@@ -1,0 +1,12 @@
+pgk/
+bin/
+src/.DS_Store
+src/dvolplug/dvolplug
+src/github.com/
+src/golang.org/
+src/google.golang.org/
+*.a
+*.so
+.build_*
+*/vib/*.vib
+*/vib/payloads/

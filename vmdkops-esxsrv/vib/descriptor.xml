@@ -1,0 +1,65 @@
+<!--  dockervolagent VIB descriptor.xml. Used to generate installable VIBs-->
+
+
+<!--  TBD: PUT ACTUAL PAYLOAD CONTENT  in ../payloads/payload1/... -->
+
+
+<vib version="6.0">
+
+   <name>vmware-esx-vmdkops-service</name>
+   <version>1.0.0-0.0.1</version>
+   <vendor>VMWare</vendor>
+   <summary>ESX-side daemon supporting basic VMDK operations requested by a guest</summary>
+
+   <description>
+   This daemon executes VMDK operations (create/format/attach/rm/detach)requested 
+   by in-the-guest Docker Volume Plugin
+   </description>
+
+   <payloads>
+     <payload name="payload1" type="vgz">
+     </payload> 
+   </payloads>
+   
+   
+   <!-- Used for specifying KB article URLs. -->
+   <urls></urls>
+
+   <!-- defines a VIB's relationships with other VIBs -->
+   <relationships>
+      <depends></depends>
+      <conflicts></conflicts>
+      <replaces></replaces>
+      <provides> </provides>
+      <compatibleWith />
+   </relationships>
+
+   <software-tags />
+
+   <!-- System installation requirements -->
+   <system-requires>
+      <maintenance-mode>false</maintenance-mode>
+   </system-requires>
+
+   <!-- VIB acceptance level.  Should be one of -->
+   <!-- certified / accepted / partner / community -->
+   <!-- Defaults to community if not specified    -->
+   <!-- TODO: This value may be overridden by the signing code. -->
+   <acceptance-level>partner</acceptance-level>
+
+   <!-- Both live install and live removes must be true for a live upgrade -->
+   <live-install-allowed>true</live-install-allowed>
+   <live-remove-allowed>true</live-remove-allowed>
+
+   <cimom-restart>false</cimom-restart>
+
+   <!-- Mark this VIB as stateless ready - meaning that this VIB can be booted
+        from a stateless host and its configuration has a host profiles plugin.
+        Defaults to false.  -->
+   <stateless-ready>false</stateless-ready>
+
+   <!-- This VIB overlays files of other VIBs.  -->
+   <!-- Note that the use of overlays must be approved by VMware via
+        the certification or acceptance programs. -->
+   <overlay>false</overlay>
+</vib>
