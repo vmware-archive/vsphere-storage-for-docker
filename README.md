@@ -1,5 +1,6 @@
 # Docker VMDK volume plugin - includes Go vmdkops module and ESX python service
 
+WIP: This is work in progress and I do not expect it to be useful yet
 
 text TBD.
 
