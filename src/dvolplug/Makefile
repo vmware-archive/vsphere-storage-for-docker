@@ -20,10 +20,11 @@ BIN := ../../bin
 PLUGIN := dvolplug
 
 # vmdkops module we depend on.
-# it is handled here to make full build more reliable
+# it is handled here to make full build more reliable by building dependencies
 VMDKOPS_MODULE = vmware/vmdkops
-VMDKOPS_SRC = ../vmware/vmdkops/vmdkops.go
-
+VMDKOPS_SRC =   ../$(VMDKOPS_MODULE)/vmdkops.go \
+				../$(VMDKOPS_MODULE)/vmci/vmci_client.c \
+				../$(VMDKOPS_MODULE)/vmci/vmci_sockets.h
 
 .build_module: .build_container $(VMDKOPS_SRC)
 	$(GO) build $(VMDKOPS_MODULE)
