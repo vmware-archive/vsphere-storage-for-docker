@@ -151,7 +151,7 @@ def createVMDK(vmdkPath, volName, opts):
 		# TODO: need to get backing 
 		# block device differently (in vsan via objtool create)
 		backing = vmdkPath.replace(".vmdk", "-flat.vmdk")
-		cmd = "%s/mkfs.ext4   -F -L {0} -q {1}".format(BinLoc, volName, backing) 
+		cmd = "{0}/mkfs.ext4   -F -L {1} -q {2}".format(BinLoc, volName, backing) 
 		rc, out = RunCommand(cmd)
 		
 	except Exception as ex:
