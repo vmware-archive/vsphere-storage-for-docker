@@ -9,3 +9,6 @@ Build prereqs:
  - 32 bit headers 'apt-get libc6-dev-i386' 
      (clean up in progress, will be part of dockerfiles)
  - build on clean boxes needs to be validated, there are probably issues 
+ 
+ To build, just type 'make' in the root folder. 
+ 
