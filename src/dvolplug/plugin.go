@@ -60,7 +60,7 @@ import (
 
 	"github.com/docker/go-plugins-helpers/volume"
 
-	"vmware/vmdkops" // TODO: vmware/vmci/vmdkops ?
+	"github.com/msterin/docker-vmdk-plugin/vmdkops" // TODO: vmware/vmci/vmdkops ?
 )
 
 const (
@@ -77,6 +77,17 @@ func newVmdkDriver() vmdkDriver {
 		m: &sync.Mutex{},
 	}
 	return d
+}
+
+func (d vmdkDriver) Get(r volume.Request) volume.Response {
+	log.Printf("'Get' called on %s -TBD return volume info \n", r.Name)
+	return volume.Response{Err: ""}
+}
+
+func (d vmdkDriver) List(r volume.Request) volume.Response {
+		log.Printf("'List' called on %s - TBD return volumes list \n", r.Name)
+		return volume.Response{Err: ""}
+	
 }
 
 // request attach and them mounts the volume
