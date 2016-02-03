@@ -32,7 +32,7 @@ GUEST := root@10.20.105.74
 # nested makefiles put stuff here. We need to know to use ...
 BIN = ./bin
 
-COPY  := scp -B -p
+COPY  := scp -p
 MKDIR := mkdir -p
 
 # bin locations on target machines (guest and host)

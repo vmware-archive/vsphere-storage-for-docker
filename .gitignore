@@ -8,5 +8,6 @@ src/google.golang.org/
 *.a
 *.so
 .build_*
-*/vib/*.vib
-*/vib/payloads/
+.copy_*
+*/*.vib
+*/payloads/
