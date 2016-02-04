@@ -17,7 +17,6 @@ package main
 // make sure msg and err is properly initialized everywhere (and check in go if it's needed)
 ///
 //TODO :
-// Add * _test.go
 // Potentially: add unit test , fully contained on 1 Linux machine:
 //- make server code actually create a loop block device and do a bind mount for volume test
 //- hardcode location for testing (/var/vmware/dvolplug/volumes/vol-name
@@ -59,8 +58,8 @@ import (
 	//	"syscall"
 
 	"github.com/docker/go-plugins-helpers/volume"
-
-	"vmware/vmdkops" // TODO: vmware/vmci/vmdkops ?
+	
+	"github.com/vmware/docker-vmdk-plugin/vmdkops" 
 )
 
 const (
@@ -77,6 +76,17 @@ func newVmdkDriver() vmdkDriver {
 		m: &sync.Mutex{},
 	}
 	return d
+}
+
+func (d vmdkDriver) Get(r volume.Request) volume.Response {
+	log.Printf("'Get' called on %s -TBD return volume info \n", r.Name)
+	return volume.Response{Err: ""}
+}
+
+func (d vmdkDriver) List(r volume.Request) volume.Response {
+		log.Printf("'List' called on %s - TBD return volumes list \n", r.Name)
+		return volume.Response{Err: ""}
+	
 }
 
 // request attach and them mounts the volume

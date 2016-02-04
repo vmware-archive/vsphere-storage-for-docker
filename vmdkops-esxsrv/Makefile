@@ -1,53 +1,30 @@
 # 
 # Makefile for ESX "vmdkops" service - host part of "vmware/vmdkops" Go package
 #
-# builds the VIB and places it in ../bin
+# Prepares payload folder for vibauthor and builds/places neede stuff there
+# We expect the actual vibauthor to be run via dedicated container upstair
 # 
-# assumes all pre-reqs are checked by now
-#
-# Expectations:
-#   Need 'apt-get libc6-dev-i386' for 32 bit C headers
-#   TODO: check it is installed, or (better) do a container with cc and this
+
 
 # code
 PY_SRC := vmci_srv.py
 C_SRC  := server.c
 
-# Shared lib. Note that it is referred by name from vmci_srv.py
-VMCI_SRV_LIB = libvmci_srv.so 
-
-# all needed for pythoning , for now 
-PYFILES = $(PY_SRC) $(VMCI_SRV_LIB)
-
-# mkfs etc.. to copy to vib
+# extra stuff to copy to vib
 TOOLS := tools/lin32/mkfs.ext4
 
-# deliverables (placed by build)
-BIN := ../bin
-VIB := vmware-esx-vmdkops-1.0.0.vib
+# Shared lib. Note that it is referred by name from vmci_srv.py
+VMCI_SRV_LIB := libvmci_srv.so 
 
-CP := cp -f 
-RM := rm -f 
+PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
+SRC_FILES    = descriptor.xml $(PY_FILES) $(TOOLS)
 
 # location on ESX where the stuff needs to go (used in .py code)
 ESX_BIN := /usr/lib/vmware/vmdkops/bin
 
-# in-container Src locations for build steps
-VIB_CONT_LOC    := /usr/src/vib
-VIB_CONT        := lamw/vibauthor
-
-# where the files should be placed for vibauthor
-STAGE   = $(PWD)/vib
-
-# payload location - see vib/descriptor.xml
-PAYLOAD = $(STAGE)/payloads/payload1
-
+# payload location - see descriptor.xml
+PAYLOAD = payloads/payload1
 PAYLOAD_BIN = $(PAYLOAD)$(ESX_BIN)
-
-# containers to run commands for build steps
-VIBAUTHOR := docker run --rm -v $(STAGE):$(VIB_CONT_LOC) $(VIB_CONT) vibauthor
-
-
 
 # C stuff
 # Note : vSockets return cartelId to ID connecting VM. We use vsi to convert 
@@ -56,41 +33,24 @@ VIBAUTHOR := docker run --rm -v $(STAGE):$(VIB_CONT_LOC) $(VIB_CONT) vibauthor
 CC      := gcc
 CFLAGS  := -fPIC -m32 -shared
 
-# this is used when manually invoking make with no options
-.PHONY: first_target
-first_target: build
 
 # this is used from a Makefile upstairs, and could be used manually 
 .PHONY: build test clean
-build: .build_container $(BIN)/$(VIB)
+build: .copy_files
 
-.build_container:
-	@which docker > /dev/null ; \
-	  if [ $$? -ne 0 ] ; then \
-	      echo Failed to run: Docker installation required. ; exit 1 ; fi 
-	docker pull $(VIB_CONT)
+
+.copy_files: $(SRC_FILES)
+	mkdir -p $(PAYLOAD_BIN)
+	cp -f  $(PY_FILES) $(TOOLS) $(PAYLOAD_BIN)
 	@touch $@
 
-# puts stuff in staging, and also to $(BIN) for manual test
-$(BIN)/$(VIB): $(STAGE)/descriptor.xml $(PYFILES) $(TOOLS)
-	@mkdir -p $(PAYLOAD_BIN)
-	$(CP) $(PYFILES) $(TOOLS) $(PAYLOAD_BIN)
-	$(VIBAUTHOR) --debug --compose \
-				 --vib=$(VIB_CONT_LOC)/$(VIB) --stage-dir $(VIB_CONT_LOC) \
-		  		 --force
-	$(CP) vib/$(VIB) $(BIN)
-	$(CP) $(PYFILES) $(TOOLS) $(BIN)
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
 	
 	
 clean:
-	$(RM) $(BIN)/$(VIB) $(STAGE)/$(VIB) 
-	$(RM) $(VMCI_SRV_LIB)
-	$(RM) $(PAYLOAD_BIN)/*
-	$(RM) $(BIN)/$(PY_SRC) $(BIN)/$(VMCI_SRV_LIB) $(BIN)/mkfs.ext4
-
+	rm -fr $(VIB) $(VMCI_SRV_LIB) $(PAYLOAD_BIN)
 
 test: build
 	@echo "*** Info: No unit test here  yet ($(PWD))"	

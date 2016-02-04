@@ -20,11 +20,15 @@
 		<nature>com.googlecode.goclipse.core.goNature</nature>
 		<nature>org.python.pydev.pythonNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>pyvmomi-community-samples</name>
-			<type>2</type>
-			<location>/Users/msterin/workspace/pyvmomi-community-samples</location>
-		</link>
-	</linkedResources>
+	<filteredResources>
+		<filter>
+			<id>1454455609889</id>
+			<name></name>
+			<type>26</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-bin</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
 </projectDescription>
