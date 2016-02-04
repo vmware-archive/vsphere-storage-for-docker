@@ -31,8 +31,50 @@ Build results are in ./bin
  
 Proper install on ESX/guest is not ready yet, but top-level Makefile 
 has a "make deploy" target, which send files over ssh  to the ESX and GUEST.
-You need to manually change HOST and GUEST IPs in the Makefile.
 
-This relies on SSH being properly enabled between you build 
-machine and target machines.
+You need to manually change HOST and GUEST IPs in the Makefile to point to 
+to IPs in your environment. The copy will rely on SSH being properly enabled 
+on target machines and between them and your build machine. 
+
+```
+make deploy
+```
+will copy python code, vmci shared lib code and a mkfs.ext4 binary
+to ESX (/usr/lib/vmware/vmdkops/bin) and will copy dvolplug binary to guest 
+Linux VM 
+
+If you build machine does not have 'make' (e.g. Photon OS), you can use 
+```
+docker run --rm -v $PWD:/work -w /work docker-vmdk-plugin  make deploy
+```
+
+Note: when fully  implemented, will will have VIB install via excli, RPM
+install on VC (and pushing VIBs automatically), and proper container to run 
+on Linux guest
  
+## To run:
+ 
+on ESX:
+```
+python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
+```
+
+on Linux guest:
+```
+sudo /usr/local/bin/dvolplug
+```
+
+Then you can run "docker volume" commands against docker on you Linux guest, 
+something like that:
+```Shell
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+docker volume ls
+docker volume inspect MyVolume
+docker run  --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
+docker volume rm MyVolume # SHOULD FAIL - still used by container
+docker rm my_container
+docker volume rm MyVolume # Should pass 
+```
+
+Note: when fully implemented, all will run automatically as service and this 
+step won't be needed
