@@ -47,7 +47,7 @@ or even better https://gist.github.com/hartsock/d8b9c56cd7f779c92a78 (fails if e
 for examples
 ==
 
-make sure backend name is properluy calculated -
+make sure backend name is properly calculated -
 OR replace it all with in-guest formatting (but then we'd need to locate the proper blockdevice()
 
 With the current approach, new device is found for mount with blkid -L <volume-name>, which is easier
@@ -157,7 +157,7 @@ def createVMDK(vmdkPath, volName, opts):
 	except Exception as ex:
 		# something failed - try to unlink it
 		try:
-			os.unlink(path);
+			os.unlink(vmdkPath);
 		except:
 			pass
 
