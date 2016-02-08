@@ -44,13 +44,15 @@ GFILES := dvolplug
 # files to copy to host
 HFILES   := vmci_srv.py libvmci_srv.so mkfs.ext4  
 
+SRV_BIN := vmdkops-esxsrv/payloads/payload1/usr/lib/vmware/vmdkops/bin
+
 .PHONY: deploy
 deploy: build
 	@echo Copying $(GFILES) to $(GUEST):$(GLOC) ...
 	@-$(foreach f,$(GFILES), $(COPY) $(BIN)/$f $(GUEST):$(GLOC)/$f; )
 	@rsh $(HOST) $(MKDIR) $(HLOC)
 	@echo Copying $(HFILES) to $(HOST):$(HLOC) ...
-	@-$(foreach f,$(HFILES), $(COPY) $(BIN)/$f $(HOST):$(HLOC)/$f; )
+	@-$(foreach f,$(HFILES), $(COPY) $(SRV_BIN)/$f $(HOST):$(HLOC)/$f; )
 
 cleanremote:
 	-ssh $(GUEST) rm $(GLOC)/$(DVOLPLUG)
