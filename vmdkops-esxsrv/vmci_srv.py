@@ -3,7 +3,7 @@
 '''
 TOP TODO
 
-0. extract attach/detach code and make sure it work fine without anyuthing else
+0. extract attach/detach code and make sure it work fine without anything else
 1. add WaitForTask in Python  and drop sleep, Also add time track for reconfigure
 2. Add scsi_resync to plugin.go. Check how mount is done in flocker and in VIC
 3. Go over code, and collect TODO in one place (add TODO file)
@@ -25,8 +25,8 @@ TOP TODO
 #		"create" - create a VMDK in "[vmdatastore] dvol"
 #		"remove" - remove a VMDK. We assume it's not open, and fail if it is
 #		"list"   - [future, need docker support] enumerate related VMDK
-#		"attach" - attach a VMDK to the requestor VM
-#		"detach" - detach a VMDK from the requestor VM (assuming is's unmounted)
+#		"attach" - attach a VMDK to the requesting VM
+#		"detach" - detach a VMDK from the requesting VM (assuming it's unmounted)
 #
 #
 # known issues:
@@ -66,10 +66,10 @@ Pass error as a code in the VMCI package, rather than a hack with server.c:vmci_
 
 ===
 
- *   TBD: authorization/acces config:
+ *   TBD: authorization/access config:
  *   - location configuration. And generally, configuration... host profile/adv.conf?
  *   - a local version, talking over Unix Socket, to debug all I can on Linux - with logic and fake responses (part of build unit test)
- *   - an ESX version, talking over http , to debug logic on a randon ESX - with full vigor API usage
+ *   - an ESX version, talking over http , to debug logic on a random ESX - with full vigor API usage
  *   - an ESX version, with vSocket (C I suppose) connection, to finalize debugging on actual guest/host story
 
 '''
@@ -97,7 +97,7 @@ DefaultDiskSize = "100mb"
 BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
 # Run executable on ESX
-# needed for vmkfstools invokation (until normal disk create is written)
+# needed for vmkfstools invocation (until normal disk create is written)
 # borrowed from vmkernel/tests/lib/python/pyCommon.py
 def RunCommand(cmd, ignoreStatus=False, printCmd=True):
    """RunCommand
@@ -176,7 +176,7 @@ def removeVMDK(vmdkPath):
 		return "Failed to remove %s" % vmdkPath, ex
 	return None
 
-# returns a list of volnames (note: may be an empty list)
+# returns a list of volume names (note: may be an empty list)
 def listVMDK(path):
 	vmdks = [x for x in os.listdir(path) if  ".vmdk" in x and
 			os.stat(os.path.join(path, x)).st_size < MaxDescrSize]
@@ -210,7 +210,7 @@ def detachVMDK(vmdkPath, vmName):
 	disk_detach(vmdkPath, vm)
 	return None
 
-# check existance (and creates if needed) the path
+# check existence (and creates if needed) the path
 # NOTE / TBD: for vsan we may need to use osfs_mkdir instead of regular os.mkdir
 def checkPath(path):
 	try:
@@ -250,7 +250,7 @@ def connectLocal():
 	connect and do stuff on local machine
 	'''
 
-	# Connect to localhoat as dcui
+	# Connect to localhost as dcui
 	# User "dcui" is a local Admin that does not lose permissions
 	# when the host is in lockdown mode.
 	si = pyVim.connect.Connect(host='localhost', user='dcui')
@@ -292,7 +292,7 @@ def findDeviceByPath(vmdkPath, vm):
 
  		# TODO: use device_disk_uuid = d.backing.uuid  # FFU
 		# for now - ugly hack to convert "[ds] dir/name" to fullpath
-		# we also assume homogenous mounts here... well, we are on 1 esx after all
+		# we also assume homogeneous mounts here... well, we are on 1 esx after all
 		dsPath = d.backing.datastore.host[0].mountInfo.path
 		dev = os.path.join(dsPath, d.backing.fileName.split(" ")[1])
 		if dev == vmdkPath:
@@ -304,7 +304,7 @@ def findDeviceByPath(vmdkPath, vm):
 	return None
 
 
-# attaches *existing* disk to a vm  on a PVSCI controller
+# attaches *existing* disk to a vm on a PVSCI controller
 # (we need PVSCSI to avoid SCSI rescans in the guest)
 def disk_attach(vmdkPath, vm):
   # NOTE:
