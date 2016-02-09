@@ -50,7 +50,7 @@ $(VMCI_SRV_LIB): $(C_SRC)
 	
 	
 clean:
-	rm -fr $(VIB) $(VMCI_SRV_LIB) $(PAYLOAD_BIN)
+	rm -fr $(VIB) $(VMCI_SRV_LIB) $(PAYLOAD)
 
 test: build
 	@echo "*** Info: No unit test here  yet ($(PWD))"	
