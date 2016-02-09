@@ -32,31 +32,28 @@ GUEST := root@10.20.105.74
 # nested makefiles put stuff here. We need to know to use ...
 BIN = ./bin
 
-COPY  := scp
-MKDIR := mkdir -p
-
-# bin locations on target machines (guest and host)
+# bin locations on target guest
 GLOC := /usr/local/bin
-HLOC := /usr/lib/vmware/vmdkops/bin
 
-# files to copy to guest
-GFILES := dvolplug
-# files to copy to host
-HFILES   := vmci_srv.py libvmci_srv.so mkfs.ext4  
 
-SRV_BIN := vmdkops-esxsrv/payloads/payload1/usr/lib/vmware/vmdkops/bin
+# vib install: we install by file name but remove by internal name
+VIBFILE := vmware-esx-vmdkops-1.0.0.vib
+VIBNAME := vmware-esx-vmdkops-service
+VIBCMD  := localcli software vib
+
 
 .PHONY: deploy
-deploy: build
-	@echo Copying $(GFILES) to $(GUEST):$(GLOC) ...
-	@-$(foreach f,$(GFILES), $(COPY) $(BIN)/$f $(GUEST):$(GLOC)/$f; )
-	@rsh $(HOST) $(MKDIR) $(HLOC)
-	@echo Copying $(HFILES) to $(HOST):$(HLOC) ...
-	@-$(foreach f,$(HFILES), $(COPY) $(SRV_BIN)/$f $(HOST):$(HLOC)/$f; )
+# ignore failures in copy to guest (can be busy) and remove vib (can be not installed)
+deploy: 
+	./build.sh
+	-cd $(BIN); scp dvolplug $(GUEST):$(GLOC)/
+	cd $(BIN); scp $(VIBFILE) $(HOST):/tmp
+	-ssh $(HOST) $(VIBCMD) remove --vibname $(VIBNAME)
+	ssh  $(HOST) $(VIBCMD) install --no-sig-check  -v /tmp/$(VIBFILE)
 
 cleanremote:
 	-ssh $(GUEST) rm $(GLOC)/$(DVOLPLUG)
-	-ssh $(ESX)   rm $(HLOC)/$(VMCI_SRV)
+	-ssh $(HOST) $(VIBCMD) remove --vibname $(VIBNAME)
 
 # "make simpletest" assumes all services are started manually, and simply 
 # does sanity check of create/remove docker volume on the guest
@@ -66,7 +63,7 @@ TEST_VOL_NAME := MyVolume
 simpletest:  
 	rsh $(GUEST)  docker volume create \
 			--driver=vmdk --name=$(TEST_VOL_NAME) \
-			-o size=1tb -o policy=good
+			-o size=1gb -o policy=good
 	rsh $(GUEST)  docker volume ls
 	rsh $(GUEST)  docker volume inspect $(TEST_VOL_NAME)
 	rsh $(GUEST)  docker volume rm $(TEST_VOL_NAME)

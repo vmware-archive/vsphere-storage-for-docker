@@ -28,8 +28,7 @@ $(BIN)/$(PLUGIN): $(SRC)
 	@-mkdir -p $(BIN)
 
 clean: 
-	go clean $(PLUGIN)
-	rm -f $(BIN)/$(PLUGIN) .build_*
+	rm -f $(BIN)/* .build_*
 
 #TBD: this is a good place to add unit tests...	
 test: build
