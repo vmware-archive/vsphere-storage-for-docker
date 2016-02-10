@@ -1,0 +1,39 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"revision": "be52937128b38f1d99787bb476c789e2af1147f1",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/docker/go-connections/sockets",
+			"repository": "https://github.com/docker/go-connections",
+			"revision": "3ef1e92d1b93e587895dfa466e1682ae63448801",
+			"branch": "master",
+			"path": "/sockets"
+		},
+		{
+			"importpath": "github.com/docker/go-plugins-helpers/sdk",
+			"repository": "https://github.com/docker/go-plugins-helpers",
+			"revision": "e121e40d9473dd84b97bbccd835192dce7096f30",
+			"branch": "master",
+			"path": "/sdk"
+		},
+		{
+			"importpath": "github.com/docker/go-plugins-helpers/volume",
+			"repository": "https://github.com/docker/go-plugins-helpers",
+			"revision": "e121e40d9473dd84b97bbccd835192dce7096f30",
+			"branch": "master",
+			"path": "/volume"
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/user",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "8e8d01d38d7b4fb0a35bf89b72bc3e18c98882d7",
+			"branch": "master",
+			"path": "/libcontainer/user"
+		}
+	]
+}
