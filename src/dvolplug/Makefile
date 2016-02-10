@@ -24,7 +24,7 @@ SRC = plugin.go main.go $(VMDKOPS_SRC)
 build: $(BIN)/$(PLUGIN)
      
 $(BIN)/$(PLUGIN): $(SRC) 
-	go build -o $@ .
+	GO15VENDOREXPERIMENT=1 go build -o $@ .
 	@-mkdir -p $(BIN)
 
 clean: 

@@ -8,7 +8,11 @@ Build prerequisites:
 
 ## To build:
 
+### Using docker
+
 ```Shell
+mkdir -p $(GOPATH)/src/github.com/vmware
+cd $(GOPATH)/src/github.com/vmware
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
 ./build.sh
@@ -24,8 +28,20 @@ cd docker-vmdk-plugin
 sed -i 's/ARG WHO/ENV WHO/' Dockerfile # photon only
 ./build.sh
 ```
-
 Build results are in ./bin
+
+### Using make
+
+This does not build the vibs yet.
+
+```Shell
+sudo apt-get install libc6-dev-i386
+mkdir -p $(GOPATH)/src/github.com/vmware
+cd $(GOPATH)/src/github.com/vmware
+git clone https://github.com/vmware/docker-vmdk-plugin.git
+cd docker-vmdk-plugin
+make
+```
 
 ## To install:
 

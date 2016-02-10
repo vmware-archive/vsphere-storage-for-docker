@@ -50,8 +50,8 @@ id=`id -u`
 plugin=docker-vmdk-plugin  
 plug_container=$plugin
 
-# mount point within the container
-dir=/work           
+# mount point within the container. Based on GOPATH=/go
+dir=/go/src/github.com/vmware/docker-vmdk-plugin
 
 # use this for vibauthor (and opportunistically for git)
 vibauth_container=lamw/vibauthor
