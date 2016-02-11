@@ -34,13 +34,15 @@ PAYLOAD_BIN = $(PAYLOAD)$(ESX_BIN)
 # Note : vSockets return cartelId to ID connecting VM. We use vsi to convert 
 #       it to VM name/ID. ESX is shipped with 32bit VSI python module only, so 
 #       we use 32bit python and 32 bit shared libs for VMCI
-CC      := gcc
+CC      := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
 CFLAGS  := -fPIC -m32 -shared
 
 
 ifeq ($(DOCKER_USE), false)
+	cc := gcc
 	VIBAUTHOR := echo " *** SKIPPING (DOCKER_USE=false):" docker vibauthor
 else
+	CC := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
 	# in-container work dir and bin dir
 	WDIR    := /work/vib
 	BDIR    := /work/bin
@@ -55,7 +57,7 @@ export USE_DOCKER
 .PHONY: build
 build: $(VIB_BIN)
 
-$(VIB_BIN): .build_container descriptor.xml $(PY_FILES) $(TOOLS)
+$(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
 	@echo Preparing payload in $(PAYLOAD_BIN)...
 	@mkdir -p $(PAYLOAD_BIN)
 	@cp -f  $(PY_FILES) $(TOOLS) $(PAYLOAD_BIN)

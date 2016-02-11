@@ -22,8 +22,8 @@ then
    exit 2
 fi
 
-maj_ver=`echo $ver | grep -o '\.[0-9]*\.' | sed 's/\.//g'`
-if [ $maj_ver -lt 8 ]
+min_ver=`echo $ver | grep -o '\.[0-9]*\.' | sed 's/\.//g'`
+if [ $min_ver -lt 8 ]
 then 
    echo '***********************************************************'
    echo "Error: need Docker 1.9 or later. Found $ver"
@@ -31,13 +31,3 @@ then
    exit 3
 
 fi
-
-if [ $maj_ver -eq 8 ]
-then
-        echo '***********************************************************'
-        echo "Warning: if the build fails on Docker 1.8, "
-        echo "         replace ARG with ENV in Dockerfile and rerun"
-        echo "         Command: sed -i 's/ARG WHO/ENV WHO/' Dockerfile" 
-        echo 
-        echo '***********************************************************'
-   fi
