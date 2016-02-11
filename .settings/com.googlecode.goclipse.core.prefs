@@ -1,9 +1,9 @@
-build_targets=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<build_targets xmlns\="com.googlecode.goclipse.core">\n<target config\="./... \#build" enabled\="true" options\="build -o ../bin/dvolplug dvolplug"/>\n<target config\="./... \#build-tests" enabled\="false"/>\n<target config\="./... \#[run-tests]" enabled\="false"/>\n</build_targets>\n
+build_targets=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<build_targets xmlns\="com.googlecode.goclipse.core">\n<target config\="./... \#build" enabled\="true" options\="help "/>\n<target config\="./... \#build-tests" enabled\="false"/>\n<target config\="./... \#[run-tests]" enabled\="false"/>\n</build_targets>\n
 com.googlecode.goclipse.documentor.path=/usr/local/opt/go/libexec/bin/godoc
 com.googlecode.goclipse.formatter.path=/usr/local/opt/go/libexec/bin/gofmt
 com.googlecode.goclipse.goarch=amd64
 com.googlecode.goclipse.goos=darwin
-com.googlecode.goclipse.gopath=\:/Users/msterin/workspace/go_path
+com.googlecode.goclipse.gopath=
 com.googlecode.goclipse.goroot=/usr/local/opt/go/libexec
 eclipse.preferences.version=1
 toolchain_prefs.use_project_settings=true
