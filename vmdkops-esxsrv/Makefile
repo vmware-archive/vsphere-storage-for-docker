@@ -5,6 +5,10 @@
 # We expect the actual vibauthor to be run via dedicated container upstair
 # 
 
+# deliverables (placed by build)
+BIN := ../bin
+VIB := vmware-esx-vmdkops-1.0.0.vib
+VIB_BIN  = $(BIN)/$(VIB)
 
 # code
 PY_SRC := vmci_srv.py
@@ -13,13 +17,13 @@ C_SRC  := server.c
 # extra stuff to copy to vib
 TOOLS := tools/lin32/mkfs.ext4
 
+
 # Shared lib. Note that it is referred by name from vmci_srv.py
 VMCI_SRV_LIB := libvmci_srv.so 
 
 PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
-SRC_FILES    = descriptor.xml $(PY_FILES) $(TOOLS)
 
-# location on ESX where the stuff needs to go (used in .py code)
+# location on ESX where the stuff needs to go in payload
 ESX_BIN := /usr/lib/vmware/vmdkops/bin
 
 # payload location - see descriptor.xml
@@ -30,30 +34,51 @@ PAYLOAD_BIN = $(PAYLOAD)$(ESX_BIN)
 # Note : vSockets return cartelId to ID connecting VM. We use vsi to convert 
 #       it to VM name/ID. ESX is shipped with 32bit VSI python module only, so 
 #       we use 32bit python and 32 bit shared libs for VMCI
-CC      := gcc
+CC      := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
 CFLAGS  := -fPIC -m32 -shared
 
 
+ifeq ($(DOCKER_USE), false)
+	cc := gcc
+	VIBAUTHOR := echo " *** SKIPPING (DOCKER_USE=false):" docker vibauthor
+else
+	CC := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
+	# in-container work dir and bin dir
+	WDIR    := /work/vib
+	BDIR    := /work/bin
+	VIB_CONT        := lamw/vibauthor
+	# containers to run commands for build steps
+	VIBAUTHOR := docker run --rm -v $(PWD):$(WDIR) -v $(PWD)/../bin:$(BDIR)  $(VIB_CONT)  vibauthor
+endif
+export USE_DOCKER
+
+
 # this is used from a Makefile upstairs, and could be used manually 
-.PHONY: build test clean
-build: .copy_files
+.PHONY: build
+build: $(VIB_BIN)
 
-
-.copy_files: $(SRC_FILES)
-	mkdir -p $(PAYLOAD_BIN)
-	cp -f  $(PY_FILES) $(TOOLS) $(PAYLOAD_BIN)
-	@touch $@
-
+$(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
+	@echo Preparing payload in $(PAYLOAD_BIN)...
+	@mkdir -p $(PAYLOAD_BIN)
+	@cp -f  $(PY_FILES) $(TOOLS) $(PAYLOAD_BIN)
+	@echo Building a VIB file at $@...
+	$(VIBAUTHOR) \
+		--debug --compose \
+		--vib=$(BDIR)/$(VIB) --stage-dir $(WDIR) \
+		--force
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
 	
-	
+.PHONY:	clean
 clean:
-	rm -fr $(VIB) $(VMCI_SRV_LIB) $(PAYLOAD)
+	rm -rf $(VIB) $(VMCI_SRV_LIB) $(PAYLOAD)
 
+.PHONY: test
 test: build
-	@echo "*** Info: No unit test here  yet ($(PWD))"	
+	@echo "? Info: No unit test here yet."	
 
 
-	
+
+
+

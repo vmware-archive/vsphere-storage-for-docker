@@ -1,6 +1,17 @@
-# Docker VMDK volume plugin  (with Go vmdkops module and ESX python service)
+# Docker VMDK volume plugin 
 
 WIP: This is work in progress and I do not expect it to be fully working yet
+
+Docker-side service supporting Docker Volume API for VMWARE VMDKs.
+
+The service runs on Docker VM, inside ESX, and communicates with a dedicated
+service on ESX side. The code makes use of  vmdkops module  (source in ./vmdkops)
+and ESX python service (source in ./vmdkops-esxsrc). 
+
+The end results is that "docker volume create --drive vmdk" is capable
+of creating VMDK disks on enclosing ESX host, and using the new volume auto
+attaches and mounts the storage so it is immediately usable
+ 
 
 Build prerequisites:
  - Linux with Docker 1.9
@@ -15,33 +26,30 @@ mkdir -p $(GOPATH)/src/github.com/vmware
 cd $(GOPATH)/src/github.com/vmware
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
-./build.sh
+make
 ```
+
+If you have GO installed on your build machine and do not want to use docker 
+for build, you can ran
+```
+make DOCKER_USE=false"
+```
+instead of make.  Note that in this case .vib file will NOT be build as it DOES
+required docker currently; so this option is good for dealing with guest-side
+plugin only.
 
 Note: on Photon TP2, which does not have git installed and has Docker 1.8,
 you need to  do  the following:
 
 ```Shell
-tyum install git                     # photon only
-git clone https://github.com/vmware/docker-vmdk-plugin.git
-cd docker-vmdk-plugin
-sed -i 's/ARG WHO/ENV WHO/' Dockerfile # photon only
-./build.sh
-```
-Build results are in ./bin
-
-### Using make
-
-This does not build the vibs yet.
-
-```Shell
-sudo apt-get install libc6-dev-i386
-mkdir -p $(GOPATH)/src/github.com/vmware
-cd $(GOPATH)/src/github.com/vmware
+tyum install -y git      # photon only
+tyum install -y make     # photon only
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
 make
 ```
+Build results are in ./bin
+
 
 ## To install:
 
