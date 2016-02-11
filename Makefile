@@ -31,9 +31,11 @@ PLUGIN := github.com/vmware/$(PNAME)
 CNAME := $(PNAME)-go-bld
 
 ifeq ($(DOCKER_USE), false)
+	PREREQ_CHECK := ./check.sh nodocker
 	GO := GO15VENDOREXPERIMENT=1 go
 	DOCKER := echo *** Skipping "(DOCKER_USE=false):" docker
 else
+	PREREQ_CHECK := ./check.sh
 	DOCKER := docker
 	#  in the container GOPATH=/go
 	GO := docker run --rm -w /go/src/$(PLUGIN)  -v $(PWD):/go/src/$(PLUGIN) $(CNAME) go
@@ -54,7 +56,7 @@ build: prereqs .build_container $(PLUGIN_BIN)
 
 .PHONY: prereqs
 prereqs:
-	@./check.sh
+	@$(PREREQ_CHECK)
 
 $(PLUGIN_BIN): $(SRC) $(EXTRA_SRC) Dockerfile
 	@-mkdir -p $(BIN)

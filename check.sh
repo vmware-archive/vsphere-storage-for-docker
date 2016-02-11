@@ -5,6 +5,18 @@
 
 # Check prereq first - we need docker 
 
+if [ "$1" = "nodocker" ] 
+then 
+        if [ `uname` != "Linux" ] 
+        then
+              #  don't want to mess with cross-compile
+              echo '***********************************************************'
+              echo "Error: Linux box is needed for no-docker build"
+              exit 3
+        fi
+        exit 0
+fi
+
 ver=`docker -v` 
 if [ $? -ne 0 ]
 then 
@@ -26,7 +38,7 @@ min_ver=`echo $ver | grep -o '\.[0-9]*\.' | sed 's/\.//g'`
 if [ $min_ver -lt 8 ]
 then 
    echo '***********************************************************'
-   echo "Error: need Docker 1.9 or later. Found $ver"
+   echo "Error: need Docker 1.8 or later. Found $ver"
    echo "         Please update docker to a newer version"
    exit 3
 

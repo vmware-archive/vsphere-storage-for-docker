@@ -16,7 +16,7 @@ import (
 const (
 	plugingSockDir = "/run/docker/plugins"
 	vmdkPluginId   = "vmdk"
-	version        = "VMDK Volume Driver v0.1"
+	version        = "VMDK Volume Driver v0.2"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 	port := flag.Int("port", 15000, "default port  for vmci")
 	flag.Parse()
 
-	log.Printf("%s (port: %d - ignored and it's OK)", version, *port)
+	log.Printf("%s (port: %d)", version, *port)
 	//	TODO: register signal handling
 	//	sigChannel := make(chan os.Signal, 1)
 	//	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)

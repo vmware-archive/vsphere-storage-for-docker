@@ -39,11 +39,6 @@ package main
 // We also need to track volumes attached and mounted to save on this ops if requested
 // On start, we need to list vmdks attached to the VM and polulate list of volumes from it
 
-// Ideally, we need to give a default location as a symlink (??- talk to Pavel etc)
-// from usr/lib or etc; and manage it .
-// OPEN: how do we manage default locations and config. is it esxcli or just advcfg (preference)
-// /usr/lib/vmware/defaultDockerVmdkDir -> /vmfs/volumes/datastore226/eek
-// Docker Volume Driver Interface functions (create/remove/path/mount/unmount
 
 import (
 	//	"encoding/json"
