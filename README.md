@@ -1,54 +1,92 @@
-# Docker VMDK volume plugin 
+# Docker VMDK volume plugin (WIP)
 
-WIP: This is work in progress and I do not expect it to be fully working yet
+Native ESXi VMDK support for Docker Data Volumes.
 
-Docker-side service supporting Docker Volume API for VMWARE VMDKs.
+When Docker runs in a VM under ESXi hypervisor, we allow Docker user to 
+create and use VMDK-based data volumes. E.g. 
+```Shell
+docker volume create --driver=vmdk --name=MyStorage -o size=10gb
+docker run --rm -it -v MyStorage:/mnt/data busybox sh
+```
 
-The service runs on Docker VM, inside ESX, and communicates with a dedicated
-service on ESX side. The code makes use of  vmdkops module  (source in ./vmdkops)
-and ESX python service (source in ./vmdkops-esxsrc). 
+This will create a MyStorage.vmdk on the same datastore where Docker VM is 
+located. This vmdk will be attached to the Docker VM on "docker run" and 
+the containers can use this storage for data. 
+
+The plug-in contains guest code and ESXi code. 
+The docker-vmdk-plugin service runs in docker VM and talks to Docker Volume
+Plugin API via Unix Sockets. It then relays requests via VMWare vSockets 
+host-guest communication to a edicated service on ESXi. 
+The code makes use of  vmdkops module  (found  in ./vmdkops)
+and ESX python service (found in ./vmdkops-esxsrc). 
 
 The end results is that "docker volume create --drive vmdk" is capable
 of creating VMDK disks on enclosing ESX host, and using the new volume auto
 attaches and mounts the storage so it is immediately usable
- 
 
-Build prerequisites:
- - Linux with Docker 1.9
- - git
 
 ## To build:
 
-### Using docker
+Build prerequisites:
+ - Linux with Docker (1.8+ is supported, lower versions not tested)
+ - git
+ - make
+ 
+Build results are in ./bin.
+ 
+### Simple method - using docker
+
+Use it when you do not have GO on your machine, or do not plan to impact your 
+GO projects. 
 
 ```Shell
+git clone https://github.com/vmware/docker-vmdk-plugin.git
+cd docker-vmdk-plugin
+make
+```
+
+There are also the following targets:
+```
+make clean       # removes binaries build by 'make'
+make test        # runs whatever unit tests we have
+make deploy      # deploys to your test box (see below)
+make cleanremote # uninstalls from test boxes)
+make testremote  # runs sanity check docker commands for volumes
+```
+
+### Building on Photon TP2 Minimal
+
+Photon TP2 Minimal does not have git or make installed, and does not 
+not start docker by default, so you need to do this before running make: 
+
+```Shell
+ # Photon TP2 Minimal only:
+tyum install -y git
+tyum install -y make
+systemctl start docker
+```
+and then the git/cd/make sequence. 
+
+### Building without Docker
+
+This build requires GO go be installed on your build machine.
+It also requires libc-i386-dev package to be installed , as it is needed
+for ESX-side vSocket shim compilation. 
+
+With these prerequisites, you can do the following to build: 
+
+```
 mkdir -p $(GOPATH)/src/github.com/vmware
 cd $(GOPATH)/src/github.com/vmware
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
-make
+make DOCKER_USE=false
 ```
 
-If you have GO installed on your build machine and do not want to use docker 
-for build, you can ran
-```
-make DOCKER_USE=false"
-```
-instead of make.  Note that in this case .vib file will NOT be build as it DOES
+Note that in this case .vib file will NOT be build as it DOES
 required docker currently; so this option is good for dealing with guest-side
 plugin only.
 
-Note: on Photon TP2, which does not have git installed and has Docker 1.8,
-you need to  do  the following:
-
-```Shell
-tyum install -y git      # photon only
-tyum install -y make     # photon only
-git clone https://github.com/vmware/docker-vmdk-plugin.git
-cd docker-vmdk-plugin
-make
-```
-Build results are in ./bin
 
 
 ## To install:
@@ -63,18 +101,18 @@ on target machines and between them and your build machine.
 ```
 make deploy
 ```
-will copy python code, vmci shared lib code and a mkfs.ext4 binary
-to ESX (/usr/lib/vmware/vmdkops/bin) and will copy dvolplug binary to guest
-Linux VM
+This will copy the VIB file to ESXi and install in so  /usr/lib/vmware/vmdkops/bin
+has all neccessary file, and will copy docker-vmdk-plugin binary to guest
+Linux VM /usr/local/bin. 
 
 If you build machine does not have 'make' (e.g. Photon OS), you can use
 ```
 docker run --rm -v $PWD:/work -w /work docker-vmdk-plugin  make deploy
 ```
 
-Note: when fully  implemented, will will have VIB install via excli, RPM
-install on VC (and pushing VIBs automatically), and proper container to run
-on Linux guest
+Note: when fully  implemented, will will have the VIB install actually starting
+the service properly, RPM install on VC for pushing VIBs automatically, 
+and proper container to run service on Linux guest.
 
 ## To run:
 
@@ -100,5 +138,7 @@ docker rm my_container
 docker volume rm MyVolume # Should pass
 ```
 
-Note: when fully implemented, all will run automatically as service and this
-step won't be needed
+You can also run 'make remotetest' to get basic docker volume commands 
+executed. 
+
+To be continued...

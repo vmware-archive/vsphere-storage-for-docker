@@ -17,7 +17,6 @@ C_SRC  := server.c
 # extra stuff to copy to vib
 TOOLS := tools/lin32/mkfs.ext4
 
-
 # Shared lib. Note that it is referred by name from vmci_srv.py
 VMCI_SRV_LIB := libvmci_srv.so 
 
@@ -30,18 +29,19 @@ ESX_BIN := /usr/lib/vmware/vmdkops/bin
 PAYLOAD = payloads/payload1
 PAYLOAD_BIN = $(PAYLOAD)$(ESX_BIN)
 
-# C stuff
-# Note : vSockets return cartelId to ID connecting VM. We use vsi to convert 
+# We need to build C code as 32 bits.
+# Reason: vSockets return cartelId to ID connecting VM. We use VSI to convert 
 #       it to VM name/ID. ESX is shipped with 32bit VSI python module only, so 
-#       we use 32bit python and 32 bit shared libs for VMCI
-CC      := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
+#       we use 32bit python and 32 bit shared libs for VMCI/vSockets
 CFLAGS  := -fPIC -m32 -shared
 
 
 ifeq ($(DOCKER_USE), false)
 	cc := gcc
-	VIBAUTHOR := echo " *** SKIPPING (DOCKER_USE=false):" docker vibauthor
+	VIBAUTHOR := @echo " *** SKIPPING (DOCKER_USE=false):" docker run --rm \
+				-v $(PWD):$(WDIR) -v $(PWD)/../bin:$(BDIR)  $(VIB_CONT)  vibauthor
 else
+	# we have all packages in container for plugin. See ../Makefile and ../Dockerfile	
 	CC := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
 	# in-container work dir and bin dir
 	WDIR    := /work/vib
