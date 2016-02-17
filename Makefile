@@ -3,13 +3,6 @@
 #
 # Builds client-side (docker engine) volume plug in code, and ESX-side VIB
 #
-# Expectations:
-#   By default, needs docker (for containerized go build)
-#   Can be used without docker, but:
-#		- the final VIB assembly needs docker and will be skipped
-#		- requires golang 1.5+ installed
-#		- requires libc-i386-dev package for 32-bit build installed
-# 
 
 # Place binaries here
 BIN := ./bin
@@ -27,20 +20,7 @@ VIB_BIN := $(BIN)/$(VIBFILE)
 # plugin name, for go build
 PLUGIN := github.com/vmware/$(PNAME)
 
-# container name 
-CNAME := $(PNAME)-go-bld
-
-ifeq ($(DOCKER_USE), false)
-	PREREQ_CHECK := ./check.sh nodocker
-	GO := GO15VENDOREXPERIMENT=1 go
-	DOCKER := echo *** Skipping "(DOCKER_USE=false):" docker
-else
-	PREREQ_CHECK := ./check.sh
-	DOCKER := docker
-	#  in the container GOPATH=/go
-	GO := docker run --rm -w /go/src/$(PLUGIN)  -v $(PWD):/go/src/$(PLUGIN) $(CNAME) go
-endif
-export DOCKER_USE
+GO := GO15VENDOREXPERIMENT=1 go 
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
 EXTRA_SRC = vmdkops/*.go 
@@ -51,23 +31,16 @@ SRC = plugin.go main.go
 #  Targets 
 #
 .PHONY: build
-build: prereqs .build_container $(PLUGIN_BIN)
+build: prereqs $(PLUGIN_BIN)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@ 
 
 .PHONY: prereqs
 prereqs:
-	@$(PREREQ_CHECK)
+	@./check.sh
 
-$(PLUGIN_BIN): $(SRC) $(EXTRA_SRC) Dockerfile
+$(PLUGIN_BIN): $(SRC) $(EXTRA_SRC)
 	@-mkdir -p $(BIN)
-	@echo "Building $(PLUGIN_BIN) ..." 
 	$(GO) build -o $(PLUGIN_BIN) $(PLUGIN)
-
-
-.build_container: Dockerfile
-	$(DOCKER) build -t $(CNAME) .
-	@touch $@
-	 
 
 .PHONY: clean
 clean: 
