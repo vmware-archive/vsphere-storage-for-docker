@@ -1,0 +1,5 @@
+build:
+  image: kerneltime/vibauthor-and-go
+  commands:
+    - make
+    - make test

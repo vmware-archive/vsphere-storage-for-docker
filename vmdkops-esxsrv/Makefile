@@ -34,38 +34,24 @@ PAYLOAD_BIN = $(PAYLOAD)$(ESX_BIN)
 #       it to VM name/ID. ESX is shipped with 32bit VSI python module only, so 
 #       we use 32bit python and 32 bit shared libs for VMCI/vSockets
 CFLAGS  := -fPIC -m32 -shared
-
-
-ifeq ($(DOCKER_USE), false)
-	cc := gcc
-	VIBAUTHOR := @echo " *** SKIPPING (DOCKER_USE=false):" docker run --rm \
-				-v $(PWD):$(WDIR) -v $(PWD)/../bin:$(BDIR)  $(VIB_CONT)  vibauthor
-else
-	# we have all packages in container for plugin. See ../Makefile and ../Dockerfile	
-	CC := docker run -v $(PWD):/work -w /work --rm docker-vmdk-plugin-go-bld gcc
-	# in-container work dir and bin dir
-	WDIR    := /work/vib
-	BDIR    := /work/bin
-	VIB_CONT        := lamw/vibauthor
-	# containers to run commands for build steps
-	VIBAUTHOR := docker run --rm -v $(PWD):$(WDIR) -v $(PWD)/../bin:$(BDIR)  $(VIB_CONT)  vibauthor
-endif
-export USE_DOCKER
-
+cc := gcc
+VIBAUTHOR := vibauthor
+BDIR := ../bin
+WDIR := .
 
 # this is used from a Makefile upstairs, and could be used manually 
 .PHONY: build
 build: $(VIB_BIN)
 
 $(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
-	@echo Preparing payload in $(PAYLOAD_BIN)...
 	@mkdir -p $(PAYLOAD_BIN)
+	@chmod -R a+rwx $(PAYLOAD)/../
 	@cp -f  $(PY_FILES) $(TOOLS) $(PAYLOAD_BIN)
-	@echo Building a VIB file at $@...
 	$(VIBAUTHOR) \
-		--debug --compose \
-		--vib=$(BDIR)/$(VIB) --stage-dir $(WDIR) \
-		--force
+ 	--debug --compose \
+   	--vib=$(BDIR)/$(VIB) \
+   	--stage-dir $(WDIR) \
+   	--force
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
