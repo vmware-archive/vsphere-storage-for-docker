@@ -38,7 +38,7 @@ Build prerequisites:
  
 Build results are in ./bin.
  
-### Recommended method: Using docker
+### Using docker (Recommended)
 
 Use it when you do not have GO, vibauthor and 32 bit C libraries on your machine, 
 or do not plan to impact your GO projects. 
