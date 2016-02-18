@@ -18,7 +18,9 @@ python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
 
 # To run on Linux guest
 
-sudo /usr/local/bin/dvolplug
+sudo apt-get install libc6-i386
+
+sudo /usr/local/bin/docker-vmdk-plugin
 
 # Docker commands to use plugin
 
@@ -146,31 +148,10 @@ Note: when fully  implemented, deploy will have the VIB install actually startin
 the service properly, RPM install on VC for pushing VIBs automatically, 
 and proper container to run service on Linux guest.
 
-## To run:
+## To Run:
 
-on ESX:
-```
-python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
-```
+Check quicksteps above.
+One dependency that needs to be installed on the guest side is the 32 bit libc.
 
-on Linux guest:
-```
-sudo /usr/local/bin/dvolplug
-```
-
-Then you can run "docker volume" commands against docker on you Linux guest,
-something like that:
-```Shell
-docker volume create --driver=vmdk --name=MyVolume -o size=10gb
-docker volume ls
-docker volume inspect MyVolume
-docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
-docker volume rm MyVolume # SHOULD FAIL - still used by container
-docker rm my_container
-docker volume rm MyVolume # Should pass
-```
-
-You can also run 'make remotetest' to get basic docker volume commands 
-executed. 
-
+# WIP
 To be continued...

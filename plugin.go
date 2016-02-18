@@ -39,7 +39,6 @@ package main
 // We also need to track volumes attached and mounted to save on this ops if requested
 // On start, we need to list vmdks attached to the VM and polulate list of volumes from it
 
-
 import (
 	//	"encoding/json"
 	"fmt"
@@ -53,8 +52,8 @@ import (
 	//	"syscall"
 
 	"github.com/docker/go-plugins-helpers/volume"
-	
-	"github.com/vmware/docker-vmdk-plugin/vmdkops" 
+
+	"github.com/vmware/docker-vmdk-plugin/vmdkops"
 )
 
 const (
@@ -79,9 +78,9 @@ func (d vmdkDriver) Get(r volume.Request) volume.Response {
 }
 
 func (d vmdkDriver) List(r volume.Request) volume.Response {
-		log.Printf("'List' called on %s - TBD return volumes list \n", r.Name)
-		return volume.Response{Err: ""}
-	
+	log.Printf("'List' called on %s - TBD return volumes list \n", r.Name)
+	return volume.Response{Err: ""}
+
 }
 
 // request attach and them mounts the volume
