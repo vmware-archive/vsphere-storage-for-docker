@@ -79,7 +79,7 @@ VIBCMD  := localcli software vib
 
 .PHONY: deploy
 # ignore failures in copy to guest (can be busy) and remove vib (can be not installed)
-deploy: build
+deploy: 
 	-scp $(PLUGIN_BIN) $(GUEST):$(GLOC)/
 	scp $(VIB_BIN) $(HOST):/tmp
 	-ssh $(HOST) $(VIBCMD) remove --vibname $(VIBNAME)
