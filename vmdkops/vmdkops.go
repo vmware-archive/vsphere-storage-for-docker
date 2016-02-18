@@ -37,7 +37,6 @@ import (
 //   Run:   open-vm-tools has to be installed
 //
 
-
 /*
 #include "vmci/vmci_client.c"
 */
@@ -47,7 +46,7 @@ const (
 	vmciEsxPort int = 15000 // port we are connecting on. TBD: config?
 )
 
-var commBackendName string  = "vsocket" // could be changed in test
+var commBackendName string = "vsocket" // could be changed in test
 
 // Info we get about the volume from upstairs
 type VolumeInfo struct {
@@ -57,18 +56,19 @@ type VolumeInfo struct {
 
 // A request to be passed to ESX service
 type requestToVmci struct {
-	Ops     string  `json:"cmd"`
+	Ops     string     `json:"cmd"`
 	Details VolumeInfo `json:"details"`
 }
 
 // Send a command 'cmd' to VMCI, via C API
-func vmdkCmd(cmd string, name string, opts map[string]string)  string {
+func vmdkCmd(cmd string, name string, opts map[string]string) string {
 
 	json_str, err := json.Marshal(&requestToVmci{
-			Ops: cmd,
-			Details: VolumeInfo{Name: name, Options: opts,}}); if err != nil {
-				return fmt.Sprintf("Failed to marshal json: %s", err)
-			}
+		Ops:     cmd,
+		Details: VolumeInfo{Name: name, Options: opts}})
+	if err != nil {
+		return fmt.Sprintf("Failed to marshal json: %s", err)
+	}
 
 	cmd_s := C.CString(string(json_str))
 	defer C.free(unsafe.Pointer(cmd_s))
@@ -120,7 +120,6 @@ func VmdkList(name string, opts map[string]string) string {
 	return vmdkCmd("list", name, opts)
 }
 
-
 func TestSetDummyBackend() {
 	commBackendName = "dummy"
-	}
+}
