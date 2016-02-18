@@ -1,5 +1,36 @@
 [![Build Status](https://ci.vmware.run/api/badges/vmware/docker-vmdk-plugin/status.svg)](https://ci.vmware.run/vmware/docker-vmdk-plugin)
 
+# Quicksteps to get going
+
+Here the basic commands you need to run to get going with the docker vmdk plugin.
+
+```
+./build.sh # Use a docker image to run make.
+# Output is in the bin folder.
+
+vi Makefile # update IP addresses for VM and ESX
+
+make deploy # SCP files over and run commands to install.
+
+# To run on ESX
+
+python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
+
+# To run on Linux guest
+
+sudo /usr/local/bin/dvolplug
+
+# Docker commands to use plugin
+
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+docker volume ls
+docker volume inspect MyVolume
+docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
+docker volume rm MyVolume # SHOULD FAIL - still used by container
+docker rm my_container
+docker volume rm MyVolume # Should pass
+```
+
 # Docker VMDK volume plugin (WIP)
 
 Native ESXi VMDK support for Docker Data Volumes.
