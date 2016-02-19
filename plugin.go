@@ -78,9 +78,15 @@ func (d vmdkDriver) Get(r volume.Request) volume.Response {
 }
 
 func (d vmdkDriver) List(r volume.Request) volume.Response {
-	log.Printf("'List' called on %s - TBD return volumes list \n", r.Name)
-	return volume.Response{Err: ""}
-
+	volumes, err := vmdkops.VmdkList()
+	if err != nil {
+		return volume.Response{Err: err.Error()}
+	}
+	var response_volumes []*volume.Volume
+	for _, vol := range volumes {
+		response_volumes = append(response_volumes, &vol)
+	}
+	return volume.Response{Volumes: response_volumes}
 }
 
 // request attach and them mounts the volume

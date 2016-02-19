@@ -1,5 +1,5 @@
 //
-// VMCI sockets communication - client side. 
+// VMCI sockets communication - client side.
 //
 // Called mainly from Go code.
 //
@@ -40,7 +40,7 @@ typedef struct {
 #define ANSW_BUFSIZE 1024  // fixed size for json reply or specific errmsg
 #define MAXBUF ANSW_BUFSIZE + 1 // Safety limit
 
-typedef struct {
+typedef struct be_answer {
    int status; // TBD: OK, parse error, access denied, etc...
    char buf[ANSW_BUFSIZE];
 } be_answer;
@@ -282,9 +282,9 @@ host_request(be_funcs *be, be_request* req, be_answer* ans, int cid, int port)
 // Entry point for vsocket requests
 //
 be_sock_status
-Vmci_GetReply(int port, const char* json_request, const char* be_name)
+Vmci_GetReply(int port, const char* json_request, const char* be_name, be_answer* ans)
 {
-   	be_answer ans;
+//   	be_answer ans;
    	be_request req;
 
 	be_funcs *be = get_backend(be_name);
@@ -295,6 +295,5 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name)
    req.mlen = strnlen(json_request, MAXBUF);
    req.msg = json_request;
 
-   return host_request(be, &req, &ans, ESX_VMCI_CID, port);
+   return host_request(be, &req, ans, ESX_VMCI_CID, port);
 }
-
