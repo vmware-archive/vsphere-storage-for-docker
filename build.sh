@@ -53,7 +53,7 @@ fi
 
 
 plugin=docker-vmdk-plugin  
-plug_container=kerneltime/vibauthor-and-go
+plug_container=kerneltime/vibauthor-and-go:0.1
 GOPATH=/go
 
 # mount point within the container.

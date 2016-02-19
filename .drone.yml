@@ -1,5 +1,20 @@
 build:
-  image: kerneltime/vibauthor-and-go
+  image: kerneltime/vibauthor-and-go:0.1
+  volumes: 
+    - /var/run/docker.sock:/var/run/docker.sock
   commands:
     - make
     - make test
+publish:
+  docker:
+    image: casualjim/drone-docker
+    username: $$DOCKER_USER
+    password: $$DOCKER_PASS
+    email: $$DOCKER_EMAIL
+    repo: kerneltime/docker-vmdk-plugin
+    tag: latest
+    file: Dockerfile.vmdk-plugin
+    privileged: true
+    storage_driver: overlay
+    when:
+      branch: master
