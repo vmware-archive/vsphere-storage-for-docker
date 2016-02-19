@@ -180,7 +180,7 @@ def removeVMDK(vmdkPath):
 def listVMDK(path):
 	vmdks = [x for x in os.listdir(path) if  ".vmdk" in x and
 			os.stat(os.path.join(path, x)).st_size < MaxDescrSize]
-	return [x.replace(".vmdk", "") for x in vmdks]
+        return [{u'Name': x.replace(".vmdk", ""), u'Mountpoint': path} for x in vmdks]
 
 # Find VM , reconnect if needed. throws on error
 def findVmByName(vmName):
@@ -474,11 +474,8 @@ def main():
 		# note: Connection can time out on idle. TODO: to refresh in that case
 		details = req["details"]
 		opts = details["Opts"] if "Opts" in details else None
-		ret = executeRequest(vmName, vmId, cfgPath,
-								req["cmd"], details["Name"], opts)
-		print "execute_request: handler returns " , ret
-
-		err = l.vmci_reply(c, c_char_p(str(ret)))
+		ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
+		err = l.vmci_reply(c, c_char_p(json.dumps(ret)))
 		print "execute_request: VMCI replied with errcode ", err
 
 	l.close(sock, vmciFd)
