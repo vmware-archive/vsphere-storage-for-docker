@@ -4,7 +4,6 @@ package vmdkops
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/docker/go-plugins-helpers/volume"
 	"log"
 	"syscall"
 	"unsafe"
@@ -53,6 +52,12 @@ var commBackendName string = "vsocket" // could be changed in test
 type VolumeInfo struct {
 	Name    string            `json:"Name"`
 	Options map[string]string `json:"Opts,omitempty"`
+}
+
+// Data we return to the caller
+type VolumeData struct {
+	Name       string
+	Attributes map[string]string
 }
 
 // A request to be passed to ESX service
@@ -165,12 +170,12 @@ func VmdkDetach(name string, opts map[string]string) string {
 	}
 	return ""
 }
-func VmdkList() ([]volume.Volume, error) {
+func VmdkList() ([]VolumeData, error) {
 	str, err := vmdkCmd("list", "", make(map[string]string))
 	if err != nil {
 		return nil, err
 	}
-	result := make([]volume.Volume, 0)
+	result := make([]VolumeData, 0)
 	err = json.Unmarshal(str, &result)
 	if err != nil {
 		return nil, err

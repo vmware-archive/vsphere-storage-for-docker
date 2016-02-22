@@ -83,8 +83,9 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 		return volume.Response{Err: err.Error()}
 	}
 	response_volumes := make([]*volume.Volume, 0, len(volumes))
-	for i, _ := range volumes {
-		response_volumes = append(response_volumes, &volumes[i])
+	for _, vol := range volumes {
+		response_vol := volume.Volume{Name: vol.Name, Mountpoint: vol.Attributes["Mountpoint"]}
+		response_volumes = append(response_volumes, &response_vol)
 	}
 	return volume.Response{Volumes: response_volumes}
 }
