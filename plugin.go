@@ -82,9 +82,9 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
-	var response_volumes []*volume.Volume
-	for _, vol := range volumes {
-		response_volumes = append(response_volumes, &vol)
+	response_volumes := make([]*volume.Volume, 0, len(volumes))
+	for i, _ := range volumes {
+		response_volumes = append(response_volumes, &volumes[i])
 	}
 	return volume.Response{Volumes: response_volumes}
 }
