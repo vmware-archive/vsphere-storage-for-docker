@@ -40,7 +40,7 @@ A typical workflow for a developer should be.
 - Create a branch, push changes and make sure unit tests do not break as reported
   by the CI system.
 - Run end to end tests on their testbed.
-- When ready post a RP. This will trigger a full set of tests on ESX. After all 
+- When ready post a RP. This will trigger a full set of tests on ESX. After all
   the tests pass and the review is complete the PR will be merged in.
 - When the PR is merged in the CI system will re-run the tests against the master.
   On success a new Docker image will be ready for customers to deploy (This is only
@@ -48,13 +48,13 @@ A typical workflow for a developer should be.
 
 ## CI System
 
-We are using the CI system that has been up by the CNA folks (@casualjim && @frapposelli). 
+We are using the CI system that has been up by the CNA folks (@casualjim && @frapposelli).
 The CI system is based on https://drone.io/
 
 The URL for the server is located https://ci.vmware.run/
 
 There is a webhook setup between github repo and the CI server. The CI server uses
-.drone.yml file to drive the CI workflow. 
+.drone.yml file to drive the CI workflow.
 
 The credentials for Docker Hub deployment is secured using http://readme.drone.io/usage/secrets/
 
