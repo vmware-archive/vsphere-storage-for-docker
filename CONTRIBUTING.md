@@ -17,14 +17,17 @@ git commit -m "Added new dependency go-plugins-helpers"
 
 The work flow for coding looks like this
 
-- Each checkin into a branch on the official repo will run builtin unit tests.
-  - Unit test failure details are posted on the CI server.
-
-- Each Pull Request will run the full set of tests part of the CI system.
+- Each checkin into a branch on the official repo will run the full set of 
+  tests.
   - On success or failure, the compiled binary and all relevant logs will
     be posted as a docker image on Docker Hub with a tag <branch>-<build>
     (Ex: kerneltime/docker-vmdk-plugin:docker-image-plugin-76)
   - Developer can pull the image using docker pull and debug.
+
+- On Pull Requests the full set of tests will be run.
+  - The logs for the build and test will be posted to the CI server.
+  - Due to security concerns the artifacts will not be published.
+    https://github.com/drone/drone/issues/1476
 
 - Each commit into the master operation will run the full set of tests
   part of the CI system.
@@ -37,10 +40,9 @@ The work flow for coding looks like this
 
 A typical workflow for a developer should be.
 
-- Create a branch, push changes and make sure unit tests do not break as reported
+- Create a branch, push changes and make sure tests do not break as reported
   by the CI system.
-- Run end to end tests on their testbed.
-- When ready post a RP. This will trigger a full set of tests on ESX. After all
+- When ready post a PR. This will trigger a full set of tests on ESX. After all
   the tests pass and the review is complete the PR will be merged in.
 - When the PR is merged in the CI system will re-run the tests against the master.
   On success a new Docker image will be ready for customers to deploy (This is only
@@ -64,4 +66,4 @@ TODO:
 3. Write tests for end to end testing.
   1. Needs a guarantee that only one build running tests at a time.
 4. Write a stub server to allow for unit testing the docker plugin code.
-
+5. On failure for now the publishing will be manual. Going forward 0.6 release of drone will support publish on failure. One option might be to run a forked drone release in co-ordination with the CNA folks.

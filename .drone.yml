@@ -1,5 +1,5 @@
 build:
-  master:
+  ci:
     image: kerneltime/vibauthor-and-go:0.2
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -7,11 +7,9 @@ build:
       - ./logit.sh make
       - ./logit.sh "make test"
       - ./logit.sh "ping -c 1 192.168.109.2"
-      - ./logit.sh "ssh $$CI_VMWARE_ESX_USER@192.168.109.2 ls"
-      - echo $$DOCKER_EMAIL
+      - ./logit.sh "ssh 192.168.109.2 ls"
     when :
       event: [push, tag]
-      branch: master
 
   codereview:
     image: kerneltime/vibauthor-and-go:0.2
@@ -21,19 +19,10 @@ build:
       - ./logit.sh make
       - ./logit.sh "make test"
       - ./logit.sh "ping -c 1 192.168.109.2"
-      - ./logit.sh "ssh $$CI_VMWARE_ESX_USER@192.168.109.2 ls"
+      - ./logit.sh "ssh 192.168.109.2 ls"
+      - cat run.log
     when :
       event: pull_request
-
-  develop:
-    image: kerneltime/vibauthor-and-go:0.2
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    commands:
-      - ./logit.sh "make test"
-    when :
-      event: push
-      branch: "!master"
 
 publish:
   docker:
