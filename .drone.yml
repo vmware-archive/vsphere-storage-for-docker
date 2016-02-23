@@ -38,7 +38,6 @@ publish:
   docker:
     environment:
       - DOCKER_LAUNCH_DEBUG=true
-    image: casualjim/drone-docker
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
@@ -50,7 +49,6 @@ publish:
     when:
       event: pull_request
   docker:
-    image: casualjim/drone-docker
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
