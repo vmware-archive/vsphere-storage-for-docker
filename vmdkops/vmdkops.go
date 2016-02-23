@@ -182,6 +182,18 @@ func VmdkList() ([]VolumeData, error) {
 	}
 	return result, nil
 }
+func VmdkGet(name string) (VolumeData, error) {
+	volumes, err := VmdkList()
+	if err != nil {
+		return VolumeData{}, err
+	}
+	for _, vol := range volumes {
+		if vol.Name == name {
+			return vol, nil
+		}
+	}
+	return VolumeData{}, &VolumeError{msg: "Volume does not exist"}
+}
 
 func TestSetDummyBackend() {
 	commBackendName = "dummy"

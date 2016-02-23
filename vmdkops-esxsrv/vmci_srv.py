@@ -180,8 +180,7 @@ def removeVMDK(vmdkPath):
 def listVMDK(path):
 	vmdks = [x for x in os.listdir(path) if  ".vmdk" in x and
 			os.stat(os.path.join(path, x)).st_size < MaxDescrSize]
-        return [{u'Name': x.replace(".vmdk", ""),
-                 u'Attributes': {u'Mountpoint': path}} for x in vmdks]
+        return [{u'Name': x.replace(".vmdk", ""), u'Attributes': {}} for x in vmdks]
 
 # Find VM , reconnect if needed. throws on error
 def findVmByName(vmName):
