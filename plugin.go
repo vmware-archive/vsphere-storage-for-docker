@@ -73,17 +73,12 @@ func newVmdkDriver() vmdkDriver {
 }
 
 func (d vmdkDriver) Get(r volume.Request) volume.Response {
-	volumes, err := vmdkops.VmdkList()
+	_, err := vmdkops.VmdkGet(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
-	for _, vol := range volumes {
-		if vol.Name == r.Name {
-			mountpoint := filepath.Join(mountRoot, r.Name)
-			return volume.Response{Volume: &volume.Volume{Name: vol.Name, Mountpoint: mountpoint}}
-		}
-	}
-	return volume.Response{Err: "Volume does not exist"}
+	mountpoint := filepath.Join(mountRoot, r.Name)
+	return volume.Response{Volume: &volume.Volume{Name: r.Name, Mountpoint: mountpoint}}
 }
 
 func (d vmdkDriver) List(r volume.Request) volume.Response {
