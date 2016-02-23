@@ -15,16 +15,15 @@ func TestCommands(t *testing.T) {
 
 	vmdkops.TestSetDummyBackend()
 
-	v := &vmdkops.VolumeInfo{Name: "myVolume",
-		Options: map[string]string{"size": "2gb", "format": "none"},
-	}
-	v.Create()
-	v.Remove()
-	v.Attach()
-	v.Detach()
+	name := "myVolume"
+	opts := map[string]string{"size": "2gb", "format": "none"}
 
-	err := vmdkops.VmdkCreate("otherVolume",
-		map[string]string{"size": "1gb", "format": "ext4"})
+	vmdkops.Create(name, opts)
+	vmdkops.Remove(name, opts)
+	vmdkops.Attach(name, opts)
+	vmdkops.Detach(name, opts)
+
+	err := vmdkops.Create("otherVolume", map[string]string{"size": "1gb", "format": "ext4"})
 	if err != "" {
 		t.Error(err)
 	}

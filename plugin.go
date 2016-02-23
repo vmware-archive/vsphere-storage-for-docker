@@ -73,7 +73,7 @@ func newVmdkDriver() vmdkDriver {
 }
 
 func (d vmdkDriver) Get(r volume.Request) volume.Response {
-	_, err := vmdkops.VmdkGet(r.Name)
+	_, err := vmdkops.Get(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -82,7 +82,7 @@ func (d vmdkDriver) Get(r volume.Request) volume.Response {
 }
 
 func (d vmdkDriver) List(r volume.Request) volume.Response {
-	volumes, err := vmdkops.VmdkList()
+	volumes, err := vmdkops.List()
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -112,7 +112,7 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) string {
 	// just return volume.Response{Mountpoint: m} in this case
 	// TODO: save info abouf voliume mount , in memory
 	// d.volumes[m] = &volumeName{name: r.Name, connections: 1}
-	if msg := vmdkops.VmdkAttach(r.Name, r.Options); msg != "" {
+	if msg := vmdkops.Attach(r.Name, r.Options); msg != "" {
 		return msg
 	}
 
@@ -153,7 +153,7 @@ func (d vmdkDriver) unmountVolume(r volume.Request) string {
 		return err.Error()
 	}
 	log.Printf("detach request for %s : sending...", r.Name)
-	return vmdkops.VmdkDetach(r.Name, r.Options)
+	return vmdkops.Detach(r.Name, r.Options)
 }
 
 // All plugin callbbacks are getting "Name" as a part of volume.Request.
@@ -164,12 +164,12 @@ func (d vmdkDriver) unmountVolume(r volume.Request) string {
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 func (d vmdkDriver) Create(r volume.Request) volume.Response {
-	msg := vmdkops.VmdkCreate(r.Name, r.Options)
+	msg := vmdkops.Create(r.Name, r.Options)
 	return volume.Response{Err: msg}
 }
 
 func (d vmdkDriver) Remove(r volume.Request) volume.Response {
-	msg := vmdkops.VmdkRemove(r.Name, r.Options)
+	msg := vmdkops.Remove(r.Name, r.Options)
 	return volume.Response{Err: msg}
 }
 
