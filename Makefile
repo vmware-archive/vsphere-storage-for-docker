@@ -40,7 +40,7 @@ prereqs:
 
 $(PLUGIN_BIN): $(SRC) $(EXTRA_SRC)
 	@-mkdir -p $(BIN)
-	$(GO) build -o $(PLUGIN_BIN) $(PLUGIN)
+	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
 
 .PHONY: clean
 clean: 

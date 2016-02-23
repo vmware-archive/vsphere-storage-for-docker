@@ -1,0 +1,14 @@
+====================== run make test ======================
+Tue Feb 23 07:22:57 UTC 2016
+make[1]: Entering directory `/drone/src/github.com/vmware/docker-vmdk-plugin/vmdkops-esxsrv'
+make[1]: Nothing to be done for `build'.
+make[1]: Leaving directory `/drone/src/github.com/vmware/docker-vmdk-plugin/vmdkops-esxsrv'
+GO15VENDOREXPERIMENT=1 go  test github.com/vmware/docker-vmdk-plugin/vmdkops github.com/vmware/docker-vmdk-plugin
+ok  	github.com/vmware/docker-vmdk-plugin/vmdkops	0.126s
+?   	github.com/vmware/docker-vmdk-plugin	[no test files]
+*** Info: No tests in plugin folder yet
+make[1]: Entering directory `/drone/src/github.com/vmware/docker-vmdk-plugin/vmdkops-esxsrv'
+? Info: No unit test here yet.
+make[1]: Leaving directory `/drone/src/github.com/vmware/docker-vmdk-plugin/vmdkops-esxsrv'
+Tue Feb 23 07:24:11 UTC 2016
+====================== end make test ======================

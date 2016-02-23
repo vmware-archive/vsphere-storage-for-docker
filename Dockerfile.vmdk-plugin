@@ -1,0 +1,7 @@
+FROM alpine
+
+MAINTAINER cna-storage@vmware.com
+
+ADD ./bin/docker-vmdk-plugin /usr/bin/docker-vmdk-plugin
+
+ENTRYPOINT ["/usr/bin/docker-vmdk-plugin"]
