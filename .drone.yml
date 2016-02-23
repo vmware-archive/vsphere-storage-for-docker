@@ -8,6 +8,7 @@ build:
       - ./logit.sh "make test"
       - ./logit.sh "ping -c 1 192.168.109.2"
       - ./logit.sh "ssh $$CI_VMWARE_ESX_USER@192.168.109.2 ls"
+      - echo $$DOCKER_EMAIL
     when :
       event: [push, tag]
       branch: master
@@ -46,7 +47,6 @@ publish:
     storage_driver: overlay
     when:
       branch: "!master"
-      event: "!push"
 
   docker:
     username: $$DOCKER_USER
