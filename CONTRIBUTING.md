@@ -61,6 +61,7 @@ There is a webhook setup between github repo and the CI server. The CI server us
 The credentials for Docker Hub deployment is secured using http://readme.drone.io/usage/secrets/
 
 TODO:
+
 1. Push Docker images on failures, needs custom scripting.
 2. Deploy VMs on nested ESX.
 3. Write tests for end to end testing.
