@@ -1,0 +1,24 @@
+FROM lamw/vibauthor
+
+MAINTAINER cna-storage@vmware.com
+
+RUN curl --remote-name https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz && \
+    rm -rf ~/*.rpm ~/*.tar.gz && \
+    yum update -y && \
+    yum -y install gcc && \
+    yum -y install glibc-devel.i686 libgcc.i686 glibc-static && \
+    tee /etc/yum.repos.d/docker.repo << -'EOF' \
+    [dockerrepo] \
+    name=Docker Repository \
+    baseurl=https://yum.dockerproject.org/repo/main/centos/$releasever/ \
+    enabled=1 \
+    gpgcheck=1 \
+    gpgkey=https://yum.dockerproject.org/gpg \
+    EOF \
+    yum clean all
+
+ENV PATH=$PATH:/usr/local/go/bin
+ENV GOROOT=/usr/local/go
+ENV GOPATH=/go
+ENV GO15VENDOREXPERIMENT=1
