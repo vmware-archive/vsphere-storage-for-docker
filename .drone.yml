@@ -36,8 +36,6 @@ build:
 
 publish:
   docker:
-    environment:
-      - DOCKER_LAUNCH_DEBUG=true
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
@@ -47,7 +45,9 @@ publish:
     privileged: true
     storage_driver: overlay
     when:
-      event: pull_request
+      branch: "!master"
+      event: "!push"
+
   docker:
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
