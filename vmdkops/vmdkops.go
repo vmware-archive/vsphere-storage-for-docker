@@ -97,33 +97,33 @@ func vmdkCmd(cmd string, name string, opts map[string]string) ([]byte, error) {
 	return []byte(C.GoString((*C.char)(unsafe.Pointer(&ans.buf)))), nil
 }
 
-func Create(name string, opts map[string]string) string {
+func Create(name string, opts map[string]string) error {
 	_, err := vmdkCmd("create", name, opts)
 	if err != nil {
-		return err.Error()
+		return err
 	}
-	return ""
+	return nil
 }
-func Remove(name string, opts map[string]string) string {
+func Remove(name string, opts map[string]string) error {
 	_, err := vmdkCmd("remove", name, opts)
 	if err != nil {
-		return err.Error()
+		return err
 	}
-	return ""
+	return nil
 }
-func Attach(name string, opts map[string]string) string {
+func Attach(name string, opts map[string]string) error {
 	_, err := vmdkCmd("attach", name, opts)
 	if err != nil {
-		return err.Error()
+		return err
 	}
-	return ""
+	return nil
 }
-func Detach(name string, opts map[string]string) string {
+func Detach(name string, opts map[string]string) error {
 	_, err := vmdkCmd("detach", name, opts)
 	if err != nil {
-		return err.Error()
+		return err
 	}
-	return ""
+	return nil
 }
 func List() ([]VolumeData, error) {
 	str, err := vmdkCmd("list", "", make(map[string]string))
@@ -147,8 +147,7 @@ func Get(name string) (VolumeData, error) {
 			return vol, nil
 		}
 	}
-	volume_err := NotFound
-	return VolumeData{}, &volume_err
+	return VolumeData{}, fmt.Errorf("Volume does not exist: %s", name)
 }
 
 func TestSetDummyBackend() {

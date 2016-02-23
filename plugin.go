@@ -99,21 +99,21 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 // actual mount - send attach to ESX and do the in-guest magix
 // TODO: this should actually be a goroutine , no need to block
 //       SAME (and more) applies to unmount
-func (d vmdkDriver) mountVolume(r volume.Request, path string) string {
+func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 
 	// First of all, have ESX attach the disk
 
 	refCount := 0
 	if refCount != 0 { // TODO: actual refcounting
-		return ""
+		return nil
 	}
 
 	// TODO: refcount  if the volume is already mounted (for other container) and
 	// just return volume.Response{Mountpoint: m} in this case
 	// TODO: save info abouf voliume mount , in memory
 	// d.volumes[m] = &volumeName{name: r.Name, connections: 1}
-	if msg := vmdkops.Attach(r.Name, r.Options); msg != "" {
-		return msg
+	if err := vmdkops.Attach(r.Name, r.Options); err != nil {
+		return err
 	}
 
 	// TODO: evenntually drop the exec.command(mount) and replace with
@@ -125,18 +125,19 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) string {
 	out, err := exec.Command("blkid", []string{"-L", r.Name}...).Output()
 	if err != nil {
 		log.Printf("blkid err: %T (%s)", err, string(out))
+		return fmt.Errorf("blkid err: %T", err)
 	} else {
 		device := strings.TrimRight(string(out), " \n")
 
 		mountPoint := filepath.Join(mountRoot, r.Name)
 		log.Printf("Mounting %s for label %s", device, mountPoint)
 
-		_, err = exec.Command("mount", []string{device, mountPoint}...).Output()
+		out, err = exec.Command("mount", []string{device, mountPoint}...).Output()
 		if err != nil {
-			log.Printf("mount failed: %T", err)
+			return fmt.Errorf("Failed to mount device %s at %s", device, mountPoint)
 		}
 	}
-	return ""
+	return nil
 
 }
 
@@ -144,13 +145,12 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) string {
 // TODO : use docker.mount or syscall.mount, and goroutine
 // syscall.Unmount(d.volumes(r.Name).device, flag)
 
-func (d vmdkDriver) unmountVolume(r volume.Request) string {
-
+func (d vmdkDriver) unmountVolume(r volume.Request) error {
 	mountPoint := filepath.Join(mountRoot, r.Name)
 	_, err := exec.Command("umount", mountPoint).Output()
 	if err != nil {
 		log.Printf("umount failed: %T", err)
-		return err.Error()
+		return fmt.Errorf("umount failed: %T", err)
 	}
 	log.Printf("detach request for %s : sending...", r.Name)
 	return vmdkops.Detach(r.Name, r.Options)
@@ -164,20 +164,18 @@ func (d vmdkDriver) unmountVolume(r volume.Request) string {
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 func (d vmdkDriver) Create(r volume.Request) volume.Response {
-	msg := vmdkops.Create(r.Name, r.Options)
-	return volume.Response{Err: msg}
+	err := vmdkops.Create(r.Name, r.Options)
+	return volume.Response{Err: err.Error()}
 }
 
 func (d vmdkDriver) Remove(r volume.Request) volume.Response {
-	msg := vmdkops.Remove(r.Name, r.Options)
-	return volume.Response{Err: msg}
+	err := vmdkops.Remove(r.Name, r.Options)
+	return volume.Response{Err: err.Error()}
 }
 
 // give docker a reminder of the volume mount path
 func (d vmdkDriver) Path(r volume.Request) volume.Response {
 	m := filepath.Join(mountRoot, r.Name)
-
-	log.Print("path = ", m)
 	return volume.Response{Mountpoint: m}
 }
 
@@ -209,8 +207,8 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 		return volume.Response{Err: fmt.Sprintf("%v already exist and it's not a directory", m)}
 	}
 
-	if msg := d.mountVolume(r, m); msg != "" {
-		return volume.Response{Err: msg}
+	if err := d.mountVolume(r, m); err != nil {
+		return volume.Response{Err: err.Error()}
 	}
 
 	return volume.Response{Mountpoint: m}
@@ -225,5 +223,9 @@ func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
 	}
 
 	log.Printf("unmount %s", r.Name)
-	return volume.Response{Err: d.unmountVolume(r)}
+	err := d.unmountVolume(r)
+	if err != nil {
+		return volume.Response{Err: err.Error()}
+	}
+	return volume.Response{Err: ""}
 }
