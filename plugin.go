@@ -165,12 +165,18 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 // Name and driver specific options passed through to the ESX host
 func (d vmdkDriver) Create(r volume.Request) volume.Response {
 	err := vmdkops.Create(r.Name, r.Options)
-	return volume.Response{Err: err.Error()}
+	if err != nil {
+		return volume.Response{Err: err.Error()}
+	}
+	return volume.Response{Err: ""}
 }
 
 func (d vmdkDriver) Remove(r volume.Request) volume.Response {
 	err := vmdkops.Remove(r.Name, r.Options)
-	return volume.Response{Err: err.Error()}
+	if err != nil {
+		return volume.Response{Err: err.Error()}
+	}
+	return volume.Response{Err: ""}
 }
 
 // give docker a reminder of the volume mount path

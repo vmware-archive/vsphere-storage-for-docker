@@ -106,24 +106,16 @@ func Create(name string, opts map[string]string) error {
 }
 func Remove(name string, opts map[string]string) error {
 	_, err := vmdkCmd("remove", name, opts)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 func Attach(name string, opts map[string]string) error {
+	fmt.Printf("Attach called for %s", name)
 	_, err := vmdkCmd("attach", name, opts)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 func Detach(name string, opts map[string]string) error {
 	_, err := vmdkCmd("detach", name, opts)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 func List() ([]VolumeData, error) {
 	str, err := vmdkCmd("list", "", make(map[string]string))
