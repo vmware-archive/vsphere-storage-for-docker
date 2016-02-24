@@ -24,7 +24,7 @@ func TestCommands(t *testing.T) {
 	vmdkops.Detach(name, opts)
 
 	err := vmdkops.Create("otherVolume", map[string]string{"size": "1gb", "format": "ext4"})
-	if err != "" {
+	if err != nil {
 		t.Error(err)
 	}
 }
