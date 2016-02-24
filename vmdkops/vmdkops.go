@@ -66,14 +66,6 @@ type requestToVmci struct {
 	Details VolumeInfo `json:"details"`
 }
 
-type VolumeError struct {
-	msg string
-}
-
-func (e *VolumeError) Error() string {
-	return e.msg
-}
-
 // Send a command 'cmd' to VMCI, via C API
 // Return the resulting JSON or an error. Each Public API function will decode
 // the JSON corresponding to it's return type, and return an error if decoding fails.
@@ -105,72 +97,27 @@ func vmdkCmd(cmd string, name string, opts map[string]string) ([]byte, error) {
 	return []byte(C.GoString((*C.char)(unsafe.Pointer(&ans.buf)))), nil
 }
 
-// public API
-func (v VolumeInfo) Create() string {
-	_, err := vmdkCmd("create", v.Name, v.Options)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-func (v VolumeInfo) Remove() string {
-	_, err := vmdkCmd("create", v.Name, v.Options)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-func (v VolumeInfo) Attach() string {
-	_, err := vmdkCmd("create", v.Name, v.Options)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-func (v VolumeInfo) Detach() string {
-	_, err := vmdkCmd("create", v.Name, v.Options)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-func (v VolumeInfo) List() string {
-	_, err := vmdkCmd("list", v.Name, v.Options)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-
-func VmdkCreate(name string, opts map[string]string) string {
+func Create(name string, opts map[string]string) error {
 	_, err := vmdkCmd("create", name, opts)
 	if err != nil {
-		return err.Error()
+		return err
 	}
-	return ""
+	return nil
 }
-func VmdkRemove(name string, opts map[string]string) string {
+func Remove(name string, opts map[string]string) error {
 	_, err := vmdkCmd("remove", name, opts)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
+	return err
 }
-func VmdkAttach(name string, opts map[string]string) string {
+func Attach(name string, opts map[string]string) error {
+	fmt.Printf("Attach called for %s", name)
 	_, err := vmdkCmd("attach", name, opts)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
+	return err
 }
-func VmdkDetach(name string, opts map[string]string) string {
+func Detach(name string, opts map[string]string) error {
 	_, err := vmdkCmd("detach", name, opts)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
+	return err
 }
-func VmdkList() ([]VolumeData, error) {
+func List() ([]VolumeData, error) {
 	str, err := vmdkCmd("list", "", make(map[string]string))
 	if err != nil {
 		return nil, err
@@ -182,8 +129,8 @@ func VmdkList() ([]VolumeData, error) {
 	}
 	return result, nil
 }
-func VmdkGet(name string) (VolumeData, error) {
-	volumes, err := VmdkList()
+func Get(name string) (VolumeData, error) {
+	volumes, err := List()
 	if err != nil {
 		return VolumeData{}, err
 	}
@@ -192,7 +139,7 @@ func VmdkGet(name string) (VolumeData, error) {
 			return vol, nil
 		}
 	}
-	return VolumeData{}, &VolumeError{msg: "Volume does not exist"}
+	return VolumeData{}, fmt.Errorf("Volume does not exist: %s", name)
 }
 
 func TestSetDummyBackend() {
