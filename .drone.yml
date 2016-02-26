@@ -1,13 +1,43 @@
 build:
-  image: kerneltime/vibauthor-and-go:0.1
-  volumes: 
-    - /var/run/docker.sock:/var/run/docker.sock
-  commands:
-    - make
-    - make test
+  ci:
+    image: kerneltime/vibauthor-and-go:0.2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - ./logit.sh make
+      - ./logit.sh "make test"
+      - ./logit.sh "ping -c 1 192.168.109.2"
+      - ./logit.sh "ssh 192.168.109.2 ls"
+    when :
+      event: [push, tag]
+
+  codereview:
+    image: kerneltime/vibauthor-and-go:0.2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - ./logit.sh make
+      - ./logit.sh "make test"
+      - ./logit.sh "ping -c 1 192.168.109.2"
+      - ./logit.sh "ssh 192.168.109.2 ls"
+      - cat run.log
+    when :
+      event: pull_request
+
 publish:
   docker:
-    image: casualjim/drone-docker
+    username: $$DOCKER_USER
+    password: $$DOCKER_PASS
+    email: $$DOCKER_EMAIL
+    repo: kerneltime/docker-vmdk-plugin
+    tag: "$$BRANCH-$$BUILD_NUMBER"
+    file: Dockerfile.vmdk-plugin.debug
+    privileged: true
+    storage_driver: overlay
+    when:
+      branch: "!master"
+
+  docker:
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
