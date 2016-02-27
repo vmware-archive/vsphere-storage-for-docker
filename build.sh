@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # The preffered choice to build the repo. Uses a docker image
 # with all dependencies installed.
 
