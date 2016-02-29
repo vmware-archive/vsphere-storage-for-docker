@@ -96,11 +96,9 @@ MaxDescrSize = 100000  # we assume files smaller that that to be descriptor file
 DefaultDiskSize = "100mb"
 BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
-# Run executable on ESX
-# needed for vmkfstools invocation (until normal disk create is written)
+# Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
 # Returns the integer return value and the stdout str on success and integer return value and
 # the stderr str on error
-# borrowed from vmkernel/tests/lib/python/pyCommon.py and modified
 def RunCommand(cmd):
    """RunCommand
 
@@ -144,8 +142,10 @@ def createVMDK(vmdkPath, volName, opts):
         rc, out = RunCommand(cmd)
 
         if rc != 0:
-            unlink(vmdkPath);
-            return {u'Error': "Failed to create %s. %s" % (vmdkPath, out)}
+            if removeVMDK(vmdkPath) == None:
+                return {u'Error': "Failed to create %s. %s" % (vmdkPath, out)}
+            else:
+                return {u'Error': "Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath}
 
         return formatVmdk(vmdkPath, volName)
 
@@ -159,17 +159,12 @@ def formatVmdk(vmdkPath, volName):
         rc, out = RunCommand(cmd)
 
         if rc != 0:
-            unlink(vmdkPath);
-            return {u'Error': "Failed to format %s. %s" % (vmdkPath, out)}
+            if removeVMDK(vmdkPath) == None:
+                return {u'Error': "Failed to format %s. %s" % (vmdkPath, out)}
+            else:
+                return {u'Error': "Unable to format %s and unable to delete volume. Please delete it manually." % vmdkPath}
 
 	return None
-
-def unlink(vmdkPath):
-    # something failed - try to unlink it
-    try:
-        os.unlink(vmdkPath);
-    except:
-        pass
 
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
