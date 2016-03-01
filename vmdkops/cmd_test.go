@@ -1,11 +1,8 @@
 package vmdkops_test
 
-// testing command build and transfer. Uses dummy communication backend -
-// does NOT communicate over vmci
+// Test commands with mocked ESX server and guest fs code
+// Does not communicate over VMCI
 
-// currently manual - go test -v and observe the results
-// TODO: have dummy backend return received as is, parse it here as json
-// and compare
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/docker-vmdk-plugin/vmdkops"
