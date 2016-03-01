@@ -42,18 +42,12 @@ package main
 import (
 	//	"encoding/json"
 	"fmt"
+	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-vmdk-plugin/fs"
+	"github.com/vmware/docker-vmdk-plugin/vmdkops"
 	"log"
-	"strings"
-
-	"os"
-	"os/exec"
 	"path/filepath"
 	"sync"
-	//	"syscall"
-
-	"github.com/docker/go-plugins-helpers/volume"
-
-	"github.com/vmware/docker-vmdk-plugin/vmdkops"
 )
 
 const (
@@ -116,38 +110,14 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 		return err
 	}
 
-	// TODO: evenntually drop the exec.command(mount) and replace with
-	// docker.mount.mount (?)
-	// OR
-	//	if err := syscall.Mount(device, target, mType, flag, data); err != nil {
-	//		return err
-	//	}
-	out, err := exec.Command("blkid", []string{"-L", r.Name}...).Output()
-	if err != nil {
-		log.Printf("blkid err: %T (%s)", err, string(out))
-		return fmt.Errorf("blkid err: %T", err)
-	} else {
-		device := strings.TrimRight(string(out), " \n")
-
-		mountPoint := filepath.Join(mountRoot, r.Name)
-		log.Printf("Mounting %s for label %s", device, mountPoint)
-
-		out, err = exec.Command("mount", []string{device, mountPoint}...).Output()
-		if err != nil {
-			return fmt.Errorf("Failed to mount device %s at %s", device, mountPoint)
-		}
-	}
-	return nil
-
+	mountpoint := filepath.Join(mountRoot, r.Name)
+	return fs.Mount(mountpoint, r.Name)
 }
 
 // Unmounts the volume and then requests detach
-// TODO : use docker.mount or syscall.mount, and goroutine
-// syscall.Unmount(d.volumes(r.Name).device, flag)
-
 func (d vmdkDriver) unmountVolume(r volume.Request) error {
-	mountPoint := filepath.Join(mountRoot, r.Name)
-	_, err := exec.Command("umount", mountPoint).Output()
+	mountpoint := filepath.Join(mountRoot, r.Name)
+	err := fs.Unmount(mountpoint)
 	if err != nil {
 		log.Printf("umount failed: %T", err)
 		return fmt.Errorf("umount failed: %T", err)
@@ -200,17 +170,9 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 	m := filepath.Join(mountRoot, r.Name)
 	log.Printf("Mounting volume %s on %s\n", r.Name, m)
 
-	stat, err := os.Lstat(m)
-	if os.IsNotExist(err) {
-		if err := os.MkdirAll(m, 0755); err != nil {
-			return volume.Response{Err: err.Error()}
-		}
-	} else if err != nil {
+	err := fs.Mkdir(m)
+	if err != nil {
 		return volume.Response{Err: err.Error()}
-	}
-
-	if stat != nil && !stat.IsDir() {
-		return volume.Response{Err: fmt.Sprintf("%v already exist and it's not a directory", m)}
 	}
 
 	if err := d.mountVolume(r, m); err != nil {
