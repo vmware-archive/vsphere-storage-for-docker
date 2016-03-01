@@ -3,6 +3,7 @@
 package vmdkops
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-var loopback_count int = 1001
 
 // Return JSON responses to each command or an error
 func VmdkCmd(cmd string, name string, opts map[string]string) ([]byte, error) {
@@ -23,6 +22,17 @@ func VmdkCmd(cmd string, name string, opts map[string]string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		return []byte("null"), nil
+	case "list":
+		files, err := ioutil.ReadDir("/mnt/vmdk")
+		if err != nil {
+			panic("Failed to read /dev")
+		}
+		volumes := make([]VolumeData, 0, len(files))
+		for _, file := range files {
+			volumes = append(volumes, VolumeData{Name: file.Name()})
+		}
+		return json.Marshal(volumes)
 	}
 	return []byte("null"), nil
 }
