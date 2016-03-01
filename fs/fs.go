@@ -1,4 +1,4 @@
-// +build linux,!mock_esx
+// +build linux
 
 package fs
 
