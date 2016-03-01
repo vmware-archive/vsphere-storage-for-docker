@@ -12,7 +12,7 @@ kvPrefix = "DVOL"
 
 # Create a kv store object for this volume identified by volPath
 # Create the side car or open if it exists.
-def kvStoreInit(volPath):
+def kvStoreInit():
    kvESX.kvESXInit(kvPrefix)
    return None
 

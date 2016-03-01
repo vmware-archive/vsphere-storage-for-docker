@@ -167,7 +167,7 @@ def sidecarSetKey(volpath, key, val):
    # offset (each key-value pair is allowed
    # a max length of KV_MAX_LEN.
 
-   kvstr = dvolKeys.kv_strings[key] + "=" + val + "\n"
+   kvstr = dvolKeys.kv_strings[key] + "=" + val
    print "setting %s at %d" % (kvstr, kvloc)
 
    fh.seek(kvloc, 0)
