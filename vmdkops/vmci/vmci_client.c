@@ -284,7 +284,6 @@ host_request(be_funcs *be, be_request* req, be_answer* ans, int cid, int port)
 be_sock_status
 Vmci_GetReply(int port, const char* json_request, const char* be_name, be_answer* ans)
 {
-//   	be_answer ans;
    	be_request req;
 
 	be_funcs *be = get_backend(be_name);

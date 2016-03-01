@@ -3,6 +3,7 @@ package vmdkops
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"syscall"
@@ -66,6 +67,10 @@ type requestToVmci struct {
 	Details VolumeInfo `json:"details"`
 }
 
+type vmciError struct {
+	Error string
+}
+
 // Send a command 'cmd' to VMCI, via C API
 // Return the resulting JSON or an error. Each Public API function will decode
 // the JSON corresponding to it's return type, and return an error if decoding fails.
@@ -94,7 +99,27 @@ func vmdkCmd(cmd string, name string, opts map[string]string) ([]byte, error) {
 		log.Print("Warning - no connection to ESX over vsocket, trace only")
 		return nil, fmt.Errorf("vmdkCmd err: %d (%s)", ret, syscall.Errno(ret).Error())
 	}
-	return []byte(C.GoString((*C.char)(unsafe.Pointer(&ans.buf)))), nil
+	response := []byte(C.GoString((*C.char)(unsafe.Pointer(&ans.buf))))
+	err = unmarshalError(response)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func unmarshalError(str []byte) error {
+	// Unmarshalling null always succeeds
+	if string(str) == "null" {
+		return nil
+	}
+	err_struct := vmciError{}
+	err := json.Unmarshal(str, &err_struct)
+	if err != nil {
+		// We didn't unmarshal an error, so there is no error ;)
+		return nil
+	}
+	// Return the unmarshaled error string as an `error`
+	return errors.New(err_struct.Error)
 }
 
 func Create(name string, opts map[string]string) error {
