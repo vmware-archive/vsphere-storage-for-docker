@@ -32,10 +32,7 @@ type VolumeData struct {
 
 func Create(name string, opts map[string]string) error {
 	_, err := VmdkCmd("create", name, opts)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 func Remove(name string, opts map[string]string) error {
 	_, err := VmdkCmd("remove", name, opts)

@@ -15,9 +15,9 @@ func TestCommands(t *testing.T) {
 	assert.Nil(t, vmdkops.Create(name, opts))
 
 	opts = map[string]string{}
-	assert.Nil(t, vmdkops.Remove(name, opts))
 	assert.Nil(t, vmdkops.Attach(name, opts))
 	assert.Nil(t, vmdkops.Detach(name, opts))
+	assert.Nil(t, vmdkops.Remove(name, opts))
 	assert.Nil(t,
 		vmdkops.Create("otherVolume",
 			map[string]string{"size": "1gb", "format": "ext4"}))
