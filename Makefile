@@ -35,6 +35,10 @@ SRC = plugin.go main.go
 build: prereqs $(PLUGIN_BIN)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@ 
 
+.PHONY: mock_esx
+mock_esx: prereqs
+	$(GO) build -tags mock_esx --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
+
 .PHONY: prereqs
 prereqs:
 	@./check.sh
@@ -52,7 +56,7 @@ clean:
 #TBD: this is a good place to add unit tests...	
 .PHONY: test
 test: build
-	$(GO) test $(PLUGIN)/vmdkops $(PLUGIN) -v -tags mock_esx
+	$(GO) test $(PLUGIN)/vmdkops $(PLUGIN) -tags mock_esx
 	@echo "*** Info: No tests in plugin folder yet"
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 	
