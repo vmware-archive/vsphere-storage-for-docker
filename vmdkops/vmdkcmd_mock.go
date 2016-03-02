@@ -5,6 +5,7 @@ package vmdkops
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vmware/docker-vmdk-plugin/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,42 +14,78 @@ import (
 	"strings"
 )
 
+const (
+	backing_root = "/tmp/docker-volumes" // Files for loopback device backing stored here
+)
+
 // Return JSON responses to each command or an error
 func VmdkCmd(cmd string, name string, opts map[string]string) ([]byte, error) {
+	// We store no in memory state, so just try to recreate backing_root every time
+	err := fs.Mkdir(backing_root)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("Running Mock Cmd %s", cmd)
 	switch cmd {
 	case "create":
 		err := create_block_device(name)
-		if err != nil {
-			return nil, err
-		}
-		return []byte("null"), nil
+		return nil, err
 	case "list":
-		files, err := ioutil.ReadDir("/mnt/vmdk")
-		if err != nil {
-			panic("Failed to read /dev")
-		}
-		volumes := make([]VolumeData, 0, len(files))
-		for _, file := range files {
-			volumes = append(volumes, VolumeData{Name: file.Name()})
-		}
-		return json.Marshal(volumes)
+		return list()
+	case "attach":
+		return nil, nil
+	case "detach":
+		return nil, nil
+	case "remove":
+		err := remove(name)
+		return nil, err
 	}
 	return []byte("null"), nil
 }
 
+func list() ([]byte, error) {
+	files, err := ioutil.ReadDir(backing_root)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read %s", backing_root)
+	}
+	volumes := make([]VolumeData, 0, len(files))
+	for _, file := range files {
+		volumes = append(volumes, VolumeData{Name: file.Name()})
+	}
+	return json.Marshal(volumes)
+}
+
+func remove(name string) error {
+	backing := fmt.Sprintf("%s/%s", backing_root, name)
+	out, err := exec.Command("blkid", []string{"-L", name}...).Output()
+	if err != nil {
+		return fmt.Errorf("blkid err: %T", err)
+	}
+	device := strings.TrimRight(string(out), " \n")
+	out, err = exec.Command("losetup", "-d", device).Output()
+	if err != nil {
+		return fmt.Errorf("Failed to detach loopback device node %s with error: %s. Output = %s",
+			device, err, out)
+	}
+	err = os.Remove(backing)
+	if err != nil {
+		return fmt.Errorf("Failed to remove backing file %s: %s", backing, err)
+	}
+	return os.Remove(device)
+}
+
 func create_block_device(label string) error {
-	backing := fmt.Sprintf("/tmp/%s", label)
+	backing := fmt.Sprintf("%s/%s", backing_root, label)
 	if backing_exists(backing) {
 		// We have already created this block device
 		return nil
 	}
-	loopback_count := get_max_loopback_count() + 1
-	device := fmt.Sprintf("/dev/loop-%d", loopback_count)
 	err := create_backing_file(backing)
 	if err != nil {
 		return err
 	}
+	loopback_count := get_max_loopback_count() + 1
+	device := fmt.Sprintf("/dev/loop%d", loopback_count)
 	err = create_device_node(device, loopback_count)
 	if err != nil {
 		return err
@@ -62,7 +99,6 @@ func create_block_device(label string) error {
 		return err
 	}
 	return label_device(label, device)
-
 }
 
 func backing_exists(backing string) bool {
@@ -80,12 +116,10 @@ func get_max_loopback_count() int {
 		panic("Failed to read /dev")
 	}
 	for _, file := range files {
-		substrings := strings.Split(file.Name(), "-")
-		if len(substrings) == 2 {
-			if s, err := strconv.Atoi(substrings[1]); err == nil {
-				if s > count {
-					count = s
-				}
+		trimmed := strings.TrimPrefix(file.Name(), "loop")
+		if s, err := strconv.Atoi(trimmed); err == nil {
+			if s > count {
+				count = s
 			}
 		}
 	}
