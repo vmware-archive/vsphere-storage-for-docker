@@ -90,6 +90,9 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
+import dvolKeys
+import volumeKVStore
+
 # defaults
 DockVolsDir = "dockvols"   # place in the same (with Docker VM) datastore
 MaxDescrSize = 100000  # we assume files smaller that that to be descriptor files
