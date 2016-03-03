@@ -166,7 +166,7 @@ func setup_loopback_device(backing string, device string) error {
 }
 
 func make_filesystem(device string) error {
-	out, err := exec.Command("mkfs.ext3", device).CombinedOutput()
+	out, err := exec.Command("mkfs.ext4", device).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to create filesystem on %s with error: %s. Output = %s",
 			device, err, out)
