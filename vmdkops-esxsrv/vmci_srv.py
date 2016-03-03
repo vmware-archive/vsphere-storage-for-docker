@@ -143,9 +143,9 @@ def createVMDK(vmdkPath, volName, opts):
 
         if rc != 0:
             if removeVMDK(vmdkPath) == None:
-                return {u'Error': "Failed to create %s. %s" % (vmdkPath, out)}
+                return err("Failed to create %s. %s" % (vmdkPath, out))
             else:
-                return {u'Error': "Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath}
+                return err("Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath)
 
         return formatVmdk(vmdkPath, volName)
 
@@ -160,10 +160,9 @@ def formatVmdk(vmdkPath, volName):
 
         if rc != 0:
             if removeVMDK(vmdkPath) == None:
-                return {u'Error': "Failed to format %s. %s" % (vmdkPath, out)}
+                return err("Failed to format %s. %s" % (vmdkPath, out))
             else:
-                return {u'Error': "Unable to format %s and unable to delete volume. Please delete it manually." % vmdkPath}
-
+                return err("Unable to format %s and unable to delete volume. Please delete it manually." % vmdkPath)
 	return None
 
 #returns error, or None for OK
@@ -172,7 +171,7 @@ def removeVMDK(vmdkPath):
         cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
-            return {u'Error': "Failed to remove %s. %s" % (vmdkPath, out)}
+            return err("Failed to remove %s. %s" % (vmdkPath, out))
 
 	return None
 
@@ -187,6 +186,7 @@ def findVmByName(vmName):
 	vm = None
 	try:
 		vm = FindChild(GetVmFolder(), vmName)
+                print "FindChild name, folder, vm = {0}, {1}, {2}".format(vmName, GetVmFolder(), vm)
 	except AttributeError as ex:
 		connectLocal() 					#  retry
 		vm = FindChild(GetVmFolder(), vmName)
@@ -200,8 +200,7 @@ def findVmByName(vmName):
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
 	print "*** attachVMDK: " + vmdkPath + " to"   + vmName + " uuid=", vm.config.uuid
-	disk_attach(vmdkPath, vm)
-	return None
+	return disk_attach(vmdkPath, vm)
 
 #returns error, or None for OK
 def detachVMDK(vmdkPath, vmName):
@@ -398,12 +397,19 @@ def disk_attach(vmdkPath, vm):
 
   try:
   	wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
+  except vim.fault.FileNotFound as ex:
+      return err('Volume not found')
   except vim.fault.GenericVmConfigFault as ex:
     for f in ex.faultMessage:
       print f.message
+      return err(f.message)
   else:
     print "disk attached ", vmdkPath
 
+  return None
+
+def err(string):
+    return {u'Error': string}
 
 # detach disk (by full path) from a vm
 def disk_detach(vmdkPath, vm):
