@@ -14,6 +14,12 @@
                         "branch": "master"
                 },
 		{
+			"importpath": "github.com/stretchr/testify",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "1f4a1643a57e798696635ea4c126e9127adb7d3c"
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/docker/go-connections/sockets",
 			"repository": "https://github.com/docker/go-connections",
 			"revision": "3ef1e92d1b93e587895dfa466e1682ae63448801",
