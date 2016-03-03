@@ -12,6 +12,19 @@ use_docker() {
    exit 1
 }
 
+# check platform
+#----------------
+
+if [ `uname` != "Linux" ] 
+then 
+  echo "This build is supported only on Linux."
+  exit 1
+fi
+
+
+# Check GO version and config
+#-----------------------------
+
 GO_REQUIRED=1.5
 
 command -v go > /dev/null
@@ -25,7 +38,7 @@ GO_INSTALLED=$(go version| awk '{print $3}'| sed -r 's/([a-z])//g')
 if (( $(echo "$GO_INSTALLED $GO_REQUIRED"| awk '{print $1 < $2}') ))
 then
    use_docker "Error: go 1.5 or higher is needed for vendoring support"
- fi
+fi
 
 if [[ -z "$GOPATH" ]] 
 then
@@ -39,6 +52,9 @@ then
    use_docker "There is a local import of a package. The src should be under GOPATH=$GOPATH \
                Expected:\" $EXPECTED_PATH \" CURRENTPATH:\" $PWD:"
 fi 
+
+# check vibauthor availability
+#-----------------------------
 
 command -v vibauthor  > /dev/null
 if [ $? -ne 0 ]
