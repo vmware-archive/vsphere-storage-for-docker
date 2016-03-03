@@ -14,6 +14,8 @@ DVOL_STATUS = 3
 DVOL_VOLOPTS = 4
 DVOL_CBRC_ENABLED = 5
 DVOL_IOFILTERS = 6
+DVOL_CONTROLLER = 7
+DVOL_SLOT = 8
 
 # Key names
-kv_strings = ["dvolVolume", "dvolVMID", "dvolDaemonID", "dvolStatus", "dvolVolOpts", "dvolCBRCEnabled", "dvolIOFilters"]
+kv_strings = ["dvolVolume", "dvolVMID", "dvolDaemonID", "dvolStatus", "dvolVolOpts", "dvolCBRCEnabled", "dvolIOFilters", "controller", "slot"]
