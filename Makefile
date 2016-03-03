@@ -54,7 +54,7 @@ clean:
 
 	
 #TBD: this is a good place to add unit tests...	
-.PHONY: test
+.PHONY: test mock_esx
 test: build
 	$(GO) test $(PLUGIN)/vmdkops $(PLUGIN) -tags mock_esx
 	@echo "*** Info: No tests in plugin folder yet"
