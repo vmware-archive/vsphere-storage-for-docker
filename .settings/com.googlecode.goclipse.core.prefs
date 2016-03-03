@@ -6,4 +6,5 @@ com.googlecode.goclipse.goos=darwin
 com.googlecode.goclipse.gopath=
 com.googlecode.goclipse.goroot=/usr/local/opt/go/libexec
 eclipse.preferences.version=1
+prj_auto_build_disabled=true
 toolchain_prefs.use_project_settings=true
