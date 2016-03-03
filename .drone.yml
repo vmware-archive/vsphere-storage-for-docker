@@ -12,7 +12,7 @@ build:
     commands:
       - make
       - export VM1=`govc vm.ip ubuntu`
-      - export VM1=`govc vm.ip ubuntu-2`
+      - export VM2=`govc vm.ip ubuntu-2`
       - ./hack/setup.sh $GOVC_URL $VM1 $VM2 < /dev/null
       - make test
       - ./hack/end2end.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
