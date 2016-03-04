@@ -1,6 +1,6 @@
 #!/bin/bash
 OPERATION=$1
-BUILD_NUMBER=$2
+BUILD_NUMBER=build-$2
 
 LOCK_DIR='/tmp/docker-vmdk-plugin.lock'
 
@@ -9,9 +9,9 @@ if [ "$OPERATION" == "lock" ]; then
   then
     echo "$BUILD_NUMBER has the lock"
     echo "$BUILD_NUMBER" > $LOCK_DIR/build
+    exit 0
   else
-    echo "Cannot get LOCK_DIR"
-    cat $LOCK_DIR/build
+    echo "Cannot lock $LOCK_DIR held by " `cat $LOCK_DIR/build`
     exit 1
   fi
 fi

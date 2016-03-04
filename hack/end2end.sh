@@ -13,6 +13,12 @@ VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
 
+if [ $# -lt 3 ] 
+then
+  usage
+  exit 1
+fi
+
 . cleanup.sh
 . serialize.sh
 
@@ -25,13 +31,13 @@ then
   echo "*************************************************************************"
   echo "tests done"
   echo "*************************************************************************"
-  cleanup
+  stop_build $VM1 $BUILD_NUMBER
 else
   echo "*************************************************************************"
   echo "tests failed"
   echo "starting cleanup"
   echo "*************************************************************************"
-  cleanup
+  stop_build $VM1 $BUILD_NUMBER
   # TODO remove vmdk files if any
   # TODO collect logs and publish
   exit 1

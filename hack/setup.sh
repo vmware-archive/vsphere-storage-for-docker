@@ -8,16 +8,29 @@ usage() {
   echo "Advisable to setup ssh keys"
 }
 
+if [ $# -lt 3 ] 
+then
+  usage
+  exit 1
+fi
+
+#TODO generalize to an array of VMs
 ESX=root@$1
 VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
+SCP="scp -o StrictHostKeyChecking=no"
+SSH="ssh -o StrictHostKeyChecking=no"
+. ./hack/cleanup.sh
 
-. cleanup.sh
-. serialize.sh
+$SCP ./hack/lock.sh $VM1:/tmp/
 
-#TODO generalize to an array of VMs
-
+# Unlock performed in stop_build in cleanup.sh
+until $SSH $VM1 /tmp/lock.sh lock $BUILD_NUMBER
+ do
+  sleep 30
+  echo "Retying acquire lock"
+done 
 
 echo "*************************************************************************"
 echo "cleanup any stale state"
@@ -37,6 +50,6 @@ else
   echo "*************************************************************************"
   echo "deploy failed cleaning up"
   echo "*************************************************************************"
-  cleanup
+  stop_build $VM1 $BUILD_NUMBER
   exit 1
 fi
