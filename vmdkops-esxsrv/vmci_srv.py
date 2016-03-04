@@ -99,18 +99,17 @@ MaxDescrSize = 100000  # we assume files smaller that that to be descriptor file
 DefaultDiskSize = "100mb"
 BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
-# Run executable on ESX
-# needed for vmkfstools invocation (until normal disk create is written)
-# borrowed from vmkernel/tests/lib/python/pyCommon.py
-def RunCommand(cmd, ignoreStatus=False, printCmd=True):
+# Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
+# Returns the integer return value and the stdout str on success and integer return value and
+# the stderr str on error
+def RunCommand(cmd):
    """RunCommand
 
    Runs command specified by user
 
    @param command to execute
    """
-   if printCmd:
-      print ("Running cmd %s" % cmd)
+   print ("Running cmd %s" % cmd)
 
    p = subprocess.Popen(cmd,
                         stdout=subprocess.PIPE,
@@ -119,11 +118,10 @@ def RunCommand(cmd, ignoreStatus=False, printCmd=True):
    o, e = p.communicate()
    s = p.returncode
 
-   if not ignoreStatus and s != 0:
-      raise Exception("Failed to run %s: status=%s, stdout:%s\n\n, "
-                      "stderr: %s" % (cmd, s, o, e))
-   if printCmd:
-   	print "Return:", s, o
+   print "Return:", s, o
+
+   if s != 0:
+       return (s, e)
 
    return (s, o)
 
@@ -131,9 +129,7 @@ def RunCommand(cmd, ignoreStatus=False, printCmd=True):
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdkPath, volName, opts):
-
 	print "*** createVMDK: " + vmdkPath
-
 	if os.path.isfile(vmdkPath):
 		return "File %s already exists" % vmdkPath
 
@@ -145,38 +141,42 @@ def createVMDK(vmdkPath, volName, opts):
 		#TODO: check it is compliant format, and correct if possible
 		print "SETTING  SIZE to " , size
 
-	try:
-		cmd = "/sbin/vmkfstools -d thin -c {0} {1}".format(size, vmdkPath)
-		rc, out = RunCommand(cmd)
+        cmd = "/sbin/vmkfstools -d thin -c {0} {1}".format(size, vmdkPath)
+        rc, out = RunCommand(cmd)
 
-		# now format it as ext4:
-		# WARNING  this won't work on VVOL/VSAN
-		# TODO: need to get backing
-		# block device differently (in vsan via objtool create)
-		backing = vmdkPath.replace(".vmdk", "-flat.vmdk")
-		cmd = "{0}/mkfs.ext4   -F -L {1} -q {2}".format(BinLoc, volName, backing)
-		rc, out = RunCommand(cmd)
+        if rc != 0:
+            if removeVMDK(vmdkPath) == None:
+                return {u'Error': "Failed to create %s. %s" % (vmdkPath, out)}
+            else:
+                return {u'Error': "Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath}
 
-	except Exception as ex:
-		# something failed - try to unlink it
-		try:
-			os.unlink(vmdkPath);
-		except:
-			pass
+        return formatVmdk(vmdkPath, volName)
 
-		return "Failed to create or format %s" % vmdkPath, ex
+def formatVmdk(vmdkPath, volName):
+        # now format it as ext4:
+        # WARNING  this won't work on VVOL/VSAN
+        # TODO: need to get backing
+        # block device differently (in vsan via objtool create)
+        backing = vmdkPath.replace(".vmdk", "-flat.vmdk")
+        cmd = "{0}/mkfs.ext4   -F -L {1} -q {2}".format(BinLoc, volName, backing)
+        rc, out = RunCommand(cmd)
+
+        if rc != 0:
+            if removeVMDK(vmdkPath) == None:
+                return {u'Error': "Failed to format %s. %s" % (vmdkPath, out)}
+            else:
+                return {u'Error': "Unable to format %s and unable to delete volume. Please delete it manually." % vmdkPath}
 
 	return None
 
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
-
 	print "*** removeVMDK: " + vmdkPath
-	try:
-		cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
-		rc, out = RunCommand(cmd)
-	except Exception as ex:
-		return "Failed to remove %s" % vmdkPath, ex
+        cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
+        rc, out = RunCommand(cmd)
+        if rc != 0:
+            return {u'Error': "Failed to remove %s. %s" % (vmdkPath, out)}
+
 	return None
 
 # returns a list of volume names (note: may be an empty list)
@@ -478,6 +478,7 @@ def main():
 		details = req["details"]
 		opts = details["Opts"] if "Opts" in details else None
 		ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
+                print "executeRequest ret = ", ret
 		err = l.vmci_reply(c, c_char_p(json.dumps(ret)))
 		print "execute_request: VMCI replied with errcode ", err
 

@@ -12,6 +12,7 @@
 		</buildCommand>
 		<buildCommand>
 			<name>com.googlecode.goclipse.goBuilder</name>
+			<triggers>clean,full,incremental,</triggers>
 			<arguments>
 			</arguments>
 		</buildCommand>

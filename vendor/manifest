@@ -8,11 +8,16 @@
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/docker/go-connections/sockets",
+			"importpath": "github.com/docker/engine-api",
+			"repository": "https://github.com/docker/engine-api",
+			"revision": "5e2f1200890487b77c90933f7e4955290b3380cb",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/docker/go-connections",
 			"repository": "https://github.com/docker/go-connections",
-			"revision": "3ef1e92d1b93e587895dfa466e1682ae63448801",
-			"branch": "master",
-			"path": "/sockets"
+			"revision": "34b5052da6b11e27f5f2e357b38b571ddddd3928",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/docker/go-plugins-helpers/sdk",
@@ -29,11 +34,37 @@
 			"path": "/volume"
 		},
 		{
+			"importpath": "github.com/docker/go-units",
+			"repository": "https://github.com/docker/go-units",
+			"revision": "5d2041e26a699eaca682e2ea41c8f891e1060444",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/opencontainers/runc/libcontainer/user",
 			"repository": "https://github.com/opencontainers/runc",
 			"revision": "8e8d01d38d7b4fb0a35bf89b72bc3e18c98882d7",
 			"branch": "master",
 			"path": "/libcontainer/user"
+		},
+		{
+			"importpath": "github.com/stretchr/testify",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "1f4a1643a57e798696635ea4c126e9127adb7d3c",
+			"branch": "master"
+		},
+		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "6acef71eb69611914f7a30939ea9f6e194c78172",
+			"branch": "master",
+			"path": "/context"
+		},
+		{
+			"importpath": "golang.org/x/net/proxy",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "6acef71eb69611914f7a30939ea9f6e194c78172",
+			"branch": "master",
+			"path": "/proxy"
 		}
 	]
 }
