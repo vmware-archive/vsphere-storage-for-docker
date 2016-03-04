@@ -6,45 +6,66 @@
 ## a given volume.
 
 import kvESX
-import dvolKeys
 
-kvPrefix = "DVOL"
+# Default meta-data for a plug-vol
+defMeta = {'plugVolName':'plugvol',
+           'plugVolController':0,
+           'plugVolSlot':0,
+           'plugVolVMID':1,
+           'plugVolDaemonID':1,
+           'plugVolStatus':'detached',
+           'plugVolVolOpts':'None',
+           'plugVolCBRCEnabled':False,
+           'plugVolIOFilters':'None'};
 
 # Create a kv store object for this volume identified by volPath
 # Create the side car or open if it exists.
-def kvStoreInit():
-   kvESX.kvESXInit(kvPrefix)
+def init():
+   kvESX.kvESXInit()
    return None
 
 
 # Create a side car KV store for given volpath
-def kvStoreCreate(volPath, vmID, daemonID, volStatus):
-   res = kvESX.sidecarCreate(volPath)
+def create(volPath, name, vm, daemon, status):
+   plugVolMeta = defMeta.copy()
+
+   plugVolMeta['plugVolName'] = name
+   plugVolMeta['plugVolVMID'] = vm
+   plugVolMeta['plugVolDaemonID'] = daemon
+   plugVolMeta['plugVolStatus'] = status
+
+   res = kvESX.create(volPath, plugVolMeta)
 
    if res != True:
       print "KV store create failed"
       return False
-   kvESX.sidecarSetKey(volPath, dvolKeys.DVOL_VM_ID, vmID)
-   kvESX.sidecarSetKey(volPath, dvolKeys.DVOL_DAEMON_ID, daemonID)
-   kvESX.sidecarSetKey(volPath, dvolKeys.DVOL_STATUS, volStatus)
 
    return True
 
 # Delete a kv store object for this volume identified by volPath
-def kvStoreDelete(volPath):
-   return kvESX.sidecarDelete(volPath)
+def delete(volPath):
+   return kvESX.delete(volPath)
 
 # Set a string value for a given key(index)
-def kvStoreSet(volPath, key, val):
-   return kvESX.sidecarSetKey(volPath, key, val)
+def set(volPath, key, val):
+   plugvolMeta = kvESX.load(volPath)
+
+   plugvolMeta[key] = val
+
+   return kvESX.save(volPath, plugvolMeta)
 
 
 # Get value for a given key (index), returns a string thats the value
 # for the key
-def kvStoreGet(volPath, key):
-   return kvESX.sidecarGetKey(volPath, key)
+def get(volPath, key):
+   plugvolMeta = kvESX.load(volPath)
+
+   return plugvolMeta[key]
 
 # No-op for side car based KV pairs, once added KV pairs live till
 # the side car is deleted.
-def kvStoreRemove(volPath, key):
-   return kvESX.sidecarDeleteKey(volPath)
+def remove(volPath, key):
+   plugvolMeta = kvESX.load(volPath)
+   del plugvolMeta[key]
+
+   return kvESX.save(volPath, plugvolMeta)

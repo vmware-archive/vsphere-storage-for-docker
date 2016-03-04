@@ -4,14 +4,10 @@
 ##
 
 from ctypes import *
-import re
-import dvolKeys
+import json
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
-
-# Max KV pair length
-KV_MAX_LEN = 128
 
 # Start size for a side car
 KV_CREATE_SIZE = 0
@@ -19,7 +15,7 @@ KV_CREATE_SIZE = 0
 # Backdoor into VSphere lib APIs
 diskLib = "/lib/libvmsnapshot.so"
 lib = None
-dVolKey = None
+dVolKey = "plugvol"
 
 # Maps to OPEN_BUFFERED | OPEN_LOCK | OPEN_NOFILTERS
 # all vmdks are opened with these flags
@@ -33,15 +29,10 @@ def loadDiskLib():
       lib.DiskLib_Init.argtypes = []
       lib.DiskLib_Init.restype = c_bool
       lib.DiskLib_Init()
-   return None
-
 
 # Loads the back-door library used to access ESX disk lib API. Create arg/result
 # definitions for those that we use.
-def kvESXInit(kvPrefix):
-    global dVolKey
-    dVolKey = kvPrefix
-    print "Using %s for side car" % dVolKey
+def kvESXInit():
 
     # Load disklib APIs
     loadDiskLib()
@@ -94,7 +85,7 @@ def kvVolPathOpen(volpath):
    return dhandle
 
 # Create the side car for the volume identified by volpath.
-def sidecarCreate(volpath):
+def create(volpath, kvDict):
    disk = c_uint32(0)
    objHandle = c_uint32(0)
    res = 0
@@ -113,15 +104,14 @@ def sidecarCreate(volpath):
    lib.DiskLib_SidecarClose(disk, dVolKey, pointer(objHandle))
    lib.DiskLib_Close(disk)
 
-   sidecarFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
-   fh = open(sidecarFile, "rb+")
-   fh.seek(0, 0)
-   fh.write("# Persistent volume plugin private data.\n")
+   metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
+   fh = open(metaFile, "w+")
+   json.dump(kvDict, fh)
    fh.close()
    return True
 
 # Delete the the side car for the given volume
-def sidecarDelete(volpath):
+def delete(volpath):
    disk = c_uint32(0)
    res = 0
 
@@ -139,44 +129,27 @@ def sidecarDelete(volpath):
    return True
 
 # Return the value string given a key (index).
-def sidecarGetKey(volpath, key):
-   sidecarFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
+def load(volpath):
+   metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
-   kvloc = (key + 1) * KV_MAX_LEN
+   fh = open(metaFile, "r+")
 
-   fh = open(sidecarFile, "rb+")
-   # Use the key as index read side car at the
-   # offset.
-   fh.seek(kvloc, 0)
-   kvstr = fh.read(KV_MAX_LEN)
+   kvDict = json.load(fh)
+
    fh.close()
-   val = re.split("=", kvstr)
-   return val[1]
+
+   return kvDict
 
 # Write the KV pair at the offset for the given key index. Right now
 # this uses read/write calls, later will move to ESX ObjLib_Pread/PWrite
 # calls.
-def sidecarSetKey(volpath, key, val):
-   sidecarFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
+def save(volpath, kvDict):
+   metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
-   kvloc = (key + 1) * KV_MAX_LEN
+   fh = open(metaFile, "w+")
 
-   fh = open(sidecarFile, "rb+")
-   # Use the key as index into the key name array, append
-   # the value passed in and write the side car at the
-   # offset (each key-value pair is allowed
-   # a max length of KV_MAX_LEN.
+   json.dump(kvDict, fh)
 
-   kvstr = dvolKeys.kv_strings[key] + "=" + val
-   print "setting %s at %d" % (kvstr, kvloc)
-
-   fh.seek(kvloc, 0)
-   print "positioned at :", fh.tell()
-   fh.write(kvstr)
    fh.close()
-   return True
-
-# No-op for a side car, the key is retained till the side car is deleted
-def sidecarDeleteKey(volpath, key):
    return True
 
