@@ -90,8 +90,7 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
-import dvolKeys as keys
-import volumeKVStore as volKV
+import volumeKVStore as kv
 
 # defaults
 DockVolsDir = "dockvols"   # place in the same (with Docker VM) datastore

@@ -11,7 +11,7 @@ VIB := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
-PY_SRC := vmci_srv.py dvolKeys.py kvESX.py volumeKVStore.py
+PY_SRC := vmci_srv.py kvESX.py volumeKVStore.py
 C_SRC  := server.c
 
 # extra stuff to copy to vib
