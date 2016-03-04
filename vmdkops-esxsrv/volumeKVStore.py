@@ -8,15 +8,15 @@
 import kvESX
 
 # Default meta-data for a plug-vol
-defMeta = {'plugVolName':'plugvol',
-           'plugVolController':0,
-           'plugVolSlot':0,
-           'plugVolVMID':1,
-           'plugVolDaemonID':1,
-           'plugVolStatus':'detached',
-           'plugVolVolOpts':'None',
-           'plugVolCBRCEnabled':False,
-           'plugVolIOFilters':'None'};
+defMeta = {'name':'plugvol',
+           'controller':0,
+           'slot':0,
+           'vmID':1,
+           'daemonID':1,
+           'status':'detached',
+           'volOpts':'None',
+           'cbrcEnabled':False,
+           'ioFilters':'None'};
 
 # Create a kv store object for this volume identified by volPath
 # Create the side car or open if it exists.
@@ -29,10 +29,10 @@ def init():
 def create(volPath, name, vm, daemon, status):
    plugVolMeta = defMeta.copy()
 
-   plugVolMeta['plugVolName'] = name
-   plugVolMeta['plugVolVMID'] = vm
-   plugVolMeta['plugVolDaemonID'] = daemon
-   plugVolMeta['plugVolStatus'] = status
+   plugVolMeta['name'] = name
+   plugVolMeta['vmID'] = vm
+   plugVolMeta['daemonID'] = daemon
+   plugVolMeta['status'] = status
 
    res = kvESX.create(volPath, plugVolMeta)
 
