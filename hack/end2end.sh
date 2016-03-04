@@ -20,7 +20,6 @@ then
 fi
 
 . ./hack/cleanup.sh
-. ./hack/serialize.sh
 
 echo "*************************************************************************"
 echo "tests starting"

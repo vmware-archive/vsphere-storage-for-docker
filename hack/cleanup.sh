@@ -1,9 +1,5 @@
 #!/bin/sh
 
-SSH="ssh -o StrictHostKeyChecking=no"
-VM=$1
-BUILD_NUMBER=$2
-
 cleanup() {
   make clean-vm VM=$VM1 TEST_VOL_NAME=vol-build$BUILD_NUMBER
   make clean-vm VM=$VM2 TEST_VOL_NAME=vol-build$BUILD_NUMBER

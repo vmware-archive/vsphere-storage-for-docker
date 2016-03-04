@@ -19,8 +19,10 @@ ESX=root@$1
 VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
+
 SCP="scp -o StrictHostKeyChecking=no"
 SSH="ssh -o StrictHostKeyChecking=no"
+
 . ./hack/cleanup.sh
 
 $SCP ./hack/lock.sh $VM1:/tmp/
