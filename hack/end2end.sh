@@ -19,8 +19,8 @@ then
   exit 1
 fi
 
-. cleanup.sh
-. serialize.sh
+. ./hack/cleanup.sh
+. ./hack/serialize.sh
 
 echo "*************************************************************************"
 echo "tests starting"

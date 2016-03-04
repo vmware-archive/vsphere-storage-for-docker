@@ -103,8 +103,6 @@ deploy-vm:
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME?=MyVolume
 
-TEST_DATA?=$(shell date -u)
-
 .PHONY: testremote
 testremote:
 	$(SSH) $(VM) docker volume create \

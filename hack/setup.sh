@@ -32,10 +32,7 @@ until $SSH $VM1 /tmp/lock.sh lock $BUILD_NUMBER
   echo "Retying acquire lock"
 done 
 
-echo "*************************************************************************"
-echo "cleanup any stale state"
-echo "*************************************************************************"
-cleanup
+echo "Acquired lock for build $BUILD_NUMBER"
 
 echo "*************************************************************************"
 echo "starting deploy"
