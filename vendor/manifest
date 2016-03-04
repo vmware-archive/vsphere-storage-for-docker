@@ -7,12 +7,6 @@
 			"revision": "be52937128b38f1d99787bb476c789e2af1147f1",
 			"branch": "master"
 		},
-                {
-                        "importpath": "github.com/stretchr/testify",
-                        "repository": "https://github.com/stretchr/testify",
-                        "revision": "1f4a1643a57e798696635ea4c126e9127adb7d3c"
-                        "branch": "master"
-                },
 		{
 			"importpath": "github.com/docker/engine-api",
 			"repository": "https://github.com/docker/engine-api",
@@ -20,25 +14,10 @@
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/docker/go-connections/nat",
+			"importpath": "github.com/docker/go-connections",
 			"repository": "https://github.com/docker/go-connections",
 			"revision": "34b5052da6b11e27f5f2e357b38b571ddddd3928",
-			"branch": "master",
-			"path": "/nat"
-		},
-		{
-			"importpath": "github.com/docker/go-connections/sockets",
-			"repository": "https://github.com/docker/go-connections",
-			"revision": "3ef1e92d1b93e587895dfa466e1682ae63448801",
-			"branch": "master",
-			"path": "/sockets"
-		},
-		{
-			"importpath": "github.com/docker/go-connections/tlsconfig",
-			"repository": "https://github.com/docker/go-connections",
-			"revision": "34b5052da6b11e27f5f2e357b38b571ddddd3928",
-			"branch": "master",
-			"path": "/tlsconfig"
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/docker/go-plugins-helpers/sdk",
@@ -68,11 +47,24 @@
 			"path": "/libcontainer/user"
 		},
 		{
+			"importpath": "github.com/stretchr/testify",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "1f4a1643a57e798696635ea4c126e9127adb7d3c",
+			"branch": "master"
+		},
+		{
 			"importpath": "golang.org/x/net/context",
 			"repository": "https://go.googlesource.com/net",
 			"revision": "6acef71eb69611914f7a30939ea9f6e194c78172",
 			"branch": "master",
 			"path": "/context"
+		},
+		{
+			"importpath": "golang.org/x/net/proxy",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "6acef71eb69611914f7a30939ea9f6e194c78172",
+			"branch": "master",
+			"path": "/proxy"
 		}
 	]
 }
