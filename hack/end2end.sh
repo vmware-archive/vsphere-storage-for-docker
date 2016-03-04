@@ -12,6 +12,7 @@ ESX=root@$1
 VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
+SSH="ssh -o StrictHostKeyChecking=no"
 
 if [ $# -lt 3 ] 
 then
