@@ -13,6 +13,9 @@ VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
 
+. cleanup.sh
+. serialize.sh
+
 echo "*************************************************************************"
 echo "tests starting"
 echo "*************************************************************************"
@@ -22,17 +25,13 @@ then
   echo "*************************************************************************"
   echo "tests done"
   echo "*************************************************************************"
-  make clean-vm VM=$VM1
-  make clean-vm VM=$VM2
-  make clean-esx ESX=$ESX
+  cleanup
 else
   echo "*************************************************************************"
   echo "tests failed"
   echo "starting cleanup"
   echo "*************************************************************************"
-  make clean-vm VM=$VM1
-  make clean-vm VM=$VM2
-  make clean-esx ESX=$ESX
+  cleanup
   # TODO remove vmdk files if any
   # TODO collect logs and publish
   exit 1
