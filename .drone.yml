@@ -2,18 +2,19 @@ build:
   ci:
     image: kerneltime/vibauthor-and-go:0.3
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /home/ritesh/.ssh:/root/.ssh/
+      # For Drone exec pass in the ssh keys if needed.
+      # drone exec --trusted
+      #- /home/<user>/.ssh:/root/.ssh/
     environment:
-      - GOVC_USERNAME=root
-      - GOVC_PASSWORD=
+      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
+      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
       - GOVC_INSECURE=1
-      - GOVC_URL=192.168.109.2
+      - GOVC_URL=$$CI_ESX_IP
     commands:
-      - make
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip ubuntu-2`
-      - ./hack/setup.sh $GOVC_URL $VM1 $VM2 < /dev/null
+      - make
+      - ./hack/setup.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - make test
       - ./hack/end2end.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when :
