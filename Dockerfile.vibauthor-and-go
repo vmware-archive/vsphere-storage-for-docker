@@ -1,16 +1,29 @@
+#
+# This container is used for different duties in docker-vmdk-plugin dev process:
+#
+# - Build of GO code            => need golang 1.5+
+# - Build of C VMCI wrappers    => need gcc and 32 bit libs
+# - Build of ESX .VIB backage   => need vibauthor
+# - Manipulating dependencies   => need gvt 
+# - Running tests               => need socat to redirect to remote Docker
+#
+
 FROM lamw/vibauthor
 
 MAINTAINER cna-storage@vmware.com
 
-RUN curl --remote-name https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz && \
-    rm -rf ~/*.rpm ~/*.tar.gz && \
+RUN curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -C /usr/local -xzf - && \
     yum update -y && \
-    yum -y install gcc && \
-    yum -y install glibc-devel.i686 libgcc.i686 glibc-static && \
+    yum -y install gcc  glibc-devel.x86_64 glibc-devel.i686 libgcc.i686 glibc-static wget && \
+    (cd /etc/yum.repos.d ; \
+        wget --no-cache http://www.convirture.com/repos/definitions/rhel/6.x/convirt.repo) && \
+    yum -y install socat && \
     yum clean all
 
-ENV PATH=$PATH:/usr/local/go/bin
-ENV GOROOT=/usr/local/go
-ENV GOPATH=/go
-ENV GO15VENDOREXPERIMENT=1
+ENV GOROOT=/usr/local/go  \
+    GOPATH=/go \
+    PATH=$PATH:/go/bin:/usr/local/go/bin  \
+    GO15VENDOREXPERIMENT=1
+
+# add gvt so we use this container to also manage vendoring
+RUN GO15VENDOREXPERIMENT=1 go get -u github.com/FiloSottile/gvt

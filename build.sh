@@ -57,9 +57,12 @@ fi
 plugin=docker-vmdk-plugin  
 plugin_container_version=0.2
 plug_container=kerneltime/vibauthor-and-go:$plugin_container_version
+dockerfile=Dockerfile.vibauthor-and-go
 GOPATH=/go
 
 # mount point within the container.
 dir=$GOPATH/src/github.com/vmware/docker-vmdk-plugin
-
+set -x
+docker build -t $plug_container -f $dockerfile .
 docker run --rm -v $PWD:$dir -w $dir $plug_container make $1
+set +x

@@ -1,0 +1,61 @@
+// basic sanity test
+
+package main
+
+import (
+	"fmt"
+	"github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
+	"github.com/docker/engine-api/types/filters"
+	"testing"
+)
+
+const (
+	endpoint   = "unix:///var/run/vmdkplugintest.sock"
+	apiVersion = "v1.22"
+)
+
+// Connects to docker via unix socket and runs basic tests.
+//
+// This test can be run against a local docker engine, or a remote docker engine.
+//
+// For remote engine, to avoid messing with cert config we use "socat" tool
+// to be run agaisnt re mote docker, we use socat. This assumes ssh pre-configured
+//
+// example of socat usage for unix socket redirect:
+// 172.16.245.152 is the remote docker engine IP
+//
+// socat "UNIX-LISTEN:/var/run/vmdkplugintest.sock,reuseaddr,fork" \
+//       "EXEC:'ssh -kTax root@10.20.105.74 socat STDIO UNIX-CONNECT\:/var/run/docker.sock'" &
+
+func TestSanity(t *testing.T) {
+	defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
+
+	fmt.Println("Connecting to ", endpoint)
+	cli, err := client.NewClient(endpoint, apiVersion, nil, defaultHeaders)
+	if err != nil {
+		// TBD: add the failure back (t.Log->t.Fatal) as soon as we set remote test
+		t.Log("Failed to connect to the client at ", endpoint, " , err: ", err)
+		t.Log("** SKIPPING TEST ** ")
+		t.SkipNow()
+	}
+
+	options := types.ContainerListOptions{All: true}
+	containers, err := cli.ContainerList(options)
+	if err != nil {
+		// TBD: add the failure back (t.Log->t.Fatal) as soon as we set remote test
+		t.Log("Failed to enumerate options, err: ", err)
+		t.Log("** SKIPPING TEST ** ")
+		t.SkipNow()
+	}
+	fmt.Println("Containers count: ", len(containers))
+
+	reply, err := cli.VolumeList(filters.Args{})
+	if err != nil {
+		t.Fatal("Failed to enumerate  volumes")
+	}
+	fmt.Println("Volumes count:", len(reply.Volumes))
+	//	for _, v := range reply.Volumes {
+	//		fmt.Println(v.Name, v.Driver, v.Mountpoint)
+	//	}
+}
