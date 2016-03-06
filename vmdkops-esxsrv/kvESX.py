@@ -15,7 +15,7 @@ KV_CREATE_SIZE = 0
 # Backdoor into VSphere lib APIs
 diskLib = "/lib/libvmsnapshot.so"
 lib = None
-dVolKey = "plugvol"
+dVolKey = "vmdk-plugin-vol"
 
 # Maps to OPEN_BUFFERED | OPEN_LOCK | OPEN_NOFILTERS
 # all vmdks are opened with these flags
@@ -104,11 +104,7 @@ def create(volpath, kvDict):
    lib.DiskLib_SidecarClose(disk, dVolKey, pointer(objHandle))
    lib.DiskLib_Close(disk)
 
-   metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
-   fh = open(metaFile, "w+")
-   json.dump(kvDict, fh)
-   fh.close()
-   return True
+   return save(volpath, kvDict)
 
 # Delete the the side car for the given volume
 def delete(volpath):
@@ -128,7 +124,7 @@ def delete(volpath):
    lib.DiskLib_Close(disk)
    return True
 
-# Return the value string given a key (index).
+# Load and return dictionary from the sidecar
 def load(volpath):
    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
@@ -140,9 +136,7 @@ def load(volpath):
 
    return kvDict
 
-# Write the KV pair at the offset for the given key index. Right now
-# this uses read/write calls, later will move to ESX ObjLib_Pread/PWrite
-# calls.
+# Save the dictionary to side car.
 def save(volpath, kvDict):
    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
