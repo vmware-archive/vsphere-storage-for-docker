@@ -23,7 +23,8 @@ PLUGIN := github.com/vmware/$(PNAME)
 GO := GO15VENDOREXPERIMENT=1 go 
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
-EXTRA_SRC = vmdkops/*.go 
+VMDKOPS_MODULE := vmdkops
+EXTRA_SRC      = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
 
 # All sources. We rebuild if anything changes here
 SRC = plugin.go main.go 
