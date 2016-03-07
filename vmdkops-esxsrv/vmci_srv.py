@@ -377,7 +377,7 @@ def disk_attach(vmdkPath, vm):
   # Check if this disk is already attached, skip the
   # attach below if it is
   status = kv.get(vmdkPath, 'status')
-  print 'Attaching %s with status %s' % status
+  print 'Attaching %s with status %s' % (vmdkPath, status)
   if status != 'detached':
     print "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
     return
@@ -451,12 +451,13 @@ def disk_detach(vmdkPath, vm):
   spec.deviceChange = dev_changes
 
   try:
-  		wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
+     wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
+     kv.set(vmdkPath, 'status', 'detached')
   except vim.fault.GenericVmConfigFault as ex:
-  		for f in ex.faultMessage:
-			print f.message
+     for f in ex.faultMessage:
+        print f.message
   else:
-		print "disk detached ", vmdkPath
+        print "disk detached ", vmdkPath
 
 
 # Main - connect, load VMCI shared lib and does main loop
