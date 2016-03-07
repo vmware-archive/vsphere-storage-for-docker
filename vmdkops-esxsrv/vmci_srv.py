@@ -389,7 +389,6 @@ def disk_attach(vmdkPath, vm):
     # search in 15 slots, with unit_number 7 reserved for scsi controller
     availSlots = set(range (0,6) + range (8,16))  - taken
 
-    if len(availSlots) == 0:
       raise StandardError("We don't support this many disks yet")
 
     diskSlot = availSlots.pop()
@@ -420,12 +419,11 @@ def disk_attach(vmdkPath, vm):
 
   try:
   	wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
+        kv.set(vmdkPath, 'status', 'attached')
   except vim.fault.GenericVmConfigFault as ex:
     for f in ex.faultMessage:
       print f.message
   else:
-    kv.set(vmdkPath, 'status', 'attached')
-
     print "disk attached ", vmdkPath
 
 
