@@ -374,8 +374,9 @@ def disk_attach(vmdkPath, vm):
 
   # Check if this disk is already attached, skip the
   # attach below if it is
-  status = kv.get(vmdkPath, "status")
-  if status == "attached":
+  status = kv.get(vmdkPath, 'status')
+  print status
+  if status == 'attached':
     print "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
     return
 
@@ -422,7 +423,7 @@ def disk_attach(vmdkPath, vm):
     for f in ex.faultMessage:
       print f.message
   else:
-    kv.set(vmdkPath, "status", "attached")
+    kv.set(vmdkPath, 'status', 'attached')
 
     print "disk attached ", vmdkPath
 
