@@ -377,7 +377,7 @@ def disk_attach(vmdkPath, vm):
   # Check if this disk is already attached, skip the
   # attach below if it is
   status = kv.get(vmdkPath, 'status')
-  print status
+  print 'Attaching %s with status %s', % status
   if status != 'detached':
     print "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
     return
@@ -389,6 +389,7 @@ def disk_attach(vmdkPath, vm):
     # search in 15 slots, with unit_number 7 reserved for scsi controller
     availSlots = set(range (0,6) + range (8,16))  - taken
 
+    if len(availSlots) == 0:
       raise StandardError("We don't support this many disks yet")
 
     diskSlot = availSlots.pop()
