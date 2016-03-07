@@ -1,3 +1,4 @@
+import os
 import sys, getopt
 import subprocess
 import vmci_srv as vmci
@@ -12,7 +13,7 @@ def doCreate(volDir):
    print "Creating volumes"
    for vol in vols:
       volPath = os.path.join(volDir, "%s.vmdk" % vol)
-      vmci.createVMDK(volPath, vol, volopts)
+      vmci.createVMDK(volPath, vol, None)
 
    print "Verifying volume metadata"
    for vol in vols:
@@ -67,6 +68,7 @@ def main(argv):
       print 'vol_tests.py -v <VM config path> -d <volumes dir>'
       sys.exit(2)
 
+   kv.init()
    try:
       opts, args = getopt.getopt(argv,"hv:d:")
    except getopt.GetoptError:
