@@ -12,7 +12,7 @@ KV_SIDECAR_CREATE = 0
 # Start size for a side car
 KV_CREATE_SIZE = 0
 
-# Backdoor into VSphere lib APIs
+# VSphere lib to access ESX proprietary APIs.
 diskLib = "/lib/libvmsnapshot.so"
 lib = None
 dVolKey = "vmdk-plugin-vol"
@@ -30,8 +30,8 @@ def loadDiskLib():
       lib.DiskLib_Init.restype = c_bool
       lib.DiskLib_Init()
 
-# Loads the back-door library used to access ESX disk lib API. Create arg/result
-# definitions for those that we use.
+# Loads the ESX library used to access proprietary ESX disk lib API.
+# Create arg/result definitions for those that we use.
 def kvESXInit():
 
     # Load disklib APIs
@@ -67,7 +67,7 @@ def kvESXInit():
 
     lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
     lib.DiskLib_DBSet.restype = c_int32
-    
+
     return None
 
 def kvVolPathOpen(volpath):
@@ -100,7 +100,7 @@ def create(volpath, kvDict):
       print "Side car create for %s failed - %x" % (volpath, res)
       lib.DiskLib_Close(disk)
       return False
-   
+
    lib.DiskLib_SidecarClose(disk, dVolKey, pointer(objHandle))
    lib.DiskLib_Close(disk)
 
@@ -120,7 +120,7 @@ def delete(volpath):
    if res != 0:
       print "Side car delete for %s failed - %x" % (volpath, res)
       return False
-   
+
    lib.DiskLib_Close(disk)
    return True
 
@@ -142,6 +142,11 @@ def save(volpath, kvDict):
 
    fh = open(metaFile, "w+")
 
+   # ESX side cars are objects and as such can be read/written
+   # only with the ESX obj lib API. The approach here is to use
+   # json to serialize a dictionary to the side car file. Later
+   # use json to get serialize the dictionary into a string and
+   # write that to the side car.
    json.dump(kvDict, fh)
 
    fh.close()
