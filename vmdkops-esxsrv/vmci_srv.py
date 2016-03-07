@@ -211,6 +211,8 @@ def findVmByName(vmName):
 #returns error, or None for OK
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
+        s = kv.get(vmdkPath, 'status')
+        print "disk has status - %s" % s
 	print "*** attachVMDK: " + vmdkPath + " to"   + vmName + " uuid=", vm.config.uuid
 	disk_attach(vmdkPath, vm)
 	return None
@@ -376,7 +378,7 @@ def disk_attach(vmdkPath, vm):
   # attach below if it is
   status = kv.get(vmdkPath, 'status')
   print status
-  if status == 'attached':
+  if status != 'detached':
     print "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
     return
 
@@ -415,7 +417,6 @@ def disk_attach(vmdkPath, vm):
 
   spec = vim.vm.ConfigSpec()
   spec.deviceChange = dev_changes
-
 
   try:
   	wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
