@@ -4,9 +4,6 @@ build:
     volumes:
       # Needed for creating docker images
       - /var/run/docker.sock:/var/run/docker.sock
-      # For Drone exec pass in the ssh keys if needed.
-      # drone exec --trusted
-      #- /home/<user>/.ssh:/root/.ssh/
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
       - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
