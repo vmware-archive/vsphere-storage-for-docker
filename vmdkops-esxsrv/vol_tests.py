@@ -1,4 +1,5 @@
 import os
+import atexit
 import sys, getopt
 import subprocess
 import vmci_srv as vmci
@@ -63,40 +64,53 @@ def doVolDelete(volDir):
       vmci.removeVMDK(volPath)
    return
 
+def cleanup(vmId):
+   cmd = 'vim-cmd vmsvc/power.off %s' % vmId
+   subprocess.call(cmd, shell=True)
+
+   cmd = 'vim-cmd vmsvc/unregister %s' % vmId
+   subprocess.call(cmd, shell=True)
+
+   cmd = 'vim-cmd vmsvc/destroy %s' % vmId
+   subprocess.call(cmd, shell=True)
+
+   
 def main(argv):
    if argv == []:
-      print 'vol_tests.py -v <VM config path> -d <volumes dir>'
+      print 'vol_tests.py -d <test dir>'
       sys.exit(2)
 
    kv.init()
    try:
-      opts, args = getopt.getopt(argv,"hv:d:")
+      opts, args = getopt.getopt(argv,"hd:")
    except getopt.GetoptError:
-      print 'vol_tests.py -v <VM config path> -d <volumes dir>'
+      print 'vol_tests.py -d <test dir>'
       sys.exit(2)
 
    for opt, arg in opts:
       if opt == '-h':
          print 'vol_tests.py -v <vm config path> -d <volumes dir>'
          sys.exit()
-      elif opt in ("-v"):
-         vmPath = arg
       elif opt in ("-d"):
          volDir = arg
 
-   cmd = 'vim-cmd solo/registervm %s %s' % (vmPath, vmName)
+   cmd = 'vim-cmd vmsvc/createdummyvm %s %s' % (vmName, volDir)
    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
-   vmId = proc.communicate()[0]
+   s = proc.communicate()[0]
+
+   vmId = s.rstrip()
 
    ret = proc.returncode
 
+   atexit.register(cleanup, vmId)
+
    if ret != 0:
-      print "Failed to power on VM, exiting", vmPath
+      print "Failed to power on VM, exiting", vmName
       sys.exit(0)
 
    # Start VM
-   print "Starting VM %s with id %s ..." % (vmPath, vmId)
+   print "Starting VM %s with id %s ..." % (vmName, vmId)
 
    cmd = 'vim-cmd vmsvc/power.on %s' % vmId
    subprocess.call(cmd, shell=True)
@@ -105,24 +119,16 @@ def main(argv):
    doCreate(volDir)
 
    # Attach/Re-attach volumes
-   doAttach(volDir, vmName)
-
-   doAttach(volDir, vmName)
+   #doAttach(volDir, vmName)
 
    # Check volume meta-data
-   doVerifyVolMeta(volDir)
+   #doVerifyVolMeta(volDir)
 
    # Detach volumes
-   doDetach(volDir, vmName)
+   #doDetach(volDir, vmName)
 
    # Delete volumes
    doVolDelete(volDir)
-
-   cmd = 'vim-cmd vmsvc/power.off %s' % vmId
-   subprocess.call(cmd, shell=True)
-
-   cmd = 'vim-cmd vmsvc/unregister %s' % vmId
-   subprocess.call(cmd, shell=True)
 
 # start the server
 if __name__ == "__main__":
