@@ -19,10 +19,6 @@ The work flow for coding looks like this
 
 - Each checkin into a branch on the official repo will run the full set of 
   tests.
-  - On success or failure, the compiled binary and all relevant logs will
-    be posted as a docker image on Docker Hub with a tag <branch>-<build>
-    (Ex: kerneltime/docker-vmdk-plugin:docker-image-plugin-76)
-  - Developer can pull the image using docker pull and debug.
 
 - On Pull Requests the full set of tests will be run.
   - The logs for the build and test will be posted to the CI server.
@@ -35,8 +31,6 @@ The work flow for coding looks like this
     plugin is posted to docker hub. The image is tagged with latest
     (and <branch>-<build>). Any one can pull this image and run it to
     use the docker plugin.
-  - On failure all binaries and log files will be posted with <branch>-<build>
-    tag to Docker hub. Developer can pull this image and debug.
 
 A typical workflow for a developer should be.
 
