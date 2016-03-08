@@ -8,7 +8,10 @@ RUN curl --remote-name https://storage.googleapis.com/golang/go1.6.linux-amd64.t
     yum update -y && \
     yum -y install gcc && \
     yum -y install glibc-devel.i686 libgcc.i686 glibc-static && \
-    yum clean all
+    yum clean all 
+
+RUN curl -L https://github.com/vmware/govmomi/releases/download/v0.4.0/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
+    chmod +x /usr/local/bin/govc 
 
 ENV PATH=$PATH:/usr/local/go/bin
 ENV GOROOT=/usr/local/go
