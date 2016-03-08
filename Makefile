@@ -120,16 +120,13 @@ testremote:
 
 .PHONY: clean-vm
 clean-vm:
-	-$(SSH) $(VM) service docker restart
-	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)
-	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
-	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)
 	-$(SCP) $(STOPVM_LOC) $(VM):/tmp/
 	-$(SSH) $(VM) "sh /tmp/$(STOPVM)"
 	-$(SSH) $(VM) rm $(GLOC)/$(PLUGIN_NAME)
 	-$(SSH) $(VM) rm /tmp/$(STARTVM) /tmp/$(STOPVM)
 	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
 	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
+	-$(SSH) $(VM) service docker restart
 
 .PHONY: clean-esx
 clean-esx:
