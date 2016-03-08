@@ -90,8 +90,6 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
-import volumeKVStore as kv
-
 # defaults
 DockVolsDir = "dockvols"   # place in the same (with Docker VM) datastore
 MaxDescrSize = 100000  # we assume files smaller that that to be descriptor files
@@ -149,13 +147,6 @@ def createVMDK(vmdkPath, volName, opts):
             else:
                 return {u'Error': "Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath}
 
-        # Create the kv store for the disk before its attached
-        ret = kv.create(vmdkPath, "detached", opts)
-        if ret != True:
-           print "Failed creating key value store for", vmdkPath
-           removeVMDK(vmdkPath)
-           return None
-
         return formatVmdk(vmdkPath, volName)
 
 def formatVmdk(vmdkPath, volName):
@@ -178,9 +169,6 @@ def formatVmdk(vmdkPath, volName):
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
 	print "*** removeVMDK: " + vmdkPath
-        # Remove the kv store for vmdkPath if present
-        kv.delete(vmdkPath)
-    
         cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
@@ -211,8 +199,6 @@ def findVmByName(vmName):
 #returns error, or None for OK
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
-        s = kv.get(vmdkPath, 'status')
-        print "disk has status - %s" % s
 	print "*** attachVMDK: " + vmdkPath + " to"   + vmName + " uuid=", vm.config.uuid
 	disk_attach(vmdkPath, vm)
 	return None
@@ -374,14 +360,6 @@ def disk_attach(vmdkPath, vm):
     )
     dev_changes.append(controller_spec)
 
-  # Check if this disk is already attached, skip the
-  # attach below if it is
-  status = kv.get(vmdkPath, 'status')
-  print 'Attaching %s with status %s' % (vmdkPath, status)
-  if status != 'detached':
-    print "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
-    return
-
   # Now find a slot on the controller  , if needed
   if not diskSlot:
     taken = set([dev.unitNumber for dev in devices
@@ -420,7 +398,6 @@ def disk_attach(vmdkPath, vm):
 
   try:
   	wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-        kv.set(vmdkPath, 'status', 'attached')
   except vim.fault.GenericVmConfigFault as ex:
     for f in ex.faultMessage:
       print f.message
@@ -451,13 +428,12 @@ def disk_detach(vmdkPath, vm):
   spec.deviceChange = dev_changes
 
   try:
-     wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
-     kv.set(vmdkPath, 'status', 'detached')
+  		wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
   except vim.fault.GenericVmConfigFault as ex:
-     for f in ex.faultMessage:
-        print f.message
+  		for f in ex.faultMessage:
+			print f.message
   else:
-        print "disk detached ", vmdkPath
+		print "disk detached ", vmdkPath
 
 
 # Main - connect, load VMCI shared lib and does main loop
@@ -465,9 +441,6 @@ def main():
 	global si  # we maintain only one connection
 
 	si = connectLocal()
-
-        # Init the key-store module
-        kv.init()
 
 	printVMInfo(si) # just making sure we can do it - print
 
