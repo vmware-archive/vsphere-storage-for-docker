@@ -1,5 +1,6 @@
 build:
   ci:
+    privileged: true
     image: kerneltime/vibauthor-and-go:0.3
     volumes:
       # Needed for creating docker images
