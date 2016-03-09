@@ -53,7 +53,7 @@ def kvESXInit():
     lib.DiskLib_Close.argtypes = [c_uint32]
     lib.DiskLib_Close.restype = c_int32
 
-    if esxVersion == '6.1.0':
+    if esxVersion > '6.0.0':
        lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
        lib.DiskLib_SidecarCreate.restype = c_int32
 
@@ -105,11 +105,12 @@ def create(volpath, kvDict):
    if disk == 0:
       return False
 
-   # This is the API to use for VSphere 6.01 and above for 6.0 we use the open call
-   if esxVersion == '6.1.0':
+   # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
+   if esxVersion > '6.0.0':
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
+
    if res != 0:
       print "Side car create for %s failed - %x" % (volpath, res)
       lib.DiskLib_Close(disk)
@@ -133,6 +134,7 @@ def delete(volpath):
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
    if res != 0:
       print "Side car delete for %s failed - %x" % (volpath, res)
+      lib.DiskLib_Close(disk)
       return False
 
    lib.DiskLib_Close(disk)
@@ -156,11 +158,6 @@ def save(volpath, kvDict):
 
    fh = open(metaFile, "w+")
 
-   # ESX side cars are objects and as such can be read/written
-   # only with the ESX obj lib API. The approach here is to use
-   # json to serialize a dictionary to the side car file. Later
-   # use json to get serialize the dictionary into a string and
-   # write that to the side car.
    json.dump(kvDict, fh)
 
    fh.close()

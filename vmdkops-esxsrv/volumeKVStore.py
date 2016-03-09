@@ -25,12 +25,8 @@ def init():
 
 # Create a side car KV store for given volpath
 def create(volPath, status, opts):
-   volMeta = { 'status' : 'detached',
-               'volOpts' : None
-             };
-
-   volMeta['status'] = status
-   volMeta['volOpts'] = opts
+   volMeta = {'status': status,
+              'volOpts': opts};
 
    res = kvESX.create(volPath, volMeta)
 
