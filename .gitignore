@@ -9,3 +9,5 @@ src/dvolplug/dvolplug
 */*.vib
 */payloads/
 *.test
+*~
+.*~
