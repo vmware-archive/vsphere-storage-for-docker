@@ -134,8 +134,8 @@ vmci_get_one_op(const int s,    // socket to listen on
 
    // get VMID. We really get CartelID for VM, but it will make do
    socklen_t len = sizeof(*vmid);
-   if (getsockopt(c, af, SO_VMCI_PEER_HOST_VM_ID, vmid, &len) == -1 || len
-            != sizeof(*vmid)) {
+   if (getsockopt(c, af, SO_VMCI_PEER_HOST_VM_ID, vmid, &len) == -1
+            || len != sizeof(*vmid)) {
       perror("sockopt SO_VMCI_PEER_HOST_VM_ID failed, continuing...");
       // will still try to recv message to know what was there - so no return
    }
@@ -182,7 +182,10 @@ vmci_get_one_op(const int s,    // socket to listen on
    }
    // protocol sanity check
    if (strlen(buf) + 1 != b) {
-      printf("Warning: len mismatch, expected %d, got %d\n", strlen(buf), b);
+      printf("Protocol error: len mismatch, expected %d, got %d\n",
+               strlen(buf), b);
+      close(c);
+      return -1;
    }
 
    return c;

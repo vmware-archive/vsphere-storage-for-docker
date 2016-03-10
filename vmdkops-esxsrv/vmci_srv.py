@@ -96,7 +96,7 @@ from pyVmomi import VmomiSupport, vim, vmodl
 DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
 MaxDescrSize = 10000     # we assume files smaller that that to be descriptor files
 MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limited in size
-MaxSkipCoint = 100       # max retries on VMCI Get Ops failures
+MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
 BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
@@ -479,7 +479,7 @@ def main():
 
     af = c_int() ; vmciFd = c_int(); cartel = c_int32()
     sock = lib.vmci_init(byref(af), byref(vmciFd))
-    skipCount = MaxSkipCoint # retries for vmci_get_one_op failures
+    skipCount = MaxSkipCount # retries for vmci_get_one_op failures
     while True:
         c = lib.vmci_get_one_op(sock, af, byref(cartel), txt, c_int(bsize))
         print "lib.vmci_get_one_op returns {0} , buffer '{1}'".format(c, txt.value)
@@ -492,7 +492,7 @@ def main():
                 raise Exception("Too many errors from VMCI Get Ops - giving up.")
             continue
         else:
-            skipCount = MaxSkipCoint # reset the counter, just in case
+            skipCount = MaxSkipCount # reset the counter, just in case
 
         # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
         vmmLeader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel.value))
