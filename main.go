@@ -16,8 +16,8 @@ import (
 
 const (
 	pluginSockDir = "/run/docker/plugins"
-	vmdkPluginId  = "vmdk"
-	version       = "VMDK Volume Driver v0.2"
+	vmdkPluginId   = "vmdk"
+	version        = "VMDK Volume Driver v0.3"
 )
 
 // An equivalent function is not exported from the SDK.

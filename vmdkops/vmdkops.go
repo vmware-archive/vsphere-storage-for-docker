@@ -74,3 +74,4 @@ func (v VmdkOps) Get(name string) (VolumeData, error) {
 	}
 	return VolumeData{}, fmt.Errorf("Volume does not exist: %s", name)
 }
+
