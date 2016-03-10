@@ -89,7 +89,7 @@ def kvVolPathOpen(volpath):
 
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
-   if res != 0:
+   if res != c_uint32(0):
       print "Open %s failed - %x" % (volpath, res)
 
    return dhandle
@@ -102,7 +102,7 @@ def create(volpath, kvDict):
 
    disk = kvVolPathOpen(volpath)
 
-   if disk == 0:
+   if disk == c_uint32(0):
       return False
 
    # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
@@ -128,7 +128,7 @@ def delete(volpath):
 
    disk = kvVolPathOpen(volpath)
 
-   if disk == 0:
+   if disk == c_uint32(0):
       return False
 
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
