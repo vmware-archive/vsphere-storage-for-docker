@@ -47,6 +47,8 @@ prereqs:
 $(PLUGIN_BIN): $(SRC) $(EXTRA_SRC)
 	@-mkdir -p $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
+	$(GO) test -c -o $(BIN)/$(VMDKOPS_MODULE).test $(PLUGIN)/$(VMDKOPS_MODULE)
+	$(GO) test -c -o $(BIN)/$(PNAME).test $(PLUGIN)
 
 .PHONY: clean
 clean:

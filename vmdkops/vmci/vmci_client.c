@@ -32,17 +32,16 @@ typedef struct {
 // Protocol message structure: request and reply
 //
 #define MAGIC 0xbadbeef
-typedef struct {
-   uint32_t mlen;  // length of message (including trailing \0)
-   const char *msg;     // expect null-term string there. Immutable.
+typedef struct be_request {
+   uint32_t mlen;   // length of message (including trailing \0)
+   const char *msg; // null-terminated immutable JSON string.
 } be_request;
 
-#define ANSW_BUFSIZE 1024  // fixed size for json reply or specific errmsg
-#define MAXBUF ANSW_BUFSIZE + 1 // Safety limit
+#define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
 
 typedef struct be_answer {
-   int status; // TBD: OK, parse error, access denied, etc...
-   char buf[ANSW_BUFSIZE];
+   int status;  // TBD: OK, parse error, access denied, etc...
+   char *buf;   // calloced, so needs to be free()
 } be_answer;
 
 //
@@ -114,7 +113,6 @@ get_backend(const char *shortName)
    return NULL;
 }
 
-
 // "dummy" interface implementation
 // Used for manual testing mainly,
 // to make sure data arrives to backend
@@ -138,12 +136,11 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
 {
    printf("dummy_get_reply: got request %s.\n", r->msg);
    printf("dummy_get_reply: replying empty (for now).\n");
-   a->buf[0] = '\0';
+   a->buf = strdup("none");
    a->status = 0;
 
    return 0;
 }
-
 
 // vsocket interface implementation
 //---------------------------------
@@ -169,6 +166,7 @@ vsock_init(be_sock_id *id, int cid, int port)
    sock = socket(af, SOCK_STREAM, 0);
    if (sock == -1) {
       perror("Failed to open socket");
+      VMCISock_ReleaseAFValueFd(id->vmci_id);
       return errno;
    }
 
@@ -182,63 +180,86 @@ vsock_init(be_sock_id *id, int cid, int port)
    ret = connect(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
    if (ret == -1) {
       perror("Failed to connect");
+      vsock_release(id);
       return errno;
    }
-
-   fprintf(stderr, "Connected to %d:%d.\n", id->addr.svm_cid,
-            id->addr.svm_port);
-
 
    return ret;
 }
 
-// Send request (r->msg) and wait for reply. Return reply in a->buf.
-// Expect r and a to be allocated by the caller
+//
+// Send request (r->msg) and wait for reply.
+// returns 0 on success , -1 (or potentially errno) on error
+// On success , allocates a->buf ( caller needs to free it) and placed reply there
+// Expects r and a to be allocated by the caller.
+//
+//
 static be_sock_status
 vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
 {
    int ret;
    uint32_t b; // smallish buffer
 
- 	// Try to send a message to the server.
+   printf("vsock_get_reply: Requesting '%s'.\n", r->msg);
+
+   // Try to send a message to the server.
+   // TODO use sendmsg here...
    b = MAGIC;
    ret = send(s->sock_id, &b, sizeof b, 0);
-   ret += send(s->sock_id, &r->mlen, sizeof(r->mlen), 0);
-   ret += send(s->sock_id, r->msg, r->mlen + 1, 0);
-   if (ret != (sizeof(b) + sizeof(r->mlen) + r->mlen + 1)) {
-      perror("Failed to send ");
-      return errno;
-   }
-
-   // magic:
-   b = 0;
-   ret = recv(s->sock_id, &b, sizeof b, 0);
-   if (ret == -1 || b != MAGIC) {
-      printf("Failed to receive magic: %d (%s) 0x%x\n", errno, strerror(errno),
-               b);
-      return ret;
-   }
-
-   // length, just in case:
-   b = 0;
-   ret = recv(s->sock_id, &b, sizeof b, 0);
-   if (ret == -1) {
-      printf("Failed to receive len: %d (%s)\n", errno, strerror(errno));
-      return ret;
-   }
-
-   memset(a->buf, 0, sizeof a->buf); // pure paranoia
-   ret = recv(s->sock_id, a->buf, sizeof(a->buf) - 1, 0);
-   if (ret == -1) {
-      printf("Failed to receive msg: %d (%s)", errno, strerror(errno));
-      return ret;
-   }
-   if (strlen(a->buf) != b) {
-      printf("Warning: len mismatch, strlen %zd, len %d\n", strlen(a->buf), b);
+   if (ret == -1 || ret != sizeof b) {
+      printf("Failed to send magic: ret %d (%s) expected ret %d\n",
+               ret, strerror(errno), sizeof b);
       return -1;
    }
 
-   printf("Received '%s'.\n", a->buf);
+   ret = send(s->sock_id, &r->mlen, sizeof r->mlen, 0);
+   if (ret == -1 || ret != sizeof r->mlen) {
+      printf("Failed to send len: ret %d (%s) expected ret %d\n",
+               ret, strerror(errno), sizeof r->mlen);
+      return -1;
+   }
+
+   ret = send(s->sock_id, r->msg, r->mlen, 0);
+   if (ret == -1 || ret != r->mlen) {
+      printf("Failed to send content: ret %d (%s) expected ret\n",
+               ret, strerror(errno), r->mlen);
+      return -1;
+   }
+
+   // Now get the reply (blocking, wait on ESX-side execution):
+
+   // MAGIC:
+   b = 0;
+   ret = recv(s->sock_id, &b, sizeof b, 0);
+   if (ret == -1 || ret != sizeof b || b != MAGIC) {
+      printf("*** Failed to receive magic: ret %d (%s) got 0x%x magic 0x%x\n",
+               ret, strerror(errno), b, MAGIC);
+      return -1;
+   }
+
+   // length
+   b = 0;
+   ret = recv(s->sock_id, &b, sizeof b, 0);
+   if (ret == -1 || ret != sizeof b) {
+      printf("Failed to receive len: ret %d (%s)\n", ret, strerror(errno));
+      return -1;
+   }
+
+   a->buf = calloc(1, b);
+   if ( !a->buf) {
+      printf("Memory allocation failure: request for %d bytes failed\n", b);
+      return -1;
+   }
+
+   ret = recv(s->sock_id, a->buf, b, 0);
+   if (ret == -1 || ret != b) {
+      printf("Failed to receive msg: ret %d (%s) expected ret %d\n",
+               ret, strerror(errno), b);
+      free(a->buf);
+      return -1;
+   }
+
+   printf("vsock_get_reply: Received '%s'.\n", a->buf);
    return 0;
 }
 
@@ -268,30 +289,29 @@ host_request(be_funcs *be, be_request* req, be_answer* ans, int cid, int port)
       return ret;
    }
 
-   if ((ret = be->get_reply(&id, req, ans)) != 0) {
-      return ret;
-   }
-
+   ret = be->get_reply(&id, req, ans);
    be->release_sock(&id);
-   return 0;
-}
 
+   return ret;
+}
 
 //
 //
 // Entry point for vsocket requests
+// <ans> is allocated upstairs
 //
 be_sock_status
-Vmci_GetReply(int port, const char* json_request, const char* be_name, be_answer* ans)
+Vmci_GetReply(int port, const char* json_request, const char* be_name,
+              be_answer* ans)
 {
-   	be_request req;
+   be_request req;
+   be_funcs *be = get_backend(be_name);
 
-	be_funcs *be = get_backend(be_name);
-
-   	if (be == NULL) {
-    	  return BAD_BE_NAME;
+   if (be == NULL) {
+      return BAD_BE_NAME;
    }
-   req.mlen = strnlen(json_request, MAXBUF);
+
+   req.mlen = strnlen(json_request, MAXBUF) + 1;
    req.msg = json_request;
 
    return host_request(be, &req, ans, ESX_VMCI_CID, port);

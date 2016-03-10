@@ -75,10 +75,9 @@ func (_ VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, e
 		log.Print("Warning - no connection to ESX over vsocket, trace only")
 		return nil, fmt.Errorf("vmdkCmd err: %d (%s)", ret, syscall.Errno(ret).Error())
 	}
-	response := []byte(C.GoString((*C.char)(unsafe.Pointer(&ans.buf))))
-	// Try to unmarshal an error response
-	err = unmarshalError(response)
-	if err != nil {
+	response := []byte(C.GoString(ans.buf))
+	C.free(unsafe.Pointer(ans.buf))
+	err = unmarshalError(response); if err != nil {
 		return nil, err
 	}
 	// There was no error, so return the slice containing the json response

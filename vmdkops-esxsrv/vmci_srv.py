@@ -93,8 +93,10 @@ from pyVmomi import VmomiSupport, vim, vmodl
 #import volumeKVStore as kv
 
 # defaults
-DockVolsDir = "dockvols"   # place in the same (with Docker VM) datastore
-MaxDescrSize = 100000  # we assume files smaller that that to be descriptor files
+DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
+MaxDescrSize = 10000     # we assume files smaller that that to be descriptor files
+MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limited in size
+MaxSkipCoint = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
 BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
@@ -233,7 +235,7 @@ def checkPath(path):
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
-	print "{0} ({1}) -> '{2} {3} ({4}".format(vmName, vmId, cmd, volName, opts)
+	#print "{0} (id {1}) requests cmd '{2}' vol '{3}' opts '{4}'".format(vmName, vmId, cmd, volName, opts)
 
 	# get /vmfs/volumes/<volid> path on ESX:
 	path = os.path.join("/".join(configPath.split("/")[0:4]),  DockVolsDir)
@@ -463,51 +465,62 @@ def disk_detach(vmdkPath, vm):
 
 # Main - connect, load VMCI shared lib and does main loop
 def main():
-	global si  # we maintain only one connection
+    global si  # we maintain only one connection
 
-	si = connectLocal()
+    si = connectLocal()
 
-        # Init the key-store module
-        # kv.init()
+    printVMInfo(si) # just making sure we can do it - print
 
-	printVMInfo(si) # just making sure we can do it - print
+    # Load and use DLL with vsocket shim to listen for docker requests
+    lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
 
-	# Load and use DLL with vsocket shim to listen for docker requests
-	l = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
+    bsize = MaxJsonSize 
+    txt = create_string_buffer(bsize)
 
-	bsize = 4096 # max buf size for json strings... to be fixed TBD
-	txt = create_string_buffer(bsize)
+    af = c_int() ; vmciFd = c_int(); cartel = c_int32()
+    sock = lib.vmci_init(byref(af), byref(vmciFd))
+    skipCount = MaxSkipCoint # retries for vmci_get_one_op failures
+    while True:
+        c = lib.vmci_get_one_op(sock, af, byref(cartel), txt, c_int(bsize))
+        print "lib.vmci_get_one_op returns {0} , buffer '{1}'".format(c, txt.value)
 
-	af = c_int() ; vmciFd = c_int(); cartel = c_int32()
-	sock = l.vmci_init(byref(af), byref(vmciFd))
-	while True:
+        if c == -1:
+            # VMCI Get Ops can self-correct by reoping sockets internally. Give it a chance.
+            print "VMCI Get Ops failed - ignoring and moving on."
+            skipCount = skipCount - 1
+            if skipCount <= 0:
+                raise Exception("Too many errors from VMCI Get Ops - giving up.")
+            continue
+        else:
+            skipCount = MaxSkipCoint # reset the counter, just in case
 
-		c = l.vmci_get_one_op(sock, af, byref(cartel), txt, c_int(bsize))
-		if c == c_int(-1):
-			break
+        # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
+        vmmLeader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel.value))
+        groupInfo = vsi.get("/vm/%s/vmmGroupInfo" % vmmLeader)
 
-		# Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
-		vmmLeader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel.value))
-		groupInfo = vsi.get("/vm/%s/vmmGroupInfo" % vmmLeader)
+        # vmId - get and convert to format understood by vmodl as a VM key
+        # end result should be like this 564d6865-2f33-29ad-6feb-87ea38f9083b"
+        # see KB http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1880
+        s = groupInfo["uuid"]
+        vmId   = "{0}-{1}-{2}-{3}-{4}".format(s[0:8], s[9:12], s[12:16], s[16:20], s[20:32])
+        vmName = groupInfo["displayName"]
+        cfgPath = groupInfo["cfgPath"]
 
-		# vmId - get and convert to format understood by vmodl as a VM key
-		# end result should be like this 564d6865-2f33-29ad-6feb-87ea38f9083b"
-		# see KB http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1880
-		s = groupInfo["uuid"]
-		vmId   = "{0}-{1}-{2}-{3}-{4}".format(s[0:8], s[9:12], s[12:16], s[16:20], s[20:32])
-		vmName = groupInfo["displayName"]
-		cfgPath = groupInfo["cfgPath"]
+        try:
+            req = json.loads(txt.value, "utf-8")
+        except ValueError as e:
+            ret = {u'Error': "Failed to parse json '%s'." % (txt,value)}
+        else:
+            # note: Connection can time out on idle. TODO: to refresh in that case
+            details = req["details"]
+            opts = details["Opts"] if "Opts" in details else None
+            ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
+            print "executeRequest ret = ", ret
+        
+        err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
+        print "lib.vmci_reply: VMCI replied with errcode ", err
 
-		req = json.loads(txt.value, "utf-8")
-		# note: Connection can time out on idle. TODO: to refresh in that case
-		details = req["details"]
-		opts = details["Opts"] if "Opts" in details else None
-		ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
-                print "executeRequest ret = ", ret
-		err = l.vmci_reply(c, c_char_p(json.dumps(ret)))
-		print "execute_request: VMCI replied with errcode ", err
-
-	l.close(sock, vmciFd)
+    lib.close(sock, vmciFd) # close listening socket when the loop is over
 
 
 #-----------------------------------------------------------

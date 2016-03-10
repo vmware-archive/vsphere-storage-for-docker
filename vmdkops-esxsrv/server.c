@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <stdint.h>
 
 #include "vmci/vmci_sockets.h"
@@ -99,13 +100,13 @@ vmci_init(int *af, int *vmciFd)
    return s;
 }
 
-// returns socket to communicate on, or -1
+// returns socket to communicate on (which neds to be closed later),
+// or -1 on error
 int
-vmci_get_one_op(
-         const int s,   // socket to listen on
-         const int af,  // address family for VMCI
+vmci_get_one_op(const int s,    // socket to listen on
+         const int af,   // address family for VMCI
          uint32_t *vmid, // cartel ID for VM
-         char *buf,     // external buffer to return json string
+         char *buf,      // external buffer to return json string
          const int bsize // buffer size
          )
 {
@@ -121,7 +122,7 @@ vmci_get_one_op(
    ret = listen(s, 1);
    if (ret == -1) {
       perror("Failed to listen on socket");
-      return -1; // -1 break the outer loops
+      return -1;
    }
 
    addrLen = sizeof addr;
@@ -133,16 +134,10 @@ vmci_get_one_op(
 
    // get VMID. We really get CartelID for VM, but it will make do
    socklen_t len = sizeof(*vmid);
-   if (getsockopt(c, af, SO_VMCI_PEER_HOST_VM_ID, vmid, &len) == -1
-            || len != sizeof(*vmid)) {
-      perror("sockopt SO_VMCI_PEER_HOST_VM_ID, Continuing...");
+   if (getsockopt(c, af, SO_VMCI_PEER_HOST_VM_ID, vmid, &len) == -1 || len
+            != sizeof(*vmid)) {
+      perror("sockopt SO_VMCI_PEER_HOST_VM_ID failed, continuing...");
       // will still try to recv message to know what was there - so no return
-   }
-
-   struct sockaddr_vm client_addr;
-   len = sizeof(client_addr);
-   if (getpeername(c, (struct sockaddr *) &client_addr, &len) == -1) {
-      perror("getpeername error. Continuing...");
    }
 
    /*
@@ -154,7 +149,8 @@ vmci_get_one_op(
    b = 0;
    ret = recv(c, &b, sizeof b, 0);
    if (ret == -1 || b != MAGIC) {
-      printf("Failed to receive magic: %d (%s) 0x%zx\n", ret, strerror(ret), b);
+      printf("Failed to receive magic: ret %d (%s) got 0x%x (expected 0x%x)\n",
+               ret, strerror(errno), b, MAGIC);
       close(c);
       return -1;
    }
@@ -163,69 +159,84 @@ vmci_get_one_op(
    b = 0;
    ret = recv(c, &b, sizeof b, 0);
    if (ret == -1) {
-      printf("Failed to receive len: %d (%s)\n", ret, strerror(ret));
+      printf("Failed to receive len: ret %d (%s) got %d\n",
+               ret, strerror(errno), b);
       close(c);
       return -1;
    }
 
-   memset(buf, 0, bsize);
-   ret = recv(c, buf, bsize - 1, 0);
-   if (-1 == ret) {
-      perror("Failed to receive");
+   if (b > bsize) {
+      // passed in buffer too small !
+      printf("Query is too large, can't handle: %d (max %d)\n", b, bsize);
       close(c);
       return -1;
    }
-   if (strlen(buf) != b) {
-      printf("Warning: len mismatch, strlen %d, len %zd'\n", strlen(buf), b);
 
+   memset(buf, 0, b);
+   ret = recv(c, buf, b, 0);
+   if (ret != b) {
+      printf("Failed to receive content: ret %d (%s) expected %d\n",
+             ret, strerror(errno), b);
+      close(c);
+      return -1;
+   }
+   // protocol sanity check
+   if (strlen(buf) + 1 != b) {
+      printf("Warning: len mismatch, expected %d, got %d\n", strlen(buf), b);
    }
 
    return c;
 }
 
 // sends a single reply
+// returns 0 on OK and -1 on error, with "reply" send in this case being the error message
 int
-vmci_reply(
-         const int c,   // socket to use
-         const char *reply // (json) to send back
+vmci_reply(const int c,      // socket to use
+           const char *reply // (json) to send back
          )
 {
    int ret; // keep return values here
    uint32_t b; // smallish buffer
+
+   // just being paranoid
+   // TODO: add error code to network protocol instead if the hacky err msg.
+   // Also wire the proper error handling in both python srv and GO client
+   if (reply == NULL) {
+      reply = "OK";
+   }
+   printf("vmci_reply: got to send '%s' on socket %d\n", reply, c);
 
    /*
     * And send one word back.
     */
 
    b = MAGIC;
-
    ret = send(c, &b, sizeof(b), 0);
    if (ret != sizeof(b)) {
-      perror("Failed to send magic");
-      return 0;
+      reply = "Failed to send magic";
+      printf("%s: ret %d (%s) expected size %d\n",
+               reply, ret, strerror(errno), sizeof(b));
+      close(c);
+      return -1;
    }
 
-   // HACK : fixme. Add error code to package instead if this ugly check.
-   // Also wire the proper error handling in sendToVmci (need to accest NULL or string
-   // as OUT , string means error to pass to client
-   if (reply == NULL) {
-      reply = "OK";
-   }
-
-   b = strlen(reply) ;
-
+   b = strlen(reply) + 1; // send the string and trailing \0
    ret = send(c, &b, sizeof(b), 0);
    if (ret != sizeof(b)) {
-      perror("Failed to send len");
+      reply = "Failed to send len";
+      printf("%s: ret %d (%s) expected size %d\n",
+               reply, ret, strerror(errno), sizeof(b));
       close(c);
-      return 0;
+      return -1;
    }
 
-   ret = send(c, reply, strlen(reply) + 1, 0);
-   if (strlen(reply) + 1 != ret) {
-      perror("Failed to send");
+   printf("Sending reply '%s'\n", reply);
+   ret = send(c, reply, b, 0);
+   if (b != ret) {
+      printf("Failed to send content: ret %d (%s) expected size %d\n",
+               ret, strerror(errno), b);
       close(c);
-      return 0;
+      return -1;
    }
 
    close(c);
