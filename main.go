@@ -32,10 +32,11 @@ func fullSocketAddress(pluginName string) string {
 
 func main() {
 	// connect to this socket
-	port := flag.Int("port", 15000, "default port  for vmci")
+	port := flag.Int("port", 15000, "Default port for vmci")
+	mockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
 	flag.Parse()
+	log.Printf("%s (port: %d, mock_esx: %v)", version, *port, *mockEsx)
 
-	log.Printf("%s (port: %d)", version, *port)
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -47,7 +48,7 @@ func main() {
 
 	// register Docker plugin socket (.sock) and listen on it
 
-	driver := newVmdkDriver()
+	driver := newVmdkDriver(*mockEsx)
 	handler := volume.NewHandler(driver)
 
 	log.Print("Going into ServeUnix - Listening on Unix socket: %s", fullSocketAddress(vmdkPluginId))

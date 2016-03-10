@@ -1,14 +1,15 @@
 build:
   ci:
-    image: kerneltime/vibauthor-and-go:0.3
+    privileged: true
+    image: kerneltime/vibauthor-and-go:0.4
     volumes:
       # Needed for creating docker images
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
-      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
+      - GOVC_USERNAME=root
+      - GOVC_PASSWORD=
       - GOVC_INSECURE=1
-      - GOVC_URL=$$CI_ESX_IP
+      - GOVC_URL=192.168.109.59
     commands:
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip ubuntu-2`
