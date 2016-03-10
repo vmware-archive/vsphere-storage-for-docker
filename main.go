@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	pluginSockDir = "/run/docker/plugins"
+	pluginSockDir  = "/run/docker/plugins"
 	vmdkPluginId   = "vmdk"
 	version        = "VMDK Volume Driver v0.3"
 )
@@ -51,6 +51,6 @@ func main() {
 	driver := newVmdkDriver(*mockEsx)
 	handler := volume.NewHandler(driver)
 
-	log.Print("Going into ServeUnix - Listening on Unix socket: %s", fullSocketAddress(vmdkPluginId))
+	log.Printf("Going into ServeUnix - Listening on %s", fullSocketAddress(vmdkPluginId))
 	fmt.Println(handler.ServeUnix("root", fullSocketAddress(vmdkPluginId)))
 }

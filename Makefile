@@ -24,7 +24,7 @@ GO := GO15VENDOREXPERIMENT=1 go
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
 VMDKOPS_MODULE := vmdkops
-EXTRA_SRC      = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
+VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
 
 # All sources. We rebuild if anything changes here
 SRC = plugin.go main.go
@@ -32,23 +32,22 @@ SRC = plugin.go main.go
 #  Targets
 #
 .PHONY: build
-build: prereqs $(PLUGIN_BIN)
+build: prereqs $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@ 
-	@echo "Now building tests..."
-	$(GO) test -c -o $(BIN)/$(VMDKOPS_MODULE).test $(PLUGIN)/$(VMDKOPS_MODULE)
-	$(GO) test -c -o $(BIN)/$(PLUGNAME).test       $(PLUGIN)
-	@cd  $(ESX_SRC)  ; $(MAKE)  $@
-
 
 .PHONY: prereqs
 prereqs:
 	@./check.sh
 
-$(PLUGIN_BIN): $(SRC) $(EXTRA_SRC)
+$(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
-	$(GO) test -c -o $(BIN)/$(VMDKOPS_MODULE).test $(PLUGIN)/$(VMDKOPS_MODULE)
-	$(GO) test -c -o $(BIN)/$(PNAME).test $(PLUGIN)
+
+$(BIN)/$(VMDKOPS_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go
+	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE)
+
+$(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
+	$(GO) test -c -o $@ $(PLUGIN)
 
 .PHONY: clean
 clean:
