@@ -111,7 +111,7 @@ def create(volpath, kvDict):
    else:
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
-   if res != 0:
+   if res != c_uint32(0):
       print "Side car create for %s failed - %x" % (volpath, res)
       lib.DiskLib_Close(disk)
       return False
@@ -132,7 +132,7 @@ def delete(volpath):
       return False
 
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
-   if res != 0:
+   if res != c_uint32(0):
       print "Side car delete for %s failed - %x" % (volpath, res)
       lib.DiskLib_Close(disk)
       return False
