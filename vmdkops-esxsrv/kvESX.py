@@ -89,7 +89,7 @@ def kvVolPathOpen(volpath):
 
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
-   if res != 0:
+   if res != c_uint32(0):
       print "Open %s failed - %x" % (volpath, res)
 
    return dhandle
