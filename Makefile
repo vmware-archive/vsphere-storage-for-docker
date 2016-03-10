@@ -126,6 +126,7 @@ clean-vm:
 	-$(SSH) $(VM) rm /tmp/$(STARTVM) /tmp/$(STOPVM)
 	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
 	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
+	-$(SSH) $(VM) rm -rvf /tmp/docker-volumes/
 	-$(SSH) $(VM) service docker restart
 
 .PHONY: clean-esx
