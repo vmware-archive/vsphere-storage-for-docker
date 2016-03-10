@@ -1,7 +1,7 @@
 build:
   ci:
     privileged: true
-    image: kerneltime/vibauthor-and-go:0.3
+    image: kerneltime/vibauthor-and-go:0.4
     volumes:
       # Needed for creating docker images
       - /var/run/docker.sock:/var/run/docker.sock
