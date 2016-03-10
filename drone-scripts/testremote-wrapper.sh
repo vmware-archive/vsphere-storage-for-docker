@@ -14,6 +14,7 @@ VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
 SSH="ssh -o StrictHostKeyChecking=no"
+LOGFILE="/var/log/docker-vmdk-plugin.log"
 
 if [ $# -lt 3 ]
 then
@@ -35,11 +36,11 @@ dump_log() {
   echo "*************************************************************************"
   echo "dumping log: VM " $VM1
   echo "*************************************************************************"
-  $SSH $VM1 cat /tmp/plugin.log
+  $SSH $VM1 cat $LOGFILE
   echo "*************************************************************************"
   echo "dumping log: VM " $VM2
   echo "*************************************************************************"
-  $SSH $VM2 cat /tmp/plugin.log
+  $SSH $VM2 cat $LOGFILE
 }
 
 if make testremote VM=$VM1 VM2=$VM2 TEST_VOL_NAME=vol-build$BUILD_NUMBER

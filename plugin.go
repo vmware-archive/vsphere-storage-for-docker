@@ -42,10 +42,10 @@ package main
 import (
 	//	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-vmdk-plugin/fs"
 	"github.com/vmware/docker-vmdk-plugin/vmdkops"
-	"log"
 	"path/filepath"
 	"sync"
 )
@@ -133,15 +133,12 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 	mountpoint := filepath.Join(mountRoot, r.Name)
 	err := fs.Unmount(mountpoint)
 	if err != nil {
-		log.Printf("umount failed: %T", err)
-		return fmt.Errorf("umount failed: %T", err)
+		log.WithFields(log.Fields{"error": err}).Info("Unmount failed")
+		return fmt.Errorf("Unmount failed: %T", err)
 	}
-	log.Printf("detach request for %s : sending...", r.Name)
+	log.WithFields(log.Fields{"name": r.Name, "options": r.Options}).Info("Detach Volume")
 	return d.ops.Detach(r.Name, r.Options)
 }
-
-// All plugin callbbacks are getting "Name" as a part of volume.Request.
-// Create() also getting "Opts" (flags entered via '-o')
 
 // The user wants to create a volume.
 // No need to actually manifest the volume on the filesystem yet
@@ -182,16 +179,18 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 
 	// Get the mount point path and make sure it exists.
 	m := filepath.Join(mountRoot, r.Name)
-	log.Printf("Mounting volume %s on %s\n", r.Name, m)
+	log.WithFields(log.Fields{"name": r.Name, "mountpoint": m}).Info("Mounting Volume")
 
 	err := fs.Mkdir(m)
 	if err != nil {
+		log.WithFields(log.Fields{"dir": m}).Error("Failed to make directory")
 		return volume.Response{Err: err.Error()}
 	}
 
 	if err := d.mountVolume(r, m); err != nil {
 		return volume.Response{Err: err.Error()}
 	}
+	log.WithFields(log.Fields{"name": r.Name}).Info("Mount Succeeded")
 
 	return volume.Response{Mountpoint: m}
 }
@@ -204,10 +203,12 @@ func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
 		return volume.Response{Err: ""}
 	}
 
-	log.Printf("unmount %s", r.Name)
 	err := d.unmountVolume(r)
+	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume")
 	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Unmount Failed")
 		return volume.Response{Err: err.Error()}
 	}
+	log.WithFields(log.Fields{"name": r.Name}).Info("Unmount Succeeded")
 	return volume.Response{Err: ""}
 }

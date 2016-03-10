@@ -6,7 +6,7 @@ package fs
 
 import (
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"strings"
@@ -32,11 +32,13 @@ func Mkdir(path string) error {
 func Mount(mountpoint string, name string, fs string) error {
 	out, err := exec.Command("blkid", []string{"-L", name}...).Output()
 	if err != nil {
-		log.Printf("Failed to discover device using blkid")
-		return fmt.Errorf("blkid err: %T", err)
+		return fmt.Errorf("Failed to discover device  using blkid")
 	} else {
 		device := strings.TrimRight(string(out), " \n")
-		log.Printf("Mounting %s for label %s", device, mountpoint)
+		log.WithFields(log.Fields{
+			"device":     device,
+			"mountpoint": mountpoint,
+		}).Debug("Calling syscall.Mount()")
 		//_, err = exec.Command("mount", []string{device, mountpoint}...).Output()
 		err = syscall.Mount(device, mountpoint, fs, 0, "")
 		if err != nil {

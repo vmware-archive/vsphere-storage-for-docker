@@ -27,12 +27,12 @@ VMDKOPS_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
 
 # All sources. We rebuild if anything changes here
-SRC = plugin.go main.go
+SRC = plugin.go main.go log_formatter.go
 
 #  TargetprintNQuit
 
 # The default build is using a prebuilt docker image that has all dependencies.
-.PHONY: dockerbuild 
+.PHONY: dockerbuild
 dockerbuild:
 	@./scripts/check.sh dockerbuild
 	./scripts/build.sh
@@ -40,7 +40,7 @@ dockerbuild:
 # The non docker build.
 .PHONY: build
 build: prereqs $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
-	@cd  $(ESX_SRC)  ; $(MAKE)  $@ 
+	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 .PHONY: prereqs
 prereqs:
@@ -67,7 +67,7 @@ clean:
 # ----------
 # temporary goal to simplify my deployments and sanity check test (create/delete)
 #
-# expectations: 
+# expectations:
 #   Need target machines (ESX/Guest) to have proper ~/.ssh/authorized_keys
 #
 # Usage:
@@ -121,9 +121,9 @@ deploy-vm:
 deploy: deploy-esx deploy-vm
 	@echo Done
 
-	
+
 #
-# 'make test' or 'make testremote' 
+# 'make test' or 'make testremote'
 # CAUTION: FOR NOW, RUN testremote DIRECTLY VIA 'make'. DO NOT run via './build.sh'
 #  reason: ssh keys for accessing remote hosts are not in container used by ./build.sh
 # ----------
@@ -131,9 +131,9 @@ deploy: deploy-esx deploy-vm
 
 # this is a set of unit tests run on build machine
 .PHONY: test
-test: 
+test:
 	$(GO) test $(PLUGIN)/vmdkops
-	
+
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME?=MyVolume
 
