@@ -8,9 +8,8 @@ Here the basic commands you need to run to get going with the docker vmdk plugin
 ./build.sh # Use a docker image to run make.
 # Output is in the bin folder.
 
-vi Makefile # update IP addresses for VM and ESX
-
-make deploy # SCP files over and run commands to install.
+make deploy-esx ESX=root@10.20.105.54
+make deploy-vm  VM=root@10.20.105.121
 
 # To run on ESX
 
@@ -125,24 +124,13 @@ make
 
 ## To install:
 
-Proper install on ESX/guest is not ready yet, but top-level Makefile
-has a "make deploy" target, which send files over ssh  to the ESX and GUEST.
-
-You need to manually change HOST and GUEST IPs in the Makefile to point to
-to IPs in your environment. The copy will rely on SSH being properly enabled
-on target machines and between them and your build machine.
-
 ```
-make deploy
+make deploy-esx ESX=root@10.20.105.54
+make deploy-vm VM=root@10.20.105.121
 ```
 This will copy the VIB file to ESXi and install in so  /usr/lib/vmware/vmdkops/bin
 has all neccessary file, and will copy docker-vmdk-plugin binary to guest
 Linux VM /usr/local/bin. 
-
-If you build machine does not have 'make' (e.g. Photon OS), you can use
-```
-docker run --rm -v $PWD:/work -w /work docker-vmdk-plugin  make deploy
-```
 
 Note: when fully  implemented, deploy will have the VIB install actually starting
 the service properly, RPM install on VC for pushing VIBs automatically, 
