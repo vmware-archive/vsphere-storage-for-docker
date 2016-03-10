@@ -1,2 +1,4 @@
 #!/bin/sh
-/usr/local/bin/docker-vmdk-plugin < /dev/null > /tmp/plugin.log 2>&1 &
+log=/tmp/plugin.log
+echo ==== `date` ===== >> $log
+/usr/local/bin/docker-vmdk-plugin < /dev/null >> $log 2>&1 &

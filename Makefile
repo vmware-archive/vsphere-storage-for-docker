@@ -11,14 +11,14 @@ BIN := ./bin
 ESX_SRC     := vmdkops-esxsrv # esx service for docker volume ops
 
 #  binaries location
-PLUGIN_NAME  := docker-vmdk-plugin
-PLUGIN_BIN = $(BIN)/$(PLUGIN_NAME)
+PLUGNAME  := docker-vmdk-plugin
+PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 
 VIBFILE := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
 # plugin name, for go build
-PLUGIN := github.com/vmware/$(PLUGIN_NAME)
+PLUGIN := github.com/vmware/$(PLUGNAME)
 
 GO := GO15VENDOREXPERIMENT=1 go
 
@@ -33,7 +33,12 @@ SRC = plugin.go main.go
 #
 .PHONY: build
 build: prereqs $(PLUGIN_BIN)
+	@cd  $(ESX_SRC)  ; $(MAKE)  $@ 
+	@echo "Now building tests..."
+	$(GO) test -c -o $(BIN)/$(VMDKOPS_MODULE).test $(PLUGIN)/$(VMDKOPS_MODULE)
+	$(GO) test -c -o $(BIN)/$(PLUGNAME).test       $(PLUGIN)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
+
 
 .PHONY: prereqs
 prereqs:
@@ -49,22 +54,23 @@ clean:
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 
-#TBD: this is a good place to add unit tests...
-.PHONY: test
-test: build
-	$(GO) test $(PLUGIN)/vmdkops $(PLUGIN)
-	@echo "*** Info: No tests in plugin folder yet"
-	@cd  $(ESX_SRC)  ; $(MAKE)  $@
-
-
+#
+# 'make deploy'
+# ----------
+# temporary goal to simplify my deployments and sanity check test (create/delete)
+#
+# expectations: 
+#   Need target machines (ESX/Guest) to have proper ~/.ssh/authorized_keys
+#
+# Usage:
 # either pass the ESX and VM
 # make deploy-esx root@10.20.105.54
 # make deploy-vm root@10.20.105.121
 # or edit the entries below
 
-ESX?=root@10.20.105.54
-VM?=root@10.20.105.121
-VM2?=$(VM1) # run tests only on one VM
+ESX? = root@10.20.105.54
+VM?  = root@10.20.105.121
+VM2? = $(VM1) # run tests only on one VM
 SCP := scp -o StrictHostKeyChecking=no
 SSH := ssh -kTax -o StrictHostKeyChecking=no
 
@@ -89,22 +95,43 @@ STOPESX_LOC  := ./hack/$(STOPESX)
 deploy-esx:
 	$(SCP) $(VIB_BIN) $(ESX):/tmp
 	$(SCP) $(STARTESX_LOC) $(STOPESX_LOC) $(ESX):/tmp
+	-$(SSH) $(ESX) "sh /tmp/$(STOPESX)"
 	-$(SSH) $(ESX) $(VIBCMD) remove --vibname $(VIBNAME)
 	$(SSH) $(ESX) $(VIBCMD) install --no-sig-check  -v /tmp/$(VIBFILE)
 	$(SSH) $(ESX) "sh /tmp/$(STARTESX)"
 
 .PHONY: deploy-vm
 deploy-vm:
-	$(SCP) $(PLUGIN_BIN) $(VM):$(GLOC)
+	$(SCP) $(BIN)/*.test $(VM):/tmp
 	$(SCP) $(STARTVM_LOC) $(STOPVM_LOC) $(VM):/tmp/
+	-$(SSH) $(VM) "sh /tmp/$(STOPVM) &"
+	$(SCP) $(PLUGIN_BIN) $(VM):$(GLOC)
 	$(SSH) $(VM) "sh /tmp/$(STARTVM) &"
 
-# "make simpletest" assumes all services are started manually, and simply
+.PHONY:deploy
+deploy: deploy-esx deploy-vm
+	@echo Done
+
+	
+#
+# 'make test' or 'make testremote' 
+# CAUTION: FOR NOW, RUN testremote DIRECTLY VIA 'make'. DO NOT run via './build.sh'
+#  reason: ssh keys for accessing remote hosts are not in container used by ./build.sh
+# ----------
+
+
+# this is a set of unit tests run on build machine
+.PHONY: test
+test: 
+	$(GO) test $(PLUGIN)/vmdkops
+	
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME?=MyVolume
 
 .PHONY: testremote
 testremote:
+	$(SSH) $(VM) /tmp/$(PLUGNAME).test
+	$(SSH) $(VM) /tmp/$(VMDKOPS_MODULE).test
 	$(SSH) $(VM) docker volume create \
 			--driver=vmdk --name=$(TEST_VOL_NAME) \
 			-o size=1gb -o policy=good
@@ -122,8 +149,8 @@ testremote:
 clean-vm:
 	-$(SCP) $(STOPVM_LOC) $(VM):/tmp/
 	-$(SSH) $(VM) "sh /tmp/$(STOPVM)"
-	-$(SSH) $(VM) rm $(GLOC)/$(PLUGIN_NAME)
-	-$(SSH) $(VM) rm /tmp/$(STARTVM) /tmp/$(STOPVM)
+	-$(SSH) $(VM) rm $(GLOC)/$(PLUGNAME)
+	-$(SSH) $(VM) rm /tmp/$(STARTVM) /tmp/$(STOPVM) /tmp/$(VMDKOPS_MODULE).test /tmp/$(PLUGNAME).test
 	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
 	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
 	-$(SSH) $(VM) rm -rvf /tmp/docker-volumes/
