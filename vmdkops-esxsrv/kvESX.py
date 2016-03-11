@@ -48,20 +48,20 @@ def kvESXInit():
 
     # Define all of the functions we are interested in
     lib.DiskLib_OpenWithInfo.argtypes = [c_char_p, c_int32, POINTER(c_uint32), POINTER(c_uint32), POINTER(c_uint32)]
-    lib.DiskLib_OpenWithInfo.restype = c_int32
+    lib.DiskLib_OpenWithInfo.restype = c_uint32
 
     lib.DiskLib_Close.argtypes = [c_uint32]
-    lib.DiskLib_Close.restype = c_int32
+    lib.DiskLib_Close.restype = c_uint32
 
     if esxVersion > '6.0.0':
        lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
-       lib.DiskLib_SidecarCreate.restype = c_int32
+       lib.DiskLib_SidecarCreate.restype = c_uint32
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
-    lib.DiskLib_SidecarOpen.restype = c_int32
+    lib.DiskLib_SidecarOpen.restype = c_uint32
 
     lib.DiskLib_SidecarClose.argtypes = [c_uint32, c_char_p, POINTER(c_uint32)]
-    lib.DiskLib_SidecarClose.restype = c_int32
+    lib.DiskLib_SidecarClose.restype = c_uint32
 
     lib.DiskLib_SidecarMakeFileName.argtypes = [c_char_p, c_char_p]
     lib.DiskLib_SidecarMakeFileName.restype = c_char_p
@@ -73,10 +73,10 @@ def kvESXInit():
     lib.ObjLib_Pwrite.restype = c_int32
 
     lib.DiskLib_DBGet.argtypes = [c_uint32, c_char_p, POINTER(c_char_p)]
-    lib.DiskLib_DBGet.restype = c_int32
+    lib.DiskLib_DBGet.restype = c_uint32
 
     lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
-    lib.DiskLib_DBSet.restype = c_int32
+    lib.DiskLib_DBSet.restype = c_uint32
 
     return None
 
@@ -85,7 +85,7 @@ def kvVolPathOpen(volpath):
    ihandle = c_uint32(0)
    key = c_uint32(0)
    objHandle = c_uint32(0)
-   res = c_int32(0)
+   res = c_uint32(0)
 
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
@@ -98,11 +98,11 @@ def kvVolPathOpen(volpath):
 def create(volpath, kvDict):
    disk = c_uint32(0)
    objHandle = c_uint32(0)
-   res = 0
+   res = c_uint32(0)
 
    disk = kvVolPathOpen(volpath)
 
-   if disk == 0:
+   if disk == c_uint32(0):
       return False
 
    # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
@@ -124,11 +124,11 @@ def create(volpath, kvDict):
 # Delete the the side car for the given volume
 def delete(volpath):
    disk = c_uint32(0)
-   res = 0
+   res = c_uint32(0)
 
    disk = kvVolPathOpen(volpath)
 
-   if disk == 0:
+   if disk == c_uint32(0):
       return False
 
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
