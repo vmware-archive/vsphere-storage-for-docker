@@ -6,6 +6,7 @@ usage() {
   echo "./end2end.sh <ESX IP> <VM1 IP> <VM2 IP> <Optional Build id>"
   echo "root user will be used for all operations"
   echo "Advisable to setup ssh keys"
+  echo "Run this script from the root of the repo"
 }
 
 ESX=root@$1
@@ -20,7 +21,7 @@ then
   exit 1
 fi
 
-. ./hack/cleanup.sh
+. ./drone-scripts/cleanup.sh
 
 echo "*************************************************************************"
 echo "tests starting"

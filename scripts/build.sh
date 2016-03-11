@@ -62,8 +62,8 @@ GOPATH=/go
 
 # mount point within the container.
 dir=$GOPATH/src/github.com/vmware/$plugin
-
+docker_socket=/var/run/docker.sock
 set -x
-docker run --privileged --rm -v $PWD:$dir -w $dir $plug_container make $1
+docker run --privileged --rm -v $docker_socket:$docker_socket -v $PWD:$dir -w $dir $plug_container make build
 set +x
 

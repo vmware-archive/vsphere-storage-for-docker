@@ -29,15 +29,22 @@ VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
 # All sources. We rebuild if anything changes here
 SRC = plugin.go main.go
 
-#  Targets
-#
+#  TargetprintNQuit
+
+# The default build is using a prebuilt docker image that has all dependencies.
+.PHONY: dockerbuild 
+dockerbuild:
+	@./scripts/check.sh dockerbuild
+	./scripts/build.sh
+
+# The non docker build.
 .PHONY: build
 build: prereqs $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@ 
 
 .PHONY: prereqs
 prereqs:
-	@./check.sh
+	@./scripts/check.sh
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN)
@@ -82,14 +89,15 @@ GLOC := /usr/local/bin
 # vib install: we install by file name but remove by internal name
 VIBNAME := vmware-esx-vmdkops-service
 VIBCMD  := localcli software vib
+SCRIPTS := ./scripts
 STARTESX := startesx.sh
 STOPESX  := stopesx.sh
 STARTVM := startvm.sh
 STOPVM  := stopvm.sh
-STARTVM_LOC := ./hack/$(STARTVM)
-STOPVM_LOC  := ./hack/$(STOPVM)
-STARTESX_LOC := ./hack/$(STARTESX)
-STOPESX_LOC  := ./hack/$(STOPESX)
+STARTVM_LOC := $(SCRIPTS)/$(STARTVM)
+STOPVM_LOC  := $(SCRIPTS)/$(STOPVM)
+STARTESX_LOC := $(SCRIPTS)/$(STARTESX)
+STOPESX_LOC  := $(SCRIPTS)/$(STOPESX)
 
 .PHONY: deploy-esx
 # ignore failures in copy to guest (can be busy) and remove vib (can be not installed)
@@ -129,21 +137,28 @@ test:
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME?=MyVolume
 
+VM1? = $(VM)
+
 .PHONY: testremote
 testremote:
-	$(SSH) $(VM) /tmp/$(PLUGNAME).test
-	$(SSH) $(VM) /tmp/$(VMDKOPS_MODULE).test
-	$(SSH) $(VM) docker volume create \
+	$(SSH) $(VM1) /tmp/$(PLUGNAME).test
+	$(SSH) $(VM1) /tmp/$(VMDKOPS_MODULE).test
+	$(SSH) $(VM1) docker volume create \
 			--driver=vmdk --name=$(TEST_VOL_NAME) \
 			-o size=1gb -o policy=good
-	$(SSH) $(VM) docker run --rm -v $(TEST_VOL_NAME):/$(TEST_VOL_NAME) busybox touch /$(TEST_VOL_NAME)/file
-	$(SSH) $(VM2) docker run --rm -v $(TEST_VOL_NAME):/$(TEST_VOL_NAME) --volume-driver=vmdk busybox stat /$(TEST_VOL_NAME)/file
-	$(SSH) $(VM) "docker volume ls | grep $(TEST_VOL_NAME)"
+	$(SSH) $(VM1) docker run --rm \
+		-v $(TEST_VOL_NAME):/$(TEST_VOL_NAME) \
+		busybox touch /$(TEST_VOL_NAME)/file
+	$(SSH) $(VM2) docker run --rm \
+		-v $(TEST_VOL_NAME):/$(TEST_VOL_NAME) \
+		--volume-driver=vmdk busybox \
+		stat /$(TEST_VOL_NAME)/file
+	$(SSH) $(VM1) "docker volume ls | grep $(TEST_VOL_NAME)"
 	$(SSH) $(VM2) "docker volume ls | grep $(TEST_VOL_NAME)"
-	$(SSH) $(VM) "docker volume inspect $(TEST_VOL_NAME)| grep Driver | grep vmdk"
+	$(SSH) $(VM1) "docker volume inspect $(TEST_VOL_NAME)| grep Driver | grep vmdk"
 	$(SSH) $(VM2) "docker volume inspect $(TEST_VOL_NAME)| grep Driver | grep vmdk"
-	$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)
-	-$(SSH) $(VM) "docker volume ls "
+	$(SSH) $(VM1) docker volume rm $(TEST_VOL_NAME)
+	-$(SSH) $(VM1) "docker volume ls "
 	-$(SSH) $(VM2) "docker volume ls "
 
 .PHONY: clean-vm
@@ -151,7 +166,11 @@ clean-vm:
 	-$(SCP) $(STOPVM_LOC) $(VM):/tmp/
 	-$(SSH) $(VM) "sh /tmp/$(STOPVM)"
 	-$(SSH) $(VM) rm $(GLOC)/$(PLUGNAME)
-	-$(SSH) $(VM) rm /tmp/$(STARTVM) /tmp/$(STOPVM) /tmp/$(VMDKOPS_MODULE).test /tmp/$(PLUGNAME).test
+	-$(SSH) $(VM) rm \
+		      /tmp/$(STARTVM) \
+		      /tmp/$(STOPVM) \
+		      /tmp/$(VMDKOPS_MODULE).test \
+		      /tmp/$(PLUGNAME).test
 	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
 	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
 	-$(SSH) $(VM) rm -rvf /tmp/docker-volumes/

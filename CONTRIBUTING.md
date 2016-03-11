@@ -3,6 +3,69 @@
 * Create a fork or branch (if you can) and make your changes.
 * Push your changes and create a pull request.
 
+# Typical Dev Workflow
+
+Make changes to code and run build. Make will basic unit tests
+
+```
+make
+```
+
+To deploy the code onto a dev setup, typically consisting of 1 ESX and 2 VMs,
+there are some automated steps.
+
+Setup:
+```
+export ESX=root@10.20.105.54
+make deploy-esx
+export VM=root@10.20.105.121
+make deploy-vm
+export VM=root@10.20.105.201
+make deploy-vm
+```
+
+or
+
+```
+make deploy-esx ESX=root@10.20.105.54
+make deploy-vm VM=root@10.20.105.121
+make deploy-vm VM=root@10.20.104.210
+```
+
+To run the end 2 end tests, run the following commands.
+
+Test:
+```
+make testremote VM1=root@10.20.105.121 VM2=root@10.20.104.210
+```
+
+If the code needs to run in debugger or the console output is desired.
+Login to the machine kill the binary and re-run it manually.
+
+```
+Standard invocation on ESX:
+python /usr/lib/vmware/vmdkops/bin/vmci_srv.py 
+
+Standard invocation on VM: (as root)
+/usr/local/bin/docker-vmdk-plugin
+```
+
+To remove the code from the testbed, follow the steps.
+
+Cleanup:
+
+```
+make clean-vm VM=root@10.20.105.121
+make clean-vm VM=root@10.20.104.210
+make clean-esx ESX=root@10.20.105.54
+```
+
+If additional python scripts are added to the ESX code, update the vib description file to include them.
+
+```
+./vmdkops-esxsrv/descriptor.xml
+```
+
 # Managing GO Dependencies
 
 Use [gvt](https://github.com/FiloSottile/gvt) and check in the dependency.
@@ -37,7 +100,9 @@ A typical workflow for a developer should be.
 - Create a branch, push changes and make sure tests do not break as reported
   by the CI system.
 - When ready post a PR. This will trigger a full set of tests on ESX. After all
-  the tests pass and the review is complete the PR will be merged in.
+  the tests pass and the review is complete the PR will be merged in. If the PR 
+  depends on new code checked into master, merge in the changes as a rebase and
+  push the changes to the branch.
 - When the PR is merged in the CI system will re-run the tests against the master.
   On success a new Docker image will be ready for customers to deploy (This is only
   for the docker plugin, the ESX code needs to be shipped separately).
@@ -101,7 +166,6 @@ index 5550172..9a4b872 100644
 +      - export VM2=10.20.104.210
        - make
        - make test
-       - ./hack/setup.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
 ```
 
 Do not restart docker if machine running drone is also a VM in the devsetup.
@@ -142,38 +206,4 @@ Test SSH keys, login form the drone node should not require typing in a password
 ```
 cd cd $GOPATH/src/github.com/vmware/docker-vmdk-plugin/
 drone exec --trusted -i ~/.ssh/id_rsa
-```
-
-### Running the tests manually.
-
-Scripts invoked by CI/CD can also be run manually.
-
-Setup:
-```
-export ESX=root@10.20.105.54
-make deploy-esx
-export VM=root@10.20.105.121
-make deploy-vm
-export VM=root@10.20.105.201
-make deploy-vm
-```
-
-or
-
-```
-make deploy-esx ESX=root@10.20.105.54
-make deploy-vm VM=root@10.20.105.121
-make deploy-vm VM=root@10.20.104.210
-```
-
-Test:
-```
-make testremote VM=root@10.20.105.121 VM2=root@10.20.104.210
-```
-
-Cleanup:
-```
-make clean-vm VM=root@10.20.105.121
-make clean-vm VM=root@10.20.104.210
-make clean-esx ESX=root@10.20.105.54
 ```
