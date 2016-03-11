@@ -121,7 +121,6 @@ git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
 make 
 ```
-
 ## To install:
 
 ```
