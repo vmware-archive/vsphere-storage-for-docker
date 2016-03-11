@@ -209,17 +209,37 @@ def findVmByName(vmName):
 
 	return vm
 
+# Return true or false depending on whether the
+# disk exists and is a valid disk.
+def verifyVMDK(vmdkPath):
+   cmd = "/sbin/vmkfstools -e %s" % vmdkPath
+   proc = subprocess.Popen(cmd,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           shell=True)
+   proc.communicate()
+   ret = proc.returncode
+
+   if ret != 0:
+      return False
+   else:
+      return True
+
 #returns error, or None for OK
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
-        # s = kv.get(vmdkPath, 'status')
-        # print "disk has status - %s" % s
+        if not verifyVMDK(vmdkPath):
+           msg = "Invalid or missing volume %s" % os.path.splitext(os.path.basename(vmdkPath))[0]
+           return msg
 	print "*** attachVMDK: " + vmdkPath + " to"   + vmName + " uuid=", vm.config.uuid
 	return disk_attach(vmdkPath, vm)
 
 #returns error, or None for OK
 def detachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
+        if not verifyVMDK(vmdkPath):
+           msg = "Invalid or missing volume %s" % os.path.splitext(os.path.basename(vmdkPath))[0]
+           return msg
 	print "*** detachVMDK: " + vmdkPath + " from "  + vmName + " VM uuid=", vm.config.uuid
 	disk_detach(vmdkPath, vm)
 	return None
