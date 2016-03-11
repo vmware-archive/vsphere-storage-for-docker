@@ -106,10 +106,10 @@ def create(volpath, kvDict):
       return False
 
    # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
-   if esxVersion > '6.0.0':
+   #if esxVersion > '6.0.0':
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
-   else:
-      res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
+   #else:
+      #res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
       print "Side car create for %s failed - %x" % (volpath, res)
