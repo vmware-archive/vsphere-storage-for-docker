@@ -64,6 +64,7 @@ func (h Handler) listenAndServe(proto, addr, group string) error {
 		Addr:    addr,
 		Handler: h.mux,
 	}
+	server.SetKeepAlivesEnabled(false)
 
 	switch proto {
 	case "tcp":
