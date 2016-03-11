@@ -21,20 +21,29 @@
 
 #define MAGIC 0xbadbeef
 
+// TODO: get shared lib for client and server
+static int
+vsock_get_family(void)
+{
+   static int af = -1;
+
+   if (af == -1) { // Note: this may leak FDs in multi-threads. TBD: lock.
+      af = VMCISock_GetAFValue();
+   }
+   return af;
+}
+
 // returns socket to listen to, or -1
 // also fills in af and vmciFd
 int
-vmci_init(int *af, int *vmciFd)
+vmci_init(void)
 {
    struct sockaddr_vm addr;
    socklen_t addrLen;
+   int af; // socket family for VMCI communication
    int ret;
    int s; // socket to open
 
-   if (af == 0 || vmciFd == 0) {
-      fprintf(stderr, "Passing null ptr for buffer is evil.\n");
-      return -1;
-   }
 
    /*
     * The address family for vSockets must be acquired, it is not static.
@@ -42,8 +51,8 @@ vmci_init(int *af, int *vmciFd)
     * open.
     */
 
-   *af = VMCISock_GetAFValueFd(vmciFd);
-   if (*af == -1) {
+   af = vsock_get_family();
+   if (af == -1) {
       fprintf(stderr, "Failed to get address family.\n");
       return -1;
    }
@@ -52,7 +61,7 @@ vmci_init(int *af, int *vmciFd)
     * Open a STREAM socket using our address family.
     */
 
-   s = socket(*af, SOCK_STREAM, 0);
+   s = socket(af, SOCK_STREAM, 0);
    if (s == -1) {
       perror("Failed to open socket");
       return -1;
@@ -65,7 +74,7 @@ vmci_init(int *af, int *vmciFd)
     */
 
    memset(&addr, 0, sizeof addr);
-   addr.svm_family = *af;
+   addr.svm_family = af;
    addr.svm_cid = VMADDR_CID_ANY;
    addr.svm_port = 15000;
    ret = bind(s, (const struct sockaddr *) &addr, sizeof addr);
@@ -104,7 +113,6 @@ vmci_init(int *af, int *vmciFd)
 // or -1 on error
 int
 vmci_get_one_op(const int s,    // socket to listen on
-         const int af,   // address family for VMCI
          uint32_t *vmid, // cartel ID for VM
          char *buf,      // external buffer to return json string
          const int bsize // buffer size
@@ -115,7 +123,12 @@ vmci_get_one_op(const int s,    // socket to listen on
    socklen_t addrLen;
    struct sockaddr_vm addr;
    int c = -1; // connected socket
+   int af = vsock_get_family();
 
+   if (af == -1)  {
+      printf("Internal error - FAMILY (af) value is not set\n");
+      return -1;
+   }
    /*
     * listen for client connections.
     */
@@ -247,13 +260,10 @@ vmci_reply(const int c,      // socket to use
 }
 
 void
-vmci_close(int s, int vmciFd)
+vmci_close(int s)
 {
 
    if (s != -1) {
       close(s);
    }
-
-   VMCISock_ReleaseAFValueFd(vmciFd);
-
 }

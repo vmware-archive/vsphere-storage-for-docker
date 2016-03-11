@@ -477,11 +477,11 @@ def main():
     bsize = MaxJsonSize 
     txt = create_string_buffer(bsize)
 
-    af = c_int() ; vmciFd = c_int(); cartel = c_int32()
-    sock = lib.vmci_init(byref(af), byref(vmciFd))
+    cartel = c_int32()
+    sock = lib.vmci_init()
     skipCount = MaxSkipCount # retries for vmci_get_one_op failures
     while True:
-        c = lib.vmci_get_one_op(sock, af, byref(cartel), txt, c_int(bsize))
+        c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
         print "lib.vmci_get_one_op returns {0} , buffer '{1}'".format(c, txt.value)
 
         if c == -1:
@@ -520,7 +520,7 @@ def main():
         err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
         print "lib.vmci_reply: VMCI replied with errcode ", err
 
-    lib.close(sock, vmciFd) # close listening socket when the loop is over
+    lib.close(sock) # close listening socket when the loop is over
 
 
 #-----------------------------------------------------------
