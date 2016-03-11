@@ -229,10 +229,8 @@ def verifyVMDK(vmdkPath):
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
         if not verifyVMDK(vmdkPath):
-           print "Invalid volume %s, skipping attach" % vmdkPath
-           return None
-        # s = kv.get(vmdkPath, 'status')
-        # print "disk has status - %s" % s
+           msg = "Invalid or missing volume %s" % os.path.splitext(os.path.basename(vmdkPath))[0]
+           return msg
 	print "*** attachVMDK: " + vmdkPath + " to"   + vmName + " uuid=", vm.config.uuid
 	return disk_attach(vmdkPath, vm)
 
@@ -240,8 +238,8 @@ def attachVMDK(vmdkPath, vmName):
 def detachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
         if not verifyVMDK(vmdkPath):
-           print "Invalid volume %s, skipping detach" % vmdkPath
-           return None
+           msg = "Invalid or missing volume %s" % os.path.splitext(os.path.basename(vmdkPath))[0]
+           return msg
 	print "*** detachVMDK: " + vmdkPath + " from "  + vmName + " VM uuid=", vm.config.uuid
 	disk_detach(vmdkPath, vm)
 	return None
