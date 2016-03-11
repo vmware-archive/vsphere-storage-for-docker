@@ -5,21 +5,9 @@
 Here the basic commands you need to run to get going with the docker vmdk plugin.
 
 ```
-./build.sh # Use a docker image to run make.
-# Output is in the bin folder.
-
-make deploy-esx ESX=root@10.20.105.54
-make deploy-vm  VM=root@10.20.105.121
-
-# To run on ESX
-
-python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
-
-# To run on Linux guest
-
-sudo apt-get install libc6-i386
-
-sudo /usr/local/bin/docker-vmdk-plugin
+make # Requires docker installed.
+make deploy-esx ESX=root@10.20.105.54 # Python service deployed and running.
+make deploy-vm  VM=root@10.20.105.121 # Docker plugin deployed and running.
 
 # Docker commands to use plugin
 
@@ -30,7 +18,18 @@ docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox 
 docker volume rm MyVolume # SHOULD FAIL - still used by container
 docker rm my_container
 docker volume rm MyVolume # Should pass
+
+# To run on ESX manually.
+
+python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
+
+# To run on Linux guest manually.
+
+sudo /usr/local/bin/docker-vmdk-plugin
+
 ```
+
+To read more about code developement and testing read [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 # Docker VMDK volume plugin (WIP)
 
@@ -78,19 +77,20 @@ or do not plan to impact your GO projects.
 ```Shell
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
-./build.sh
-./build.sh test
-./build.sh clean
+make # Build and run unit tests. 
+make clean
 ```
 
-There are also the following targets (can use used with build.sh):
+There are also the following targets:
 ```
 make clean       # removes binaries build by 'make'
 make test        # runs whatever unit tests we have
 make deploy      # deploys to your test box (see below)
-make cleanremote # uninstalls from test boxes)
+make clean-esx   # uninstalls from esx 
+make clean-vm    # uninstalls from vm
 make testremote  # runs sanity check docker commands for volumes
 ```
+For more details refer to [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 ### Building on Photon TP2 Minimal
 
@@ -119,27 +119,8 @@ mkdir -p $(GOPATH)/src/github.com/vmware
 cd $(GOPATH)/src/github.com/vmware
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
-make 
+make build
 ```
-
-## To install:
-
-```
-make deploy-esx ESX=root@10.20.105.54
-make deploy-vm VM=root@10.20.105.121
-```
-This will copy the VIB file to ESXi and install in so  /usr/lib/vmware/vmdkops/bin
-has all neccessary file, and will copy docker-vmdk-plugin binary to guest
-Linux VM /usr/local/bin. 
-
-Note: when fully  implemented, deploy will have the VIB install actually starting
-the service properly, RPM install on VC for pushing VIBs automatically, 
-and proper container to run service on Linux guest.
-
-## To Run:
-
-Check quicksteps above.
-One dependency that needs to be installed on the guest side is the 32 bit libc.
 
 # WIP
 To be continued...
