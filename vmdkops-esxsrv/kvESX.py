@@ -54,8 +54,8 @@ def kvESXInit():
     lib.DiskLib_Close.restype = c_uint32
 
     #if esxVersion > '6.0.0':
-       lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
-       lib.DiskLib_SidecarCreate.restype = c_uint32
+    lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
+    lib.DiskLib_SidecarCreate.restype = c_uint32
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarOpen.restype = c_uint32
@@ -107,7 +107,7 @@ def create(volpath, kvDict):
 
    # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
    #if esxVersion > '6.0.0':
-      res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
+   res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    #else:
       #res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
