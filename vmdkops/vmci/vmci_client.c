@@ -24,7 +24,6 @@ typedef int be_sock_status;
 //
 typedef struct {
    int sock_id; // socket id for socket APIs
-   int vmci_id; // vmci id to track close()
    struct sockaddr_vm addr; // held here for bookkeeping and reporting
 } be_sock_id;
 
@@ -145,6 +144,23 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
 // vsocket interface implementation
 //---------------------------------
 
+// Get socket family for VMCI. Returns -1 on failure
+// Actually opens and keep FD to /dev/vsock to indicate
+// to the kernel that VMCI driver is used by this process.
+// Need to be inited once.
+// Can be released explicitly on exit, or left as is and process completion
+// will clean it up
+static int
+vsock_get_family(void)
+{
+   static int af = -1;
+
+   if (af == -1) { // Note: this may leak FDs in multi-threads. TODO: lock.
+      af = VMCISock_GetAFValue();
+   }
+   return af;
+}
+
 // Create and connect VMCI socket.
 static be_sock_status
 vsock_init(be_sock_id *id, int cid, int port)
@@ -153,21 +169,14 @@ vsock_init(be_sock_id *id, int cid, int port)
    int af;    // family id
    int sock;     // socket id
 
-   // The address family for vSockets is not static and must be acquired.
-   // We hold onto the family we get back by keeping the fd to the device
-   // open.
-
-   af = VMCISock_GetAFValueFd(&id->vmci_id);
-   if (af == -1) {
-      fprintf(stderr, "Failed to get address family.\n");
+   if ((af = vsock_get_family()) == -1) {
+      perror("Failed to get address family.");
       return -1;
    }
-
    sock = socket(af, SOCK_STREAM, 0);
    if (sock == -1) {
       perror("Failed to open socket");
-      VMCISock_ReleaseAFValueFd(id->vmci_id);
-      return errno;
+      return -1;
    }
 
    id->sock_id = sock;
@@ -181,7 +190,7 @@ vsock_init(be_sock_id *id, int cid, int port)
    if (ret == -1) {
       perror("Failed to connect");
       vsock_release(id);
-      return errno;
+      return -1;
    }
 
    return ret;
@@ -246,7 +255,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    }
 
    a->buf = calloc(1, b);
-   if ( !a->buf) {
+   if (!a->buf) {
       printf("Memory allocation failure: request for %d bytes failed\n", b);
       return -1;
    }
@@ -268,7 +277,6 @@ static void
 vsock_release(be_sock_id *id)
 {
    close(id->sock_id);
-   VMCISock_ReleaseAFValueFd(id->vmci_id);
 }
 
 //
