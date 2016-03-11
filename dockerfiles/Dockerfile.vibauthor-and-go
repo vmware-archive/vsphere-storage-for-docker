@@ -1,3 +1,15 @@
+# This docker file is published using the kerneltime account.
+# If any changes are to be made contact cna-storage@vmware.com 
+# to publish the updates to docker hub.
+# This is published to docker hub for 2 reasons
+# 1. Drone cannot build this image and then use it without forking
+#    a separate repo and adding dependencies between dockerfile 
+#    and the docker-vmdk-plugin repo. 
+# 2. Others outside the project can find this useful.
+
+
+# Current tag: 0.4
+
 FROM lamw/vibauthor
 
 MAINTAINER cna-storage@vmware.com

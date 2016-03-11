@@ -5,7 +5,8 @@
 usage() {
   echo "./setup.sh <ESX IP> <VM1 IP> <VM2 IP> <Optional Build id>"
   echo "root user will be used for all operations"
-  echo "Advisable to setup ssh keys"
+  echo "Advisable to setup ssh keys."
+  echo "run this script from the root of the repo"
 }
 
 if [ $# -lt 3 ] 
@@ -23,9 +24,9 @@ BUILD_NUMBER=$4
 SCP="scp -o StrictHostKeyChecking=no"
 SSH="ssh -o StrictHostKeyChecking=no"
 
-. ./hack/cleanup.sh
+. ./drone-scripts/cleanup.sh
 
-$SCP ./hack/lock.sh $VM1:/tmp/
+$SCP ./drone-scripts/lock.sh $VM1:/tmp/
 
 # Unlock performed in stop_build in cleanup.sh
 until $SSH $VM1 /tmp/lock.sh lock $BUILD_NUMBER
