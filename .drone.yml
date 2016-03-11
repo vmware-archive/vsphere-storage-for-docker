@@ -24,8 +24,10 @@ publish:
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
     repo: kerneltime/docker-vmdk-plugin
-    tag: latest
-    file: Dockerfile.vmdk-plugin
+    tag:
+      - "latest"
+      - $$BRANCH-$$BUILD_NUMBER
+    file: dockerfiles/Dockerfile.vmdk-plugin
     privileged: true
     storage_driver: overlay
     when:
