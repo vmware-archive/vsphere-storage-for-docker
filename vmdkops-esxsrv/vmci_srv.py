@@ -88,7 +88,7 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
-#import volumeKVStore as kv
+import volumeKVStore as kv
 
 # defaults
 DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
@@ -187,7 +187,7 @@ def formatVmdk(vmdkPath, volName):
 def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
         # Remove the kv store for vmdkPath if present
-        # kv.delete(vmdkPath)
+        kv.delete(vmdkPath)
     
         cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
         rc, out = RunCommand(cmd)
@@ -381,6 +381,7 @@ def disk_attach(vmdkPath, vm):
 
   # Check if this disk is already attached, skip the
   # attach below if it is
+
   # status = kv.get(vmdkPath, 'status')
   # logging.info 'Attaching %s with status %s' % (vmdkPath, status)
   # if status != 'detached':
@@ -425,7 +426,7 @@ def disk_attach(vmdkPath, vm):
 
   try:
       wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-      # kv.set(vmdkPath, 'status', 'attached')
+      kv.set(vmdkPath, 'status', 'attached')
   except vim.fault.VimFault as ex:
       return err(ex.msg)
   else:
@@ -460,7 +461,7 @@ def disk_detach(vmdkPath, vm):
 
   try:
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
-     # kv.set(vmdkPath, 'status', 'detached')
+     kv.set(vmdkPath, 'status', 'detached')
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)
