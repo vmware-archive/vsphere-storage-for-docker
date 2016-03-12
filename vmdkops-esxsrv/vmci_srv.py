@@ -104,9 +104,9 @@ LogFile = "/var/log/vmware/docker-vmdk-plugin.log"
 def LogSetup(logfile):
     logging.basicConfig(filename=logfile,
                         level=logging.DEBUG,
-                        format='%(asctime)-12s %(message)s',
-                        datefmt='%X %x')
-    logging.info("===" + time.strftime('%X %x %Z') + "Starting vmdkops service ===")
+                        format='%(asctime)-12s %(process)d [%(levelname)s] %(message)s',
+                        datefmt='%x %X')
+    logging.info("===" + time.strftime('%x %X %Z') + "Starting vmdkops service ===")
 
 
 # Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)

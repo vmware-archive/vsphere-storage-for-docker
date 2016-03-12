@@ -31,7 +31,8 @@ dump_log() {
   echo "*************************************************************************"
   echo "dumping log: ESX " $ESX
   echo "*************************************************************************"
-  $SSH $ESX cat "/var/log/vmware/docker-vmdk-plugin.log"
+  $SSH $ESX cat /var/log/vmware/docker-vmdk-plugin.log
+  $SSH $ESX cat /tmp/plugin.log
   echo "*************************************************************************"
   echo "dumping log: VM " $VM1
   echo "*************************************************************************"
