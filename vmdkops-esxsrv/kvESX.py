@@ -113,6 +113,7 @@ def create(volpath, kvDict):
       return False
 
    if useSideCarCreate:
+      print "Creating side car for", volpath
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
