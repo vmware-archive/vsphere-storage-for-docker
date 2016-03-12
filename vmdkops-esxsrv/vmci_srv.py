@@ -161,7 +161,7 @@ def createVMDK(vmdkPath, volName, opts):
         # Create the kv store for the disk before its attached
         ret = kv.create(vmdkPath, "detached", opts)
         if ret != True:
-           logging.info "Failed creating key value store for", vmdkPath
+           logging.info("Failed creating key value store for " + vmdkPath)
            removeVMDK(vmdkPath)
            return None
 
@@ -381,9 +381,9 @@ def disk_attach(vmdkPath, vm):
   # attach below if it is
 
   status = kv.get(vmdkPath, 'status')
-  logging.info 'Attaching %s with status %s' % (vmdkPath, status)
+  logging.info("Attaching" + vmdkPath + "with status" + status))
   if status != 'detached':
-     logging.info "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
+     logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
      return
 
   # Now find a slot on the controller  , if needed
