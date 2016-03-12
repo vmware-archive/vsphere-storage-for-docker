@@ -45,6 +45,8 @@ def loadDiskLib():
    if ret == 0:
       useSideCarCreate = True
 
+   print ret
+   print useSideCarCreate
 
 # Loads the ESX library used to access proprietary ESX disk lib API.
 # Create arg/result definitions for those that we use.
