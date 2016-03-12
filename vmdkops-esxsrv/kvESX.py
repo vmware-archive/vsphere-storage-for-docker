@@ -45,9 +45,6 @@ def loadDiskLib():
    if ret == 0:
       useSideCarCreate = True
 
-   print ret
-   print useSideCarCreate
-
 # Loads the ESX library used to access proprietary ESX disk lib API.
 # Create arg/result definitions for those that we use.
 def kvESXInit():
@@ -114,8 +111,8 @@ def create(volpath, kvDict):
    if disk == c_uint32(0):
       return False
 
+   print "Creating side car for", volpath, useSideCarCreate
    if useSideCarCreate:
-      print "Creating side car for", volpath
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
