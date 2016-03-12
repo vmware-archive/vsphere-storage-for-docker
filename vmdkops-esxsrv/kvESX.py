@@ -16,7 +16,7 @@ KV_CREATE_SIZE = 0
 # VSphere lib to access ESX proprietary APIs.
 diskLib = "/lib/libvmsnapshot.so"
 lib = None
-esxVersion = None
+useSideCarCreate = False
 dVolKey = "vmdk-plugin-vol"
 
 # Maps to OPEN_BUFFERED | OPEN_LOCK | OPEN_NOFILTERS
@@ -26,7 +26,7 @@ vmdkOpenFlags = 524312
 # Load the library if not done already
 def loadDiskLib():
    global lib
-   global esxVersion
+   global useSideCarCreate
 
    if not lib:
       lib = CDLL(diskLib)
@@ -34,10 +34,17 @@ def loadDiskLib():
       lib.DiskLib_Init.restype = c_bool
       lib.DiskLib_Init()
 
-   if not esxVersion:
-      proc = subprocess.Popen('uname -r', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-      s = proc.communicate()[0]
-      esxVersion = s.rstrip()
+   # Figure what APIs supported for side car creation.
+   objDmp = '/bin/objdump -R %s | grep %s' % (diskLib, 'DiskLib_SidecarCreate')
+   proc = subprocess.Popen(objDmp,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           shell=True)
+   proc.communicate()
+   ret = proc.returncode
+   if ret == 0:
+      useSideCarCreate = True
+
 
 # Loads the ESX library used to access proprietary ESX disk lib API.
 # Create arg/result definitions for those that we use.
@@ -53,9 +60,9 @@ def kvESXInit():
     lib.DiskLib_Close.argtypes = [c_uint32]
     lib.DiskLib_Close.restype = c_uint32
 
-    #if esxVersion > '6.0.0':
-    lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
-    lib.DiskLib_SidecarCreate.restype = c_uint32
+    if useSideCarCreate:
+       lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
+       lib.DiskLib_SidecarCreate.restype = c_uint32
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarOpen.restype = c_uint32
@@ -106,10 +113,10 @@ def create(volpath, kvDict):
       return False
 
    # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
-   #if esxVersion > '6.0.0':
-   res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
-   #else:
-      #res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
+   if useSideCarCreate:
+      res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
+   else:
+      res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
       print "Side car create for %s failed - %x" % (volpath, res)
