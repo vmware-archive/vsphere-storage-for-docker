@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"syscall"
 	"unsafe"
 )
@@ -72,12 +72,13 @@ func (_ VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, e
 	ret := C.Vmci_GetReply(C.int(vmciEsxPort), cmd_s, be_s, ans)
 
 	if ret != 0 {
-		log.Print("Warning - no connection to ESX over vsocket, trace only")
+		log.Warn("No connection to ESX over vsocket, trace only")
 		return nil, fmt.Errorf("vmdkCmd err: %d (%s)", ret, syscall.Errno(ret).Error())
 	}
 	response := []byte(C.GoString(ans.buf))
 	C.free(unsafe.Pointer(ans.buf))
-	err = unmarshalError(response); if err != nil {
+	err = unmarshalError(response)
+	if err != nil {
 		return nil, err
 	}
 	// There was no error, so return the slice containing the json response

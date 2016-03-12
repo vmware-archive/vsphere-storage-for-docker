@@ -7,9 +7,9 @@ package vmdkops
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/vmware/docker-vmdk-plugin/fs"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -30,7 +30,7 @@ func (_ MockVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byt
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Running Mock Cmd %s", cmd)
+	log.WithFields(log.Fields{"cmd": cmd}).Debug("Running Mock Cmd")
 	switch cmd {
 	case "create":
 		err := create_block_device(name)

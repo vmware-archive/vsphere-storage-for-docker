@@ -35,26 +35,26 @@ To read more about code developement and testing read [CONTRIBUTING.md](https://
 
 Native ESXi VMDK support for Docker Data Volumes.
 
-When Docker runs in a VM under ESXi hypervisor, we allow Docker user to 
-create and use VMDK-based data volumes. Example: 
+When Docker runs in a VM under ESXi hypervisor, we allow Docker user to
+create and use VMDK-based data volumes. Example:
 
 ```Shell
 docker volume create --driver=vmdk --name=MyStorage -o size=10gb
 docker run --rm -it -v MyStorage:/mnt/data busybox sh
 ```
 
-This will create a MyStorage.vmdk on the same datastore where Docker VM is 
-located. This vmdk will be attached to the Docker VM on "docker run" and 
-the containers can use this storage for data. 
+This will create a MyStorage.vmdk on the same datastore where Docker VM is
+located. This vmdk will be attached to the Docker VM on "docker run" and
+the containers can use this storage for data.
 
-This repo contains guest code and ESXi code. 
+This repo contains guest code and ESXi code.
 
 The docker-vmdk-plugin service runs in docker VM and talks to Docker Volume
-Plugin API via Unix Sockets. It then relays requests via VMWare vSockets 
-host-guest communication to a edicated service on ESXi. 
+Plugin API via Unix Sockets. It then relays requests via VMWare vSockets
+host-guest communication to a edicated service on ESXi.
 
 The docker plugin code makes use of  vmdkops module  (found  in ./vmdkops)
-and ESX python service (found in ./vmdkops-esxsrc). 
+and ESX python service (found in ./vmdkops-esxsrc).
 
 The end results is that "docker volume create --drive vmdk" is capable
 of creating VMDK disks on enclosing ESX host, and using the new volume auto
@@ -66,18 +66,18 @@ Build prerequisites:
  - Linux with Docker (1.8+ is supported)
  - git
  - make
- 
+
 Build results are in ./bin.
- 
+
 ### Using docker (Recommended)
 
-Use it when you do not have GO, vibauthor and 32 bit C libraries on your machine, 
-or do not plan to impact your GO projects. 
+Use it when you do not have GO, vibauthor and 32 bit C libraries on your machine,
+or do not plan to impact your GO projects.
 
 ```Shell
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 cd docker-vmdk-plugin
-make # Build and run unit tests. 
+make # Build and run unit tests.
 make clean
 ```
 
@@ -86,16 +86,18 @@ There are also the following targets:
 make clean       # removes binaries build by 'make'
 make test        # runs whatever unit tests we have
 make deploy      # deploys to your test box (see below)
-make clean-esx   # uninstalls from esx 
+make clean-esx   # uninstalls from esx
 make clean-vm    # uninstalls from vm
 make testremote  # runs sanity check docker commands for volumes
 ```
+Note that `make testremote` reads log output from the plugin at `/var/log/docker-vmdk-plugin.log`.
+
 For more details refer to [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 ### Building on Photon TP2 Minimal
 
-Photon TP2 Minimal does not have git or make installed, and does not 
-not start docker by default, so you need to do this before running make: 
+Photon TP2 Minimal does not have git or make installed, and does not
+not start docker by default, so you need to do this before running make:
 
 ```Shell
  # Photon TP2 Minimal only:
@@ -103,7 +105,7 @@ tyum install -y git
 tyum install -y make
 systemctl start docker
 ```
-and then the git/cd/make sequence. 
+and then the git/cd/make sequence.
 
 ### Building without Docker
 
@@ -112,7 +114,7 @@ This build requires
 - vibauthor
 - 32 bit libc headers (as it is needed for ESX-side vSocket shim compilation.)
 
-With these prerequisites, you can do the following to build: 
+With these prerequisites, you can do the following to build:
 
 ```
 mkdir -p $(GOPATH)/src/github.com/vmware

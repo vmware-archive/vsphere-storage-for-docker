@@ -5,9 +5,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -15,9 +14,10 @@ import (
 )
 
 const (
-	pluginSockDir  = "/run/docker/plugins"
-	vmdkPluginId   = "vmdk"
-	version        = "VMDK Volume Driver v0.3"
+	pluginSockDir = "/run/docker/plugins"
+	vmdkPluginId  = "vmdk"
+	version       = "VMDK Volume Driver v0.3"
+	logPath       = "/var/log/docker-vmdk-plugin.log"
 )
 
 // An equivalent function is not exported from the SDK.
@@ -34,14 +34,36 @@ func main() {
 	// connect to this socket
 	port := flag.Int("port", 15000, "Default port for vmci")
 	mockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
+	logLevel := flag.String("log_level", "info", "Logging Level")
 	flag.Parse()
-	log.Printf("%s (port: %d, mock_esx: %v)", version, *port, *mockEsx)
+
+	level, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.WithFields(log.Fields{"level": *logLevel}).Panic("Invalid Log Level")
+	}
+
+	flags := syscall.O_APPEND | syscall.O_CREAT | syscall.O_WRONLY
+	file, err := os.OpenFile(logPath, flags, 0755)
+	if err != nil {
+		log.WithFields(log.Fields{"path": logPath, "error": err}).Panic("Failed to open logfile")
+	}
+
+	log.SetOutput(file)
+	log.SetFormatter(new(VmwareFormatter))
+	log.SetLevel(level)
+
+	log.WithFields(log.Fields{
+		"version":   version,
+		"port":      *port,
+		"mock_esx":  *mockEsx,
+		"log_level": *logLevel,
+	}).Info("Docker VMDK plugin started")
 
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigChannel
-		log.Printf("Received Signal:%v", sig)
+		log.WithFields(log.Fields{"signal": sig}).Error("Received Signal")
 		os.Remove(fullSocketAddress(vmdkPluginId))
 		os.Exit(0)
 	}()
@@ -51,6 +73,9 @@ func main() {
 	driver := newVmdkDriver(*mockEsx)
 	handler := volume.NewHandler(driver)
 
-	log.Printf("Going into ServeUnix - Listening on %s", fullSocketAddress(vmdkPluginId))
-	fmt.Println(handler.ServeUnix("root", fullSocketAddress(vmdkPluginId)))
+	log.WithFields(log.Fields{
+		"address": fullSocketAddress(vmdkPluginId),
+	}).Info("Going into ServeUnix - Listening on Unix socket")
+
+	log.Info(handler.ServeUnix("root", fullSocketAddress(vmdkPluginId)))
 }
