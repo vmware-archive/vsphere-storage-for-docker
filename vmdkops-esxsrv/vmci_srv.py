@@ -381,7 +381,7 @@ def disk_attach(vmdkPath, vm):
   # attach below if it is
 
   status = kv.get(vmdkPath, 'status')
-  logging.info("Attaching" + vmdkPath + "with status" + status))
+  logging.info("Attaching" + vmdkPath + "with status" + status)
   if status != 'detached':
      logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
      return
@@ -397,7 +397,6 @@ def disk_attach(vmdkPath, vm):
       raise StandardError("We don't support this many disks yet")
 
     diskSlot = availSlots.pop()
-    logging.debug(" controllerKey=%d slot=%d" % (controllerKey, diskSlot))
 
   # add disk here
   disk_spec = vim.VirtualDeviceConfigSpec(
