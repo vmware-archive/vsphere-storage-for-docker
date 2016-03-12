@@ -112,7 +112,6 @@ def create(volpath, kvDict):
    if disk == c_uint32(0):
       return False
 
-   # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
    if useSideCarCreate:
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
