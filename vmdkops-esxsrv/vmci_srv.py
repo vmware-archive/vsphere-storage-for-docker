@@ -52,9 +52,6 @@ OR replace it all with in-guest formatting (but then we'd need to locate the pro
 
 With the current approach, new device is found for mount with blkid -L <volume-name>, which is easier
 
-
-==
-REPLACE prints with logging
 ===
 check size format and handle policy on -o flags
 ==
@@ -80,6 +77,7 @@ import os
 import subprocess
 import atexit
 import time
+import logging
 
 from vmware import vsi
 
@@ -98,7 +96,18 @@ MaxDescrSize = 10000     # we assume files smaller that that to be descriptor fi
 MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limited in size
 MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
-BinLoc = "/usr/lib/vmware/vmdkops/bin/"
+BinLoc  = "/usr/lib/vmware/vmdkops/bin/"
+
+# default log file. Should be synced with CI and make wrappers in ../*scripts
+LogFile = "/var/log/vmware/docker-vmdk-plugin.log"
+
+def LogSetup(logfile):
+    logging.basicConfig(filename=logfile,
+                        level=logging.DEBUG,
+                        format='%(asctime)-12s %(process)d [%(levelname)s] %(message)s',
+                        datefmt='%x %X')
+    logging.info("===" + time.strftime('%x %X %Z') + "Starting vmdkops service ===")
+
 
 # Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
 # Returns the integer return value and the stdout str on success and integer return value and
@@ -110,7 +119,7 @@ def RunCommand(cmd):
 
    @param command to execute
    """
-   print ("Running cmd %s" % cmd)
+   logging.debug ("Running cmd %s" % cmd)
 
    p = subprocess.Popen(cmd,
                         stdout=subprocess.PIPE,
@@ -118,8 +127,6 @@ def RunCommand(cmd):
                         shell=True)
    o, e = p.communicate()
    s = p.returncode
-
-   print "Return:", s, o
 
    if s != 0:
        return (s, e)
@@ -130,17 +137,17 @@ def RunCommand(cmd):
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdkPath, volName, opts):
-	print "*** createVMDK: " + vmdkPath
+	logging.info ("*** createVMDK: " + vmdkPath)
 	if os.path.isfile(vmdkPath):
 		return "File %s already exists" % vmdkPath
 
 	if not opts or not "size" in opts:
 		size = DefaultDiskSize
-		print "SETTING DEFAULT SIZE to " , size
+		logging.debug("SETTING DEFAULT SIZE to " +  size)
 	else:
 		size = str(opts["size"])
 		#TODO: check it is compliant format, and correct if possible
-		print "SETTING  SIZE to " , size
+		logging.debug("SETTING  SIZE to " + size)
 
         cmd = "/sbin/vmkfstools -d thin -c {0} {1}".format(size, vmdkPath)
         rc, out = RunCommand(cmd)
@@ -154,7 +161,7 @@ def createVMDK(vmdkPath, volName, opts):
         # Create the kv store for the disk before its attached
         # ret = kv.create(vmdkPath, "detached", opts)
         # if ret != True:
-        #    print "Failed creating key value store for", vmdkPath
+        #    logging.info "Failed creating key value store for", vmdkPath
         #    removeVMDK(vmdkPath)
         #    return None
 
@@ -178,7 +185,7 @@ def formatVmdk(vmdkPath, volName):
 
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
-	print "*** removeVMDK: " + vmdkPath
+	logging.info("*** removeVMDK: " + vmdkPath)
         # Remove the kv store for vmdkPath if present
         # kv.delete(vmdkPath)
     
@@ -212,15 +219,17 @@ def findVmByName(vmName):
 #returns error, or None for OK
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
-        # s = kv.get(vmdkPath, 'status')
-        # print "disk has status - %s" % s
-	print "*** attachVMDK: " + vmdkPath + " to"   + vmName + " uuid=", vm.config.uuid
+    # s = kv.get(vmdkPath, 'status')
+    # logging.info "disk has status - %s" % s
+	logging.info ("*** attachVMDK: " + vmdkPath + " to "   + vmName + 
+                  " uuid=" + vm.config.uuid)
 	return disk_attach(vmdkPath, vm)
 
 #returns error, or None for OK
 def detachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
-	print "*** detachVMDK: " + vmdkPath + " from "  + vmName + " VM uuid=", vm.config.uuid
+	logging.info("*** detachVMDK: " + vmdkPath + " from "  + vmName + 
+                 " VM uuid=" + vm.config.uuid)
 	disk_detach(vmdkPath, vm)
 	return None
 
@@ -229,14 +238,12 @@ def detachVMDK(vmdkPath, vmName):
 def checkPath(path):
 	try:
 		os.mkdir(path)
-		print path, "created"
+		logging.info(path +" created")
 	except OSError:
 		pass
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
-	#print "{0} (id {1}) requests cmd '{2}' vol '{3}' opts '{4}'".format(vmName, vmId, cmd, volName, opts)
-
 	# get /vmfs/volumes/<volid> path on ESX:
 	path = os.path.join("/".join(configPath.split("/")[0:4]),  DockVolsDir)
 	checkPath(path)
@@ -280,20 +287,20 @@ def connectLocal():
 	return si
 
 
-# helper to print out all VMs info
+# helper to logging.info out all VMs info
 def printVMInfo(si):
 	container = si.content.rootFolder  # starting point to look into
-	containerView = \
-		si.content.viewManager.CreateContainerView(container,
-																type=[vim.VirtualMachine],
-																recursive=True)
+	containerView = si.content.viewManager.CreateContainerView(container,
+			type=[vim.VirtualMachine],
+			recursive=True)
+
 	for child in containerView.view:
 		summary = child.summary
-		print("Name       : ", summary.config.name)
-		print("Path       : ", summary.config.vmPathName)
-		print("Guest      : ", summary.config.guestFullName)
-		print("Instance UUID : ", summary.config.instanceUuid)
-		print("Bios UUID     : ", summary.config.uuid)
+		logging.info("Name       : " + summary.config.name)
+		logging.info("Path       : " + summary.config.vmPathName)
+		logging.info("Guest      : " + summary.config.guestFullName)
+		logging.info("Instance UUID : " + summary.config.instanceUuid)
+		logging.info("Bios UUID     : " + summary.config.uuid)
 
 
 
@@ -310,10 +317,8 @@ def findDeviceByPath(vmdkPath, vm):
 		dsPath = d.backing.datastore.host[0].mountInfo.path
 		dev = os.path.join(dsPath, d.backing.fileName.split(" ")[1])
 		if dev == vmdkPath:
-			print "findDeviceByPath: MATCH: " + vmdkPath
+			logging.debug("findDeviceByPath: MATCH: " + vmdkPath)
 			return d
-		else:
-			print "findDeviceByPath: skip: " + dev + " since it's not " + vmdkPath
 
 	return None
 
@@ -349,7 +354,7 @@ def disk_attach(vmdkPath, vm):
     diskSlot = None  # need to find out
     controllerKey = pvsci[0].key
   else:
-    print "Warning: PVSCI adapter is missing - trying to add one..."
+    logging.warning("Warning: PVSCI adapter is missing - trying to add one...")
     diskSlot = 0  # starting on a fresh controller
     if len(controllers) == max_scsi_controllers:
       raise StandardError("Error: cannot create PVSCI adapter - VM is out of bus slots")
@@ -377,9 +382,9 @@ def disk_attach(vmdkPath, vm):
   # Check if this disk is already attached, skip the
   # attach below if it is
   # status = kv.get(vmdkPath, 'status')
-  # print 'Attaching %s with status %s' % (vmdkPath, status)
+  # logging.info 'Attaching %s with status %s' % (vmdkPath, status)
   # if status != 'detached':
-  #   print "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
+  #   logging.info "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
   #   return
 
   # Now find a slot on the controller  , if needed
@@ -393,7 +398,7 @@ def disk_attach(vmdkPath, vm):
       raise StandardError("We don't support this many disks yet")
 
     diskSlot = availSlots.pop()
-    print " controllerKey=", controllerKey, " slot=", diskSlot
+    logging.debug(" controllerKey=%d slot=%d" % (controllerKey, diskSlot))
 
   # add disk here
   disk_spec = vim.VirtualDeviceConfigSpec(
@@ -424,7 +429,7 @@ def disk_attach(vmdkPath, vm):
   except vim.fault.VimFault as ex:
       return err(ex.msg)
   else:
-    print "disk attached ", vmdkPath
+    logging.info("disk attached " + vmdkPath)
 
   return None
 
@@ -439,10 +444,10 @@ def disk_detach(vmdkPath, vm):
   device = findDeviceByPath(vmdkPath, vm)
 
   if not device:
-  		# TBD: Docker asks to detach something not attached :-) .
-  		# Better message is needed
-  	 	print "**** SOMETHING IS VERY WRONG: detach_disk did not find " + vmdkPath
-  	  	return
+      # TBD: Docker asks to detach something not attached :-) .
+      # Better message is needed
+      logging.error("**** SOMETHING IS VERY WRONG: detach_disk did not find " + vmdkPath)
+      return
 
   spec = vim.vm.ConfigSpec()
   dev_changes = []
@@ -458,18 +463,20 @@ def disk_detach(vmdkPath, vm):
      # kv.set(vmdkPath, 'status', 'detached')
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
-        print f.message
+        logging.warning(f.message)
   else:
-        print "disk detached ", vmdkPath
+        logging.info("disk detached " + vmdkPath)
 
 
 # Main - connect, load VMCI shared lib and does main loop
 def main():
     global si  # we maintain only one connection
-
+    
+    LogSetup(LogFile)
+    
     si = connectLocal()
 
-    printVMInfo(si) # just making sure we can do it - print
+    printVMInfo(si) # just making sure we can do it - logging.info
 
     # Load and use DLL with vsocket shim to listen for docker requests
     lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
@@ -482,11 +489,11 @@ def main():
     skipCount = MaxSkipCount # retries for vmci_get_one_op failures
     while True:
         c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
-        print "lib.vmci_get_one_op returns {0} , buffer '{1}'".format(c, txt.value)
+        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'" %(c, txt.value))
 
         if c == -1:
             # VMCI Get Ops can self-correct by reoping sockets internally. Give it a chance.
-            print "VMCI Get Ops failed - ignoring and moving on."
+            logging.warning("VMCI Get Ops failed - ignoring and moving on.")
             skipCount = skipCount - 1
             if skipCount <= 0:
                 raise Exception("Too many errors from VMCI Get Ops - giving up.")
@@ -515,10 +522,10 @@ def main():
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else None
             ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
-            print "executeRequest ret = ", ret
+            logging.debug("executeRequest ret = %s" % ret)
         
         err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
-        print "lib.vmci_reply: VMCI replied with errcode ", err
+        logging.debug("lib.vmci_reply: VMCI replied with errcode %s " % err)
 
     lib.close(sock) # close listening socket when the loop is over
 
