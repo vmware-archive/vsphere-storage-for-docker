@@ -36,12 +36,14 @@ def loadDiskLib():
 
    # Figure what APIs supported for side car creation.
    objDmp = '/bin/objdump -R %s | grep %s' % (diskLib, 'DiskLib_SidecarCreate')
+   print "running ", objDmp
    proc = subprocess.Popen(objDmp,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
-   proc.communicate()
+   op = proc.communicate()[0]
    ret = proc.returncode
+   print op
    if ret == 0:
       useSideCarCreate = True
 
@@ -113,6 +115,11 @@ def create(volpath, kvDict):
       return False
 
    print "**********************************"
+   proc = subprocess.Popen("uname -a",
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           shell=True)
+   print proc.communicate()[0] 
    print "Now Creating side car for", volpath, useSideCarCreate
    print "**********************************"
    if useSideCarCreate:
