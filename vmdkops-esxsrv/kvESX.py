@@ -129,8 +129,8 @@ def create(volpath, kvDict):
                            shell=True)
    print proc.communicate()[0] 
 
-   print "/bin/objdump -R /lib/libvmsnapshot.so | grep -i disklib_sidecar"
-   proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so | grep -i disklib_sidecar",
+   print "/bin/objdump -R /lib/libvmsnapshot.so"
+   proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so",
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
