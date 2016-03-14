@@ -128,11 +128,13 @@ def create(volpath, kvDict):
                            stderr=subprocess.PIPE,
                            shell=True)
    print proc.communicate()[0] 
+
+   print "/bin/objdump -R /lib/libvmsnapshot.so | grep -i dislib_sidecar"
    proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so | grep -i dislib_sidecar",
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
-   print proc.communicate()[0] 
+   print proc.communicate()[0]
 
    print "**********************************"
    if useSideCarCreate:
