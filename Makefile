@@ -1,4 +1,6 @@
+# Makefile
 #
+
 # Makefile for Docker data volume VMDK plugin
 #
 # Builds client-side (docker engine) volume plug in code, and ESX-side VIB
@@ -93,15 +95,26 @@ fmt:
 # expectations:
 #   Need target machines (ESX/Guest) to have proper ~/.ssh/authorized_keys
 #
-# Usage:
-# either pass the ESX and VM
-# make deploy-esx root@10.20.105.54
-# make deploy-vm root@10.20.105.121
-# or edit the entries below
+# You can
+#   set ESX_IP and VM_IP (and VM1_IP / VM2_IP) as env. vars,
+# or pass on command line
+# 	make deploy-esx ESX_IP=10.20.105.54
+# 	make deploy-vm  VM_IP=10.20.105.121
+# 	make testremote  ESX_IP=10.20.105.54 VM1_IP=10.20.105.121 VM2_IP=10.20.105.122
 
-ESX? = root@10.20.105.54
-VM?  = root@10.20.105.121
-VM2? = $(VM1) # run tests only on one VM
+ESX_IP ?= 10.20.105.54
+VM1_IP ?= 10.20.105.121
+VM2_IP ?= $(VM1_IP)
+
+ESX ?= root@$(ESX_IP)
+VM1 ?= root@$(VM1_IP)
+VM2 ?= root@$(VM2_IP)
+VM  ?= $(VM1)
+
+VM1_DOCKER = tcp://$(VM1_IP):2375
+VM2_DOCKER = tcp://$(VM2_IP):2375
+
+
 SCP := scp -o StrictHostKeyChecking=no
 SSH := ssh -kTax -o StrictHostKeyChecking=no
 
@@ -142,7 +155,6 @@ deploy-vm:
 
 .PHONY:deploy
 deploy: deploy-esx deploy-vm
-	@echo Done
 
 
 #
@@ -162,31 +174,15 @@ testasroot:
 	$(GO) test $(PLUGIN)/vmdkops
 
 # does sanity check of create/remove docker volume on the guest
-TEST_VOL_NAME?=MyVolume
-
-VM1? = $(VM)
+TEST_VOL_NAME ?= TestVolume
+TEST_VERBOSE   = -test.v
 
 .PHONY: testremote
 testremote:
-	$(SSH) $(VM1) /tmp/$(PLUGNAME).test
-	$(SSH) $(VM1) /tmp/$(VMDKOPS_MODULE).test
-	$(SSH) $(VM1) docker volume create \
-			--driver=vmdk --name=$(TEST_VOL_NAME) \
-			-o size=1gb -o policy=good
-	$(SSH) $(VM1) docker run --rm \
-		-v $(TEST_VOL_NAME):/$(TEST_VOL_NAME) \
-		busybox touch /$(TEST_VOL_NAME)/file
-	$(SSH) $(VM2) docker run --rm \
-		-v $(TEST_VOL_NAME):/$(TEST_VOL_NAME) \
-		--volume-driver=vmdk busybox \
-		stat /$(TEST_VOL_NAME)/file
-	$(SSH) $(VM1) "docker volume ls | grep $(TEST_VOL_NAME)"
-	$(SSH) $(VM2) "docker volume ls | grep $(TEST_VOL_NAME)"
-	$(SSH) $(VM1) "docker volume inspect $(TEST_VOL_NAME)| grep Driver | grep vmdk"
-	$(SSH) $(VM2) "docker volume inspect $(TEST_VOL_NAME)| grep Driver | grep vmdk"
-	$(SSH) $(VM1) docker volume rm $(TEST_VOL_NAME)
-	-$(SSH) $(VM1) "docker volume ls "
-	-$(SSH) $(VM2) "docker volume ls "
+	$(SSH) $(VM1) /tmp/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
+	$(SSH) $(VM1) /tmp/$(PLUGNAME).test $(TEST_VERBOSE) \
+		-v $(TEST_VOL_NAME) \
+		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
 .PHONY: clean-vm
 clean-vm:
@@ -210,3 +206,7 @@ clean-esx:
 	-$(SSH) $(ESX) "rm -v /tmp/$(STARTESX) /tmp/$(STOPESX)"
 	-$(SSH) $(ESX) $(VIBCMD) remove --vibname $(VIBNAME)
 	-$(SSH) $(ESX) "rm -v /tmp/$(VIBFILE)"
+
+# helper goals - save typing in manual passes
+all: dockerbuild deploy testremote
+all-vm: dockerbuild deploy-vm testremote
