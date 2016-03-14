@@ -14,7 +14,7 @@ build:
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip ubuntu-2`
       - ssh -kTax $VM1 "rm -rvf /tmp/docker-*"
-     - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - make test
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
 
