@@ -35,7 +35,7 @@ def loadDiskLib():
       lib.DiskLib_Init()
 
    # Figure what APIs supported for side car creation.
-   objDmp = '/bin/objdump -R %s | grep DiskLib_SidecarCreate' % diskLib
+   objDmp = '/bin/strings %s | grep DiskLib_SidecarCreate' % diskLib
    print "running ", objDmp
    proc = subprocess.Popen(objDmp,
                            stdout=subprocess.PIPE,
@@ -129,8 +129,8 @@ def create(volpath, kvDict):
                            shell=True)
    print proc.communicate()[0] 
 
-   print "/bin/objdump -R /lib/libvmsnapshot.so"
-   proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so",
+   print "/bin/strings /lib/libvmsnapshot.so | grep -i disklib_sidecar"
+   proc = subprocess.Popen("/bin/strings /lib/libvmsnapshot.so | grep -i disklib_sidecar",
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
