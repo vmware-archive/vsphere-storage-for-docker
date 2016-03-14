@@ -130,7 +130,7 @@ def create(volpath, kvDict):
    print proc.communicate()[0] 
 
    print "/bin/objdump -R /lib/libvmsnapshot.so | grep -i dislib_sidecar"
-   proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so | grep -i dislib_sidecar",
+   proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so | grep -i disklib_sidecar",
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
