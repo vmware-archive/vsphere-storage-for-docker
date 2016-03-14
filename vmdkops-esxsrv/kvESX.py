@@ -129,7 +129,7 @@ def create(volpath, kvDict):
                            shell=True)
    print proc.communicate()[0] 
 
-   print "/bin/objdump -R /lib/libvmsnapshot.so | grep -i dislib_sidecar"
+   print "/bin/objdump -R /lib/libvmsnapshot.so | grep -i disklib_sidecar"
    proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so | grep -i disklib_sidecar",
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
@@ -138,8 +138,10 @@ def create(volpath, kvDict):
 
    print "**********************************"
    if useSideCarCreate:
+      print "Use sidecar-create"
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
+      print "Use sidecar-open"
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
