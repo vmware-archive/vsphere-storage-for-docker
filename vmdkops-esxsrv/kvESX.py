@@ -35,7 +35,7 @@ def loadDiskLib():
       lib.DiskLib_Init()
 
    # Figure what APIs supported for side car creation.
-   objDmp = '/bin/objdump -R %s | grep %s' % (diskLib, 'DiskLib_SidecarCreate')
+   objDmp = '/bin/objdump -R %s | grep DiskLib_SidecarCreate' % diskLib
    print "running ", objDmp
    proc = subprocess.Popen(objDmp,
                            stdout=subprocess.PIPE,
