@@ -381,7 +381,7 @@ def disk_attach(vmdkPath, vm):
   # attach below if it is
 
   status = kv.get(vmdkPath, 'status')
-  logging.info("Attaching" + vmdkPath + "with status" + status)
+  logging.info("Attaching " + vmdkPath + " with status " + status)
   if status != 'detached':
      logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
      return

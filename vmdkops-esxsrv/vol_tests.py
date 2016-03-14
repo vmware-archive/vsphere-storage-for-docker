@@ -68,9 +68,6 @@ def cleanup(vmId):
    cmd = 'vim-cmd vmsvc/power.off %s' % vmId
    subprocess.call(cmd, shell=True)
 
-   cmd = 'vim-cmd vmsvc/unregister %s' % vmId
-   subprocess.call(cmd, shell=True)
-
    cmd = 'vim-cmd vmsvc/destroy %s' % vmId
    subprocess.call(cmd, shell=True)
 

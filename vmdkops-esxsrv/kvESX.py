@@ -36,14 +36,13 @@ def loadDiskLib():
 
    # Figure what APIs supported for side car creation.
    
-   objDmp = 'grep DiskLib_SidecarCreate %s' % diskLib
-   print "running ", objDmp
-   proc = subprocess.Popen(objDmp,
+   checkLib = 'grep DiskLib_SidecarCreate %s' % diskLib
+   print "running ", checkLib
+   proc = subprocess.Popen(checkLib,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
-   op = proc.communicate()[0]
-   print "Got result", op
+   proc.communicate()
    ret = proc.returncode
    if ret == 0:
       useSideCarCreate = True
@@ -115,25 +114,9 @@ def create(volpath, kvDict):
    if disk == c_uint32(0):
       return False
 
-   print "**********************************"
-   proc = subprocess.Popen("uname -a",
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           shell=True)
-   print proc.communicate()[0] 
-   print "Now Creating side car for", volpath, useSideCarCreate
-
-   proc = subprocess.Popen("find /vmfs/volumes -name dockvols -exec ls -l {} ';'",
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           shell=True)
-   print proc.communicate()[0] 
-   print "**********************************"
    if useSideCarCreate:
-      print "Use sidecar-create"
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
-      print "Use sidecar-open"
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
