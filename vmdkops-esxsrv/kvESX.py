@@ -42,8 +42,8 @@ def loadDiskLib():
                            stderr=subprocess.PIPE,
                            shell=True)
    op = proc.communicate()[0]
+   print "Got result", op
    ret = proc.returncode
-   print op
    if ret == 0:
       useSideCarCreate = True
 
@@ -121,6 +121,13 @@ def create(volpath, kvDict):
                            shell=True)
    print proc.communicate()[0] 
    print "Now Creating side car for", volpath, useSideCarCreate
+
+   proc = subprocess.Popen("find /vmfs/volumes -name dockvols -exec ls -l {} ';'",
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           shell=True)
+   print proc.communicate()[0] 
+
    print "**********************************"
    if useSideCarCreate:
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
