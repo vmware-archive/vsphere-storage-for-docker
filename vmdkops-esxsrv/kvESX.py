@@ -63,8 +63,8 @@ def kvESXInit():
 
     if useSideCarCreate:
        print "KV create API is supported"
-       lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
-       lib.DiskLib_SidecarCreate.restype = c_uint32
+    lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
+    lib.DiskLib_SidecarCreate.restype = c_uint32
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarOpen.restype = c_uint32
