@@ -35,14 +35,8 @@ def loadDiskLib():
       lib.DiskLib_Init()
 
    # Figure what APIs supported for side car creation.
-   proc = subprocess.Popen("type strings",
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           shell=True)
-   op = proc.communicate()[0]
-   print "Got result", op
    
-   objDmp = '/bin/strings %s | grep DiskLib_SidecarCreate' % diskLib
+   objDmp = 'grep DiskLib_SidecarCreate %s' % diskLib
    print "running ", objDmp
    proc = subprocess.Popen(objDmp,
                            stdout=subprocess.PIPE,
@@ -70,9 +64,8 @@ def kvESXInit():
 
     if useSideCarCreate:
        print "KV create API is supported"
-
-    lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
-    lib.DiskLib_SidecarCreate.restype = c_uint32
+       lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
+       lib.DiskLib_SidecarCreate.restype = c_uint32
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarOpen.restype = c_uint32
@@ -135,14 +128,6 @@ def create(volpath, kvDict):
                            stderr=subprocess.PIPE,
                            shell=True)
    print proc.communicate()[0] 
-
-   print "/bin/strings /lib/libvmsnapshot.so"
-   proc = subprocess.Popen("/bin/strings /lib/libvmsnapshot.so",
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           shell=True)
-   print proc.communicate()[0]
-
    print "**********************************"
    if useSideCarCreate:
       print "Use sidecar-create"
