@@ -35,6 +35,13 @@ def loadDiskLib():
       lib.DiskLib_Init()
 
    # Figure what APIs supported for side car creation.
+   proc = subprocess.Popen("type strings",
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           shell=True)
+   op = proc.communicate()[0]
+   print "Got result", op
+   
    objDmp = '/bin/strings %s | grep DiskLib_SidecarCreate' % diskLib
    print "running ", objDmp
    proc = subprocess.Popen(objDmp,
