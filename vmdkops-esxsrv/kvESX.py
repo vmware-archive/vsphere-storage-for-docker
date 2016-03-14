@@ -63,6 +63,7 @@ def kvESXInit():
 
     if useSideCarCreate:
        print "KV create API is supported"
+
     lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarCreate.restype = c_uint32
 
@@ -123,6 +124,11 @@ def create(volpath, kvDict):
    print "Now Creating side car for", volpath, useSideCarCreate
 
    proc = subprocess.Popen("find /vmfs/volumes -name dockvols -exec ls -l {} ';'",
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           shell=True)
+   print proc.communicate()[0] 
+   proc = subprocess.Popen("/bin/objdump -R /lib/libvmsnapshot.so | grep -i dislib_sidecar",
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE,
                            shell=True)
