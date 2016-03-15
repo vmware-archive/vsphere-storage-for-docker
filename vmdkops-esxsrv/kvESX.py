@@ -146,7 +146,10 @@ def delete(volpath):
 def load(volpath):
    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
-   fh = open(metaFile, "r+")
+   try:
+      fh = open(metaFile, "r+")
+   except IOError:
+      return None
 
    kvDict = json.load(fh)
 
@@ -158,7 +161,10 @@ def load(volpath):
 def save(volpath, kvDict):
    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
-   fh = open(metaFile, "w+")
+   try:
+      fh = open(metaFile, "w+")
+   except IOError:
+      return None
 
    json.dump(kvDict, fh)
 
