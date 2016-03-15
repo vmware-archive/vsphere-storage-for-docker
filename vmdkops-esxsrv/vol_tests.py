@@ -21,6 +21,10 @@ def doCreate(volDir):
       volPath = os.path.join(volDir, "%s.vmdk" % vol)
       volDict = kv.getAll(volPath)
 
+      if not volDict:
+         print "Failed to fetch volume meta-data for ", volPath
+         continue
+
       print "Vol metadata 'status' - %s, 'volOpts' - %s" % (volDict['status'], volDict['volOpts'])
       if volDict['status'] != 'detached':
          print 'Found volume %s with status %s, expected' % (vol, volDict['status'], 'detached')
