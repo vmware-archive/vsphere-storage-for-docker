@@ -44,7 +44,7 @@ Login to the machine kill the binary and re-run it manually.
 
 ```
 Standard invocation on ESX:
-python /usr/lib/vmware/vmdkops/bin/vmci_srv.py 
+python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py 
 
 Standard invocation on VM: (as root)
 /usr/local/bin/docker-vmdk-plugin
@@ -164,8 +164,6 @@ index 5550172..9a4b872 100644
 -      - export VM2=`govc vm.ip ubuntu-2`
 +      - export VM1=10.20.105.121
 +      - export VM2=10.20.104.210
-       - make
-       - make test
 ```
 
 Do not restart docker if machine running drone is also a VM in the devsetup.
