@@ -8,4 +8,4 @@ log=/tmp/plugin.log
 pylog=/var/log/vmware/docker-vmdk-plugin.log 
 echo === `date` Actual logs are in $pylog  === > $log
 cat /dev/null > $pylog
-nohup python /usr/lib/vmware/vmdkops/bin/vmci_srv.py >> $log 2>&1 &
+nohup python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py >> $log 2>&1 &
