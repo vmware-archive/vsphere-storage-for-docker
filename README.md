@@ -21,7 +21,7 @@ docker volume rm MyVolume # Should pass
 
 # To run on ESX manually.
 
-python /usr/lib/vmware/vmdkops/bin/vmci_srv.py
+python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py
 
 # To run on Linux guest manually.
 
@@ -85,7 +85,7 @@ There are also the following targets:
 ```
 make clean       # removes binaries build by 'make'
 make test        # runs whatever unit tests we have
-make deploy      # deploys to your test box (see below)
+make deploy      # deploys to your test box (see CONTRIBUTING.md)
 make clean-esx   # uninstalls from esx
 make clean-vm    # uninstalls from vm
 make testremote  # runs sanity check docker commands for volumes
