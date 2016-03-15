@@ -15,7 +15,7 @@ import (
 
 const (
 	pluginSockDir = "/run/docker/plugins"
-	vmdkPluginId  = "vmdk"
+	vmdkPluginID  = "vmdk"
 	version       = "VMDK Volume Driver v0.3"
 	logPath       = "/var/log/docker-vmdk-plugin.log"
 )
@@ -64,7 +64,7 @@ func main() {
 	go func() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Error("Received Signal")
-		os.Remove(fullSocketAddress(vmdkPluginId))
+		os.Remove(fullSocketAddress(vmdkPluginID))
 		os.Exit(0)
 	}()
 
@@ -74,8 +74,8 @@ func main() {
 	handler := volume.NewHandler(driver)
 
 	log.WithFields(log.Fields{
-		"address": fullSocketAddress(vmdkPluginId),
+		"address": fullSocketAddress(vmdkPluginID),
 	}).Info("Going into ServeUnix - Listening on Unix socket")
 
-	log.Info(handler.ServeUnix("root", fullSocketAddress(vmdkPluginId)))
+	log.Info(handler.ServeUnix("root", fullSocketAddress(vmdkPluginID)))
 }

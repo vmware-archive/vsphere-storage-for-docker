@@ -24,32 +24,42 @@ import (
 //   Run:   open-vm-tools has to be installed
 //
 
+// VmdkOps struct
 type VmdkOps struct {
 	Cmd VmdkCmdRunner
 }
 
-// Data we return to the caller
+// VolumeData we return to the caller
 type VolumeData struct {
 	Name       string
 	Attributes map[string]string
 }
 
+// Create a volume
 func (v VmdkOps) Create(name string, opts map[string]string) error {
 	_, err := v.Cmd.Run("create", name, opts)
 	return err
 }
+
+// Remove a volume
 func (v VmdkOps) Remove(name string, opts map[string]string) error {
 	_, err := v.Cmd.Run("remove", name, opts)
 	return err
 }
+
+// Attach a volume
 func (v VmdkOps) Attach(name string, opts map[string]string) error {
 	_, err := v.Cmd.Run("attach", name, opts)
 	return err
 }
+
+// Detach a volume
 func (v VmdkOps) Detach(name string, opts map[string]string) error {
 	_, err := v.Cmd.Run("detach", name, opts)
 	return err
 }
+
+// List all volumes
 func (v VmdkOps) List() ([]VolumeData, error) {
 	str, err := v.Cmd.Run("list", "", make(map[string]string))
 	if err != nil {
@@ -62,6 +72,8 @@ func (v VmdkOps) List() ([]VolumeData, error) {
 	}
 	return result, nil
 }
+
+// Get for volume
 func (v VmdkOps) Get(name string) (VolumeData, error) {
 	volumes, err := v.List()
 	if err != nil {
@@ -74,4 +86,3 @@ func (v VmdkOps) Get(name string) (VolumeData, error) {
 	}
 	return VolumeData{}, fmt.Errorf("Volume does not exist: %s", name)
 }
-

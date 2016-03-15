@@ -19,6 +19,7 @@ import (
 */
 import "C"
 
+// VmdkCmd struct
 type VmdkCmd struct{}
 
 const (
@@ -32,7 +33,7 @@ type requestToVmci struct {
 	Details VolumeInfo `json:"details"`
 }
 
-// Info we get about the volume from upstairs
+// VolumeInfo we get about the volume from upstairs
 type VolumeInfo struct {
 	Name    string            `json:"Name"`
 	Options map[string]string `json:"Opts,omitempty"`
@@ -42,34 +43,32 @@ type vmciError struct {
 	Error string
 }
 
-//
-// * Guest VM requests running an operation on ESX via vmdkops_serv.py listening on vSocket
+// Run command Guest VM requests on ESX via vmdkops_serv.py listening on vSocket
 // *
 // * For each request:
 // *   - Establishes a vSocket connection
 // *   - Sends json string up to ESX
 // *   - waits for reply and returns resulting JSON or an error
-
-func (_ VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
-	json_str, err := json.Marshal(&requestToVmci{
+func (vmdkCmd VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
+	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
 		Details: VolumeInfo{Name: name, Options: opts}})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to marshal json: %v", err)
 	}
 
-	cmd_s := C.CString(string(json_str))
-	defer C.free(unsafe.Pointer(cmd_s))
+	cmdS := C.CString(string(jsonStr))
+	defer C.free(unsafe.Pointer(cmdS))
 
-	be_s := C.CString(commBackendName)
-	defer C.free(unsafe.Pointer(be_s))
+	beS := C.CString(commBackendName)
+	defer C.free(unsafe.Pointer(beS))
 
 	// Get the response data in json
 	ans := (*C.be_answer)(C.malloc(C.sizeof_struct_be_answer))
 	defer C.free(unsafe.Pointer(ans))
 
 	// connect, send command, get reply, disconnect - all in one shot
-	ret := C.Vmci_GetReply(C.int(vmciEsxPort), cmd_s, be_s, ans)
+	ret := C.Vmci_GetReply(C.int(vmciEsxPort), cmdS, beS, ans)
 
 	if ret != 0 {
 		log.Warn("No connection to ESX over vsocket, trace only")
@@ -90,12 +89,12 @@ func unmarshalError(str []byte) error {
 	if string(str) == "null" {
 		return nil
 	}
-	err_struct := vmciError{}
-	err := json.Unmarshal(str, &err_struct)
+	errStruct := vmciError{}
+	err := json.Unmarshal(str, &errStruct)
 	if err != nil {
 		// We didn't unmarshal an error, so there is no error ;)
 		return nil
 	}
 	// Return the unmarshaled error string as an `error`
-	return errors.New(err_struct.Error)
+	return errors.New(errStruct.Error)
 }

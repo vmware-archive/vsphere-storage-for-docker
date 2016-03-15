@@ -35,11 +35,11 @@ SRC = plugin.go main.go log_formatter.go
 .PHONY: dockerbuild
 dockerbuild:
 	@./scripts/check.sh dockerbuild
-	./scripts/build.sh
+	./scripts/build.sh build
 
 # The non docker build.
 .PHONY: build
-build: prereqs $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+build: prereqs code_verify $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 .PHONY: prereqs
@@ -61,6 +61,29 @@ clean:
 	rm -f $(BIN)/* .build_*
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
+
+# GO Code quality checks.
+
+.PHONY: code_verify
+code_verify: lint vet fmt
+
+.PHONY: lint
+lint:
+	@echo "Running $@"
+	${GOPATH}/bin/golint
+	${GOPATH}/bin/golint vmdkops
+
+.PHONY: vet
+vet:
+	@echo "Running $@"
+	@go vet *.go
+	@go vet vmdkops/*.go
+
+.PHONY: fmt
+fmt:
+	@echo "Running $@"
+	gofmt -s -l *.go
+	gofmt -s -l vmdkops/*.go
 
 #
 # 'make deploy'
@@ -132,6 +155,10 @@ deploy: deploy-esx deploy-vm
 # this is a set of unit tests run on build machine
 .PHONY: test
 test:
+	./scripts/build.sh testasroot
+
+.PHONY: testasroot
+testasroot:
 	$(GO) test $(PLUGIN)/vmdkops
 
 # does sanity check of create/remove docker volume on the guest

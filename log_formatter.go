@@ -12,8 +12,10 @@ import (
 	"strings"
 )
 
+// VmwareFormatter struct
 type VmwareFormatter struct{}
 
+// Format log messages
 func (f *VmwareFormatter) Format(entry *log.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 	fmt.Fprint(b, entry.Time.String())
