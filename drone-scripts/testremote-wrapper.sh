@@ -15,7 +15,7 @@ VM2=root@$3
 BUILD_NUMBER=$4
 SSH="ssh -o StrictHostKeyChecking=no"
 LOGFILE="/var/log/docker-vmdk-plugin.log"
-
+STDLOG="/tmp/plugin.log"
 if [ $# -lt 3 ]
 then
   usage
@@ -28,20 +28,32 @@ echo "*************************************************************************"
 echo "tests starting"
 echo "*************************************************************************"
 
-dump_log() {
+dump_log_esx() {
   echo "*************************************************************************"
   echo "dumping log: ESX " $ESX
   echo "*************************************************************************"
+  set -x
   $SSH $ESX cat /var/log/vmware/docker-vmdk-plugin.log
   $SSH $ESX cat /tmp/plugin.log
+  set +x
   echo "*************************************************************************"
-  echo "dumping log: VM " $VM1
+}
+
+dump_log_vm(){
   echo "*************************************************************************"
-  $SSH $VM1 cat $LOGFILE
+  echo "dumping log: VM " $1
   echo "*************************************************************************"
-  echo "dumping log: VM " $VM2
+  set -x
+  $SSH $1 cat $STDLOG
+  $SSH $1 cat $LOGFILE
+  set +x
   echo "*************************************************************************"
-  $SSH $VM2 cat $LOGFILE
+}
+
+dump_log() {
+  dump_log_esx
+  dump_log_vm $VM1
+  dump_log_vm $VM2
 }
 
 if make testremote VM=$VM1 VM2=$VM2 TEST_VOL_NAME=vol-build$BUILD_NUMBER
@@ -62,6 +74,5 @@ else
 
   stop_build $VM1 $BUILD_NUMBER
   # TODO remove vmdk files if any
-  # TODO collect logs and publish
   exit 1
 fi
