@@ -1,0 +1,3 @@
+{"MaxLogAgeDays": 28,
+ "MaxLogSizeMb": 100,
+ "LogPath": "/var/log/docker-vmdk-plugin.log"}

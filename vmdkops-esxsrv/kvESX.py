@@ -6,6 +6,7 @@
 from ctypes import *
 import json
 import subprocess
+import logging
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -16,17 +17,16 @@ KV_CREATE_SIZE = 0
 # VSphere lib to access ESX proprietary APIs.
 diskLib = "/lib/libvmsnapshot.so"
 lib = None
-esxVersion = None
+useSideCarCreate = False
 dVolKey = "vmdk-plugin-vol"
 
 # Maps to OPEN_BUFFERED | OPEN_LOCK | OPEN_NOFILTERS
 # all vmdks are opened with these flags
 vmdkOpenFlags = 524312
 
-# Load the library if not done already
+# Load the disk lib API library
 def loadDiskLib():
    global lib
-   global esxVersion
 
    if not lib:
       lib = CDLL(diskLib)
@@ -34,34 +34,35 @@ def loadDiskLib():
       lib.DiskLib_Init.restype = c_bool
       lib.DiskLib_Init()
 
-   if not esxVersion:
-      proc = subprocess.Popen('uname -r', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-      s = proc.communicate()[0]
-      esxVersion = s.rstrip()
-
 # Loads the ESX library used to access proprietary ESX disk lib API.
 # Create arg/result definitions for those that we use.
 def kvESXInit():
+    global useSideCarCreate
 
     # Load disklib APIs
     loadDiskLib()
 
     # Define all of the functions we are interested in
     lib.DiskLib_OpenWithInfo.argtypes = [c_char_p, c_int32, POINTER(c_uint32), POINTER(c_uint32), POINTER(c_uint32)]
-    lib.DiskLib_OpenWithInfo.restype = c_int32
+    lib.DiskLib_OpenWithInfo.restype = c_uint32
 
     lib.DiskLib_Close.argtypes = [c_uint32]
-    lib.DiskLib_Close.restype = c_int32
+    lib.DiskLib_Close.restype = c_uint32
 
-    if esxVersion > '6.0.0':
+    # Check if thihs library supports create API
+    try: 
        lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
-       lib.DiskLib_SidecarCreate.restype = c_int32
+       lib.DiskLib_SidecarCreate.restype = c_uint32
+       useSideCarCreate = True
+    except:
+       # do nothing
+       logging.debug ("ESX version doesn't support create API, using open instead.")
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
-    lib.DiskLib_SidecarOpen.restype = c_int32
+    lib.DiskLib_SidecarOpen.restype = c_uint32
 
     lib.DiskLib_SidecarClose.argtypes = [c_uint32, c_char_p, POINTER(c_uint32)]
-    lib.DiskLib_SidecarClose.restype = c_int32
+    lib.DiskLib_SidecarClose.restype = c_uint32
 
     lib.DiskLib_SidecarMakeFileName.argtypes = [c_char_p, c_char_p]
     lib.DiskLib_SidecarMakeFileName.restype = c_char_p
@@ -73,24 +74,26 @@ def kvESXInit():
     lib.ObjLib_Pwrite.restype = c_int32
 
     lib.DiskLib_DBGet.argtypes = [c_uint32, c_char_p, POINTER(c_char_p)]
-    lib.DiskLib_DBGet.restype = c_int32
+    lib.DiskLib_DBGet.restype = c_uint32
 
     lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
-    lib.DiskLib_DBSet.restype = c_int32
+    lib.DiskLib_DBSet.restype = c_uint32
 
     return None
 
-def kvVolPathOpen(volpath):
+# Open a VMDK given its path, the VMDK is opened locked just to
+# ensure we have exclusive access and its not already in use.
+def volOpenPath(volpath):
    dhandle = c_uint32(0)
    ihandle = c_uint32(0)
    key = c_uint32(0)
    objHandle = c_uint32(0)
-   res = c_int32(0)
+   res = c_uint32(0)
 
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
    if res != 0:
-      print "Open %s failed - %x" % (volpath, res)
+       logging.warning ("Open %s failed - %x" % (volpath, res))
 
    return dhandle
 
@@ -98,21 +101,20 @@ def kvVolPathOpen(volpath):
 def create(volpath, kvDict):
    disk = c_uint32(0)
    objHandle = c_uint32(0)
-   res = 0
+   res = c_uint32(0)
 
-   disk = kvVolPathOpen(volpath)
+   disk = volOpenPath(volpath)
 
-   if disk == 0:
+   if disk == c_uint32(0):
       return False
 
-   # This is the API to use for VSphere 6.0u1 and above for 6.0.0 we use the open call
-   if esxVersion > '6.0.0':
+   if useSideCarCreate:
       res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE, KV_SIDECAR_CREATE, pointer(objHandle))
    else:
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
-      print "Side car create for %s failed - %x" % (volpath, res)
+      logging.warning ("Side car create for %s failed - %x" % (volpath, res))
       lib.DiskLib_Close(disk)
       return False
 
@@ -124,16 +126,16 @@ def create(volpath, kvDict):
 # Delete the the side car for the given volume
 def delete(volpath):
    disk = c_uint32(0)
-   res = 0
+   res = c_uint32(0)
 
-   disk = kvVolPathOpen(volpath)
+   disk = volOpenPath(volpath)
 
-   if disk == 0:
+   if disk == c_uint32(0):
       return False
 
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
    if res != 0:
-      print "Side car delete for %s failed - %x" % (volpath, res)
+      logging.warning ("Side car delete for %s failed - %x" % (volpath, res))
       lib.DiskLib_Close(disk)
       return False
 
@@ -144,7 +146,10 @@ def delete(volpath):
 def load(volpath):
    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
-   fh = open(metaFile, "r+")
+   try:
+      fh = open(metaFile, "r+")
+   except IOError:
+      return None
 
    kvDict = json.load(fh)
 
@@ -156,7 +161,10 @@ def load(volpath):
 def save(volpath, kvDict):
    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
 
-   fh = open(metaFile, "w+")
+   try:
+      fh = open(metaFile, "w+")
+   except IOError:
+      return None
 
    json.dump(kvDict, fh)
 

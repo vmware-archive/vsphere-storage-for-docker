@@ -90,7 +90,7 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
-#import volumeKVStore as kv
+import volumeKVStore as kv
 
 # defaults
 DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
@@ -161,11 +161,11 @@ def createVMDK(vmdkPath, volName, opts):
                 return err("Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath)
 
         # Create the kv store for the disk before its attached
-        # ret = kv.create(vmdkPath, "detached", opts)
-        # if ret != True:
-        #    logging.info "Failed creating key value store for", vmdkPath
-        #    removeVMDK(vmdkPath)
-        #    return None
+        ret = kv.create(vmdkPath, "detached", opts)
+        if ret != True:
+           logging.warning ("Failed creating meta data store for %s" % vmdkPath)
+           removeVMDK(vmdkPath)
+           return err("Failed to create meta-data store for %s" % vmdkPath)
 
         return formatVmdk(vmdkPath, volName)
 
@@ -179,6 +179,7 @@ def formatVmdk(vmdkPath, volName):
         rc, out = RunCommand(cmd)
 
         if rc != 0:
+            logging.warning ("Failed to format %s. %s" % (vmdkPath, out))
             if removeVMDK(vmdkPath) == None:
                 return err("Failed to format %s. %s" % (vmdkPath, out))
             else:
@@ -188,9 +189,6 @@ def formatVmdk(vmdkPath, volName):
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
-        # Remove the kv store for vmdkPath if present
-        # kv.delete(vmdkPath)
-
         cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
@@ -221,8 +219,6 @@ def findVmByName(vmName):
 #returns error, or None for OK
 def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
-    # s = kv.get(vmdkPath, 'status')
-    # logging.info "disk has status - %s" % s
 	logging.info ("*** attachVMDK: " + vmdkPath + " to "   + vmName +
                   " uuid=" + vm.config.uuid)
 	return disk_attach(vmdkPath, vm)
@@ -383,11 +379,12 @@ def disk_attach(vmdkPath, vm):
 
   # Check if this disk is already attached, skip the
   # attach below if it is
-  # status = kv.get(vmdkPath, 'status')
-  # logging.info 'Attaching %s with status %s' % (vmdkPath, status)
-  # if status != 'detached':
-  #   logging.info "Disk %s is already attached, skipping duplicate attach request." % vmdkPath
-  #   return
+
+  status = kv.get(vmdkPath, 'status')
+  logging.info("Attaching " + vmdkPath + " with status " + status)
+  if status != 'detached':
+     logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
+     return err("%s is already attached, skipping duplicate attach request." % vmdkPath)
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
@@ -401,7 +398,6 @@ def disk_attach(vmdkPath, vm):
 
     diskSlot = availSlots.pop()
     logging.debug(" controllerKey=%d slot=%d" % (controllerKey, diskSlot))
-
   # add disk here
   disk_spec = vim.VirtualDeviceConfigSpec(
     operation = 'add',
@@ -427,7 +423,7 @@ def disk_attach(vmdkPath, vm):
 
   try:
       wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-      # kv.set(vmdkPath, 'status', 'attached')
+      kv.set(vmdkPath, 'status', 'attached')
   except vim.fault.VimFault as ex:
       return err(ex.msg)
   else:
@@ -462,7 +458,7 @@ def disk_detach(vmdkPath, vm):
 
   try:
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
-     # kv.set(vmdkPath, 'status', 'detached')
+     kv.set(vmdkPath, 'status', 'detached')
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)
@@ -483,6 +479,9 @@ def main():
     si = connectLocal()
 
     printVMInfo(si) # just making sure we can do it - logging.info
+
+    # Init KV
+    kv.init()
 
     # Load and use DLL with vsocket shim to listen for docker requests
     lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")

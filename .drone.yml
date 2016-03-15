@@ -1,7 +1,7 @@
 build:
   ci:
     privileged: true
-    image: kerneltime/vibauthor-and-go:0.4
+    image: kerneltime/vibauthor-and-go:0.5
     volumes:
       # Needed for creating docker images
       - /var/run/docker.sock:/var/run/docker.sock
@@ -13,10 +13,15 @@ build:
     commands:
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip ubuntu-2`
+      - go get github.com/golang/lint/golint
       - make build
       - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - make test
+      - make testasroot
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+
+matrix:
+  GO_VERSION:
+    - 1.6
 
 publish:
   docker:
