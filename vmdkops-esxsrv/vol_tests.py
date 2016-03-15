@@ -77,7 +77,6 @@ def main(argv):
       print 'vol_tests.py -d <test dir>'
       sys.exit(2)
 
-   kv.init()
    try:
       opts, args = getopt.getopt(argv,"hd:")
    except getopt.GetoptError:
@@ -90,6 +89,13 @@ def main(argv):
          sys.exit()
       elif opt in ("-d"):
          volDir = arg
+
+   # Init logging
+   logfile = "%s/test.log" % volDir
+   vmci.LogSetup(logfile)
+
+   # Init KV
+   kv.init()
 
    cmd = 'vim-cmd vmsvc/createdummyvm %s %s' % (vmName, volDir)
    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

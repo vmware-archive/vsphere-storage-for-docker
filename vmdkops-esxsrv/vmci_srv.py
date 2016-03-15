@@ -161,9 +161,9 @@ def createVMDK(vmdkPath, volName, opts):
         # Create the kv store for the disk before its attached
         ret = kv.create(vmdkPath, "detached", opts)
         if ret != True:
-           logging.info("Failed creating key value store for " + vmdkPath)
+           logging.warning ("Failed creating meta data store for %s" % vmdkPath)
            removeVMDK(vmdkPath)
-           return None
+           return err("Failed to create meta-data store for %s" % vmdkPath)
 
         return formatVmdk(vmdkPath, volName)
 
@@ -177,6 +177,7 @@ def formatVmdk(vmdkPath, volName):
         rc, out = RunCommand(cmd)
 
         if rc != 0:
+            logging.warning ("Failed to format %s. %s" % (vmdkPath, out))
             if removeVMDK(vmdkPath) == None:
                 return err("Failed to format %s. %s" % (vmdkPath, out))
             else:
@@ -186,9 +187,6 @@ def formatVmdk(vmdkPath, volName):
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
-        # Remove the kv store for vmdkPath if present
-        kv.delete(vmdkPath)
-    
         cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
@@ -384,7 +382,7 @@ def disk_attach(vmdkPath, vm):
   logging.info("Attaching " + vmdkPath + " with status " + status)
   if status != 'detached':
      logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
-     return
+     return err("%s is already attached, skipping duplicate attach request." % vmdkPath)
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
@@ -397,7 +395,7 @@ def disk_attach(vmdkPath, vm):
       raise StandardError("We don't support this many disks yet")
 
     diskSlot = availSlots.pop()
-
+    logging.debug(" controllerKey=%d slot=%d" % (controllerKey, diskSlot))
   # add disk here
   disk_spec = vim.VirtualDeviceConfigSpec(
     operation = 'add',

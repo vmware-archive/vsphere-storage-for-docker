@@ -6,6 +6,7 @@
 from ctypes import *
 import json
 import subprocess
+import logging
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -23,10 +24,9 @@ dVolKey = "vmdk-plugin-vol"
 # all vmdks are opened with these flags
 vmdkOpenFlags = 524312
 
-# Load the library if not done already
+# Load the disk lib API library
 def loadDiskLib():
    global lib
-   global useSideCarCreate
 
    if not lib:
       lib = CDLL(diskLib)
@@ -34,22 +34,10 @@ def loadDiskLib():
       lib.DiskLib_Init.restype = c_bool
       lib.DiskLib_Init()
 
-   # Figure what APIs supported for side car creation.
-   
-   checkLib = 'grep DiskLib_SidecarCreate %s' % diskLib
-   print "running ", checkLib
-   proc = subprocess.Popen(checkLib,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE,
-                           shell=True)
-   proc.communicate()
-   ret = proc.returncode
-   if ret == 0:
-      useSideCarCreate = True
-
 # Loads the ESX library used to access proprietary ESX disk lib API.
 # Create arg/result definitions for those that we use.
 def kvESXInit():
+    global useSideCarCreate
 
     # Load disklib APIs
     loadDiskLib()
@@ -61,10 +49,14 @@ def kvESXInit():
     lib.DiskLib_Close.argtypes = [c_uint32]
     lib.DiskLib_Close.restype = c_uint32
 
-    if useSideCarCreate:
-       print "KV create API is supported"
+    # Check if thihs library supports create API
+    try: 
        lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
        lib.DiskLib_SidecarCreate.restype = c_uint32
+       useSideCarCreate = True
+    except:
+       # do nothing
+       logging.debug ("ESX version doesn't support create API, using open instead.")
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarOpen.restype = c_uint32
@@ -89,7 +81,9 @@ def kvESXInit():
 
     return None
 
-def kvVolPathOpen(volpath):
+# Open a VMDK given its path, the VMDK is opened locked just to
+# ensure we have exclusive access and its not already in use.
+def volOpenPath(volpath):
    dhandle = c_uint32(0)
    ihandle = c_uint32(0)
    key = c_uint32(0)
@@ -99,7 +93,7 @@ def kvVolPathOpen(volpath):
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
    if res != 0:
-      print "Open %s failed - %x" % (volpath, res)
+       logging.warning ("Open %s failed - %x" % (volpath, res))
 
    return dhandle
 
@@ -109,7 +103,7 @@ def create(volpath, kvDict):
    objHandle = c_uint32(0)
    res = c_uint32(0)
 
-   disk = kvVolPathOpen(volpath)
+   disk = volOpenPath(volpath)
 
    if disk == c_uint32(0):
       return False
@@ -120,7 +114,7 @@ def create(volpath, kvDict):
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
-      print "Side car create for %s failed - %x" % (volpath, res)
+      logging.warning ("Side car create for %s failed - %x" % (volpath, res))
       lib.DiskLib_Close(disk)
       return False
 
@@ -134,14 +128,14 @@ def delete(volpath):
    disk = c_uint32(0)
    res = c_uint32(0)
 
-   disk = kvVolPathOpen(volpath)
+   disk = volOpenPath(volpath)
 
    if disk == c_uint32(0):
       return False
 
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
    if res != 0:
-      print "Side car delete for %s failed - %x" % (volpath, res)
+      logging.warning ("Side car delete for %s failed - %x" % (volpath, res))
       lib.DiskLib_Close(disk)
       return False
 
