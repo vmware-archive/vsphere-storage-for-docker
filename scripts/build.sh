@@ -53,8 +53,8 @@ then
 
 fi
 
-plugin=docker-vmdk-plugin  
-plugin_container_version=0.4
+plugin=docker-vmdk-plugin
+plugin_container_version=0.5
 plug_container=kerneltime/vibauthor-and-go:$plugin_container_version
 dockerfile=Dockerfile.vibauthor-and-go
 
@@ -64,6 +64,5 @@ GOPATH=/go
 dir=$GOPATH/src/github.com/vmware/$plugin
 docker_socket=/var/run/docker.sock
 set -x
-docker run --privileged --rm -v $docker_socket:$docker_socket -v $PWD:$dir -w $dir $plug_container make build
+docker run --privileged --rm -v $docker_socket:$docker_socket -v $PWD:$dir -w $dir $plug_container make $1
 set +x
-

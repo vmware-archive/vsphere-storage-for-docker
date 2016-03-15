@@ -90,13 +90,13 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
-	response_volumes := make([]*volume.Volume, 0, len(volumes))
+	responseVolumes := make([]*volume.Volume, 0, len(volumes))
 	for _, vol := range volumes {
 		mountpoint := filepath.Join(mountRoot, vol.Name)
-		response_vol := volume.Volume{Name: vol.Name, Mountpoint: mountpoint}
-		response_volumes = append(response_volumes, &response_vol)
+		responseVol := volume.Volume{Name: vol.Name, Mountpoint: mountpoint}
+		responseVolumes = append(responseVolumes, &responseVol)
 	}
-	return volume.Response{Volumes: response_volumes}
+	return volume.Response{Volumes: responseVolumes}
 }
 
 // request attach and them mounts the volume
@@ -123,9 +123,8 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 	mountpoint := filepath.Join(mountRoot, r.Name)
 	if d.mockEsx {
 		return fs.Mount(mountpoint, r.Name, "ext4")
-	} else {
-		return fs.Mount(mountpoint, r.Name, "ext2")
 	}
+	return fs.Mount(mountpoint, r.Name, "ext2")
 }
 
 // Unmounts the volume and then requests detach

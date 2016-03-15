@@ -8,25 +8,35 @@
 # 2. Others outside the project can find this useful.
 
 
-# Current tag: 0.4
+#
+## This container is used for different duties in docker-vmdk-plugin dev process:
+##
+## - Build of GO code            => need golang 1.5+
+## - Build of C VMCI wrappers    => need gcc and 32 bit libs
+## - Build of ESX .VIB package   => need vibauthor
+## - Manual investigations etc   => may need wget
+## - Manipulating dependencies   => need gvt
+## - Controlling VMs under ESX   => may need govc command line
+##
+
+# Current tag: 0.5
 
 FROM lamw/vibauthor
 
 MAINTAINER cna-storage@vmware.com
 
-RUN curl --remote-name https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz && \
-    rm -rf ~/*.rpm ~/*.tar.gz && \
+RUN curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -C /usr/local -xzf - && \
     yum update -y && \
-    yum -y install gcc && \
-    yum -y install glibc-devel.i686 libgcc.i686 glibc-static && \
-    yum -y install e2fsprogs && \
-    yum clean all 
+    yum -y install e2fsprogs gcc  glibc-devel.x86_64 glibc-devel.i686 libgcc.i686 glibc-static  && \
+    rm -rf ~/*.rpm ~/*.tar.gz && \
+    yum clean all && \
+    curl -L https://github.com/vmware/govmomi/releases/download/v0.4.0/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
+    chmod +x /usr/local/bin/govc
 
-RUN curl -L https://github.com/vmware/govmomi/releases/download/v0.4.0/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
-    chmod +x /usr/local/bin/govc 
+ENV PATH=$PATH:/usr/local/go/bin:/go/bin \
+    GOROOT=/usr/local/go \
+    GOPATH=/go \
+    GO15VENDOREXPERIMENT=1
 
-ENV PATH=$PATH:/usr/local/go/bin
-ENV GOROOT=/usr/local/go
-ENV GOPATH=/go
-ENV GO15VENDOREXPERIMENT=1
+RUN go get -u github.com/FiloSottile/gvt && \
+    go get -u github.com/golang/lint/golint

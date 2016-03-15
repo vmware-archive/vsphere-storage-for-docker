@@ -17,23 +17,24 @@ import (
 	"syscall"
 )
 
+// MockVmdkCmd struct
 type MockVmdkCmd struct{}
 
 const (
-	backing_root = "/tmp/docker-volumes" // Files for loopback device backing stored here
+	backingRoot = "/tmp/docker-volumes" // Files for loopback device backing stored here
 )
 
-// Return JSON responses to each command or an error
-func (_ MockVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
-	// We store no in memory state, so just try to recreate backing_root every time
-	err := fs.Mkdir(backing_root)
+// Run returns JSON responses to each command or an error
+func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
+	// We store no in memory state, so just try to recreate backingRoot every time
+	err := fs.Mkdir(backingRoot)
 	if err != nil {
 		return nil, err
 	}
 	log.WithFields(log.Fields{"cmd": cmd}).Debug("Running Mock Cmd")
 	switch cmd {
 	case "create":
-		err := create_block_device(name)
+		err := createBlockDevice(name)
 		return nil, err
 	case "list":
 		return list()
@@ -49,9 +50,9 @@ func (_ MockVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byt
 }
 
 func list() ([]byte, error) {
-	files, err := ioutil.ReadDir(backing_root)
+	files, err := ioutil.ReadDir(backingRoot)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read %s", backing_root)
+		return nil, fmt.Errorf("Failed to read %s", backingRoot)
 	}
 	volumes := make([]VolumeData, 0, len(files))
 	for _, file := range files {
@@ -61,7 +62,7 @@ func list() ([]byte, error) {
 }
 
 func remove(name string) error {
-	backing := fmt.Sprintf("%s/%s", backing_root, name)
+	backing := fmt.Sprintf("%s/%s", backingRoot, name)
 	out, err := exec.Command("blkid", []string{"-L", name}...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to find device for backing file %s via blkid", backing)
@@ -80,29 +81,29 @@ func remove(name string) error {
 	return os.Remove(device)
 }
 
-func create_block_device(label string) error {
-	backing := fmt.Sprintf("%s/%s", backing_root, label)
-	err := create_backing_file(backing)
+func createBlockDevice(label string) error {
+	backing := fmt.Sprintf("%s/%s", backingRoot, label)
+	err := createBackingFile(backing)
 	if err != nil {
 		return err
 	}
-	loopback_count := get_max_loopback_count() + 1
-	device := fmt.Sprintf("/dev/loop%d", loopback_count)
-	err = create_device_node(device, loopback_count)
+	loopbackCount := getMaxLoopbackCount() + 1
+	device := fmt.Sprintf("/dev/loop%d", loopbackCount)
+	err = createDeviceNode(device, loopbackCount)
 	if err != nil {
 		return err
 	}
 	// Ignore output. This is to prevent spurious failures from old devices
 	// that were removed, but not detached.
 	exec.Command("losetup", "-d", device).CombinedOutput()
-	err = setup_loopback_device(backing, device)
+	err = setupLoopbackDevice(backing, device)
 	if err != nil {
 		return err
 	}
-	return make_filesystem(device, label)
+	return makeFilesystem(device, label)
 }
 
-func get_max_loopback_count() int {
+func getMaxLoopbackCount() int {
 	// always start at 1000
 	count := 1000
 	files, err := ioutil.ReadDir("/dev")
@@ -120,7 +121,7 @@ func get_max_loopback_count() int {
 	return count
 }
 
-func create_backing_file(backing string) error {
+func createBackingFile(backing string) error {
 	flags := syscall.O_RDWR | syscall.O_CREAT | syscall.O_EXCL
 	file, err := os.OpenFile(backing, flags, 0755)
 	if err != nil {
@@ -133,8 +134,8 @@ func create_backing_file(backing string) error {
 	return nil
 }
 
-func create_device_node(device string, loopback_count int) error {
-	count := fmt.Sprintf("%d", loopback_count)
+func createDeviceNode(device string, loopbackCount int) error {
+	count := fmt.Sprintf("%d", loopbackCount)
 	out, err := exec.Command("mknod", device, "b", "7", count).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to make device node %s with error: %s. Output = %s",
@@ -143,7 +144,7 @@ func create_device_node(device string, loopback_count int) error {
 	return nil
 }
 
-func setup_loopback_device(backing string, device string) error {
+func setupLoopbackDevice(backing string, device string) error {
 	out, err := exec.Command("losetup", device, backing).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to setup loopback device node %s for backing file %s with error: %s. Output = %s",
@@ -152,7 +153,7 @@ func setup_loopback_device(backing string, device string) error {
 	return nil
 }
 
-func make_filesystem(device string, label string) error {
+func makeFilesystem(device string, label string) error {
 	out, err := exec.Command("mkfs.ext4", "-L", label, device).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to create filesystem on %s with error: %s. Output = %s",

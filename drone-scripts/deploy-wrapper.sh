@@ -35,6 +35,20 @@ until $SSH $VM1 /tmp/lock.sh lock $BUILD_NUMBER
   echo "Retying acquire lock"
 done 
 
+dump_vm_info() {
+  set -x
+  $SSH $1 uname -a
+  $SSH $1 docker version
+  set +x
+}
+
+dump_esx_info() {
+  set -x
+  $SSH $ESX uname -a
+  $SSH $ESX vmware -vl
+  set +x
+}
+
 echo "Acquired lock for build $BUILD_NUMBER"
 
 echo "*************************************************************************"
@@ -48,6 +62,9 @@ echo "*************************************************************************"
 
 if make deploy-esx ESX=$ESX && make deploy-vm VM=$VM1 && make deploy-vm VM=$VM2;
 then
+  dump_esx_info $ESX
+  dump_vm_info $VM1
+  dump_vm_info $VM2
   echo "*************************************************************************"
   echo "deploy done"
   echo "*************************************************************************"
