@@ -78,6 +78,8 @@ import subprocess
 import atexit
 import time
 import logging
+import signal
+import sys
 
 from vmware import vsi
 
@@ -188,7 +190,7 @@ def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
         # Remove the kv store for vmdkPath if present
         # kv.delete(vmdkPath)
-    
+
         cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
@@ -221,14 +223,14 @@ def attachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
     # s = kv.get(vmdkPath, 'status')
     # logging.info "disk has status - %s" % s
-	logging.info ("*** attachVMDK: " + vmdkPath + " to "   + vmName + 
+	logging.info ("*** attachVMDK: " + vmdkPath + " to "   + vmName +
                   " uuid=" + vm.config.uuid)
 	return disk_attach(vmdkPath, vm)
 
 #returns error, or None for OK
 def detachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
-	logging.info("*** detachVMDK: " + vmdkPath + " from "  + vmName + 
+	logging.info("*** detachVMDK: " + vmdkPath + " from "  + vmName +
                  " VM uuid=" + vm.config.uuid)
 	disk_detach(vmdkPath, vm)
 	return None
@@ -467,13 +469,17 @@ def disk_detach(vmdkPath, vm):
   else:
         logging.info("disk detached " + vmdkPath)
 
+def signal_handler_stop(signalnum, frame):
+    logging.warn("Received stop signal num: " + `signalnum`)
+    sys.exit(0)
 
 # Main - connect, load VMCI shared lib and does main loop
 def main():
     global si  # we maintain only one connection
-    
+
     LogSetup(LogFile)
-    
+    signal.signal(signal.SIGINT, signal_handler_stop)
+    signal.signal(signal.SIGTERM, signal_handler_stop)
     si = connectLocal()
 
     printVMInfo(si) # just making sure we can do it - logging.info
@@ -481,7 +487,7 @@ def main():
     # Load and use DLL with vsocket shim to listen for docker requests
     lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
 
-    bsize = MaxJsonSize 
+    bsize = MaxJsonSize
     txt = create_string_buffer(bsize)
 
     cartel = c_int32()
@@ -523,7 +529,7 @@ def main():
             opts = details["Opts"] if "Opts" in details else None
             ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
             logging.debug("executeRequest ret = %s" % ret)
-        
+
         err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
         logging.debug("lib.vmci_reply: VMCI replied with errcode %s " % err)
 
