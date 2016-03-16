@@ -65,6 +65,12 @@
 			"revision": "6acef71eb69611914f7a30939ea9f6e194c78172",
 			"branch": "master",
 			"path": "/proxy"
-		}
+		},
+		{
+			"importpath": "github.com/natefinch/lumberjack",
+			"repository": "https://github.com/natefinch/lumberjack",
+			"revision": "514cbda263a734ae8caac038dadf05f8f3f9f738",
+			"branch": "v2.0"
+		},
 	]
 }
