@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	apiVersion    = "v1.22"
-	driverName    = "vmdk"
-	dockerUSocket = "unix:///var/run/docker.sock"
+	apiVersion           = "v1.22"
+	driverName           = "vmdk"
+	dockerUSocket        = "unix:///var/run/docker.sock"
+	defaultMountLocation = "/mnt/vol"
 )
 
 var (
@@ -34,7 +35,6 @@ var (
 
 func init() {
 	flag.StringVar(&endPoint1, "H1", dockerUSocket, "Endpoint (Host1) to connect to")
-	flag.StringVar(&endPoint1, "H", dockerUSocket, "Endpoint (Host) to connect to")
 	flag.StringVar(&endPoint2, "H2", dockerUSocket, "Endpoint (Host2) to connect to")
 	flag.StringVar(&volumeName, "v", "TestVol", "Volume name to use in sanity tests")
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
@@ -45,39 +45,40 @@ func init() {
 
 // returns in-container mount point for a volume
 func getMountpoint(vol string) string {
-	return "/mnt/vol/" + vol
+	return defaultMountLocation + "/" + vol
 }
 
 // runs a command in a container , with volume mounted
 // returns completion code.
 // exits (t.Fatal() or create/start/wait errors
-func runBusyboxCmd(t *testing.T, client *client.Client, volumeName string,
-	cmd *strslice.StrSlice) int {
+func runContainerCmd(t *testing.T, client *client.Client, volumeName string,
+	image string, cmd *strslice.StrSlice) int {
 
 	mountPoint := getMountpoint(volumeName)
 	bind := volumeName + ":" + mountPoint
 	t.Logf("Running container vol=%s cmd=%v", volumeName, cmd)
 
 	r, err := client.ContainerCreate(
-		&container.Config{Image: "busybox", Cmd: *cmd,
+		&container.Config{Image: image, Cmd: *cmd,
 			Volumes: map[string]struct{}{mountPoint: {}}},
 		&container.HostConfig{Binds: []string{bind}}, nil, "")
 	if err != nil {
-		t.Fatalf("\tCreate failed: %v", err)
+		t.Fatalf("\tContainer create failed: %v", err)
 	}
 
 	err = client.ContainerStart(r.ID)
 	if err != nil {
-		t.Fatalf("\tStart failed: %v", err)
+		t.Fatalf("\tContainer start failed: id=%s, err %v", r.ID, err)
 	}
 
 	code, err := client.ContainerWait(context.Background(), r.ID)
 	if err != nil {
-		t.Fatalf("\tWait failed: %v", err)
+		t.Fatalf("\tContainer wait failed: id=%s, err %v", r.ID, err)
 	}
 
 	if removeContainers == false {
-		t.Logf("\tSkipping container rm (removeContainers == false)")
+		t.Logf("\tSkipping container removal, id=%s (removeContainers == false)",
+			r.ID)
 		return code
 	}
 
@@ -87,52 +88,51 @@ func runBusyboxCmd(t *testing.T, client *client.Client, volumeName string,
 		Force:         true,
 	})
 	if err != nil {
-		t.Fatalf("\nRm failed: %v", err)
+		t.Fatalf("\nContainer removal failed: %v", err)
 	}
 
 	return code
 }
 
-// checks that we can touch and then stat a file
+// Checks that we can touch a file in one container and then stat it
+// in another container, using the same (vmdk-based) volume
+//
 // goes over 'cases' and runs commands, then checks expected return code
 func checkTouch(t *testing.T, c *client.Client, vol string,
 	file string) {
 
 	cases := []struct {
+		image    string             // Container image to use
 		cmd      *strslice.StrSlice // Command to run under busybox
 		expected int                // expected results
 	}{
-		{&strslice.StrSlice{"touch", getMountpoint(vol) + "/" + file}, 0},
-		{&strslice.StrSlice{"stat", getMountpoint(vol) + "/" + file}, 0},
+		{"busybox", &strslice.StrSlice{"touch", getMountpoint(vol) + "/" + file}, 0},
+		{"busybox", &strslice.StrSlice{"stat", getMountpoint(vol) + "/" + file}, 0},
 	}
 
 	for _, i := range cases {
-		code := runBusyboxCmd(t, c, vol, i.cmd)
+		code := runContainerCmd(t, c, vol, i.image, i.cmd)
 		if code != i.expected {
 			t.Errorf("Expected  %d, got %d (cmd: %v)", i.expected, code, i.cmd)
 		}
 	}
 }
 
-// returns true if volume exists
+// returns nil for NOT_FOUND and  if volume exists
 // still fails the test if driver for this volume is not vmdk
-func volumeVmdkExists(t *testing.T, c *client.Client, vol string) bool {
+func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume {
 	reply, err := c.VolumeList(filters.Args{})
 	if err != nil {
 		t.Fatalf("Failed to enumerate  volumes: %v", err)
 	}
 
-	// TBD: check we do not have volumeName there
 	for _, v := range reply.Volumes {
 		//	t.Log(v.Name, v.Driver, v.Mountpoint)
 		if v.Name == vol {
-			if v.Driver != driverName {
-				t.Errorf("wrong driver (%s) for volume %s", v.Driver, v.Name)
-			}
-			return true
+			return v
 		}
 	}
-	return false
+	return nil
 }
 
 // Sanity test for VMDK volumes
@@ -153,8 +153,9 @@ func TestSanity(t *testing.T) {
 	for idx, elem := range clients {
 		c, err := client.NewClient(elem.endPoint, apiVersion, nil, defaultHeaders)
 		if err != nil {
-			t.Fatalf("Failed to connect to %s, err: %v", endPoint1, err)
+			t.Fatalf("Failed to connect to %s, err: %v", elem.endPoint, err)
 		}
+		t.Logf("Successfully connected to %s", elem.endPoint)
 		clients[idx].client = c
 	}
 
@@ -175,9 +176,13 @@ func TestSanity(t *testing.T) {
 	checkTouch(t, c, volumeName, "file_to_touch")
 
 	for _, elem := range clients {
-		if volumeVmdkExists(t, elem.client, volumeName) == false {
-			t.Errorf("Volume=%s is missing on %s after create",
+		v := volumeVmdkExists(t, elem.client, volumeName)
+		if v == nil {
+			t.Fatalf("Volume=%s is missing on %s after create",
 				volumeName, elem.endPoint)
+		}
+		if v.Driver != driverName {
+			t.Fatalf("wrong driver (%s) for volume %s", v.Driver, v.Name)
 		}
 	}
 
@@ -187,7 +192,7 @@ func TestSanity(t *testing.T) {
 	}
 
 	for _, elem := range clients {
-		if volumeVmdkExists(t, elem.client, volumeName) == true {
+		if volumeVmdkExists(t, elem.client, volumeName) != nil {
 			t.Errorf("Volume=%s is still present on %s after removal",
 				volumeName, elem.endPoint)
 		}

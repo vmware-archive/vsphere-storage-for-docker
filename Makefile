@@ -177,8 +177,16 @@ testasroot:
 TEST_VOL_NAME ?= TestVolume
 TEST_VERBOSE   = -test.v
 
+CONN_MSG := "Please make sure Docker is running and is configured to accept TCP connections"
+.PHONY: checkremote
+checkremote:
+	@$(SSH) $(VM1) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
+		(echo VM1 $(VM1_IP): $(CONN_MSG) ; exit 1)
+	@$(SSH) $(VM1) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
+		(echo VM2 $(VM2_IP): $(CONN_MSG); exit 1)
+
 .PHONY: testremote
-testremote:
+testremote: checkremote
 	$(SSH) $(VM1) /tmp/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(VM1) /tmp/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
