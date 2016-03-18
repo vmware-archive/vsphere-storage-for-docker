@@ -65,7 +65,8 @@ func (v VmdkOps) List() ([]VolumeData, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := make([]VolumeData, 0)
+
+	var result []VolumeData
 	err = json.Unmarshal(str, &result)
 	if err != nil {
 		return nil, err

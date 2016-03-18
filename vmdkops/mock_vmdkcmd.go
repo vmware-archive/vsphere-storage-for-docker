@@ -68,7 +68,7 @@ func remove(name string) error {
 		return fmt.Errorf("Failed to find device for backing file %s via blkid", backing)
 	}
 	device := strings.TrimRight(string(out), " \n")
-	fmt.Printf("Detaching loopback device %s", device)
+	fmt.Printf("Detaching loopback device %s\n", device)
 	out, err = exec.Command("losetup", "-d", device).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to detach loopback device node %s with error: %s. Output = %s",

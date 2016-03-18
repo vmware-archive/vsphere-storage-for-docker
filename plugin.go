@@ -178,18 +178,18 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 
 	// Get the mount point path and make sure it exists.
 	m := filepath.Join(mountRoot, r.Name)
-	log.WithFields(log.Fields{"name": r.Name, "mountpoint": m}).Info("Mounting Volume")
+	log.WithFields(log.Fields{"name": r.Name, "mountpoint": m}).Info("Mounting Volume ")
 
 	err := fs.Mkdir(m)
 	if err != nil {
-		log.WithFields(log.Fields{"dir": m}).Error("Failed to make directory")
+		log.WithFields(log.Fields{"dir": m}).Error("Failed to make directory ")
 		return volume.Response{Err: err.Error()}
 	}
 
 	if err := d.mountVolume(r, m); err != nil {
 		return volume.Response{Err: err.Error()}
 	}
-	log.WithFields(log.Fields{"name": r.Name}).Info("Mount Succeeded")
+	log.WithFields(log.Fields{"name": r.Name}).Info("Mount Succeeded ")
 
 	return volume.Response{Mountpoint: m}
 }
@@ -203,11 +203,11 @@ func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
 	}
 
 	err := d.unmountVolume(r)
-	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume")
+	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Unmount Failed")
+		log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Unmount Failed ")
 		return volume.Response{Err: err.Error()}
 	}
-	log.WithFields(log.Fields{"name": r.Name}).Info("Unmount Succeeded")
+	log.WithFields(log.Fields{"name": r.Name}).Info("Unmount Succeeded ")
 	return volume.Response{Err: ""}
 }
