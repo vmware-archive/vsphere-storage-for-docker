@@ -16,6 +16,9 @@ ESX_SRC     := vmdkops-esxsrv # esx service for docker volume ops
 PLUGNAME  := docker-vmdk-plugin
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 
+# all binaries for VMs - plugin and tests
+VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+
 VIBFILE := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
@@ -36,17 +39,17 @@ SRC = plugin.go main.go log_formatter.go
 # The default build is using a prebuilt docker image that has all dependencies.
 .PHONY: dockerbuild
 dockerbuild:
-	@./scripts/check.sh dockerbuild
-	./scripts/build.sh build
+	@$(SCRIPTS)/check.sh dockerbuild
+	$(SCRIPTS)/build.sh build
 
 # The non docker build.
 .PHONY: build
-build: prereqs code_verify $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+build: prereqs code_verify $(VM_BINS)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 .PHONY: prereqs
 prereqs:
-	@./scripts/check.sh
+	@$(SCRIPTS)/check.sh
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN)
@@ -124,39 +127,45 @@ SSH := ssh -kTax -o StrictHostKeyChecking=no
 # bin locations on target guest
 GLOC := /usr/local/bin
 
+#
+# Scripts to deploy and control services - used from Makefile and from Drone CI
+#
+# script sources live here. All scripts are copied to test VM during deployment
+SCRIPTS     := ./scripts
 
-# vib install: we install by file name but remove by internal name
-VIBNAME := vmware-esx-vmdkops-service
-VIBCMD  := localcli software vib
-SCRIPTS := ./scripts
-STARTESX := startesx.sh
-STOPESX  := stopesx.sh
-STARTVM := startvm.sh
-STOPVM  := stopvm.sh
-STARTVM_LOC := $(SCRIPTS)/$(STARTVM)
-STOPVM_LOC  := $(SCRIPTS)/$(STOPVM)
-STARTESX_LOC := $(SCRIPTS)/$(STARTESX)
-STOPESX_LOC  := $(SCRIPTS)/$(STOPESX)
+# scripts started locally to deploy to and clean up test machines
+DEPLOY_VM_SH  := $(SCRIPTS)/deployvm.sh
+DEPLOY_ESX_SH := $(SCRIPTS)/deployesx.sh
+CLEANVM_SH    := $(SCRIPTS)/cleanvm.sh
+CLEANESX_SH   := $(SCRIPTS)/cleanesx.sh
 
-.PHONY: deploy-esx
-# ignore failures in copy to guest (can be busy) and remove vib (can be not installed)
-deploy-esx:
-	$(SCP) $(VIB_BIN) $(ESX):/tmp
-	$(SCP) $(STARTESX_LOC) $(STOPESX_LOC) $(ESX):/tmp
-	-$(SSH) $(ESX) "sh /tmp/$(STOPESX)"
-	-$(SSH) $(ESX) $(VIBCMD) remove --vibname $(VIBNAME)
-	$(SSH) $(ESX) $(VIBCMD) install --no-sig-check  -v /tmp/$(VIBFILE)
-	$(SSH) $(ESX) "sh /tmp/$(STARTESX)"
 
-.PHONY: deploy-vm
-deploy-vm:
-	$(SCP) $(BIN)/*.test $(VM):/tmp
-	$(SCP) $(STARTVM_LOC) $(STOPVM_LOC) $(VM):/tmp/
-	-$(SSH) $(VM) "sh /tmp/$(STOPVM) &"
-	$(SCP) $(PLUGIN_BIN) $(VM):$(GLOC)
-	$(SSH) $(VM) "sh /tmp/$(STARTVM) &"
+# A helper to validate environment variables settings.
+.PHONY: check-test-ip
+check-test-ip:
+ifeq "$(origin ESX_IP)" "undefined"
+	$(error ESX_IP environment needs to be set to point to test ESX IP address)
+endif 
+ifndef VM1_IP
+	$(error VM1_IP environment needs to be set to point to test VM IP address)
+endif
+ifndef VM2_IP
+	$(error VM2_IP environment needs to be set to point to test VM IP address)
+endif
 
-.PHONY:deploy
+#
+# Deploy to existing testbed, Expects ESX_IP VM1_IP and VM2_IP env vars
+#
+.PHONY: deploy deploy-esx deploy-vm
+deploy-esx: check-test-ip
+	$(DEPLOY_ESX_SH) $(VIB_BIN) $(ESX_IP)
+
+VM_IPS= $(VM1_IP) $(VM2_IP)
+
+# deploys to "GLOC" on vm1 and vm2
+deploy-vm: check-test-ip
+	$(DEPLOY_VM_SH) "$(VM_BINS)" $(GLOC) "$(VM_IPS)"
+
 deploy: deploy-esx deploy-vm
 
 
@@ -170,7 +179,7 @@ deploy: deploy-esx deploy-vm
 # this is a set of unit tests run on build machine
 .PHONY: test
 test:
-	./scripts/build.sh testasroot
+	$(SCRIPTS)/build.sh testasroot
 
 .PHONY: testasroot
 testasroot:
@@ -191,34 +200,21 @@ checkremote:
 
 .PHONY: testremote
 testremote: checkremote
-	$(SSH) $(VM1) /tmp/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
-	$(SSH) $(VM1) /tmp/$(PLUGNAME).test $(TEST_VERBOSE) \
+	$(SSH) $(VM1) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
+	$(SSH) $(VM1) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
-.PHONY: clean-vm
-clean-vm:
-	-$(SCP) $(STOPVM_LOC) $(VM):/tmp/
-	-$(SSH) $(VM) "sh /tmp/$(STOPVM)"
-	-$(SSH) $(VM) rm $(GLOC)/$(PLUGNAME)
-	-$(SSH) $(VM) rm \
-		      /tmp/$(STARTVM) \
-		      /tmp/$(STOPVM) \
-		      /tmp/$(VMDKOPS_MODULE).test \
-		      /tmp/$(PLUGNAME).test
-	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
-	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
-	-$(SSH) $(VM) rm -rvf /tmp/docker-volumes/
-	-$(SSH) $(VM) service docker restart
+.PHONY:clean-vm clean-esx
+clean-vm: check-test-ip
+	$(CLEANVM_SH) "$(VM_BINS)" $(GLOC)  $(TEST_VOL_NAME) "$(VM_IPS)"
 
-.PHONY: clean-esx
-clean-esx:
-	-$(SCP) $(STOPESX_LOC) $(ESX):/tmp
-	-$(SSH) $(ESX) "sh /tmp/$(STOPESX)"
-	-$(SSH) $(ESX) "rm -v /tmp/$(STARTESX) /tmp/$(STOPESX)"
-	-$(SSH) $(ESX) $(VIBCMD) remove --vibname $(VIBNAME)
-	-$(SSH) $(ESX) "rm -v /tmp/$(VIBFILE)"
+clean-esx: check-test-ip
+	$(CLEANESX_SH) "$(ESX_IP)"
+
 
 # helper goals - save typing in manual passes
+clean-all: clean clean-vm clean-esx
 all: dockerbuild deploy testremote
 all-vm: dockerbuild deploy-vm testremote
+

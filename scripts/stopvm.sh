@@ -1,3 +1,7 @@
 #!/bin/bash
-kill `pidof docker-vmdk-plugin`
+pid=`pidof docker-vmdk-plugin`
+if [ "$pid" != "" ] 
+then
+   $E kill $pid
+fi
 rm -rvf /mnt/vmdk/*

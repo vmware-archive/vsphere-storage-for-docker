@@ -21,6 +21,10 @@ VM1=root@$2
 VM2=root@$3
 BUILD_NUMBER=$4
 
+export ESX_IP=$1
+export VM1_IP=$2
+export VM2_IP=$3
+
 SCP="scp -o StrictHostKeyChecking=no"
 SSH="ssh -o StrictHostKeyChecking=no"
 
@@ -32,7 +36,7 @@ $SCP ./drone-scripts/lock.sh $VM1:/tmp/
 until $SSH $VM1 /tmp/lock.sh lock $BUILD_NUMBER
  do
   sleep 30
-  echo "Retying acquire lock"
+  echo "Retrying acquire lock"
 done 
 
 dump_vm_info() {
@@ -60,7 +64,7 @@ echo "*************************************************************************"
 echo "starting deploy"
 echo "*************************************************************************"
 
-if make deploy-esx ESX=$ESX && make deploy-vm VM=$VM1 && make deploy-vm VM=$VM2;
+if make deploy-esx deploy-vm;
 then
   dump_esx_info $ESX
   dump_vm_info $VM1

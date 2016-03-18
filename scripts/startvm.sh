@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 stdlog=/tmp/plugin.log
 log=/var/log/docker-vmdk-plugin.log
 echo ==== `date` ===== > $stdlog
