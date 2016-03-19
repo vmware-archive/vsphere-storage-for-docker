@@ -9,8 +9,8 @@
 # Place binaries here
 BIN := ./bin
 
-# source locations for Make
-ESX_SRC     := vmdkops-esxsrv # esx service for docker volume ops
+# esx service for docker volume ops
+ESX_SRC     := vmdkops-esxsrv
 
 #  binaries location
 PLUGNAME  := docker-vmdk-plugin
@@ -118,8 +118,8 @@ VM1_DOCKER = tcp://$(VM1):2375
 VM2_DOCKER = tcp://$(VM2):2375
 
 
-SCP := scp -o StrictHostKeyChecking=no
-SSH := ssh -kTax -o StrictHostKeyChecking=no
+SCP := $(DEBUG) scp -o StrictHostKeyChecking=no
+SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
 
 # bin locations on target guest
 GLOC := /usr/local/bin
@@ -140,7 +140,7 @@ CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 #
 # Deploy to existing testbed, Expects ESX VM1 and VM2 env vars
 #
-.PHONY: deploy deploy-esx deploy-vm
+.PHONY: deploy-esx deploy-vm deploy
 deploy-esx:
 	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
 
@@ -151,7 +151,6 @@ deploy-vm:
 	$(DEPLOY_VM_SH) "$(VMS)" "$(VM_BINS)" $(GLOC) 
 
 deploy: deploy-esx deploy-vm
-
 
 #
 # 'make test' or 'make testremote'
@@ -182,14 +181,17 @@ checkremote:
 	$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2): $(CONN_MSG); exit 1)
 
-.PHONY: testremote
+.PHONY: testremote test-all
 testremote: checkremote
 	$(SSH) $(TEST_VM) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(TEST_VM) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
+test-all: test-remote test-esx
+
 .PHONY:clean-vm clean-esx
+
 clean-vm:
 	$(CLEANVM_SH) "$(VMS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
@@ -199,7 +201,16 @@ clean-esx:
 
 # helper goals - save typing in manual passes
 clean-all: clean clean-vm clean-esx
-
-deploy-all: dockerbuild deploy-vm deploy-esx
-
+deploy-all: dockerbuild deploy
+test-all: deploy-all testremote
+# full circle
 all: clean-all deploy-all testremote clean-all
+
+# test-esx is a quick unittest for Python.
+TAR  = $(DEBUG) tar
+ECHO = $(DEBUG) echo
+test-esx:
+	@$(TAR) cz --no-recursion $(ESX_SRC)/*.py | $(SSH) $(ESX) "cd /tmp; $(TAR) xz"
+	@$(ECHO) Running unit tests for vmdk-ops python code...
+	@$(SSH) $(ESX) "python /tmp/$(ESX_SRC)/tests_vmdkops.py"
+	@$(SSH) $(ESX) rm -rf /tmp/$(ESX_SRC)

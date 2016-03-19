@@ -49,7 +49,7 @@ def kvESXInit():
     lib.DiskLib_Close.argtypes = [c_uint32]
     lib.DiskLib_Close.restype = c_uint32
 
-    # Check if thihs library supports create API
+    # Check if this library supports create API
     try: 
        lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64, c_int32, POINTER(c_uint32)]
        lib.DiskLib_SidecarCreate.restype = c_uint32

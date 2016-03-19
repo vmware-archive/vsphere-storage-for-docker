@@ -87,11 +87,16 @@ make clean
 There are also the following targets:
 ```
 make clean       # removes binaries build by 'make'
-make test        # runs whatever unit tests we have
-make deploy      # deploys to your test box (see CONTRIBUTING.md)
 make clean-esx   # uninstalls from esx
 make clean-vm    # uninstalls from vm
-make testremote  # runs sanity check docker commands for volumes
+
+make deploy      # deploys to both ESX and VM test boxes (see CONTRIBUTING.md)
+make deploy-vm   # deploys to guest VMs only 
+make deploy-esx  # deploys to ESX VM only
+
+make test        # runs whatever unit tests we have, locally on build machine
+make testremote  # runs ESX and VM side remote unit tests, and remote end2end sanity tests
+make test-esx    # Runs ESX-side remote unit tests
 ```
 Note that `make testremote` reads log output from the plugin at `/var/log/docker-vmdk-plugin.log`.
 

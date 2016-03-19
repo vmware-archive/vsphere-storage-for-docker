@@ -20,7 +20,7 @@ INIT_SCRIPT := vmdk-opsd
 TOOLS := tools/lin32/mkfs.ext4
 
 # Shared lib. Note that it is referred by name from vmci_srv.py
-VMCI_SRV_LIB := libvmci_srv.so 
+VMCI_SRV_LIB := ../bin/libvmci_srv.so
 
 PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
 

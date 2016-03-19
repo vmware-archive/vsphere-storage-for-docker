@@ -1,3 +1,11 @@
+#!/usr/bin/env python 
+
+'''
+Standalone tests for metadata volume operations
+Create vm and try to attach/detach disks with metadata
+This test is NOT a part of 'make testremote' or Drone CI pass
+'''
+
 import os
 import atexit
 import sys, getopt
@@ -75,7 +83,7 @@ def cleanup(vmId):
    cmd = 'vim-cmd vmsvc/destroy %s' % vmId
    subprocess.call(cmd, shell=True)
 
-   
+
 def main(argv):
    if argv == []:
       print 'vol_tests.py -d <test dir>'

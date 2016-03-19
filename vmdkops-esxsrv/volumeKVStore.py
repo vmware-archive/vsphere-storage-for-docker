@@ -21,8 +21,6 @@ import kvESX
 # Create the side car or open if it exists.
 def init():
    kvESX.kvESXInit()
-   return None
-
 
 # Create a side car KV store for given volpath
 def create(volPath, status, opts):

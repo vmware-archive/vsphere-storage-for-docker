@@ -141,7 +141,7 @@ func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume 
 // - check we see it properly from another docker VM (-H2 flag)
 func TestSanity(t *testing.T) {
 
-	fmt.Printf("Running tests on  %s (may take a while)...", endPoint1)
+	fmt.Printf("Running tests on  %s (may take a while)...\n", endPoint1)
 	clients := []struct {
 		endPoint string
 		client   *client.Client
