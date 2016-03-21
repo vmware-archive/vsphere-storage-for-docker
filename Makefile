@@ -74,18 +74,21 @@ lint:
 	@echo "Running $@"
 	${GOPATH}/bin/golint
 	${GOPATH}/bin/golint vmdkops
+	${GOPATH}/bin/golint config
+	${GOPATH}/bin/golint fs
 
 .PHONY: vet
 vet:
 	@echo "Running $@"
 	@go vet *.go
 	@go vet vmdkops/*.go
+	@go vet config/*.go
+	@go vet fs/*.go
 
 .PHONY: fmt
 fmt:
 	@echo "Running $@"
-	gofmt -s -l *.go
-	gofmt -s -l vmdkops/*.go
+	gofmt -s -l *.go vmdkops/*.go config/*.go fs/*.go
 
 #
 # 'make deploy'
@@ -172,6 +175,7 @@ test:
 .PHONY: testasroot
 testasroot:
 	$(GO) test $(PLUGIN)/vmdkops
+	$(GO) test $(PLUGIN)/config
 
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME ?= TestVolume

@@ -5,8 +5,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/natefinch/lumberjack"
+	"github.com/vmware/docker-vmdk-plugin/config"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,10 +17,10 @@ import (
 )
 
 const (
-	pluginSockDir = "/run/docker/plugins"
-	vmdkPluginID  = "vmdk"
-	version       = "VMDK Volume Driver v0.3"
-	logPath       = "/var/log/docker-vmdk-plugin.log"
+	pluginSockDir     = "/run/docker/plugins"
+	vmdkPluginID      = "vmdk"
+	version           = "VMDK Volume Driver v0.3"
+	defaultConfigPath = "/etc/docker-vmdk-plugin.conf"
 )
 
 // An equivalent function is not exported from the SDK.
@@ -35,29 +38,46 @@ func main() {
 	port := flag.Int("port", 15000, "Default port for vmci")
 	mockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
 	logLevel := flag.String("log_level", "info", "Logging Level")
+	configFile := flag.String("config", defaultConfigPath, "Configuration file path")
 	flag.Parse()
 
 	level, err := log.ParseLevel(*logLevel)
 	if err != nil {
-		log.WithFields(log.Fields{"level": *logLevel}).Panic("Invalid Log Level")
+		panic(fmt.Sprintf("Failed to parse log level: %v", err))
 	}
 
-	flags := syscall.O_APPEND | syscall.O_CREAT | syscall.O_WRONLY
-	file, err := os.OpenFile(logPath, flags, 0755)
+	usingConfigDefaults := false
+	c, err := config.Load(*configFile)
 	if err != nil {
-		log.WithFields(log.Fields{"path": logPath, "error": err}).Panic("Failed to open logfile")
+		if os.IsNotExist(err) {
+			usingConfigDefaults = true
+			c = config.Config{}
+			config.SetDefaults(&c)
+		} else {
+			panic(fmt.Sprintf("Failed to load config file %s: %v", *configFile, err))
+		}
 	}
 
-	log.SetOutput(file)
+	log.SetOutput(&lumberjack.Logger{
+		Filename: c.LogPath,
+		MaxSize:  c.MaxLogSizeMb,  // megabytes
+		MaxAge:   c.MaxLogAgeDays, // days
+	})
+
 	log.SetFormatter(new(VmwareFormatter))
 	log.SetLevel(level)
+
+	if usingConfigDefaults {
+		log.Warn("No config file found. Using defaults.")
+	}
 
 	log.WithFields(log.Fields{
 		"version":   version,
 		"port":      *port,
 		"mock_esx":  *mockEsx,
 		"log_level": *logLevel,
-	}).Info("Docker VMDK plugin started")
+		"config":    *configFile,
+	}).Info("Docker VMDK plugin started ")
 
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
@@ -75,7 +95,7 @@ func main() {
 
 	log.WithFields(log.Fields{
 		"address": fullSocketAddress(vmdkPluginID),
-	}).Info("Going into ServeUnix - Listening on Unix socket")
+	}).Info("Going into ServeUnix - Listening on Unix socket ")
 
 	log.Info(handler.ServeUnix("root", fullSocketAddress(vmdkPluginID)))
 }
