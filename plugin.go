@@ -132,10 +132,9 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 	mountpoint := filepath.Join(mountRoot, r.Name)
 	err := fs.Unmount(mountpoint)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Info("Unmount failed")
+		log.WithFields(log.Fields{"mountpoint": mountpoint, "error": err}).Error("Failed to unmount ")
 		return fmt.Errorf("Unmount failed: %T", err)
 	}
-	log.WithFields(log.Fields{"name": r.Name, "options": r.Options}).Info("Detach Volume")
 	return d.ops.Detach(r.Name, r.Options)
 }
 
@@ -146,16 +145,20 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 func (d vmdkDriver) Create(r volume.Request) volume.Response {
 	err := d.ops.Create(r.Name, r.Options)
 	if err != nil {
+                log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
 		return volume.Response{Err: err.Error()}
 	}
+        log.WithFields(log.Fields{"name": r.Name}).Info("Volume created ") 
 	return volume.Response{Err: ""}
 }
 
 func (d vmdkDriver) Remove(r volume.Request) volume.Response {
 	err := d.ops.Remove(r.Name, r.Options)
 	if err != nil {
+                log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to remove volume ")
 		return volume.Response{Err: err.Error()}
 	}
+        log.WithFields(log.Fields{"name": r.Name}).Info("Volume removed ") 
 	return volume.Response{Err: ""}
 }
 
@@ -187,6 +190,7 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 	}
 
 	if err := d.mountVolume(r, m); err != nil {
+                log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Failed to mount ") 
 		return volume.Response{Err: err.Error()}
 	}
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mount Succeeded ")
@@ -205,7 +209,7 @@ func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
 	err := d.unmountVolume(r)
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Unmount Failed ")
+		log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Failed to unmount ")
 		return volume.Response{Err: err.Error()}
 	}
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmount Succeeded ")
