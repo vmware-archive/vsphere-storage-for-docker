@@ -124,6 +124,7 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 	if d.mockEsx {
 		return fs.Mount(mountpoint, r.Name, "ext4")
 	}
+        
 	return fs.Mount(mountpoint, r.Name, "ext2")
 }
 
