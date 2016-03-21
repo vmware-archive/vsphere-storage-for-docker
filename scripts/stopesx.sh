@@ -1,6 +1,8 @@
 #!/bin/sh
-# VIB note: we remove by internal name, not file name - see description.xml in VIB
-vibname=vmware-esx-vmdkops-service
+#
+# Stop vmci_srv.py process and remove the VIB
+
+name=$1
 
 pid=`ps -c | grep -v awk | awk '/vmci_srv.py/ { print $1 }'`
 if [ "$pid" != "" ] 
@@ -8,9 +10,9 @@ then
    kill $pid
 fi
 
-if localcli software vib list | grep -q $vibname ;
+if localcli software vib list | grep -q $name ;
 then
-   # long running, so let's echo
-   echo "localcli software vib remove --vibname $vibname" 
-   localcli software vib remove --vibname $vibname
+   # long running, so let's always echo
+   echo "localcli software vib remove --vibname $name" 
+   localcli software vib remove --vibname $name
 fi

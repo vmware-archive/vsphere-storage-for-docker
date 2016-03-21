@@ -1,6 +1,6 @@
 # Contributing Code
 
-* Create a fork or branch (if you can) and make your changes.
+* Create a fork or branch (if you can) and make your changes
 * Push your changes and create a pull request.
 
 # Typical Dev Workflow
@@ -11,32 +11,50 @@ Make changes to code and run build. Make will basic unit tests
 make
 ```
 
-To deploy the code onto a dev setup, typically consisting of 1 ESX and 2 VMs,
-there are some automated steps.
 
-Setup:
+Dev setup automation is planned but bit done yet, so currently dev environment 
+has to be set up manually.
+
+
+Dev environment  typically consist of 1 ESX and 2  guest VMs running inside of the
+ESX. We also support 1 ESX and 1 guest VM. We require ESX 6.0 and later,
+and a Lunix VM running  Docker 1.10+ enabled for  plain text TCP connection, i.e.
+Docker Daemon running with "-H tcp://0.0.0.0:2375" flag.
+Please check  "Configuring and running Docker"
+(https://docs.docker.com/engine/admin/configuring/)  page on how to configure this
+
+To deploy the code onto a dev setup,, there are some automated steps.
+
+Environment variable:
+- You **need** to set ESX_IP and either VM_IP (in which case we'll use 1 VM) or
+both VM1_IP and VM2_IP environment variables
+
+Examples:
 ```
-export ESX=root@10.20.105.54
-make deploy-esx
-export VM=root@10.20.105.121
-make deploy-vm
-export VM=root@10.20.105.201
-make deploy-vm
+# Build and deploy the code and tests
+ESX_IP=10.20.105.54 VM_IP=10.20.105.201 make deploy-all
 ```
 
 or
 
 ```
-make deploy-esx ESX=root@10.20.105.54
-make deploy-vm VM=root@10.20.105.121
-make deploy-vm VM=root@10.20.104.210
+# clean, build, deploy, test and clean again
+export ESX_IP=10.20.105.54
+export VM1_IP=10.20.105.121
+export VM2_IP=10.20.104.210
+
+make all
 ```
 
-To run the end 2 end tests, run the following commands.
+Or just put the 'export' statement in your ~/.bash_profile and run
 
-Test:
 ```
-make testremote VM1=root@10.20.105.121 VM2=root@10.20.104.210
+# just build
+make
+# build, deploy, test
+make deploy-all testremote
+# only test
+make testremote
 ```
 
 If the code needs to run in debugger or the console output is desired.
@@ -50,14 +68,18 @@ Standard invocation on VM: (as root)
 /usr/local/bin/docker-vmdk-plugin
 ```
 
-To remove the code from the testbed, follow the steps.
-
-Cleanup:
+To remove the code from the testbed, use the same steps as above (i.e define 
+ESX_IP, VM1_IP and VM2_IP) and use the following make targets:
 
 ```
-make clean-vm VM=root@10.20.105.121
-make clean-vm VM=root@10.20.104.210
-make clean-esx ESX=root@10.20.105.54
+# remove stuff from the build
+make clean
+# remove stuff from ESX
+make clean-esx
+# remove stuff from VMs
+make clean-vm
+# clean all (all 3 steps above)
+make clean
 ```
 
 If additional python scripts are added to the ESX code, update the vib description file to include them.

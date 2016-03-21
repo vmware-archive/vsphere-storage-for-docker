@@ -108,14 +108,11 @@ fmt:
 # 	make deploy-vm  VM_IP=10.20.105.121
 # 	make testremote  ESX_IP=10.20.105.54 VM1_IP=10.20.105.121 VM2_IP=10.20.105.122
 
-ESX_IP ?= 10.20.105.54
-VM1_IP ?= 10.20.105.121
-VM2_IP ?= $(VM1_IP)
 
-ESX ?= root@$(ESX_IP)
-VM1 ?= root@$(VM1_IP)
-VM2 ?= root@$(VM2_IP)
-VM  ?= $(VM1)
+VM1_IP ?= "$(VM_IP)"
+VM2_IP ?= "$(VM_IP)"
+
+TEST_VM = root@$(VM1_IP)
 
 VM1_DOCKER = tcp://$(VM1_IP):2375
 VM2_DOCKER = tcp://$(VM2_IP):2375
@@ -134,37 +131,24 @@ GLOC := /usr/local/bin
 SCRIPTS     := ./scripts
 
 # scripts started locally to deploy to and clean up test machines
-DEPLOY_VM_SH  := $(SCRIPTS)/deployvm.sh
-DEPLOY_ESX_SH := $(SCRIPTS)/deployesx.sh
-CLEANVM_SH    := $(SCRIPTS)/cleanvm.sh
-CLEANESX_SH   := $(SCRIPTS)/cleanesx.sh
+DEPLOY_VM_SH  := $(SCRIPTS)/deploy-tools.sh deployvm
+DEPLOY_ESX_SH := $(SCRIPTS)/deploy-tools.sh deployesx
+CLEANVM_SH    := $(SCRIPTS)/deploy-tools.sh cleanvm
+CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 
-
-# A helper to validate environment variables settings.
-.PHONY: check-test-ip
-check-test-ip:
-ifeq "$(origin ESX_IP)" "undefined"
-	$(error ESX_IP environment needs to be set to point to test ESX IP address)
-endif 
-ifndef VM1_IP
-	$(error VM1_IP environment needs to be set to point to test VM IP address)
-endif
-ifndef VM2_IP
-	$(error VM2_IP environment needs to be set to point to test VM IP address)
-endif
 
 #
 # Deploy to existing testbed, Expects ESX_IP VM1_IP and VM2_IP env vars
 #
 .PHONY: deploy deploy-esx deploy-vm
-deploy-esx: check-test-ip
-	$(DEPLOY_ESX_SH) $(VIB_BIN) $(ESX_IP)
+deploy-esx:
+	$(DEPLOY_ESX_SH) "$(ESX_IP)" "$(VIB_BIN)"
 
 VM_IPS= $(VM1_IP) $(VM2_IP)
 
 # deploys to "GLOC" on vm1 and vm2
-deploy-vm: check-test-ip
-	$(DEPLOY_VM_SH) "$(VM_BINS)" $(GLOC) "$(VM_IPS)"
+deploy-vm:
+	$(DEPLOY_VM_SH) "$(VM_IPS)" "$(VM_BINS)" $(GLOC) 
 
 deploy: deploy-esx deploy-vm
 
@@ -193,28 +177,29 @@ TEST_VERBOSE   = -test.v
 CONN_MSG := "Please make sure Docker is running and is configured to accept TCP connections"
 .PHONY: checkremote
 checkremote:
-	@$(SSH) $(VM1) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
+	$(SSH) $(TEST_VM) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM1 $(VM1_IP): $(CONN_MSG) ; exit 1)
-	@$(SSH) $(VM1) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
+	$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2_IP): $(CONN_MSG); exit 1)
 
 .PHONY: testremote
 testremote: checkremote
-	$(SSH) $(VM1) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
-	$(SSH) $(VM1) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
+	$(SSH) $(TEST_VM) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
+	$(SSH) $(TEST_VM) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
 .PHONY:clean-vm clean-esx
-clean-vm: check-test-ip
-	$(CLEANVM_SH) "$(VM_BINS)" $(GLOC)  $(TEST_VOL_NAME) "$(VM_IPS)"
+clean-vm:
+	$(CLEANVM_SH) "$(VM_IPS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
-clean-esx: check-test-ip
-	$(CLEANESX_SH) "$(ESX_IP)"
+clean-esx:
+	$(CLEANESX_SH) "$(ESX_IP)" vmware-esx-vmdkops-service
 
 
 # helper goals - save typing in manual passes
 clean-all: clean clean-vm clean-esx
-all: dockerbuild deploy testremote
-all-vm: dockerbuild deploy-vm testremote
 
+deploy-all: dockerbuild deploy-vm deploy-esx
+
+all: clean-all deploy-all testremote clean-all

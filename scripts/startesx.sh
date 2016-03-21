@@ -10,10 +10,9 @@
 # this will be gone when VIB work is complete
 # Note that we are resetting actual log here - it is useful in Drone runs. 
 
+vibfile=$1
 
-vibfile="$1/$(basename $2)"
-
-# long running, so let's echo
+# long running, so let's always echo
 echo "localcli software vib install --no-sig-check  -v $vibfile" 
 localcli software vib install --no-sig-check  -v $vibfile
 
