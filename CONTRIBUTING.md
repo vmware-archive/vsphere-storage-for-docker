@@ -21,7 +21,8 @@ has to be set up manually.
 Test environment  typically consist of 1 ESX and 2  guest VMs running inside of the
 ESX. We also support 1 ESX and 1 guest VM. We require ESX 6.0 and later,
 and a Linux VM running  Docker 1.10+ enabled for  plain text TCP connection, i.e.
-Docker Daemon running with "-H tcp://0.0.0.0:2375 -H fd://" options. Note that both tcp: and fd: need to be present
+Docker Daemon running with "-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock" 
+options. Note that both tcp: and unix: need to be present
 Please check  "Configuring and running Docker"
 (https://docs.docker.com/engine/admin/configuring/)  page on how to configure this - also there is a github link at the bottom, for systemd config files.
 
@@ -35,7 +36,7 @@ both VM1_IP and VM2_IP environment variables
 
 Examples:
 ```
-# Build and deploy the code and tests
+# Build and deploy the code. Also deploy (but do not run) tests
 ESX_IP=10.20.105.54 VM_IP=10.20.105.201 make deploy-all
 ```
 

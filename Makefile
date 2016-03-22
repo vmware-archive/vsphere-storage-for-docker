@@ -52,7 +52,7 @@ prereqs:
 	@$(SCRIPTS)/check.sh
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
-	@-mkdir -p $(BIN)
+	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
 
 $(BIN)/$(VMDKOPS_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go

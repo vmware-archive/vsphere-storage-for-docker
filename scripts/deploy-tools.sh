@@ -147,20 +147,25 @@ function cleanvm {
         echo "Cleaning up on VM $ip..."
         target=root@$ip
         $SSH $target mkdir -p $tmp_loc
+        $SCP $script_loc/$stopsvc $target:$tmp_loc
+
+        echo "   Asking docker to remove volumes ($volumes)..."
+        # make sure docker engine is not hanging due to old/dead plugins
+        $SSH $target service docker restart
+        # and now clean up
+        for vol in $volumes
+        do
+           $SSH $target "if docker volume ls | grep -q $vol; then \
+                        docker volume rm $vol; fi "
+        done
         
         echo "   Stopping services..."
-        $SCP $script_loc/$stopsvc $target:$tmp_loc
         $SSH $target $tmp_loc/$stopsvc $name
         $SSH $target "rm -rf $tmp_loc"
    
-        echo "   Removing volumes and restarting docker..."
+        echo "   Removing binaries and restarting docker..."
         $SSH $target rm -f $remote_binaries
         $SSH $target rm -rvf $guest_mount_point/$test_vol
-        for vol in $volumes
-        do
-                $SSH $target "if docker volume ls | grep -q $vol; then \
-                        docker volume rm $vol; fi "
-        done
         $SSH $target rm -rvf /tmp/docker-volumes/
         $SSH $target service docker restart
    done
