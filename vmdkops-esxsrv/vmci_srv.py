@@ -387,7 +387,7 @@ def disk_attach(vmdkPath, vm):
      if vmUuid:
         if vmUuid == str(vm.config.uuid):
            logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
-           return err("%s is already attached, skipping duplicate attach request." % vmdkPath)
+           return None
         else:
            logging.info(vmdkPath + " is attached to VM with ID " + str(vm.config.uuid) +
                         " skipping attach request.")
