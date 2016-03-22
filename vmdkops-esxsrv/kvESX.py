@@ -164,7 +164,7 @@ def save(volpath, kvDict):
    try:
       fh = open(metaFile, "w+")
    except IOError:
-      return None
+      return False
 
    json.dump(kvDict, fh)
 
