@@ -3,7 +3,7 @@
 * Create a fork or branch (if you can) and make your changes
 * Push your changes and create a pull request.
 
-# Typical Dev Workflow
+# Typical Developer Workflow
 
 Make changes to code and run build. Make will basic unit tests
 
@@ -11,21 +11,25 @@ Make changes to code and run build. Make will basic unit tests
 make
 ```
 
+Build environment is described in README.md. The result of the build is a set
+of binaries in ./bin directory.
 
-Dev setup automation is planned but bit done yet, so currently dev environment 
+In order to test locally, you'd need a test setup. Local test setup automation is planned but but not done yet, so currently the environment
 has to be set up manually.
 
 
-Dev environment  typically consist of 1 ESX and 2  guest VMs running inside of the
+Test environment  typically consist of 1 ESX and 2  guest VMs running inside of the
 ESX. We also support 1 ESX and 1 guest VM. We require ESX 6.0 and later,
-and a Lunix VM running  Docker 1.10+ enabled for  plain text TCP connection, i.e.
-Docker Daemon running with "-H tcp://0.0.0.0:2375" flag.
+and a Linux VM running  Docker 1.10+ enabled for  plain text TCP connection, i.e.
+Docker Daemon running with "-H tcp://0.0.0.0:2375 -H fd://" options. Note that both tcp: and fd: need to be present
 Please check  "Configuring and running Docker"
-(https://docs.docker.com/engine/admin/configuring/)  page on how to configure this
+(https://docs.docker.com/engine/admin/configuring/)  page on how to configure this - also there is a github link at the bottom, for systemd config files.
 
-To deploy the code onto a dev setup,, there are some automated steps.
+To deploy the plugin and test code onto a test environment we support a set of
+Makefile targets. There targets rely on environment variables to point to the
+correct environment.
 
-Environment variable:
+Environment variables:
 - You **need** to set ESX_IP and either VM_IP (in which case we'll use 1 VM) or
 both VM1_IP and VM2_IP environment variables
 

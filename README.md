@@ -2,15 +2,20 @@
 
 # Quicksteps to get going
 
-Here the basic commands you need to run to get going with the docker vmdk plugin.
+In order to get going, you need to build the plugin, configure test environment
+and deploy the plugin to this environment. 
+- A simplest way to build is to use
+docker - see "Build using docker (Recommended)" section below
+- For test, you need ESX and one (or two) Guest Linux VMs inside the ESX. Check out Contributing.md for details on test environment
+- once you are done, you can deploy and test using the following:
 
 ```
-make # Requires docker installed.
-make deploy-esx ESX=root@10.20.105.54 # Python service deployed and running.
-make deploy-vm  VM=root@10.20.105.121 # Docker plugin deployed and running.
+# Build - Requires docker installed.
+make
+# Deploy - requires test bed prepared
+ESX_IP=10.20.105.54 VM_IP=10.20.105.121 make deploy-esx depoy-vm
 
 # Docker commands to use plugin
-
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 docker volume ls
 docker volume inspect MyVolume
@@ -19,19 +24,17 @@ docker volume rm MyVolume # SHOULD FAIL - still used by container
 docker rm my_container
 docker volume rm MyVolume # Should pass
 
-# To run on ESX manually.
-
+# To run on ESX manually ("make deploy-esx" does it automatically)
 python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py
 
-# To run on Linux guest manually.
-
+# To run on Linux guest manually ("make deploy-vm" does it automatically)
 sudo /usr/local/bin/docker-vmdk-plugin
 
 ```
 
-To read more about code developement and testing read [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
+To read more about code development and testing read [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
-# Docker VMDK volume plugin (WIP)
+# Docker VMDK volume plugin
 
 Native ESXi VMDK support for Docker Data Volumes.
 
@@ -51,7 +54,7 @@ This repo contains guest code and ESXi code.
 
 The docker-vmdk-plugin service runs in docker VM and talks to Docker Volume
 Plugin API via Unix Sockets. It then relays requests via VMWare vSockets
-host-guest communication to a edicated service on ESXi.
+host-guest communication to a dedicated service on ESXi.
 
 The docker plugin code makes use of  vmdkops module  (found  in ./vmdkops)
 and ESX python service (found in ./vmdkops-esxsrc).
@@ -69,7 +72,7 @@ Build prerequisites:
 
 Build results are in ./bin.
 
-### Using docker (Recommended)
+### Build using docker (Recommended)
 
 Use it when you do not have GO, vibauthor and 32 bit C libraries on your machine,
 or do not plan to impact your GO projects.
@@ -94,7 +97,7 @@ Note that `make testremote` reads log output from the plugin at `/var/log/docker
 
 For more details refer to [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
-### Building on Photon TP2 Minimal
+### Build on Photon TP2 Minimal
 
 Photon TP2 Minimal does not have git or make installed, and does not
 not start docker by default, so you need to do this before running make:
@@ -107,7 +110,7 @@ systemctl start docker
 ```
 and then the git/cd/make sequence.
 
-### Building without Docker
+### Build without Docker
 
 This build requires
 - GO to be installed
