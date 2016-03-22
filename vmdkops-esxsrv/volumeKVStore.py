@@ -56,7 +56,7 @@ def set(volPath, key, val):
    volMeta = kvESX.load(volPath)
 
    if not volMeta:
-      return None
+      return False
 
    volMeta[key] = val
 
@@ -82,7 +82,7 @@ def remove(volPath, key):
    volMeta = kvESX.load(volPath)
 
    if not volMeta:
-      return None
+      return False
 
    del volMeta[key]
 
