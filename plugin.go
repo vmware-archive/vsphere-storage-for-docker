@@ -41,7 +41,7 @@ package main
 
 import (
 	//	"encoding/json"
-	"fmt"
+	//      "fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-vmdk-plugin/fs"
@@ -133,7 +133,7 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 	err := fs.Unmount(mountpoint)
 	if err != nil {
 		log.WithFields(log.Fields{"mountpoint": mountpoint, "error": err}).Error("Failed to unmount ")
-		return fmt.Errorf("Unmount failed: %T", err)
+                // Do not return error. Continue with detach.
 	}
 	return d.ops.Detach(r.Name, r.Options)
 }
