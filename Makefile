@@ -16,6 +16,9 @@ ESX_SRC     := vmdkops-esxsrv # esx service for docker volume ops
 PLUGNAME  := docker-vmdk-plugin
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 
+# all binaries for VMs - plugin and tests
+VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+
 VIBFILE := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
@@ -36,20 +39,20 @@ SRC = plugin.go main.go log_formatter.go
 # The default build is using a prebuilt docker image that has all dependencies.
 .PHONY: dockerbuild
 dockerbuild:
-	@./scripts/check.sh dockerbuild
-	./scripts/build.sh build
+	@$(SCRIPTS)/check.sh dockerbuild
+	$(SCRIPTS)/build.sh build
 
 # The non docker build.
 .PHONY: build
-build: prereqs code_verify $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+build: prereqs code_verify $(VM_BINS)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 .PHONY: prereqs
 prereqs:
-	@./scripts/check.sh
+	@$(SCRIPTS)/check.sh
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
-	@-mkdir -p $(BIN)
+	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
 
 $(BIN)/$(VMDKOPS_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go
@@ -105,14 +108,11 @@ fmt:
 # 	make deploy-vm  VM_IP=10.20.105.121
 # 	make testremote  ESX_IP=10.20.105.54 VM1_IP=10.20.105.121 VM2_IP=10.20.105.122
 
-ESX_IP ?= 10.20.105.54
-VM1_IP ?= 10.20.105.121
-VM2_IP ?= $(VM1_IP)
 
-ESX ?= root@$(ESX_IP)
-VM1 ?= root@$(VM1_IP)
-VM2 ?= root@$(VM2_IP)
-VM  ?= $(VM1)
+VM1_IP ?= "$(VM_IP)"
+VM2_IP ?= "$(VM_IP)"
+
+TEST_VM = root@$(VM1_IP)
 
 VM1_DOCKER = tcp://$(VM1_IP):2375
 VM2_DOCKER = tcp://$(VM2_IP):2375
@@ -124,39 +124,32 @@ SSH := ssh -kTax -o StrictHostKeyChecking=no
 # bin locations on target guest
 GLOC := /usr/local/bin
 
+#
+# Scripts to deploy and control services - used from Makefile and from Drone CI
+#
+# script sources live here. All scripts are copied to test VM during deployment
+SCRIPTS     := ./scripts
 
-# vib install: we install by file name but remove by internal name
-VIBNAME := vmware-esx-vmdkops-service
-VIBCMD  := localcli software vib
-SCRIPTS := ./scripts
-STARTESX := startesx.sh
-STOPESX  := stopesx.sh
-STARTVM := startvm.sh
-STOPVM  := stopvm.sh
-STARTVM_LOC := $(SCRIPTS)/$(STARTVM)
-STOPVM_LOC  := $(SCRIPTS)/$(STOPVM)
-STARTESX_LOC := $(SCRIPTS)/$(STARTESX)
-STOPESX_LOC  := $(SCRIPTS)/$(STOPESX)
+# scripts started locally to deploy to and clean up test machines
+DEPLOY_VM_SH  := $(SCRIPTS)/deploy-tools.sh deployvm
+DEPLOY_ESX_SH := $(SCRIPTS)/deploy-tools.sh deployesx
+CLEANVM_SH    := $(SCRIPTS)/deploy-tools.sh cleanvm
+CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 
-.PHONY: deploy-esx
-# ignore failures in copy to guest (can be busy) and remove vib (can be not installed)
+
+#
+# Deploy to existing testbed, Expects ESX_IP VM1_IP and VM2_IP env vars
+#
+.PHONY: deploy deploy-esx deploy-vm
 deploy-esx:
-	$(SCP) $(VIB_BIN) $(ESX):/tmp
-	$(SCP) $(STARTESX_LOC) $(STOPESX_LOC) $(ESX):/tmp
-	-$(SSH) $(ESX) "sh /tmp/$(STOPESX)"
-	-$(SSH) $(ESX) $(VIBCMD) remove --vibname $(VIBNAME)
-	$(SSH) $(ESX) $(VIBCMD) install --no-sig-check  -v /tmp/$(VIBFILE)
-	$(SSH) $(ESX) "sh /tmp/$(STARTESX)"
+	$(DEPLOY_ESX_SH) "$(ESX_IP)" "$(VIB_BIN)"
 
-.PHONY: deploy-vm
+VM_IPS= $(VM1_IP) $(VM2_IP)
+
+# deploys to "GLOC" on vm1 and vm2
 deploy-vm:
-	$(SCP) $(BIN)/*.test $(VM):/tmp
-	$(SCP) $(STARTVM_LOC) $(STOPVM_LOC) $(VM):/tmp/
-	-$(SSH) $(VM) "sh /tmp/$(STOPVM) &"
-	$(SCP) $(PLUGIN_BIN) $(VM):$(GLOC)
-	$(SSH) $(VM) "sh /tmp/$(STARTVM) &"
+	$(DEPLOY_VM_SH) "$(VM_IPS)" "$(VM_BINS)" $(GLOC) 
 
-.PHONY:deploy
 deploy: deploy-esx deploy-vm
 
 
@@ -170,7 +163,7 @@ deploy: deploy-esx deploy-vm
 # this is a set of unit tests run on build machine
 .PHONY: test
 test:
-	./scripts/build.sh testasroot
+	$(SCRIPTS)/build.sh testasroot
 
 .PHONY: testasroot
 testasroot:
@@ -184,41 +177,29 @@ TEST_VERBOSE   = -test.v
 CONN_MSG := "Please make sure Docker is running and is configured to accept TCP connections"
 .PHONY: checkremote
 checkremote:
-	@$(SSH) $(VM1) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
+	$(SSH) $(TEST_VM) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM1 $(VM1_IP): $(CONN_MSG) ; exit 1)
-	@$(SSH) $(VM1) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
+	$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2_IP): $(CONN_MSG); exit 1)
 
 .PHONY: testremote
 testremote: checkremote
-	$(SSH) $(VM1) /tmp/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
-	$(SSH) $(VM1) /tmp/$(PLUGNAME).test $(TEST_VERBOSE) \
+	$(SSH) $(TEST_VM) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
+	$(SSH) $(TEST_VM) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
-.PHONY: clean-vm
+.PHONY:clean-vm clean-esx
 clean-vm:
-	-$(SCP) $(STOPVM_LOC) $(VM):/tmp/
-	-$(SSH) $(VM) "sh /tmp/$(STOPVM)"
-	-$(SSH) $(VM) rm $(GLOC)/$(PLUGNAME)
-	-$(SSH) $(VM) rm \
-		      /tmp/$(STARTVM) \
-		      /tmp/$(STOPVM) \
-		      /tmp/$(VMDKOPS_MODULE).test \
-		      /tmp/$(PLUGNAME).test
-	-$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
-	-$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
-	-$(SSH) $(VM) rm -rvf /tmp/docker-volumes/
-	-$(SSH) $(VM) service docker restart
+	$(CLEANVM_SH) "$(VM_IPS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
-.PHONY: clean-esx
 clean-esx:
-	-$(SCP) $(STOPESX_LOC) $(ESX):/tmp
-	-$(SSH) $(ESX) "sh /tmp/$(STOPESX)"
-	-$(SSH) $(ESX) "rm -v /tmp/$(STARTESX) /tmp/$(STOPESX)"
-	-$(SSH) $(ESX) $(VIBCMD) remove --vibname $(VIBNAME)
-	-$(SSH) $(ESX) "rm -v /tmp/$(VIBFILE)"
+	$(CLEANESX_SH) "$(ESX_IP)" vmware-esx-vmdkops-service
+
 
 # helper goals - save typing in manual passes
-all: dockerbuild deploy testremote
-all-vm: dockerbuild deploy-vm testremote
+clean-all: clean clean-vm clean-esx
+
+deploy-all: dockerbuild deploy-vm deploy-esx
+
+all: clean-all deploy-all testremote clean-all

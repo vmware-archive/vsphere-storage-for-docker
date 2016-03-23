@@ -1,3 +1,12 @@
 #!/bin/bash
-kill `pidof docker-vmdk-plugin`
-rm -rvf /mnt/vmdk/*
+#
+# Stop name process and clean up mount point used in test
+
+name=$1
+
+pid=`pidof $(basename $name)`
+if [ "$pid" != "" ] 
+then
+   kill $pid
+fi
+$DEBUG rm -rvf /mnt/vmdk/*
