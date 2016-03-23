@@ -381,17 +381,16 @@ def disk_attach(vmdkPath, vm):
   # attach below if it is
 
   status = kv.get(vmdkPath, 'status')
-  logging.info("Attaching " + vmdkPath + " with status " + status)
-  if status != 'detached':
+  logging.info("Attaching {0} with status {1}".format(vmdkPath,  status))
+  if status and status != 'detached':
      vmUuid = kv.get(vmdkPath, 'attachedVMUuid')
      if vmUuid:
         if vmUuid == vm.config.uuid:
-           logging.warning(vmdkPath + " is already attached, skipping duplicate attach request.")
-           return err(vmdkPath + " is already attached, skipping duplicate attach request.")
+           msg = "{0} is already attached, skipping duplicate request.".format(vmdkPath)
         else:
-           logging.warning(vmdkPath + " is attached to VM with ID " + str(vm.config.uuid) +
-                           " skipping attach request.")
-           return err("%s is in use." % vmdkPath)
+           msg = "{0} is attached to VM ID={1}, skipping attach request".format(vmdkPath, vmUuid)
+        logging.warning(msg)
+        return err(msg)
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
