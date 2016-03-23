@@ -385,12 +385,12 @@ def disk_attach(vmdkPath, vm):
   if status != 'detached':
      vmUuid = kv.get(vmdkPath, 'attachedVMUuid')
      if vmUuid:
-        if vmUuid == str(vm.config.uuid):
-           logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
-           return None
+        if vmUuid == vm.config.uuid:
+           logging.warning(vmdkPath + " is already attached, skipping duplicate attach request.")
+           return err(vmdkPath + " is already attached, skipping duplicate attach request.")
         else:
-           logging.info(vmdkPath + " is attached to VM with ID " + str(vm.config.uuid) +
-                        " skipping attach request.")
+           logging.warning(vmdkPath + " is attached to VM with ID " + str(vm.config.uuid) +
+                           " skipping attach request.")
            return err("%s is in use." % vmdkPath)
 
   # Now find a slot on the controller  , if needed
@@ -430,8 +430,11 @@ def disk_attach(vmdkPath, vm):
 
   try:
       wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-      kv.set(vmdkPath, 'status', 'attached')
-      kv.set(vmdkPath, 'attachedVMUuid', str(vm.config.uuid))
+      volMeta = kv.getAll(vmdkPath)
+      if volMeta:
+         volMeta['status'] = 'attached'
+         volMeta['attachedVMUuid'] = vm.config.uuid
+         kv.setAll(vmdkPath, volMeta)
   except vim.fault.VimFault as ex:
       return err(ex.msg)
   else:
@@ -466,8 +469,11 @@ def disk_detach(vmdkPath, vm):
 
   try:
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
-     kv.set(vmdkPath, 'status', 'detached')
-     kv.remove(vmdkPath, 'attachedVMUuid')
+     volMeta = kv.getAll(vmdkPath)
+     if volMeta:
+        volMeta['status'] = 'detached'
+        del volMeta['attachedVMUuid']
+        kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)

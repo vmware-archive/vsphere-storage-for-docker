@@ -41,8 +41,7 @@ def create(volPath, status, opts):
 def delete(volPath):
    return kvESX.delete(volPath)
 
-# Get value for a given key (index), returns a string thats the value
-# for the key
+# Return the entire meta-data for the given volpath
 def getAll(volPath):
    volMeta = kvESX.load(volPath)
 
@@ -50,6 +49,11 @@ def getAll(volPath):
       return volMeta
    else:
       return None
+
+# Store the meta-data for a given vol-path
+def setAll(volPath, volMeta):
+   if volMeta:
+       return kvESX.save(volPath, volMeta)
 
 # Set a string value for a given key(index)
 def set(volPath, key, val):
