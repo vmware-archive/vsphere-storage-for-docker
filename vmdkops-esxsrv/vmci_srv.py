@@ -141,7 +141,7 @@ def RunCommand(cmd):
 def createVMDK(vmdkPath, volName, opts):
 	logging.info ("*** createVMDK: " + vmdkPath)
 	if os.path.isfile(vmdkPath):
-		return "File %s already exists" % vmdkPath
+		return err("File %s already exists" % vmdkPath)
 
 	if not opts or not "size" in opts:
 		size = DefaultDiskSize
@@ -156,7 +156,7 @@ def createVMDK(vmdkPath, volName, opts):
 
         if rc != 0:
             if removeVMDK(vmdkPath) == None:
-                return err("Failed to create %s. %s" % (vmdkPath, out))
+                return err("Failed to create %s." % vmdkPath)
             else:
                 return err("Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath)
 
@@ -181,7 +181,7 @@ def formatVmdk(vmdkPath, volName):
         if rc != 0:
             logging.warning ("Failed to format %s. %s" % (vmdkPath, out))
             if removeVMDK(vmdkPath) == None:
-                return err("Failed to format %s. %s" % (vmdkPath, out))
+                return err("Failed to format %s." % vmdkPath)
             else:
                 return err("Unable to format %s and unable to delete volume. Please delete it manually." % vmdkPath)
 	return None
@@ -383,8 +383,15 @@ def disk_attach(vmdkPath, vm):
   status = kv.get(vmdkPath, 'status')
   logging.info("Attaching " + vmdkPath + " with status " + status)
   if status != 'detached':
-     logging.info(vmdkPath + " is already attached, skipping duplicate attach request.")
-     return err("%s is already attached, skipping duplicate attach request." % vmdkPath)
+     vmUuid = kv.get(vmdkPath, 'attachedVMUuid')
+     if vmUuid:
+        if vmUuid == vm.config.uuid:
+           logging.warning(vmdkPath + " is already attached, skipping duplicate attach request.")
+           return err(vmdkPath + " is already attached, skipping duplicate attach request.")
+        else:
+           logging.warning(vmdkPath + " is attached to VM with ID " + str(vm.config.uuid) +
+                           " skipping attach request.")
+           return err("%s is in use." % vmdkPath)
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
@@ -423,7 +430,11 @@ def disk_attach(vmdkPath, vm):
 
   try:
       wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-      kv.set(vmdkPath, 'status', 'attached')
+      volMeta = kv.getAll(vmdkPath)
+      if volMeta:
+         volMeta['status'] = 'attached'
+         volMeta['attachedVMUuid'] = vm.config.uuid
+         kv.setAll(vmdkPath, volMeta)
   except vim.fault.VimFault as ex:
       return err(ex.msg)
   else:
@@ -458,7 +469,11 @@ def disk_detach(vmdkPath, vm):
 
   try:
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
-     kv.set(vmdkPath, 'status', 'detached')
+     volMeta = kv.getAll(vmdkPath)
+     if volMeta:
+        volMeta['status'] = 'detached'
+        del volMeta['attachedVMUuid']
+        kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)
