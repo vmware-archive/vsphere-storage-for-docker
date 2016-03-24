@@ -1,11 +1,53 @@
-# Contributing Code
+# Contributing 
 
+## Topics
+* [Code contribution guidelines](#code-contribution-guidelines)
+* [Bug filing guidelines](#bug-filing-guidelines)
+* [Testing and CI](#testing-and-ci)
+
+## Code Contribution guidelines
+### Pull Requests
 * Create a fork or branch (if you can) and make your changes
-* Push your changes and create a pull request.
+* Each PR must be accompaned with unit/integration tests
+* Add detail description to pull request including reference to issues.
+* Add details of tests in "Testing Done".
+* Locally run integration tests. 
+* Squash your commits before you publish pull request.
+* If there are any documentation changes then it must be in same PR.
+* We don't have formal coding conventions at this point. Make sure your code follows same style and convention as existing code.
 
-# Typical Developer Workflow
+See  [Typical Developer Workflow](#typical-developer-workflow) to get started. 
 
-Make changes to code and run build. Make will basic unit tests
+
+### Merge Approvals:
+* Pull request requires minmium 2 Ship it/ LGTM before you merge.
+* Author is responsble for resolving conflicts if any and merge pull request. 
+* After merge, you must ensure integration tests pass successfully. Failure to pass test would result in reverting a change.
+
+Do not hesistate to ask your colleagues if you need help or have questions. Post your question to Telegram or drop a line to cna-storage@vmware.com
+
+## Bug filing guidelines
+* Search for duplicates!
+* Include crisp summary of issue in "Title"
+* Suggested template:
+
+```
+Envionment Details: (#VMs, ESX, Datastore, Application etc)
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Expected Result:
+
+Actual Result:
+
+Triage:
+Copy-paste relevant snippets from log file, code. Use github markdown language for basic formatting. 
+
+```
+## Typical Developer Workflow
 
 ```
 make
@@ -93,7 +135,7 @@ If additional python scripts are added to the ESX code, update the vib descripti
 ./vmdkops-esxsrv/descriptor.xml
 ```
 
-# Managing GO Dependencies
+## Managing GO Dependencies
 
 Use [gvt](https://github.com/FiloSottile/gvt) and check in the dependency.
 Example:
@@ -103,7 +145,7 @@ git add vendor
 git commit -m "Added new dependency go-plugins-helpers"
 ```
 
-# Testing and CI/CD
+## Testing and CI
 
 The work flow for coding looks like this
 
