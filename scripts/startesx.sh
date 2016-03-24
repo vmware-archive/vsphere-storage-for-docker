@@ -11,13 +11,19 @@
 # Note that we are resetting actual log here - it is useful in Drone runs. 
 
 vibfile=$1
+installedvib=vmware-esx-vmdkops-service
 
 # long running, so let's always echo
-echo "localcli software vib install --no-sig-check  -v $vibfile" 
-localcli software vib install --no-sig-check  -v $vibfile
+echo "localcli software vib remove -n $installedvib ...."
+localcli software vib remove -n $installedvib > /dev/null
+
+echo "localcli software vib install --no-sig-check  -v $vibfile ...."
+localcli software vib install --no-sig-check  -v $vibfile > /dev/null
 
 log=/tmp/plugin.log
-pylog=/var/log/vmware/docker-vmdk-plugin.log 
+pylog=/var/log/vmware/docker-vmdk-plugin.log
 echo === `date` Actual logs are in $pylog  === > $log
 cat /dev/null > $pylog
 nohup python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py >> $log 2>&1 &
+
+echo "Successfully started plugin service."
