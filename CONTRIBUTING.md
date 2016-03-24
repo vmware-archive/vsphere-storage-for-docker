@@ -9,19 +9,19 @@
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
 * Each PR must be accompaned with unit/integration tests
-* Add detail description to pull request including reference to issues.
+* Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
 * Locally run integration tests. 
 * Squash your commits before you publish pull request.
-* If there are any documentation changes then it must be in same PR.
+* If there are any documentation changes then they must be in the same PR.
 * We don't have formal coding conventions at this point. Make sure your code follows same style and convention as existing code.
 
 See  [Typical Developer Workflow](#typical-developer-workflow) to get started. 
 
 
 ### Merge Approvals:
-* Pull request requires minmium 2 Ship it/ LGTM before you merge.
-* Author is responsble for resolving conflicts if any and merge pull request. 
+* Pull request requires a minmium of 2 approvals, given via "Ship it", "LGTM" or "+1" comments.
+* Author is responsble for resolving conflicts, if any, and merging pull request. 
 * After merge, you must ensure integration tests pass successfully. Failure to pass test would result in reverting a change.
 
 Do not hesistate to ask your colleagues if you need help or have questions. Post your question to Telegram or drop a line to cna-storage@vmware.com
