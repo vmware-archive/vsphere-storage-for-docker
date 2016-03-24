@@ -40,9 +40,19 @@ func Mount(mountpoint string, name string, fs string) error {
 	device := strings.TrimRight(string(out), " \n")
 	log.WithFields(log.Fields{
 		"device":     device,
-		"mountpoint": mountpoint,
-	}).Debug("Calling syscall.Mount()")
+		"mountpoint": mountpoint}).Info("Calling syscall.Mount()")
 	//_, err = exec.Command("mount", []string{device, mountpoint}...).Output()
+
+        // If the device is already mounted return ok.
+	out, err = exec.Command("grep", []string{device, "/proc/mounts"}...).Output()
+        res := string(out)
+
+	log.WithFields(log.Fields{ "out": res}).Info("got grep output ")
+	if res != "" {
+	   return nil
+        }
+
+        // Else mount the device.
 	err = syscall.Mount(device, mountpoint, fs, 0, "")
 	if err != nil {
 		return fmt.Errorf("Failed to mount device %s at %s: %s", device, mountpoint, err)
