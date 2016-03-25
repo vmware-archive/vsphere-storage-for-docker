@@ -13,7 +13,7 @@ docker - see "Build using docker (Recommended)" section below
 # Build - Requires docker installed.
 make
 # Deploy - requires test bed prepared
-ESX_IP=10.20.105.54 VM_IP=10.20.105.121 make deploy-esx depoy-vm
+ESX=10.20.105.54 VM=10.20.105.121 make deploy-esx depoy-vm
 
 # Docker commands to use plugin
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb

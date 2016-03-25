@@ -15,25 +15,21 @@ then
   exit 1
 fi
 
-#TODO generalize to an array of VMs
-ESX=root@$1
-VM1=root@$2
-VM2=root@$3
 BUILD_NUMBER=$4
 
-export ESX_IP=$1
-export VM1_IP=$2
-export VM2_IP=$3
+export ESX=$1
+export VM1=$2
+export VM2=$3
 
 SCP="scp -o StrictHostKeyChecking=no"
 SSH="ssh -o StrictHostKeyChecking=no"
-
+USER=root
 . ./drone-scripts/cleanup.sh
 
 $SCP ./drone-scripts/lock.sh $VM1:/tmp/
 
 # Unlock performed in stop_build in cleanup.sh
-until $SSH $VM1 /tmp/lock.sh lock $BUILD_NUMBER
+until $SSH $USER@$VM1 /tmp/lock.sh lock $BUILD_NUMBER
  do
   sleep 30
   echo "Retrying acquire lock"
@@ -41,15 +37,15 @@ done
 
 dump_vm_info() {
   set -x
-  $SSH $1 uname -a
-  $SSH $1 docker version
+  $SSH $USER@$1 uname -a
+  $SSH $USER@$1 docker version
   set +x
 }
 
 dump_esx_info() {
   set -x
-  $SSH $ESX uname -a
-  $SSH $ESX vmware -vl
+  $SSH $USER@$ESX uname -a
+  $SSH $USER@$ESX vmware -vl
   set +x
 }
 

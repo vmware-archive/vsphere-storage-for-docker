@@ -1,0 +1,136 @@
+#!/bin/sh
+# chkconfig: on 20 20
+
+#
+# Start and stop the storage operations daemon. 
+# Ref: https://github.com/vmware/docker-vmdk-plugin/
+# 
+# This script supports:
+# * start   : Start the python based daemon
+# * stop    : Stop the python based daemon
+# * restart : Stop and start the daemon.
+# * status  : status of the daemon
+#
+
+OPSD_BIN="/usr/lib/vmware/vmdkops/bin/vmdk-ops.py"
+OPSD_TAG=vmdkops-opsd
+OPSD_GROUP_PATH="host/vim/vimuser"
+OPSD_GROUP_NAME="vmdkops"
+OPSD_GROUP="$OPSD_GROUP_PATH/$OPSD_GROUP_NAME"
+OPSD_SCHED_PARAM="++memreliable,group=$OPSD_GROUP"
+OPSD_PARAMS="--log-level=info"
+
+LOCAL_CLI_SCHED="localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group"
+
+#WATCHDOG
+WATCHDOG=/sbin/watchdog.sh
+MAX_RETRY=10
+MAX_QUICK_FAILURES=5
+SIGTERM=15
+
+
+# The numbers below are to setup the framework for
+# resource limits but not setting them up. -1 is unlimited
+MINMEM=0
+MAXMEM=-1 
+MINLIMIT=-1
+MINCPU=100
+MAXCPU=-1
+
+
+NUM_RETRY=10
+
+getpid() {
+   ps -uc| grep -v ${WATCHDOG}| grep -v grep | grep ${OPSD_BIN} | awk '{ print $1 }'
+}
+  
+start() {
+   set -x
+   GROUP=$(${LOCAL_CLI_SCHED} list |grep ${OPSD_GROUP})
+   if [ -z "${GROUP}" ]; then
+      ${LOCAL_CLI_SCHED} add --group-name=${OPSD_GROUP_NAME} --parent-path=${OPSD_GROUP_PATH}
+      if [ $? -ne 0 ]; then
+         echo "Failed to create resource pool $?"
+         exit 1
+      fi
+   fi
+   
+   ${LOCAL_CLI_SCHED} setmemconfig -g ${OPSD_GROUP} --min=${MINMEM} --max=${MAXMEM} --minlimit=${MINLIMIT} -u mb
+   ${LOCAL_CLI_SCHED} setcpuconfig -g ${OPSD_GROUP} --min=${MINCPU} --max=${MAXCPU} -u pct
+
+   local PID=$(getpid)
+   if [ -n "${PID}" ]; then
+      echo "${OPSD_TAG} is running pid=${PID}"
+      exit 2
+   fi
+
+   setsid ${OPSD_SCHED_PARAM} ${WATCHDOG} -q ${MAX_QUICK_FAILURES} -d -s ${OPSD_TAG} -t ${MAX_RETRY} "${OPSD_BIN} ${OPSD_PARAMS}" > /dev/null 2>&1
+   if [ $? -ne 0 ]; then 
+      syslog "Failed to start ${OPSD_TAG}: $?"
+      exit 3
+   fi
+   while [ $((wait--)) -gt 0 ]; do
+      local watchdog_pid="${WATCHDOG} -r ${OPSD_TAG})"
+      if [ -z "${watchdog_pid}" ]; then
+         usleep 1000
+      fi 
+   done
+   status
+}
+
+stop() {
+   ${WATCHDOG} -k ${OPSD_TAG}
+   
+   local PID=$(getpid)
+   if [ -n "${PID}" ]; then
+      kill -$SIGTERM ${PID}
+      while kill -0 ${PID} > /dev/null 2>&1; do
+         sleep 1;
+      done
+   fi
+
+   ${LOCAL_CLI_SCHED} list --group-path=${OPSD_GROUP} &> /dev/null
+   if [ $? -eq 0 ]; then
+      ${LOCAL_CLI_SCHED} delete --group-path=${OPSD_GROUP}
+      if [ $? -ne 0 ]; then
+         echo "Failed to delete resource pool=${OPSD_SCHED_PARAM}"
+         status
+         exit 4
+      fi
+   fi 
+   status
+}
+
+status() {
+   local PID=$(getpid)
+   if [ -n "${PID}" ]; then
+      echo "${OPSD_TAG} is running pid=${PID}"
+      exit 0
+   fi
+   echo "${OPSD_TAG} is not running"
+   exit 0
+}
+
+case $1 in
+   "start")
+      start
+      ;;
+   "stop")
+      stop
+      ;;
+   "status")
+      status
+      ;;
+   "restart")
+      stop
+      start
+      ;;
+   "remove") # Called by vib
+      stop
+      ;;
+    *)
+      echo "$1 unsupported"
+      echo "$0 start|stop|status"
+      exit 1
+      ;;
+esac

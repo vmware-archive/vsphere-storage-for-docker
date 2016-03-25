@@ -9,17 +9,13 @@ usage() {
   echo "Run this script from the root of the repo"
 }
 
-export ESX_IP=$1
-export VM1_IP=$2
-export VM2_IP=$3
+export ESX=$1
+export VM1=$2
+export VM2=$3
 export BUILD_NUMBER=$4
 
-ESX=root@$ESX_IP
-VM1=root@$VM1_IP
-VM2=root@$VM2_IP
-
-
 SSH="ssh -o StrictHostKeyChecking=no"
+USER=root
 LOGFILE="/var/log/docker-vmdk-plugin.log"
 STDLOG="/tmp/plugin.log"
 if [ $# -lt 3 ]
@@ -39,8 +35,8 @@ dump_log_esx() {
   echo "*** dumping log: ESX " $ESX
   echo "*************************************************************************"
   set -x
-  $SSH $ESX cat /var/log/vmware/docker-vmdk-plugin.log
-  $SSH $ESX cat /tmp/plugin.log
+  $SSH $USER@$ESX cat /var/log/vmware/docker-vmdk-plugin.log
+  $SSH $USER@$ESX cat /tmp/plugin.log
   set +x
   echo "*************************************************************************"
 }
@@ -50,8 +46,8 @@ dump_log_vm(){
   echo "*** dumping log: VM " $1
   echo "*************************************************************************"
   set -x
-  $SSH $1 cat $STDLOG
-  $SSH $1 cat $LOGFILE
+  $SSH $USER@$1 cat $STDLOG
+  $SSH $USER@$1 cat $LOGFILE
   set +x
   echo "*************************************************************************"
 }
@@ -79,6 +75,5 @@ else
   echo "*************************************************************************"
 
   stop_build $VM1 $BUILD_NUMBER
-  # TODO remove vmdk files if any
   exit 1
 fi
