@@ -1,43 +1,14 @@
 package main
 
 //
-// A VMDK Docker Data Volume plugin
-// (for now just an outline)
+// VMWare VMDK Docker Data Volume plugin.
 //
-// It checks that it can connect to ESX via vSocket , and then
-// fakes the successful ops by returning success and printing a messafe,
-// without doing anything useful (useful stuff is work in progress)
+// Provide suport for --driver=vmdk in Docker, when Docker VM is running under ESX.
 //
-// TBD: add check for the guest communicates from ROOT - check the doc wrt security
-// TBD: check we are running inside ESX and tools installed - in CODE , not make
-
-// TODO:
-//  convert all to return error() and only response to docker to return msg
-//
-// make sure msg and err is properly initialized everywhere (and check in go if it's needed)
+// This code received requests from Docker Engine and requests/coordinates
+// related VMDK operations with vmdk-opsd service running on enclosing host ESX 
+// (see ./vmdkops-esxsrv) 
 ///
-//TODO :
-// Potentially: add unit test , fully contained on 1 Linux machine:
-//- make server code actually create a loop block device and do a bind mount for volume test
-//- hardcode location for testing (/var/vmware/dvolplug/volumes/vol-name
-//	fallocate -d -l <length> volume.img
-//	losetup -v /dev/loop$(id) -f volume.img
-//	mkfs.ext4 /dev/loop$(id)
-//	mount /dev/lopp$(id) /mnt/loop$(id) # mount all here. Or skip
-//	mount -o bind # bind mount where Docker asks
-//	Good refs: https://www.suse.com/communities/blog/accessing-file-systems-disk-block-image-files/
-//)
-// for actual mounts:
-//- add actual create/mount code instead of prints
-//
-// TODO: add volumes tracking per the following docker spec:
-//
-// multiple containers on the same docker engine may use the same vmdk volume
-// thus we need to track the volumes already attached, and just do bind mount for them
-// Also it means we need to serialize all ops with mutex
-
-// We also need to track volumes attached and mounted to save on this ops if requested
-// On start, we need to list vmdks attached to the VM and polulate list of volumes from it
 
 import (
 	//	"encoding/json"
@@ -55,7 +26,7 @@ const (
 )
 
 type vmdkDriver struct {
-	m       *sync.Mutex // create() serialization
+	m       *sync.Mutex // create() serialization - FFU
 	mockEsx bool
 	ops     vmdkops.VmdkOps
 }
@@ -68,7 +39,6 @@ func newVmdkDriver(mockEsx bool) vmdkDriver {
 		vmdkCmd = vmdkops.VmdkCmd{}
 	}
 	d := vmdkDriver{
-		// TODO: volumes map(string)volinfo, (name->uuid/refcount/creationtime)
 		m:       &sync.Mutex{},
 		mockEsx: mockEsx,
 		ops:     vmdkops.VmdkOps{Cmd: vmdkCmd},
@@ -112,9 +82,10 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 		return nil
 	}
 
-	// TODO: refcount  if the volume is already mounted (for other container) and
+	// TODO: Issue #28
+	// - refcount  if the volume is already mounted (for other container) and
 	// just return volume.Response{Mountpoint: m} in this case
-	// TODO: save info abouf voliume mount , in memory
+	// -  save info abouf voliume mount , in memory
 	// d.volumes[m] = &volumeName{name: r.Name, connections: 1}
 	if err := d.ops.Attach(r.Name, r.Options); err != nil {
 		return err

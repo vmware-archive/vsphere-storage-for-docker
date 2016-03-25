@@ -200,7 +200,7 @@ ECHO = $(DEBUG) echo
 test-esx:
 	$(TAR) cz --no-recursion $(ESX_SRC)/*.py | $(SSH) root@$(ESX) "cd /tmp; $(TAR) xz"
 	$(ECHO) Running unit tests for vmdk-opsd python code on $(ESX)...
-	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/tests_vmdk_ops.py"
+	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vmdk_ops_test.py"
 	$(SSH) root@$(ESX) rm -rf /tmp/$(ESX_SRC)
 
 testremote: test-esx test-vm 
