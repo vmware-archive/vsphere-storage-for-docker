@@ -206,7 +206,7 @@ EOF
 function_name=$1 ; shift
 
 # globals used in misc. functions instead of params (to avoid extra parse)
-ip_list="$1"
+ip_list=`echo $1 | xargs -n1 | sort -u | xargs` # dedup the IP list
 files="$2"
 bin_remote_location="$3"
 volumes="$4"

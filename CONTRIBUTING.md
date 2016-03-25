@@ -99,8 +99,8 @@ Or just put the 'export' statement in your ~/.bash_profile and run
 # just build
 make
 # build, deploy, test
-make deploy-all testremote
-# only test
+make build-all deploy-all test-all
+# only remote test
 make testremote
 ```
 

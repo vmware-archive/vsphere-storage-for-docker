@@ -139,8 +139,8 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdkPath, volName, opts):
-	logging.info ("*** createVMDK: " + vmdkPath)
+def createVMDK(vmdkPath, volName, opts=""):
+	logging.info ("*** createVMDK: %s opts=%s" % (vmdkPath, opts))
 	if os.path.isfile(vmdkPath):
 		return err("File %s already exists" % vmdkPath)
 
@@ -234,35 +234,38 @@ def detachVMDK(vmdkPath, vmName):
 
 # check existence (and creates if needed) the path
 # NOTE / TBD: for vsan we may need to use osfs_mkdir instead of regular os.mkdir
-def checkPath(path):
-	try:
-		os.mkdir(path)
-		logging.info(path +" created")
-	except OSError:
+def getVolPath(vmConfigPath):
+    path = os.path.join("/".join(vmConfigPath.split("/")[0:4]),  DockVolsDir)
+    try:
+        os.mkdir(path)
+        logging.info(path +" created")
+    except OSError:
 		pass
+    return path
+
+def getVmdkName(path, volName):
+    # form full name as <path-to-volumes>/<volname>.vmdk
+    return  os.path.join(path, "%s.vmdk" % volName)
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
 	# get /vmfs/volumes/<volid> path on ESX:
-	path = os.path.join("/".join(configPath.split("/")[0:4]),  DockVolsDir)
-	checkPath(path)
+    path     = getVolPath(configPath)
+    vmdkPath = getVmdkName(path, volName)
 
-	# form full name as <path-to-volumes>/<volname>.vmdk
-	vmdkPath = os.path.join(path, "%s.vmdk" % volName)
 
-	if cmd == "create":
-		return createVMDK(vmdkPath, volName, opts)
-	elif cmd == "remove":
-		return removeVMDK(vmdkPath)
-	elif cmd == "list":
-		return listVMDK(path)
-	elif cmd == "attach":
-		return attachVMDK(vmdkPath, vmName)
-	elif cmd == "detach":
-		return detachVMDK(vmdkPath, vmName)
-	else:
-		return "Unknown command:" + cmd
-
+    if cmd == "create":
+	   return createVMDK(vmdkPath, volName, opts)
+    elif cmd == "remove":
+        return removeVMDK(vmdkPath)
+    elif cmd == "list":
+        return listVMDK(path)
+    elif cmd == "attach":
+        return attachVMDK(vmdkPath, vmName)
+    elif cmd == "detach":
+        return detachVMDK(vmdkPath, vmName)
+    else:
+        return "Unknown command:" + cmd
 
 
 def connectLocal():

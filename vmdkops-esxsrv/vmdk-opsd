@@ -12,7 +12,7 @@
 # * status  : status of the daemon
 #
 
-OPSD_BIN="/usr/lib/vmware/vmdkops/bin/vmdk-ops.py"
+OPSD_BIN="/usr/lib/vmware/vmdkops/bin/vmdk_ops.py"
 OPSD_TAG=vmdkops-opsd
 OPSD_GROUP_PATH="host/vim/vimuser"
 OPSD_GROUP_NAME="vmdkops"

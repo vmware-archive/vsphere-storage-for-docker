@@ -9,8 +9,8 @@
 # Place binaries here
 BIN := ./bin
 
-# source locations for Make
-ESX_SRC     := vmdkops-esxsrv # esx service for docker volume ops
+# esx service for docker volume ops
+ESX_SRC     := vmdkops-esxsrv
 
 #  binaries location
 PLUGNAME  := docker-vmdk-plugin
@@ -37,10 +37,12 @@ SRC = plugin.go main.go log_formatter.go
 #  TargetprintNQuit
 
 # The default build is using a prebuilt docker image that has all dependencies.
-.PHONY: dockerbuild
+.PHONY: dockerbuild build-all
 dockerbuild:
 	@$(SCRIPTS)/check.sh dockerbuild
 	$(SCRIPTS)/build.sh build
+
+build-all: dockerbuild
 
 # The non docker build.
 .PHONY: build
@@ -118,8 +120,8 @@ VM1_DOCKER = tcp://$(VM1):2375
 VM2_DOCKER = tcp://$(VM2):2375
 
 
-SCP := scp -o StrictHostKeyChecking=no
-SSH := ssh -kTax -o StrictHostKeyChecking=no
+SCP := $(DEBUG) scp -o StrictHostKeyChecking=no
+SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
 
 # bin locations on target guest
 GLOC := /usr/local/bin
@@ -140,7 +142,7 @@ CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 #
 # Deploy to existing testbed, Expects ESX VM1 and VM2 env vars
 #
-.PHONY: deploy deploy-esx deploy-vm
+.PHONY: deploy-esx deploy-vm deploy deploy-all deploy
 deploy-esx:
 	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
 
@@ -150,8 +152,8 @@ VMS= $(VM1) $(VM2)
 deploy-vm:
 	$(DEPLOY_VM_SH) "$(VMS)" "$(VM_BINS)" $(GLOC) 
 
-deploy: deploy-esx deploy-vm
-
+deploy-all: deploy-esx deploy-vm
+deploy: deploy-all
 
 #
 # 'make test' or 'make testremote'
@@ -182,24 +184,37 @@ checkremote:
 	$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2): $(CONN_MSG); exit 1)
 
-.PHONY: testremote
-testremote: checkremote
+.PHONY: test-vm test-esx test-all testremote
+# test-vm runs GO unit tests and plugin test suite on a guest VM
+# expects binaries to be deployed ot the VM and ESX (see deploy-all target)
+test-vm: checkremote
 	$(SSH) $(TEST_VM) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(TEST_VM) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
-.PHONY:clean-vm clean-esx
+# test-esx is a quick unittest for Python.
+# Deploys, runs and clean unittests on ESX
+TAR  = $(DEBUG) tar
+ECHO = $(DEBUG) echo
+test-esx:
+	$(TAR) cz --no-recursion $(ESX_SRC)/*.py | $(SSH) root@$(ESX) "cd /tmp; $(TAR) xz"
+	$(ECHO) Running unit tests for vmdk-opsd python code on $(ESX)...
+	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/tests_vmdk_ops.py"
+	$(SSH) root@$(ESX) rm -rf /tmp/$(ESX_SRC)
+
+testremote: test-esx test-vm 
+test-all:  test testremote
+
+.PHONY:clean-vm clean-esx clean-all
 clean-vm:
 	$(CLEANVM_SH) "$(VMS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
 clean-esx:
 	$(CLEANESX_SH) "$(ESX)" vmware-esx-vmdkops-service
 
-
-# helper goals - save typing in manual passes
 clean-all: clean clean-vm clean-esx
 
-deploy-all: dockerbuild deploy-vm deploy-esx
+# full circle
+all: clean-all build-all deploy-all test-all clean-all
 
-all: clean-all deploy-all testremote clean-all

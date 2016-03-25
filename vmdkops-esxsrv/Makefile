@@ -12,7 +12,7 @@ OFFLINE_DEPOT := vmware-esx-vmdkops-1.0.0.zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
-PY_SRC := vmdk-ops.py volumeKVStore.py kvESX.py
+PY_SRC := vmdk_ops.py volumeKVStore.py kvESX.py
 C_SRC  := server.c
 INIT_SCRIPT := vmdk-opsd 
 
@@ -20,7 +20,7 @@ INIT_SCRIPT := vmdk-opsd
 TOOLS := tools/lin32/mkfs.ext4
 
 # Shared lib. Note that it is referred by name from vmci_srv.py
-VMCI_SRV_LIB := libvmci_srv.so 
+VMCI_SRV_LIB := ../bin/libvmci_srv.so
 
 PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
 

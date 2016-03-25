@@ -52,11 +52,11 @@ func getMountpoint(vol string) string {
 // returns completion code.
 // exits (t.Fatal() or create/start/wait errors
 func runContainerCmd(t *testing.T, client *client.Client, volumeName string,
-	image string, cmd *strslice.StrSlice) int {
+	image string, cmd *strslice.StrSlice, addr string) int {
 
 	mountPoint := getMountpoint(volumeName)
 	bind := volumeName + ":" + mountPoint
-	t.Logf("Running container vol=%s cmd=%v", volumeName, cmd)
+	t.Logf("Running cmd=%v with vol=%s on client %s", cmd, volumeName, addr)
 
 	r, err := client.ContainerCreate(
 		&container.Config{Image: image, Cmd: *cmd,
@@ -99,7 +99,7 @@ func runContainerCmd(t *testing.T, client *client.Client, volumeName string,
 //
 // goes over 'cases' and runs commands, then checks expected return code
 func checkTouch(t *testing.T, c *client.Client, vol string,
-	file string) {
+	file string, addr string) {
 
 	cases := []struct {
 		image    string             // Container image to use
@@ -111,7 +111,7 @@ func checkTouch(t *testing.T, c *client.Client, vol string,
 	}
 
 	for _, i := range cases {
-		code := runContainerCmd(t, c, vol, i.image, i.cmd)
+		code := runContainerCmd(t, c, vol, i.image, i.cmd, addr)
 		if code != i.expected {
 			t.Errorf("Expected  %d, got %d (cmd: %v)", i.expected, code, i.cmd)
 		}
@@ -141,7 +141,7 @@ func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume 
 // - check we see it properly from another docker VM (-H2 flag)
 func TestSanity(t *testing.T) {
 
-	fmt.Printf("Running tests on  %s (may take a while)...", endPoint1)
+	fmt.Printf("Running tests on  %s (may take a while)...\n", endPoint1)
 	clients := []struct {
 		endPoint string
 		client   *client.Client
@@ -160,6 +160,7 @@ func TestSanity(t *testing.T) {
 	}
 
 	c := clients[0].client // this is the endpoint we use as master
+	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
 	_, err := c.VolumeCreate(
 		types.VolumeCreateRequest{
 			Name:   volumeName,
@@ -173,7 +174,7 @@ func TestSanity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checkTouch(t, c, volumeName, "file_to_touch")
+	checkTouch(t, c, volumeName, "file_to_touch", clients[0].endPoint)
 
 	for _, elem := range clients {
 		v := volumeVmdkExists(t, elem.client, volumeName)
