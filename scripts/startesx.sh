@@ -12,12 +12,10 @@
 
 vibfile=$1
 
+pylog=/var/log/vmware/docker-vmdk-plugin.log 
+cat /dev/null > $pylog
 # long running, so let's always echo
 echo "localcli software vib install --no-sig-check  -v $vibfile" 
 localcli software vib install --no-sig-check  -v $vibfile
-
-log=/tmp/plugin.log
-pylog=/var/log/vmware/docker-vmdk-plugin.log 
-echo === `date` Actual logs are in $pylog  === > $log
-cat /dev/null > $pylog
-nohup python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py >> $log 2>&1 &
+localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group list| grep vmdkops | grep python> /dev/null
+/etc/init.d/vmdk-opsd status| grep pid

@@ -80,6 +80,7 @@ import time
 import logging
 import signal
 import sys
+sys.dont_write_bytecode = True
 
 from vmware import vsi
 

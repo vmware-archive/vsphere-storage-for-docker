@@ -12,12 +12,12 @@
    <summary>ESX-side daemon supporting basic VMDK operations requested by a guest</summary>
 
    <description>
-   This daemon executes VMDK operations (create/format/attach/rm/detach)requested 
-   by in-the-guest Docker Volume Plugin
+   This daemon executes VMDK operations requested 
+   by in-the-guest apps.
    </description>
 
    <payloads>
-     <payload name="payload1" type="vgz">
+     <payload name="vmdkops" type="vgz">
      </payload> 
    </payloads>
    

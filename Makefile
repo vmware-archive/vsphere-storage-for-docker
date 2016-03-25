@@ -102,20 +102,20 @@ fmt:
 #   Need target machines (ESX/Guest) to have proper ~/.ssh/authorized_keys
 #
 # You can
-#   set ESX_IP and VM_IP (and VM1_IP / VM2_IP) as env. vars,
+#   set ESX and VM (and VM1 / VM2) as env. vars,
 # or pass on command line
-# 	make deploy-esx ESX_IP=10.20.105.54
-# 	make deploy-vm  VM_IP=10.20.105.121
-# 	make testremote  ESX_IP=10.20.105.54 VM1_IP=10.20.105.121 VM2_IP=10.20.105.122
+# 	make deploy-esx ESX=10.20.105.54
+# 	make deploy-vm  VM=10.20.105.121
+# 	make testremote  ESX=10.20.105.54 VM1=10.20.105.121 VM2=10.20.105.122
 
 
-VM1_IP ?= "$(VM_IP)"
-VM2_IP ?= "$(VM_IP)"
+VM1 ?= "$(VM)"
+VM2 ?= "$(VM)"
 
-TEST_VM = root@$(VM1_IP)
+TEST_VM = root@$(VM1)
 
-VM1_DOCKER = tcp://$(VM1_IP):2375
-VM2_DOCKER = tcp://$(VM2_IP):2375
+VM1_DOCKER = tcp://$(VM1):2375
+VM2_DOCKER = tcp://$(VM2):2375
 
 
 SCP := scp -o StrictHostKeyChecking=no
@@ -138,17 +138,17 @@ CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 
 
 #
-# Deploy to existing testbed, Expects ESX_IP VM1_IP and VM2_IP env vars
+# Deploy to existing testbed, Expects ESX VM1 and VM2 env vars
 #
 .PHONY: deploy deploy-esx deploy-vm
 deploy-esx:
-	$(DEPLOY_ESX_SH) "$(ESX_IP)" "$(VIB_BIN)"
+	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
 
-VM_IPS= $(VM1_IP) $(VM2_IP)
+VMS= $(VM1) $(VM2)
 
 # deploys to "GLOC" on vm1 and vm2
 deploy-vm:
-	$(DEPLOY_VM_SH) "$(VM_IPS)" "$(VM_BINS)" $(GLOC) 
+	$(DEPLOY_VM_SH) "$(VMS)" "$(VM_BINS)" $(GLOC) 
 
 deploy: deploy-esx deploy-vm
 
@@ -178,9 +178,9 @@ CONN_MSG := "Please make sure Docker is running and is configured to accept TCP 
 .PHONY: checkremote
 checkremote:
 	$(SSH) $(TEST_VM) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
-		(echo VM1 $(VM1_IP): $(CONN_MSG) ; exit 1)
+		(echo VM1 $(VM1): $(CONN_MSG) ; exit 1)
 	$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
-		(echo VM2 $(VM2_IP): $(CONN_MSG); exit 1)
+		(echo VM2 $(VM2): $(CONN_MSG); exit 1)
 
 .PHONY: testremote
 testremote: checkremote
@@ -191,10 +191,10 @@ testremote: checkremote
 
 .PHONY:clean-vm clean-esx
 clean-vm:
-	$(CLEANVM_SH) "$(VM_IPS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
+	$(CLEANVM_SH) "$(VMS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
 clean-esx:
-	$(CLEANESX_SH) "$(ESX_IP)" vmware-esx-vmdkops-service
+	$(CLEANESX_SH) "$(ESX)" vmware-esx-vmdkops-service
 
 
 # helper goals - save typing in manual passes

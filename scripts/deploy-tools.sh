@@ -80,7 +80,7 @@ function deploy_helper {
 
 function deployvm {
    startsvc=startvm.sh
-   stopsvc=stopvm.sh
+   stopsvc=cleanvm.sh
    
    # hardcoded since it'll be dropped in favor of apt-get anyways:
    service_file=$bin_remote_location/docker-vmdk-plugin
@@ -103,7 +103,7 @@ function deployvm {
 
 function deployesx {
    startsvc=startesx.sh
-   stopsvc=stopesx.sh
+   stopsvc=cleanesx.sh
    # we support only 1 VIB file, so treat $files as a single name
    service_file="$bin_remote_location/$(basename $files)"
 
@@ -116,7 +116,7 @@ function deployesx {
 # Does vib and tmp files cleanup on ESX
 
 function cleanesx {
-    stopsvc=stopesx.sh
+    stopsvc=cleanesx.sh
     # We remove VIB by internal name, not file name. See description.xml in VIB
     internal_vib_name=vmware-esx-vmdkops-service
  
@@ -138,7 +138,7 @@ function cleanesx {
 
 function cleanvm {
    remote_binaries=`for f in $files ; do echo "$bin_remote_location/$(basename $f)"; done`
-   stopsvc=stopvm.sh
+   stopsvc=cleanvm.sh
    # We kill process by name:
    name=docker-vmdk-plugin
 

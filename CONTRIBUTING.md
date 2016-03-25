@@ -31,22 +31,22 @@ Makefile targets. There targets rely on environment variables to point to the
 correct environment.
 
 Environment variables:
-- You **need** to set ESX_IP and either VM_IP (in which case we'll use 1 VM) or
-both VM1_IP and VM2_IP environment variables
+- You **need** to set ESX and either VM_IP (in which case we'll use 1 VM) or
+both VM1 and VM2 environment variables
 
 Examples:
 ```
 # Build and deploy the code. Also deploy (but do not run) tests
-ESX_IP=10.20.105.54 VM_IP=10.20.105.201 make deploy-all
+ESX=10.20.105.54 VM_IP=10.20.105.201 make deploy-all
 ```
 
 or
 
 ```
 # clean, build, deploy, test and clean again
-export ESX_IP=10.20.105.54
-export VM1_IP=10.20.105.121
-export VM2_IP=10.20.104.210
+export ESX=10.20.105.54
+export VM1=10.20.105.121
+export VM2=10.20.104.210
 
 make all
 ```
@@ -74,7 +74,7 @@ Standard invocation on VM: (as root)
 ```
 
 To remove the code from the testbed, use the same steps as above (i.e define 
-ESX_IP, VM1_IP and VM2_IP) and use the following make targets:
+ESX, VM1 and VM2) and use the following make targets:
 
 ```
 # remove stuff from the build
@@ -84,7 +84,7 @@ make clean-esx
 # remove stuff from VMs
 make clean-vm
 # clean all (all 3 steps above)
-make clean
+make clean-all
 ```
 
 If additional python scripts are added to the ESX code, update the vib description file to include them.
@@ -194,19 +194,19 @@ index 5550172..9a4b872 100644
 ```
 
 Do not restart docker if machine running drone is also a VM in the devsetup.
-
-Sample Makefile:
 ```
-diff --git a/Makefile b/Makefile
-index a376536..093420d 100644
---- a/Makefile
-+++ b/Makefile
-@@ -126,7 +126,7 @@ clean-vm:
-        -$(SSH) $(VM) rm /tmp/$(STARTVM) /tmp/$(STOPVM)
-        -$(SSH) $(VM) rm -rvf /mnt/vmdk/$(TEST_VOL_NAME)
-        -$(SSH) $(VM) docker volume rm $(TEST_VOL_NAME)  # delete any local datavolumes
--       -$(SSH) $(VM) service docker restart
-+       #-$(SSH) $(VM) service docker restart
+--- a/scripts/deploy-tools.sh
++++ b/scripts/deploy-tools.sh
+@@ -151,7 +151,7 @@ function cleanvm {
+ 
+         echo "   Asking docker to remove volumes ($volumes)..."
+         # make sure docker engine is not hanging due to old/dead plugins
+-        $SSH $target service docker restart
++        #$SSH $target service docker restart
+         # and now clean up
+         for vol in $volumes
+         do
+```
  
  .PHONY: clean-esx
  clean-esx:

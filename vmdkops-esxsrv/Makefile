@@ -8,11 +8,13 @@
 # deliverables (placed by build)
 BIN := ../bin
 VIB := vmware-esx-vmdkops-1.0.0.vib
+OFFLINE_DEPOT := vmware-esx-vmdkops-1.0.0.zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
-PY_SRC := vmci_srv.py volumeKVStore.py kvESX.py
+PY_SRC := vmdk-ops.py volumeKVStore.py kvESX.py
 C_SRC  := server.c
+INIT_SCRIPT := vmdk-opsd 
 
 # extra stuff to copy to vib
 TOOLS := tools/lin32/mkfs.ext4
@@ -24,10 +26,13 @@ PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
 
 # location on ESX where the stuff needs to go in payload
 ESX_BIN := /usr/lib/vmware/vmdkops/bin
+INITD_PATH := /etc/init.d/
 
 # payload location - see descriptor.xml
-PAYLOAD = payloads/payload1
-PAYLOAD_BIN = $(PAYLOAD)$(ESX_BIN)
+PAYLOAD=payloads
+VMDKOPS_PAYLOAD=$(PAYLOAD)/vmdkops/
+VMDKOPS_BIN = $(VMDKOPS_PAYLOAD)$(ESX_BIN)
+VMDKOPS_INITD = $(VMDKOPS_PAYLOAD)$(INITD_PATH)
 
 # We need to build C code as 32 bits.
 # Reason: vSockets return cartelId to ID connecting VM. We use VSI to convert 
@@ -44,14 +49,20 @@ WDIR := .
 build: $(VIB_BIN)
 
 $(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
-	@mkdir -p $(PAYLOAD_BIN)
-	@chmod -R a+rwx $(PAYLOAD)/../
-	@cp -f  $(PY_FILES) $(TOOLS) $(PAYLOAD_BIN)
+	echo $(VMDKOPS_BIN)
+	@mkdir -p $(VMDKOPS_BIN)
+	@mkdir -p $(VMDKOPS_INITD)
+	@chmod -R a+w $(PAYLOAD)
+	@cp -f $(PY_FILES) $(TOOLS) $(VMDKOPS_BIN)
+	@cp -f $(INIT_SCRIPT) $(VMDKOPS_INITD)
 	$(VIBAUTHOR) \
  	--debug --compose \
    	--vib=$(BDIR)/$(VIB) \
    	--stage-dir $(WDIR) \
+	--offline-depot $(BDIR)/$(OFFLINE_DEPOT) \
    	--force
+
+
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
