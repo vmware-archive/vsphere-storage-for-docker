@@ -28,6 +28,10 @@ SCP="$DEBUG scp -q -o StrictHostKeyChecking=no"
 SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 
 # consts
+
+# We remove VIB by internal name, not file name. See description.xml in VIB
+internal_vib_name=vmware-esx-vmdkops-service
+
 script_loc=./scripts
 tmp_loc=/tmp/docker-volume-plugin
 guest_mount_point=/mnt/vmdk
@@ -53,7 +57,7 @@ function deploy_helper {
         $SCP $script_loc/* $target:$tmp_loc
    
         echo "  Stop services using $stopsvc..."
-        $SSH $target  $tmp_loc/$stopsvc $files
+        $SSH $target  $tmp_loc/$stopsvc $service_name
    
         echo "  Copy Binaries..."
         for file in $files
@@ -84,7 +88,8 @@ function deployvm {
    
    # hardcoded since it'll be dropped in favor of apt-get anyways:
    service_file=$bin_remote_location/docker-vmdk-plugin
-   
+   service_name=$service_file
+
    deploy_helper
 
    echo "  Test Docker TCP connection..."
@@ -106,6 +111,7 @@ function deployesx {
    stopsvc=cleanesx.sh
    # we support only 1 VIB file, so treat $files as a single name
    service_file="$bin_remote_location/$(basename $files)"
+   service_name=$internal_vib_name
 
    deploy_helper
 }
@@ -117,8 +123,6 @@ function deployesx {
 
 function cleanesx {
     stopsvc=cleanesx.sh
-    # We remove VIB by internal name, not file name. See description.xml in VIB
-    internal_vib_name=vmware-esx-vmdkops-service
  
     for ip in $ip_list
     do
