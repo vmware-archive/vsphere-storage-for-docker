@@ -8,6 +8,7 @@ Tests for basic vmdk Operations
 import unittest
 import sys
 import logging
+import os.path
 
 import vmci_srv
 import volumeKVStore as kv
@@ -34,8 +35,12 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     def testCreateDelete(self):
         err = vmci_srv.createVMDK(vmdkPath=self.name, volName=self.volName)
         self.assertEqual(err, None, err)
+        self.assertEqual(os.path.isfile(self.name), True,
+                    "VMDK {0} is missing after create.".format(self.name))
         err = vmci_srv.removeVMDK(self.name)
         self.assertEqual(err, None, err)
+        self.assertEqual(os.path.isfile(self.name), False,
+                    "VMDK {0} is still present after delete.".format(self.name))
 
 
     def testBadOpts(self):
