@@ -198,10 +198,10 @@ test-vm: checkremote
 TAR  = $(DEBUG) tar
 ECHO = $(DEBUG) echo
 test-esx:
-	$(TAR) cz --no-recursion $(ESX_SRC)/*.py | $(SSH) root@$(ESX_IP) "cd /tmp; $(TAR) xz"
-	$(ECHO) Running unit tests for vmdk-ops python code on $(ESX_IP)...
-	$(SSH) root@$(ESX_IP) "python /tmp/$(ESX_SRC)/tests_vmdkops.py"
-	$(SSH) root@$(ESX_IP) rm -rf /tmp/$(ESX_SRC)
+	$(TAR) cz --no-recursion $(ESX_SRC)/*.py | $(SSH) root@$(ESX) "cd /tmp; $(TAR) xz"
+	$(ECHO) Running unit tests for vmdk-opsd python code on $(ESX)...
+	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/tests_vmdk_ops.py"
+	$(SSH) root@$(ESX) rm -rf /tmp/$(ESX_SRC)
 
 testremote: test-esx test-vm 
 test-all:  test testremote

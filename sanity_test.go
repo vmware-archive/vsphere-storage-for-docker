@@ -160,6 +160,7 @@ func TestSanity(t *testing.T) {
 	}
 
 	c := clients[0].client // this is the endpoint we use as master
+	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
 	_, err := c.VolumeCreate(
 		types.VolumeCreateRequest{
 			Name:   volumeName,

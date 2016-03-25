@@ -12,7 +12,7 @@ OFFLINE_DEPOT := vmware-esx-vmdkops-1.0.0.zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
-PY_SRC := vmdk-ops.py volumeKVStore.py kvESX.py
+PY_SRC := vmdk_ops.py volumeKVStore.py kvESX.py
 C_SRC  := server.c
 INIT_SCRIPT := vmdk-opsd 
 
