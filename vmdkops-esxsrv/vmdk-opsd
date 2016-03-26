@@ -18,6 +18,9 @@ OPSD_GROUP_PATH="host/vim/vimuser"
 OPSD_GROUP_NAME="vmdkops"
 OPSD_GROUP="$OPSD_GROUP_PATH/$OPSD_GROUP_NAME"
 OPSD_SCHED_PARAM="++memreliable,group=$OPSD_GROUP"
+
+# Sample dummy for how params can be passed.
+# TODO: All params when script needs them.
 OPSD_PARAMS="--log-level=info"
 
 LOCAL_CLI_SCHED="localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group"
@@ -27,65 +30,77 @@ WATCHDOG=/sbin/watchdog.sh
 MAX_RETRY=10
 MAX_QUICK_FAILURES=5
 SIGTERM=15
-
+SIGKILL=9
 
 # The numbers below are to setup the framework for
 # resource limits but not setting them up. -1 is unlimited
 MINMEM=0
-MAXMEM=-1 
+MAXMEM=-1
 MINLIMIT=-1
-MINCPU=100
+MINCPU=-1
 MAXCPU=-1
 
 
 NUM_RETRY=10
+WAIT_KILL_SEC=2
+WAIT_START_USEC=3000
 
 getpid() {
    ps -uc| grep -v ${WATCHDOG}| grep -v grep | grep ${OPSD_BIN} | awk '{ print $1 }'
 }
-  
+
 start() {
-   set -x
+   local PID=$(getpid)
+
+   if [ -n "${PID}" ]; then
+      echo "Failed to start. $OPSD_TAG already running."
+      exit 1
+   fi
+   
+   echo "Starting ${OPSD_TAG}"
+
    GROUP=$(${LOCAL_CLI_SCHED} list |grep ${OPSD_GROUP})
    if [ -z "${GROUP}" ]; then
       ${LOCAL_CLI_SCHED} add --group-name=${OPSD_GROUP_NAME} --parent-path=${OPSD_GROUP_PATH}
       if [ $? -ne 0 ]; then
          echo "Failed to create resource pool $?"
-         exit 1
+         exit 2
       fi
    fi
-   
+
    ${LOCAL_CLI_SCHED} setmemconfig -g ${OPSD_GROUP} --min=${MINMEM} --max=${MAXMEM} --minlimit=${MINLIMIT} -u mb
    ${LOCAL_CLI_SCHED} setcpuconfig -g ${OPSD_GROUP} --min=${MINCPU} --max=${MAXCPU} -u pct
-
-   local PID=$(getpid)
-   if [ -n "${PID}" ]; then
-      echo "${OPSD_TAG} is running pid=${PID}"
-      exit 2
-   fi
-
    setsid ${OPSD_SCHED_PARAM} ${WATCHDOG} -q ${MAX_QUICK_FAILURES} -d -s ${OPSD_TAG} -t ${MAX_RETRY} "${OPSD_BIN} ${OPSD_PARAMS}" > /dev/null 2>&1
    if [ $? -ne 0 ]; then 
       syslog "Failed to start ${OPSD_TAG}: $?"
       exit 3
    fi
+
    while [ $((wait--)) -gt 0 ]; do
       local watchdog_pid="${WATCHDOG} -r ${OPSD_TAG})"
       if [ -z "${watchdog_pid}" ]; then
-         usleep 1000
+         usleep ${WAIT_START_USEC}
       fi 
    done
-   status
+   check_running_status
+   exit $?
 }
 
 stop() {
    ${WATCHDOG} -k ${OPSD_TAG}
-   
+
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
+      echo "Stopping $OPSD_TAG with PID=${PID}"
       kill -$SIGTERM ${PID}
+      local COUNT=0
       while kill -0 ${PID} > /dev/null 2>&1; do
-         sleep 1;
+         sleep ${WAIT_KILL_SEC};
+         if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
+            echo "Sending kill -${SIGKILL} to ${PID} after kill -${SIGTERM} did not stop ${PID}"
+            kill -${SIGKILL} ${PID}
+            break
+         fi
       done
    fi
 
@@ -94,21 +109,34 @@ stop() {
       ${LOCAL_CLI_SCHED} delete --group-path=${OPSD_GROUP}
       if [ $? -ne 0 ]; then
          echo "Failed to delete resource pool=${OPSD_SCHED_PARAM}"
-         status
+         check_running_status
          exit 4
       fi
    fi 
-   status
+   
+   check_running_status
+   if [ $? -eq 0 ]; then
+      echo "Failed to stop $OPSD_TAG"
+      exit 5
+   fi 
+   exit 0
+}
+
+check_running_status () {
+   local PID=$(getpid)
+
+   if [ -n "${PID}" ]; then
+      echo "${OPSD_TAG} is running pid=${PID}"
+      return 0
+   fi
+
+   echo "${OPSD_TAG} is not running"
+   return 6
 }
 
 status() {
-   local PID=$(getpid)
-   if [ -n "${PID}" ]; then
-      echo "${OPSD_TAG} is running pid=${PID}"
-      exit 0
-   fi
-   echo "${OPSD_TAG} is not running"
-   exit 0
+   check_running_status
+   exit $?
 }
 
 case $1 in
