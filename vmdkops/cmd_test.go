@@ -13,14 +13,15 @@ func TestCommands(t *testing.T) {
 	ops := vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}}
 	name := "myVolume"
 	opts := map[string]string{"size": "2gb", "format": "none"}
-	assert.Nil(t, ops.Create(name, opts))
+	if assert.Nil(t, ops.Create(name, opts)) {
 
-	opts = map[string]string{}
-	assert.Nil(t, ops.Attach(name, opts))
-	assert.Nil(t, ops.Detach(name, opts))
-	assert.Nil(t, ops.Remove(name, opts))
-	assert.Nil(t,
-		ops.Create("otherVolume",
-			map[string]string{"size": "1gb", "format": "ext4"}))
-	assert.Nil(t, ops.Remove("otherVolume", opts))
+	  opts = map[string]string{}
+	  assert.Nil(t, ops.Attach(name, opts))
+	  assert.Nil(t, ops.Detach(name, opts))
+	  assert.Nil(t, ops.Remove(name, opts))
+	}
+	if assert.Nil(t, ops.Create("otherVolume",
+				map[string]string{"size": "1gb", "format": "ext4"})) {
+	  assert.Nil(t, ops.Remove("otherVolume", opts))
+	}
 }
