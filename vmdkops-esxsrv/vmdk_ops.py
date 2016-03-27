@@ -7,7 +7,7 @@ The requests (create/delete/attach/detach) are JSON formatted.
 
 All operations are using requester VM (docker host) datastore and
 "Name" in request refers to vmdk basename
-VMDK name is formed as [vmdatastore] dvol/"Name".vmdk
+VMDK name is formed as [vmdatastore] dockvols/"Name".vmdk
 
 Commands ("cmd" in request):
 		"create" - create a VMDK in "[vmdatastore] dvol"

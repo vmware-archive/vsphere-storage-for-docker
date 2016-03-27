@@ -5,9 +5,9 @@ package main
 //
 // Provide suport for --driver=vmdk in Docker, when Docker VM is running under ESX.
 //
-// This code received requests from Docker Engine and requests/coordinates
-// related VMDK operations with vmdk-opsd service running on enclosing host ESX 
-// (see ./vmdkops-esxsrv) 
+// Serves requests from Docker Engine related to VMDK volume operations.
+// Depends on vmdk-opsd service to be running on hosting ESX
+// (see ./vmdkops-esxsrv)
 ///
 
 import (
@@ -26,7 +26,7 @@ const (
 )
 
 type vmdkDriver struct {
-	m       *sync.Mutex // create() serialization - FFU
+	m       *sync.Mutex // create() serialization - for future use
 	mockEsx bool
 	ops     vmdkops.VmdkOps
 }
@@ -85,7 +85,7 @@ func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 	// TODO: Issue #28
 	// - refcount  if the volume is already mounted (for other container) and
 	// just return volume.Response{Mountpoint: m} in this case
-	// -  save info abouf voliume mount , in memory
+	// -  save info abouf volume mount , in memory
 	// d.volumes[m] = &volumeName{name: r.Name, connections: 1}
 	if err := d.ops.Attach(r.Name, r.Options); err != nil {
 		return err
