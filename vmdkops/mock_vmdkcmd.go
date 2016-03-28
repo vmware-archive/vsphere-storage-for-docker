@@ -22,7 +22,15 @@ type MockVmdkCmd struct{}
 
 const (
 	backingRoot = "/tmp/docker-volumes" // Files for loopback device backing stored here
+	fileSizeInBytes = 100*1024*1024     // file size for loopback block device 
 )
+
+func getBackingFileName(nameBase string) string {
+    // make unique name - avoid clashes shall we find any garbage in the directory
+	name := fmt.Sprintf("%s/%s-%d", backingRoot, nameBase, os.Getpid())
+	log.WithFields(log.Fields{"name": name}).Debug("Created tmp file for loopback")
+	return name
+}
 
 // Run returns JSON responses to each command or an error
 func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
@@ -62,7 +70,7 @@ func list() ([]byte, error) {
 }
 
 func remove(name string) error {
-	backing := fmt.Sprintf("%s/%s", backingRoot, name)
+	backing := getBackingFileName(name)
 	out, err := exec.Command("blkid", []string{"-L", name}...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to find device for backing file %s via blkid", backing)
@@ -82,7 +90,7 @@ func remove(name string) error {
 }
 
 func createBlockDevice(label string) error {
-	backing := fmt.Sprintf("%s/%s", backingRoot, label)
+	backing := getBackingFileName(label)
 	err := createBackingFile(backing)
 	if err != nil {
 		return err
@@ -127,9 +135,9 @@ func createBackingFile(backing string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to create backing file %s: %s.", backing, err)
 	}
-	err = syscall.Fallocate(int(file.Fd()), 0, 0, 100*1024*1024)
+	err = syscall.Fallocate(int(file.Fd()), 0, 0, fileSizeInBytes)
 	if err != nil {
-		return fmt.Errorf("Failed to allocate %s with error: %s.", backing, err)
+		return fmt.Errorf("Failed to allocate %s: %s.", backing, err)
 	}
 	return nil
 }
@@ -138,7 +146,7 @@ func createDeviceNode(device string, loopbackCount int) error {
 	count := fmt.Sprintf("%d", loopbackCount)
 	out, err := exec.Command("mknod", device, "b", "7", count).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Failed to make device node %s with error: %s. Output = %s",
+		return fmt.Errorf("Failed to make device node %s: %s. Output = %s",
 			device, err, out)
 	}
 	return nil
@@ -147,7 +155,7 @@ func createDeviceNode(device string, loopbackCount int) error {
 func setupLoopbackDevice(backing string, device string) error {
 	out, err := exec.Command("losetup", device, backing).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Failed to setup loopback device node %s for backing file %s with error: %s. Output = %s",
+		return fmt.Errorf("Failed to setup loopback device node %s for backing file %s: %s. Output = %s",
 			device, backing, err, out)
 	}
 	return nil
@@ -156,7 +164,7 @@ func setupLoopbackDevice(backing string, device string) error {
 func makeFilesystem(device string, label string) error {
 	out, err := exec.Command("mkfs.ext4", "-L", label, device).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Failed to create filesystem on %s with error: %s. Output = %s",
+		return fmt.Errorf("Failed to create filesystem on %s: %s. Output = %s",
 			device, err, out)
 	}
 	return nil
