@@ -9,14 +9,14 @@ import unittest
 import sys
 import logging
 import glob
-import os.path
+import os, os.path
 
 import vmdk_ops
 import volumeKVStore as kv
 
-# Get dockvols full path
-# WARNING: for many datastores with dockvols, this picks up the first
-path = glob.glob("/vmfs/volumes/[a-z]*/dockvols")[0]
+# will do creation/deleteion in this folder:
+global path
+
 
 # TODO:
 # (1) clean up TODO from vmci_svc.py in a separate check-in
@@ -89,6 +89,27 @@ if __name__ == '__main__':
     #log_init()
     vmdk_ops.LogSetup("/var/log/vmware/docker-vmdk-plugin-pytest.log")
     kv.init()
-    unittest.main()
+
+    # Callculate the path
+    paths = glob.glob("/vmfs/volumes/[a-z]*/dockvols")
+    if paths:
+      # WARNING: for many datastores with dockvols, this picks up the first
+      path=paths[0]
+    else:
+       # create dir in a datastore (just pick fists datastore if needed)
+      path=glob.glob("/vmfs/volumes/[a-z]*")[0] + "/dockvols"
+      logging.debug("Directory does not exist - creating %s", path)
+      os.makedirs(path)
+
+    logging.info("Directory used in test - %s", path)
+
+    try:
+       unittest.main()
+    except:
+       pass
+    finally:
+       if not paths:
+          logging.debug("Directory clean up - removing  %s", path)
+          os.removedirs(path)
     #suite = unittest.TestLoader().loadTestsFromTestCase(TestStringMethods)
     #unittest.TextTestRunner(verbosity=2).run(suite)

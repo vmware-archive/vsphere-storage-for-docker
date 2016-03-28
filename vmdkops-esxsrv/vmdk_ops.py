@@ -1,73 +1,20 @@
 #!/usr/bin/env python
 
 '''
-TOP TODO
+ESX-side service  handling VMDK create/attach requests from VMCI clients
 
-0. extract attach/detach code and make sure it work fine without anything else
-1. add WaitForTask in Python  and drop sleep, Also add time track for reconfigure
-2. Add scsi_resync to plugin.go. Check how mount is done in flocker and in VIC
-3. Go over code, and collect TODO in one place (add TODO file)
-4. add simple test script (or sketch it)
-5. Look at cleaning up makefile and adding godeps
-'''
+The requests (create/delete/attach/detach) are JSON formatted.
 
+All operations are using requester VM (docker host) datastore and
+"Name" in request refers to vmdk basename
+VMDK name is formed as [vmdatastore] dockvols/"Name".vmdk
 
-#
-# ESX-side service  handling VMDK creat/attach requests from VMCI clients
-#
-# The requests (create/delete/attach/detach) are JSON formatted.
-#
-# All operations are using requester VM (docker host) datastore and
-# "Name" in request refers to vmdk basename
-# VMDK name is formed as [vmdatastore] dvol/"Name".vmdk
-#
-# Commands ("cmd" in request):
-#		"create" - create a VMDK in "[vmdatastore] dvol"
-#		"remove" - remove a VMDK. We assume it's not open, and fail if it is
-#		"list"   - [future, need docker support] enumerate related VMDK
-#		"attach" - attach a VMDK to the requesting VM
-#		"detach" - detach a VMDK from the requesting VM (assuming it's unmounted)
-#
-#
-# known issues:
-# - need interrupt handler to restart listen() on control-c
-# - call VirtualDiskManager directly instead of cmd line
-# - todo/tbd below
-
-'''
-TODO
-==
-Drop command line and use VDM for disk manipulation:
-spec=vim.FileBackedVirtualDiskSpec(capacityKB=1024, profile = None ,adapterType='lsiLogic', diskType = 'thin')
-vdm = si.content.virtualDiskManager
-vdm.CreateVirtualDisk_Task(name="[datastore] eek/a1.vmdk", datadatacenter=dc, spec = spec)
-vm = findVmByName()... ; vm.config.datastoreUrl[0].name is datastore
-see https://opengrok.eng.vmware.com/source/xref/vmcore-main.perforce.1666/bora/vmkernel/tests/vsan/vsansparse_sanity.py#314
-or even better https://gist.github.com/hartsock/d8b9c56cd7f779c92a78 (fails if exists)
-for examples
-==
-
-make sure backend name is properly calculated -
-OR replace it all with in-guest formatting (but then we'd need to locate the proper blockdevice()
-
-With the current approach, new device is found for mount with blkid -L <volume-name>, which is easier
-
-===
-check size format and handle policy on -o flags
-==
-make sure the NEW disk is really formatted if if it does not have -flat.vmdk
-==
-findChild seems to generate a task - too slow. Find out where and drop
-==
-Pass error as a code in the VMCI package, rather than a hack with server.c:vmci_reply
-
-===
-
- *   TBD: authorization/access config:
- *   - location configuration. And generally, configuration... host profile/adv.conf?
- *   - a local version, talking over Unix Socket, to debug all I can on Linux - with logic and fake responses (part of build unit test)
- *   - an ESX version, talking over http , to debug logic on a random ESX - with full vigor API usage
- *   - an ESX version, with vSocket (C I suppose) connection, to finalize debugging on actual guest/host story
+Commands ("cmd" in request):
+		"create" - create a VMDK in "[vmdatastore] dvol"
+		"remove" - remove a VMDK. We assume it's not open, and fail if it is
+		"list"   - [future, need docker support] enumerate related VMDK
+		"attach" - attach a VMDK to the requesting VM
+		"detach" - detach a VMDK from the requesting VM (assuming it's unmounted)
 
 '''
 
