@@ -155,7 +155,7 @@ def findVmByName(vmName):
 	vm = None
 	try:
 		vm = FindChild(GetVmFolder(), vmName)
-	except AttributeError as ex:
+	except vim.fault.NotAuthenticated as ex:
 		connectLocal() 					#  retry
 		vm = FindChild(GetVmFolder(), vmName)
 
