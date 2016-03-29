@@ -6,7 +6,8 @@
 from ctypes import *
 import json
 import subprocess
-import logging
+
+global vmdkOpsLogger 
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -56,7 +57,7 @@ def kvESXInit():
        useSideCarCreate = True
     except:
        # do nothing
-       logging.debug ("ESX version doesn't support create API, using open instead.")
+       vmdkOpsLogger.debug ("ESX version doesn't support create API, using open instead.")
 
     lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32, POINTER(c_uint32)]
     lib.DiskLib_SidecarOpen.restype = c_uint32
@@ -93,7 +94,7 @@ def volOpenPath(volpath):
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
    if res != 0:
-       logging.warning ("Open %s failed - %x" % (volpath, res))
+       vmdkOpsLogger.warning ("Open %s failed - %x" % (volpath, res))
 
    return dhandle
 
@@ -114,7 +115,7 @@ def create(volpath, kvDict):
       res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE, pointer(objHandle))
 
    if res != 0:
-      logging.warning ("Side car create for %s failed - %x" % (volpath, res))
+      vmdkOpsLogger.warning ("Side car create for %s failed - %x" % (volpath, res))
       lib.DiskLib_Close(disk)
       return False
 
@@ -135,7 +136,7 @@ def delete(volpath):
 
    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
    if res != 0:
-      logging.warning ("Side car delete for %s failed - %x" % (volpath, res))
+      vmdkOpsLogger.warning ("Side car delete for %s failed - %x" % (volpath, res))
       lib.DiskLib_Close(disk)
       return False
 

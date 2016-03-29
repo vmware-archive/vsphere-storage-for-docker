@@ -7,19 +7,17 @@ Tests for basic vmdk Operations
 
 import unittest
 import sys
-import logging
 import glob
 import os, os.path
 
 import vmdk_ops
 import volumeKVStore as kv
 
-# will do creation/deleteion in this folder:
+# will do creation/deletion in this folder:
 global path
 
+vmdkOpsLogger = vmdk_ops.LogSetup("/var/log/vmware/docker-vmdk-plugin-pytest.log")
 
-# TODO:
-# (1) clean up TODO from vmci_svc.py in a separate check-in
 
 class VmdkCreateRemoveTestCase(unittest.TestCase):
     """Unit test for VMDK Create and Remove ops"""
@@ -48,11 +46,11 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     def testBadOpts(self):
         err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName,
                                   opts=self.badOpts)
-        logging.info(err)
+        vmdkOpsLogger.info(err)
         self.assertNotEqual(err, None, err)
 
         err = vmdk_ops.removeVMDK(self.name)
-        logging.info(err)
+        vmdkOpsLogger.info(err)
         self.assertNotEqual(err, None, err)
 
     def testPolicy(self):
@@ -76,18 +74,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             self.assertEqual(err == None, unit[2], err)
 
 
-# init log stream handle to use sys.output before running tests.
-# this is needed if we want to keep using "print" in test
-# otherwise the logger from vmdk_ops is just fine
-def log_init():
-    logger = logging.getLogger()
-    logger.level = logging.DEBUG
-    stream_handler = logging.StreamHandler(sys.stdout)
-    logger.addHandler(stream_handler)
-
 if __name__ == '__main__':
-    #log_init()
-    vmdk_ops.LogSetup("/var/log/vmware/docker-vmdk-plugin-pytest.log")
     kv.init()
 
     # Callculate the path
@@ -98,10 +85,10 @@ if __name__ == '__main__':
     else:
        # create dir in a datastore (just pick fists datastore if needed)
       path=glob.glob("/vmfs/volumes/[a-z]*")[0] + "/dockvols"
-      logging.debug("Directory does not exist - creating %s", path)
+      vmdkOpsLogger.debug("Directory does not exist - creating %s", path)
       os.makedirs(path)
 
-    logging.info("Directory used in test - %s", path)
+    vmdkOpsLogger.info("Directory used in test - %s", path)
 
     try:
        unittest.main()
@@ -109,7 +96,7 @@ if __name__ == '__main__':
        pass
     finally:
        if not paths:
-          logging.debug("Directory clean up - removing  %s", path)
+          vmdkOpsLogger.debug("Directory clean up - removing  %s", path)
           os.removedirs(path)
     #suite = unittest.TestLoader().loadTestsFromTestCase(TestStringMethods)
     #unittest.TextTestRunner(verbosity=2).run(suite)
