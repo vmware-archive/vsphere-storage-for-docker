@@ -5,8 +5,9 @@
 ## on the kv store. Currently uses side cars to keep KV pairs for
 ## a given volume.
 
-import logging
 import kvESX
+#import logging
+global vmdkOpsLogger
 
 # Default meta-data for a volume created by the plugin, keys can be
 # added or removed during the life of a volume. The below list
@@ -30,7 +31,7 @@ def create(volPath, status, opts):
    res = kvESX.create(volPath, volMeta)
 
    if res != True:
-      logging.debug ("KV store create failed.")
+      vmdkOpsLogger.debug ("KV store create failed.")
       return False
 
    return True
