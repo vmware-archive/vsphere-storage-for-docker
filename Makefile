@@ -216,5 +216,5 @@ clean-esx:
 clean-all: clean clean-vm clean-esx
 
 # full circle
-all: clean-all build-all deploy-all test-all clean-all
+all: clean-all build-all deploy-all test-all
 

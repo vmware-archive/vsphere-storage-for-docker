@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include "vmci/vmci_sockets.h"
+#include "vmci_sockets.h"
 
 #define MAGIC 0xbadbeef
 

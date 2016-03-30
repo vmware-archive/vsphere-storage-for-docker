@@ -13,7 +13,7 @@ VIB_BIN  = $(BIN)/$(VIB)
 
 # code
 PY_SRC := vmdk_ops.py volumeKVStore.py kvESX.py
-C_SRC  := server.c
+C_SRC  := vmci/vmci_server.c
 INIT_SCRIPT := vmdk-opsd 
 
 # extra stuff to copy to vib
