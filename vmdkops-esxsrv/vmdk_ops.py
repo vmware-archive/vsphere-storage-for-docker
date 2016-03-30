@@ -176,8 +176,8 @@ def detachVMDK(vmdkPath, vmName):
 	vm = findVmByName(vmName)
 	logging.info("*** detachVMDK: " + vmdkPath + " from "  + vmName +
                  " VM uuid=" + vm.config.uuid)
-	disk_detach(vmdkPath, vm)
-	return None
+	return disk_detach(vmdkPath, vm)
+
 
 # check existence (and creates if needed) the path
 # NOTE / TBD: for vsan we may need to use osfs_mkdir instead of regular os.mkdir
@@ -212,7 +212,7 @@ def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
     elif cmd == "detach":
         return detachVMDK(vmdkPath, vmName)
     else:
-        return "Unknown command:" + cmd
+        return err("Unknown command:" + cmd)
 
 
 def connectLocal():
@@ -398,6 +398,7 @@ def err(string):
 
 
 # detach disk (by full path) from a vm
+# returns None or err(msg)
 def disk_detach(vmdkPath, vm):
 
   # Find device object by vmkd path
@@ -406,9 +407,9 @@ def disk_detach(vmdkPath, vm):
 
   if not device:
       # TBD: Docker asks to detach something not attached :-) .
-      # Better message is needed
-      logging.error("**** SOMETHING IS VERY WRONG: detach_disk did not find " + vmdkPath)
-      return
+      msg = "**** INTERNAL ERROR: can't find the disk to detach: " + vmdkPath
+      logging.error(msg)
+      return err(msg)
 
   spec = vim.vm.ConfigSpec()
   dev_changes = []
@@ -429,8 +430,11 @@ def disk_detach(vmdkPath, vm):
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)
-  else:
-        logging.info("disk detached " + vmdkPath)
+     return err("Failed to detach " + vmdkPath)
+
+  logging.info("Disk detached " + vmdkPath)
+  return None
+
 
 
 def signal_handler_stop(signalnum, frame):
