@@ -392,8 +392,10 @@ def disk_attach(vmdkPath, vm):
 
   return None
 
+
 def err(string):
     return {u'Error': string}
+
 
 # detach disk (by full path) from a vm
 def disk_detach(vmdkPath, vm):
@@ -430,75 +432,79 @@ def disk_detach(vmdkPath, vm):
   else:
         logging.info("disk detached " + vmdkPath)
 
+
 def signal_handler_stop(signalnum, frame):
     logging.warn("Received stop signal num: " + `signalnum`)
     sys.exit(0)
 
-# Main - connect, load VMCI shared lib and does main loop
-def main():
-    global si  # we maintain only one connection
 
+# load VMCI shared lib , listen on vSocket in main loop, handle requests
+def handleVmciRequests():
+	# Load and use DLL with vsocket shim to listen for docker requests
+	lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
+
+	bsize = MaxJsonSize
+	txt = create_string_buffer(bsize)
+
+	cartel = c_int32()
+	sock = lib.vmci_init()
+	skipCount = MaxSkipCount # retries for vmci_get_one_op failures
+	while True:
+		c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
+		logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'" %(c, txt.value))
+
+		if c == -1:
+			# VMCI Get Ops can self-correct by reoping sockets internally. Give it a chance.
+			logging.warning("VMCI Get Ops failed - ignoring and moving on.")
+			skipCount = skipCount - 1
+			if skipCount <= 0:
+				raise Exception("Too many errors from VMCI Get Ops - giving up.")
+			continue
+		else:
+			skipCount = MaxSkipCount # reset the counter, just in case
+
+		# Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
+		vmmLeader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel.value))
+		groupInfo = vsi.get("/vm/%s/vmmGroupInfo" % vmmLeader)
+
+		# vmId - get and convert to format understood by vmodl as a VM key
+		# end result should be like this 564d6865-2f33-29ad-6feb-87ea38f9083b"
+		# see KB http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1880
+		s = groupInfo["uuid"]
+		vmId   = "{0}-{1}-{2}-{3}-{4}".format(s[0:8], s[9:12], s[12:16], s[16:20], s[20:32])
+		vmName = groupInfo["displayName"]
+		cfgPath = groupInfo["cfgPath"]
+
+		try:
+			req = json.loads(txt.value, "utf-8")
+		except ValueError as e:
+			ret = {u'Error': "Failed to parse json '%s'." % (txt,value)}
+		else:
+			# note: Connection can time out on idle. TODO: to refresh in that case
+			details = req["details"]
+			opts = details["Opts"] if "Opts" in details else None
+			ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
+			logging.debug("executeRequest ret = %s" % ret)
+
+		err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
+		logging.debug("lib.vmci_reply: VMCI replied with errcode %s " % err)
+
+	lib.close(sock) # close listening socket when the loop is over
+
+
+def main():
     LogSetup(LogFile)
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
-    si = connectLocal()
 
-    printVMInfo(si) # just making sure we can do it - logging.info
-
-    # Init KV
-    kv.init()
-
-    # Load and use DLL with vsocket shim to listen for docker requests
-    lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
-
-    bsize = MaxJsonSize
-    txt = create_string_buffer(bsize)
-
-    cartel = c_int32()
-    sock = lib.vmci_init()
-    skipCount = MaxSkipCount # retries for vmci_get_one_op failures
-    while True:
-        c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
-        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'" %(c, txt.value))
-
-        if c == -1:
-            # VMCI Get Ops can self-correct by reoping sockets internally. Give it a chance.
-            logging.warning("VMCI Get Ops failed - ignoring and moving on.")
-            skipCount = skipCount - 1
-            if skipCount <= 0:
-                raise Exception("Too many errors from VMCI Get Ops - giving up.")
-            continue
-        else:
-            skipCount = MaxSkipCount # reset the counter, just in case
-
-        # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
-        vmmLeader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel.value))
-        groupInfo = vsi.get("/vm/%s/vmmGroupInfo" % vmmLeader)
-
-        # vmId - get and convert to format understood by vmodl as a VM key
-        # end result should be like this 564d6865-2f33-29ad-6feb-87ea38f9083b"
-        # see KB http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1880
-        s = groupInfo["uuid"]
-        vmId   = "{0}-{1}-{2}-{3}-{4}".format(s[0:8], s[9:12], s[12:16], s[16:20], s[20:32])
-        vmName = groupInfo["displayName"]
-        cfgPath = groupInfo["cfgPath"]
-
-        try:
-            req = json.loads(txt.value, "utf-8")
-        except ValueError as e:
-            ret = {u'Error': "Failed to parse json '%s'." % (txt,value)}
-        else:
-            # note: Connection can time out on idle. TODO: to refresh in that case
-            details = req["details"]
-            opts = details["Opts"] if "Opts" in details else None
-            ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
-            logging.debug("executeRequest ret = %s" % ret)
-
-        err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
-        logging.debug("lib.vmci_reply: VMCI replied with errcode %s " % err)
-
-    lib.close(sock) # close listening socket when the loop is over
-
+    try:
+        kv.init()
+        global si  # we maintain only one connection
+        si = connectLocal()
+        printVMInfo(si) # just making sure we can do it - logging.info
+        handleVmciRequests()
+    except Exception, e:
+    	logging.exception(e)
 
 #-----------------------------------------------------------
 #
