@@ -139,10 +139,11 @@ func (d vmdkDriver) formatVolume(r volume.Request) error {
 
    //TODO - check for null device name and return error.
    log.WithFields(log.Fields{"device ": device}).Debug("Formatting ")
-   _, res := exec.Command("/sbin/mkfs.ext4", []string{"-F -q -L ", r.Name, device}...).Output()
+   _, res := exec.Command("/sbin/mkfs.ext4", []string{"-F -q -L", r.Name, device}...).Output()
 
    // Convert to a user readable error vs. what mkfs returns.
    if res != nil {
+      log.WithFields(log.Fields{"device": device, "error": res}).Error("Failed to format: ")
       return fmt.Errorf("Failed formatting device %s", device)
    }
 
