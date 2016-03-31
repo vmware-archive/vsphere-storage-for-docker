@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include "vmci/vmci_sockets.h"
+#include "vmci_sockets.h"
 
 #define MAGIC 0xbadbeef
 
@@ -109,7 +109,7 @@ vmci_init(void)
    return s;
 }
 
-// returns socket to communicate on (which neds to be closed later),
+// returns socket to communicate on (which needs to be closed later),
 // or -1 on error
 int
 vmci_get_one_op(const int s,    // socket to listen on

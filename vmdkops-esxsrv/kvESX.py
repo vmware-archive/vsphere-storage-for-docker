@@ -167,6 +167,7 @@ def save(volpath, kvDict):
       return False
 
    json.dump(kvDict, fh)
+   fh.write("\n") # newline makes it easier for human to read
 
    fh.close()
    return True
