@@ -168,7 +168,8 @@ def createVMDK(vmdkPath, volName, opts=""):
            removeVMDK(vmdkPath)
            return err("Failed to create meta-data store for %s" % vmdkPath)
 
-        return formatVmdk(vmdkPath, volName)
+        #return formatVmdk(vmdkPath, volName)
+        return None
 
 def formatVmdk(vmdkPath, volName):
         # now format it as ext4:
@@ -355,6 +356,7 @@ def disk_attach(vmdkPath, vm):
   if len(pvsci) > 0:
     diskSlot = None  # need to find out
     controllerKey = pvsci[0].key
+    busNumber = pvsci[0].busNumber
   else:
     logging.warning("Warning: PVSCI adapter is missing - trying to add one...")
     diskSlot = 0  # starting on a fresh controller
@@ -371,6 +373,9 @@ def disk_attach(vmdkPath, vm):
     key = avail.pop()           # bus slot
     controllerKey = key + 1000  # controller key (1000 is for SCSI controllers)
     diskSlot = 0
+    busNumber = key
+
+    # Init config spec for this controller.
     controller_spec = vim.VirtualDeviceConfigSpec(
       operation = 'add',
       device = vim.ParaVirtualSCSIController(
@@ -394,7 +399,8 @@ def disk_attach(vmdkPath, vm):
         else:
            msg = "{0} is attached to VM ID={1}, skipping attach request".format(vmdkPath, vmUuid)
         logging.warning(msg)
-        return err(msg)
+        #return [None, None, err(msg)]
+        return [None, None]
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
@@ -437,13 +443,15 @@ def disk_attach(vmdkPath, vm):
       if volMeta:
          volMeta['status'] = 'attached'
          volMeta['attachedVMUuid'] = vm.config.uuid
+         volMeta['unitNumber'] = str(diskSlot)
          kv.setAll(vmdkPath, volMeta)
   except vim.fault.VimFault as ex:
-      return err(ex.msg)
+      #return [None, None, err(ex.msg)]
+      return [None, None]
   else:
     logging.info("disk attached " + vmdkPath)
 
-  return None
+  return [str(diskSlot), str(busNumber)]
 
 def err(string):
     return {u'Error': string}
@@ -476,6 +484,7 @@ def disk_detach(vmdkPath, vm):
      if volMeta:
         volMeta['status'] = 'detached'
         del volMeta['attachedVMUuid']
+        del volMeta['unitNumber']
         kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:

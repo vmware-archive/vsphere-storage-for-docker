@@ -35,10 +35,17 @@ type VolumeData struct {
 	Attributes map[string]string
 }
 
+// VolumeDevSpec struct
+// - Bus and unit numbers for the volume
+type VolumeDevSpec struct {
+   UnitNumber string
+   BusNumber string
+}
+
 // Create a volume
 func (v VmdkOps) Create(name string, opts map[string]string) error {
 	_, err := v.Cmd.Run("create", name, opts)
-	return err
+        return err
 }
 
 // Remove a volume
@@ -48,9 +55,25 @@ func (v VmdkOps) Remove(name string, opts map[string]string) error {
 }
 
 // Attach a volume
-func (v VmdkOps) Attach(name string, opts map[string]string) error {
-	_, err := v.Cmd.Run("attach", name, opts)
-	return err
+func (v VmdkOps) Attach(name string, opts map[string]string) (VolumeDevSpec, error) {
+        var volData VolumeDevSpec
+        var dev []string
+        out, err := v.Cmd.Run("attach", name, opts)
+        if err != nil {
+           return volData, err
+        }
+        
+        // TODO - For some reason unable to unmarshal into
+        // volData directly.
+        err = json.Unmarshal(out, &dev)
+        if err != nil {
+           // For a non-Null error caller ignores unit number.
+           return volData, err
+        }
+
+        volData.UnitNumber = dev[0]
+        volData.BusNumber = dev[1]
+        return volData, nil
 }
 
 // Detach a volume

@@ -9,6 +9,9 @@
 # Place binaries here
 BIN := ./bin
 
+# script sources live here. All scripts are copied to test VM during deployment
+SCRIPTS     := ./scripts
+
 # esx service for docker volume ops
 ESX_SRC     := vmdkops-esxsrv
 
@@ -16,8 +19,10 @@ ESX_SRC     := vmdkops-esxsrv
 PLUGNAME  := docker-vmdk-plugin
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 
+DEV_SCRIPT := $(SCRIPTS)/vmdk_getdev.sh
+
 # all binaries for VMs - plugin and tests
-VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test $(DEV_SCRIPT)
 
 VIBFILE := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN := $(BIN)/$(VIBFILE)
@@ -129,8 +134,6 @@ GLOC := /usr/local/bin
 #
 # Scripts to deploy and control services - used from Makefile and from Drone CI
 #
-# script sources live here. All scripts are copied to test VM during deployment
-SCRIPTS     := ./scripts
 
 # scripts started locally to deploy to and clean up test machines
 DEPLOY_VM_SH  := $(SCRIPTS)/deploy-tools.sh deployvm

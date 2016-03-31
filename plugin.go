@@ -41,18 +41,23 @@ package main
 
 import (
 	//	"encoding/json"
-	//      "fmt"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-vmdk-plugin/fs"
 	"github.com/vmware/docker-vmdk-plugin/vmdkops"
 	"path/filepath"
+        "os"
+        "os/exec"
+        "strings"
 	"sync"
 )
 
 const (
 	mountRoot = "/mnt/vmdk" // VMDK block devices are mounted here
 )
+
+const vmdk2dev = "/usr/local/bin/vmdk_getdev.sh"
 
 type vmdkDriver struct {
 	m       *sync.Mutex // create() serialization
@@ -99,32 +104,84 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 	return volume.Response{Volumes: responseVolumes}
 }
 
-// request attach and them mounts the volume
+func (d vmdkDriver) attachVolume(r volume.Request) (string, error) {
+	// First of all, have ESX attach the disk
+        var volDev vmdkops.VolumeDevSpec
+	volDev, err := d.ops.Attach(r.Name, r.Options)
+        if err != nil {
+           return "", err
+	}
+
+	log.WithFields(log.Fields{"unit number ": volDev.UnitNumber,
+                       "bus number ": volDev.BusNumber}).Debug("Got Volume ")
+        
+        // Get the device node for the unit returned from the attach.
+	out, err := exec.Command(vmdk2dev,
+                                 []string{volDev.UnitNumber, volDev.BusNumber}...).Output()
+        if err != nil {
+           return "", err
+	}
+	device := strings.TrimRight(string(out), " \n")
+
+        if device == "" {
+           return "", fmt.Errorf("Device not found for unit %s bus %s", volDev.UnitNumber, volDev.BusNumber)
+        } else { 
+           return device, nil
+        }
+}
+
+func (d vmdkDriver) formatVolume(r volume.Request) error {
+
+   device, err := d.attachVolume(r)
+   if err != nil {
+      return err
+   } 
+
+   //TODO - check for null device name and return error.
+   log.WithFields(log.Fields{"device ": device}).Debug("Formatting ")
+   _, res := exec.Command("/sbin/mkfs.ext4", []string{"-F -q -L ", r.Name, device}...).Output()
+
+   // Convert to a user readable error vs. what mkfs returns.
+   if res != nil {
+      return fmt.Errorf("Failed formatting device %s", device)
+   }
+
+   return nil
+}
+
+// Handles preparing a volume for mounting or formatting, a single
+// method is used as actions are similar and decided by the
+// format boolean.
+// Request attach and them mounts the volume
 // actual mount - send attach to ESX and do the in-guest magix
 // TODO: this should actually be a goroutine , no need to block
 //       SAME (and more) applies to unmount
 func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
-
-	// First of all, have ESX attach the disk
-
+        device, err := d.attachVolume(r)
+        if err != nil {
+           return err
+        } 
 	refCount := 0
 	if refCount != 0 { // TODO: actual refcounting
-		return nil
+           return nil
 	}
 
 	// TODO: refcount  if the volume is already mounted (for other container) and
 	// just return volume.Response{Mountpoint: m} in this case
 	// TODO: save info abouf voliume mount , in memory
 	// d.volumes[m] = &volumeName{name: r.Name, connections: 1}
-	if err := d.ops.Attach(r.Name, r.Options); err != nil {
-		return err
-	}
 
 	mountpoint := filepath.Join(mountRoot, r.Name)
+	log.WithFields(log.Fields{
+	      "device":     device,
+	      "mountpoint": mountpoint,
+	}).Debug("Mounting ")
+
 	if d.mockEsx {
-		return fs.Mount(mountpoint, r.Name, "ext4")
+              return fs.Mount(mountpoint, device, "ext4")
 	}
-	return fs.Mount(mountpoint, r.Name, "ext2")
+
+	return fs.Mount(mountpoint, device, "ext2")
 }
 
 // Unmounts the volume and then requests detach
@@ -143,16 +200,43 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 func (d vmdkDriver) Create(r volume.Request) volume.Response {
-	err := d.ops.Create(r.Name, r.Options)
+	// Get the mount point path and make sure it exists.
+	m := filepath.Join(mountRoot, r.Name)
+
+        // First create the mountpoint
+	err := fs.Mkdir(m)
 	if err != nil {
-                log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
+		log.WithFields(log.Fields{"dir": m}).Error("Failed to make directory: ")
 		return volume.Response{Err: err.Error()}
 	}
+
+	err = d.ops.Create(r.Name, r.Options)
+	if err != nil {
+           log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed: ")
+           return volume.Response{Err: err.Error()}
+	}
+
+        // Attach the new volume and format it.
+        err = d.formatVolume(r)
+        if err != nil {
+           log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to format volume: ")
+           // Unmount and remove the volume.
+	   d.ops.Detach(r.Name, r.Options)
+           d.Remove(r)
+           return volume.Response{Err: err.Error()}
+        }
+
+        // Detach the volume that was attached to format the volume.
+	d.ops.Detach(r.Name, r.Options)
         log.WithFields(log.Fields{"name": r.Name}).Info("Volume created ") 
-	return volume.Response{Err: ""}
+
+        return volume.Response{Err: ""}
 }
 
 func (d vmdkDriver) Remove(r volume.Request) volume.Response {
+	// Get the mount point path and make sure it exists.
+	m := filepath.Join(mountRoot, r.Name)
+        os.Remove(m)
 	err := d.ops.Remove(r.Name, r.Options)
 	if err != nil {
                 log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to remove volume ")
@@ -183,16 +267,11 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 	m := filepath.Join(mountRoot, r.Name)
 	log.WithFields(log.Fields{"name": r.Name, "mountpoint": m}).Info("Mounting Volume ")
 
-	err := fs.Mkdir(m)
-	if err != nil {
-		log.WithFields(log.Fields{"dir": m}).Error("Failed to make directory ")
-		return volume.Response{Err: err.Error()}
-	}
-
 	if err := d.mountVolume(r, m); err != nil {
                 log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Failed to mount ") 
 		return volume.Response{Err: err.Error()}
 	}
+
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mount Succeeded ")
 
 	return volume.Response{Mountpoint: m}

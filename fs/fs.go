@@ -8,8 +8,6 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
-	"os/exec"
-	"strings"
 	"syscall"
 )
 
@@ -32,18 +30,13 @@ func Mkdir(path string) error {
 
 // Mount discovers which devices are for which volume using blkid.
 // It then mounts the filesystem (`fs`) on the device at the given mountpoint.
-func Mount(mountpoint string, name string, fs string) error {
-	out, err := exec.Command("blkid", []string{"-L", name}...).Output()
-	if err != nil {
-		return fmt.Errorf("Failed to discover device  using blkid")
-	}
-	device := strings.TrimRight(string(out), " \n")
+func Mount(mountpoint string, device string, fs string) error {
 	log.WithFields(log.Fields{
 		"device":     device,
 		"mountpoint": mountpoint,
 	}).Debug("Calling syscall.Mount()")
 	//_, err = exec.Command("mount", []string{device, mountpoint}...).Output()
-	err = syscall.Mount(device, mountpoint, fs, 0, "")
+	err := syscall.Mount(device, mountpoint, fs, 0, "")
 	if err != nil {
 		return fmt.Errorf("Failed to mount device %s at %s: %s", device, mountpoint, err)
 	}
