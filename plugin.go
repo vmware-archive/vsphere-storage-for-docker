@@ -124,9 +124,8 @@ func (d vmdkDriver) Remove(r volume.Request) volume.Response {
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
 	if refcounts[r.Name] != 0 {
-		msg := fmt.Sprintf("Refcount error, volume=%s, refcount=%d  "+
-			"(possibly unmount request for a non-mounted volume)",
-			r.Name, refcounts[r.Name])
+		msg := fmt.Sprintf("Remove faiure - volume is still mounted. " +
+		    " volume=%s, refcount=%d", r.Name, refcounts[r.Name])
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
