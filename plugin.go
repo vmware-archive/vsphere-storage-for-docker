@@ -11,8 +11,7 @@ package main
 ///
 
 import (
-	//	"encoding/json"
-	//      "fmt"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-vmdk-plugin/fs"
@@ -31,6 +30,13 @@ type vmdkDriver struct {
 	ops     vmdkops.VmdkOps
 }
 
+var (
+	// volume name -> refcount , for volumes with refcount > 0
+	refcounts = make(map[string]int)
+)
+
+// creates vmdkDriver which may talk to real ESX (mockEsx=False) or
+// real ESX.
 func newVmdkDriver(mockEsx bool) vmdkDriver {
 	var vmdkCmd vmdkops.VmdkCmdRunner
 	if mockEsx {
@@ -74,19 +80,7 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 // TODO: this should actually be a goroutine , no need to block
 //       SAME (and more) applies to unmount
 func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
-
 	// First of all, have ESX attach the disk
-
-	refCount := 0
-	if refCount != 0 { // TODO: actual refcounting
-		return nil
-	}
-
-	// TODO: Issue #28
-	// - refcount  if the volume is already mounted (for other container) and
-	// just return volume.Response{Mountpoint: m} in this case
-	// -  save info abouf volume mount , in memory
-	// d.volumes[m] = &volumeName{name: r.Name, connections: 1}
 	if err := d.ops.Attach(r.Name, r.Options); err != nil {
 		return err
 	}
@@ -103,8 +97,10 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 	mountpoint := filepath.Join(mountRoot, r.Name)
 	err := fs.Unmount(mountpoint)
 	if err != nil {
-		log.WithFields(log.Fields{"mountpoint": mountpoint, "error": err}).Error("Failed to unmount ")
-                // Do not return error. Continue with detach.
+		log.WithFields(
+			log.Fields{"mountpoint": mountpoint, "error": err},
+		).Error("Failed to unmount volume. Still trying to detach. ")
+		// Do not return error. Continue with detach.
 	}
 	return d.ops.Detach(r.Name, r.Options)
 }
@@ -116,20 +112,33 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 func (d vmdkDriver) Create(r volume.Request) volume.Response {
 	err := d.ops.Create(r.Name, r.Options)
 	if err != nil {
-                log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
 		return volume.Response{Err: err.Error()}
 	}
-        log.WithFields(log.Fields{"name": r.Name}).Info("Volume created ") 
+	log.WithFields(log.Fields{"name": r.Name}).Info("Volume created ")
 	return volume.Response{Err: ""}
 }
 
 func (d vmdkDriver) Remove(r volume.Request) volume.Response {
+	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
+
+	// Docker is supposed to block 'remove' command if the volume is used. Verify.
+	if refcounts[r.Name] != 0 {
+		msg := fmt.Sprintf("Refcount error, volume=%s, refcount=%d  "+
+			"(possibly unmount request for a non-mounted volume)",
+			r.Name, refcounts[r.Name])
+		log.Error(msg)
+		return volume.Response{Err: msg}
+	}
+
 	err := d.ops.Remove(r.Name, r.Options)
 	if err != nil {
-                log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to remove volume ")
+		log.WithFields(
+			log.Fields{"name": r.Name, "error": err},
+		).Error("Failed to remove volume ")
 		return volume.Response{Err: err.Error()}
 	}
-        log.WithFields(log.Fields{"name": r.Name}).Info("Volume removed ") 
+
 	return volume.Response{Err: ""}
 }
 
@@ -144,45 +153,79 @@ func (d vmdkDriver) Path(r volume.Request) volume.Response {
 func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 	d.m.Lock()
 	defer d.m.Unlock()
+	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
-	refCount := 0 // TBD: get actual from d.volumes(r.name).refCount
-	if refCount != 0 {
-		return volume.Response{Err: ""}
+	m := filepath.Join(mountRoot, r.Name)
+
+	// If the volume is already mounted , just increase the refcount.
+	//
+	// Note: We are deliberately incrementing refcount first, before trying
+	// to do anything else. If Mount fails, Docker will send Unmount request,
+	// and we will happily decrement the refcount there, and will fail the unmount
+	// since the volume will have been never mounted.
+	// Note: for new keys, GO maps return zero value, so no need for if_exists.
+
+	refcounts[r.Name]++
+	refcnt := refcounts[r.Name] // save map traversal
+	if refcnt > 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: m}
 	}
 
-	// Get the mount point path and make sure it exists.
-	m := filepath.Join(mountRoot, r.Name)
-	log.WithFields(log.Fields{"name": r.Name, "mountpoint": m}).Info("Mounting Volume ")
-
+	// Make sure  that mountpoint exists.
 	err := fs.Mkdir(m)
 	if err != nil {
-		log.WithFields(log.Fields{"dir": m}).Error("Failed to make directory ")
+		log.WithFields(
+			log.Fields{"name": r.Name, "dir": m},
+		).Error("Failed to make directory for volume mount")
 		return volume.Response{Err: err.Error()}
 	}
 
+	// This is the first time we are asked to mount the volume, so comply
 	if err := d.mountVolume(r, m); err != nil {
-                log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Failed to mount ") 
+		log.WithFields(
+			log.Fields{"name": r.Name, "error": err.Error()},
+		).Error("Failed to mount ")
 		return volume.Response{Err: err.Error()}
 	}
-	log.WithFields(log.Fields{"name": r.Name}).Info("Mount Succeeded ")
 
 	return volume.Response{Mountpoint: m}
 }
 
-//
+// Unmount request from Docker. If mount refcount is drop to 0,
+// unmount and detach from VM
 func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
-	// make sure it's unmounted on guest side, then detach
-	refCount := 0 // TBD: get actual from d.volumes(r.name).refCount
-	if refCount > 0 {
+	d.m.Lock()
+	defer d.m.Unlock()
+	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
+
+	// if the volume is still used by other containers, just return OK
+	refcounts[r.Name]--
+	refcnt := refcounts[r.Name] // save map traversal
+	if refcnt >= 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Still in use, skipping unmount request. ")
 		return volume.Response{Err: ""}
 	}
+	// More "unmounts" than "mounts" receied. Yell, reset to 0 and keep going
+	if refcnt != 0 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Error("WRONG REF COUNT in mount (should be 0). Resetting to 0. ")
+	}
+	delete(refcounts, r.Name)
+
+	// and if nobody needs it, unmount and detach
 
 	err := d.unmountVolume(r)
-	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err.Error()}).Error("Failed to unmount ")
+		log.WithFields(
+			log.Fields{"name": r.Name, "error": err.Error()},
+		).Error("Failed to unmount ")
 		return volume.Response{Err: err.Error()}
 	}
-	log.WithFields(log.Fields{"name": r.Name}).Info("Unmount Succeeded ")
 	return volume.Response{Err: ""}
 }
