@@ -9,4 +9,8 @@ if [ "$pid" != "" ]
 then
    kill $pid
 fi
-$DEBUG rm -rvf /mnt/vmdk/*
+for d in /mnt/vmdk/*
+do
+   $DEBUG umount $d 2>/dev/null
+   $DEBUG rm -rvf $d
+done
