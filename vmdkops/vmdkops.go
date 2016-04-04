@@ -48,10 +48,13 @@ func (v VmdkOps) Remove(name string, opts map[string]string) error {
 }
 
 // Attach a volume
-func (v VmdkOps) Attach(name string, opts map[string]string) error {
+func (v VmdkOps) Attach(name string, opts map[string]string) ([]byte, error) {
 	log.Debugf("vmdkOps.Attach name=%s", name)
-	_, err := v.Cmd.Run("attach", name, opts)
-	return err
+        str, err := v.Cmd.Run("attach", name, opts)
+        if err != nil {
+           return nil, err
+        }
+        return str, err
 }
 
 // Detach a volume

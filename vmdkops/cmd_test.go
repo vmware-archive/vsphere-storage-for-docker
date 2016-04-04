@@ -16,7 +16,8 @@ func TestCommands(t *testing.T) {
 	if assert.Nil(t, ops.Create(name, opts)) {
 
 	  opts = map[string]string{}
-	  assert.Nil(t, ops.Attach(name, opts))
+	  _, err := ops.Attach(name, opts)
+	  assert.Nil(t, err)
 	  assert.Nil(t, ops.Detach(name, opts))
 	  assert.Nil(t, ops.Remove(name, opts))
 	}
