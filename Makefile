@@ -32,7 +32,7 @@ VMDKOPS_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
 
 # All sources. We rebuild if anything changes here
-SRC = plugin.go main.go log_formatter.go
+SRC = plugin.go main.go log_formatter.go refcnt.go fs/fs.go config/config.go
 
 #  TargetprintNQuit
 
@@ -119,8 +119,6 @@ TEST_VM = root@$(VM1)
 VM1_DOCKER = tcp://$(VM1):2375
 VM2_DOCKER = tcp://$(VM2):2375
 
-
-SCP := $(DEBUG) scp -o StrictHostKeyChecking=no
 SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
 
 # bin locations on target guest
@@ -179,9 +177,9 @@ TEST_VERBOSE   = -test.v
 CONN_MSG := "Please make sure Docker is running and is configured to accept TCP connections"
 .PHONY: checkremote
 checkremote:
-	$(SSH) $(TEST_VM) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
+	@$(SSH) $(TEST_VM) docker -H $(VM1_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM1 $(VM1): $(CONN_MSG) ; exit 1)
-	$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
+	@$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2): $(CONN_MSG); exit 1)
 
 .PHONY: test-vm test-esx test-all testremote

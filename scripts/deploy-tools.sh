@@ -33,7 +33,7 @@ SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 internal_vib_name=vmware-esx-vmdkops-service
 
 script_loc=./scripts
-tmp_loc=/tmp/docker-volume-plugin
+tmp_loc=/tmp/docker-vmdk-plugin
 guest_mount_point=/mnt/vmdk
 
 # ====== define functions =======
