@@ -216,21 +216,21 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    b = MAGIC;
    ret = send(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
-      printf("Failed to send magic: ret %d (%s) expected ret %d\n",
+      printf("Failed to send magic: ret %d (%s) expected ret %lu\n",
                ret, strerror(errno), sizeof b);
       return -1;
    }
 
    ret = send(s->sock_id, &r->mlen, sizeof r->mlen, 0);
    if (ret == -1 || ret != sizeof r->mlen) {
-      printf("Failed to send len: ret %d (%s) expected ret %d\n",
+      printf("Failed to send len: ret %d (%s) expected ret %lu\n",
                ret, strerror(errno), sizeof r->mlen);
       return -1;
    }
 
    ret = send(s->sock_id, r->msg, r->mlen, 0);
    if (ret == -1 || ret != r->mlen) {
-      printf("Failed to send content: ret %d (%s) expected ret\n",
+      printf("Failed to send content: ret %d (%s) expected ret %d\n",
                ret, strerror(errno), r->mlen);
       return -1;
    }

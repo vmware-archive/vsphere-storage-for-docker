@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"syscall"
 	"unsafe"
 )
 
@@ -71,8 +70,11 @@ func (vmdkCmd VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]b
 	ret := C.Vmci_GetReply(C.int(vmciEsxPort), cmdS, beS, ans)
 
 	if ret != 0 {
-		log.Warn("No connection to ESX over vsocket, trace only")
-		return nil, fmt.Errorf("vmdkCmd err: %d (%s)", ret, syscall.Errno(ret).Error())
+		msg := "Failed to connect to ESX over vsocket"
+		// TODO: vci_client.c:vsock_get_reply needs to return meaninful errcode
+		// and we need to issue details on connection failure
+		log.Warn(msg)
+		return nil, errors.New(msg)
 	}
 	response := []byte(C.GoString(ans.buf))
 	C.free(unsafe.Pointer(ans.buf))
