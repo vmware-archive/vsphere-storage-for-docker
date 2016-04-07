@@ -39,7 +39,7 @@ type VolumeInfo struct {
 }
 
 type vmciError struct {
-	Error string
+	Error string `json:",omitempty"`
 }
 
 // Run command Guest VM requests on ESX via vmdkops_serv.py listening on vSocket
@@ -79,7 +79,7 @@ func (vmdkCmd VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]b
 	response := []byte(C.GoString(ans.buf))
 	C.free(unsafe.Pointer(ans.buf))
 	err = unmarshalError(response)
-	if err != nil {
+	if err != nil && len(err.Error()) != 0 {
 		return nil, err
 	}
 	// There was no error, so return the slice containing the json response

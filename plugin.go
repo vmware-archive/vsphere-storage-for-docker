@@ -81,15 +81,16 @@ func (d vmdkDriver) List(r volume.Request) volume.Response {
 //       SAME (and more) applies to unmount
 func (d vmdkDriver) mountVolume(r volume.Request, path string) error {
 	// First of all, have ESX attach the disk
-	if err := d.ops.Attach(r.Name, r.Options); err != nil {
+	dev, err := d.ops.Attach(r.Name, r.Options)
+	if err != nil {
 		return err
 	}
 
 	mountpoint := filepath.Join(mountRoot, r.Name)
 	if d.mockEsx {
-		return fs.Mount(mountpoint, r.Name, "ext4")
+		return fs.Mount(mountpoint, nil, "ext4")
 	}
-	return fs.Mount(mountpoint, r.Name, "ext2")
+	return fs.Mount(mountpoint, dev, "ext2")
 }
 
 // Unmounts the volume and then requests detach

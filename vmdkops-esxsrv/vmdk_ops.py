@@ -274,6 +274,7 @@ def findDeviceByPath(vmdkPath, vm):
 
 # attaches *existing* disk to a vm on a PVSCI controller
 # (we need PVSCSI to avoid SCSI rescans in the guest)
+# return error or unit:bus numbers of newly attached disk
 def disk_attach(vmdkPath, vm):
   # NOTE:
   # vSphere is very picky about unitNumbers and controllers of virtual
@@ -302,6 +303,7 @@ def disk_attach(vmdkPath, vm):
   if len(pvsci) > 0:
     diskSlot = None  # need to find out
     controllerKey = pvsci[0].key
+    busNumber = pvsci[0].busNumber
   else:
     logging.warning("Warning: PVSCI adapter is missing - trying to add one...")
     diskSlot = 0  # starting on a fresh controller
@@ -318,6 +320,7 @@ def disk_attach(vmdkPath, vm):
     key = avail.pop()           # bus slot
     controllerKey = key + 1000  # controller key (1000 is for SCSI controllers)
     diskSlot = 0
+    busNumber = key
     controller_spec = vim.VirtualDeviceConfigSpec(
       operation = 'add',
       device = vim.ParaVirtualSCSIController(
@@ -388,9 +391,9 @@ def disk_attach(vmdkPath, vm):
   except vim.fault.VimFault as ex:
       return err(ex.msg)
   else:
-    logging.info("disk attached " + vmdkPath)
+    logging.info("disk attached %s unit - %d, bus - %d" % (vmdkPath, diskSlot, busNumber))
 
-  return None
+  return {'Unit':str(diskSlot), 'Bus':str(busNumber)}
 
 
 def err(string):
