@@ -16,7 +16,6 @@ build:
       - go get github.com/golang/lint/golint
       - make build
       - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - make testasroot
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
 
 matrix:

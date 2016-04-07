@@ -58,7 +58,7 @@ dump_log() {
   dump_log_vm $VM2
 }
 
-if make testremote TEST_VOL_NAME=vol-build$BUILD_NUMBER
+if make testasroot testremote TEST_VOL_NAME=vol-build$BUILD_NUMBER
 then
   echo "*************************************************************************"
   echo "tests done"
