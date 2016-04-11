@@ -30,7 +30,6 @@ type vmdkDriver struct {
 	ops     vmdkops.VmdkOps
 }
 
-
 // creates vmdkDriver which may talk to real ESX (mockEsx=False) or
 // real ESX.
 func newVmdkDriver(mockEsx bool) vmdkDriver {
@@ -121,8 +120,8 @@ func (d vmdkDriver) Remove(r volume.Request) volume.Response {
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
 	if refCounts.getCount(r.Name) != 0 {
-		msg := fmt.Sprintf("Remove faiure - volume is still mounted. " +
-		    " volume=%s, refcount=%d", r.Name, refCounts.getCount(r.Name))
+		msg := fmt.Sprintf("Remove faiure - volume is still mounted. "+
+			" volume=%s, refcount=%d", r.Name, refCounts.getCount(r.Name))
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
@@ -197,22 +196,22 @@ func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
 	// if the volume is still used by other containers, just return OK
-	refcnt := refCounts.decr(r.Name)
+	refcnt, err := refCounts.decr(r.Name)
+	if err != nil {
+		// something went wrong - yell, but still try to unmount
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Error("Refcount error - still trying to unmount...")
+	}
 	if refcnt >= 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Info("Still in use, skipping unmount request. ")
 		return volume.Response{Err: ""}
-	}
-	// something went wrong - yell, but still try to unmount
-	if refcnt == -1 {
-		log.WithFields(
-			log.Fields{"name": r.Name, "refcount": refcnt},
-		).Error("Refcount error - still trying to unmount...")
-	}
+	} 
 
 	// and if nobody needs it, unmount and detach
-	err := d.unmountVolume(r)
+	err = d.unmountVolume(r)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
