@@ -490,6 +490,8 @@ def disk_detach(vmdkPath, vm):
             # key resulting in an exception here when removing
             # a non-existent key.
             del volMeta['attachedVMUuid']
+        except KeyError as e:
+            logging.exception(e, extra=volMeta)
         finally:
             kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
