@@ -1,18 +1,37 @@
 //
 // Refcount discovery from local docker.
 //
+// Docker issues mount/unmount to a volume plugin each time container
+// using this volume is started or stopped(or killed). So if multiple  containers
+// use the same volume, it is the responsibility of the plugin to track it.
+// This file implements this tracking via refcounting volume usage, and recovering
+// refcounts and mount states on plugin or docker restart
+//
+// When  Docker is killed (-9). Docker may forget
+// all about volume usage and consider clean slate. This could lead to plugin
+// locking volumes which Docker does not need so we need to recover correct
+// refcounts.
+//
+// Note: when Docker Is properly restarted ('service docker restart'), it shuts
+// down accurately  and sends unmounts so refcounts stays in sync. In this case
+// there is no need to do anything special in the plugin. Thus all this code is
+// mainly for crash recovery and cleanup.
+//
+// Refcounts are tracked in Mount/Unmount. The code in this file provides
+// generic reccnt API and also supports refcount discovery on restarts:
 // - Connects to Docker over unix socket, enumerates Volume Mounts and builds
 //   "volume mounts refcount" map as Docker sees it.
-// - Also gets actual mounts from /proc/mounts, and makes sure the refcounts and
+// - Gets actual mounts from /proc/mounts, and makes sure the refcounts and
 //   actual mounts are in sync.
-// - The process is initiated on plugin start.  If it fails (e.g. docker is not
+//
+// The process is initiated on plugin start.  If it fails (e.g. docker is not
 //    running), we sleep/retry until Docker answers.
 //
 // After refcount discovery, results are compared to /proc/mounts content.
 //
 // We rely on all plugin mounts being in /mnt/vmdk/<volume_name>, and will
 // unount stuff there at will - this place SHOULD NOT be used for manual mounts.
-//          TODO: reject file names > 255 chars on ‘create’
+//          TODO: on create, reject file names > 255 chars on ‘create’
 //
 // If a volume IS mounted, but should not be (refcount = 0)
 //   - we assume there was a restart of either Docker or VM or even ESX, and
@@ -25,18 +44,9 @@
 //   - we just log an error and keep going. Recovery in this case is manual
 //
 // We assume that mounted (in Docker VM) and attached (to Docker VM) is the
-// same. If something is attached to VM but not mounted, we leave it to manual
-// recovery.
-//
-// Reason: if  Docker is killed (-9) , or VM (or ESX) crashes. Docker may forget
-// all about volume mounts and consider clean slate. This could lead to plugin
-// locking volumes which Docker does not need so we need to recover correct
-// refcounts
-//
-// Note: when Docker Is properly restarted ('service docker restart), it shuts
-// down accurately  and sends unmounts so refcounts stays in sync. In this case
-// there is no need to do anythign specia in the plugin. Thus all this code is
-// for crash recovery and cleanup.
+// same. If something is attached to VM but not mounted (so from refcnt and
+// mountspoint of view the volume is not used, but the VMDK is still attached
+// to the VM) - we leave it to manual recovery.
 //
 
 package main
@@ -64,25 +74,32 @@ const (
 
 // info about individual volume ref counts and mount
 type refCount struct {
-	count   int    // refcount
-	mounted bool   // is the volume mounted (from OS point of view)
-	dev     string // mounted from device <dev/> (or Nil)
+	// refcount for the given volume.
+	count uint
+
+	// Is the volume mounted from OS point of view
+	// (i.e. entry in /proc/mounts exists)
+	mounted bool
+
+	// Volume is mounted from this device. Used on recovery only , for info
+	// purposes. Value is empty during normal operation
+	dev string
 }
 
 // volume name -> {count, mounted, device}
 type refCountsMap map[string]*refCount
 
-
 var (
-    // vmdk or local
-	driverName             string
-	
+	// vmdk or local. We use "vmdk" only in production, but need "local" to
+	// allow no-ESX test. sanity_test.go '-d' flag allows to switch it to local
+	driverName string
+
 	// header for Docker Remote API
-	defaultHeaders         map[string]string
-	
+	defaultHeaders map[string]string
+
 	// wait time for reconnect
 	reconnectSleepInterval time.Duration
-	
+
 	// volume name -> {refcount, mounted, device} for volumes with refcount > 0
 	refCounts refCountsMap
 )
@@ -96,7 +113,7 @@ func init() {
 }
 
 // Init volume usage refcounts from Docker. This will poll until replied to.
-func refCountsInit()  {
+func refCountsInit() {
 
 	refCounts = make(refCountsMap)
 	err := refCounts.connectAndDiscover()
@@ -106,8 +123,8 @@ func refCountsInit()  {
 	log.Infof("Discovered %d volumes in use.", len(refCounts))
 	if log.GetLevel() == log.DebugLevel {
 		for name, cnt := range refCounts {
-			log.Debugf("Volume name=%s count=%d mounted=%d",
-				name, cnt.count, cnt.mounted)
+			log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
+				name, cnt.count, cnt.mounted, cnt.dev)
 		}
 	}
 }
@@ -115,7 +132,7 @@ func refCountsInit()  {
 // Returns ref count for the volume.
 // If volume is not referred (not in the map), return 0
 // NOTE: this assumes the caller holds the lock if we run concurrently
-func (r refCountsMap) getCount(vol string) int {
+func (r refCountsMap) getCount(vol string) uint {
 	rc := r[vol]
 	if rc == nil {
 		return 0
@@ -124,35 +141,38 @@ func (r refCountsMap) getCount(vol string) int {
 }
 
 // incr refCount for the volume vol. Creates new entry if needed.
-func (r refCountsMap) incr(vol string) int {
-	vc := r[vol]
-	if vc == nil {
-		vc = &refCount{count: 0, mounted: false}
-		r[vol] = vc
+func (r refCountsMap) incr(vol string) uint {
+	rc := r[vol]
+	if rc == nil {
+		rc = &refCount{}
+		r[vol] = rc
 	}
-	vc.count++
-	return vc.count
+	rc.count++
+	return rc.count
 }
 
 // decr recfcount for the volume vol and returns the new count
 // returns -1  for error (and resets count to 0)
 // also deletes the node from the map if refcount drops to 0
-func (r refCountsMap) decr(vol string) int {
-	vc := r[vol]
-	if vc == nil {
-		log.Errorf("decr: refcount is missing, setting to 0. name=%s", vol)
-		return -1
-	} else if vc.count <= 0 {
-		log.Errorf("decr: Corrupted refcount, setting to 0. name=%s count=%d",
-			vol, vc.count)
-		delete(r, vol)
-		return -1
+func (r refCountsMap) decr(vol string) (uint, error) {
+	rc := r[vol]
+	if rc == nil {
+		return 0, fmt.Errorf("decr: refcount is already 0. name=%s", vol)
 	}
-	vc.count--
-	if vc.count == 0 {
+
+	if rc.count == 0 {
+		// we should NEVER get here. Even if Docker sends Unmount before Mount,
+		// it should be caught in precious check. So delete the entry (in case
+		// someone upstairs does 'recover', and panic.
 		delete(r, vol)
+		log.Panicf("decr: refcnt corruption (rc.count=0), name=%s", vol)
 	}
-	return vc.count
+
+	rc.count--
+	if rc.count == 0 {
+		defer delete(r, vol)
+	}
+	return rc.count, nil
 }
 
 // connects (and polls if needed) and then calls discover()
@@ -224,11 +244,11 @@ func (r refCountsMap) discoverAndSync(c *client.Client) error {
 // syncronize mount info with refcounts - and unmounts if needed
 func (r refCountsMap) syncMountsWithRefCounters() {
 	for vol, cnt := range r {
-		log.Debugf("Volume %s %+v", vol, cnt)
+		log.Debugf("Volume %s %#v", vol, cnt)
 		if cnt.mounted == true {
 			if cnt.count == 0 {
 				// Volume mounted but not used - unmount !
-				log.Infof("Volume %s (%s) is not used - unmounting", vol, cnt.dev)
+				log.Infof("Volume %s (%s) is not used - unmounting (TBD)", vol, cnt.dev)
 				// TBD **** ACTUAL UNMOUNT & DETACH ***
 			}
 			// else: volume mounted and used - all good, nothing to do
@@ -236,9 +256,9 @@ func (r refCountsMap) syncMountsWithRefCounters() {
 		} else {
 			// volume unmounted. We should not even get here since unmounted
 			// volumes should have no record in refcount maps (refcnt=0)
-			log.Errorf("Volume %s is not mounted but refcnt=%d. %+v",
+			log.Errorf("Volume %s is not mounted but refcnt=%d. %#v",
 				vol, cnt.count, cnt)
-				// TBD **** CALLBACK UP , PROBBALY TO EXIT ***
+			// TBD **** CALLBACK UP , PROBALY TO EXIT ***
 		}
 	}
 }
@@ -263,11 +283,11 @@ func (r refCountsMap) getMountInfo() error {
 		volName := filepath.Base(field[1])
 		refInfo := r[volName]
 		if refInfo == nil {
-		    refInfo = &refCount{count:0}
+			refInfo = &refCount{count: 0}
 		}
 		refInfo.mounted = true
 		refInfo.dev = field[0]
-		log.Debugf("  found a mounted volume %s (%+v)", volName, refInfo)
+		log.Debugf("  found a mounted volume %s (%#v)", volName, refInfo)
 	}
 
 	return nil
