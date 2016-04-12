@@ -54,8 +54,8 @@ files=`$DOCKER run -v $vname:/v busybox sh -c 'ls -1 /v/file*'`
 c=`echo $files | wc -w`
 echo "Found $c files. Expected $count"
 if [ $c -ne $count ] ; then
-   echo FAILED CONTENT TEST - cannot file enough files in /$vname/file\*
-   echo files: $files
+   echo FAILED CONTENT TEST - not enough files in /$vname/file\*
+   echo files: \"$files\"
    exit 1
 fi
 
