@@ -1,6 +1,6 @@
 [![Build Status](https://ci.vmware.run/api/badges/vmware/docker-vmdk-plugin/status.svg)](https://ci.vmware.run/vmware/docker-vmdk-plugin)
 
-# Quicksteps to get going
+# Quick steps to get going
 
 In order to get going, you need to build the plugin, configure test environment
 and deploy the plugin to this environment. 
