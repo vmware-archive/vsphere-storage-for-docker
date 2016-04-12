@@ -104,13 +104,13 @@ if __name__ == '__main__':
     vmdk_ops.LogSetup("/var/log/vmware/docker-vmdk-plugin-pytest.log")
     kv.init()
 
-    # Callculate the path
+    # Calculate the path
     paths = glob.glob("/vmfs/volumes/[a-z]*/dockvols")
     if paths:
       # WARNING: for many datastores with dockvols, this picks up the first
       path=paths[0]
     else:
-       # create dir in a datastore (just pick fists datastore if needed)
+       # create dir in a datastore (just pick first datastore if needed)
       path=glob.glob("/vmfs/volumes/[a-z]*")[0] + "/dockvols"
       logging.debug("Directory does not exist - creating %s", path)
       os.makedirs(path)
