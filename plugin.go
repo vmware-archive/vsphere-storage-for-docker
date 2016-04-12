@@ -30,11 +30,6 @@ type vmdkDriver struct {
 	ops     vmdkops.VmdkOps
 }
 
-var (
-	// volume name -> refcount , for volumes with refcount > 0
-	refcounts = make(map[string]int)
-)
-
 // creates vmdkDriver which may talk to real ESX (mockEsx=False) or
 // real ESX.
 func newVmdkDriver(mockEsx bool) vmdkDriver {
@@ -100,7 +95,7 @@ func (d vmdkDriver) unmountVolume(r volume.Request) error {
 	if err != nil {
 		log.WithFields(
 			log.Fields{"mountpoint": mountpoint, "error": err},
-		).Error("Failed to unmount volume. Still trying to detach. ")
+		).Error("Failed to unmount volume. Now trying to detach... ")
 		// Do not return error. Continue with detach.
 	}
 	return d.ops.Detach(r.Name, r.Options)
@@ -124,9 +119,9 @@ func (d vmdkDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
-	if refcounts[r.Name] != 0 {
-		msg := fmt.Sprintf("Remove faiure - volume is still mounted. " +
-		    " volume=%s, refcount=%d", r.Name, refcounts[r.Name])
+	if refCounts.getCount(r.Name) != 0 {
+		msg := fmt.Sprintf("Remove faiure - volume is still mounted. "+
+			" volume=%s, refcount=%d", r.Name, refCounts.getCount(r.Name))
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
@@ -165,8 +160,7 @@ func (d vmdkDriver) Mount(r volume.Request) volume.Response {
 	// since the volume will have been never mounted.
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
 
-	refcounts[r.Name]++
-	refcnt := refcounts[r.Name] // save map traversal
+	refcnt := refCounts.incr(r.Name) // save map traversal
 	if refcnt > 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
@@ -202,25 +196,22 @@ func (d vmdkDriver) Unmount(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
 	// if the volume is still used by other containers, just return OK
-	refcounts[r.Name]--
-	refcnt := refcounts[r.Name] // save map traversal
+	refcnt, err := refCounts.decr(r.Name)
+	if err != nil {
+		// something went wrong - yell, but still try to unmount
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Error("Refcount error - still trying to unmount...")
+	}
 	if refcnt >= 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Info("Still in use, skipping unmount request. ")
 		return volume.Response{Err: ""}
-	}
-	// More "unmounts" than "mounts" receied. Yell, reset to 0 and keep going
-	if refcnt != 0 {
-		log.WithFields(
-			log.Fields{"name": r.Name, "refcount": refcnt},
-		).Error("WRONG REF COUNT in mount (should be 0). Resetting to 0. ")
-	}
-	delete(refcounts, r.Name)
+	} 
 
 	// and if nobody needs it, unmount and detach
-
-	err := d.unmountVolume(r)
+	err = d.unmountVolume(r)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},

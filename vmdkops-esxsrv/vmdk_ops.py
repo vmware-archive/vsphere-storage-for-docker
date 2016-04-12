@@ -430,6 +430,8 @@ def disk_detach(vmdkPath, vm):
         volMeta['status'] = 'detached'
         try:
             del volMeta['attachedVMUuid']
+        except KeyError as e:
+            logging.exception(e, extra=volMeta)
         finally:
             kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
