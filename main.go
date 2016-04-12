@@ -77,7 +77,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 func main() {
 	// connect to this socket
 	port := flag.Int("port", 15000, "Default port for vmci")
-	mockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
+	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
 	logLevel := flag.String("log_level", "debug", "Logging Level")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 	flag.Parse()
@@ -87,7 +87,7 @@ func main() {
 	log.WithFields(log.Fields{
 		"version":   version,
 		"port":      *port,
-		"mock_esx":  *mockEsx,
+		"mock_esx":  *useMockEsx,
 		"log_level": *logLevel,
 		"config":    *configFile,
 	}).Info("Docker VMDK plugin started ")
@@ -101,10 +101,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	refCountsInit()
-
-	// register Docker plugin socket (.sock) and listen on it
-	driver := newVmdkDriver(*mockEsx)
+	driver := newVmdkDriver(*useMockEsx)
 	handler := volume.NewHandler(driver)
 
 	log.WithFields(log.Fields{
