@@ -117,12 +117,33 @@ def createVMDK(vmdkPath, volName, opts=""):
 
         return formatVmdk(vmdkPath, volName)
 
+# Return a backing file path for given vmdk path or none
+# if a backing can't be found.
+def getVMDKBacking(vmdkPath):
+   if os.path.isfile(vmdkPath.replace(".vmdk", "-flat.vmdk"):
+      return vmdkPath.replace(".vmdk", "-flat.vmdk")
+
+   exp = re.compile("RW .* VMFS \"vsan:\/\/(.*)\"")
+   with open(vmdkPath) as f:
+      for line in f and line != '':
+         uuid = exp.search(line)
+         if uuid
+            logging.debug("Got volume UUID %s" % uuid.group(1)) 
+            objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u (0)".format(uuid.group(1))
+            rc, out = RunCommand(objToolCmd) 
+            if rc == 0:
+               return "/vmfs/devices/vsan/(0)".format(uuid.group(1))
+   return None
+
 def formatVmdk(vmdkPath, volName):
-        # now format it as ext4:
-        # WARNING  this won't work on VVOL/VSAN
-        # TODO: need to get backing
-        # block device differently (in vsan via objtool create)
-        backing = vmdkPath.replace(".vmdk", "-flat.vmdk")
+        # Get backing for given vmdk path.
+        backing = getVMDKBacking(vmdkPath)
+
+        if !backing:
+           logging.warning ("Failed to get backing for %s" % vmdkPath)
+           return err("Failed to format %s." % vmdkPath)
+
+        # Format it as ext4.
         cmd = "{0}/mkfs.ext4   -F -L {1} -q {2}".format(BinLoc, volName, backing)
         rc, out = RunCommand(cmd)
 
@@ -179,16 +200,38 @@ def detachVMDK(vmdkPath, vmName):
 	return disk_detach(vmdkPath, vm)
 
 
-# check existence (and creates if needed) the path
-# NOTE / TBD: for vsan we may need to use osfs_mkdir instead of regular os.mkdir
+# Check existence (and creates if needed) the path
 def getVolPath(vmConfigPath):
-    path = os.path.join("/".join(vmConfigPath.split("/")[0:4]),  DockVolsDir)
-    try:
-        os.mkdir(path)
-        logging.info(path +" created")
-    except OSError:
-		pass
-    return path
+    cnt = len(vmConfigPath.split("/"))
+
+    # Skip the VM name and the VM folder, the remaining is the parent path name for
+    # the folder we want to create.
+    path = os.path.join("/".join(vmConfigPath.split("/")[0:(cnt - 2)]),  DockVolsDir)
+
+    if os.path.exists(path):
+       # If the path exists then return it as is.
+       logging.info("Found %s, returning" % path)
+       return path
+
+    # The osfs tools re usable for both vvol and vsan datastores
+    mkdirOk = True
+    if 'vsan' in path or 'vvol' in path:
+       # Its a VSAN/VVOl datastore use osfs-mkdir to create the folder.
+       mkdirCmd = '/usr/lib/vmware/osfs/bin/osfs-mkdir -n (0)'.format(path)
+       rc, out = RunCommand(mkdirCmd)
+       if rc != 0:
+          mkdirOk = False
+       else:
+          logging.info(path +" created")
+    else:
+       try:
+          os.mkdir(path)
+          logging.info(path +" created")
+       except OSError:
+          mkdirOk = False
+          pass
+
+    return path if mkdirOk else None
 
 def getVmdkName(path, volName):
     # form full name as <path-to-volumes>/<volname>.vmdk
@@ -196,8 +239,12 @@ def getVmdkName(path, volName):
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
-	# get /vmfs/volumes/<volid> path on ESX:
-    path     = getVolPath(configPath)
+    # get /vmfs/volumes/<volid> path on ESX:
+    path = getVolPath(configPath)
+
+    if !path:
+       return err("Failed initializing volume path")
+
     vmdkPath = getVmdkName(path, volName)
 
 
