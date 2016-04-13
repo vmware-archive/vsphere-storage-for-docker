@@ -247,7 +247,7 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 	        "dev": cnt.dev,
 	    }
 
-		log.WithFields(f).Debug("Record")
+		log.WithFields(f).Debug("Refcnt record: ")
 		if cnt.mounted == true {
 			if cnt.count == 0 {
 				// Volume mounted but not used - UNMOUNT and DETACH !
