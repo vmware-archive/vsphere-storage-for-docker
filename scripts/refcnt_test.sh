@@ -46,7 +46,7 @@ echo "Creating a volume and $count containers using it"
 $DOCKER volume create --driver=vmdk --name=$vname
 for i in `seq 1 $count`
 do
-  $DOCKER run -d -v $vname:/v busybox sh -c "touch /v/file$i; sleep 60"
+  $DOCKER run -d -v $vname:/v busybox sh -c "touch /v/file$i; sync ; sleep 60"
 done
 
 echo "Checking volume content"
@@ -61,33 +61,58 @@ fi
 
 echo "Checking the last refcount and mount record"
 last_line=`tail -1 /var/log/docker-vmdk-plugin.log`
-echo $last_line | $GREP -q refcount=$count
-status=$?
-if $? -eq 0 ; then
-   echo FAILED REFCOUNT TEST, status $status
+echo $last_line | $GREP -q refcount=$count ; if [ $? -ne 0 ] ; then
+   echo FAILED REFCOUNT TEST - pattern  \"refcount=$count\" not found
    echo Last line in the log: \'$last_line\'
-   echo missing pattern "refcount=$count"
-   return 2
+   echo Expected pattern \"refcount=$count\"
+   exit 1
 fi
 
-$GREP -q $mount /proc/mounts || (echo "FAILED MOUNT TEST 1"; exit 3)
+$GREP -q $mount /proc/mounts ; if [ $? -ne 0 ] ; then
+   echo "FAILED MOUNT TEST 1"
+   echo \"$mount\" is not found in /proc/mounts
+	exit 1
+fi
+
 
 # should fail 'volume rm', so checking it
 echo "Checking 'docker volume rm'"
-$DOCKER volume rm $vname 2> /dev/null && (echo "FAILED DOCKER RM TEST 1"; exit 4)
+$DOCKER volume rm $vname 2> /dev/null ; if [ $? -eq 0 ] ; then
+   echo FAILED DOCKER RM TEST
+   echo  \"docker volume rm $vname\" was expected to fail but succeeded
+   exit 1
+fi
 
-# <TBD>
-# if we restart the plugin, all the counts should be as is
-# kill -9 `pidof docker-vmdk-plugin'
-# /usr/local/bin/docker-vmdk-plugin &
-# grep last 5 lines of the log for 'volume=$vname refcnt=$count"
-# </tbd>
 
+echo "Checking recovery for VMDK plugin kill -9"
+kill -9 `pidof docker-vmdk-plugin`
+/usr/local/bin/docker-vmdk-plugin 2>&1 >/dev/null &
+sleep 1; sync  # give log the time to flush
+line=`tail -4 /var/log/docker-vmdk-plugin.log | $GREP 'Volume name='`
+expected="name=$vname count=$count mounted=true"
+
+echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then
+   echo PLUGIN RESTART TEST FAILED. Did not find proper recovery record
+   echo Found:  \"$line\"
+   echo Expected pattern: \"$expected\"
+   exit 1
+fi
+
+# kill containers but keep the volume around
 cleanup
 
 echo "Checking that the volume is unmounted and can be removed"
-$DOCKER volume rm $vname || (echo "FAILED DOCKER RM TEST 2"; exit 5)
-$GREP -q $mount /proc/mounts && (echo "FAILED MOUNT TEST 2"; exit 6)
+$DOCKER volume rm $vname ; if [ $? -ne 0 ] ; then
+   echo "FAILED DOCKER RM TEST 2"
+   echo \"$DOCKER volume rm $vname\" failed but expected to succeed
+   exit 1
+fi
+
+$GREP -q $mount /proc/mounts ; if [ $? -eq 0 ] ; then
+   echo "FAILED MOUNT TEST "
+   echo \"$mount\" found in /proc/mount for an unmounted volume
+   exit 1
+fi
 
 echo "TEST PASSED."
 exit 0

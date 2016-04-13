@@ -53,7 +53,7 @@ func Mount(mountpoint string, devSpec []byte, fs string) error {
 	log.WithFields(log.Fields{
 		"device":     device,
 		"mountpoint": mountpoint,
-	}).Debug("Calling syscall.Mount()")
+	}).Debug("Calling syscall.Mount() ")
 
 	err = syscall.Mount(device, mountpoint, fs, 0, "")
 	if err != nil {
