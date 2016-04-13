@@ -148,6 +148,7 @@ function cleanvm {
    for ip in $ip_list
    do
         echo "Cleaning up on VM $ip..."
+        # First make sure the helper scripts are on the target box
         target=root@$ip
         $SSH $target mkdir -p $tmp_loc
         $SCP $script_loc/$stopsvc $target:$tmp_loc
@@ -164,7 +165,7 @@ function cleanvm {
         $SSH $target $tmp_loc/$stopsvc $name
         $SSH $target "rm -rf $tmp_loc"
    
-        echo "   Removing binaries and restarting docker..."
+        echo "   Removing binaries..."
         $SSH $target rm -f $remote_binaries
    done
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
-#
+
 # A simple test to validate refcounts.
-#
+
 # Creates $count running containers using a VMDK volume, checks refcount
 # by grepping the log (assumes DEBUG log level), touches files within and
 # checks the files are all there, Then removes the containers and the volume
@@ -11,10 +11,6 @@
 #
 # It should eventually be replaced with a proper test in ../refcnt_test.go.
 # For now (TP) we still need basic validation
-#
-# It also should do crash validation :
-# - restart plugin and check all in place
-# - kill -9 docker ,then  restart docker and check all is clean
 #
 
 log=/var/log/docker-vmdk-plugin.log
