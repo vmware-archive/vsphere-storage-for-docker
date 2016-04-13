@@ -24,7 +24,7 @@ set -e
 # the actual command is executed.  If 'DEBUG=echo' is typed before 'make', 
 # then instead of command (e.g. scp) "echo scp" will be executed so it will 
 # print out the commands. Super convenient for debugging.
-SCP="$DEBUG scp -q -o StrictHostKeyChecking=no"
+SCP="$DEBUG scp -r -q -o StrictHostKeyChecking=no"
 SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 
 # consts
@@ -154,8 +154,6 @@ function cleanvm {
         $SCP $script_loc/$stopsvc $target:$tmp_loc
 
         echo "   Asking docker to remove volumes ($volumes)..."
-        # make sure docker engine is not hanging due to old/dead plugins
-        $SSH $target service docker restart
         # and now clean up
         for vol in $volumes
         do

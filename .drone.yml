@@ -1,10 +1,31 @@
 build:
-  ci:
-    privileged: true
+  build:
     image: kerneltime/vibauthor-and-go:0.5
+    commands:
+      - go get github.com/golang/lint/golint
+      - make build
+
+  fpm:
+    privileged: true
+    image: docker
     volumes:
       # Needed for creating docker images
       - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - docker build -t vmware/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
+    when:
+      success: true
+
+  package:
+    image: vmware/fpm
+    commands:
+      - make deb rpm
+    when:
+      success: true
+
+  test:
+    image: kerneltime/vibauthor-and-go:0.5
+    privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
       - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
@@ -13,10 +34,10 @@ build:
     commands:
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip ubuntu-2`
-      - go get github.com/golang/lint/golint
-      - make build
       - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+    when:
+      success: true
 
 matrix:
   GO_VERSION:
@@ -27,7 +48,7 @@ publish:
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
-    repo: kerneltime/docker-vmdk-plugin
+    repo: vmware/docker-vmdk-plugin
     tag:
       - "latest"
       - $$BRANCH-$$BUILD_NUMBER
