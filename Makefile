@@ -1,13 +1,22 @@
-# Makefile
-#
-
 # Makefile for Docker data volume VMDK plugin
-#
-# Builds client-side (docker engine) volume plug in code, and ESX-side VIB
-#
+
+# Guest Package Version
+# TODO: Move the version to be integrated with tagging releases
+PKG_VERSION=0.1
 
 # Place binaries here
 BIN := ./bin
+
+#
+# Scripts to deploy and control services - used from Makefile and from Drone CI
+#
+SCRIPTS     := ./scripts
+CHECK	    := $(SCRIPTS)/check.sh
+BUILD       := $(SCRIPTS)/build.sh
+SYSTEMD_UNIT := $(SCRIPTS)/install/docker-vmdk-plugin.service
+PACKAGE      := package
+SYSTEMD_LIB  := $(PACKAGE)/lib/systemd/system/
+INSTALL_BIN  := $(PACKAGE)/usr/bin
 
 # esx service for docker volume ops
 ESX_SRC     := vmdkops-esxsrv
@@ -19,6 +28,7 @@ PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 # all binaries for VMs - plugin and tests
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
 
+# TODO: VERSION should be based on tagging
 VIBFILE := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
@@ -26,6 +36,7 @@ VIB_BIN := $(BIN)/$(VIBFILE)
 PLUGIN := github.com/vmware/$(PLUGNAME)
 
 GO := GO15VENDOREXPERIMENT=1 go
+FPM := fpm
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
 VMDKOPS_MODULE := vmdkops
@@ -34,13 +45,11 @@ VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
 # All sources. We rebuild if anything changes here
 SRC = plugin.go main.go log_formatter.go refcnt.go fs/fs.go config/config.go
 
-#  TargetprintNQuit
-
 # The default build is using a prebuilt docker image that has all dependencies.
 .PHONY: dockerbuild build-all
 dockerbuild:
-	@$(SCRIPTS)/check.sh dockerbuild
-	$(SCRIPTS)/build.sh build
+	@$(CHECK) dockerbuild
+	$(BUILD) build
 
 build-all: dockerbuild
 
@@ -48,6 +57,54 @@ build-all: dockerbuild
 .PHONY: build
 build: prereqs code_verify $(VM_BINS)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
+
+# Build the linux distro packages
+
+.PHONY: fpm-docker
+fpm-docker:
+	docker build -t vmware/fpm -f dockerfiles/Dockerfile.fpm .
+
+.PHONY: pkg
+pkg: dockerdeb dockerrpm
+
+.PHONY: dockerdeb
+dockerdeb: build-all fpm-docker
+	$(BUILD) deb
+
+.PHONY: dockerrpm
+dockerrpm: build-all fpm-docker
+	$(BUILD) rpm
+
+DESCRIPTION := "VMDK Volume Plugin for Docker."
+FPM_COMMON := $(FPM) -p $(BIN) -C $(PACKAGE) -s dir -n $(PLUGNAME) -v $(PKG_VERSION) -d 'docker-engine > 1.9' --provides docker-vmdk-plugin -m cna-storage@vmware.com --url "https://github.com/vmware/docker-vmdk-plugin" --after-install $(SCRIPTS)/install/systemd-after-install.sh  --before-remove $(SCRIPTS)/install/systemd-before-remove.sh --after-remove $(SCRIPTS)/install/systemd-after-remove.sh
+
+# FPM should be installed for target deb
+.PHONY: debbuild
+debbuild: pkg-prep
+	@$(CHECK) pkg
+	$(FPM_COMMON) -t deb .
+
+.PHONY: rpm
+rpmbuild: pkg-prep
+	@$(CHECK) pkg
+	$(FPM_COMMON) -t rpm .
+
+.PHONY: pkg-prep
+pkg-prep:
+	@mkdir -p $(SYSTEMD_LIB)
+	@cp $(SYSTEMD_UNIT) $(SYSTEMD_LIB)
+	@mkdir -p $(INSTALL_BIN)
+	@cp $(PLUGIN_BIN) $(INSTALL_BIN)
+	@chmod a+w -R $(PACKAGE)
+
+.PHONY: pkg-post
+	@rm -rf $(PACKAGE)
+	@rm -rf DEBIAN
+
+.PHONY: deb
+deb: debbuild pkg-post
+.PHONY: rpm
+rpm: rpmbuild pkg-post
 
 .PHONY: prereqs
 prereqs:
@@ -65,7 +122,8 @@ $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
 
 .PHONY: clean
 clean:
-	rm -f $(BIN)/* .build_*
+	rm -f $(BIN)/*
+	rm -rf $(PACKAGE)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 
@@ -124,12 +182,7 @@ SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
 # bin locations on target guest
 GLOC := /usr/local/bin
 
-#
-# Scripts to deploy and control services - used from Makefile and from Drone CI
-#
 # script sources live here. All scripts are copied to test VM during deployment
-SCRIPTS     := ./scripts
-
 # scripts started locally to deploy to and clean up test machines
 DEPLOY_VM_SH  := $(SCRIPTS)/deploy-tools.sh deployvm
 DEPLOY_ESX_SH := $(SCRIPTS)/deploy-tools.sh deployesx
@@ -148,7 +201,7 @@ VMS= $(VM1) $(VM2)
 
 # deploys to "GLOC" on vm1 and vm2
 deploy-vm:
-	$(DEPLOY_VM_SH) "$(VMS)" "$(VM_BINS)" $(GLOC) 
+	$(DEPLOY_VM_SH) "$(VMS)" "$(VM_BINS)" $(GLOC)
 
 deploy-all: deploy-esx deploy-vm
 deploy: deploy-all
@@ -201,7 +254,7 @@ test-esx:
 	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vmdk_ops_test.py"
 	$(SSH) root@$(ESX) rm -rf /tmp/$(ESX_SRC)
 
-testremote: test-esx test-vm 
+testremote: test-esx test-vm
 test-all:  test testremote
 
 .PHONY:clean-vm clean-esx clean-all
@@ -215,4 +268,3 @@ clean-all: clean clean-vm clean-esx
 
 # full circle
 all: clean-all build-all deploy-all test-all
-

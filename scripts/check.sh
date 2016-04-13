@@ -32,6 +32,16 @@ then
  exit 0
 fi
 
+if [ "$1" == "pkg" ]
+then
+ command -v fpm > /dev/null
+ if [ $? -ne 0 ]
+ then
+   printNQuit "FPM needs to be installed"
+ fi
+ exit 0
+fi
+
 # Check GO version and config
 #-----------------------------
 
