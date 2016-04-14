@@ -1,0 +1,12 @@
+[Unit]
+Description=docker-vmdk-service
+Before=docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/usr/bin/docker-vmdk-plugin
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
