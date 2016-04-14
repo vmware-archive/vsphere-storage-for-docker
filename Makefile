@@ -1,19 +1,31 @@
 # Makefile for Docker data volume VMDK plugin
 
 # Guest Package Version
-# TODO: Move the version to be integrated with tagging releases
-PKG_VERSION=0.1
+PKG_VERSION := 0.1
+EPOCH := 0
 
 # Place binaries here
 BIN := ./bin
 
+# Location for scripts
+SCRIPTS     := ./scripts
+
+# Packaging variables
+PLUGNAME  := docker-vmdk-plugin
+MAINTAINERS := cna-storage@vmware.com
+REPO_URL    := https://github.com/vmware/$(PLUGNAME)
+MIN_DOCKER_VERSION :=1.9
+DOCKER_PACKAGE := docker-engine
+AFTER_INSTALL  := $(SCRIPTS)/install/systemd-after-install.sh
+BEFORE_REMOVE  := $(SCRIPTS)/install/systemd-before-remove.sh
+AFTER_REMOVE   := $(SCRIPTS)/install/systemd-after-remove.sh
+
 #
 # Scripts to deploy and control services - used from Makefile and from Drone CI
 #
-SCRIPTS     := ./scripts
 CHECK	    := $(SCRIPTS)/check.sh
 BUILD       := $(SCRIPTS)/build.sh
-SYSTEMD_UNIT := $(SCRIPTS)/install/docker-vmdk-plugin.service
+SYSTEMD_UNIT := $(SCRIPTS)/install/$(PLUGNAME).service
 PACKAGE      := package
 SYSTEMD_LIB  := $(PACKAGE)/lib/systemd/system/
 INSTALL_BIN  := $(PACKAGE)/usr/bin
@@ -22,13 +34,11 @@ INSTALL_BIN  := $(PACKAGE)/usr/bin
 ESX_SRC     := vmdkops-esxsrv
 
 #  binaries location
-PLUGNAME  := docker-vmdk-plugin
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 
 # all binaries for VMs - plugin and tests
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
 
-# TODO: VERSION should be based on tagging
 VIBFILE := vmware-esx-vmdkops-1.0.0.vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
@@ -58,54 +68,6 @@ build-all: dockerbuild
 build: prereqs code_verify $(VM_BINS)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
-# Build the linux distro packages
-
-.PHONY: fpm-docker
-fpm-docker:
-	docker build -t vmware/fpm -f dockerfiles/Dockerfile.fpm .
-
-.PHONY: pkg
-pkg: dockerdeb dockerrpm
-
-.PHONY: dockerdeb
-dockerdeb: build-all fpm-docker
-	$(BUILD) deb
-
-.PHONY: dockerrpm
-dockerrpm: build-all fpm-docker
-	$(BUILD) rpm
-
-DESCRIPTION := "VMDK Volume Plugin for Docker."
-FPM_COMMON := $(FPM) -p $(BIN) -C $(PACKAGE) -s dir -n $(PLUGNAME) -v $(PKG_VERSION) -d 'docker-engine > 1.9' --provides docker-vmdk-plugin -m cna-storage@vmware.com --url "https://github.com/vmware/docker-vmdk-plugin" --after-install $(SCRIPTS)/install/systemd-after-install.sh  --before-remove $(SCRIPTS)/install/systemd-before-remove.sh --after-remove $(SCRIPTS)/install/systemd-after-remove.sh
-
-# FPM should be installed for target deb
-.PHONY: debbuild
-debbuild: pkg-prep
-	@$(CHECK) pkg
-	$(FPM_COMMON) -t deb .
-
-.PHONY: rpm
-rpmbuild: pkg-prep
-	@$(CHECK) pkg
-	$(FPM_COMMON) -t rpm .
-
-.PHONY: pkg-prep
-pkg-prep:
-	@mkdir -p $(SYSTEMD_LIB)
-	@cp $(SYSTEMD_UNIT) $(SYSTEMD_LIB)
-	@mkdir -p $(INSTALL_BIN)
-	@cp $(PLUGIN_BIN) $(INSTALL_BIN)
-	@chmod a+w -R $(PACKAGE)
-
-.PHONY: pkg-post
-	@rm -rf $(PACKAGE)
-	@rm -rf DEBIAN
-
-.PHONY: deb
-deb: debbuild pkg-post
-.PHONY: rpm
-rpm: rpmbuild pkg-post
-
 .PHONY: prereqs
 prereqs:
 	@$(SCRIPTS)/check.sh
@@ -121,9 +83,8 @@ $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
 	$(GO) test -c -o $@ $(PLUGIN)
 
 .PHONY: clean
-clean:
+clean: pkg-post
 	rm -f $(BIN)/*
-	rm -rf $(PACKAGE)
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 
@@ -152,6 +113,69 @@ vet:
 fmt:
 	@echo "Running $@"
 	gofmt -s -l *.go vmdkops/*.go config/*.go fs/*.go
+
+# Build the linux distro packages
+
+DOCKER = $(DEBUG) docker
+
+.PHONY: fpm-docker
+fpm-docker:
+	$(DOCKER) build -t vmware/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
+
+.PHONY: pkg
+pkg: dockerdeb dockerrpm
+
+.PHONY: package
+package: pkg
+
+.PHONY: dockerdeb
+dockerdeb: build-all fpm-docker
+	$(BUILD) deb
+
+.PHONY: dockerrpm
+dockerrpm: build-all fpm-docker
+	$(BUILD) rpm
+
+DESCRIPTION := "VMDK Volume Plugin for Docker"
+FPM_COMMON := -p $(BIN) \
+	-C $(PACKAGE) \
+	-s dir \
+	-n $(PLUGNAME) \
+	-v $(PKG_VERSION) \
+	-d '$(DOCKER_PACKAGE) > $(MIN_DOCKER_VERSION)' \
+        --provides $(PLUGNAME) \
+        -m $(MAINTAINERS) \
+        --url $(REPO_URL) \
+	--after-install $(AFTER_INSTALL) \
+	--before-remove $(BEFORE_REMOVE) \
+	--after-remove $(AFTER_REMOVE) \
+	--description $(DESCRIPTION) \
+	--architecture x86_64 \
+	--force
+
+# FPM should be installed for target deb
+.PHONY: deb
+deb: pkg-prep
+	@$(CHECK) pkg
+	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -t deb .
+
+.PHONY: rpm
+rpm: pkg-prep
+	@$(CHECK) pkg
+	$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -t rpm .
+
+.PHONY: pkg-prep
+pkg-prep:
+	@mkdir -p $(SYSTEMD_LIB)
+	@cp $(SYSTEMD_UNIT) $(SYSTEMD_LIB)
+	@mkdir -p $(INSTALL_BIN)
+	@cp $(PLUGIN_BIN) $(INSTALL_BIN)
+	@chmod a+w -R $(PACKAGE)
+
+.PHONY: pkg-post
+pkg-post:
+	@rm -rf $(PACKAGE)
+	@rm -rf DEBIAN
 
 #
 # 'make deploy'
