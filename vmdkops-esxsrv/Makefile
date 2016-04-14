@@ -44,6 +44,12 @@ VIBAUTHOR := vibauthor
 BDIR := ../bin
 WDIR := .
 
+VIBAUTHOR_PARAMS := --debug --compose \
+        --vib=$(BDIR)/$(VIB) \
+	--stage-dir $(WDIR) \
+	--offline-depot $(BDIR)/$(OFFLINE_DEPOT) \
+        --force
+
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
 build: $(VIB_BIN)
@@ -55,14 +61,7 @@ $(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
 	@chmod -R a+w $(PAYLOAD)
 	@cp -f $(PY_FILES) $(TOOLS) $(VMDKOPS_BIN)
 	@cp -f $(INIT_SCRIPT) $(VMDKOPS_INITD)
-	$(VIBAUTHOR) \
- 	--debug --compose \
-   	--vib=$(BDIR)/$(VIB) \
-   	--stage-dir $(WDIR) \
-	--offline-depot $(BDIR)/$(OFFLINE_DEPOT) \
-   	--force
-
-
+	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
@@ -74,8 +73,3 @@ clean:
 .PHONY: test
 test: build
 	@echo "? Info: No unit test here yet."
-
-
-
-
-

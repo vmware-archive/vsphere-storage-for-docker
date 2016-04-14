@@ -58,8 +58,7 @@ plugin_container_version=0.5
 plug_container=kerneltime/vibauthor-and-go:$plugin_container_version
 plug_pkg_container=vmware/fpm
 dockerfile=Dockerfile.vibauthor-and-go
-
-set -x
+DOCKER="$DEBUG docker"
 
 # mount point within the container.
 GOPATH=/go
@@ -67,10 +66,8 @@ dir=$GOPATH/src/github.com/vmware/$plugin
 
 if [ "$1" == "rpm" ] || [ "$1" == "deb" ]
 then
-  docker run --privileged --rm -v $PWD:$dir -w $dir $plug_pkg_container make $1
+  $DOCKER run --rm -v $PWD:$dir -w $dir $plug_pkg_container make $1
 else
   docker_socket=/var/run/docker.sock
-  docker run --privileged --rm -v $docker_socket:$docker_socket -v $PWD:$dir -w $dir $plug_container make $1
+  $DOCKER run --privileged --rm -v $docker_socket:$docker_socket -v $PWD:$dir -w $dir $plug_container make $1
 fi
-
-
