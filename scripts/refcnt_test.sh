@@ -46,6 +46,9 @@ do
 done
 
 echo "Checking volume content"
+# give OS schedule time to execute the 'touches' from the above docker runs
+sleep 5
+# now check how many files we see in the still-mounted volume
 files=`$DOCKER run -v $vname:/v busybox sh -c 'ls -1 /v/file*'`
 c=`echo $files | wc -w`
 echo "Found $c files. Expected $count"
