@@ -70,7 +70,7 @@ build: prereqs code_verify $(VM_BINS)
 
 .PHONY: prereqs
 prereqs:
-	@$(SCRIPTS)/check.sh
+	@$(CHECK)
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
@@ -86,7 +86,6 @@ $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
 clean: pkg-post
 	rm -f $(BIN)/*
 	@cd  $(ESX_SRC)  ; $(MAKE)  $@
-
 
 # GO Code quality checks.
 
@@ -120,6 +119,7 @@ DOCKER = $(DEBUG) docker
 
 .PHONY: fpm-docker
 fpm-docker:
+	@echo "Building FPM container. It could take a while, please stand by..."
 	$(DOCKER) build -t vmware/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
 
 .PHONY: pkg
@@ -281,12 +281,18 @@ test-esx:
 testremote: test-esx test-vm
 test-all:  test testremote
 
-.PHONY:clean-vm clean-esx clean-all
+.PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
 	$(CLEANVM_SH) "$(VMS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
 clean-esx:
 	$(CLEANESX_SH) "$(ESX)" vmware-esx-vmdkops-service
+
+# rm ALL containers and volumes. Useful for post-failure force cleanup
+clean-docker:
+	-$(SSH) $(TEST_VM) 'docker kill `docker ps -q`'
+	-$(SSH) $(TEST_VM) 'docker rm `docker ps -a -q`'
+	-$(SSH) $(TEST_VM) 'docker volume rm `docker volume ls -q`'
 
 clean-all: clean clean-vm clean-esx
 
