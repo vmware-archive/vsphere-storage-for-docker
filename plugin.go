@@ -31,8 +31,7 @@ type vmdkDriver struct {
 	refCounts  refCountsMap
 }
 
-// creates vmdkDriver which may talk to real ESX (useMockEsx=False) or
-// real ESX.
+// creates vmdkDriver which to real ESX (useMockEsx=False) or a mock
 func newVmdkDriver(useMockEsx bool) *vmdkDriver {
 	var d *vmdkDriver
 	if useMockEsx {
@@ -53,9 +52,9 @@ func newVmdkDriver(useMockEsx bool) *vmdkDriver {
 
 	return d
 }
-func (d *vmdkDriver) getCount(vol string) uint      { return d.refCounts.getCount(vol) }
-func (d *vmdkDriver) incr(vol string) uint          { return d.refCounts.incr(vol) }
-func (d *vmdkDriver) decr(vol string) (uint, error) { return d.refCounts.decr(vol) }
+func (d *vmdkDriver) getRefCount(vol string) uint  { return d.refCounts.getCount(vol) }
+func (d *vmdkDriver) incrRefCount(vol string) uint { return d.refCounts.incr(vol) }
+func (d *vmdkDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.decr(vol) }
 
 func getMountPoint(volName string) string {
 	return filepath.Join(mountRoot, volName)
@@ -89,29 +88,28 @@ func (d *vmdkDriver) List(r volume.Request) volume.Response {
 // actual mount - send attach to ESX and do the in-guest magix
 // returns mount point and  error (or nil)
 func (d *vmdkDriver) mountVolume(name string) (string, error) {
-	m := getMountPoint(name)
+	mountpoint := getMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
-	err := fs.Mkdir(m)
+	err := fs.Mkdir(mountpoint)
 	if err != nil {
 		log.WithFields(
-			log.Fields{"name": name, "dir": m},
+			log.Fields{"name": name, "dir": mountpoint},
 		).Error("Failed to make directory for volume mount ")
-		return m, err
-		//		return volume.Response{Err: err.Error()}
+		return mountpoint, err
 	}
 
 	// Have ESX attach the disk
 	dev, err := d.ops.Attach(name, nil)
 	if err != nil {
-		return m, err
+		return mountpoint, err
 	}
 
 	if d.useMockEsx {
-		return m, fs.Mount(m, nil, "ext4")
+		return mountpoint, fs.Mount(mountpoint, nil, "ext4")
 	}
 
-	return m, fs.Mount(m, dev, "ext2")
+	return mountpoint, fs.Mount(mountpoint, dev, "ext2")
 }
 
 // Unmounts the volume and then requests detach
@@ -145,9 +143,9 @@ func (d *vmdkDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
-	if d.getCount(r.Name) != 0 {
+	if d.getRefCount(r.Name) != 0 {
 		msg := fmt.Sprintf("Remove faiure - volume is still mounted. "+
-			" volume=%s, refcount=%d", r.Name, d.getCount(r.Name))
+			" volume=%s, refcount=%d", r.Name, d.getRefCount(r.Name))
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
@@ -183,7 +181,7 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 	// since the volume will have been never mounted.
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
 
-	refcnt := d.incr(r.Name) // save map traversal
+	refcnt := d.incrRefCount(r.Name) // save map traversal
 	if refcnt > 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
@@ -192,7 +190,7 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 	}
 
 	// This is the first time we are asked to mount the volume, so comply
-	m, err := d.mountVolume(r.Name)
+	mountpoint, err := d.mountVolume(r.Name)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
@@ -200,7 +198,7 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 		return volume.Response{Err: err.Error()}
 	}
 
-	return volume.Response{Mountpoint: m}
+	return volume.Response{Mountpoint: mountpoint}
 }
 
 // Unmount request from Docker. If mount refcount is drop to 0,
@@ -211,7 +209,7 @@ func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
 	// if the volume is still used by other containers, just return OK
-	refcnt, err := d.decr(r.Name)
+	refcnt, err := d.decrRefCount(r.Name)
 	if err != nil {
 		// something went wrong - yell, but still try to unmount
 		log.WithFields(

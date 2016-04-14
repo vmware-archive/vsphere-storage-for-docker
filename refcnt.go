@@ -240,19 +240,22 @@ func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 // syncronize mount info with refcounts - and unmounts if needed
 func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 	for vol, cnt := range r {
-	    f := log.Fields{
-	        "name": vol,
-	        "refcnt": cnt.count,
-	        "mounted": cnt.mounted,
-	        "dev": cnt.dev,
-	    }
+		f := log.Fields{
+			"name":    vol,
+			"refcnt":  cnt.count,
+			"mounted": cnt.mounted,
+			"dev":     cnt.dev,
+		}
 
 		log.WithFields(f).Debug("Refcnt record: ")
 		if cnt.mounted == true {
 			if cnt.count == 0 {
 				// Volume mounted but not used - UNMOUNT and DETACH !
-				log.WithFields(f).Info("Initiationg recovery unmount. ")
-				d.unmountVolume(vol)
+				log.WithFields(f).Info("Initiating recovery unmount. ")
+				err := d.unmountVolume(vol)
+				if err != nil {
+					log.Warning("Failed to unmount - manual recovery may be needed")
+				}
 			}
 			// else: all good, nothing to do - volume mounted and used.
 
@@ -268,7 +271,10 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 				// but not using files on the volumes, and the volume is (manually?)
 				// unmounted. Unlikely but possible. Mount !
 				log.WithFields(f).Warning("Initiating recovery mount. ")
-				d.mountVolume(vol)
+				_, err := d.mountVolume(vol)
+				if err != nil {
+					log.Warning("Failed to mount - manual recovery may be needed")
+				}
 			}
 		}
 	}

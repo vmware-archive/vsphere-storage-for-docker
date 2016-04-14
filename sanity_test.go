@@ -55,8 +55,6 @@ func init() {
 	reconnectSleepInterval = time.Duration(*waitSec) * time.Second
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 
-//	refCountsInit()
-
 	log.WithFields(log.Fields{
 		"driver":          driverName,
 		"waitSec":         *waitSec,
