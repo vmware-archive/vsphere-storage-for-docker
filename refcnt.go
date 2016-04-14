@@ -136,7 +136,7 @@ func (r refCountsMap) Init(d *vmdkDriver) {
 		err = r.discoverAndSync(c, d)
 	}
 
-	log.Infof("Discovered %d volumes in use.", len(r))
+	log.Infof("Discovered %d volumes in use or mounted.", len(r))
 	if log.GetLevel() == log.DebugLevel {
 		for name, cnt := range r {
 			log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
@@ -304,7 +304,8 @@ func (r refCountsMap) getMountInfo() error {
 		}
 		refInfo.mounted = true
 		refInfo.dev = field[0]
-		log.Debugf("  found a mounted volume %s (%#v)", volName, refInfo)
+		r[volName] = refInfo
+		log.Debugf("Found a mounted volume %s (%#v)", volName, refInfo)
 	}
 
 	return nil
