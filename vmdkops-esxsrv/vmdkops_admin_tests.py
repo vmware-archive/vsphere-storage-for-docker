@@ -152,8 +152,9 @@ class TestLs(unittest.TestCase):
 
     def setUp(self):
         """ Setup run before each test """
-        self.cleanup()
         (datastore, path) = vmdkops_admin.get_datastores()[0]
+        self.mkdir(path)
+        self.cleanup()
         for id in range(5):
             volName = 'testvol'+str(id)
             fullpath = os.path.join(path, volName+'.vmdk')
@@ -162,6 +163,13 @@ class TestLs(unittest.TestCase):
     def tearDown(self):
         """ Cleanup after each test """
         self.cleanup()
+
+    def mkdir(self, path):
+        """ Create a directory if it doesn't exist. Ignore errors. """
+        try:
+            os.mkdir(path)
+        except os.error:
+            pass
 
     def cleanup(self):
         for v in self.get_testvols():
