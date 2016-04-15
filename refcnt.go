@@ -117,7 +117,7 @@ func init() {
 func (r refCountsMap) Init(d *vmdkDriver) {
 
 	c, err := client.NewClient(dockerUSocket, apiVersion, nil, defaultHeaders)
-	for err != nil {
+	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
 			dockerUSocket, err)
 	}
