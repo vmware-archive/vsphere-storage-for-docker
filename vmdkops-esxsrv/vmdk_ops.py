@@ -120,14 +120,14 @@ def createVMDK(vmdkPath, volName, opts=""):
 # Return a backing file path for given vmdk path or none
 # if a backing can't be found.
 def getVMDKBacking(vmdkPath):
-   if os.path.isfile(vmdkPath.replace(".vmdk", "-flat.vmdk"):
+   if os.path.isfile(vmdkPath.replace(".vmdk", "-flat.vmdk")):
       return vmdkPath.replace(".vmdk", "-flat.vmdk")
 
    exp = re.compile("RW .* VMFS \"vsan:\/\/(.*)\"")
    with open(vmdkPath) as f:
       for line in f and line != '':
          uuid = exp.search(line)
-         if uuid
+         if uuid:
             logging.debug("Got volume UUID %s" % uuid.group(1)) 
             objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u (0)".format(uuid.group(1))
             rc, out = RunCommand(objToolCmd) 
@@ -139,7 +139,7 @@ def formatVmdk(vmdkPath, volName):
         # Get backing for given vmdk path.
         backing = getVMDKBacking(vmdkPath)
 
-        if !backing:
+        if backing is None:
            logging.warning ("Failed to get backing for %s" % vmdkPath)
            return err("Failed to format %s." % vmdkPath)
 
@@ -242,7 +242,7 @@ def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
     # get /vmfs/volumes/<volid> path on ESX:
     path = getVolPath(configPath)
 
-    if !path:
+    if path is None:
        return err("Failed initializing volume path")
 
     vmdkPath = getVmdkName(path, volName)
@@ -476,7 +476,11 @@ def disk_detach(vmdkPath, vm):
      if volMeta:
         volMeta['status'] = 'detached'
         try:
-            del volMeta['attachedVMUuid']
+            # The attach may have failed and not added the
+            # key resulting in an exception here when removing
+            # a non-existent key.
+            if 'attachedVMUuid' in volMeta:
+               del volMeta['attachedVMUuid']
         finally:
             kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
@@ -562,6 +566,18 @@ def main():
     except Exception, e:
     	logging.exception(e)
 
+def getTaskList(propCollector, tasks):
+    # Create filter
+    obj_specs = [vmodl.query.PropertyCollector.ObjectSpec(obj=task)
+                 for task in tasks]
+    property_spec = vmodl.query.PropertyCollector.PropertySpec(type=vim.Task,
+                                                               pathSet=[],
+                                                               all=True)
+    filter_spec = vmodl.query.PropertyCollector.FilterSpec()
+    filter_spec.objectSet = obj_specs
+    filter_spec.propSet = [property_spec]
+    return propCollector.CreateFilter(filter_spec, True)
+
 #-----------------------------------------------------------
 #
 # Support for 'wait for task completion'
@@ -583,18 +599,16 @@ def wait_for_tasks(service_instance, tasks):
     """Given the service instance si and tasks, it returns after all the
    tasks are complete
    """
-    property_collector = service_instance.content.propertyCollector
     task_list = [str(task) for task in tasks]
-    # Create filter
-    obj_specs = [vmodl.query.PropertyCollector.ObjectSpec(obj=task)
-                 for task in tasks]
-    property_spec = vmodl.query.PropertyCollector.PropertySpec(type=vim.Task,
-                                                               pathSet=[],
-                                                               all=True)
-    filter_spec = vmodl.query.PropertyCollector.FilterSpec()
-    filter_spec.objectSet = obj_specs
-    filter_spec.propSet = [property_spec]
-    pcfilter = property_collector.CreateFilter(filter_spec, True)
+    property_collector = service_instance.content.propertyCollector
+    try:
+       pcfilter = getTaskList(property_collector, tasks)
+    except vim.fault.NotAuthenticated:
+       # Reconnect and retry
+       service_instance = connectLocal()
+       property_collector = service_instance.content.propertyCollector
+       pcfilter = getTaskList(property_collector, tasks)
+
     try:
         version, state = None, None
         # Loop looking for updates till the state moves to a completed state.
