@@ -207,7 +207,6 @@ def all_ls_headers():
 def generate_ls_dash_l_rows():
    """ Gather all volume metadata into rows that can be used to format a table """
    rows = []
-   volumes = get_volumes()
    for v in get_volumes():
        path = os.path.join(v[0], v[1])
        name = v[1][0:-5] # strip .vmdk
@@ -229,8 +228,18 @@ def is_symlink(path):
     except OSError:
         return False
 
+# datastoes should not randomly change during test so using global
+datastores = None
 def get_datastores():
-    """ Return pairs of datastore names and their absolute paths after following the symlink """
+    """
+    Return pairs of datastore names and absolute paths to dockvols directory,
+    after following the symlink
+    """
+
+    global datastores
+    if datastores != None:
+        return datastores
+
     datastores = []
     for f in os.listdir(volume_path):
         ds_path = os.path.join(volume_path, f)
