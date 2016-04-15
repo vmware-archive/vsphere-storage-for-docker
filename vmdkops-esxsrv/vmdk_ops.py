@@ -606,8 +606,8 @@ def wait_for_tasks(service_instance, tasks):
     except vim.fault.NotAuthenticated:
        # Reconnect and retry
        logging.warning ("Reconnecting and retry")
-       service_instance = connectLocal()
-       property_collector = service_instance.content.propertyCollector
+       si = connectLocal()
+       property_collector = si.content.propertyCollector
        pcfilter = getTaskList(property_collector, tasks)
 
     try:
