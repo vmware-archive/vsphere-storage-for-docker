@@ -152,8 +152,8 @@ class TestLs(unittest.TestCase):
 
     def setUp(self):
         """ Setup run before each test """
-        (datastore, path) = vmdkops_admin.get_datastores()[0]
-        self.mkdir(path)
+        for (datastore, path) in vmdkops_admin.get_datastores():
+            self.mkdir(path)
         self.cleanup()
         for id in range(5):
             volName = 'testvol'+str(id)
@@ -168,7 +168,8 @@ class TestLs(unittest.TestCase):
         """ Create a directory if it doesn't exist. Ignore errors. """
         try:
             os.mkdir(path)
-        except os.error:
+        except os.error as e:
+            print("warning: mkdir failed for", path, e)
             pass
 
     def cleanup(self):

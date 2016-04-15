@@ -46,6 +46,10 @@ echo "*************************************************************************"
 
 dump_log_esx() {
   echo ""
+  echo " ESX Config info ***************"
+  cmd='vmware -l; uname -a; df; ls -ld /vmfs/volumes/*'
+  echo $cmd ; $SSH $USER@$ESX $cmd
+
   echo "*** dumping log: ESX " $ESX
   echo "*************************************************************************"
   set -x
