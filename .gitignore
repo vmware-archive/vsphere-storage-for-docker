@@ -1,4 +1,5 @@
 pgk/
+package/
 bin/
 src/.DS_Store
 src/dvolplug/dvolplug
