@@ -22,9 +22,14 @@ import (
 //   Run:   open-vm-tools has to be installed
 //
 
-// VmdkOps struct
+// VmdkCmdRunner interface for sending Vmdk Commands to an ESX server.
+type VmdkCmdRunner interface {
+	Run(cmd string, name string, opts map[string]string) ([]byte, error)
+}
+
+// VmdkOps struct 
 type VmdkOps struct {
-	Cmd VmdkCmdRunner
+	Cmd VmdkCmdRunner // see *_vmdkcmd.go for implementations. 
 }
 
 // VolumeData we return to the caller

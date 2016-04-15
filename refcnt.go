@@ -1,3 +1,5 @@
+// +build linux
+
 //
 // Refcount discovery from local docker.
 //
@@ -99,11 +101,9 @@ var (
 
 	// wait time for reconnect
 	reconnectSleepInterval time.Duration
-
-	// volume name -> {refcount, mounted, device} for volumes with refcount > 0
-	refCounts refCountsMap
 )
 
+// file init() these things before running any code
 func init() {
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 
@@ -112,17 +112,33 @@ func init() {
 	driverName = "vmdk"
 }
 
-// Init volume usage refcounts from Docker. This will poll until replied to.
-func refCountsInit() {
+// Init Refcounts. Discover volume usage refcounts from Docker.
+// This will poll until replied to.
+func (r refCountsMap) Init(d *vmdkDriver) {
 
-	refCounts = make(refCountsMap)
-	err := refCounts.connectAndDiscover()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to get volume info from Docker (%v)", err))
+	c, err := client.NewClient(dockerUSocket, apiVersion, nil, defaultHeaders)
+	for err != nil {
+		log.Panicf("Failed to create client for Docker at %s.( %v)",
+			dockerUSocket, err)
 	}
-	log.Infof("Discovered %d volumes in use.", len(refCounts))
+
+	// connects (and polls if needed) and then calls discovery
+	log.Infof("Getting volume data from to %s", dockerUSocket)
+	err = r.discoverAndSync(c, d)
+	attempt := 1
+	for err != nil {
+		// stay here forever, until connected to Docker or killed
+		attempt++
+		if (attempt-2)%10 == 0 { // throttle to each 10th attempt
+			log.Warningf("Failed to get data from Docker, retrying. (err: %v)", err)
+		}
+		time.Sleep(reconnectSleepInterval)
+		err = r.discoverAndSync(c, d)
+	}
+
+	log.Infof("Discovered %d volumes in use or mounted.", len(r))
 	if log.GetLevel() == log.DebugLevel {
-		for name, cnt := range refCounts {
+		for name, cnt := range r {
 			log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
 				name, cnt.count, cnt.mounted, cnt.dev)
 		}
@@ -175,28 +191,8 @@ func (r refCountsMap) decr(vol string) (uint, error) {
 	return rc.count, nil
 }
 
-// connects (and polls if needed) and then calls discover()
-func (r refCountsMap) connectAndDiscover() error {
-	c, err := client.NewClient(dockerUSocket, apiVersion, nil, defaultHeaders)
-	for err != nil {
-		log.Errorf("connectAndDiscover: Failed to create client for %s.( %v)",
-			dockerUSocket, err)
-		return err
-	}
-
-	log.Infof("connectAndDiscover: Getting volume data from to %s", dockerUSocket)
-	err = r.discoverAndSync(c)
-	for err != nil {
-		// stay here forever, until connected to Docker or killed
-		log.Errorf("Failed to get data from Docker, retrying. (err: %v)", err)
-		time.Sleep(reconnectSleepInterval)
-		err = r.discoverAndSync(c)
-	}
-	return nil
-}
-
 // enumberates volumes and  builds refCountsMap, then sync with mount info
-func (r refCountsMap) discoverAndSync(c *client.Client) error {
+func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 	// we assume to  have empty refcounts. Let's enforce
 	for name := range r {
 		delete(r, name)
@@ -236,29 +232,50 @@ func (r refCountsMap) discoverAndSync(c *client.Client) error {
 	// not mounted but should be (it's error. we should not get there)
 
 	r.getMountInfo()
-	r.syncMountsWithRefCounters()
+	r.syncMountsWithRefCounters(d)
 
 	return nil
 }
 
 // syncronize mount info with refcounts - and unmounts if needed
-func (r refCountsMap) syncMountsWithRefCounters() {
+func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 	for vol, cnt := range r {
-		log.Debugf("Volume %s %#v", vol, cnt)
+		f := log.Fields{
+			"name":    vol,
+			"refcnt":  cnt.count,
+			"mounted": cnt.mounted,
+			"dev":     cnt.dev,
+		}
+
+		log.WithFields(f).Debug("Refcnt record: ")
 		if cnt.mounted == true {
 			if cnt.count == 0 {
-				// Volume mounted but not used - unmount !
-				log.Infof("Volume %s (%s) is not used - unmounting (TBD)", vol, cnt.dev)
-				// TBD **** ACTUAL UNMOUNT & DETACH ***
+				// Volume mounted but not used - UNMOUNT and DETACH !
+				log.WithFields(f).Info("Initiating recovery unmount. ")
+				err := d.unmountVolume(vol)
+				if err != nil {
+					log.Warning("Failed to unmount - manual recovery may be needed")
+				}
 			}
-			// else: volume mounted and used - all good, nothing to do
+			// else: all good, nothing to do - volume mounted and used.
 
 		} else {
-			// volume unmounted. We should not even get here since unmounted
-			// volumes should have no record in refcount maps (refcnt=0)
-			log.Errorf("Volume %s is not mounted but refcnt=%d. %#v",
-				vol, cnt.count, cnt)
-			// TBD **** CALLBACK UP , PROBALY TO EXIT ***
+			if cnt.count == 0 {
+				// volume unmounted AND refcount 0.  We should NEVER get here
+				// since unmounted and recount==0 volumes should have no record
+				// in the map. Something went seriously wrong in the code.
+				log.WithFields(f).Panic("Internal failure: record should not exist. ")
+			} else {
+				// No mounts, but Docker tells we have refcounts.
+				// It could happen when Docker runs a container with a volume
+				// but not using files on the volumes, and the volume is (manually?)
+				// unmounted. Unlikely but possible. Mount !
+				log.WithFields(f).Warning("Initiating recovery mount. ")
+				_, err := d.mountVolume(vol)
+				if err != nil {
+					log.Warning("Failed to mount - manual recovery may be needed")
+				}
+			}
 		}
 	}
 }
@@ -287,7 +304,8 @@ func (r refCountsMap) getMountInfo() error {
 		}
 		refInfo.mounted = true
 		refInfo.dev = field[0]
-		log.Debugf("  found a mounted volume %s (%#v)", volName, refInfo)
+		r[volName] = refInfo
+		log.Debugf("Found a mounted volume %s (%#v)", volName, refInfo)
 	}
 
 	return nil

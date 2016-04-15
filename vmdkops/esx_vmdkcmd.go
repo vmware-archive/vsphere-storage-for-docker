@@ -1,6 +1,6 @@
 // +build linux
 
-// The default implementation of the VmdkCmdRunner interface.
+// The default (ESX) implementation of the VmdkCmdRunner interface.
 // This implementation sends synchronous commands to and receives responses from ESX.
 
 package vmdkops
@@ -18,8 +18,8 @@ import (
 */
 import "C"
 
-// VmdkCmd struct
-type VmdkCmd struct{}
+// EsxVmdkCmd struct - empty , we use it only to implement VmdkCmdRunner interface
+type EsxVmdkCmd struct{}
 
 const (
 	vmciEsxPort     int    = 15000 // port we are connecting on. TBD: config?
@@ -48,7 +48,7 @@ type vmciError struct {
 // *   - Establishes a vSocket connection
 // *   - Sends json string up to ESX
 // *   - waits for reply and returns resulting JSON or an error
-func (vmdkCmd VmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
+func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
 		Details: VolumeInfo{Name: name, Options: opts}})
