@@ -34,7 +34,6 @@ internal_vib_name=vmware-esx-vmdkops-service
 
 script_loc=./scripts
 tmp_loc=/tmp/docker-vmdk-plugin
-guest_mount_point=/mnt/vmdk
 
 # ====== define functions =======
 
@@ -167,9 +166,6 @@ function cleanvm {
    
         echo "   Removing binaries and restarting docker..."
         $SSH $target rm -f $remote_binaries
-        $SSH $target rm -rvf $guest_mount_point/$test_vol
-        $SSH $target rm -rvf /tmp/docker-volumes/
-        $SSH $target service docker restart
    done
 }
 
