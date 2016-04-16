@@ -40,15 +40,24 @@ from pyVmomi import VmomiSupport, vim, vmodl
 
 import volumeKVStore as kv
 
-# defaults
+# Location of utils used by the plugin.
+BinLoc  = "/usr/lib/vmware/vmdkops/bin/"
+
+# External tools used by the plugin.
+objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u "
+osfsMkdirCmd = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
+mkfsCmd = "/usr/lib/vmware/vmdkops/bin/mkfs.ext4 -qF -L "
+vmdkCreateCmd = "/sbin/vmkfstools -d thin -c "
+vmdkDeleteCmd = "/sbin/vmkfstools -U "
+
+# Defaults
 DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
 MaxDescrSize = 10000     # we assume files smaller that that to be descriptor files
 MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limited in size
 MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
-BinLoc  = "/usr/lib/vmware/vmdkops/bin/"
 
-# default log file. Should be synced with CI and make wrappers in ../*scripts
+# Default log file. Should be synced with CI and make wrappers in ../*scripts
 LogFile = "/var/log/vmware/docker-vmdk-plugin.log"
 
 def LogSetup(logfile):
@@ -99,7 +108,7 @@ def createVMDK(vmdkPath, volName, opts=""):
 		#TODO: check it is compliant format, and correct if possible
 		logging.debug("SETTING  SIZE to " + size)
 
-        cmd = "/sbin/vmkfstools -d thin -c {0} {1}".format(size, vmdkPath)
+        cmd = "%s %s %s" % (vmdkCreateCmd, size, vmdkPath)
         rc, out = RunCommand(cmd)
 
         if rc != 0:
@@ -129,10 +138,13 @@ def getVMDKBacking(vmdkPath):
          uuid = exp.search(line)
          if uuid:
             logging.debug("Got volume UUID %s" % uuid.group(1)) 
-            objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u (0)".format(uuid.group(1))
-            rc, out = RunCommand(objToolCmd) 
-            if rc == 0:
-               return "/vmfs/devices/vsan/(0)".format(uuid.group(1))
+            # Objtool creates a link thats usable to format the
+            # vsan object.
+            cmd = "%s %s" % (objToolCmd, uuid.group(1))
+            rc, out = RunCommand(cmd) 
+            fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
+            if rc == 0 and os.path.isfile(fpath):
+               return fpath
    return None
 
 def formatVmdk(vmdkPath, volName):
@@ -144,7 +156,7 @@ def formatVmdk(vmdkPath, volName):
            return err("Failed to format %s." % vmdkPath)
 
         # Format it as ext4.
-        cmd = "{0}/mkfs.ext4   -F -L {1} -q {2}".format(BinLoc, volName, backing)
+        cmd = "%s %s %s" % (mkfsCmd, volName, backing)
         rc, out = RunCommand(cmd)
 
         if rc != 0:
@@ -158,7 +170,7 @@ def formatVmdk(vmdkPath, volName):
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
-        cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
+        cmd = "%s %s" % (vmdkDeleteCmd, vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
             return err("Failed to remove %s. %s" % (vmdkPath, out))
@@ -204,34 +216,24 @@ def detachVMDK(vmdkPath, vmName):
 def getVolPath(vmConfigPath):
     cnt = len(vmConfigPath.split("/"))
 
-    # Skip the VM name and the VM folder, the remaining is the parent path name for
-    # the folder we want to create.
-    path = os.path.join("/".join(vmConfigPath.split("/")[0:(cnt - 2)]),  DockVolsDir)
+    # The volumes folder is created in the parent of the given VM's folder.
+    path = os.path.join(os.path.dirname(os.path.dirname(vmConfigPath)), DockVolsDir)
 
-    if os.path.exists(path):
+    if os.path.isdir(path):
        # If the path exists then return it as is.
        logging.info("Found %s, returning" % path)
        return path
 
-    # The osfs tools re usable for both vvol and vsan datastores
-    mkdirOk = True
-    if 'vsan' in path or 'vvol' in path:
-       # Its a VSAN/VVOl datastore use osfs-mkdir to create the folder.
-       mkdirCmd = '/usr/lib/vmware/osfs/bin/osfs-mkdir -n (0)'.format(path)
-       rc, out = RunCommand(mkdirCmd)
-       if rc != 0:
-          mkdirOk = False
-       else:
-          logging.info(path +" created")
+    # The osfs tools are usable for all datastores
+    cmd = "%s %s" % (osfsMkdirCmd, path)
+    rc, out = RunCommand(cmd)
+    if rc != 0:
+       logging.warning("Failed to create " + path)
     else:
-       try:
-          os.mkdir(path)
-          logging.info(path +" created")
-       except OSError:
-          mkdirOk = False
-          pass
+       logging.info(path +" created")
+       return path
 
-    return path if mkdirOk else None
+    return None
 
 def getVmdkName(path, volName):
     # form full name as <path-to-volumes>/<volname>.vmdk
@@ -243,7 +245,7 @@ def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
     path = getVolPath(configPath)
 
     if path is None:
-       return err("Failed initializing volume path")
+       return err("Failed initializing volume path " + path)
 
     vmdkPath = getVmdkName(path, volName)
 
@@ -479,8 +481,7 @@ def disk_detach(vmdkPath, vm):
             # The attach may have failed and not added the
             # key resulting in an exception here when removing
             # a non-existent key.
-            if 'attachedVMUuid' in volMeta:
-               del volMeta['attachedVMUuid']
+            del volMeta['attachedVMUuid']
         finally:
             kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:

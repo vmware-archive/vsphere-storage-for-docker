@@ -41,9 +41,7 @@ def delete(volPath):
 
 # Return the entire meta-data for the given volpath
 def getAll(volPath):
-   volMeta = kvESX.load(volPath)
-
-   return volMeta
+   return kvESX.load(volPath)
 
 # Store the meta-data for a given vol-path
 def setAll(volPath, volMeta):
