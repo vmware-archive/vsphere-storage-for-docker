@@ -228,8 +228,10 @@ def is_symlink(path):
     except OSError:
         return False
 
-# datastoes should not randomly change during test so using global
+# datastores should not change during 'vmdkops_admin' run,
+# so using global to avoid multiple scans of /vmfs/volumes
 datastores = None
+
 def get_datastores():
     """
     Return pairs of datastore names and absolute paths to dockvols directory,
