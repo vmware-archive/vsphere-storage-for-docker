@@ -41,6 +41,7 @@ import time
 import logging
 import signal
 import sys
+import re
 sys.dont_write_bytecode = True
 
 from vmware import vsi
@@ -55,7 +56,7 @@ from pyVmomi import VmomiSupport, vim, vmodl
 import volumeKVStore as kv
 
 # Location of utils used by the plugin.
-BinLoc  = "/usr/lib/vmware/vmdkops/bin/"
+BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
 # External tools used by the plugin.
 objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u "
@@ -236,14 +237,12 @@ def detachVMDK(vmdkPath, vmName):
 
 # Check existence (and creates if needed) the path
 def getVolPath(vmConfigPath):
-    cnt = len(vmConfigPath.split("/"))
-
     # The volumes folder is created in the parent of the given VM's folder.
     path = os.path.join(os.path.dirname(os.path.dirname(vmConfigPath)), DockVolsDir)
 
     if os.path.isdir(path):
        # If the path exists then return it as is.
-       logging.info("Found %s, returning" % path)
+       logging.debug("Found %s, returning" % path)
        return path
 
     # The osfs tools are usable for all datastores
@@ -331,13 +330,20 @@ def findDeviceByPath(vmdkPath, vm):
  		if type(d) != vim.vm.device.VirtualDisk:
  			continue
 
- 		# TODO: use device_disk_uuid = d.backing.uuid  # FFU
-		# for now - ugly hack to convert "[ds] dir/name" to fullpath
-		# we also assume homogeneous mounts here... well, we are on 1 esx after all
-		dsPath = d.backing.datastore.host[0].mountInfo.path
-		dev = os.path.join(dsPath, d.backing.fileName.split(" ")[1])
-		if dev == vmdkPath:
-			logging.debug("findDeviceByPath: MATCH: " + vmdkPath)
+                # Disks of all backing have a backing object with
+                # a filename attribute in it. The filename identifies the
+                # virtual disk by name and can be used to try a match
+                # with the given name. Filename has format like,
+                # "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>".
+                backingDisk = d.backing.fileName.split(" ")[1]
+
+                # Construct the parent dir and vmdk name, resolving
+                # links if any.
+                dvolDir = os.path.dirname(vmdkPath)
+                realDvolDir = os.path.basename(os.path.realpath(dvolDir))
+                virtualDisk = realDvolDir + "/" + os.path.basename(vmdkPath)
+		if virtualDisk == backingDisk:
+			logging.debug("findDeviceByPath: MATCH: " + backingDisk)
 			return d
 
 	return None
