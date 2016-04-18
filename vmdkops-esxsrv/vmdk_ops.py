@@ -129,22 +129,30 @@ def createVMDK(vmdkPath, volName, opts=""):
 # Return a backing file path for given vmdk path or none
 # if a backing can't be found.
 def getVMDKBacking(vmdkPath):
-   if os.path.isfile(vmdkPath.replace(".vmdk", "-flat.vmdk")):
-      return vmdkPath.replace(".vmdk", "-flat.vmdk")
+   flatBacking = vmdkPath.replace(".vmdk", "-flat.vmdk")
+   if os.path.isfile(flatBacking):
+      return flatBacking
 
+   f = open(vmdkPath)
+   data = f.read()
+
+   # Paranoia??
+   if data is None:
+      return None
+
+   # For now we look for a VSAN URI, later vvol.
    exp = re.compile("RW .* VMFS \"vsan:\/\/(.*)\"")
-   with open(vmdkPath) as f:
-      for line in f and line != '':
-         uuid = exp.search(line)
-         if uuid:
-            logging.debug("Got volume UUID %s" % uuid.group(1)) 
-            # Objtool creates a link thats usable to format the
-            # vsan object.
-            cmd = "%s %s" % (objToolCmd, uuid.group(1))
-            rc, out = RunCommand(cmd) 
-            fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
-            if rc == 0 and os.path.isfile(fpath):
-               return fpath
+
+   uuid = exp.search(data)
+   if uuid:
+      logging.debug("Got volume UUID %s" % uuid.group(1)) 
+      # Objtool creates a link thats usable to format the
+      # vsan object.
+      cmd = "%s %s" % (objToolCmd, uuid.group(1))
+      rc, out = RunCommand(cmd) 
+      fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
+      if rc == 0 and os.path.isfile(fpath):
+         return fpath
    return None
 
 def formatVmdk(vmdkPath, volName):
