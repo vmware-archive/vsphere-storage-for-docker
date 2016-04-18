@@ -41,6 +41,7 @@ import time
 import logging
 import signal
 import sys
+import re
 sys.dont_write_bytecode = True
 
 from vmware import vsi
@@ -55,7 +56,7 @@ from pyVmomi import VmomiSupport, vim, vmodl
 import volumeKVStore as kv
 
 # Location of utils used by the plugin.
-BinLoc  = "/usr/lib/vmware/vmdkops/bin/"
+BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
 # External tools used by the plugin.
 objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u "
