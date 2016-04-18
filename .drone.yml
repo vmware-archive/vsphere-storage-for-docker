@@ -57,3 +57,14 @@ publish:
     storage_driver: overlay
     when:
       branch: master
+  
+  github_release:
+    api_key: $$GITHUB_TOKEN
+    files:
+      - bin/*.deb
+      - bin/*.rpm
+      - bin/*.vib
+      - bin/*.zip
+    when:
+      repo: vmware/docker-vmdk-plugin
+      event: tag
