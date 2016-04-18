@@ -1,3 +1,18 @@
+// Copyright 2016 VMware, Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 package config
 
 // Read the plugin configuration file. The file is stored in JSON.
@@ -9,7 +24,14 @@ import (
 )
 
 const (
-	defaultLogPath       = "/var/log/docker-vmdk-plugin.log"
+	// Default pathes - used in log init in main() and test:
+
+	// DefaultConfigPath is the default location of Log configuration file
+	DefaultConfigPath = "/etc/docker-vmdk-plugin.conf"
+	// DefaultLogPath is the default location of log (trace) file
+	DefaultLogPath = "/var/log/docker-vmdk-plugin.log"
+
+	// Local consts
 	defaultMaxLogSizeMb  = 100
 	defaultMaxLogAgeDays = 28
 )
@@ -38,7 +60,7 @@ func Load(path string) (Config, error) {
 // SetDefaults for any config setting that is at its `bottom`
 func SetDefaults(config *Config) {
 	if config.LogPath == "" {
-		config.LogPath = defaultLogPath
+		config.LogPath = DefaultLogPath
 	}
 	if config.MaxLogSizeMb == 0 {
 		config.MaxLogSizeMb = defaultMaxLogSizeMb

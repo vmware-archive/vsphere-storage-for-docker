@@ -1,3 +1,18 @@
+// Copyright 2016 VMware, Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 //
 // VMDK Docker driver sanity tests.
 //
@@ -7,20 +22,22 @@ package main
 import (
 	"flag"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
+	"github.com/vmware/docker-vmdk-plugin/config"
 	"golang.org/x/net/context"
 	"testing"
+	"time"
 )
 
 const (
-	apiVersion           = "v1.22"
-	driverName           = "vmdk"
-	dockerUSocket        = "unix:///var/run/docker.sock"
-	defaultMountLocation = "/mnt/vol"
+	defaultMountLocation = "/mnt/testvol"
+	// tests are often run under regular account and have no access to /var/log
+	defaultTestLogPath = "/tmp/test-docker-vmdk-plugin.log"
 )
 
 var (
@@ -29,18 +46,38 @@ var (
 	endPoint2        string
 	volumeName       string
 	removeContainers bool
-
-	defaultHeaders map[string]string
 )
 
+// prepares the environment. Kind of "main"-ish code for tests.
+// Parses flags and inits logs and mount ref counters (the latter waits on Docker
+// actuallu replyimg). As any other init(), it is called somewhere during init phase
+// so do not expect ALL inits from other tests (if any) to compete by now. 
 func init() {
+	waitSec := flag.Int("t", defaultSleepIntervalSec, "Reconnect polling time, in seconds")
+	logLevel := flag.String("log_level", "debug", "Logging Level")
+	logFile := flag.String("log_file", config.DefaultLogPath, "Log file path")
+	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
+
 	flag.StringVar(&endPoint1, "H1", dockerUSocket, "Endpoint (Host1) to connect to")
 	flag.StringVar(&endPoint2, "H2", dockerUSocket, "Endpoint (Host2) to connect to")
 	flag.StringVar(&volumeName, "v", "TestVol", "Volume name to use in sanity tests")
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
+	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
 	flag.Parse()
 
+	usingConfigFile := logInit(logLevel, logFile, configFile)
+
+	reconnectSleepInterval = time.Duration(*waitSec) * time.Second
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
+
+	log.WithFields(log.Fields{
+		"driver":          driverName,
+		"waitSec":         *waitSec,
+		"log_level":       *logLevel,
+		"log_file":        *logFile,
+		"conf_file":       *configFile,
+		"using_conf_file": usingConfigFile,
+	}).Info("VMDK plugin tests started ")
 }
 
 // returns in-container mount point for a volume
