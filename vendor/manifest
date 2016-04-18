@@ -71,6 +71,6 @@
 			"repository": "https://github.com/natefinch/lumberjack",
 			"revision": "514cbda263a734ae8caac038dadf05f8f3f9f738",
 			"branch": "v2.0"
-		},
+		}
 	]
 }

@@ -1,24 +1,30 @@
 #!/bin/bash
+# Copyright 2016 VMware, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 
 #
 # simple wrapper for check build pre-requisites
 #
-
-# Check prereq first - we need docker
 
 printNQuit() {
    echo $1
    exit 1
 }
 
-# check platform
-#----------------
-
-if [ `uname` != "Linux" ]
-then
-  echo "This build is supported only on Linux."
-  exit 1
-fi
+# dockerbuild needs docker :-)
 
 if [ "$1" == "dockerbuild" ]
 then
@@ -29,11 +35,34 @@ then
    # 1.9 might be ok..?
    printNQuit "Docker is needed to run dockerbuild"
  fi
+ if [ "$(docker version -f '{{.Server.Os}}')" != "linux" ]
+ then
+   printNQuit "This build requires Docker Server running on Linux."
+ fi
  exit 0
 fi
 
-# Check GO version and config
-#-----------------------------
+# pgk build just needs FPM (it is taken care of by Dockerfiles/Dockerfile.fpm)
+
+if [ "$1" == "pkg" ]
+then
+ command -v fpm > /dev/null
+ if [ $? -ne 0 ]
+ then
+   printNQuit "FPM needs to be installed"
+ fi
+ exit 0
+fi
+
+# And all other builds need GO 1.5+ version and proper config
+#------------------------------------------------------------
+
+if [ `uname` != "Linux" ]
+then
+  echo "This build is supported only on Linux."
+  exit 1
+fi
+# Check
 
 GO_REQUIRED=1.5
 

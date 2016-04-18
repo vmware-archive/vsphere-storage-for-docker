@@ -1,3 +1,18 @@
+# Copyright 2016 VMware, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 #
 # Makefile for ESX "vmdkops" service - host part of "vmware/vmdkops" Go package
 #
@@ -12,7 +27,7 @@ OFFLINE_DEPOT := vmware-esx-vmdkops-1.0.0.zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
-PY_SRC := vmdk_ops.py volumeKVStore.py kvESX.py vmdkops_admin.py
+PY_SRC := vmdk_ops.py volumeKVStore.py kvESX.py vmdkops_admin.py cli_table.py
 C_SRC  := vmci/vmci_server.c
 INIT_SCRIPT := vmdk-opsd
 
@@ -44,6 +59,12 @@ VIBAUTHOR := vibauthor
 BDIR := ../bin
 WDIR := .
 
+VIBAUTHOR_PARAMS := --debug --compose \
+        --vib=$(BDIR)/$(VIB) \
+	--stage-dir $(WDIR) \
+	--offline-depot $(BDIR)/$(OFFLINE_DEPOT) \
+        --force
+
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
 build: $(VIB_BIN)
@@ -55,14 +76,7 @@ $(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
 	@chmod -R a+w $(PAYLOAD)
 	@cp -f $(PY_FILES) $(TOOLS) $(VMDKOPS_BIN)
 	@cp -f $(INIT_SCRIPT) $(VMDKOPS_INITD)
-	$(VIBAUTHOR) \
- 	--debug --compose \
-   	--vib=$(BDIR)/$(VIB) \
-   	--stage-dir $(WDIR) \
-	--offline-depot $(BDIR)/$(OFFLINE_DEPOT) \
-   	--force
-
-
+	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
@@ -74,8 +88,3 @@ clean:
 .PHONY: test
 test: build
 	@echo "? Info: No unit test here yet."
-
-
-
-
-

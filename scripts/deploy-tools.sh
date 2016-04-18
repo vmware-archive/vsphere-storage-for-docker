@@ -1,4 +1,19 @@
 #!/bin/bash
+# Copyright 2016 VMware, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 #
 # deploy-tools.sh
 # 
@@ -24,7 +39,7 @@ set -e
 # the actual command is executed.  If 'DEBUG=echo' is typed before 'make', 
 # then instead of command (e.g. scp) "echo scp" will be executed so it will 
 # print out the commands. Super convenient for debugging.
-SCP="$DEBUG scp -q -o StrictHostKeyChecking=no"
+SCP="$DEBUG scp -r -q -o StrictHostKeyChecking=no"
 SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 
 # consts
@@ -33,8 +48,7 @@ SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 internal_vib_name=vmware-esx-vmdkops-service
 
 script_loc=./scripts
-tmp_loc=/tmp/docker-volume-plugin
-guest_mount_point=/mnt/vmdk
+tmp_loc=/tmp/docker-vmdk-plugin
 
 # ====== define functions =======
 
@@ -149,13 +163,12 @@ function cleanvm {
    for ip in $ip_list
    do
         echo "Cleaning up on VM $ip..."
+        # First make sure the helper scripts are on the target box
         target=root@$ip
         $SSH $target mkdir -p $tmp_loc
         $SCP $script_loc/$stopsvc $target:$tmp_loc
 
         echo "   Asking docker to remove volumes ($volumes)..."
-        # make sure docker engine is not hanging due to old/dead plugins
-        $SSH $target service docker restart
         # and now clean up
         for vol in $volumes
         do
@@ -167,11 +180,8 @@ function cleanvm {
         $SSH $target $tmp_loc/$stopsvc $name
         $SSH $target "rm -rf $tmp_loc"
    
-        echo "   Removing binaries and restarting docker..."
+        echo "   Removing binaries..."
         $SSH $target rm -f $remote_binaries
-        $SSH $target rm -rvf $guest_mount_point/$test_vol
-        $SSH $target rm -rvf /tmp/docker-volumes/
-        $SSH $target service docker restart
    done
 }
 

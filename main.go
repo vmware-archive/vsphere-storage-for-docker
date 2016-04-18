@@ -1,3 +1,18 @@
+// Copyright 2016 VMware, Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 package main
 
 // A VMDK Docker Data Volume plugin - main
@@ -17,10 +32,9 @@ import (
 )
 
 const (
-	pluginSockDir     = "/run/docker/plugins"
-	vmdkPluginID      = "vmdk"
-	version           = "VMDK Volume Driver v0.3"
-	defaultConfigPath = "/etc/docker-vmdk-plugin.conf"
+	pluginSockDir = "/run/docker/plugins"
+	vmdkPluginID  = "vmdk"
+	version       = "VMDK Volume Driver v0.3"
 )
 
 // An equivalent function is not exported from the SDK.
@@ -33,14 +47,9 @@ func fullSocketAddress(pluginName string) string {
 	return filepath.Join(pluginSockDir, pluginName+".sock")
 }
 
-func main() {
-	// connect to this socket
-	port := flag.Int("port", 15000, "Default port for vmci")
-	mockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
-	logLevel := flag.String("log_level", "debug", "Logging Level")
-	configFile := flag.String("config", defaultConfigPath, "Configuration file path")
-	flag.Parse()
-
+// init log with passed logLevel (and get config from configFIle if it's present)
+// returns True if using defaults,  False if using config file
+func logInit(logLevel *string, logFile *string, configFile *string) bool {
 	level, err := log.ParseLevel(*logLevel)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to parse log level: %v", err))
@@ -50,16 +59,21 @@ func main() {
 	c, err := config.Load(*configFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			usingConfigDefaults = true
+			usingConfigDefaults = true // no .conf file, so using defaults
 			c = config.Config{}
 			config.SetDefaults(&c)
 		} else {
-			panic(fmt.Sprintf("Failed to load config file %s: %v", *configFile, err))
+			panic(fmt.Sprintf("Failed to load config file %s: %v",
+				*configFile, err))
 		}
 	}
 
+	path := c.LogPath
+	if logFile != nil {
+		path = *logFile
+	}
 	log.SetOutput(&lumberjack.Logger{
-		Filename: c.LogPath,
+		Filename: path,
 		MaxSize:  c.MaxLogSizeMb,  // megabytes
 		MaxAge:   c.MaxLogAgeDays, // days
 	})
@@ -70,11 +84,25 @@ func main() {
 	if usingConfigDefaults {
 		log.Warn("No config file found. Using defaults.")
 	}
+	return usingConfigDefaults
+}
+
+// main for docker-vmdk-driver
+// Parses flags, inits mount refcounters and finally services Docker requests
+func main() {
+	// connect to this socket
+	port := flag.Int("port", 15000, "Default port for vmci")
+	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
+	logLevel := flag.String("log_level", "debug", "Logging Level")
+	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
+	flag.Parse()
+
+	logInit(logLevel, nil, configFile)
 
 	log.WithFields(log.Fields{
 		"version":   version,
 		"port":      *port,
-		"mock_esx":  *mockEsx,
+		"mock_esx":  *useMockEsx,
 		"log_level": *logLevel,
 		"config":    *configFile,
 	}).Info("Docker VMDK plugin started ")
@@ -83,14 +111,12 @@ func main() {
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigChannel
-		log.WithFields(log.Fields{"signal": sig}).Error("Received Signal")
+		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
 		os.Remove(fullSocketAddress(vmdkPluginID))
 		os.Exit(0)
 	}()
 
-	// register Docker plugin socket (.sock) and listen on it
-
-	driver := newVmdkDriver(*mockEsx)
+	driver := newVmdkDriver(*useMockEsx)
 	handler := volume.NewHandler(driver)
 
 	log.WithFields(log.Fields{
