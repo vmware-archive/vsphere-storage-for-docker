@@ -47,18 +47,13 @@ Triage:
 Copy-paste relevant snippets from log file, code. Use github markdown language for basic formatting. 
 
 ```
-## Typical Developer Workflow
-
-```
-make
-```
+## Typical Developer Workflow - build, test, rinse, repeat
+Use `make` or `make dockerbuild` to build
 
 Build environment is described in README.md. The result of the build is a set
 of binaries in ./bin directory.
 
-In order to test locally, you'd need a test setup. Local test setup automation is planned but but not done yet, so currently the environment
-has to be set up manually.
-
+In order to test locally, you'd need a test setup. Local test setup automation is planned but but not done yet, so currently the environment has to be set up manually.
 
 Test environment  typically consist of 1 ESX and 2  guest VMs running inside of the
 ESX. We also support 1 ESX and 1 guest VM. We require ESX 6.0 and later,
@@ -109,7 +104,7 @@ Login to the machine kill the binary and re-run it manually.
 
 ```
 Standard invocation on ESX:
-python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py 
+python -B /usr/lib/vmware/vmdkops/bin/vmdk_ops.py 
 
 Standard invocation on VM: (as root)
 /usr/local/bin/docker-vmdk-plugin
@@ -134,6 +129,30 @@ If additional python scripts are added to the ESX code, update the vib descripti
 ```
 ./vmdkops-esxsrv/descriptor.xml
 ```
+## Typical Developer Workflow - git, branch management and pull requests
+This section are for devs working directly on our repo, and is intended to clarify
+recommended process for internal developers.
+
+We use git and GitHub and follow customary process for dev branches and pull
+requests. The next below assumes familiarity with git concepts. If you need a
+refresher, there are plenty of good info on the web, i.e. http://rogerdudler.github.io/git-guide/is a good refresher.
+
+The typical source management workflow is as follows: 
+* in a local repo clone, create a branch off master and work on it
+* when local test is done and it's time to validate with CI tests, push your branch
+to GitHub and make sure CI passes
+* when you branch is ready, rebase to latest master and squash commit
+if needed - each commit should have 
+a distinct functionality you want to handle as a unit of work. Then re-push your 
+branch, with "push -f" if needed.
+* create a PR on github using already pushed branch. Please make sure the title, 
+description and "tested:" section are accurate.
+* When applying review coments, create a new commit so the diff can be easily seen
+* by reviewers.
+* when ready to merge, squash multiple "review" commits (if any) into one, rebase
+to master and re-push, This is done to make sure CI still passes.
+* merge the PR
+* With any questions/issues about the steps, telegram to cna-storage
 
 ## Managing GO Dependencies
 
