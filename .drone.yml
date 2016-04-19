@@ -60,6 +60,25 @@ build:
       - export VM2=`govc vm.ip ubuntu-2`
       - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+    when:
+      event: [push, pull_request]
+
+  test_tag:
+    image: kerneltime/vibauthor-and-go:0.5
+    privileged: true
+    environment:
+      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
+      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
+      - GOVC_INSECURE=1
+      - GOVC_URL=$$CI_ESX_IP
+    commands:
+      - export PKG_VERSION=$$TAG
+      - export VM1=`govc vm.ip ubuntu`
+      - export VM2=`govc vm.ip ubuntu-2`
+      - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+    when:
+      event: tag
 
 matrix:
   GO_VERSION:
