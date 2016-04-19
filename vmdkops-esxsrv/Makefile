@@ -22,8 +22,9 @@
 
 # deliverables (placed by build)
 BIN := ../bin
-VIB := vmware-esx-vmdkops-1.0.0.vib
-OFFLINE_DEPOT := vmware-esx-vmdkops-1.0.0.zip
+PKG_VERSION ?= 0.1.TP-pre.$(shell git log --pretty=format:'%h' -n 1)
+VIB := vmware-esx-vmdkops-$(PKG_VERSION).vib
+OFFLINE_DEPOT := vmware-esx-vmdkops-$(PKG_VERSION).zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
