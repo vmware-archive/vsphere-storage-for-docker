@@ -21,7 +21,8 @@ import os
 import volumeKVStore as kv
 import cli_table
 
-volume_path = "/vmfs/volumes"
+import pyVim.connect
+
 
 def main():
     kv.init()
@@ -242,21 +243,28 @@ def get_datastores():
     if datastores != None:
         return datastores
 
-    datastores = []
-    for f in os.listdir(volume_path):
-        ds_path = os.path.join(volume_path, f)
-        if is_symlink(ds_path):
-            datastores.append((f, os.path.join(volume_path, os.readlink(ds_path), 'dockvols')))
+    si = pyVim.connect.Connect()
+    #  We are connected to ESX so chileEntity[0] is current DC/Host
+    ds_objects = si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
+    datastores = [(d.info.name, os.path.join(d.info.url, 'dockvols'))
+                  for d in ds_objects]
+    pyVim.connect.Disconnect(si)
+
     return datastores
 
 def get_volumes():
-    """ Return tuples of volumes, their datastore and their paths """
+    """ Return tuples of docker volumes, their datastore and their paths """
     volumes = []
     for (datastore, path) in get_datastores():
-        files = os.listdir(path)
-        for f in files:
-            if f.endswith('.vmdk') and not f.endswith('-flat.vmdk'):
-                volumes.append((path, f, datastore))
+        try:
+            files = os.listdir(path)
+        except OSError as e:
+            # dockvols may not exists on a datastore, so skip it
+            pass
+        else:
+            for f in files:
+                if f.endswith('.vmdk') and not f.endswith('-flat.vmdk'):
+                    volumes.append((path, f, datastore))
     return volumes
 
 def get_metadata(volPath):
