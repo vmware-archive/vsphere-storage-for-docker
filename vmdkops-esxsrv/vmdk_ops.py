@@ -123,7 +123,7 @@ def createVMDK(vmdkPath, volName, opts=""):
 		#TODO: check it is compliant format, and correct if possible
 		logging.debug("SETTING  SIZE to " + size)
 
-        cmd = "%s %s %s" % (vmdkCreateCmd, size, vmdkPath)
+        cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
         rc, out = RunCommand(cmd)
 
         if rc != 0:
@@ -150,20 +150,21 @@ def getVMDKBacking(vmdkPath):
 
    f = open(vmdkPath)
    data = f.read()
-
-   # Paranoia??
-   if data is None:
-      return None
+   f.close()
 
    # For now we look for a VSAN URI, later vvol.
    exp = re.compile("RW .* VMFS \"vsan:\/\/(.*)\"")
 
-   uuid = exp.search(data)
+   try:
+      uuid = exp.search(data)
+   except:
+      return None
+
    if uuid:
       logging.debug("Got volume UUID %s" % uuid.group(1)) 
       # Objtool creates a link thats usable to format the
       # vsan object.
-      cmd = "%s %s" % (objToolCmd, uuid.group(1))
+      cmd = "{0} {1}".format(objToolCmd, uuid.group(1))
       rc, out = RunCommand(cmd) 
       fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
       if rc == 0 and os.path.isfile(fpath):
@@ -175,11 +176,11 @@ def formatVmdk(vmdkPath, volName):
         backing = getVMDKBacking(vmdkPath)
 
         if backing is None:
-           logging.warning ("Failed to get backing for %s" % vmdkPath)
+           logging.warning ("Failed to format %s." % vmdkPath)
            return err("Failed to format %s." % vmdkPath)
 
         # Format it as ext4.
-        cmd = "%s %s %s" % (mkfsCmd, volName, backing)
+        cmd = "{0} {1} {2}".format(mkfsCmd, volName, backing)
         rc, out = RunCommand(cmd)
 
         if rc != 0:
@@ -193,7 +194,7 @@ def formatVmdk(vmdkPath, volName):
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
-        cmd = "%s %s" % (vmdkDeleteCmd, vmdkPath)
+        cmd = "{0} {1}".format(vmdkDeleteCmd, vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
             return err("Failed to remove %s. %s" % (vmdkPath, out))
@@ -246,7 +247,7 @@ def getVolPath(vmConfigPath):
        return path
 
     # The osfs tools are usable for all datastores
-    cmd = "%s %s" % (osfsMkdirCmd, path)
+    cmd = "{0} {1}".format(osfsMkdirCmd, path)
     rc, out = RunCommand(cmd)
     if rc != 0:
        logging.warning("Failed to create " + path)
