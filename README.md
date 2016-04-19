@@ -24,10 +24,9 @@ VM:
 - Ubuntu 14.04 64 bit (using systemd)
 - Photon
 
-The VM plugin code is tested against the listed enumerated above but it should
-work against any 64 bit distro with systemd installed.
-
 ## Installation
+The VM plugin code is tested against the list enumerated above,
+but it should work against any 64 bit distro with systemd installed.
 
 In order to get going, pick the latest stable release (for now
 only pre TP release is available) from

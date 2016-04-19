@@ -48,7 +48,7 @@ Copy-paste relevant snippets from log file, code. Use github markdown language f
 
 ```
 ## Typical Developer Workflow - build, test, rinse, repeat
-Use `make` or `make dockerbuild` to build
+Use `make` or `make dockerbuild` to build.
 
 Build environment is described in README.md. The result of the build is a set
 of binaries in ./bin directory.
@@ -130,24 +130,28 @@ If additional python scripts are added to the ESX code, update the vib descripti
 ./vmdkops-esxsrv/descriptor.xml
 ```
 ## Typical Developer Workflow - git, branch management and pull requests
-This section are for devs working directly on our repo, and is intended to clarify
-recommended process for internal developers.
+This section is for developers working directly on our git repo,
+and is intended to clarify recommended process for internal developers.
 
-We use git and GitHub and follow customary process for dev branches and pull
-requests. The next below assumes familiarity with git concepts. If you need a
-refresher, there are plenty of good info on the web, i.e. http://rogerdudler.github.io/git-guide/is a good refresher.
+We use git and GitHub, and follow customary process for dev branches and pull
+requests. The text below assumes familiarity with git concepts. If you need a
+refresher on git, there is plenty of good info on the web,
+e.g. http://rogerdudler.github.io/git-guide/is.
 
 The typical source management workflow is as follows: 
 * in a local repo clone, create a branch off master and work on it
+(e.g. `git checkout -b <your_branch> master`)
 * when local test is done and it's time to validate with CI tests, push your branch
 to GitHub and make sure CI passes
-* when you branch is ready, rebase to latest master and squash commit
-if needed - each commit should have 
+(e.g. `git push origin <your_branch>`)
+* when you branch is ready, rebase to latest master
+ and squash commit if needed (e.g. `git fetch origin; git rebase -i origin/master`).
+ Each commit should have 
 a distinct functionality you want to handle as a unit of work. Then re-push your 
 branch, with "push -f" if needed.
 * create a PR on github using already pushed branch. Please make sure the title, 
 description and "tested:" section are accurate.
-* When applying review coments, create a new commit so the diff can be easily seen
+* When applying review comments, create a new commit so the diff can be easily seen
 * by reviewers.
 * when ready to merge, squash multiple "review" commits (if any) into one, rebase
 to master and re-push, This is done to make sure CI still passes.
