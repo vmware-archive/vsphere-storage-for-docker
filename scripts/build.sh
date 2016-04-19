@@ -81,8 +81,16 @@ dir=$GOPATH/src/github.com/vmware/$plugin
 
 if [ "$1" == "rpm" ] || [ "$1" == "deb" ]
 then
-  $DOCKER run --rm -v $PWD:$dir -w $dir $plug_pkg_container make $1
+  $DOCKER run --rm  \
+    -e "PKG_VERSION=$PKG_VERSION" \
+    -v $PWD:$dir \
+    -w $dir \
+    $plug_pkg_container \
+    make $1
 else
   docker_socket=/var/run/docker.sock
-  $DOCKER run --privileged --rm -v $docker_socket:$docker_socket -v $PWD:$dir -w $dir $plug_container make $1
+  $DOCKER run --privileged --rm \
+    -e "PKG_VERSION=$PKG_VERSION" \
+    -v $docker_socket:$docker_socket  \
+    -v $PWD:$dir -w $dir $plug_container make $1
 fi

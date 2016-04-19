@@ -1,9 +1,26 @@
+clone:
+    path: github.com/vmware/docker-vmdk-plugin
+    tags: true
+
 build:
-  build:
+  build_dev:
     image: kerneltime/vibauthor-and-go:0.5
     commands:
       - go get github.com/golang/lint/golint
       - make build
+    when:
+      event: [push, pull_request]
+
+
+  build_tag:
+    image: kerneltime/vibauthor-and-go:0.5
+    commands:
+      - export PKG_VERSION=$$TAG
+      - echo $PKG_VERSION
+      - go get github.com/golang/lint/golint
+      - make build
+    when:
+      event: tag
 
   fpm:
     privileged: true
@@ -13,15 +30,22 @@ build:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - docker build -t vmware/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
-    when:
-      success: true
 
   package:
     image: vmware/fpm
     commands:
       - make deb rpm
     when:
-      success: true
+      event: [push, pull_request]
+
+  package_tag:
+    image: vmware/fpm
+    commands:
+      - export PKG_VERSION=$$TAG
+      - echo $PKG_VERSION
+      - make deb rpm
+    when:
+      event: tag
 
   test:
     image: kerneltime/vibauthor-and-go:0.5
@@ -36,8 +60,6 @@ build:
       - export VM2=`govc vm.ip ubuntu-2`
       - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-    when:
-      success: true
 
 matrix:
   GO_VERSION:
@@ -57,3 +79,14 @@ publish:
     storage_driver: overlay
     when:
       branch: master
+
+  github_release:
+    api_key: $$GITHUB_TOKEN
+    files:
+      - bin/*.deb
+      - bin/*.rpm
+      - bin/*.vib
+      - bin/*.zip
+    when:
+      repo: vmware/docker-vmdk-plugin
+      event: tag

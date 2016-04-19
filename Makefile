@@ -16,7 +16,17 @@
 # Makefile for Docker data volume VMDK plugin
 
 # Guest Package Version
-PKG_VERSION := 0.1
+
+# PKG_VERSION is either set externally as part of a build off a tag or
+# suffixed with a sha1 of the most recent commit to the prefix of the
+# most recent tag. Tagged builds use the externally defined version,
+# developer builds use a sha1 of the most recent commit.
+PKG_VERSION ?= "$(shell \
+	       git describe --tags `git rev-list --tags --max-count=1`\
+	       ).$(shell \
+	       git log --pretty=format:'%h' -n 1)"
+
+export PKG_VERSION
 EPOCH := 0
 
 # Place binaries here
@@ -54,7 +64,7 @@ PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 # all binaries for VMs - plugin and tests
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
 
-VIBFILE := vmware-esx-vmdkops-1.0.0.vib
+VIBFILE := vmware-esx-vmdkops-$(PKG_VERSION).vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
 # plugin name, for go build
