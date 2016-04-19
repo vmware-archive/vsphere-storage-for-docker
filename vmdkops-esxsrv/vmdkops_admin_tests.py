@@ -152,36 +152,41 @@ class TestLs(unittest.TestCase):
 
     def setUp(self):
         """ Setup run before each test """
-        for (datastore, path) in vmdkops_admin.get_datastores():
-            self.mkdir(path)
+        self.vol_count = 0
         self.cleanup()
-        for id in range(5):
-            volName = 'testvol'+str(id)
-            fullpath = os.path.join(path, volName+'.vmdk')
-            self.assertEqual(None, vmdk_ops.createVMDK(vmdkPath=fullpath, volName=volName))
+        for (datastore, path) in vmdkops_admin.get_datastores():
+            if not self.mkdir(path):
+                continue
+            for id in range(5):
+                volName = 'testvol'+str(id)
+                fullpath = os.path.join(path, volName+'.vmdk')
+                self.assertEqual(None, vmdk_ops.createVMDK(vmdkPath=fullpath, volName=volName))
+                self.vol_count += 1
 
     def tearDown(self):
         """ Cleanup after each test """
         self.cleanup()
 
     def mkdir(self, path):
-        """ Create a directory if it doesn't exist. Ignore errors. """
-        try:
-            os.mkdir(path)
-        except os.error as e:
-            print("warning: mkdir failed for", path, e)
-            pass
+        """ Create a directory if it doesn't exist. Returns pathname or None. """
+        if not os.path.isdir(path):
+            try:
+                os.mkdir(path)
+            except OSError as e:
+                return None
+        return path
+
 
     def cleanup(self):
         for v in self.get_testvols():
-            vmdk_ops.removeVMDK(os.path.join(v[0], v[1]))
+            self.assertEqual(None, vmdk_ops.removeVMDK(os.path.join(v[0], v[1])))
 
     def get_testvols(self):
         return [x for x in vmdkops_admin.get_volumes() if x[1].startswith('testvol')]
 
     def test_ls_helpers(self):
         volumes = self.get_testvols()
-        self.assertEqual(len(volumes), 5)
+        self.assertEqual(len(volumes), self.vol_count)
         for v in volumes:
             metadata = vmdkops_admin.get_metadata(os.path.join(v[0], v[1]))
             self.assertNotEqual(None, metadata)

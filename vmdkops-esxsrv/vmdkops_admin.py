@@ -259,11 +259,12 @@ def get_volumes():
         try:
             files = os.listdir(path)
         except OSError as e:
-            # dockvols may not exists on a volume, so skip it
+            # dockvols may not exists on a datastore, so skip it
             pass
-        for f in files:
-            if f.endswith('.vmdk') and not f.endswith('-flat.vmdk'):
-                volumes.append((path, f, datastore))
+        else:
+            for f in files:
+                if f.endswith('.vmdk') and not f.endswith('-flat.vmdk'):
+                    volumes.append((path, f, datastore))
     return volumes
 
 def get_metadata(volPath):
