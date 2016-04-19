@@ -249,12 +249,7 @@ Do not restart docker if machine running drone is also a VM in the devsetup.
          for vol in $volumes
          do
 ```
- 
- .PHONY: clean-esx
- clean-esx:
-```
-
-* Setup ssh keys on linux nodes & ESX
+#### Setup ssh keys on linux nodes & ESX
 
 Linux:
 ```
@@ -268,7 +263,7 @@ cat ~/.ssh/id_rsa.pub | ssh $NODE " cat >> /etc/ssh/keys-root/authorized_keys"
 ```
 Test SSH keys, login form the drone node should not require typing in a password.
 
-* Run drone exec
+#### Run drone exec
 
 ```
 cd cd $GOPATH/src/github.com/vmware/docker-vmdk-plugin/

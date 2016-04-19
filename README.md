@@ -1,35 +1,57 @@
 [![Build Status](https://ci.vmware.run/api/badges/vmware/docker-vmdk-plugin/status.svg)](https://ci.vmware.run/vmware/docker-vmdk-plugin)
 
-# Quick steps to get going
+# Docker VMDK Plugin
 
-In order to get going, you need to build the plugin, configure test environment
-and deploy the plugin to this environment. 
-- A simplest way to build is to use
-docker - see "Build using docker (Recommended)" section below
-- For test, you need ESX and one (or two) Guest Linux VMs inside the ESX. Check out Contributing.md for details on test environment
-- once you are done, you can deploy and test using the following:
+This repo hosts the docker volume plugin for VMware vSphere. The plugin allows storage owned by vSphere to be managed and consumed via the [docker volume plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
+
+## Tested on
+
+ESXi:
+
+- 6.0
+- 6.0 u1
+* 6.0 u2
+
+Docker: 1.9 and higher
+
+VM: 
+- Ubuntu 14.04 64 bit (using systemd)
+- Photon
+
+The VM plugin code is tested against the listed enumerated above but it should work against any 64 bit distro with systemd installed.
+
+# Installation
+
+In order to get going, pick the latest stable release (for now only pre TP release is available) from https://github.com/vmware/docker-vmdk-plugin/releases.
+
+Install the vSphere side of code (vib or offline depot), [please refer to vSphere documentation.](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
+
+Same sample options:
+```
+# Log on to ESX after copying the vib over and run
+localcli software vib install --no-sig-check  -v <vib_name>.vib
+```
+
+Or use the helper scripts part of the build and test infrasructure, refer [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 ```
-# Build - Requires docker installed.
-make
-# Deploy - requires test bed prepared
-ESX=10.20.105.54 VM=10.20.105.121 make deploy-esx depoy-vm
+# DEB
+sudo dpkg -i docker-vmdk-plugin_v0.1.pre-tp_amd64.deb
+# RPM
+rpm -ivh docker-vmdk-plugin-v0.1.pre_tp-1.x86_64.rpm
+```
 
+For the VM side docker plugin, use the deb or rpm file to install the plugin, requires systemd for starting and stopping the plugin. For manual steps not using rpm or deb file please refer CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
+
+# Using the plugin.
+```
 # Docker commands to use plugin
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 docker volume ls
 docker volume inspect MyVolume
 docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
-docker volume rm MyVolume # SHOULD FAIL - still used by container
 docker rm my_container
-docker volume rm MyVolume # Should pass
-
-# To run on ESX manually ("make deploy-esx" does it automatically)
-python -B /usr/lib/vmware/vmdkops/bin/vmci_srv.py
-
-# To run on Linux guest manually ("make deploy-vm" does it automatically)
-sudo /usr/local/bin/docker-vmdk-plugin
-
+docker volume rm MyVolume 
 ```
 
 To read more about code development and testing read [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
@@ -63,78 +85,8 @@ The end results is that "docker volume create --drive vmdk" is capable
 of creating VMDK disks on enclosing ESX host, and using the new volume auto
 attaches and mounts the storage so it is immediately usable
 
-## To build:
-
-Build prerequisites:
- - Linux with Docker (1.8+ is supported)
- - git
- - make
-
-Build results are in ./bin.
-
-### Build using docker (Recommended)
-
-Use it when you do not have GO, vibauthor and 32 bit C libraries on your machine,
-or do not plan to impact your GO projects.
-
-```Shell
-git clone https://github.com/vmware/docker-vmdk-plugin.git
-cd docker-vmdk-plugin
-make # Build and run unit tests.
-make clean
-```
-
-There are also the following targets:
-```
-make clean       # removes binaries build by 'make'
-make clean-esx   # uninstalls from esx
-make clean-vm    # uninstalls from vm
-make clean-all   # all 3 steps above
-
-make deploy-vm   # deploys to guest VMs only 
-make deploy-esx  # deploys to ESX VM only
-make deploy-all  # deploys to both ESX and VM (see CONTRIBUTING.md)
-make deploy      # same as deploy-all
-
-make test        # runs whatever unit tests we have, locally on build machine
-make test-esx    # Runs ESX-side remote unit tests
-make test-vm     # Runs VM-side remote unit tests
-make testremote  # runs ESX and VM side remote unit tests, and remote end2end sanity tests
-make test-all    # runs all tests - first local, then remote
-```
-Note that `make testremote` reads log output from the plugin at `/var/log/docker-vmdk-plugin.log`.
-
-For more details refer to [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
-
-### Build on Photon TP2 Minimal
-
-Photon TP2 Minimal does not have git or make installed, and does not
-not start docker by default, so you need to do this before running make:
-
-```Shell
- # Photon TP2 Minimal only:
-tyum install -y git
-tyum install -y make
-systemctl start docker
-```
-and then the git/cd/make sequence.
-
-### Build without Docker
-
-This build requires
-- GO to be installed
-- vibauthor
-- 32 bit libc headers (as it is needed for ESX-side vSocket shim compilation.)
-
-With these prerequisites, you can do the following to build:
-
-```
-mkdir -p $(GOPATH)/src/github.com/vmware
-cd $(GOPATH)/src/github.com/vmware
-git clone https://github.com/vmware/docker-vmdk-plugin.git
-cd docker-vmdk-plugin
-make build
-```
-
-# WIP
+# Demo
 To be continued...
+
+# Contact
+[CNA Storage](cna-storage <cna-storage@vmware.com>)
