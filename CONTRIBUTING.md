@@ -8,23 +8,27 @@
 ## Code Contribution guidelines
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
-* Each PR must be accompaned with unit/integration tests
+* Each PR must be accompanied with unit/integration tests
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
 * Locally run integration tests. 
 * Squash your commits before you publish pull request.
 * If there are any documentation changes then they must be in the same PR.
-* We don't have formal coding conventions at this point. Make sure your code follows same style and convention as existing code.
+* We don't have formal coding conventions at this point.
+Make sure your code follows same style and convention as existing code.
 
 See  [Typical Developer Workflow](#typical-developer-workflow) to get started. 
 
 
 ### Merge Approvals:
-* Pull request requires a minmium of 2 approvals, given via "Ship it", "LGTM" or "+1" comments.
-* Author is responsble for resolving conflicts, if any, and merging pull request. 
-* After merge, you must ensure integration tests pass successfully. Failure to pass test would result in reverting a change.
+* Pull request requires a minimum of 2 approvals, given via "Ship it",
+"LGTM" or "+1" comments.
+* Author is responsible for resolving conflicts, if any, and merging pull request. 
+* After merge, you must ensure integration tests pass successfully.
+Failure to pass test would result in reverting a change.
 
-Do not hesistate to ask your colleagues if you need help or have questions. Post your question to Telegram or drop a line to cna-storage@vmware.com
+Do not hesitate to ask your colleagues if you need help or have questions.
+Post your question to Telegram or drop a line to cna-storage@vmware.com
 
 ## Bug filing guidelines
 * Search for duplicates!
@@ -32,7 +36,7 @@ Do not hesistate to ask your colleagues if you need help or have questions. Post
 * Suggested template:
 
 ```
-Envionment Details: (#VMs, ESX, Datastore, Application etc)
+Environment Details: (#VMs, ESX, Datastore, Application etc)
 
 Steps to Reproduce:
 1.
@@ -47,7 +51,8 @@ Triage:
 Copy-paste relevant snippets from log file, code. Use github markdown language for basic formatting. 
 
 ```
-## Typical Developer Workflow - build, test, rinse, repeat
+## Typical Developer Workflow
+### Build, test, rinse, repeat
 Use `make` or `make dockerbuild` to build.
 
 Build environment is described in README.md. The result of the build is a set
@@ -129,7 +134,7 @@ If additional python scripts are added to the ESX code, update the vib descripti
 ```
 ./vmdkops-esxsrv/descriptor.xml
 ```
-## Typical Developer Workflow - git, branch management and pull requests
+### git, branch management and pull requests
 This section is for developers working directly on our git repo,
 and is intended to clarify recommended process for internal developers.
 
@@ -138,24 +143,26 @@ requests. The text below assumes familiarity with git concepts. If you need a
 refresher on git, there is plenty of good info on the web,
 e.g. http://rogerdudler.github.io/git-guide/is.
 
-The typical source management workflow is as follows: 
+The typical source management workflow is as follows:
 * in a local repo clone, create a branch off master and work on it
 (e.g. `git checkout -b <your_branch> master`)
 * when local test is done and it's time to validate with CI tests, push your branch
 to GitHub and make sure CI passes
 (e.g. `git push origin <your_branch>`)
 * when you branch is ready, rebase to latest master
- and squash commit if needed (e.g. `git fetch origin; git rebase -i origin/master`).
- Each commit should have 
+and squash commit if needed (e.g. `git fetch origin; git rebase -i origin/master`).
+Each commit should have
 a distinct functionality you want to handle as a unit of work. Then re-push your 
-branch, with "push -f" if needed.
+branch, with `git push origin <your_branch>`, or, if needed,
+`git push -f origin <your_branch>`
 * create a PR on github using already pushed branch. Please make sure the title, 
 description and "tested:" section are accurate.
 * When applying review comments, create a new commit so the diff can be easily seen
-* by reviewers.
-* when ready to merge, squash multiple "review" commits (if any) into one, rebase
-to master and re-push, This is done to make sure CI still passes.
-* merge the PR
+by reviewers.
+* When ready to merge (see "Merge Approvals" section above), squash multiple
+"review" commits (if any) into one, rebase to master and re-push.
+This is done to make sure CI still passes.
+* Then merge the PR.
 * With any questions/issues about the steps, telegram to cna-storage
 
 ## Managing GO Dependencies
@@ -232,7 +239,8 @@ cd $GOPATH/src/github.com/vmware
 git clone https://github.com/vmware/docker-vmdk-plugin.git
 ```
 
-* Edit the .drone.yml file to reflect the devsetup. If the machine running drone is also one of the target machines, edit the Makefile to not restart docker.
+* Edit the .drone.yml file to reflect the dev setup.
+If the machine running drone is also one of the target machines, edit the Makefile to not restart docker.
 
 Sample .drone.yml :
 ```

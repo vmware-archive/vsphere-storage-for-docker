@@ -45,7 +45,7 @@ Same sample options:
 # Log on to ESX after copying the vib over and run
 localcli software vib install --no-sig-check  -v /tmp/<vib_name>.vib
 ```
-Or use the helper scripts part of the build and test infrasructure, refer
+Or use the helper scripts part of the build and test infrastructure, refer
 [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 ### Plugin installation on the docker host (VM)
