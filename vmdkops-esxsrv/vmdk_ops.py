@@ -41,6 +41,7 @@ import time
 import logging
 import signal
 import sys
+import re
 sys.dont_write_bytecode = True
 
 from vmware import vsi
@@ -54,15 +55,24 @@ from pyVmomi import VmomiSupport, vim, vmodl
 
 import volumeKVStore as kv
 
-# defaults
+# Location of utils used by the plugin.
+BinLoc = "/usr/lib/vmware/vmdkops/bin/"
+
+# External tools used by the plugin.
+objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u "
+osfsMkdirCmd = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
+mkfsCmd = "/usr/lib/vmware/vmdkops/bin/mkfs.ext4 -qF -L "
+vmdkCreateCmd = "/sbin/vmkfstools -d thin -c "
+vmdkDeleteCmd = "/sbin/vmkfstools -U "
+
+# Defaults
 DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
 MaxDescrSize = 10000     # we assume files smaller that that to be descriptor files
 MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limited in size
 MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
-BinLoc  = "/usr/lib/vmware/vmdkops/bin/"
 
-# default log file. Should be synced with CI and make wrappers in ../*scripts
+# Default log file. Should be synced with CI and make wrappers in ../*scripts
 LogFile = "/var/log/vmware/docker-vmdk-plugin.log"
 
 def LogSetup(logfile):
@@ -113,7 +123,7 @@ def createVMDK(vmdkPath, volName, opts=""):
 		#TODO: check it is compliant format, and correct if possible
 		logging.debug("SETTING  SIZE to " + size)
 
-        cmd = "/sbin/vmkfstools -d thin -c {0} {1}".format(size, vmdkPath)
+        cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
         rc, out = RunCommand(cmd)
 
         if rc != 0:
@@ -131,13 +141,46 @@ def createVMDK(vmdkPath, volName, opts=""):
 
         return formatVmdk(vmdkPath, volName)
 
+# Return a backing file path for given vmdk path or none
+# if a backing can't be found.
+def getVMDKBacking(vmdkPath):
+   flatBacking = vmdkPath.replace(".vmdk", "-flat.vmdk")
+   if os.path.isfile(flatBacking):
+      return flatBacking
+
+   f = open(vmdkPath)
+   data = f.read()
+   f.close()
+
+   # For now we look for a VSAN URI, later vvol.
+   exp = re.compile("RW .* VMFS \"vsan:\/\/(.*)\"")
+
+   try:
+      uuid = exp.search(data)
+   except:
+      return None
+
+   if uuid:
+      logging.debug("Got volume UUID %s" % uuid.group(1)) 
+      # Objtool creates a link thats usable to format the
+      # vsan object.
+      cmd = "{0} {1}".format(objToolCmd, uuid.group(1))
+      rc, out = RunCommand(cmd) 
+      fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
+      if rc == 0 and os.path.isfile(fpath):
+         return fpath
+   return None
+
 def formatVmdk(vmdkPath, volName):
-        # now format it as ext4:
-        # WARNING  this won't work on VVOL/VSAN
-        # TODO: need to get backing
-        # block device differently (in vsan via objtool create)
-        backing = vmdkPath.replace(".vmdk", "-flat.vmdk")
-        cmd = "{0}/mkfs.ext4   -F -L {1} -q {2}".format(BinLoc, volName, backing)
+        # Get backing for given vmdk path.
+        backing = getVMDKBacking(vmdkPath)
+
+        if backing is None:
+           logging.warning ("Failed to format %s." % vmdkPath)
+           return err("Failed to format %s." % vmdkPath)
+
+        # Format it as ext4.
+        cmd = "{0} {1} {2}".format(mkfsCmd, volName, backing)
         rc, out = RunCommand(cmd)
 
         if rc != 0:
@@ -151,7 +194,7 @@ def formatVmdk(vmdkPath, volName):
 #returns error, or None for OK
 def removeVMDK(vmdkPath):
 	logging.info("*** removeVMDK: " + vmdkPath)
-        cmd = "/sbin/vmkfstools -U {0}".format(vmdkPath)
+        cmd = "{0} {1}".format(vmdkDeleteCmd, vmdkPath)
         rc, out = RunCommand(cmd)
         if rc != 0:
             return err("Failed to remove %s. %s" % (vmdkPath, out))
@@ -193,16 +236,26 @@ def detachVMDK(vmdkPath, vmName):
 	return disk_detach(vmdkPath, vm)
 
 
-# check existence (and creates if needed) the path
-# NOTE / TBD: for vsan we may need to use osfs_mkdir instead of regular os.mkdir
+# Check existence (and creates if needed) the path
 def getVolPath(vmConfigPath):
-    path = os.path.join("/".join(vmConfigPath.split("/")[0:4]),  DockVolsDir)
-    try:
-        os.mkdir(path)
-        logging.info(path +" created")
-    except OSError:
-		pass
-    return path
+    # The volumes folder is created in the parent of the given VM's folder.
+    path = os.path.join(os.path.dirname(os.path.dirname(vmConfigPath)), DockVolsDir)
+
+    if os.path.isdir(path):
+       # If the path exists then return it as is.
+       logging.debug("Found %s, returning" % path)
+       return path
+
+    # The osfs tools are usable for all datastores
+    cmd = "{0} {1}".format(osfsMkdirCmd, path)
+    rc, out = RunCommand(cmd)
+    if rc != 0:
+       logging.warning("Failed to create " + path)
+    else:
+       logging.info(path +" created")
+       return path
+
+    return None
 
 def getVmdkName(path, volName):
     # form full name as <path-to-volumes>/<volname>.vmdk
@@ -210,8 +263,12 @@ def getVmdkName(path, volName):
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
-	# get /vmfs/volumes/<volid> path on ESX:
-    path     = getVolPath(configPath)
+    # get /vmfs/volumes/<volid> path on ESX:
+    path = getVolPath(configPath)
+
+    if path is None:
+       return err("Failed initializing volume path " + path)
+
     vmdkPath = getVmdkName(path, volName)
 
 
@@ -274,13 +331,20 @@ def findDeviceByPath(vmdkPath, vm):
  		if type(d) != vim.vm.device.VirtualDisk:
  			continue
 
- 		# TODO: use device_disk_uuid = d.backing.uuid  # FFU
-		# for now - ugly hack to convert "[ds] dir/name" to fullpath
-		# we also assume homogeneous mounts here... well, we are on 1 esx after all
-		dsPath = d.backing.datastore.host[0].mountInfo.path
-		dev = os.path.join(dsPath, d.backing.fileName.split(" ")[1])
-		if dev == vmdkPath:
-			logging.debug("findDeviceByPath: MATCH: " + vmdkPath)
+                # Disks of all backing have a backing object with
+                # a filename attribute in it. The filename identifies the
+                # virtual disk by name and can be used to try a match
+                # with the given name. Filename has format like,
+                # "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>".
+                backingDisk = d.backing.fileName.split(" ")[1]
+
+                # Construct the parent dir and vmdk name, resolving
+                # links if any.
+                dvolDir = os.path.dirname(vmdkPath)
+                realDvolDir = os.path.basename(os.path.realpath(dvolDir))
+                virtualDisk = realDvolDir + "/" + os.path.basename(vmdkPath)
+		if virtualDisk == backingDisk:
+			logging.debug("findDeviceByPath: MATCH: " + backingDisk)
 			return d
 
 	return None
@@ -443,6 +507,9 @@ def disk_detach(vmdkPath, vm):
      if volMeta:
         volMeta['status'] = 'detached'
         try:
+            # The attach may have failed and not added the
+            # key resulting in an exception here when removing
+            # a non-existent key.
             del volMeta['attachedVMUuid']
         except KeyError as e:
             logging.exception(e, extra=volMeta)
@@ -531,6 +598,18 @@ def main():
     except Exception, e:
     	logging.exception(e)
 
+def getTaskList(propCollector, tasks):
+    # Create filter
+    obj_specs = [vmodl.query.PropertyCollector.ObjectSpec(obj=task)
+                 for task in tasks]
+    property_spec = vmodl.query.PropertyCollector.PropertySpec(type=vim.Task,
+                                                               pathSet=[],
+                                                               all=True)
+    filter_spec = vmodl.query.PropertyCollector.FilterSpec()
+    filter_spec.objectSet = obj_specs
+    filter_spec.propSet = [property_spec]
+    return propCollector.CreateFilter(filter_spec, True)
+
 #-----------------------------------------------------------
 #
 # Support for 'wait for task completion'
@@ -552,18 +631,17 @@ def wait_for_tasks(service_instance, tasks):
     """Given the service instance si and tasks, it returns after all the
    tasks are complete
    """
-    property_collector = service_instance.content.propertyCollector
     task_list = [str(task) for task in tasks]
-    # Create filter
-    obj_specs = [vmodl.query.PropertyCollector.ObjectSpec(obj=task)
-                 for task in tasks]
-    property_spec = vmodl.query.PropertyCollector.PropertySpec(type=vim.Task,
-                                                               pathSet=[],
-                                                               all=True)
-    filter_spec = vmodl.query.PropertyCollector.FilterSpec()
-    filter_spec.objectSet = obj_specs
-    filter_spec.propSet = [property_spec]
-    pcfilter = property_collector.CreateFilter(filter_spec, True)
+    property_collector = service_instance.content.propertyCollector
+    try:
+       pcfilter = getTaskList(property_collector, tasks)
+    except vim.fault.NotAuthenticated:
+       # Reconnect and retry
+       logging.warning ("Reconnecting and retry")
+       si = connectLocal()
+       property_collector = si.content.propertyCollector
+       pcfilter = getTaskList(property_collector, tasks)
+
     try:
         version, state = None, None
         # Loop looking for updates till the state moves to a completed state.
