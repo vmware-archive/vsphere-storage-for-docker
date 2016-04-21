@@ -23,6 +23,15 @@
 import logging
 import kvESX
 
+# Keys used in the volume KV, add to this list when adding a new key.
+KEY_STATUS = 'status'
+KEY_VM_UUID = 'attachedVMUuid'
+KEY_VOL_OPTS = 'volOpts'
+
+# Values for keys used for the volume KV.
+ATTACHED = 'attached'
+DETACHED = 'detached'
+
 # Default meta-data for a volume created by the plugin, keys can be
 # added or removed during the life of a volume. The below list
 # is whats included by default when a kv store is created.
@@ -38,10 +47,7 @@ def init():
    kvESX.kvESXInit()
 
 # Create a side car KV store for given volpath
-def create(volPath, status, opts):
-   volMeta = {'status': status,
-              'volOpts': opts};
-
+def create(volPath, volMeta):
    res = kvESX.create(volPath, volMeta)
 
    if res != True:
@@ -62,7 +68,7 @@ def getAll(volPath):
 def setAll(volPath, volMeta):
    if volMeta:
        return kvESX.save(volPath, volMeta)
-   return None
+   return True
 
 # Set a string value for a given key(index)
 def set(volPath, key, val):
