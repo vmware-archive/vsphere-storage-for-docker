@@ -133,7 +133,8 @@ def createVMDK(vmdkPath, volName, opts=""):
                 return err("Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath)
 
         # Create the kv store for the disk before its attached
-        ret = kv.create(vmdkPath, "detached", opts)
+        volMeta = {kv.KEY_STATUS: kv.DETACHED, kv.KEY_VOL_OPTS: opts};
+        ret = kv.create(vmdkPath, volMeta)
         if ret != True:
            logging.warning ("Failed creating meta data store for %s" % vmdkPath)
            removeVMDK(vmdkPath)

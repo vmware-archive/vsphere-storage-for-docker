@@ -47,10 +47,7 @@ def init():
    kvESX.kvESXInit()
 
 # Create a side car KV store for given volpath
-def create(volPath, status, opts):
-   volMeta = {KEY_STATUS: status,
-              KEY_VOL_OPTS: opts};
-
+def create(volPath, volMeta):
    res = kvESX.create(volPath, volMeta)
 
    if res != True:
@@ -71,7 +68,7 @@ def getAll(volPath):
 def setAll(volPath, volMeta):
    if volMeta:
        return kvESX.save(volPath, volMeta)
-   return False
+   return True
 
 # Set a string value for a given key(index)
 def set(volPath, key, val):
