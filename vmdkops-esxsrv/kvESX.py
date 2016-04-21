@@ -103,7 +103,6 @@ def volOpenPath(volpath):
    ihandle = c_uint32(0)
    key = c_uint32(0)
    objHandle = c_uint32(0)
-   res = c_uint32(0)
 
    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key), pointer(dhandle), pointer(ihandle))
 
@@ -116,7 +115,6 @@ def volOpenPath(volpath):
 def create(volpath, kvDict):
    disk = c_uint32(0)
    objHandle = c_uint32(0)
-   res = c_uint32(0)
 
    disk = volOpenPath(volpath)
 
@@ -141,7 +139,6 @@ def create(volpath, kvDict):
 # Delete the the side car for the given volume
 def delete(volpath):
    disk = c_uint32(0)
-   res = c_uint32(0)
 
    disk = volOpenPath(volpath)
 

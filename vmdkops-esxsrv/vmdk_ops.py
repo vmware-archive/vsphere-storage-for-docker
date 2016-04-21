@@ -161,11 +161,11 @@ def getVMDKBacking(vmdkPath):
       return None
 
    if uuid:
-      logging.debug("Got volume UUID %s" % uuid.group(1)) 
+      logging.debug("Got volume UUID %s" % uuid.group(1))
       # Objtool creates a link thats usable to format the
       # vsan object.
       cmd = "{0} {1}".format(objToolCmd, uuid.group(1))
-      rc, out = RunCommand(cmd) 
+      rc, out = RunCommand(cmd)
       fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
       if rc == 0 and os.path.isfile(fpath):
          return fpath
@@ -349,6 +349,49 @@ def findDeviceByPath(vmdkPath, vm):
 
 	return None
 
+# Returns status (attached or detached or None) and the saved uuid if passed in uuid
+# conflicts with the saved one. Returns None for both status and uuid if the meta-data
+# is corrupt - attached with no uuid.
+def diskGetState(volMeta, uuid):
+   if not volMeta:
+      return None, None
+   if volMeta[kv.KEY_STATUS] != kv.DETACHED:
+      if kv.KEY_VM_UUID in volMeta:
+         if uuid == volMeta[kv.KEY_VM_UUID]:
+            # Disk is attached and saved uuid matches the one passed in.
+            return kv.ATTACHED, None
+         else:
+            return kv.ATTACHED, volMeta[kv.KEY_VM_UUID]
+      else:
+         return None, None
+   else:
+      # Disk is detached.
+      return kv.DETACHED, None
+
+# Update meta-data to attached status and persist
+# uuid.
+def diskSetAttached(vmdkPath, volMeta, uuid):
+   if not volMeta:
+      return False
+   volMeta[kv.KEY_STATUS] = kv.ATTACHED
+   volMeta[kv.KEY_VM_UUID] = uuid
+   return kv.setAll(vmdkPath, volMeta)
+
+# Update meta-data to detached status and remove
+# uuid.
+def diskSetDetached(vmdkPath, volMeta):
+   if not volMeta:
+      return False
+   volMeta[kv.KEY_STATUS] = kv.DETACHED
+   try:
+      # The attach may have failed and not added the
+      # key resulting in an exception here when removing
+      # a non-existent key.
+      del volMeta[kv.KEY_VM_UUID]
+   except KeyError as e:
+      logging.exception(e, extra=volMeta)
+   finally:
+      return kv.setAll(vmdkPath, volMeta)
 
 # attaches *existing* disk to a vm on a PVSCI controller
 # (we need PVSCSI to avoid SCSI rescans in the guest)
@@ -411,18 +454,23 @@ def disk_attach(vmdkPath, vm):
 
   # Check if this disk is already attached, skip the
   # attach below if it is
+  volMeta = kv.getAll(vmdkPath)
+  status, uuid = diskGetState(volMeta, vm.config.uuid)
 
-  status = kv.get(vmdkPath, 'status')
-  logging.info("Attaching {0} with status {1}".format(vmdkPath,  status))
-  if status and status != 'detached':
-     vmUuid = kv.get(vmdkPath, 'attachedVMUuid')
-     if vmUuid:
-        if vmUuid == vm.config.uuid:
-           msg = "{0} is already attached, skipping duplicate request.".format(vmdkPath)
-        else:
-           msg = "{0} is attached to VM ID={1}, skipping attach request".format(vmdkPath, vmUuid)
-        logging.warning(msg)
-        return err(msg)
+  # First check that the meta-data is valid.
+  if not status:
+     msg = "Meta-data for {0} is corrupt, attached disk with no VM uuid, failing attach request.".format(vmdkPath)
+     logging.warning(msg)
+     return err(msg)
+
+  if status != kv.DETACHED:
+     if not uuid:
+        msg = "{0} is already attached, skipping duplicate request.".format(vmdkPath)
+     else:
+        msg = "{0} is attached to VM ID={1}, skipping attach request".format(
+              vmdkPath, uuid)
+     logging.warning(msg)
+     return err(msg)
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
@@ -460,14 +508,19 @@ def disk_attach(vmdkPath, vm):
   spec.deviceChange = dev_changes
 
   try:
+      if not diskSetAttached(vmdkPath, volMeta, vm.config.uuid):
+         return err("Failed meta-data update for {0}, disallowing attach.".format(
+                    vmdkPath))
+
+      # Meta-data is updated, go ahead and reconfig VM. Any failure will revert
+      # the meta-data.
       wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-      volMeta = kv.getAll(vmdkPath)
-      if volMeta:
-         volMeta['status'] = 'attached'
-         volMeta['attachedVMUuid'] = vm.config.uuid
-         kv.setAll(vmdkPath, volMeta)
   except vim.fault.VimFault as ex:
-      return err(ex.msg)
+     # Revert volume state.
+     if not diskSetDetached(vmdkPath, volMeta):
+        logging.warning("Failed to revert meta-data for {0} on VM reconfig error.".format(
+                        vmdkPath))
+     return err(ex.msg)
   else:
     logging.info("disk attached %s unit - %d, bus - %d" % (vmdkPath, diskSlot, busNumber))
 
@@ -504,17 +557,9 @@ def disk_detach(vmdkPath, vm):
   try:
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
      volMeta = kv.getAll(vmdkPath)
-     if volMeta:
-        volMeta['status'] = 'detached'
-        try:
-            # The attach may have failed and not added the
-            # key resulting in an exception here when removing
-            # a non-existent key.
-            del volMeta['attachedVMUuid']
-        except KeyError as e:
-            logging.exception(e, extra=volMeta)
-        finally:
-            kv.setAll(vmdkPath, volMeta)
+     if not diskSetDetached(vmdkPath, volMeta):
+        logging.warning("Failed meta-data update for {0} on detach.".format(
+                        vmdkPath))
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)
