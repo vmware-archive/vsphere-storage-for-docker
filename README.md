@@ -24,10 +24,9 @@ VM:
 - Ubuntu 14.04 64 bit (using systemd)
 - Photon
 
-The VM plugin code is tested against the listed enumerated above but it should
-work against any 64 bit distro with systemd installed.
-
 ## Installation
+The VM plugin code is tested against the list enumerated above,
+but it should work against any 64 bit distro with systemd installed.
 
 In order to get going, pick the latest stable release (for now
 only pre TP release is available) from
@@ -46,7 +45,7 @@ Same sample options:
 # Log on to ESX after copying the vib over and run
 localcli software vib install --no-sig-check  -v /tmp/<vib_name>.vib
 ```
-Or use the helper scripts part of the build and test infrasructure, refer
+Or use the helper scripts part of the build and test infrastructure, refer
 [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 ### Plugin installation on the docker host (VM)
