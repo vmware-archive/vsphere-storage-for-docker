@@ -349,6 +349,21 @@ def findDeviceByPath(vmdkPath, vm):
 
 	return None
 
+# Generate an error when we failed to find a disk which should have been there
+def err_not_found(vmdkPath):
+	msg = "**** INTERNAL ERROR: can't find the disk to detach: " + vmdkPath
+	logging.error(msg)
+	return err(msg)
+
+# Return a dictionary with Unit/Bus for the vmdk (or error)
+def get_bus_info(vmdkPath, vm):
+	device = findDeviceByPath(vmdkPath, vm)
+	if not device:
+		return err_not_found(vmdkPath)
+	return {
+		'Unit': str(device.unitNumber),
+		'Bus': str(device.controllerKey - 1000)
+		}
 
 # attaches *existing* disk to a vm on a PVSCI controller
 # (we need PVSCSI to avoid SCSI rescans in the guest)
@@ -411,18 +426,18 @@ def disk_attach(vmdkPath, vm):
 
   # Check if this disk is already attached, skip the
   # attach below if it is
-
   status = kv.get(vmdkPath, 'status')
   logging.info("Attaching {0} with status {1}".format(vmdkPath,  status))
   if status and status != 'detached':
      vmUuid = kv.get(vmdkPath, 'attachedVMUuid')
      if vmUuid:
         if vmUuid == vm.config.uuid:
-           msg = "{0} is already attached, skipping duplicate request.".format(vmdkPath)
+           logging.warning("{0} is already attached, nothing to do".format(vmdkPath))
+           return get_bus_info(vmdkPath, vm)
         else:
            msg = "{0} is attached to VM ID={1}, skipping attach request".format(vmdkPath, vmUuid)
-        logging.warning(msg)
-        return err(msg)
+           logging.warning(msg)
+           return err(msg)
 
   # Now find a slot on the controller  , if needed
   if not diskSlot:
@@ -487,10 +502,7 @@ def disk_detach(vmdkPath, vm):
   device = findDeviceByPath(vmdkPath, vm)
 
   if not device:
-      # TBD: Docker asks to detach something not attached :-) .
-      msg = "**** INTERNAL ERROR: can't find the disk to detach: " + vmdkPath
-      logging.error(msg)
-      return err(msg)
+     return err_not_found(vmdkPath)
 
   spec = vim.vm.ConfigSpec()
   dev_changes = []
