@@ -323,8 +323,6 @@ def printVMInfo(si):
 		logging.info("Bios UUID     : " + summary.config.uuid)
 
 
-
-#
 def findDeviceByPath(vmdkPath, vm):
 
  	for d in vm.config.hardware.device:
@@ -346,24 +344,44 @@ def findDeviceByPath(vmdkPath, vm):
 		if virtualDisk == backingDisk:
 			logging.debug("findDeviceByPath: MATCH: " + backingDisk)
 			return d
-
 	return None
 
-# Generate an error when we failed to find a disk which should have been there
-def err_not_found(vmdkPath):
-	msg = "**** INTERNAL ERROR: can't find the disk to detach: " + vmdkPath
-	logging.error(msg)
-	return err(msg)
 
 # Return a dictionary with Unit/Bus for the vmdk (or error)
-def get_bus_info(vmdkPath, vm):
-	device = findDeviceByPath(vmdkPath, vm)
-	if not device:
-		return err_not_found(vmdkPath)
-	return {
-		'Unit': str(device.unitNumber),
-		'Bus': str(device.controllerKey - 1000)
-		}
+def busInfo(unitNumber, busNumber):
+    return {'Unit': str(unitNumber), 'Bus': str(busNumber)}
+
+def setStatusAttached(vmdkPath, uuid):
+    volMeta = kv.getAll(vmdkPath)
+    if not volMeta:
+        volMeta = []
+    volMeta['status'] = 'attached'
+    volMeta['attachedVMUuid'] = uuid
+    if not kv.setAll(vmdkPath, volMeta):
+        logging.warning("Attach: Failed to save Disk metadata", vmdkPath)
+
+def setStatusDetached(vmdkPath):
+    volMeta = kv.getAll(vmdkPath)
+    if not volMeta:
+        volMeta = []
+    volMeta['status'] = 'detached'
+    if 'attachedVMUuid' in volMeta:
+        del volMeta['attachedVMUuid']
+    if not kv.setAll(vmdkPath, volMeta):
+        logging.warning("Detach: Failed to save Disk metadata", vmdkPath)
+
+# retuns (attached, uuid) tuple, with uuid being None for 'detached' status
+def getStatusAttached(vmdkPath):
+    volMeta = kv.getAll(vmdkPath)
+    if not volMeta or 'status' not in volMeta:
+        return False, None
+    attached = (volMeta['status'] == "attached")
+    try:
+        uuid = volMeta['attachedVMUuid']
+    except:
+        uuid = None
+    return attached, uuid
+
 
 # attaches *existing* disk to a vm on a PVSCI controller
 # (we need PVSCSI to avoid SCSI rescans in the guest)
@@ -373,8 +391,9 @@ def disk_attach(vmdkPath, vm):
   # vSphere is very picky about unitNumbers and controllers of virtual
   # disks. Every controller supports 15 virtual disks, and the unit
   # numbers need to be unique within the controller and range from
-  # 0 to 15 with 7 being reserved. It is up to the API client to add
-  # controllers as needed. Controller keys are in the range of 1000 to 1003
+  # 0 to 15 with 7 being reserved (for older SCSI controllers).
+  # It is up to the API client to add
+  # controllers as needed. SCSI Controller keys are in the range of 1000 to 1003
   # (1000 + busNumber).
   max_scsi_controllers = 4
 
@@ -384,7 +403,6 @@ def disk_attach(vmdkPath, vm):
   devices = vm.config.hardware.device
 
   # Make sure we have a PVSCI and add it if we don't
-
   # TODO: add more controllers if we are out of slots.
   # for now we will throw if we are out of slots
 
@@ -424,22 +442,31 @@ def disk_attach(vmdkPath, vm):
     )
     dev_changes.append(controller_spec)
 
-  # Check if this disk is already attached, skip the
-  # attach below if it is
-  status = kv.get(vmdkPath, 'status')
-  logging.info("Attaching {0} with status {1}".format(vmdkPath,  status))
-  if status and status != 'detached':
-     vmUuid = kv.get(vmdkPath, 'attachedVMUuid')
-     if vmUuid:
-        if vmUuid == vm.config.uuid:
-           logging.warning("{0} is already attached, nothing to do".format(vmdkPath))
-           return get_bus_info(vmdkPath, vm)
-        else:
-           msg = "{0} is attached to VM ID={1}, skipping attach request".format(vmdkPath, vmUuid)
-           logging.warning(msg)
-           return err(msg)
+  # Check if this disk is already attached, and if it is - skip the attach
+  device = findDeviceByPath(vmdkPath, vm)
+  kvStatusAttached, kvUuid = getStatusAttached(vmdkPath)
+  logging.info("Attach for {0}. KV attached='{1}', KV uuid='{2}".format(
+                            vmdkPath, kvStatusAttached, kvUuid))
+  if device:
+    # Disk is already attached.
+    if not kvStatusAttached:
+        logging.warning("Disk {0} already attached: " + 
+                        "Metadata mismatch, kv was '{1}'".format( vmdkPath, kv.getAll()))
+    setStatusAttached(vmdkPath, vm.config.uuid)
+    return busInfo(device.unitNumber, device.controllerKey - 1000)
 
-  # Now find a slot on the controller  , if needed
+  # Disk is not attached. Use metadata (KV) for extra logging
+  if kvUuid != vm.config.uuid:	
+     # KV  claims we are attached to a different VM'. Log and proceed.
+     logging.info("Disk {0}: may be already attached " + 
+                  "to VM uuid={0}".format(vmdkPath, kvUuid))
+  else:
+     # KV  claims disk is already attached to current VM: 
+     logging.warning("Disk {0} attach: " +
+                     "Metadata mismatch, kv was '{1}'".format(vmdkPath, kv.getAll()))
+
+
+  # Find a slot on the controller, issue attach task and wait for completion
   if not diskSlot:
     taken = set([dev.unitNumber for dev in devices
                  if type(dev) == vim.VirtualDisk and dev.controllerKey == controllerKey])
@@ -476,33 +503,29 @@ def disk_attach(vmdkPath, vm):
 
   try:
       wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-      volMeta = kv.getAll(vmdkPath)
-      if volMeta:
-         volMeta['status'] = 'attached'
-         volMeta['attachedVMUuid'] = vm.config.uuid
-         kv.setAll(vmdkPath, volMeta)
+      setStatusAttached(vmdkPath, vm.config.uuid)
   except vim.fault.VimFault as ex:
+      setStatusDetached(vmdkPath)
       return err(ex.msg)
-  else:
-    logging.info("disk attached %s unit - %d, bus - %d" % (vmdkPath, diskSlot, busNumber))
 
-  return {'Unit':str(diskSlot), 'Bus':str(busNumber)}
+  logging.info("disk attached %s unit - %d, bus - %d" %
+               (vmdkPath, diskSlot, busNumber))
+  return busInfo(diskSlot, busNumber)
 
 
 def err(string):
     return {u'Error': string}
 
-
-# detach disk (by full path) from a vm
-# returns None or err(msg)
 def disk_detach(vmdkPath, vm):
+  """detach disk (by full path) from a vm amd return None or err(msg)"""
 
-  # Find device object by vmkd path
-  # TODO : the right way is to FIND BY disk UUID.
   device = findDeviceByPath(vmdkPath, vm)
 
   if not device:
-     return err_not_found(vmdkPath)
+    msg = "*** Detach error: disk={0} is not found. KV='{1}".format(vmdkPath, kv.getAll())
+    setStatusDetached(vmdkPath)
+    logging.error(msg)
+    return err(msg)
 
   spec = vim.vm.ConfigSpec()
   dev_changes = []
@@ -515,22 +538,13 @@ def disk_detach(vmdkPath, vm):
 
   try:
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])	# si is global
-     volMeta = kv.getAll(vmdkPath)
-     if volMeta:
-        volMeta['status'] = 'detached'
-        try:
-            # The attach may have failed and not added the
-            # key resulting in an exception here when removing
-            # a non-existent key.
-            del volMeta['attachedVMUuid']
-        except KeyError as e:
-            logging.exception(e, extra=volMeta)
-        finally:
-            kv.setAll(vmdkPath, volMeta)
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
         logging.warning(f.message)
+        # Make sure KV is correct here (TODO TBD FIXME)
      return err("Failed to detach " + vmdkPath)
+  else:
+     setStatusDetached(vmdkPath)
 
   logging.info("Disk detached " + vmdkPath)
   return None
