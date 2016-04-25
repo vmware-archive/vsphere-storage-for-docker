@@ -69,8 +69,10 @@ sudo rpm -ivh docker-vmdk-plugin-v0.1.pre_tp-1.x86_64.rpm
 # Docker commands to use plugin
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 docker volume ls
-docker volume inspect MyVolume docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
-docker rm my_container docker volume rm MyVolume
+docker volume inspect MyVolume
+docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
+docker rm my_container
+docker volume rm MyVolume
 ```
 
 # Plugin Overview

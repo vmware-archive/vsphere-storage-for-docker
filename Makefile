@@ -22,7 +22,7 @@
 # most recent tag. Tagged builds use the externally defined version,
 # developer builds use a sha1 of the most recent commit.
 PKG_VERSION ?= "$(shell \
-	       git describe --tags `git rev-list --tags --max-count=1`\
+	       git describe --tags `git rev-list --tags --max-count=1` \
 	       ).$(shell \
 	       git log --pretty=format:'%h' -n 1)"
 
@@ -40,7 +40,8 @@ PLUGNAME  := docker-vmdk-plugin
 MAINTAINERS := cna-storage@vmware.com
 REPO_URL    := https://github.com/vmware/$(PLUGNAME)
 MIN_DOCKER_VERSION :=1.9
-DOCKER_PACKAGE := docker-engine
+DOCKER_PACKAGE_DEB := docker-engine
+DOCKER_PACKAGE_RPM := docker
 AFTER_INSTALL  := $(SCRIPTS)/install/systemd-after-install.sh
 BEFORE_REMOVE  := $(SCRIPTS)/install/systemd-before-remove.sh
 AFTER_REMOVE   := $(SCRIPTS)/install/systemd-after-remove.sh
@@ -82,11 +83,12 @@ SRC = plugin.go main.go log_formatter.go refcnt.go fs/fs.go config/config.go
 
 # The default build is using a prebuilt docker image that has all dependencies.
 .PHONY: dockerbuild build-all
+build-all: dockerbuild package
+
 dockerbuild:
 	@$(CHECK) dockerbuild
 	$(BUILD) build
 
-build-all: dockerbuild
 
 # The non docker build.
 .PHONY: build
@@ -167,7 +169,6 @@ FPM_COMMON := -p $(BIN) \
 	-s dir \
 	-n $(PLUGNAME) \
 	-v $(PKG_VERSION) \
-	-d '$(DOCKER_PACKAGE) > $(MIN_DOCKER_VERSION)' \
         --provides $(PLUGNAME) \
         -m $(MAINTAINERS) \
         --url $(REPO_URL) \
@@ -182,12 +183,12 @@ FPM_COMMON := -p $(BIN) \
 .PHONY: deb
 deb: pkg-prep
 	@$(CHECK) pkg
-	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -t deb .
+	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE_DEB) > $(MIN_DOCKER_VERSION)' -t deb .
 
 .PHONY: rpm
 rpm: pkg-prep
 	@$(CHECK) pkg
-	$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -t rpm .
+	$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -d '$(DOCKER_PACKAGE_RPM) > $(MIN_DOCKER_VERSION)' -t rpm .
 
 .PHONY: pkg-prep
 pkg-prep:
