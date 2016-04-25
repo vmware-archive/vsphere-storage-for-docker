@@ -51,7 +51,7 @@ getpid() {
 
 start() {
    local PID=$(getpid)
-
+   local wait=$(NUM_RETRY)
    if [ -n "${PID}" ]; then
       echo "Failed to start. $OPSD_TAG already running."
       exit 1
