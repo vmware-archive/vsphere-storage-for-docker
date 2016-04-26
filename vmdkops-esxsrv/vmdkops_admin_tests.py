@@ -116,9 +116,9 @@ class TestParsing(unittest.TestCase):
     def test_role_set(self):
         cmds = [
             'role set --name=carl --volume-maxsize=4TB',
-            'role set --name=carl --rights create mount',
+            'role set --name=carl --rights create,mount',
             'role set --name=carl --matches-vm marketing*',
-            'role set --name=carl --volume-maxsize=2GB --rights create mount delete'
+            'role set --name=carl --volume-maxsize=2GB --rights create,mount,delete'
             ]
         for cmd in cmds:
             args = self.parser.parse_args(cmd.split())
