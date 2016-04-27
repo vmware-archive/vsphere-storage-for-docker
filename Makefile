@@ -52,9 +52,11 @@ AFTER_REMOVE   := $(SCRIPTS)/install/systemd-after-remove.sh
 CHECK	    := $(SCRIPTS)/check.sh
 BUILD       := $(SCRIPTS)/build.sh
 SYSTEMD_UNIT := $(SCRIPTS)/install/$(PLUGNAME).service
+UPSTART_CONF := $(SCRIPTS)/install/$(PLUGNAME).conf
 PACKAGE      := package
 SYSTEMD_LIB  := $(PACKAGE)/lib/systemd/system/
 INSTALL_BIN  := $(PACKAGE)/usr/bin
+UPSTART_INIT := $(PACKAGE)/etc/init/
 
 # esx service for docker volume ops
 ESX_SRC     := vmdkops-esxsrv
@@ -156,11 +158,11 @@ pkg: dockerdeb dockerrpm
 package: pkg
 
 .PHONY: dockerdeb
-dockerdeb: build-all fpm-docker
+dockerdeb: fpm-docker pkg-post
 	$(BUILD) deb
 
-.PHONY: dockerrpm
-dockerrpm: build-all fpm-docker
+.PHONY: dockerrpm pkg-post
+dockerrpm: fpm-docker
 	$(BUILD) rpm
 
 DESCRIPTION := "VMDK Volume Plugin for Docker"
@@ -181,9 +183,15 @@ FPM_COMMON := -p $(BIN) \
 
 # FPM should be installed for target deb
 .PHONY: deb
-deb: pkg-prep
+deb: pkg-prep deb-pkg-prep
 	@$(CHECK) pkg
 	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE_DEB) > $(MIN_DOCKER_VERSION)' -t deb .
+
+# Upstart needed for older versions of Ubuntu
+.PHONY: deb-pkg-prep
+deb-pkg-prep:
+	@mkdir -p $(UPSTART_INIT)
+	@cp $(UPSTART_CONF) $(UPSTART_INIT)
 
 .PHONY: rpm
 rpm: pkg-prep

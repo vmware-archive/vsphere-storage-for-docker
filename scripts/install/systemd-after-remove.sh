@@ -14,4 +14,8 @@
 # limitations under the License.
 
 
-systemctl daemon-reload
+stat /proc/1/exe | grep File | grep systemd
+if [ $? -eq 0 ]
+then
+  systemctl daemon-reload
+fi
