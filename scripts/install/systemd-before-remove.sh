@@ -14,5 +14,11 @@
 # limitations under the License.
 
 
-systemctl stop docker-vmdk-plugin.service
-systemctl disable docker-vmdk-plugin.service
+stat /proc/1/exe | grep File | grep systemd
+if [ $? -eq 0 ]
+then
+  systemctl stop docker-vmdk-plugin.service
+  systemctl disable docker-vmdk-plugin.service
+else
+  service docker-vmdk-plugin stop
+fi

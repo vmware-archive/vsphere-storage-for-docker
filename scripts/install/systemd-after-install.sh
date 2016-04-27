@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-systemctl daemon-reload
-systemctl enable docker-vmdk-plugin.service
-systemctl start docker-vmdk-plugin.service
+stat /proc/1/exe | grep File | grep systemd
+if [ $? -eq 0 ]
+then
+  systemctl daemon-reload
+  systemctl enable docker-vmdk-plugin.service
+  systemctl start docker-vmdk-plugin.service
+else
+  service docker-vmdk-plugin start
+fi

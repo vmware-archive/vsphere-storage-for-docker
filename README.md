@@ -21,7 +21,7 @@ ESXi:
 Docker: 1.9 and higher
 
 VM:
-- Ubuntu 14.04 64 bit (using systemd)
+- Ubuntu 14.04 64 bit (needs Upstart or systemctl)
 - Photon
 
 ## Installation
@@ -57,9 +57,9 @@ plugin. For manual steps not using rpm or deb file please refer
 
 ```
 # DEB
-sudo dpkg -i docker-vmdk-plugin_v0.1.pre-tp_amd64.deb
+sudo dpkg -i docker-vmdk-plugin_0.1.0.pre-tp_amd64.deb
 # RPM
-sudo rpm -ivh docker-vmdk-plugin-v0.1.pre_tp-1.x86_64.rpm
+sudo rpm -ivh docker-vmdk-plugin-0.1.0.pre_tp-1.x86_64.rpm
 ```
 
 ## Using the plugin.
