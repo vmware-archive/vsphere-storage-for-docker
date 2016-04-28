@@ -46,7 +46,7 @@ INITD_PATH := /etc/init.d/
 
 # payload location - see descriptor.xml
 PAYLOAD=payloads
-VMDKOPS_PAYLOAD=$(PAYLOAD)/vmdkops/
+VMDKOPS_PAYLOAD=$(PAYLOAD)/vmdkops
 VMDKOPS_BIN = $(VMDKOPS_PAYLOAD)$(ESX_BIN)
 VMDKOPS_INITD = $(VMDKOPS_PAYLOAD)$(INITD_PATH)
 
@@ -57,21 +57,20 @@ VMDKOPS_INITD = $(VMDKOPS_PAYLOAD)$(INITD_PATH)
 CFLAGS  := -fPIC -m32 -shared
 cc := gcc
 VIBAUTHOR := vibauthor
-BDIR := ../bin
 WDIR := .
 
 VIBAUTHOR_PARAMS := --debug --compose \
-        --vib=$(BDIR)/$(VIB) \
+	--vib=$(BIN)/$(VIB) \
 	--stage-dir $(WDIR) \
-	--offline-depot $(BDIR)/$(OFFLINE_DEPOT) \
-        --force
+	--offline-depot $(BIN)/$(OFFLINE_DEPOT) \
+	--force
 
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
 build: $(VIB_BIN)
 
-$(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS)
-	echo $(VMDKOPS_BIN)
+$(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS) $(INIT_SCRIPT)
+	@echo === Staging in $(VMDKOPS_BIN) and $(VMDKOPS_INITD)
 	@mkdir -p $(VMDKOPS_BIN)
 	@mkdir -p $(VMDKOPS_INITD)
 	@chmod -R a+w $(PAYLOAD)
