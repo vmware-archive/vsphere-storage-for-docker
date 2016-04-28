@@ -30,20 +30,25 @@
 
 log=/var/log/docker-vmdk-plugin.log
 count=5
-vname=vol1
+vname=refCountTestVol
 mount=/mnt/vmdk/$vname
 
-function cleanup {
+function cleanup_containers {
    to_kill=`docker ps -q`
    to_rm=`docker ps -a -q`
+
    if [ -n "$to_kill" -o -n "$to_rm" ]
    then
-      echo "Cleaning up"
+      echo "Cleaning up containers"
    fi
    if [ -n "$to_kill" ] ; then $DOCKER kill $to_kill > /dev/null ; fi
    if [ -n "$to_rm" ] ; then $DOCKER rm $to_rm > /dev/null; fi
 }
 
+function cleanup {
+   cleanup_containers
+   $DOCKER volume rm $vname
+}
 trap cleanup EXIT
 
 DOCKER="$DEBUG docker"
@@ -53,8 +58,9 @@ GREP="$DEBUG grep"
 
 echo "Testing refcounts..."
 
-echo "Creating a volume and $count containers using it"
+echo "Creating volume $vname and $count containers using it"
 $DOCKER volume create --driver=vmdk --name=$vname
+echo "$(docker volume ls)"
 for i in `seq 1 $count`
 do
   $DOCKER run -d -v $vname:/v busybox sh -c "touch /v/file$i; sync ; sleep 60"
@@ -113,7 +119,7 @@ echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then
 fi
 
 # kill containers but keep the volume around
-cleanup
+cleanup_containers
 
 echo "Checking that the volume is unmounted and can be removed"
 $DOCKER volume rm $vname ; if [ $? -ne 0 ] ; then
