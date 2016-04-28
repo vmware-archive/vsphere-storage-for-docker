@@ -20,6 +20,7 @@ import argparse
 import os
 import volumeKVStore as kv
 import cli_table
+import vmdk_ops
 
 import pyVim.connect
 
@@ -307,7 +308,7 @@ def ls_no_args():
     stripping the '.vmdk' from the volume name
     """
     header = ['Volume', 'Datastore']
-    data = [[v[1][0:-5], v[2]] for v in get_volumes()]
+    data = [[vmdk_ops.strip_vmdk_extension(v['filename']), v['datastore']] for v in get_volumes()]
     return (header, data)
 
 def ls_dash_l():
@@ -350,16 +351,15 @@ def generate_ls_dash_l_rows():
    """ Gather all volume metadata into rows that can be used to format a table """
    rows = []
    for v in get_volumes():
-       path = os.path.join(v[0], v[1])
-       name = v[1][0:-5] # strip .vmdk
-       datastore = v[2]
+       path = os.path.join(v['path'], v['filename'])
+       name = vmdk_ops.strip_vmdk_extension(v['filename'])
        metadata = get_metadata(path)
        if metadata[u'status'] == u'attached':
            attached_to = metadata[u'attachedVMUuid']
        else:
            attached_to = 'detached'
        capacity = metadata[u'volOpts'][u'size']
-       rows.append([name, datastore, 'N/A', 'N/A', 'N/A', attached_to, 'N/A', capacity, 'N/A'])
+       rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to, 'N/A', capacity, 'N/A'])
    return rows
 
 def is_symlink(path):
@@ -394,7 +394,7 @@ def get_datastores():
     return datastores
 
 def get_volumes():
-    """ Return tuples of docker volumes, their datastore and their paths """
+    """ Return dicts of docker volumes, their datastore and their paths """
     volumes = []
     for (datastore, path) in get_datastores():
         try:
@@ -404,8 +404,8 @@ def get_volumes():
             pass
         else:
             for f in files:
-                if f.endswith('.vmdk') and not f.endswith('-flat.vmdk'):
-                    volumes.append((path, f, datastore))
+                if vmdk_ops.vmdk_is_a_descriptor(os.path.join(path, f)):
+                    volumes.append({'path': path, 'filename': f, 'datastore': datastore})
     return volumes
 
 def get_metadata(volPath):

@@ -161,11 +161,11 @@ def getVMDKBacking(vmdkPath):
       return None
 
    if uuid:
-      logging.debug("Got volume UUID %s" % uuid.group(1)) 
+      logging.debug("Got volume UUID %s" % uuid.group(1))
       # Objtool creates a link thats usable to format the
       # vsan object.
       cmd = "{0} {1}".format(objToolCmd, uuid.group(1))
-      rc, out = RunCommand(cmd) 
+      rc, out = RunCommand(cmd)
       fpath = "/vmfs/devices/vsan/{0}".format(uuid.group(1))
       if rc == 0 and os.path.isfile(fpath):
          return fpath
@@ -201,11 +201,29 @@ def removeVMDK(vmdkPath):
 
 	return None
 
+def vmdk_is_a_descriptor(filepath):
+    """
+    Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk
+    and has a size less than MaxDescrSize is a desciptor file.
+    """
+    if filepath.endswith('.vmdk') and os.stat(filepath).st_size < MaxDescrSize:
+        try:
+            with open(filepath) as f:
+                line = f.readline()
+                return line.startswith('# Disk DescriptorFile')
+        except:
+            logging.warning("Failed to open {0} for descriptor check".format(filepath))
+
+    return False
+
+def strip_vmdk_extension(filename):
+    """ Remove the .vmdk file extension from a string """
+    return filename.replace(".vmdk", "")
+
 # returns a list of volume names (note: may be an empty list)
 def listVMDK(path):
-	vmdks = [x for x in os.listdir(path) if  ".vmdk" in x and
-			os.stat(os.path.join(path, x)).st_size < MaxDescrSize]
-        return [{u'Name': x.replace(".vmdk", ""), u'Attributes': {}} for x in vmdks]
+	vmdks = [x for x in os.listdir(path) if vmdk_is_a_descriptor(os.path.join(path, x))]
+        return [{u'Name': strip_vmdk_extension(x), u'Attributes': {}} for x in vmdks]
 
 # Find VM , reconnect if needed. throws on error
 def findVmByName(vmName):
@@ -399,7 +417,7 @@ return error or unit:bus numbers of newly attached disk.
   # disks. Every controller supports 15 virtual disks, and the unit
   # numbers need to be unique within the controller and range from
   # 0 to 15 with 7 being reserved (for older SCSI controllers).
-  # It is up to the API client to add controllers as needed. 
+  # It is up to the API client to add controllers as needed.
   # SCSI Controller keys are in the range of 1000 to 1003 (1000 + busNumber).
   offset_from_bus_number = 1000
   max_scsi_controllers = 4

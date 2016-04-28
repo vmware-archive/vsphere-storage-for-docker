@@ -18,7 +18,9 @@ import unittest
 import cli_table
 
 class TestTableLogic(unittest.TestCase):
-    """ Test any functions that don't require visual inspection """
+    """ Test any functions that don't require visual inspection
+        Note that the number literals are the longest strings in each column before and after
+        shrinking"""
 
     def test_max_column_sizes(self):
         header = ['Name', 'Greeting']
