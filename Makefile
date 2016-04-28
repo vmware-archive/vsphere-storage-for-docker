@@ -21,10 +21,10 @@
 # suffixed with a sha1 of the most recent commit to the prefix of the
 # most recent tag. Tagged builds use the externally defined version,
 # developer builds use a sha1 of the most recent commit.
-PKG_VERSION ?= "$(shell \
+PKG_VERSION ?= $(shell \
 	       git describe --tags `git rev-list --tags --max-count=1` \
 	       ).$(shell \
-	       git log --pretty=format:'%h' -n 1)"
+	       git log --pretty=format:'%h' -n 1)
 
 export PKG_VERSION
 EPOCH := 0

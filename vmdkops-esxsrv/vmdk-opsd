@@ -40,7 +40,6 @@ MINLIMIT=-1
 MINCPU=-1
 MAXCPU=-1
 
-
 NUM_RETRY=10
 WAIT_KILL_SEC=2
 WAIT_START_USEC=3000
@@ -51,7 +50,7 @@ getpid() {
 
 start() {
    local PID=$(getpid)
-   local wait=$(NUM_RETRY)
+   local wait=${NUM_RETRY}
    if [ -n "${PID}" ]; then
       echo "Failed to start. $OPSD_TAG already running."
       exit 1
