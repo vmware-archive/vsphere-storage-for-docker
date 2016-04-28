@@ -75,6 +75,10 @@ DefaultDiskSize = "100mb"
 # Default log file. Should be synced with CI and make wrappers in ../*scripts
 LogFile = "/var/log/vmware/docker-vmdk-plugin.log"
 
+# Service instance provide from connection to local hostd
+si = None
+
+
 def LogSetup(logfile):
     logging.basicConfig(filename=logfile,
                         level=logging.DEBUG,
@@ -231,7 +235,7 @@ def findVmByName(vmName):
 	try:
 		vm = FindChild(GetVmFolder(), vmName)
 	except vim.fault.NotAuthenticated as ex:
-		connectLocal() 					#  retry
+		connectLocal() #  retry
 		vm = FindChild(GetVmFolder(), vmName)
 
 	if not vm:
@@ -308,6 +312,7 @@ def connectLocal():
 	'''
 	connect and do stuff on local machine
 	'''
+	global si #
 
 	# Connect to localhost as dcui
 	# User "dcui" is a local Admin that does not lose permissions
@@ -552,7 +557,6 @@ def disk_detach(vmdkPath, vm):
   spec.deviceChange = dev_changes
 
   try:
-     global si
      wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
   except vim.fault.GenericVmConfigFault as ex:
      for f in ex.faultMessage:
@@ -631,8 +635,7 @@ def main():
 
     try:
         kv.init()
-        global si  # we maintain only one connection
-        si = connectLocal()
+        connectLocal()
         printVMInfo(si) # just making sure we can do it - logging.info
         handleVmciRequests()
     except Exception, e:
@@ -678,7 +681,7 @@ def wait_for_tasks(service_instance, tasks):
     except vim.fault.NotAuthenticated:
        # Reconnect and retry
        logging.warning ("Reconnecting and retry")
-       si = connectLocal()
+       connectLocal()
        property_collector = si.content.propertyCollector
        pcfilter = getTaskList(property_collector, tasks)
 

@@ -53,8 +53,9 @@ GREP="$DEBUG grep"
 
 echo "Testing refcounts..."
 
-echo "Creating a volume and $count containers using it"
+echo "Creating volume $vname and $count containers using it"
 $DOCKER volume create --driver=vmdk --name=$vname
+echo "$(docker volume ls)"
 for i in `seq 1 $count`
 do
   $DOCKER run -d -v $vname:/v busybox sh -c "touch /v/file$i; sync ; sleep 60"
