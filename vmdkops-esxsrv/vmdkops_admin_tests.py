@@ -179,16 +179,16 @@ class TestLs(unittest.TestCase):
 
     def cleanup(self):
         for v in self.get_testvols():
-            self.assertEqual(None, vmdk_ops.removeVMDK(os.path.join(v[0], v[1])))
+            self.assertEqual(None, vmdk_ops.removeVMDK(os.path.join(v['path'], v['filename'])))
 
     def get_testvols(self):
-        return [x for x in vmdkops_admin.get_volumes() if x[1].startswith('testvol')]
+        return [x for x in vmdkops_admin.get_volumes() if x['filename'].startswith('testvol')]
 
     def test_ls_helpers(self):
         volumes = self.get_testvols()
         self.assertEqual(len(volumes), self.vol_count)
         for v in volumes:
-            metadata = vmdkops_admin.get_metadata(os.path.join(v[0], v[1]))
+            metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v['filename']))
             self.assertNotEqual(None, metadata)
 
     def test_ls_no_args(self):
@@ -197,7 +197,7 @@ class TestLs(unittest.TestCase):
           self.assertEqual(2, len(header))
           self.assertEqual(len(volumes), len(data))
           for i in range(len(volumes)):
-              self.assertEqual(volumes[i][1], data[i][0]+'.vmdk')
+              self.assertEqual(volumes[i]['filename'], data[i][0]+'.vmdk')
 
 if __name__ == '__main__':
     kv.init()
