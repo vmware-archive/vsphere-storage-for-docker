@@ -19,7 +19,7 @@ VMware ESXi:
 
 Docker: 1.9 and higher
 
-VM:
+Operating System:
 - Photon 1.0 RC
 - Ubuntu 14.04 64 bit (needs Upstart or systemctl)
 
