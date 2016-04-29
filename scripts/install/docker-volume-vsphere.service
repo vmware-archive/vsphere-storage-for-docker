@@ -1,10 +1,10 @@
 [Unit]
-Description=docker-vmdk-service
+Description="Docker Volume Driver for vSphere"
 Before=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/bin/docker-vmdk-plugin
+ExecStart=/usr/bin/docker-volume-vsphere
 Restart=always
 
 [Install]

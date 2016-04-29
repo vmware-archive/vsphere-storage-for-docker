@@ -101,7 +101,7 @@ def log_init():
 
 if __name__ == '__main__':
     #log_init()
-    vmdk_ops.LogSetup("/var/log/vmware/docker-vmdk-plugin-pytest.log")
+    vmdk_ops.LogSetup("/var/log/vmware/vmdk_ops-pytest.log")
     kv.init()
 
     # Calculate the path

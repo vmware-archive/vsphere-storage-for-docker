@@ -17,8 +17,8 @@ stat /proc/1/exe | grep File | grep systemd
 if [ $? -eq 0 ]
 then
   systemctl daemon-reload
-  systemctl enable docker-vmdk-plugin.service
-  systemctl start docker-vmdk-plugin.service
+  systemctl enable docker-volume-vsphere.service
+  systemctl start docker-volume-vsphere.service
 else
-  service docker-vmdk-plugin start
+  service docker-volume-vsphere start
 fi

@@ -2,9 +2,8 @@
 # chkconfig: on 20 20
 
 #
-# Start and stop the storage operations daemon. 
-# Ref: https://github.com/vmware/docker-vmdk-plugin/
-# 
+# Start and stop the storage operations daemon.
+#
 # This script supports:
 # * start   : Start the python based daemon
 # * stop    : Stop the python based daemon
@@ -55,7 +54,7 @@ start() {
       echo "Failed to start. $OPSD_TAG already running."
       exit 1
    fi
-   
+
    echo "Starting ${OPSD_TAG}"
 
    GROUP=$(${LOCAL_CLI_SCHED} list |grep ${OPSD_GROUP})
@@ -112,7 +111,7 @@ stop() {
          exit 4
       fi
    fi 
-   
+
    check_running_status
    if [ $? -eq 0 ]; then
       echo "Failed to stop $OPSD_TAG"

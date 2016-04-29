@@ -30,7 +30,7 @@ export BUILD_NUMBER=$4
 
 SSH="ssh -o StrictHostKeyChecking=no"
 USER=root
-LOGFILE="/var/log/docker-vmdk-plugin.log"
+LOGFILE="/var/log/docker-volume-vsphere.log"
 STDLOG="/tmp/plugin.log"
 if [ $# -lt 3 ]
 then
@@ -53,7 +53,7 @@ dump_log_esx() {
   echo "*** dumping log: ESX " $ESX
   echo "*************************************************************************"
   set -x
-  $SSH $USER@$ESX cat /var/log/vmware/docker-vmdk-plugin.log
+  $SSH $USER@$ESX cat /var/log/vmware/docker-volume-vsphere.log
   $SSH $USER@$ESX cat /tmp/plugin.log
   set +x
   echo "*************************************************************************"

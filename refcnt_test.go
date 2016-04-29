@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	tmpLocation = "/tmp/docker-vmdk-plugin"
+	tmpLocation = "/tmp/docker-volume-vsphere"
 )
 
 // brute force code - just invokes external script and processes results

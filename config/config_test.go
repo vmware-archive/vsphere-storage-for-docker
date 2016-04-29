@@ -28,5 +28,5 @@ func TestLoad(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, conf.MaxLogSizeMb, 100)
 	assert.Equal(t, conf.MaxLogAgeDays, 28)
-	assert.Equal(t, conf.LogPath, "/var/log/docker-vmdk-plugin.log")
+	assert.Equal(t, conf.LogPath, "/var/log/docker-volume-vsphere.log")
 }
