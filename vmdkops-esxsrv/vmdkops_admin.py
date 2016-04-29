@@ -358,7 +358,11 @@ def generate_ls_dash_l_rows():
            attached_to = metadata[u'attachedVMUuid']
        else:
            attached_to = 'detached'
-       capacity = metadata[u'volOpts'][u'size']
+       volOpts = metadata[u'volOpts']
+       if volOpts and u'size' in volOpts:
+           capacity = volOpts[u'size']
+       else:
+           capacity = vmdk_ops.DefaultDiskSize
        rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to, 'N/A', capacity, 'N/A'])
    return rows
 
