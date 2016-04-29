@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // * This file contains an implementation of a
 // * [Logrus Formatter](https://github.com/Sirupsen/logrus#formatters) according to VMware CNA
 // * storage team specifications. The `appendKeyValue` and `needsQuoting` functions are copied

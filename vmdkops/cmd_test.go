@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package vmdkops_test
 
 // Test commands with mocked ESX server and guest fs code
@@ -30,14 +29,14 @@ func TestCommands(t *testing.T) {
 	opts := map[string]string{"size": "2gb", "format": "none"}
 	if assert.Nil(t, ops.Create(name, opts)) {
 
-	  opts = map[string]string{}
-	  _, err := ops.Attach(name, opts)
-	  assert.Nil(t, err)
-	  assert.Nil(t, ops.Detach(name, opts))
-	  assert.Nil(t, ops.Remove(name, opts))
+		opts = map[string]string{}
+		_, err := ops.Attach(name, opts)
+		assert.Nil(t, err)
+		assert.Nil(t, ops.Detach(name, opts))
+		assert.Nil(t, ops.Remove(name, opts))
 	}
 	if assert.Nil(t, ops.Create("otherVolume",
-				map[string]string{"size": "1gb", "format": "ext4"})) {
-	  assert.Nil(t, ops.Remove("otherVolume", opts))
+		map[string]string{"size": "1gb", "format": "ext4"})) {
+		assert.Nil(t, ops.Remove("otherVolume", opts))
 	}
 }

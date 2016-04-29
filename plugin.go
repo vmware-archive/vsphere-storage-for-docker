@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package main
 
 //
@@ -67,8 +66,8 @@ func newVmdkDriver(useMockEsx bool) *vmdkDriver {
 
 	return d
 }
-func (d *vmdkDriver) getRefCount(vol string) uint  { return d.refCounts.getCount(vol) }
-func (d *vmdkDriver) incrRefCount(vol string) uint { return d.refCounts.incr(vol) }
+func (d *vmdkDriver) getRefCount(vol string) uint           { return d.refCounts.getCount(vol) }
+func (d *vmdkDriver) incrRefCount(vol string) uint          { return d.refCounts.incr(vol) }
 func (d *vmdkDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.decr(vol) }
 
 func getMountPoint(volName string) string {

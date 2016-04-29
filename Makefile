@@ -143,6 +143,7 @@ vet:
 fmt:
 	@echo "Running $@"
 	gofmt -s -l *.go vmdkops/*.go config/*.go fs/*.go
+	gofmt -w $$(find . -name '*.go' -not -path './vendor/*')
 
 # Build the linux distro packages
 

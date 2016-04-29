@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 //
 // VMDK Docker driver sanity tests.
 //
@@ -51,7 +50,7 @@ var (
 // prepares the environment. Kind of "main"-ish code for tests.
 // Parses flags and inits logs and mount ref counters (the latter waits on Docker
 // actuallu replyimg). As any other init(), it is called somewhere during init phase
-// so do not expect ALL inits from other tests (if any) to compete by now. 
+// so do not expect ALL inits from other tests (if any) to compete by now.
 func init() {
 	waitSec := flag.Int("t", defaultSleepIntervalSec, "Reconnect polling time, in seconds")
 	logLevel := flag.String("log_level", "debug", "Logging Level")
