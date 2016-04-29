@@ -1,0 +1,32 @@
+{
+    "info": [
+    "Logging configuration for vmdk_opsd service, in python logging config format.",
+    "Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file."
+    ],
+
+    "version": 1,
+    "disable_existing_loggers": "False",
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)-12s %(process)d [%(levelname)-7s] %(message)s",
+            "datefmt": "%x %X"
+        }
+    },
+    "handlers": {
+        "rotate_file": {
+            "filename": "/var/log/vmware/vmdk_ops.log",
+            "level": "INFO",
+            "maxBytes": 10485760,
+            "backupCount": 5,
+            "formatter": "standard",
+            "class": "logging.handlers.RotatingFileHandler",
+            "encoding": "utf8"
+        }
+    },
+    "loggers": {
+        "": {
+            "handlers": ["rotate_file"],
+            "level": "INFO"
+        }
+    }
+}

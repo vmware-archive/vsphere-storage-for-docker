@@ -42,7 +42,6 @@ import logging
 import signal
 import sys
 import re
-import argparse
 sys.dont_write_bytecode = True
 
 from vmware import vsi
@@ -54,6 +53,7 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
+import log_config
 import volumeKVStore as kv
 
 # Location of utils used by the plugin.
@@ -73,22 +73,8 @@ MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limi
 MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
 
-# Default log file. Should be synced with CI and make wrappers in ../*scripts
-LogFile = "/var/log/vmware/vmdk_ops.log"
-LogLevel = logging.INFO # default logging level
-
 # Service instance provide from connection to local hostd
 si = None
-
-
-def LogSetup(logfile):
-    global LogLevel
-    logging.basicConfig(filename=logfile,
-                        level=LogLevel,
-                        format='%(asctime)-12s %(process)d [%(levelname)s] %(message)s',
-                        datefmt='%x %X')
-    logging.info("===" + time.strftime('%x %X %Z') + "Starting vmdkops service ===")
-
 
 # Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
 # Returns the integer return value and the stdout str on success and integer return value and
@@ -329,22 +315,6 @@ def connectLocal():
 	reqCtx = VmomiSupport.GetRequestContext()
 	reqCtx["realUser"]='dvolplug'
 	return si
-
-
-# helper to logging.info out all VMs info
-def printVMInfo(si):
-	container = si.content.rootFolder  # starting point to look into
-	containerView = si.content.viewManager.CreateContainerView(container,
-			type=[vim.VirtualMachine],
-			recursive=True)
-
-	for child in containerView.view:
-		summary = child.summary
-		logging.info("Name       : " + summary.config.name)
-		logging.info("Path       : " + summary.config.vmPathName)
-		logging.info("Guest      : " + summary.config.guestFullName)
-		logging.info("Instance UUID : " + summary.config.instanceUuid)
-		logging.info("Bios UUID     : " + summary.config.uuid)
 
 
 def findDeviceByPath(vmdkPath, vm):
@@ -626,37 +596,17 @@ def handleVmciRequests():
 
 	lib.close(sock) # close listening socket when the loop is over
 
-def parseOpts():
-    # Parse opts
-    parser = argparse.ArgumentParser(prog = 'VMDK Opsd',
-                                     description = 'Vsphere Docker Volume Ops Server')
-    # Server opts.
-    parser.add_argument('--log-level', nargs = '?', default = 'info', type = str,
-                        required = False, help = 'Log level.',
-                        choices = ['debug', 'info', 'warning'], dest = 'logLevel')
-    return vars(parser.parse_args())
 
 def main():
-    global LogLevel
+    log_config.configure()
+    logging.info("=== Starting vmdkops service ===")
 
-    # Parse options and set globals.
-    opts = parseOpts()
-    if opts:
-       if 'logLevel' in opts:
-         if opts['logLevel'] == 'info':
-            LogLevel = logging.INFO
-         elif opts['logLevel'] == 'debug':
-            LogLevel = logging.DEBUG
-         else:
-            LogLevel = logging.WARNING
-    LogSetup(LogFile)
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
 
     try:
         kv.init()
         connectLocal()
-        printVMInfo(si) # just making sure we can do it - logging.info
         handleVmciRequests()
     except Exception, e:
     	logging.exception(e)

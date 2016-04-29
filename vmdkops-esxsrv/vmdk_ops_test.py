@@ -26,6 +26,7 @@ import glob
 import os, os.path
 
 import vmdk_ops
+import log_config
 import volumeKVStore as kv
 
 # will do creation/deleteion in this folder:
@@ -87,18 +88,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             self.assertEqual(err == None, unit[2], err)
 
 
-# init log stream handle to use sys.output before running tests.
-# this is needed if we want to keep using "print" in test
-# otherwise the logger from vmdk_ops is just fine
-def log_init():
-    logger = logging.getLogger()
-    logger.level = logging.DEBUG
-    stream_handler = logging.StreamHandler(sys.stdout)
-    logger.addHandler(stream_handler)
-
 if __name__ == '__main__':
-    #log_init()
-    vmdk_ops.LogSetup("/var/log/vmware/vmdk_ops-pytest.log")
+    log_config.configure()
     kv.init()
 
     # Calculate the path

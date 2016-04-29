@@ -33,4 +33,5 @@ cat /dev/null > $pylog
 echo "localcli software vib install --no-sig-check  -v $vibfile"
 localcli software vib install --no-sig-check  -v $vibfile
 localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group list| grep vmdkops | grep python> /dev/null
-/etc/init.d/vmdk-opsd status| grep pid
+/etc/init.d/vmdk-opsd status
+/etc/init.d/vmdk-opsd status | grep -q pid
