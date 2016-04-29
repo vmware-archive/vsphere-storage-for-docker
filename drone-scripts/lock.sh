@@ -17,7 +17,7 @@
 OPERATION=$1
 BUILD_NUMBER=build-$2
 
-LOCK_DIR='/tmp/docker-vmdk-plugin.lock'
+LOCK_DIR='/tmp/docker-volume-vsphere.lock'
 
 if [ "$OPERATION" == "lock" ]; then
   if mkdir "$LOCK_DIR";

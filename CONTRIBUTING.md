@@ -112,7 +112,7 @@ Standard invocation on ESX:
 python -B /usr/lib/vmware/vmdkops/bin/vmdk_ops.py 
 
 Standard invocation on VM: (as root)
-/usr/local/bin/docker-vmdk-plugin
+/usr/local/bin/docker-volume-vsphere
 ```
 
 To remove the code from the testbed, use the same steps as above (i.e define 

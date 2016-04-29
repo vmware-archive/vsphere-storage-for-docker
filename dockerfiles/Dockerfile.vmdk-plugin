@@ -2,6 +2,6 @@ FROM alpine
 
 MAINTAINER cna-storage@vmware.com
 
-ADD ./bin/docker-vmdk-plugin /usr/bin/docker-vmdk-plugin
+ADD ./bin/docker-volume-vsphere /usr/bin/docker-volume-vsphere
 
-ENTRYPOINT ["/usr/bin/docker-vmdk-plugin"]
+ENTRYPOINT ["/usr/bin/docker-volume-vsphere"]

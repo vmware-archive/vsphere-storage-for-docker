@@ -37,7 +37,7 @@ import (
 const (
 	defaultMountLocation = "/mnt/testvol"
 	// tests are often run under regular account and have no access to /var/log
-	defaultTestLogPath = "/tmp/test-docker-vmdk-plugin.log"
+	defaultTestLogPath = "/tmp/test-docker-volume-vsphere.log"
 )
 
 var (

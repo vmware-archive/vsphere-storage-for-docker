@@ -57,9 +57,9 @@ plugin. For manual steps not using rpm or deb file please refer
 
 ```
 # DEB
-sudo dpkg -i docker-vmdk-plugin_0.1.0.pre-tp_amd64.deb
+sudo dpkg -i <name>.deb
 # RPM
-sudo rpm -ivh docker-vmdk-plugin-0.1.0.pre_tp-1.x86_64.rpm
+sudo rpm -ivh <name>.rpm
 ```
 
 ## Using the plugin.
@@ -92,7 +92,7 @@ containers can use this storage for data.
 
 This repo contains guest code and ESXi code.
 
-The docker-vmdk-plugin service runs in docker VM and talks to Docker Volume
+The docker-volume-vsphere service runs in docker VM and talks to Docker Volume
 Plugin API via Unix Sockets. It then relays requests via VMWare vSockets
 host-guest communication to a dedicated service on ESXi.
 

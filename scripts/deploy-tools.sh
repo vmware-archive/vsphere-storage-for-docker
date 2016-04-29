@@ -48,7 +48,7 @@ SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 internal_vib_name=vmware-esx-vmdkops-service
 
 script_loc=./scripts
-tmp_loc=/tmp/docker-vmdk-plugin
+tmp_loc=/tmp/docker-volume-vsphere
 
 # ====== define functions =======
 
@@ -88,7 +88,7 @@ function deploy_helper {
 
 # deployvm 
 #
-# Deploys docker-vmdk-plugin and tests to a set of Lunix Guest VMs.
+# Deploys docker-volume-vsphere and tests to a set of Lunix Guest VMs.
 #   Also stops and starts services as needed.
 #
 # Plugin and test binaries (mentioned in $files) are copied to $bin_remote_location
@@ -101,7 +101,7 @@ function deployvm {
    stopsvc=cleanvm.sh
    
    # hardcoded since it'll be dropped in favor of apt-get anyways:
-   service_file=$bin_remote_location/docker-vmdk-plugin
+   service_file=$bin_remote_location/docker-volume-vsphere
    service_name=$service_file
 
    deploy_helper
@@ -158,7 +158,7 @@ function cleanvm {
    remote_binaries=`for f in $files ; do echo "$bin_remote_location/$(basename $f)"; done`
    stopsvc=cleanvm.sh
    # We kill process by name:
-   name=docker-vmdk-plugin
+   name=docker-volume-vsphere
 
    for ip in $ip_list
    do
@@ -192,7 +192,7 @@ function cleanvm {
 function usage {
    echo $1
    echo <<EOF
-deploy-tools.sh provideds a set of helpers for deploying docker-vmdk-plugin
+deploy-tools.sh provideds a set of helpers for deploying docker-volume-vsphere
 binaries to ESX and to guest VMs. 
 
 Usage:  deploy-tools.sh command params...

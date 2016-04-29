@@ -17,7 +17,7 @@
 plugin_name=$1
 
 stdlog=/tmp/plugin.log
-log=/var/log/docker-vmdk-plugin.log
+log=/var/log/docker-volume-vsphere.log
 echo ==== `date` ===== > $stdlog
 echo ==== `date` ===== > $log
 

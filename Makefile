@@ -36,9 +36,11 @@ BIN := ./bin
 SCRIPTS     := ./scripts
 
 # Packaging variables
-PLUGNAME  := docker-vmdk-plugin
+PLUGNAME  := docker-volume-vsphere
+# This is to address build failures while repo is not renamed to docker-volume-vsphere
+GOPATH_PLUGNAME := docker-vmdk-plugin
 MAINTAINERS := cna-storage@vmware.com
-REPO_URL    := https://github.com/vmware/$(PLUGNAME)
+REPO_URL    := https://github.com/vmware/$(GOPATH_PLUGNAME)
 MIN_DOCKER_VERSION :=1.9
 DOCKER_PACKAGE_DEB := docker-engine
 DOCKER_PACKAGE_RPM := docker
@@ -71,7 +73,7 @@ VIBFILE := vmware-esx-vmdkops-$(PKG_VERSION).vib
 VIB_BIN := $(BIN)/$(VIBFILE)
 
 # plugin name, for go build
-PLUGIN := github.com/vmware/$(PLUGNAME)
+PLUGIN := github.com/vmware/$(GOPATH_PLUGNAME)
 
 GO := GO15VENDOREXPERIMENT=1 go
 FPM := fpm

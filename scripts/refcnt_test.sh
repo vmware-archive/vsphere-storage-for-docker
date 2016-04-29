@@ -28,7 +28,7 @@
 # For now (TP) we still need basic validation
 #
 
-log=/var/log/docker-vmdk-plugin.log
+log=/var/log/docker-volume-vsphere.log
 count=5
 vname=refCountTestVol
 mount=/mnt/vmdk/$vname
@@ -80,7 +80,7 @@ if [ $c -ne $count ] ; then
 fi
 
 echo "Checking the last refcount and mount record"
-last_line=`tail -1 /var/log/docker-vmdk-plugin.log`
+last_line=`tail -1 /var/log/docker-volume-vsphere.log`
 echo $last_line | $GREP -q refcount=$count ; if [ $? -ne 0 ] ; then
    echo FAILED REFCOUNT TEST - pattern  \"refcount=$count\" not found
    echo Last line in the log: \'$last_line\'
@@ -105,10 +105,10 @@ fi
 
 
 echo "Checking recovery for VMDK plugin kill -9"
-kill -9 `pidof docker-vmdk-plugin`
-/usr/local/bin/docker-vmdk-plugin 2>&1 >/dev/null &
+kill -9 `pidof docker-volume-vsphere`
+/usr/local/bin/docker-volume-vsphere 2>&1 >/dev/null &
 sleep 1; sync  # give log the time to flush
-line=`tail -4 /var/log/docker-vmdk-plugin.log | $GREP 'Volume name='`
+line=`tail -4 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
 expected="name=$vname count=$count mounted=true"
 
 echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then

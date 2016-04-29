@@ -73,7 +73,7 @@ MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
 
 # Default log file. Should be synced with CI and make wrappers in ../*scripts
-LogFile = "/var/log/vmware/docker-vmdk-plugin.log"
+LogFile = "/var/log/vmware/vmdk_ops.log"
 
 # Service instance provide from connection to local hostd
 si = None
