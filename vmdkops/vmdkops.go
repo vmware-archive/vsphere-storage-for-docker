@@ -26,12 +26,6 @@ import (
 //
 // * VMDK CADD (Create/Attach/Detach/Delete) operations client code.
 // *
-// * TODO: allow concurrency from multiple containers. Specifically, split into
-// * Vmci_SubmitRequst() [not blocking] and Vmci_GetReply() [blocking] so the
-// * goroutines can be concurrent
-// *
-// * TODO: add better length mgmt for ANSW_BUFSIZE
-// *
 // **** PREREQUISITES:
 //   Build: open-vm-tools has to be installed - provided "vmci/vmci_sockets.h"
 //   Run:   open-vm-tools has to be installed

@@ -1,7 +1,7 @@
 <!--  dockervolagent VIB descriptor.xml. Used to generate installable VIBs-->
 
 
-<!--  TBD: PUT ACTUAL PAYLOAD CONTENT  in ../payloads/payload1/... -->
+<!--  ACTUAL PAYLOAD CONTENT is expected in ../payloads/payload1/... -->
 
 
 <vib version="6.0">
@@ -44,7 +44,6 @@
    <!-- VIB acceptance level.  Should be one of -->
    <!-- certified / accepted / partner / community -->
    <!-- Defaults to community if not specified    -->
-   <!-- TODO: This value may be overridden by the signing code. -->
    <acceptance-level>partner</acceptance-level>
 
    <!-- Both live install and live removes must be true for a live upgrade -->

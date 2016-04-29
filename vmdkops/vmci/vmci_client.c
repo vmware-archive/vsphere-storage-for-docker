@@ -20,8 +20,7 @@
 //
 // API: Exposes only Vmci_GetReply. The call is blocking.
 //
-// TODO: clean up messages and error handling
-// TODO: split into  Vmci_IssueRequest and (blocking) Vmci_GetReply
+// TODO: Clean up error handing. Issue #206
 //
 
 #include <stdio.h>
@@ -54,7 +53,7 @@ typedef struct be_request {
 #define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
 
 typedef struct be_answer {
-   int status;  // TBD: OK, parse error, access denied, etc...
+   int status;  // TODO: OK, parse error, access denied, etc.... Issue #206
    char *buf;   // calloced, so needs to be free()
 } be_answer;
 
@@ -73,7 +72,6 @@ typedef struct be_funcs {
    (*release_sock)(be_sock_id *id);
 
    // send a request and get  reply - blocking
-   // TBD: split in request (asyn) , get_reply(sync)
    be_sock_status
    (*get_reply)(be_sock_id *id, be_request *r, be_answer* a);
 } be_funcs;
@@ -170,7 +168,7 @@ vsock_get_family(void)
 {
    static int af = -1;
 
-   if (af == -1) { // Note: this may leak FDs in multi-threads. TODO: lock.
+   if (af == -1) { // TODO: for multi-thread will need a lock. Issue #35
       af = VMCISock_GetAFValue();
    }
    return af;
@@ -227,7 +225,6 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    printf("vsock_get_reply: Requesting '%s'.\n", r->msg);
 
    // Try to send a message to the server.
-   // TODO use sendmsg here...
    b = MAGIC;
    ret = send(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {

@@ -48,7 +48,6 @@
 //
 // We rely on all plugin mounts being in /mnt/vmdk/<volume_name>, and will
 // unount stuff there at will - this place SHOULD NOT be used for manual mounts.
-//          TODO: on create, reject file names > 255 chars on ‘create’
 //
 // If a volume IS mounted, but should not be (refcount = 0)
 //   - we assume there was a restart of either Docker or VM or even ESX, and

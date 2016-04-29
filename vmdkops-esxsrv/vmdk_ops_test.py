@@ -32,9 +32,6 @@ import volumeKVStore as kv
 global path
 
 
-# TODO:
-# (1) clean up TODO from vmci_svc.py in a separate check-in
-
 class VmdkCreateRemoveTestCase(unittest.TestCase):
     """Unit test for VMDK Create and Remove ops"""
 

@@ -124,7 +124,6 @@ def createVMDK(vmdkPath, volName, opts=""):
 		logging.debug("SETTING DEFAULT SIZE to " +  size)
 	else:
 		size = str(opts["size"])
-		#TODO: check it is compliant format, and correct if possible
 		logging.debug("SETTING  SIZE to " + size)
 
         cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
@@ -324,7 +323,6 @@ def connectLocal():
 	atexit.register(pyVim.connect.Disconnect, si)
 
 	# set out ID in context to be used in request - so we'll see it in logs
-	# TBD - expose and use outside :-)
 	reqCtx = VmomiSupport.GetRequestContext()
 	reqCtx["realUser"]='dvolplug'
 	return si
@@ -433,8 +431,7 @@ return error or unit:bus numbers of newly attached disk.
   devices = vm.config.hardware.device
 
   # Make sure we have a PVSCI and add it if we don't
-  # TODO: add more controllers if we are out of slots.
-  # for now we will throw if we are out of slots
+  # TODO: add more controllers if we are out of slots. Issue #38
 
   # get all scsi controllers (pvsci, lsi logic, whatever)
   controllers = [d for d in devices if isinstance(d, vim.VirtualSCSIController)]
@@ -501,9 +498,8 @@ return error or unit:bus numbers of newly attached disk.
         diskMode = 'persistent',
       ),
       deviceInfo = vim.Description(
+        # TODO: use docker volume name here. Issue #292
         label = "dockerDataVolume",
-        # TODO: Use docker data volume name for label
-        # this way we use it on detach
         summary = "dockerDataVolume",
       ),
       unitNumber = diskSlot,
@@ -616,7 +612,6 @@ def handleVmciRequests():
 		except ValueError as e:
 			ret = {u'Error': "Failed to parse json '%s'." % (txt,value)}
 		else:
-			# note: Connection can time out on idle. TODO: to refresh in that case
 			details = req["details"]
 			opts = details["Opts"] if "Opts" in details else None
 			ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)

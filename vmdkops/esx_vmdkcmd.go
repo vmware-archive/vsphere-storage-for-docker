@@ -37,7 +37,7 @@ import "C"
 type EsxVmdkCmd struct{}
 
 const (
-	vmciEsxPort     int    = 15000 // port we are connecting on. TBD: config?
+	vmciEsxPort     int    = 15000 // port we are connecting on
 	commBackendName string = "vsocket"
 )
 
@@ -86,8 +86,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 
 	if ret != 0 {
 		msg := "Failed to connect to ESX over vsocket"
-		// TODO: vci_client.c:vsock_get_reply needs to return meaninful errcode
-		// and we need to issue details on connection failure
+		// TODO: per-errcode msg, when vmci_client.c err return is fixed. Issue #206
 		log.Warn(msg)
 		return nil, errors.New(msg)
 	}

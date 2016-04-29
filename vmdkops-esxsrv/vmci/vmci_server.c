@@ -24,7 +24,7 @@
 
 // useful ref on ctypes:  http://starship.python.net/crew/theller/ctypes/tutorial.html
 
-// TODO: cleanup, err mgmt. see errcheck attribute for better error checking
+// TODO: return meaningful error codes. Issue #206
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,13 +36,12 @@
 
 #define MAGIC 0xbadbeef
 
-// TODO: get shared lib for client and server
 static int
 vsock_get_family(void)
 {
    static int af = -1;
 
-   if (af == -1) { // Note: this may leak FDs in multi-threads. TBD: lock.
+   if (af == -1) { // TODO: need lock when going multi-threaded. Issue #35
       af = VMCISock_GetAFValue();
    }
    return af;
@@ -229,9 +228,7 @@ vmci_reply(const int c,      // socket to use
    int ret; // keep return values here
    uint32_t b; // smallish buffer
 
-   // just being paranoid
-   // TODO: add error code to network protocol instead if the hacky err msg.
-   // Also wire the proper error handling in both python srv and GO client
+   // Just being paranoid...
    if (reply == NULL) {
       reply = "OK";
    }
