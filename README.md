@@ -1,59 +1,40 @@
 [![Build
 Status](https://ci.vmware.run/api/badges/vmware/docker-vmdk-plugin/status.svg)](https://ci.vmware.run/vmware/docker-vmdk-plugin)
 
-# Docker VMDK Plugin
+Docker Volume Driver for vSphere
+================================
 
-This repo hosts the docker volume plugin for VMware vSphere. The plugin allows
-storage owned by vSphere to be managed and consumed via the [docker volume
-plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
+This repo hosts the Docker Volume Driver for vSphere. The plugin integrated with [docker volume
+plugin framework](https://docs.docker.com/engine/extend/plugins_volume/) will help customers address persistence storage requirements of docker containers backed by vSphere storage (vSAN, VMFS, NFS etc). 
 
 To read more about code development and testing read
 [CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
 
 ## Tested on
 
-ESXi:
-
+VMware ESXi:
 - 6.0
 - 6.0 u1
 - 6.0 u2
 
 Docker: 1.9 and higher
 
-VM:
+Guest Operating System:
+- Photon 1.0 RC
 - Ubuntu 14.04 64 bit (needs Upstart or systemctl)
-- Photon
 
-## Installation
-The VM plugin code is tested against the list enumerated above,
-but it should work against any 64 bit distro with systemd installed.
+## Installation Instructions
+### On ESX
 
-In order to get going, pick the latest stable release (for now
-only pre TP release is available) from
-https://github.com/vmware/docker-vmdk-plugin/releases.
-
-There are 2 components that need installing, backend service on ESX and the docker
-plugin on the docker host.
-
-### ESX Setup.
-
-Install the vSphere side of code (vib or offline depot), [please refer to
+Install vSphere Installation Bundle (VIB).  [Please refer to
 vSphere documentation.](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
 
-Same sample options:
+For e.g.:
 ```
-# Log on to ESX after copying the vib over and run
-localcli software vib install --no-sig-check  -v /tmp/<vib_name>.vib
+# Using local setup
+esxcli software vib install --no-sig-check  -v /vmfs/volumes/Datastore/DirectoryName/<vib_name>.vib
 ```
-Or use the helper scripts part of the build and test infrastructure, refer
-[CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
-
-### Plugin installation on the docker host (VM)
-
-VM running docker needs the plugin installed. Use the deb or rpm file to
-install the plugin. Plugin requires systemd for starting and stopping the
-plugin. For manual steps not using rpm or deb file please refer
-[CONTRIBUTING.md](https://github.com/vmware/docker-vmdk-plugin/blob/master/CONTRIBUTING.md)
+### On Docker Host (VM)
 
 ```
 # DEB
@@ -62,49 +43,24 @@ sudo dpkg -i <name>.deb
 sudo rpm -ivh <name>.rpm
 ```
 
-## Using the plugin.
+## Using Docker CLI
 
 ```
-# Docker commands to use plugin
-docker volume create --driver=vmdk --name=MyVolume -o size=10gb
-docker volume ls
-docker volume inspect MyVolume
-docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
-docker rm my_container
-docker volume rm MyVolume
+$ docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+$ docker volume ls
+$ docker volume inspect MyVolume
+$ docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
+$ docker rm my_container
+$ docker volume rm MyVolume
 ```
 
-# Plugin Overview
-
-Native ESXi VMDK support for Docker Data Volumes.
-
-When Docker runs in a VM under ESXi hypervisor, we allow Docker user to create
-and use VMDK-based data volumes. Example:
-
+## Using ESXi Admin CLI
 ```
-docker volume create --driver=vmdk --name=MyStorage -o size=10gb
-docker run --rm -it -v MyStorage:/mnt/data busybox sh
+$ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
 ```
-
-This will create a MyStorage.vmdk on the same datastore where Docker VM is
-located. This vmdk will be attached to the Docker VM on "docker run" and the
-containers can use this storage for data.
-
-This repo contains guest code and ESXi code.
-
-The docker-volume-vsphere service runs in docker VM and talks to Docker Volume
-Plugin API via Unix Sockets. It then relays requests via VMWare vSockets
-host-guest communication to a dedicated service on ESXi.
-
-The docker plugin code makes use of  vmdkops module  (found  in ./vmdkops) and
-ESX python service (found in ./vmdkops-esxsrc).
-
-The end results is that "docker volume create --drive vmdk" is capable of
-creating VMDK disks on enclosing ESX host, and using the new volume auto
-attaches and mounts the storage so it is immediately usable
 
 # Demo To be continued...
 
-# Contact
+# Contact 
 
-[CNA Storage](cna-storage <cna-storage@vmware.com>)
+Please let us know what you think! Contact us at [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
