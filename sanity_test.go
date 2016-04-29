@@ -65,7 +65,7 @@ func init() {
 	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
 	flag.Parse()
 
-	usingConfigFile := logInit(logLevel, logFile, configFile)
+	usingConfigFileDefaults := logInit(logLevel, logFile, configFile)
 
 	reconnectSleepInterval = time.Duration(*waitSec) * time.Second
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
@@ -76,7 +76,7 @@ func init() {
 		"log_level":       *logLevel,
 		"log_file":        *logFile,
 		"conf_file":       *configFile,
-		"using_conf_file": usingConfigFile,
+		"using_conf_file_defaults": usingConfigFileDefaults,
 	}).Info("VMDK plugin tests started ")
 }
 
