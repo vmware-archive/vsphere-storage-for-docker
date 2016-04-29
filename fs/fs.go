@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // +build linux
 
 // This is the filesystem interface for mounting volumes on the guest.
@@ -20,21 +19,21 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"io"
 	"os"
+	"strings"
 	"syscall"
-        "io"
-	"encoding/json"
-        "strings"
 )
 
-const sysPciDevs = "/sys/bus/pci/devices"  // All PCI devices on the host
+const sysPciDevs = "/sys/bus/pci/devices" // All PCI devices on the host
 
 // VolumeDevSpec - volume spec returned from the server on an attach
 type VolumeDevSpec struct {
-   Unit string
-   Bus string
+	Unit string
+	Bus  string
 }
 
 // Mkdir creates a directory at the specifiied path
@@ -57,14 +56,14 @@ func Mkdir(path string) error {
 // Mount discovers which devices are for which volume using blkid.
 // It then mounts the filesystem (`fs`) on the device at the given mountpoint.
 func Mount(mountpoint string, devSpec []byte, fs string) error {
-        var device string
-        if devSpec == nil {
-           return fmt.Errorf("No device to mount.")
-        }
-        device, err := GetDevicePath(devSpec)
-        if err != nil {
-           return err
-        }
+	var device string
+	if devSpec == nil {
+		return fmt.Errorf("No device to mount.")
+	}
+	device, err := GetDevicePath(devSpec)
+	if err != nil {
+		return err
+	}
 	log.WithFields(log.Fields{
 		"device":     device,
 		"mountpoint": mountpoint,
@@ -84,58 +83,58 @@ func Unmount(mountpoint string) error {
 
 // GetDevicePath - return device path or error
 func GetDevicePath(str []byte) (string, error) {
-        var volDev VolumeDevSpec
-        err := json.Unmarshal(str, &volDev)
-        if err != nil && len(err.Error()) != 0 {
-           return "", err
-        }
+	var volDev VolumeDevSpec
+	err := json.Unmarshal(str, &volDev)
+	if err != nil && len(err.Error()) != 0 {
+		return "", err
+	}
 
-        // Get the device node for the unit returned from the attach.
-        // Lookup each device that has a label and if that label matches
-        // the one for the given bus number.
-        // The device we need is then constructed from the dir name with 
-        // the matching label.
-        busLabel := fmt.Sprintf("SCSI%s", volDev.Bus)
+	// Get the device node for the unit returned from the attach.
+	// Lookup each device that has a label and if that label matches
+	// the one for the given bus number.
+	// The device we need is then constructed from the dir name with
+	// the matching label.
+	busLabel := fmt.Sprintf("SCSI%s", volDev.Bus)
 
-        dirh, err := os.Open(sysPciDevs)
-        if err != nil {
-           return "", err
-        }
+	dirh, err := os.Open(sysPciDevs)
+	if err != nil {
+		return "", err
+	}
 
-        defer dirh.Close()
+	defer dirh.Close()
 
-        // Change this to do a read in slices, needed for large dirs.
-        names, err := dirh.Readdirnames(-1)
+	// Change this to do a read in slices, needed for large dirs.
+	names, err := dirh.Readdirnames(-1)
 
-        if err != nil {
-	   log.WithFields(log.Fields{"Error": err}).Warn("Get device by path: ")
-           return "", err
-        }
+	if err != nil {
+		log.WithFields(log.Fields{"Error": err}).Warn("Get device by path: ")
+		return "", err
+	}
 
-        // Only read in as much as the size of the label we want to compare.
-        buf := make([]byte, len(busLabel))
-        for _, elem := range names {
-           label := fmt.Sprintf("%s/%s/%s", sysPciDevs, elem, "label")
-           if _, err = os.Stat(label); os.IsNotExist(err) {
-              continue
-           }
-           labelh, err := os.Open(label)
-           if err != nil {
-	      log.WithFields(log.Fields{"Error": err}).Warn("Get device by path: ")
-              return "", err
-           }
-           _, err = labelh.Read(buf) 
+	// Only read in as much as the size of the label we want to compare.
+	buf := make([]byte, len(busLabel))
+	for _, elem := range names {
+		label := fmt.Sprintf("%s/%s/%s", sysPciDevs, elem, "label")
+		if _, err = os.Stat(label); os.IsNotExist(err) {
+			continue
+		}
+		labelh, err := os.Open(label)
+		if err != nil {
+			log.WithFields(log.Fields{"Error": err}).Warn("Get device by path: ")
+			return "", err
+		}
+		_, err = labelh.Read(buf)
 
-           labelh.Close()
-           if err != nil && err != io.EOF {
-	      log.WithFields(log.Fields{"Error": err}).Warn("Get device by path: ")
-              return "", err
-           }
-           if strings.Compare(busLabel, string(buf)) == 0 {
-              // Return the device string by path for the device.
-              return fmt.Sprintf("/dev/disk/by-path/pci-%s-scsi-0:0:%s:0", elem, volDev.Unit), nil
-           }
-        }
+		labelh.Close()
+		if err != nil && err != io.EOF {
+			log.WithFields(log.Fields{"Error": err}).Warn("Get device by path: ")
+			return "", err
+		}
+		if strings.Compare(busLabel, string(buf)) == 0 {
+			// Return the device string by path for the device.
+			return fmt.Sprintf("/dev/disk/by-path/pci-%s-scsi-0:0:%s:0", elem, volDev.Unit), nil
+		}
+	}
 
-        return "", fmt.Errorf("Device not found for unit %s on bus %s", volDev.Unit, volDev.Bus)
+	return "", fmt.Errorf("Device not found for unit %s on bus %s", volDev.Unit, volDev.Bus)
 }

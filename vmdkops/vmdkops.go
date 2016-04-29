@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // +build linux
 
 package vmdkops
@@ -36,9 +35,9 @@ type VmdkCmdRunner interface {
 	Run(cmd string, name string, opts map[string]string) ([]byte, error)
 }
 
-// VmdkOps struct 
+// VmdkOps struct
 type VmdkOps struct {
-	Cmd VmdkCmdRunner // see *_vmdkcmd.go for implementations. 
+	Cmd VmdkCmdRunner // see *_vmdkcmd.go for implementations.
 }
 
 // VolumeData we return to the caller
@@ -64,11 +63,11 @@ func (v VmdkOps) Remove(name string, opts map[string]string) error {
 // Attach a volume
 func (v VmdkOps) Attach(name string, opts map[string]string) ([]byte, error) {
 	log.Debugf("vmdkOps.Attach name=%s", name)
-        str, err := v.Cmd.Run("attach", name, opts)
-        if err != nil {
-           return nil, err
-        }
-        return str, err
+	str, err := v.Cmd.Run("attach", name, opts)
+	if err != nil {
+		return nil, err
+	}
+	return str, err
 }
 
 // Detach a volume

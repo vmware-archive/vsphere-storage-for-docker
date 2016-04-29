@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // +build linux
 
 // An implementation of the VmdkCmdRunner interface that mocks ESX. This removes the requirement forunning ESX at all when testing the plugin.
@@ -36,12 +35,12 @@ import (
 type MockVmdkCmd struct{}
 
 const (
-	backingRoot = "/tmp/docker-volumes" // Files for loopback device backing stored here
-	fileSizeInBytes = 100*1024*1024     // file size for loopback block device 
+	backingRoot     = "/tmp/docker-volumes" // Files for loopback device backing stored here
+	fileSizeInBytes = 100 * 1024 * 1024     // file size for loopback block device
 )
 
 func getBackingFileName(nameBase string) string {
-    // make unique name - avoid clashes shall we find any garbage in the directory
+	// make unique name - avoid clashes shall we find any garbage in the directory
 	name := fmt.Sprintf("%s/%s-%d", backingRoot, nameBase, os.Getpid())
 	log.WithFields(log.Fields{"name": name}).Debug("Created tmp file for loopback")
 	return name

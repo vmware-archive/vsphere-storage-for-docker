@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package main
 
 // A VMDK Docker Data Volume plugin - main
