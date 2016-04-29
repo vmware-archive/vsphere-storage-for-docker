@@ -70,11 +70,11 @@ func init() {
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 
 	log.WithFields(log.Fields{
-		"driver":          driverName,
-		"waitSec":         *waitSec,
-		"log_level":       *logLevel,
-		"log_file":        *logFile,
-		"conf_file":       *configFile,
+		"driver":                   driverName,
+		"waitSec":                  *waitSec,
+		"log_level":                *logLevel,
+		"log_file":                 *logFile,
+		"conf_file":                *configFile,
 		"using_conf_file_defaults": usingConfigFileDefaults,
 	}).Info("VMDK plugin tests started ")
 }
