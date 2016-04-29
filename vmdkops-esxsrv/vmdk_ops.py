@@ -445,17 +445,16 @@ return error or unit:bus numbers of newly attached disk.
   else:
     logging.warning("Warning: PVSCI adapter is missing - trying to add one...")
     diskSlot = 0  # starting on a fresh controller
-    if len(controllers) == max_scsi_controllers:
-      raise StandardError("Error: cannot create PVSCI adapter - VM is out of bus slots")
+    if len(controllers) >= max_scsi_controllers:
+      msg = "Failed to place PVSCI adapter - out of bus slots"
+      logging.error(msg + " VM={0}".format(vm.config.uuid))
+      return err(msg)
 
     # find empty bus slot for the controller:
     taken = set([c.busNumber for c in controllers])
-    avail = set(range(0,4)) - taken
+    avail = set(range(0, max_scsi_controllers)) - taken
 
-    if len(avail) == 0:
-      raise  StandardError("Internal error:  can't allocate a bus slot but should be able to.")
-
-    key = avail.pop()           # bus slot
+    key = avail.pop() # bus slot
     controllerKey = key + offset_from_bus_number
     diskSlot = 0
     busNumber = key
@@ -485,7 +484,9 @@ return error or unit:bus numbers of newly attached disk.
     availSlots = set(range (0,6) + range (8,16))  - taken
 
     if len(availSlots) == 0:
-      raise StandardError("We don't support this many disks yet")
+      msg = "Failed to place new disk - out of disk slots"
+      logging.error(msg + " VM={0}".format(vm.config.uuid))
+      return err(msg)
 
     diskSlot = availSlots.pop()
     logging.debug(" controllerKey=%d slot=%d" % (controllerKey, diskSlot))
