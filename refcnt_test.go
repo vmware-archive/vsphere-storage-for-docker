@@ -29,7 +29,7 @@ const (
 )
 
 // brute force code - just invokes external script and processes results
-// see comments in the script for the actual test content and TBDs
+// see comments in the script for the actual test content
 func TestRefCnt(t *testing.T) {
 	err := executeScript(t, "refcnt_test.sh")
 	if err != nil {

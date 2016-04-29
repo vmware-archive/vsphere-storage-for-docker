@@ -19,8 +19,7 @@ OPSD_GROUP_NAME="vmdkops"
 OPSD_GROUP="$OPSD_GROUP_PATH/$OPSD_GROUP_NAME"
 OPSD_SCHED_PARAM="++memreliable,group=$OPSD_GROUP"
 
-# Sample dummy for how params can be passed.
-# TODO: All params when script needs them.
+# Pass these params to service.
 OPSD_PARAMS="--log-level=info"
 
 LOCAL_CLI_SCHED="localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group"

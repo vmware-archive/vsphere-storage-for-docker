@@ -31,14 +31,14 @@ then
  command -v docker > /dev/null
  if [ $? -ne 0 ]
  then
-   # TODO: To run docker build an older version of docker than
-   # 1.9 might be ok..?
    printNQuit "Docker is needed to run dockerbuild"
  fi
  if [ "$(docker version -f '{{.Server.Os}}')" != "linux" ]
  then
    printNQuit "This build requires Docker Server running on Linux."
  fi
+ # Note: not checking for docker version - we don't use anything fancy
+ # so any recent docker version should work
  exit 0
 fi
 
