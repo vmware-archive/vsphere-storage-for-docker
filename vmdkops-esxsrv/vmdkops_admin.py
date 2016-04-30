@@ -18,6 +18,7 @@
 
 import argparse
 import os
+import subprocess
 import volumeKVStore as kv
 import cli_table
 import vmdk_ops
@@ -116,10 +117,6 @@ def commands():
                     'metavar': 'Col1,Col2,...'
                 }
             }
-        },
-        'df': {
-            'func': df,
-            'help': 'Report volume datastore disk space usage',
         },
         'policy': {
             'help': 'Configure and display storage policy information',
@@ -358,12 +355,9 @@ def generate_ls_dash_l_rows():
            attached_to = metadata[u'attachedVMUuid']
        else:
            attached_to = 'detached'
-       volOpts = metadata[u'volOpts']
-       if volOpts and u'size' in volOpts:
-           capacity = volOpts[u'size']
-       else:
-           capacity = vmdk_ops.DefaultDiskSize
-       rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to, 'N/A', capacity, 'N/A'])
+       size_info = get_vmdk_size_info(path)
+       rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to, 'N/A',
+                    size_info['capacity'], size_info['used']])
    return rows
 
 def is_symlink(path):
@@ -401,23 +395,40 @@ def get_volumes():
     """ Return dicts of docker volumes, their datastore and their paths """
     volumes = []
     for (datastore, path) in get_datastores():
-        try:
-            files = os.listdir(path)
-        except OSError as e:
-            # dockvols may not exists on a datastore, so skip it
-            pass
-        else:
-            for f in files:
-                if vmdk_ops.vmdk_is_a_descriptor(os.path.join(path, f)):
-                    volumes.append({'path': path, 'filename': f, 'datastore': datastore})
+        for file in list_vmdks(path):
+            volumes.append({'path': path, 'filename': file, 'datastore': datastore})
     return volumes
 
 def get_metadata(volPath):
     """ Take the absolute path to volume vmdk and return its metadata as a dict """
     return kv.getAll(volPath)
 
-def df(args):
-    print "Called df with args {0}".format(args)
+def get_vmdk_size_info(path):
+    """
+    Get the capacity and used space for a given VMDK given its absolute path
+    Currently this data is retrieved via a call to vmkfstools.
+    The output being parsed looks like the following:
+
+    Capacity bytes: 209715200
+    Used bytes: 27262976
+    Unshared bytes: 27262976
+    """
+    try:
+        cmd = "vmkfstools --extendedstatinfo {0}".format(path).split()
+        output = subprocess.check_output(cmd)
+        lines = output.split('\n')
+        return {'capacity': lines[0].split()[2], 'used': lines[1].split()[2]}
+    except CalledProcessError:
+        sys.exit("Failed to stat {0}. VMDK corrupted. Please remove and then retry".format(path))
+
+def list_vmdks(path):
+    """ Return a list all VMDKs in a given path """
+    try:
+        files = os.listdir(path)
+        return [f for f in files if vmdk_ops.vmdk_is_a_descriptor(os.path.join(path, f))]
+    except OSError as e:
+        # dockvols may not exists on a datastore, so skip it
+        return []
 
 def policy_create(args):
     print "Called policy_create with args {0}".format(args)
