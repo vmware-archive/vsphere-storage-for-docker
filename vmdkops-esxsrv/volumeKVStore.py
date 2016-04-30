@@ -62,7 +62,8 @@ def getAll(volPath):
 def setAll(volPath, volMeta):
    if volMeta:
        return kvESX.save(volPath, volMeta)
-   return None
+   # No data to save .
+   return True
 
 # Set a string value for a given key(index)
 def set(volPath, key, val):
