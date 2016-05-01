@@ -42,6 +42,7 @@ import logging
 import signal
 import sys
 import re
+import argparse
 sys.dont_write_bytecode = True
 
 from vmware import vsi
@@ -74,14 +75,16 @@ DefaultDiskSize = "100mb"
 
 # Default log file. Should be synced with CI and make wrappers in ../*scripts
 LogFile = "/var/log/vmware/vmdk_ops.log"
+LogLevel = logging.INFO # default logging level
 
 # Service instance provide from connection to local hostd
 si = None
 
 
 def LogSetup(logfile):
+    global LogLevel
     logging.basicConfig(filename=logfile,
-                        level=logging.DEBUG,
+                        level=LogLevel,
                         format='%(asctime)-12s %(process)d [%(levelname)s] %(message)s',
                         datefmt='%x %X')
     logging.info("===" + time.strftime('%x %X %Z') + "Starting vmdkops service ===")
@@ -288,7 +291,7 @@ def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
     path = getVolPath(configPath)
 
     if path is None:
-       return err("Failed initializing volume path " + path)
+       return err("Failed initializing volume path {0}".format(path))
 
     vmdkPath = getVmdkName(path, volName)
 
@@ -623,8 +626,29 @@ def handleVmciRequests():
 
 	lib.close(sock) # close listening socket when the loop is over
 
+def parseOpts():
+    # Parse opts
+    parser = argparse.ArgumentParser(prog = 'VMDK Opsd',
+                                     description = 'Vsphere Docker Volume Ops Server')
+    # Server opts.
+    parser.add_argument('--log-level', nargs = '?', default = 'info', type = str,
+                        required = False, help = 'Log level.',
+                        choices = ['debug', 'info', 'warning'], dest = 'logLevel')
+    return vars(parser.parse_args())
 
 def main():
+    global LogLevel
+
+    # Parse options and set globals.
+    opts = parseOpts()
+    if opts:
+       if 'logLevel' in opts:
+         if opts['logLevel'] == 'info':
+            LogLevel = logging.INFO
+         elif opts['logLevel'] == 'debug':
+            LogLevel = logging.DEBUG
+         else:
+            LogLevel = logging.WARNING
     LogSetup(LogFile)
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
