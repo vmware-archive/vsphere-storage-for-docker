@@ -68,7 +68,7 @@ then
 
 fi
 
-plugin=docker-vmdk-plugin
+plugin=docker-volume-vsphere
 plugin_container_version=0.5
 plug_container=kerneltime/vibauthor-and-go:$plugin_container_version
 plug_pkg_container=vmware/fpm

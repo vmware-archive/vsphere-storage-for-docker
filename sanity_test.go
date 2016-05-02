@@ -27,7 +27,7 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
-	"github.com/vmware/docker-vmdk-plugin/config"
+	"github.com/vmware/docker-volume-vsphere/config"
 	"golang.org/x/net/context"
 	"testing"
 	"time"

@@ -84,7 +84,7 @@ then
    printNQuit "GOPATH environment variable needs to be set"
 fi
 
-EXPECTED_PATH="$GOPATH/src/github.com/vmware/docker-vmdk-plugin"
+EXPECTED_PATH="$GOPATH/src/github.com/vmware/docker-volume-vsphere"
 
 if [[ "$EXPECTED_PATH" != "$PWD" ]]
 then

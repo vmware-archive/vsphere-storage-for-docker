@@ -18,7 +18,7 @@ package config_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-vmdk-plugin/config"
+	"github.com/vmware/docker-volume-vsphere/config"
 	"testing"
 )
 

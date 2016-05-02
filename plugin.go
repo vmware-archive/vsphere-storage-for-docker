@@ -28,8 +28,8 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-vmdk-plugin/fs"
-	"github.com/vmware/docker-vmdk-plugin/vmdkops"
+	"github.com/vmware/docker-volume-vsphere/fs"
+	"github.com/vmware/docker-volume-vsphere/vmdkops"
 	"path/filepath"
 	"sync"
 )
