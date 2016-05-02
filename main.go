@@ -23,7 +23,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
-	"github.com/vmware/docker-vmdk-plugin/config"
+	"github.com/vmware/docker-volume-vsphere/config"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -86,7 +86,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 	return usingConfigDefaults
 }
 
-// main for docker-vmdk-driver
+// main for docker-volume-vsphere
 // Parses flags, inits mount refcounters and finally services Docker requests
 func main() {
 	// connect to this socket

@@ -236,7 +236,7 @@ sudo install -t /usr/local/bin drone
 ```
 mkdir -p $GOPATH/src/github.com/vmware
 cd $GOPATH/src/github.com/vmware
-git clone https://github.com/vmware/docker-vmdk-plugin.git
+git clone https://github.com/vmware/docker-volume-vsphere.git
 ```
 
 * Edit the .drone.yml file to reflect the dev setup.
@@ -297,6 +297,6 @@ Test SSH keys, login form the drone node should not require typing in a password
 #### Run drone exec
 
 ```
-cd cd $GOPATH/src/github.com/vmware/docker-vmdk-plugin/
+cd $GOPATH/src/github.com/vmware/docker-volume-vsphere/
 drone exec --trusted -i ~/.ssh/id_rsa
 ```

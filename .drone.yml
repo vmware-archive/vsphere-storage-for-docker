@@ -1,5 +1,5 @@
 clone:
-    path: github.com/vmware/docker-vmdk-plugin
+    path: github.com/vmware/docker-volume-vsphere
     tags: true
 
 build:
@@ -89,7 +89,7 @@ publish:
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
-    repo: vmware/docker-vmdk-plugin
+    repo: vmware/docker-volume-vsphere
     tag:
       - "latest"
       - $$BRANCH-$$BUILD_NUMBER
@@ -107,5 +107,5 @@ publish:
       - bin/*.vib
       - bin/*.zip
     when:
-      repo: vmware/docker-vmdk-plugin
+      repo: vmware/docker-volume-vpshere
       event: tag
