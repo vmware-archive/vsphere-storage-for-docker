@@ -104,34 +104,32 @@ def RunCommand(cmd):
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdkPath, volName, opts=""):
-	logging.info ("*** createVMDK: %s opts=%s" % (vmdkPath, opts))
-	if os.path.isfile(vmdkPath):
-		return err("File %s already exists" % vmdkPath)
+    logging.info ("*** createVMDK: %s opts=%s" % (vmdkPath, opts))
+    if os.path.isfile(vmdkPath):
+        return err("File %s already exists" % vmdkPath)
 
-	if not opts or not "size" in opts:
-		size = DefaultDiskSize
-		logging.debug("SETTING DEFAULT SIZE to " +  size)
-	else:
-		size = str(opts["size"])
-		logging.debug("SETTING  SIZE to " + size)
+    if not opts or not "size" in opts:
+        size = DefaultDiskSize
+        logging.debug("SETTING DEFAULT SIZE to " +  size)
+    else:
+        size = str(opts["size"])
+        logging.debug("SETTING  SIZE to " + size)
 
-        cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
-        rc, out = RunCommand(cmd)
+    cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
+    rc, out = RunCommand(cmd)
 
-        if rc != 0:
-            if removeVMDK(vmdkPath) == None:
-                return err("Failed to create %s." % vmdkPath)
-            else:
-                return err("Unable to create %s and unable to delete volume. Please delete it manually." % vmdkPath)
+    if rc != 0:
+        return err("Failed to create %s. %s" % (vmdkPath, out))
 
-        # Create the kv store for the disk before its attached
-        ret = kv.create(vmdkPath, "detached", opts)
-        if ret != True:
-           logging.warning ("Failed creating meta data store for %s" % vmdkPath)
-           removeVMDK(vmdkPath)
-           return err("Failed to create meta-data store for %s" % vmdkPath)
+    # Create the kv store for the disk before its attached
+    ret = kv.create(vmdkPath, "detached", opts)
+    if ret != True:
+       msg = "Failed to create meta-data store for %s" % vmdkPath
+       logging.warning (msg)
+       removeVMDK(vmdkPath)
+       return err(msg)
 
-        return formatVmdk(vmdkPath, volName)
+    return formatVmdk(vmdkPath, volName)
 
 # Return a backing file path for given vmdk path or none
 # if a backing can't be found.
