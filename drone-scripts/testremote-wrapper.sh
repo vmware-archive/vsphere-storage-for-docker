@@ -53,8 +53,7 @@ dump_log_esx() {
   echo "*** dumping log: ESX " $ESX
   echo "*************************************************************************"
   set -x
-  $SSH $USER@$ESX cat /var/log/vmware/docker-volume-vsphere.log
-  $SSH $USER@$ESX cat /tmp/plugin.log
+  $SSH $USER@$ESX cat /var/log/vmware/vmdk_ops.log
   set +x
   echo "*************************************************************************"
 }

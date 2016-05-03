@@ -28,7 +28,9 @@ OFFLINE_DEPOT := vmware-esx-vmdkops-$(PKG_VERSION).zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # code
-PY_SRC := vmdk_ops.py volumeKVStore.py kvESX.py vmdkops_admin.py cli_table.py
+PY_SRC := vmdk_ops.py log_config.py\
+	volumeKVStore.py kvESX.py \
+	vmdkops_admin.py cli_table.py
 C_SRC  := vmci/vmci_server.c
 INIT_SCRIPT := vmdk-opsd
 
@@ -42,7 +44,7 @@ PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
 
 # location on ESX where the stuff needs to go in payload
 ESX_BIN := /usr/lib/vmware/vmdkops/bin
-INITD_PATH := /etc/init.d/
+INITD_PATH := /etc/init.d
 
 # payload location - see descriptor.xml
 PAYLOAD=payloads
@@ -70,7 +72,7 @@ VIBAUTHOR_PARAMS := --debug --compose \
 build: $(VIB_BIN)
 
 $(VIB_BIN): descriptor.xml $(PY_FILES) $(TOOLS) $(INIT_SCRIPT)
-	@echo === Staging in $(VMDKOPS_BIN) and $(VMDKOPS_INITD)
+	@echo === Staging in $(VMDKOPS_BIN) and $(VMDKOPS_INITD) ===
 	@mkdir -p $(VMDKOPS_BIN)
 	@mkdir -p $(VMDKOPS_INITD)
 	@chmod -R a+w $(PAYLOAD)
