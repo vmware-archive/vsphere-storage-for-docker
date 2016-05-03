@@ -52,16 +52,6 @@ vmdkops-admin ls -f 'LastAttachedTime > 2016-03-11'
 vmdkops-admin ls -f 'AttachedTo = Test*'
 ```
 
-#### `df`
-List storage usage/availability for each datastore. Show the following attributes.
-
- * Datastore
- * Available Space (Capacity)
- * Allocated Space
- * Used Space
-
-Also list a summary including total space and volume count.
-
 ##### `policy`
 Create, configure and show the storage policy names and their corresponding vsan policies. Also show which datastores they
 apply to.

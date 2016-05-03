@@ -50,13 +50,6 @@ class TestParsing(unittest.TestCase):
     def test_parse_ls_dash_c_invalid_argument(self):
         self.assert_parse_error('ls -c personality')
 
-    def test_df(self):
-        args = self.parser.parse_args('df'.split())
-        self.assertEqual(args.func, vmdkops_admin.df)
-
-    def test_df_badargs(self):
-        self.assert_parse_error('df -l')
-
     def test_policy_no_args_fails(self):
         self.assert_parse_error('policy')
 
