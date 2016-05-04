@@ -71,7 +71,8 @@ fi
 plugin=docker-volume-vsphere
 plugin_container_version=0.5
 plug_container=kerneltime/vibauthor-and-go:$plugin_container_version
-plug_pkg_container=vmware/fpm
+plug_pkg_container_version=latest
+plug_pkg_container=kerneltime/fpm:$plug_pkg_container_version
 dockerfile=Dockerfile.vibauthor-and-go
 DOCKER="$DEBUG docker"
 

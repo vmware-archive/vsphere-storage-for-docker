@@ -152,7 +152,7 @@ DOCKER = $(DEBUG) docker
 .PHONY: fpm-docker
 fpm-docker:
 	@echo "Building FPM container. It could take a while, please stand by..."
-	$(DOCKER) build -t vmware/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
+	$(DOCKER) build -t kerneltime/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
 
 .PHONY: pkg
 pkg: dockerdeb dockerrpm
@@ -161,14 +161,14 @@ pkg: dockerdeb dockerrpm
 package: pkg
 
 .PHONY: dockerdeb
-dockerdeb: fpm-docker pkg-post
+dockerdeb: pkg-post
 	$(BUILD) deb
 
 .PHONY: dockerrpm pkg-post
-dockerrpm: fpm-docker
+dockerrpm:
 	$(BUILD) rpm
 
-DESCRIPTION := "VMDK Volume Plugin for Docker"
+DESCRIPTION := "Docker Volume Driver for vSphere"
 FPM_COMMON := -p $(BIN) \
 	-C $(PACKAGE) \
 	-s dir \
