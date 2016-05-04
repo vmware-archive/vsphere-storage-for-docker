@@ -57,7 +57,7 @@ build:
       - GOVC_URL=$$CI_ESX_IP
     commands:
       - export VM1=`govc vm.ip ubuntu`
-      - export VM2=`govc vm.ip ubuntu-2`
+      - export VM2=`govc vm.ip photon.rc`
       - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
