@@ -140,7 +140,7 @@ dummy_init(be_sock_id *id, int cid, int port)
 static void
 dummy_release(be_sock_id *id)
 {
-   printf("dumm_release: released.\n");
+   printf("dummy_release: released.\n");
 }
 
 static be_sock_status
@@ -222,27 +222,25 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    int ret;
    uint32_t b; // smallish buffer
 
-   printf("vsock_get_reply: Requesting '%s'.\n", r->msg);
-
    // Try to send a message to the server.
    b = MAGIC;
    ret = send(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
-      printf("Failed to send magic: ret %d (%s) expected ret %lu\n",
+      fprintf(stderr, "Failed to send magic: ret %d (%s) expected ret %lu\n",
                ret, strerror(errno), sizeof b);
       return -1;
    }
 
    ret = send(s->sock_id, &r->mlen, sizeof r->mlen, 0);
    if (ret == -1 || ret != sizeof r->mlen) {
-      printf("Failed to send len: ret %d (%s) expected ret %lu\n",
+      fprintf(stderr, "Failed to send len: ret %d (%s) expected ret %lu\n",
                ret, strerror(errno), sizeof r->mlen);
       return -1;
    }
 
    ret = send(s->sock_id, r->msg, r->mlen, 0);
    if (ret == -1 || ret != r->mlen) {
-      printf("Failed to send content: ret %d (%s) expected ret %d\n",
+      fprintf(stderr, "Failed to send content: ret %d (%s) expected ret %d\n",
                ret, strerror(errno), r->mlen);
       return -1;
    }
@@ -253,7 +251,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    b = 0;
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b || b != MAGIC) {
-      printf("*** Failed to receive magic: ret %d (%s) got 0x%x magic 0x%x\n",
+      fprintf(stderr, "Failed to receive magic: ret %d (%s) got 0x%x magic 0x%x\n",
                ret, strerror(errno), b, MAGIC);
       return -1;
    }
@@ -262,25 +260,24 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    b = 0;
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
-      printf("Failed to receive len: ret %d (%s)\n", ret, strerror(errno));
+      fprintf(stderr, "Failed to receive len: ret %d (%s)\n", ret, strerror(errno));
       return -1;
    }
 
    a->buf = calloc(1, b);
    if (!a->buf) {
-      printf("Memory allocation failure: request for %d bytes failed\n", b);
+      fprintf(stderr, "Memory allocation failure: request for %d bytes failed\n", b);
       return -1;
    }
 
    ret = recv(s->sock_id, a->buf, b, 0);
    if (ret == -1 || ret != b) {
-      printf("Failed to receive msg: ret %d (%s) expected ret %d\n",
+      fprintf(stderr, "Failed to receive msg: ret %d (%s) expected ret %d\n",
                ret, strerror(errno), b);
       free(a->buf);
       return -1;
    }
 
-   printf("vsock_get_reply: Received '%s'.\n", a->buf);
    return 0;
 }
 

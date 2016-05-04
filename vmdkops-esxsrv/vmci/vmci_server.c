@@ -140,7 +140,7 @@ vmci_get_one_op(const int s,    // socket to listen on
    int af = vsock_get_family();
 
    if (af == -1)  {
-      printf("Internal error - FAMILY (af) value is not set\n");
+      fprintf(stderr, "Internal error - FAMILY (af) value is not set\n");
       return -1;
    }
    /*
@@ -176,7 +176,7 @@ vmci_get_one_op(const int s,    // socket to listen on
    b = 0;
    ret = recv(c, &b, sizeof b, 0);
    if (ret == -1 || b != MAGIC) {
-      printf("Failed to receive magic: ret %d (%s) got 0x%x (expected 0x%x)\n",
+      fprintf(stderr, "Failed to receive magic: ret %d (%s) got 0x%x (expected 0x%x)\n",
                ret, strerror(errno), b, MAGIC);
       close(c);
       return -1;
@@ -186,7 +186,7 @@ vmci_get_one_op(const int s,    // socket to listen on
    b = 0;
    ret = recv(c, &b, sizeof b, 0);
    if (ret == -1) {
-      printf("Failed to receive len: ret %d (%s) got %d\n",
+      fprintf(stderr, "Failed to receive len: ret %d (%s) got %d\n",
                ret, strerror(errno), b);
       close(c);
       return -1;
@@ -202,14 +202,14 @@ vmci_get_one_op(const int s,    // socket to listen on
    memset(buf, 0, b);
    ret = recv(c, buf, b, 0);
    if (ret != b) {
-      printf("Failed to receive content: ret %d (%s) expected %d\n",
+      fprintf(stderr, "Failed to receive content: ret %d (%s) expected %d\n",
              ret, strerror(errno), b);
       close(c);
       return -1;
    }
    // protocol sanity check
    if (strlen(buf) + 1 != b) {
-      printf("Protocol error: len mismatch, expected %d, got %d\n",
+      fprintf(stderr, "Protocol error: len mismatch, expected %d, got %d\n",
                strlen(buf), b);
       close(c);
       return -1;
@@ -232,7 +232,6 @@ vmci_reply(const int c,      // socket to use
    if (reply == NULL) {
       reply = "OK";
    }
-   printf("vmci_reply: got to send '%s' on socket %d\n", reply, c);
 
    /*
     * And send one word back.
@@ -242,7 +241,7 @@ vmci_reply(const int c,      // socket to use
    ret = send(c, &b, sizeof(b), 0);
    if (ret != sizeof(b)) {
       reply = "Failed to send magic";
-      printf("%s: ret %d (%s) expected size %d\n",
+      fprintf(stderr, "%s: ret %d (%s) expected size %d\n",
                reply, ret, strerror(errno), sizeof(b));
       close(c);
       return -1;
@@ -252,16 +251,15 @@ vmci_reply(const int c,      // socket to use
    ret = send(c, &b, sizeof(b), 0);
    if (ret != sizeof(b)) {
       reply = "Failed to send len";
-      printf("%s: ret %d (%s) expected size %d\n",
+      fprintf(stderr, "%s: ret %d (%s) expected size %d\n",
                reply, ret, strerror(errno), sizeof(b));
       close(c);
       return -1;
    }
 
-   printf("Sending reply '%s'\n", reply);
    ret = send(c, reply, b, 0);
    if (b != ret) {
-      printf("Failed to send content: ret %d (%s) expected size %d\n",
+      fprintf(stderr, "Failed to send content: ret %d (%s) expected size %d\n",
                ret, strerror(errno), b);
       close(c);
       return -1;
