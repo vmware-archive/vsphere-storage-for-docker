@@ -1,4 +1,4 @@
-# This docker file is published using the kerneltime account.
+# This docker file is published using the kerneltime account to cnastorage org.
 # If any changes are to be made contact cna-storage@vmware.com 
 # to publish the updates to docker hub.
 # This is published to docker hub for 2 reasons
@@ -19,19 +19,25 @@
 ## - Controlling VMs under ESX   => may need govc command line
 ##
 
-# Current tag: 0.5
+# Current tag: 0.6
 
-FROM lamw/vibauthor
+FROM centos:6.6
 
 MAINTAINER cna-storage@vmware.com
 
-RUN curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -C /usr/local -xzf - && \
-    yum update -y && \
-    yum -y install e2fsprogs gcc  glibc-devel.x86_64 glibc-devel.i686 libgcc.i686 glibc-static  && \
+# Working directory
+WORKDIR /root
+
+RUN yum update -y && \
+    yum -y install tar openssl python-lxml glibc.i686 git file e2fsprogs gcc  glibc-devel.x86_64 glibc-devel.i686 libgcc.i686 glibc-static  && \
+    curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -C /usr/local -xzf - && \
     rm -rf ~/*.rpm ~/*.tar.gz && \
     yum clean all && \
     curl -L https://github.com/vmware/govmomi/releases/download/v0.4.0/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
-    chmod +x /usr/local/bin/govc
+    chmod +x /usr/local/bin/govc && \
+    curl -O http://download3.vmware.com/software/vmw-tools/vibauthor/vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm && \
+    rpm -ivh vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm
+
 
 ENV PATH=$PATH:/usr/local/go/bin:/go/bin \
     GOROOT=/usr/local/go \

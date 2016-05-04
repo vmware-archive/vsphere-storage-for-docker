@@ -4,7 +4,7 @@ clone:
 
 build:
   build_dev:
-    image: kerneltime/vibauthor-and-go:0.5
+    image: cnastorage/vibauthor-and-go:0.6
     commands:
       - go get github.com/golang/lint/golint
       - make build
@@ -13,7 +13,7 @@ build:
 
 
   build_tag:
-    image: kerneltime/vibauthor-and-go:0.5
+    image: cnastorage/vibauthor-and-go:0.6
     commands:
       - export PKG_VERSION=$$TAG
       - echo $PKG_VERSION
@@ -48,7 +48,7 @@ build:
       event: tag
 
   test:
-    image: kerneltime/vibauthor-and-go:0.5
+    image: cnastorage/vibauthor-and-go:0.6
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
@@ -64,7 +64,7 @@ build:
       event: [push, pull_request]
 
   test_tag:
-    image: kerneltime/vibauthor-and-go:0.5
+    image: cnastorage/vibauthor-and-go:0.6
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER

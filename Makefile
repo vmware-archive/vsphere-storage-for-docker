@@ -152,7 +152,7 @@ DOCKER = $(DEBUG) docker
 .PHONY: fpm-docker
 fpm-docker:
 	@echo "Building FPM container. It could take a while, please stand by..."
-	$(DOCKER) build -t kerneltime/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
+	$(DOCKER) build -t cnastorage/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
 
 .PHONY: pkg
 pkg: dockerdeb dockerrpm
