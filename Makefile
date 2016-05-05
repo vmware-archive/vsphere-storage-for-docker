@@ -315,6 +315,8 @@ test-esx:
 	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vmdk_ops_test.py"
 	@$(ECHO) Running unit tests for vmdkops_admin python code on $(ESX)...
 	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vmdkops_admin_tests.py"
+	@$(ECHO) Running unit tests for vsan_policy python code on $(ESX)...
+	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vsan_policy_tests.py"
 	$(SSH) root@$(ESX) rm -rf /tmp/$(ESX_SRC)
 
 testremote: test-esx test-vm

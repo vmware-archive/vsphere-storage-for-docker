@@ -21,10 +21,9 @@ import os
 import subprocess
 import volumeKVStore as kv
 import cli_table
+import vsan_policy
+import vmdk_utils as utils
 import vmdk_ops
-
-import pyVim.connect
-
 
 def main():
     kv.init()
@@ -305,7 +304,8 @@ def ls_no_args():
     stripping the '.vmdk' from the volume name
     """
     header = ['Volume', 'Datastore']
-    data = [[vmdk_ops.strip_vmdk_extension(v['filename']), v['datastore']] for v in get_volumes()]
+    data = [[utils.strip_vmdk_extension(v['filename']), v['datastore']] for v
+             in utils.get_volumes()]
     return (header, data)
 
 def ls_dash_l():
@@ -347,57 +347,24 @@ def all_ls_headers():
 def generate_ls_dash_l_rows():
    """ Gather all volume metadata into rows that can be used to format a table """
    rows = []
-   for v in get_volumes():
+   for v in utils.get_volumes():
        path = os.path.join(v['path'], v['filename'])
-       name = vmdk_ops.strip_vmdk_extension(v['filename'])
+       name = utils.strip_vmdk_extension(v['filename'])
        metadata = get_metadata(path)
        if metadata[u'status'] == u'attached':
            attached_to = metadata[u'attachedVMUuid']
        else:
            attached_to = 'detached'
+       volOpts = metadata[u'volOpts']
+       if volOpts and 'vsan-policy-name' in volOpts:
+           policy = volOpts['vsan-policy-name']
+       else:
+           policy = '[VSAN default]'
        size_info = get_vmdk_size_info(path)
-       rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to, 'N/A',
-                    size_info['capacity'], size_info['used']])
+       rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to,
+                    policy, size_info['capacity'], size_info['used']])
    return rows
 
-def is_symlink(path):
-    """ Returns true if the file is a symlink """
-    try:
-        os.readlink(path)
-        return True
-    except OSError:
-        return False
-
-# datastores should not change during 'vmdkops_admin' run,
-# so using global to avoid multiple scans of /vmfs/volumes
-datastores = None
-
-def get_datastores():
-    """
-    Return pairs of datastore names and absolute paths to dockvols directory,
-    after following the symlink
-    """
-
-    global datastores
-    if datastores != None:
-        return datastores
-
-    si = pyVim.connect.Connect()
-    #  We are connected to ESX so chileEntity[0] is current DC/Host
-    ds_objects = si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
-    datastores = [(d.info.name, os.path.join(d.info.url, 'dockvols'))
-                  for d in ds_objects]
-    pyVim.connect.Disconnect(si)
-
-    return datastores
-
-def get_volumes():
-    """ Return dicts of docker volumes, their datastore and their paths """
-    volumes = []
-    for (datastore, path) in get_datastores():
-        for file in list_vmdks(path):
-            volumes.append({'path': path, 'filename': file, 'datastore': datastore})
-    return volumes
 
 def get_metadata(volPath):
     """ Take the absolute path to volume vmdk and return its metadata as a dict """
@@ -421,23 +388,40 @@ def get_vmdk_size_info(path):
     except CalledProcessError:
         sys.exit("Failed to stat {0}. VMDK corrupted. Please remove and then retry".format(path))
 
-def list_vmdks(path):
-    """ Return a list all VMDKs in a given path """
-    try:
-        files = os.listdir(path)
-        return [f for f in files if vmdk_ops.vmdk_is_a_descriptor(os.path.join(path, f))]
-    except OSError as e:
-        # dockvols may not exists on a datastore, so skip it
-        return []
-
 def policy_create(args):
-    print "Called policy_create with args {0}".format(args)
+    output = vsan_policy.create(args.name, args.content)
+    if output:
+        print output
+    else:
+        print 'Successfully created policy: {0}'.format(args.name)
 
 def policy_rm(args):
-    print "Called policy_rm with args {0}".format(args)
+    output = vsan_policy.delete(args.name)
+    if output:
+        print output
+    else:
+        print 'Successfully removed policy: {0}'.format(args.name)
 
 def policy_ls(args):
-    print "Called policy_ls with args {0}".format(args)
+    volumes = vsan_policy.list_volumes_and_policies()
+    policies = vsan_policy.get_policies()
+    header = ['Volume', 'Policy Name', 'Policy Content']
+    rows = []
+    used_policies = set()
+    for v in volumes:
+        policy_name = v['policy']
+        if policy_name:
+            policy_content = policies[policy_name]
+            used_policies.add(policy_name)
+        else:
+            policy_name = '[VSAN default]'
+            policy_content = 'N/A'
+        rows.append([v['volume'], policy_name, policy_content])
+
+    unused_policies = list(set(policies.keys()).difference(used_policies))
+    for u in unused_policies:
+        rows.append(['[UNUSED]', u, policies[u]])
+    print cli_table.create(header, rows)
 
 def role_create(args):
     print "Called role_create with args {0}".format(args)

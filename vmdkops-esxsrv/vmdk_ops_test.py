@@ -27,6 +27,7 @@ import os, os.path
 
 import vmdk_ops
 import volumeKVStore as kv
+import vsan_policy
 
 # will do creation/deleteion in this folder:
 global path
@@ -41,9 +42,16 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
     def setUp(self):
         self.name = vmdk_ops.getVmdkName(path, self.volName)
+        self.policy_names = ['good', 'impossible']
+        policy_content = ('(("proportionalCapacity" i50) '
+                               '("hostFailuresToTolerate" i0))')
+        for n in self.policy_names:
+            vsan_policy.create(n, policy_content)
 
     def tearDown(self):
         self.vmdk = None
+        for n in self.policy_names:
+            vsan_policy.delete(n)
 
     def testCreateDelete(self):
         err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName)
@@ -79,13 +87,44 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         for unit in testInfo:
             # create a volume with requestes size/policy and check vs expected result
             err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName,
-                                      opts={u'policy': unit[1], u'size':unit[0]})
+                                      opts={'vsan-policy-name': unit[1], 'size':unit[0]})
             self.assertEqual(err == None, unit[2] , err)
 
             # clean up should fail if the created should have failed.
             err = vmdk_ops.removeVMDK(self.name)
             self.assertEqual(err == None, unit[2], err)
 
+class ValidationTestCase(unittest.TestCase):
+    """ Test validation of -o options on create """
+
+    def setUp(self):
+        """ Create a bunch of policies """
+        self.policy_names = ['name1', 'name2', 'name3']
+        self.policy_content = ('(("proportionalCapacity" i50) '
+                               '("hostFailuresToTolerate" i0))')
+        for n in self.policy_names:
+            vsan_policy.create(n, self.policy_content)
+
+    def tearDown(self):
+        for n in self.policy_names:
+            vsan_policy.delete(n)
+
+    def test_success(self):
+        sizes = ['2gb', '200tb', '200mb']
+        for s in sizes:
+            for p in self.policy_names:
+                # An exception should not be raised
+                vmdk_ops.validate_opts({'size': s, 'vsan-policy-name': p})
+                vmdk_ops.validate_opts({'size': s})
+                vmdk_ops.validate_opts({'vsan-policy-name': p})
+
+    def test_failure(self):
+        bad = [{'size': '2'}, {'vsan-policy-name': 'bad-policy'},
+               {'size': 'mb'}, {'bad-option': '4'},
+               {'bad-option': 'what', 'size': '4mb'}]
+        for opts in bad:
+            with self.assertRaises(vmdk_ops.ValidationError):
+                vmdk_ops.validate_opts(opts)
 
 # init log stream handle to use sys.output before running tests.
 # this is needed if we want to keep using "print" in test
