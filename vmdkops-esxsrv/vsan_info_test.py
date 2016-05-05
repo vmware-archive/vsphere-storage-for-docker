@@ -19,7 +19,7 @@
 
 import unittest
 import log_config
-import volumeKVStore as kv
+import volume_kv as kv
 import vmdk_ops
 import os.path
 import pyVim.connect

@@ -20,7 +20,8 @@ import shutil
 import uuid
 import glob
 import vmdk_ops
-import volumeKVStore as kv
+import vmdk_utils
+import volume_kv as kv
 import vmdkops_admin
 
 class TestParsing(unittest.TestCase):
@@ -147,7 +148,7 @@ class TestLs(unittest.TestCase):
         """ Setup run before each test """
         self.vol_count = 0
         self.cleanup()
-        for (datastore, path) in vmdkops_admin.get_datastores():
+        for (datastore, path) in vmdk_utils.get_datastores():
             if not self.mkdir(path):
                 continue
             for id in range(5):
@@ -175,7 +176,7 @@ class TestLs(unittest.TestCase):
             self.assertEqual(None, vmdk_ops.removeVMDK(os.path.join(v['path'], v['filename'])))
 
     def get_testvols(self):
-        return [x for x in vmdkops_admin.get_volumes() if x['filename'].startswith('testvol')]
+        return [x for x in vmdk_utils.get_volumes() if x['filename'].startswith('testvol')]
 
     def test_ls_helpers(self):
         volumes = self.get_testvols()
@@ -185,7 +186,7 @@ class TestLs(unittest.TestCase):
             self.assertNotEqual(None, metadata)
 
     def test_ls_no_args(self):
-          volumes = vmdkops_admin.get_volumes()
+          volumes = vmdk_utils.get_volumes()
           (header, data) = vmdkops_admin.ls_no_args()
           self.assertEqual(2, len(header))
           self.assertEqual(len(volumes), len(data))

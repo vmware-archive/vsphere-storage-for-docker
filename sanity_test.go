@@ -202,8 +202,7 @@ func TestSanity(t *testing.T) {
 			Name:   volumeName,
 			Driver: driverName,
 			DriverOpts: map[string]string{
-				"size":   "1gb",
-				"policy": "good",
+				"size": "1gb",
 			},
 		})
 	if err != nil {
