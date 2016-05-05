@@ -21,6 +21,15 @@ The download consists of 2 parts
 
 Please pick the latest release and use the same version of ESX and VM release.
 
+## Contact us
+
+Please let us know what you think! Contact us at 
+
+* [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
+* [Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
+* [Telegram] (https://telegram.me/cnastorage)
+* [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
+
 ## Tested on
 
 VMware ESXi:
@@ -69,9 +78,3 @@ $ docker volume rm MyVolume
 ```
 $ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
 ```
-
-# Demo To be continued...
-
-# Contact 
-
-Please let us know what you think! Contact us at [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
