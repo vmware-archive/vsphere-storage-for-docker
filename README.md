@@ -9,6 +9,27 @@ plugin framework](https://docs.docker.com/engine/extend/plugins_volume/) will he
 To read more about code development and testing read
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
 
+
+## Download
+
+We use [Github releases] (https://github.com/vmware/docker-volume-vsphere/releases).
+
+The download consists of 2 parts
+
+1. The ESX side code packaged as a [vib or an offline depot] (http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
+2. The VM side docker plugin packaged as a deb or rpm file. 
+
+Please pick the latest release and use the same version of ESX and VM release.
+
+## Contact us
+
+Please let us know what you think! Contact us at 
+
+* [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
+* [Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
+* [Telegram] (https://telegram.me/cnastorage)
+* [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
+
 ## Tested on
 
 VMware ESXi:
@@ -20,7 +41,7 @@ Docker: 1.9 and higher
 
 Guest Operating System:
 - Photon 1.0 RC
-- Ubuntu 14.04 64 bit (needs Upstart or systemctl)
+- Ubuntu 14.04 or higher (64 bit) (needs Upstart or systemctl to start and stop the plugin)
 
 ## Installation Instructions
 ### On ESX
@@ -57,9 +78,3 @@ $ docker volume rm MyVolume
 ```
 $ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
 ```
-
-# Demo To be continued...
-
-# Contact 
-
-Please let us know what you think! Contact us at [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
