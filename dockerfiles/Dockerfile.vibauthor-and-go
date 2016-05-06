@@ -1,4 +1,5 @@
 # This docker file is published using the kerneltime account to cnastorage org.
+# To use other account with access to the org update the CI/CD yaml file.
 # If any changes are to be made contact cna-storage@vmware.com 
 # to publish the updates to docker hub.
 # This is published to docker hub for 2 reasons
