@@ -57,7 +57,7 @@ SYSTEMD_UNIT := $(SCRIPTS)/install/$(PLUGNAME).service
 UPSTART_CONF := $(SCRIPTS)/install/$(PLUGNAME).conf
 PACKAGE      := package
 SYSTEMD_LIB  := $(PACKAGE)/lib/systemd/system/
-INSTALL_BIN  := $(PACKAGE)/usr/bin
+INSTALL_BIN  := $(PACKAGE)/usr/local/bin
 UPSTART_INIT := $(PACKAGE)/etc/init/
 
 # esx service for docker volume ops
