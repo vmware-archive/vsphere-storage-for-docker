@@ -14,6 +14,12 @@
 # limitations under the License.
 
 
+
+# NOTE: this test needs rework and is not functional currently.
+print("VOL_TEST kv_store skippped")
+exit(0)
+
+
 '''
 Standalone tests for metadata volume operations
 Create vm and try to attach/detach disks with metadata
@@ -26,6 +32,8 @@ import sys, getopt
 import subprocess
 import vmci_srv as vmci
 import volumeKVStore as kv
+
+
 
 # Default volumes dir
 vmName = "testVM"

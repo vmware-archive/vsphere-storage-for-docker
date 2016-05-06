@@ -29,6 +29,7 @@ VIB_BIN  = $(BIN)/$(VIB)
 
 # code
 PY_SRC := vmdk_ops.py log_config.py\
+	vsan_info.py \
 	volumeKVStore.py kvESX.py \
 	vmdkops_admin.py cli_table.py
 C_SRC  := vmci/vmci_server.c
