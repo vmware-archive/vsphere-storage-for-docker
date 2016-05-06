@@ -40,7 +40,7 @@ MAXCPU=-1
 
 NUM_RETRY=10
 WAIT_KILL_SEC=2
-WAIT_START_USEC=3000
+WAIT_START_SEC=1
 
 getpid() {
    ps -uc| grep -v ${WATCHDOG}| grep -v grep | grep ${OPSD_BIN} | awk '{ print $1 }'
@@ -48,7 +48,6 @@ getpid() {
 
 start() {
    local PID=$(getpid)
-   local wait=${NUM_RETRY}
    if [ -n "${PID}" ]; then
       echo "Failed to start. $OPSD_TAG already running."
       exit 1
@@ -65,20 +64,23 @@ start() {
       fi
    fi
 
+
    ${LOCAL_CLI_SCHED} setmemconfig -g ${OPSD_GROUP} --min=${MINMEM} --max=${MAXMEM} --minlimit=${MINLIMIT} -u mb
    ${LOCAL_CLI_SCHED} setcpuconfig -g ${OPSD_GROUP} --min=${MINCPU} --max=${MAXCPU} -u pct
    setsid ${OPSD_SCHED_PARAM} ${WATCHDOG} -q ${MAX_QUICK_FAILURES} -d -s ${OPSD_TAG} -t ${MAX_RETRY} "${OPSD_BIN} ${OPSD_PARAMS}" > /dev/null 2>&1
-   if [ $? -ne 0 ]; then 
-      syslog "Failed to start ${OPSD_TAG}: $?"
+   if [ $? -ne 0 ]; then
+      echo "Failed to start ${OPSD_TAG}: $?"
       exit 3
    fi
 
+   local wait=${NUM_RETRY}
    while [ $((wait--)) -gt 0 ]; do
-      local watchdog_pid="${WATCHDOG} -r ${OPSD_TAG})"
-      if [ -z "${watchdog_pid}" ]; then
-         usleep ${WAIT_START_USEC}
-      fi 
+      if [ -n "$(${WATCHDOG} -r ${OPSD_TAG})" ]; then
+         break
+      fi
+      sleep ${WAIT_START_SEC}
    done
+
    check_running_status
    exit $?
 }
