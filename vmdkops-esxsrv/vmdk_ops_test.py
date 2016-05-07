@@ -29,7 +29,7 @@ import vmdk_ops
 import log_config
 import volumeKVStore as kv
 
-# will do creation/deleteion in this folder:
+# will do creation/deletion in this folder:
 global path
 
 

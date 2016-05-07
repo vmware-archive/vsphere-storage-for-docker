@@ -306,15 +306,15 @@ test-vm: checkremote
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
 # test-esx is a quick unittest for Python.
-# Deploys, runs and clean unittests on ESX
+# Deploys, runs and clean unittests (i.e. all files *_test.py) on ESX
 TAR  = $(DEBUG) tar
 ECHO = $(DEBUG) echo
 test-esx:
 	$(TAR) cz --no-recursion $(ESX_SRC)/*.py | $(SSH) root@$(ESX) "cd /tmp; $(TAR) xz"
-	@$(ECHO) Running unit tests for vmdk-opsd python code on $(ESX)...
-	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vmdk_ops_test.py"
-	@$(ECHO) Running unit tests for vmdkops_admin python code on $(ESX)...
-	$(SSH) root@$(ESX) "python /tmp/$(ESX_SRC)/vmdkops_admin_tests.py"
+	$(SSH) root@$(ESX) \
+		'for i in /tmp/$(ESX_SRC)/*_test.py; \
+				do echo Running unit tests in $$i... ; python $$i ;\
+		done'
 	$(SSH) root@$(ESX) rm -rf /tmp/$(ESX_SRC)
 
 testremote: test-esx test-vm
