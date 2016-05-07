@@ -69,12 +69,22 @@ class TestVsanInfo(unittest.TestCase):
                         "is_on_vsan can't find file %s" % self.VMDK_PATH)
         # set policy
         policy_string = '(("hostFailuresToTolerate" i0) ("forceProvisioning" i1))'
+        # same policy content with different space/tabs:
+        same_policy= ' ((  "hostFailuresToTolerate"    \ti0) ("forceProvisioning" i1))'
+        # different content:
+        notsame_policy='(("hostFailuresToTolerate" i0) ("forceProvisioning" i0))'
         self.assertTrue(vsan_info.set_policy(self.VMDK_PATH, policy_string),
                         "failed to set")
         # get policy and check it
         p = vsan_info.get_policy (self.VMDK_PATH)
         self.assertTrue(vsan_info.same_policy(self.VMDK_PATH, p),
-                        "failed to compare")
+                        "failed to compare with get_policy")
+        self.assertTrue(vsan_info.same_policy(self.VMDK_PATH, policy_string),
+                        "failed to compare with original policy")
+        self.assertTrue(vsan_info.same_policy(self.VMDK_PATH, same_policy),
+                        "failed to compare with same policy, different tabs")
+        self.assertFalse(vsan_info.same_policy(self.VMDK_PATH, notsame_policy),
+                        "failed to compare with different policy")
 
 if __name__ == "__main__":
     log_config.configure()

@@ -65,9 +65,8 @@ def same_policy(vmdk_path, policy_string):
     """"
     Returns True if VSAN object backing <vmdk_path>  has <policy_string>
     """
-    existing_policy_string = get_policy(vmdk_path)
-    # TODO: strip whitespaces before comparing
-    return existing_policy_string == policy_string
+    existing_policy_string = get_policy(vmdk_path).expandtabs(1).replace(" ", "")
+    return existing_policy_string == policy_string.expandtabs(1).replace(" ", "")
 
 
 def get_policy (vmdk_path):
