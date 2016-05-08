@@ -54,7 +54,9 @@ from pyVim import vmconfig
 from pyVmomi import VmomiSupport, vim, vmodl
 
 import log_config
-import volumeKVStore as kv
+import volume_kv as kv
+import vmdk_utils
+import vsan_policy
 
 # Location of utils used by the plugin.
 BinLoc = "/usr/lib/vmware/vmdkops/bin/"
@@ -68,7 +70,6 @@ vmdkDeleteCmd = "/sbin/vmkfstools -U "
 
 # Defaults
 DockVolsDir = "dockvols" # place in the same (with Docker VM) datastore
-MaxDescrSize = 10000     # we assume files smaller that that to be descriptor files
 MaxJsonSize = 1024 * 4   # max buf size for query json strings. Queries are limited in size
 MaxSkipCount = 100       # max retries on VMCI Get Ops failures
 DefaultDiskSize = "100mb"
@@ -103,19 +104,31 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdkPath, volName, opts=""):
+def createVMDK(vmdkPath, volName, opts={}):
     logging.info ("*** createVMDK: %s opts=%s" % (vmdkPath, opts))
     if os.path.isfile(vmdkPath):
         return err("File %s already exists" % vmdkPath)
 
-    if not opts or not "size" in opts:
+    try:
+        validate_opts(opts)
+    except ValidationError as e:
+        return err(e.msg)
+
+    if not "size" in opts:
         size = DefaultDiskSize
         logging.debug("SETTING DEFAULT SIZE to " +  size)
     else:
         size = str(opts["size"])
         logging.debug("SETTING  SIZE to " + size)
 
-    cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
+    if 'vsan-policy-name' in opts:
+        # Note that the --policyFile option gets ignored if the
+        # datastore is not VSAN
+        policy_file = vsan_policy.policy_path(opts['vsan-policy-name'])
+        cmd = "{0} {1} --policyFile {2} {3}".format(vmdkCreateCmd, size,
+                                                    policy_file, vmdkPath)
+    else:
+        cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
     rc, out = RunCommand(cmd)
 
     if rc != 0:
@@ -123,15 +136,60 @@ def createVMDK(vmdkPath, volName, opts=""):
 
     # Create the kv store for the disk before its attached
     ret = kv.create(vmdkPath, "detached", opts)
+
     if ret != True:
-       msg = "Failed to create meta-data store for %s" % vmdkPath
-       logging.warning (msg)
+       msg = "Failed to create meta-data store for {0}".format(vmdkPath)
+       logging.warning(msg)
        removeVMDK(vmdkPath)
        return err(msg)
 
     return formatVmdk(vmdkPath, volName)
 
+def validate_opts(opts):
+    """
+    Validate available options. Current options are:
+     * size - The size of the disk to create
+     * vsan-policy-name - The name of an existing policy to use
+    """
+    valid_opts = ['size', 'vsan-policy-name']
+    defaults = [DefaultDiskSize, '[VSAN default']
+    invalid = frozenset(opts.keys()).difference(valid_opts)
+    if len(invalid) != 0:
+        msg = 'Invalid options: {0} \n'.format(list(invalid)) \
+               + 'Valid options and defaults: ' \
+               + '{0}'.format(zip(list(valid_opts),defaults))
+        raise ValidationError(msg)
 
+    if 'size' in opts:
+        validate_size(opts['size'])
+    if 'vsan-policy-name' in opts:
+        validate_vsan_policy_name(opts['vsan-policy-name'])
+
+def validate_size(size):
+    """
+    Ensure size is given in a human readable format <int><unit> where int is an
+    integer and unit is either 'mb', 'gb', or 'tb'. e.g. 22mb
+    """
+    if not size.lower().endswith(('kb','mb', 'gb', 'tb')) or not size[:-2].isdigit():
+        msg = ('Invalid format for size. \n'
+               'Valid sizes must be of form X[kKmMgGtT]b where X is an'
+               'integer. Default = 100mb'
+              )
+        raise ValidationError(msg)
+
+def validate_vsan_policy_name(policy_name):
+    """
+    Ensure that the policy file exists
+    """
+    if not vsan_policy.policy_exists(policy_name):
+        raise ValidationError('Policy {0} does not exist'.format(policy_name))
+
+# Return a backing file path for given vmdk path or none
+# if a backing can't be found.
+def getVMDKBacking(vmdkPath):
+   flatBacking = vmdkPath.replace(".vmdk", "-flat.vmdk")
+   if os.path.isfile(flatBacking):
+      return flatBacking
 
 def getVMDKUuid(vmdkPath):
    f = open(vmdkPath)
@@ -196,29 +254,12 @@ def removeVMDK(vmdkPath):
 
 	return None
 
-def vmdk_is_a_descriptor(filepath):
-    """
-    Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk
-    and has a size less than MaxDescrSize is a desciptor file.
-    """
-    if filepath.endswith('.vmdk') and os.stat(filepath).st_size < MaxDescrSize:
-        try:
-            with open(filepath) as f:
-                line = f.readline()
-                return line.startswith('# Disk DescriptorFile')
-        except:
-            logging.warning("Failed to open {0} for descriptor check".format(filepath))
-
-    return False
-
-def strip_vmdk_extension(filename):
-    """ Remove the .vmdk file extension from a string """
-    return filename.replace(".vmdk", "")
-
-# returns a list of volume names (note: may be an empty list)
 def listVMDK(path):
-	vmdks = [x for x in os.listdir(path) if vmdk_is_a_descriptor(os.path.join(path, x))]
-        return [{u'Name': strip_vmdk_extension(x), u'Attributes': {}} for x in vmdks]
+    """ returns a list of volume names (note: may be an empty list) """
+    vmdks = vmdk_utils.list_vmdks(path)
+    # fully qualified path
+    return [{u'Name': vmdk_utils.strip_vmdk_extension(x), u'Attributes': {}}
+               for x in vmdks]
 
 # Find VM , reconnect if needed. throws on error
 def findVmByName(vmName):
@@ -590,7 +631,7 @@ def handleVmciRequests():
 			ret = {u'Error': "Failed to parse json '%s'." % (txt,value)}
 		else:
 			details = req["details"]
-			opts = details["Opts"] if "Opts" in details else None
+			opts = details["Opts"] if "Opts" in details else {}
 			ret = executeRequest(vmName, vmId, cfgPath, req["cmd"], details["Name"], opts)
 			logging.debug("executeRequest ret = %s" % ret)
 
@@ -690,6 +731,12 @@ def wait_for_tasks(service_instance, tasks):
 
 #------------------------
 
+class ValidationError(Exception):
+    """ An exception for option validation errors """
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
 
 
 # start the server

@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 # Copyright 2016 VMware, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ import atexit
 import sys, getopt
 import subprocess
 import vmci_srv as vmci
-import volumeKVStore as kv
+import volume_kv as kv
 
 
 
