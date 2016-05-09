@@ -132,7 +132,7 @@ make clean-all
 If additional python scripts are added to the ESX code, update the vib description file to include them.
 
 ```
-./vmdkops-esxsrv/descriptor.xml
+./esx_service/descriptor.xml
 ```
 ### git, branch management and pull requests
 This section is for developers working directly on our git repo,

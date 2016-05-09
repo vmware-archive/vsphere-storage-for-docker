@@ -84,11 +84,11 @@ then
    printNQuit "GOPATH environment variable needs to be set"
 fi
 
-EXPECTED_PATH="$GOPATH/src/github.com/vmware/docker-volume-vsphere"
+EXPECTED_PATH="$GOPATH/src/github.com/vmware/docker-volume-vsphere/vmdk_plugin"
 
 if [[ "$EXPECTED_PATH" != "$PWD" ]]
 then
-   printNQuit "There is a local import of a package. The src should be under GOPATH=$GOPATH \
+   printNQuit "Package location check failed. The src should be under GOPATH=$GOPATH \
                Expected:\" $EXPECTED_PATH \" CURRENTPATH:\" $PWD:"
 fi
 

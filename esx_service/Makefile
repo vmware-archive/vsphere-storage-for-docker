@@ -21,7 +21,7 @@
 #
 
 # deliverables (placed by build)
-BIN := ../bin
+BIN := ../build
 PKG_VERSION ?= 0.1.TP-pre.$(shell git log --pretty=format:'%h' -n 1)
 VIB := vmware-esx-vmdkops-$(PKG_VERSION).vib
 OFFLINE_DEPOT := vmware-esx-vmdkops-$(PKG_VERSION).zip
@@ -38,7 +38,7 @@ INIT_SCRIPT := vmdk-opsd
 TOOLS := tools/lin32/mkfs.ext4
 
 # Shared lib. Note that it is referred by name from vmci_srv.py
-VMCI_SRV_LIB := ../bin/libvmci_srv.so
+VMCI_SRV_LIB := $(BIN)/libvmci_srv.so
 
 PY_FILES     = $(PY_SRC) $(VMCI_SRV_LIB)
 
@@ -88,5 +88,18 @@ clean:
 	rm -rf $(VIB) $(VMCI_SRV_LIB) $(PAYLOAD)
 
 .PHONY: test
-test: build
-	@echo "? Info: No unit test here yet."
+test: test-esx build
+
+# test-esx is a quick unittest for ESX Python code.
+# Deploys, runs and clean unittests (i.e. all files *_test.py) on ESX
+SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
+LOC := $(shell echo /tmp/vmdk_ops_unittest$$RANDOM)
+
+test-esx:
+	@echo Copying files to $(ESX):/tmp/$(LOC) and running .py unittests ...
+	@tar cz --no-recursion ./*.py | $(SSH) root@$(ESX) 'mkdir -p $(LOC); tar xz -C $(LOC)'
+	$(SSH) root@$(ESX) \
+		'for i in $(LOC)/*_test.py; \
+				do echo Running unit tests in $$i... ; python $$i ;\
+		done'
+	$(SSH) root@$(ESX) rm -rf $(LOC)

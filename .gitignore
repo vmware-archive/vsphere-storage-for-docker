@@ -1,12 +1,11 @@
 pgk/
 package/
-bin/
+build/
 src/.DS_Store
 src/dvolplug/dvolplug
 *.a
 *.so
-.build_*
-.copy_*
+.code_verify
 */*.vib
 */payloads/
 *.test
