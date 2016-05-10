@@ -68,30 +68,33 @@ then
 
 fi
 
-plugin=docker-volume-vsphere
 plugin_container_version=0.6
 plug_container=cnastorage/vibauthor-and-go:$plugin_container_version
 plug_pkg_container_version=latest
 plug_pkg_container=cnastorage/fpm:$plug_pkg_container_version
 dockerfile=Dockerfile.vibauthor-and-go
-DOCKER="$DEBUG docker"
 
 # mount point within the container.
-GOPATH=/go
-dir=$GOPATH/src/github.com/vmware/$plugin
+dir=/go/src/github.com/vmware/docker-volume-vsphere
+# We need to mount this into the container:
+host_dir=$PWD/..
+
+# we run from top level (i.e. ./scripts/build.sh) , but run make in 'vmdk_plugin'
+MAKE="$DEBUG make --directory=vmdk_plugin"
+DOCKER="$DEBUG docker"
 
 if [ "$1" == "rpm" ] || [ "$1" == "deb" ]
 then
   $DOCKER run --rm  \
     -e "PKG_VERSION=$PKG_VERSION" \
-    -v $PWD:$dir \
+    -v $PWD/..:$dir \
     -w $dir \
     $plug_pkg_container \
-    make $1
+    $MAKE $1
 else
   docker_socket=/var/run/docker.sock
   $DOCKER run --privileged --rm \
     -e "PKG_VERSION=$PKG_VERSION" \
     -v $docker_socket:$docker_socket  \
-    -v $PWD:$dir -w $dir $plug_container make $1
+    -v $PWD/..:$dir -w $dir $plug_container $MAKE $1
 fi

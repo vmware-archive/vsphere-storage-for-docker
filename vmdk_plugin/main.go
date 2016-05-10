@@ -23,7 +23,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
-	"github.com/vmware/docker-volume-vsphere/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"os"
 	"os/signal"
 	"path/filepath"

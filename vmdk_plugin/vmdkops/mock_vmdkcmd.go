@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/vmware/docker-volume-vsphere/fs"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"

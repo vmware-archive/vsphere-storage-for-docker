@@ -21,15 +21,15 @@ package main
 //
 // Serves requests from Docker Engine related to VMDK volume operations.
 // Depends on vmdk-opsd service to be running on hosting ESX
-// (see ./vmdkops-esxsrv)
+// (see ./esx_service)
 ///
 
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/fs"
-	"github.com/vmware/docker-volume-vsphere/vmdkops"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
 	"path/filepath"
 	"sync"
 )
