@@ -188,14 +188,6 @@ def validate_vsan_policy_name(policy_name):
         raise ValidationError('Policy {0} does not exist'.format(policy_name))
 
 
-# Return a backing file path for given vmdk path or none
-# if a backing can't be found.
-def getVMDKBacking(vmdkPath):
-    flatBacking = vmdkPath.replace(".vmdk", "-flat.vmdk")
-    if os.path.isfile(flatBacking):
-        return flatBacking
-
-
 def getVMDKUuid(vmdkPath):
     f = open(vmdkPath)
     data = f.read()
@@ -415,7 +407,7 @@ def setStatusAttached(vmdkPath, uuid):
     volMeta['status'] = 'attached'
     volMeta['attachedVMUuid'] = uuid
     if not kv.setAll(vmdkPath, volMeta):
-        logging.warning("Attach: Failed to save Disk metadata", vmdkPath)
+        logging.warning("Attach: Failed to save Disk metadata for %s", vmdkPath)
 
 
 def setStatusDetached(vmdkPath):
@@ -428,7 +420,7 @@ def setStatusDetached(vmdkPath):
     if 'attachedVMUuid' in volMeta:
         del volMeta['attachedVMUuid']
     if not kv.setAll(vmdkPath, volMeta):
-        logging.warning("Detach: Failed to save Disk metadata", vmdkPath)
+        logging.warning("Detach: Failed to save Disk metadata for %s", vmdkPath)
 
 
 def getStatusAttached(vmdkPath):
@@ -653,7 +645,7 @@ def handleVmciRequests():
         try:
             req = json.loads(txt.value, "utf-8")
         except ValueError as e:
-            ret = {u'Error': "Failed to parse json '%s'." % (txt, value)}
+            ret = {u'Error': "Failed to parse json '%s'." % txt.value}
         else:
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else {}

@@ -29,7 +29,6 @@ import vsan_info
 class TestVsanInfo(unittest.TestCase):
     """ Test VSAN Info API """
 
-    si = None
     VSAN_DS = "/vmfs/volumes/vsanDatastore"
     TEST_DIR = os.path.join(VSAN_DS, "vsan_info_test")
     TEST_VOL = "test_policy_vol"
@@ -41,6 +40,10 @@ class TestVsanInfo(unittest.TestCase):
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                      "VSAN is not found - skipping vsan_info tests")
+
+    def __init__(self):
+        self.si = None
+
     def setUp(self):
         """create a vmdk before each test (method) in this class"""
         self.si = vmdk_ops.connectLocal()
@@ -70,11 +73,14 @@ class TestVsanInfo(unittest.TestCase):
             vsan_info.is_on_vsan(self.VMDK_PATH),
             "is_on_vsan can't find file %s" % self.VMDK_PATH)
         # set policy
-        policy_string = '(("hostFailuresToTolerate" i0) ("forceProvisioning" i1))'
+        policy_string = \
+            '(("hostFailuresToTolerate" i0) ("forceProvisioning" i1))'
         # same policy content with different space/tabs:
-        same_policy = ' ((  "hostFailuresToTolerate"    \ti0) ("forceProvisioning" i1))'
+        same_policy = \
+            ' ((  "hostFailuresToTolerate"    \ti0) ("forceProvisioning" i1))'
         # different content:
-        notsame_policy = '(("hostFailuresToTolerate" i0) ("forceProvisioning" i0))'
+        notsame_policy = \
+            '(("hostFailuresToTolerate" i0) ("forceProvisioning" i0))'
         self.assertTrue(
             vsan_info.set_policy(self.VMDK_PATH, policy_string),
             "failed to set")

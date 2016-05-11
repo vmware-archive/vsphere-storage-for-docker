@@ -54,7 +54,7 @@ def doCreate(volDir):
         print "Vol metadata 'status' - %s, 'volOpts' - %s" % (
             volDict['status'], volDict['volOpts'])
         if volDict['status'] != 'detached':
-            print 'Found volume %s with status %s, expected' % (
+            print 'Found volume %s with status %s, expected %s' % (
                 vol, volDict['status'], 'detached')
 
     return
@@ -71,7 +71,7 @@ def doAttach(volDir, vmName):
         volDict = kv.getAll(volPath)
 
         if volDict['status'] != 'attached':
-            print 'Found volume %s with status %s, expected' % (
+            print 'Found volume %s with status %s, expected %s' % (
                 vol, volDict['status'], 'attached')
 
     return
@@ -88,7 +88,7 @@ def doDetach(volDir, vmName):
         volDict = kv.getAll(volPath)
 
         if volDict['status'] != 'detached':
-            print 'Found volume %s with status %s, expected' % (
+            print 'Found volume %s with status %s, expected %s' % (
                 vol, volDict['status'], 'detached')
 
     return

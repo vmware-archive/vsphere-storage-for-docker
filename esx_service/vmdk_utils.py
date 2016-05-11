@@ -16,6 +16,7 @@
 # Utility functions for dealing with vmdks and datastores
 
 import os
+import logging
 import pyVim.connect
 
 # datastores should not change during 'vmdkops_admin' run,
@@ -23,7 +24,7 @@ import pyVim.connect
 datastores = None
 
 # we assume files smaller that that to be descriptor files
-MaxDescrSize = 10000
+MAX_DESCR_SIZE = 10000
 
 
 def get_datastores():
@@ -80,9 +81,9 @@ def list_vmdks(path):
 def vmdk_is_a_descriptor(filepath):
     """
     Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk
-    and has a size less than MaxDescrSize is a desciptor file.
+    and has a size less than MAX_DESCR_SIZE is a desciptor file.
     """
-    if filepath.endswith('.vmdk') and os.stat(filepath).st_size < MaxDescrSize:
+    if filepath.endswith('.vmdk') and os.stat(filepath).st_size < MAX_DESCR_SIZE:
         try:
             with open(filepath) as f:
                 line = f.readline()

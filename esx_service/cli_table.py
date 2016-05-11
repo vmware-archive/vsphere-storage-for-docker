@@ -49,7 +49,7 @@ def term_width():
         # Get the number of rows and columns seperated by a space
         output = subprocess.check_output("stty size".split())
         return int(output.split()[1])
-    except CalledProcessError:
+    except subprocess.CalledProcessError:
         return 80
 
 
