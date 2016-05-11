@@ -59,7 +59,7 @@ def set_policy(vmdk_path, policy_string):
     rc, out = vmdk_ops.RunCommand(OBJTOOL_SET_POLICY.format(uuid,
                                                             policy_string))
     if rc != 0:
-        logging.warning("Failed to set policy for %s : %s" % (vmdk_path, out))
+        logging.warning("Failed to set policy for %s : %s", vmdk_path, out)
         return False
     return True
 
@@ -82,7 +82,7 @@ def get_policy(vmdk_path):
     uuid = vmdk_ops.getVMDKUuid(vmdk_path)
     rc, out = vmdk_ops.RunCommand(OBJTOOL_GET_ATTR.format(uuid))
     if rc != 0:
-        logging.warning("Failed to get policy for %s : %s" % (vmdk_path, out))
+        logging.warning("Failed to get policy for %s : %s", vmdk_path, out)
         return None
     policy = json.loads(out)['Policy']
     return policy
