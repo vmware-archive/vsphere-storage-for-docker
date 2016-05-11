@@ -18,6 +18,7 @@
 import argparse
 import os
 import subprocess
+import sys
 import volume_kv as kv
 import cli_table
 import vsan_policy
@@ -409,10 +410,9 @@ def get_vmdk_size_info(path):
         output = subprocess.check_output(cmd)
         lines = output.split('\n')
         return {'capacity': lines[0].split()[2], 'used': lines[1].split()[2]}
-    except CalledProcessError:
-        sys.exit(
-            "Failed to stat {0}. VMDK corrupted. Please remove and then retry".format(
-                path))
+    except subprocess.CalledProcessError:
+        sys.exit("Failed to stat {0}.".format(path) \
+            + " VMDK corrupted. Please remove and then retry")
 
 
 def policy_create(args):
