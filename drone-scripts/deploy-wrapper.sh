@@ -86,6 +86,9 @@ else
   echo "*************************************************************************"
   echo "deploy failed cleaning up"
   echo "*************************************************************************"
+ echo " Dumping logs..."
+ . ./drone-scripts/dump_log.sh
+ dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
   exit 1
 fi

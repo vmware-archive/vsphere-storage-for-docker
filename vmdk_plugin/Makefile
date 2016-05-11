@@ -117,7 +117,7 @@ $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
 
 .PHONY: clean
 clean: pkg-post
-	rm -f $(BIN)/* .code_verify
+	rm -rf $(BIN)/* .code_verify
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
 # GO Code quality checks.
