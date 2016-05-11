@@ -24,33 +24,34 @@ import json
 import os
 import os.path
 
-
 # Logging configuration is read from this file.
 # If the file does not exist, we create it from from LOG_CONFIG_DEFAULT dictionary.
 # Note: the file handler name MUST be "rotate_file",
 # since we rely on it to locate log file name after config is loaded.
-LOG_CONFIG_FILE="/etc/vmware/vmdkops/log_config.json"
+LOG_CONFIG_FILE = "/etc/vmware/vmdkops/log_config.json"
 
 # Defaults for log files - used to generate conf file if it is missing
 # Note: log file location should be synced with CI and 'make'
 LOG_FILE = "/var/log/vmware/vmdk_ops.log"
-LOG_MAX_BYTES   = 10485760 # 10MB
+LOG_MAX_BYTES = 10485760  # 10MB
 LOG_MAX_BACKUPS = 5
 LOG_CONFIG_DEFAULT = {
     "info": [
-    "Logging configuration for vmdk_opsd service, in python logging config format.",
-    "",
-    "'level' defines verbosity and could be DEBUG, INFO, WARNING, ERROR, CRITICAL",
-    "'maxBytes' and 'backupCount' define max log size and number of log backup files kept",
-    "For more, see https://docs.python.org/2/library/logging.config.html#logging-config-dictschema",
-    "",
-    "Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file."
+        "Logging configuration for vmdk_opsd service, in python logging config format.",
+        "",
+        "'level' defines verbosity and could be DEBUG, INFO, WARNING, ERROR, CRITICAL",
+        "'maxBytes' and 'backupCount' define max log size and number of log backup files kept",
+        "For more, see https://docs.python.org/2/library/logging.config.html#logging-config-dictschema",
+        "",
+        "Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file."
     ],
-    "version": 1, # mandated by https://docs.python.org/2/library/logging.config.html#logging-config-dictschema
+    "version":
+    1,  # mandated by https://docs.python.org/2/library/logging.config.html#logging-config-dictschema
     "disable_existing_loggers": False,
     "formatters": {
         "standard": {
-            "format": "%(asctime)-12s %(process)d [%(levelname)-7s] %(message)s",
+            "format":
+            "%(asctime)-12s %(process)d [%(levelname)-7s] %(message)s",
             "datefmt": "%x %X",
         }
     },
@@ -73,6 +74,7 @@ LOG_CONFIG_DEFAULT = {
     }
 }
 
+
 def configure(config_file=LOG_CONFIG_FILE):
     """
     Checks if the json config file exists, and if it does not, creates it from
@@ -90,16 +92,16 @@ def configure(config_file=LOG_CONFIG_FILE):
         except:
             pass
         with open(config_file, 'w') as f:
-            json.dump(LOG_CONFIG_DEFAULT, f, sort_keys = False, indent = 4)
+            json.dump(LOG_CONFIG_DEFAULT, f, sort_keys=False, indent=4)
         generatedConf = True
 
     # Get the configuration info - now it *has* to be there
     with open(config_file) as f:
-        conf=json.load(f)
+        conf = json.load(f)
 
     # make sure the dir for logs exists
-    log=conf['handlers']['rotate_file']['filename']
-    dir=os.path.dirname(log)
+    log = conf['handlers']['rotate_file']['filename']
+    dir = os.path.dirname(log)
     if not os.path.isdir(dir):
         os.makedirs(dir)
 
@@ -108,7 +110,6 @@ def configure(config_file=LOG_CONFIG_FILE):
     if generatedConf:
         logging.info("Log configuration generated - '%s'." % config_file)
     return log
-
 
 # manual test: "sudo python log_config.py"
 if __name__ == "__main__":
@@ -127,4 +128,3 @@ if __name__ == "__main__":
     print("==========Content of %s========" % conf_file)
     with open(conf_file) as f:
         print(f.read())
-

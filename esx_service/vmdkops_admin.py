@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Admin CLI for vmdk_opsd
 
 import argparse
@@ -25,10 +24,12 @@ import vsan_policy
 import vmdk_utils
 import vmdk_ops
 
+
 def main():
     kv.init()
     args = parse_args()
     args.func(args)
+
 
 def commands():
     """
@@ -111,8 +112,9 @@ def commands():
                 },
                 '-c': {
                     'help': 'Display selected columns',
-                    'choices': ['volume', 'datastore', 'created-by', 'created', 'last-attached',
-                                'attached-to', 'policy', 'capacity', 'used'],
+                    'choices': ['volume', 'datastore', 'created-by', 'created',
+                                'last-attached', 'attached-to', 'policy',
+                                'capacity', 'used'],
                     'metavar': 'Col1,Col2,...'
                 }
             }
@@ -145,7 +147,8 @@ def commands():
                 },
                 'ls': {
                     'func': policy_ls,
-                    'help': 'List storage policies and volumes using those policies'
+                    'help':
+                    'List storage policies and volumes using those policies'
                 }
             }
         },
@@ -161,7 +164,8 @@ def commands():
                             'required': True
                         },
                         '--matches-vm': {
-                            'help': 'Apply this role to VMS with names matching Glob',
+                            'help':
+                            'Apply this role to VMS with names matching Glob',
                             'metavar': 'Glob1,Glob2,...',
                             'required': True,
                             'type': comma_seperated_string
@@ -173,7 +177,8 @@ def commands():
                             'metavar': 'create,delete,mount'
                         },
                         '--volume-maxsize': {
-                            'help': 'Maximum size of the volume that can be created',
+                            'help':
+                            'Maximum size of the volume that can be created',
                             'required': True,
                             'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                         }
@@ -201,7 +206,8 @@ def commands():
                             'required': True
                         },
                         '--matches-vm': {
-                            'help': 'Apply this role to VMS with names matching Glob',
+                            'help':
+                            'Apply this role to VMS with names matching Glob',
                             'metavar': 'Glob1,Glob2,...',
                             'type': comma_seperated_string
                         },
@@ -211,7 +217,8 @@ def commands():
                             'metavar': 'create,delete,mount'
                         },
                         '--volume-maxsize': {
-                            'help': 'Maximum size of the volume that can be created',
+                            'help':
+                            'Maximum size of the volume that can be created',
                             'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                         }
                     }
@@ -233,11 +240,13 @@ def commands():
         }
     }
 
+
 def create_parser():
     """ Create a CLI parser via argparse based on the dictionary returned from commands() """
     parser = argparse.ArgumentParser(description='Manage VMDK Volumes')
     add_subparser(parser, commands())
     return parser
+
 
 def add_subparser(parser, commands):
     """ Recursively add subcommand parsers based on a dictionary of commands """
@@ -253,6 +262,7 @@ def add_subparser(parser, commands):
         if 'cmds' in attributes:
             add_subparser(subparser, attributes['cmds'])
 
+
 def build_argparse_opts(opts):
     if 'choices' in opts:
         opts['type'] = make_list_of_values(opts['choices'])
@@ -261,12 +271,15 @@ def build_argparse_opts(opts):
         del opts['choices']
     return opts
 
+
 def parse_args():
     parser = create_parser()
     return parser.parse_args()
 
+
 def comma_seperated_string(string):
     return string.split(',')
+
 
 def make_list_of_values(allowed):
     """
@@ -275,14 +288,18 @@ def make_list_of_values(allowed):
     values.  This is required to support options that take comma seperated lists
     such as --rights in 'role set --rights=create,delete,mount'
     """
+
     def list_of_values(string):
         given = string.split(',')
         for g in given:
             if g not in allowed:
-                msg = "invalid choice: {0} (choose from {1})".format(g, allowed)
+                msg = "invalid choice: {0} (choose from {1})".format(g,
+                                                                     allowed)
                 raise argparse.ArgumentTypeError(msg)
         return given
+
     return list_of_values
+
 
 def ls(args):
     """
@@ -298,15 +315,17 @@ def ls(args):
         (header, data) = ls_no_args()
     print cli_table.create(header, data)
 
+
 def ls_no_args():
     """
     Collect all volume names and their datastores as lists,
     stripping the '.vmdk' from the volume name
     """
     header = ['Volume', 'Datastore']
-    data = [[vmdk_utils.strip_vmdk_extension(v['filename']), v['datastore']] for v
-             in vmdk_utils.get_volumes()]
+    data = [[vmdk_utils.strip_vmdk_extension(v['filename']), v['datastore']]
+            for v in vmdk_utils.get_volumes()]
     return (header, data)
+
 
 def ls_dash_l():
     """
@@ -315,6 +334,7 @@ def ls_dash_l():
     header = all_ls_headers()
     rows = generate_ls_dash_l_rows()
     return (header, rows)
+
 
 def ls_dash_c(columns):
     """ Return only the columns requested in the format required for table construction """
@@ -331,6 +351,7 @@ def ls_dash_c(columns):
         rows.append([row[i] for i in indexes])
     return (headers, rows)
 
+
 def format_header_as_arg(header):
     """
     Take a header formatted as words seperated by spaces starting with
@@ -339,36 +360,39 @@ def format_header_as_arg(header):
     """
     return '-'.join(header.lower().split())
 
+
 def all_ls_headers():
     """ Return a list of all header for ls -l """
-    return ['Volume', 'Datastore', 'Created By', 'Created', 'Last Attached', 'Attached To',
-            'Policy', 'Capacity', 'Used']
+    return ['Volume', 'Datastore', 'Created By', 'Created', 'Last Attached',
+            'Attached To', 'Policy', 'Capacity', 'Used']
+
 
 def generate_ls_dash_l_rows():
-   """ Gather all volume metadata into rows that can be used to format a table """
-   rows = []
-   for v in vmdk_utils.get_volumes():
-       path = os.path.join(v['path'], v['filename'])
-       name = vmdk_utils.strip_vmdk_extension(v['filename'])
-       metadata = get_metadata(path)
-       if metadata[u'status'] == u'attached':
-           attached_to = metadata[u'attachedVMUuid']
-       else:
-           attached_to = 'detached'
-       volOpts = metadata[u'volOpts']
-       if volOpts and 'vsan-policy-name' in volOpts:
-           policy = volOpts['vsan-policy-name']
-       else:
-           policy = '[VSAN default]'
-       size_info = get_vmdk_size_info(path)
-       rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to,
-                    policy, size_info['capacity'], size_info['used']])
-   return rows
+    """ Gather all volume metadata into rows that can be used to format a table """
+    rows = []
+    for v in vmdk_utils.get_volumes():
+        path = os.path.join(v['path'], v['filename'])
+        name = vmdk_utils.strip_vmdk_extension(v['filename'])
+        metadata = get_metadata(path)
+        if metadata[u'status'] == u'attached':
+            attached_to = metadata[u'attachedVMUuid']
+        else:
+            attached_to = 'detached'
+        volOpts = metadata[u'volOpts']
+        if volOpts and 'vsan-policy-name' in volOpts:
+            policy = volOpts['vsan-policy-name']
+        else:
+            policy = '[VSAN default]'
+        size_info = get_vmdk_size_info(path)
+        rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to,
+                     policy, size_info['capacity'], size_info['used']])
+    return rows
 
 
 def get_metadata(volPath):
     """ Take the absolute path to volume vmdk and return its metadata as a dict """
     return kv.getAll(volPath)
+
 
 def get_vmdk_size_info(path):
     """
@@ -386,7 +410,10 @@ def get_vmdk_size_info(path):
         lines = output.split('\n')
         return {'capacity': lines[0].split()[2], 'used': lines[1].split()[2]}
     except CalledProcessError:
-        sys.exit("Failed to stat {0}. VMDK corrupted. Please remove and then retry".format(path))
+        sys.exit(
+            "Failed to stat {0}. VMDK corrupted. Please remove and then retry".format(
+                path))
+
 
 def policy_create(args):
     output = vsan_policy.create(args.name, args.content)
@@ -395,12 +422,14 @@ def policy_create(args):
     else:
         print 'Successfully created policy: {0}'.format(args.name)
 
+
 def policy_rm(args):
     output = vsan_policy.delete(args.name)
     if output:
         print output
     else:
         print 'Successfully removed policy: {0}'.format(args.name)
+
 
 def policy_ls(args):
     volumes = vsan_policy.list_volumes_and_policies()
@@ -424,23 +453,30 @@ def policy_ls(args):
 
     print cli_table.create(header, rows)
 
+
 def role_create(args):
     print "Called role_create with args {0}".format(args)
+
 
 def role_rm(args):
     print "Called role_rm with args {0}".format(args)
 
+
 def role_ls(args):
     print "Called role_ls with args {0}".format(args)
+
 
 def role_set(args):
     print "Called role_set with args {0}".format(args)
 
+
 def role_get(args):
     print "Called role_get with args {0}".format(args)
 
+
 def status(args):
     print "Called status with args {0}".format(args)
+
 
 if __name__ == "__main__":
     main()

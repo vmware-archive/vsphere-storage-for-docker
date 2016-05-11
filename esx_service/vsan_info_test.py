@@ -16,7 +16,6 @@
 #
 # tests for vsan_info.py
 
-
 import unittest
 import log_config
 import volume_kv as kv
@@ -26,13 +25,14 @@ import pyVim.connect
 
 import vsan_info
 
+
 class TestVsanInfo(unittest.TestCase):
     """ Test VSAN Info API """
 
     si = None
     VSAN_DS = "/vmfs/volumes/vsanDatastore"
     TEST_DIR = os.path.join(VSAN_DS, "vsan_info_test")
-    TEST_VOL= "test_policy_vol"
+    TEST_VOL = "test_policy_vol"
     VMDK_PATH = os.path.join(TEST_DIR, TEST_VOL + ".vmdk")
     NON_VSAN_VMDK = "/vmfs/volumes/datastore/eek/other.vmdk"
 
@@ -41,11 +41,10 @@ class TestVsanInfo(unittest.TestCase):
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                      "VSAN is not found - skipping vsan_info tests")
-
     def setUp(self):
         """create a vmdk before each test (method) in this class"""
         self.si = vmdk_ops.connectLocal()
-         # create VMDK
+        # create VMDK
         err = vmdk_ops.createVMDK(self.VMDK_PATH, "test_policy_vol")
         self.assertEqual(err, None, err)
 
@@ -58,33 +57,42 @@ class TestVsanInfo(unittest.TestCase):
     def test_ds(self):
         self.assertNotEqual(vsan_info.get_vsan_datastore(), None,
                             "Failed to find VSAN datastore")
-        self.assertTrue(vsan_info.is_on_vsan(self.VMDK_PATH),
-                        "is_on_vsan can't find file %s" % self.VMDK_PATH)
-        self.assertFalse(vsan_info.is_on_vsan(self.NON_VSAN_VMDK),
-                         "is_on_vsan is mistaken about the file %s" % self.NON_VSAN_VMDK)
+        self.assertTrue(
+            vsan_info.is_on_vsan(self.VMDK_PATH),
+            "is_on_vsan can't find file %s" % self.VMDK_PATH)
+        self.assertFalse(
+            vsan_info.is_on_vsan(self.NON_VSAN_VMDK),
+            "is_on_vsan is mistaken about the file %s" % self.NON_VSAN_VMDK)
 
     def test_policy(self):
         # check it's on VSAN
-        self.assertTrue(vsan_info.is_on_vsan(self.VMDK_PATH),
-                        "is_on_vsan can't find file %s" % self.VMDK_PATH)
+        self.assertTrue(
+            vsan_info.is_on_vsan(self.VMDK_PATH),
+            "is_on_vsan can't find file %s" % self.VMDK_PATH)
         # set policy
         policy_string = '(("hostFailuresToTolerate" i0) ("forceProvisioning" i1))'
         # same policy content with different space/tabs:
-        same_policy= ' ((  "hostFailuresToTolerate"    \ti0) ("forceProvisioning" i1))'
+        same_policy = ' ((  "hostFailuresToTolerate"    \ti0) ("forceProvisioning" i1))'
         # different content:
-        notsame_policy='(("hostFailuresToTolerate" i0) ("forceProvisioning" i0))'
-        self.assertTrue(vsan_info.set_policy(self.VMDK_PATH, policy_string),
-                        "failed to set")
+        notsame_policy = '(("hostFailuresToTolerate" i0) ("forceProvisioning" i0))'
+        self.assertTrue(
+            vsan_info.set_policy(self.VMDK_PATH, policy_string),
+            "failed to set")
         # get policy and check it
-        p = vsan_info.get_policy (self.VMDK_PATH)
-        self.assertTrue(vsan_info.same_policy(self.VMDK_PATH, p),
-                        "failed to compare with get_policy")
-        self.assertTrue(vsan_info.same_policy(self.VMDK_PATH, policy_string),
-                        "failed to compare with original policy")
-        self.assertTrue(vsan_info.same_policy(self.VMDK_PATH, same_policy),
-                        "failed to compare with same policy, different tabs")
-        self.assertFalse(vsan_info.same_policy(self.VMDK_PATH, notsame_policy),
-                        "failed to compare with different policy")
+        p = vsan_info.get_policy(self.VMDK_PATH)
+        self.assertTrue(
+            vsan_info.same_policy(self.VMDK_PATH, p),
+            "failed to compare with get_policy")
+        self.assertTrue(
+            vsan_info.same_policy(self.VMDK_PATH, policy_string),
+            "failed to compare with original policy")
+        self.assertTrue(
+            vsan_info.same_policy(self.VMDK_PATH, same_policy),
+            "failed to compare with same policy, different tabs")
+        self.assertFalse(
+            vsan_info.same_policy(self.VMDK_PATH, notsame_policy),
+            "failed to compare with different policy")
+
 
 if __name__ == "__main__":
     log_config.configure()

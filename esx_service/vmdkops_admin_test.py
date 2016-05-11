@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import unittest
 import sys
 import os
@@ -24,11 +23,12 @@ import vmdk_utils
 import volume_kv as kv
 import vmdkops_admin
 
+
 class TestParsing(unittest.TestCase):
     """ Test command line arg parsing for all commands """
 
     def setUp(self):
-      self.parser = vmdkops_admin.create_parser()
+        self.parser = vmdkops_admin.create_parser()
 
     def test_parse_ls_no_options(self):
         args = self.parser.parse_args(['ls'])
@@ -43,7 +43,8 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.c, None)
 
     def test_parse_ls_dash_c(self):
-        args = self.parser.parse_args('ls -c created-by,created,last-attached'.split())
+        args = self.parser.parse_args(
+            'ls -c created-by,created,last-attached'.split())
         self.assertEqual(args.func, vmdkops_admin.ls)
         self.assertEqual(args.l, False)
         self.assertEqual(args.c, ['created-by', 'created', 'last-attached'])
@@ -113,7 +114,7 @@ class TestParsing(unittest.TestCase):
             'role set --name=carl --rights create,mount',
             'role set --name=carl --matches-vm marketing*',
             'role set --name=carl --volume-maxsize=2GB --rights create,mount,delete'
-            ]
+        ]
         for cmd in cmds:
             args = self.parser.parse_args(cmd.split())
             self.assertEqual(args.func, vmdkops_admin.role_set)
@@ -141,6 +142,7 @@ class TestParsing(unittest.TestCase):
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
 
+
 class TestLs(unittest.TestCase):
     """ Test ls functionality """
 
@@ -152,9 +154,11 @@ class TestLs(unittest.TestCase):
             if not self.mkdir(path):
                 continue
             for id in range(5):
-                volName = 'testvol'+str(id)
-                fullpath = os.path.join(path, volName+'.vmdk')
-                self.assertEqual(None, vmdk_ops.createVMDK(vmdkPath=fullpath, volName=volName))
+                volName = 'testvol' + str(id)
+                fullpath = os.path.join(path, volName + '.vmdk')
+                self.assertEqual(None,
+                                 vmdk_ops.createVMDK(vmdkPath=fullpath,
+                                                     volName=volName))
                 self.vol_count += 1
 
     def tearDown(self):
@@ -170,28 +174,33 @@ class TestLs(unittest.TestCase):
                 return None
         return path
 
-
     def cleanup(self):
         for v in self.get_testvols():
-            self.assertEqual(None, vmdk_ops.removeVMDK(os.path.join(v['path'], v['filename'])))
+            self.assertEqual(
+                None,
+                vmdk_ops.removeVMDK(os.path.join(v['path'], v['filename'])))
 
     def get_testvols(self):
-        return [x for x in vmdk_utils.get_volumes() if x['filename'].startswith('testvol')]
+        return [x
+                for x in vmdk_utils.get_volumes()
+                if x['filename'].startswith('testvol')]
 
     def test_ls_helpers(self):
         volumes = self.get_testvols()
         self.assertEqual(len(volumes), self.vol_count)
         for v in volumes:
-            metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v['filename']))
+            metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v[
+                'filename']))
             self.assertNotEqual(None, metadata)
 
     def test_ls_no_args(self):
-          volumes = vmdk_utils.get_volumes()
-          (header, data) = vmdkops_admin.ls_no_args()
-          self.assertEqual(2, len(header))
-          self.assertEqual(len(volumes), len(data))
-          for i in range(len(volumes)):
-              self.assertEqual(volumes[i]['filename'], data[i][0]+'.vmdk')
+        volumes = vmdk_utils.get_volumes()
+        (header, data) = vmdkops_admin.ls_no_args()
+        self.assertEqual(2, len(header))
+        self.assertEqual(len(volumes), len(data))
+        for i in range(len(volumes)):
+            self.assertEqual(volumes[i]['filename'], data[i][0] + '.vmdk')
+
 
 if __name__ == '__main__':
     kv.init()

@@ -18,15 +18,16 @@ import vsan_policy
 import vmdk_utils
 import volume_kv as kv
 
+
 class TestVsanPolicy(unittest.TestCase):
     """ Test VSAN Policy code """
+
     def setUp(self):
         self.policy_path = os.path.join(vmdk_utils.get_vsan_datastore(),
                                         'policies/test_policy')
         self.name = 'test_policy'
         self.content = ('(("proportionalCapacity" i50) '
-                         '("hostFailuresToTolerate" i0))'
-                       )
+                        '("hostFailuresToTolerate" i0))')
 
     def tearDown(self):
         try:
@@ -62,6 +63,7 @@ class TestVsanPolicy(unittest.TestCase):
         self.assertEqual(None, vsan_policy.create(self.name, self.content))
         policies = vsan_policy.get_policies()
         self.assertTrue(self.content + '\n', policies[self.name])
+
 
 if __name__ == '__main__':
     kv.init()

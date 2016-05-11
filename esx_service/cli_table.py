@@ -18,6 +18,7 @@ import subprocess
 
 spaces = 2
 
+
 def create(header, data):
     """
     Create a printable ascii table as a string and return it
@@ -31,11 +32,12 @@ def create(header, data):
     """
     max_sizes = max_column_sizes(header, data)
     ### Subtract the number of spaces between columns from the term width
-    width = term_width() - spaces*(len(header)-1)
+    width = term_width() - spaces * (len(header) - 1)
     sizes = shrink_to_fit(max_sizes, width)
     header = truncate([header], sizes)[0]
     data = truncate(data, sizes)
     return format(header, data, sizes)
+
 
 def term_width():
     """
@@ -49,6 +51,7 @@ def term_width():
         return int(output.split()[1])
     except CalledProcessError:
         return 80
+
 
 def shrink_to_fit(column_sizes, term_width):
     """
@@ -97,7 +100,7 @@ def shrink_to_fit(column_sizes, term_width):
         to_remove = total_size - term_width
         gap = largest - next_largest
 
-        if gap*num_largest_columns > to_remove:
+        if gap * num_largest_columns > to_remove:
             # We can resize in this step and we are done
             to_remove_per_column = to_remove / num_largest_columns
             remainder = to_remove % num_largest_columns
@@ -120,6 +123,7 @@ def shrink_to_fit(column_sizes, term_width):
 
     return column_sizes
 
+
 def format(header, data, sizes):
     """ Actually create the table as a string """
     s = value_row(header, sizes) + '\n'
@@ -128,12 +132,14 @@ def format(header, data, sizes):
         s = s + value_row(row, sizes) + '\n'
     return s
 
+
 def value_row(values, sizes):
     """ Create a one line string of left justified values using the column sizes in sizes """
     s = ''
     for i in range(len(values)):
-        s = s + values[i].ljust(sizes[i]+spaces)
+        s = s + values[i].ljust(sizes[i] + spaces)
     return s
+
 
 def divider_row(sizes):
     """ Create a one line string of '-' characters of given length in each column """
@@ -141,6 +147,7 @@ def divider_row(sizes):
     for i in range(len(sizes)):
         s = s + '-'.ljust(sizes[i], '-') + '  '
     return s
+
 
 def max_column_sizes(header, data):
     """ Determine the maximum length for each column and return the lengths as a list """
@@ -150,6 +157,7 @@ def max_column_sizes(header, data):
             if len(row[i]) > sizes[i]:
                 sizes[i] = len(row[i])
     return sizes
+
 
 def truncate(data, sizes):
     """
@@ -166,7 +174,7 @@ def truncate(data, sizes):
             size = sizes[i]
             column = row[i]
             if len(column) > size:
-                truncated_row.append(column[:size-2] + '..')
+                truncated_row.append(column[:size - 2] + '..')
             else:
                 truncated_row.append(column)
         truncated.append(truncated_row)

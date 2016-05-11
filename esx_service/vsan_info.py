@@ -25,7 +25,7 @@ import json
 import os.path
 import vmdk_ops
 
-OBJTOOL='/usr/lib/vmware/osfs/bin/objtool '
+OBJTOOL = '/usr/lib/vmware/osfs/bin/objtool '
 OBJTOOL_SET_POLICY = OBJTOOL + "setPolicy -u {0} -p '{1}'"
 OBJTOOL_GET_ATTR = OBJTOOL + "getAttr -u {0} --format=json"
 
@@ -42,11 +42,12 @@ def get_vsan_datastore():
 
 
 def is_on_vsan(vmdk_path):
-   """Returns True if path is on VSAN datastore, False otherwise"""
-   ds = get_vsan_datastore()
-   if not ds:
-       return False
-   return os.path.realpath(vmdk_path).startswith(os.path.realpath(ds.info.url))
+    """Returns True if path is on VSAN datastore, False otherwise"""
+    ds = get_vsan_datastore()
+    if not ds:
+        return False
+    return os.path.realpath(vmdk_path).startswith(os.path.realpath(
+        ds.info.url))
 
 
 def set_policy(vmdk_path, policy_string):
@@ -55,21 +56,25 @@ def set_policy(vmdk_path, policy_string):
     Returns True on success
     """
     uuid = vmdk_ops.getVMDKUuid(vmdk_path)
-    rc, out = vmdk_ops.RunCommand(OBJTOOL_SET_POLICY.format(uuid, policy_string))
+    rc, out = vmdk_ops.RunCommand(OBJTOOL_SET_POLICY.format(uuid,
+                                                            policy_string))
     if rc != 0:
         logging.warning("Failed to set policy for %s : %s" % (vmdk_path, out))
         return False
     return True
 
+
 def same_policy(vmdk_path, policy_string):
     """"
     Returns True if VSAN object backing <vmdk_path>  has <policy_string>
     """
-    existing_policy_string = get_policy(vmdk_path).expandtabs(1).replace(" ", "")
-    return existing_policy_string == policy_string.expandtabs(1).replace(" ", "")
+    existing_policy_string = get_policy(vmdk_path).expandtabs(1).replace(" ",
+                                                                         "")
+    return existing_policy_string == policy_string.expandtabs(1).replace(" ",
+                                                                         "")
 
 
-def get_policy (vmdk_path):
+def get_policy(vmdk_path):
     """
     Returns VSAN policy string for VSAN object backing <vmdk_path>
     Throws exception if the path is not found or it is not a VSAN object
