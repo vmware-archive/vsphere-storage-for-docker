@@ -158,7 +158,7 @@ def validate_opts(opts):
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
                + 'Valid options and defaults: ' \
-               + '{0}'.format(zip(list(valid_opts),defaults))
+               + '{0}'.format(zip(list(valid_opts), defaults))
         raise ValidationError(msg)
 
     if 'size' in opts:
@@ -270,7 +270,7 @@ def findVmByName(vmName):
     vm = None
     try:
         vm = FindChild(GetVmFolder(), vmName)
-    except vim.fault.NotAuthenticated as ex:
+    except vim.fault.NotAuthenticated:
         connectLocal()  #  retry
         vm = FindChild(GetVmFolder(), vmName)
 
@@ -304,16 +304,16 @@ def getVolPath(vmConfigPath):
 
     if os.path.isdir(path):
         # If the path exists then return it as is.
-        logging.debug("Found %s, returning" % path)
+        logging.debug("Found %s, returning", path)
         return path
 
     # The osfs tools are usable for all datastores
     cmd = "{0} {1}".format(osfsMkdirCmd, path)
     rc, out = RunCommand(cmd)
     if rc != 0:
-        logging.warning("Failed to create " + path)
+        logging.warning("Failed to create %s", path)
     else:
-        logging.info(path + " created")
+        logging.info("Created %s", path)
         return path
 
     return None

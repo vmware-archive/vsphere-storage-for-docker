@@ -17,9 +17,10 @@
 ## of a KV store for vmdks.
 ##
 
-from ctypes import *
+from ctypes import \
+        CDLL, POINTER, byref, \
+        c_void_p, c_char_p, c_int32, c_bool, c_uint32, c_uint64
 import json
-import subprocess
 import logging
 
 # Side car create/open options
@@ -108,13 +109,12 @@ def volOpenPath(volpath):
     dhandle = c_uint32(0)
     ihandle = c_uint32(0)
     key = c_uint32(0)
-    objHandle = c_uint32(0)
 
-    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, pointer(key),
-                                   pointer(dhandle), pointer(ihandle))
+    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, byref(key),
+                                   byref(dhandle), byref(ihandle))
 
     if res != 0:
-        logging.warning("Open %s failed - %x" % (volpath, res))
+        logging.warning("Open %s failed - %x", volpath, res)
 
     return dhandle
 
@@ -131,17 +131,17 @@ def create(volpath, kvDict):
 
     if useSideCarCreate:
         res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE,
-                                        KV_SIDECAR_CREATE, pointer(objHandle))
+                                        KV_SIDECAR_CREATE, byref(objHandle))
     else:
         res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE,
-                                      pointer(objHandle))
+                                      byref(objHandle))
 
     if res != 0:
-        logging.warning("Side car create for %s failed - %x" % (volpath, res))
+        logging.warning("Side car create for %s failed - %x", volpath, res)
         lib.DiskLib_Close(disk)
         return False
 
-    lib.DiskLib_SidecarClose(disk, dVolKey, pointer(objHandle))
+    lib.DiskLib_SidecarClose(disk, dVolKey, byref(objHandle))
     lib.DiskLib_Close(disk)
 
     return save(volpath, kvDict)
@@ -158,7 +158,7 @@ def delete(volpath):
 
     res = lib.DiskLib_SidecarDelete(disk, dVolKey)
     if res != 0:
-        logging.warning("Side car delete for %s failed - %x" % (volpath, res))
+        logging.warning("Side car delete for %s failed - %x", volpath, res)
         lib.DiskLib_Close(disk)
         return False
 
