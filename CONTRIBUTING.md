@@ -56,7 +56,7 @@ Copy-paste relevant snippets from log file, code. Use github markdown language f
 Use `make` or `make dockerbuild` to build.
 
 Build environment is described in README.md. The result of the build is a set
-of binaries in ./bin directory.
+of binaries in ./build directory.
 
 In order to test locally, you'd need a test setup. Local test setup automation is planned but but not done yet, so currently the environment has to be set up manually.
 

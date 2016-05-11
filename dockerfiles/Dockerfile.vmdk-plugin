@@ -2,6 +2,6 @@ FROM alpine
 
 MAINTAINER cna-storage@vmware.com
 
-ADD ./bin/docker-volume-vsphere /usr/local/bin/docker-volume-vsphere
+ADD ./build/docker-volume-vsphere /usr/local/bin/docker-volume-vsphere
 
 ENTRYPOINT ["/usr/local/bin/docker-volume-vsphere"]
