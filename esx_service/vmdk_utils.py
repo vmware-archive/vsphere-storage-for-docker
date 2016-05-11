@@ -25,6 +25,7 @@ datastores = None
 # we assume files smaller that that to be descriptor files
 MaxDescrSize = 10000
 
+
 def get_datastores():
     """
     Return pairs of datastore names and absolute paths to dockvols directory,
@@ -37,12 +38,14 @@ def get_datastores():
 
     si = pyVim.connect.Connect()
     #  We are connected to ESX so childEntity[0] is current DC/Host
-    ds_objects = si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
+    ds_objects = si.content.rootFolder.childEntity[
+        0].datastoreFolder.childEntity
     datastores = [(d.info.name, os.path.join(d.info.url, 'dockvols'))
                   for d in ds_objects]
     pyVim.connect.Disconnect(si)
 
     return datastores
+
 
 def get_vsan_datastore():
     """
@@ -50,6 +53,7 @@ def get_vsan_datastore():
     first datastore for now, so we can test without VSAN.
     """
     return get_datastores()[0][1]
+
 
 def get_volumes():
     """ Return dicts of docker volumes, their datastore and their paths """
@@ -61,14 +65,17 @@ def get_volumes():
                             'datastore': datastore})
     return volumes
 
+
 def list_vmdks(path):
     """ Return a list all VMDKs in a given path """
     try:
         files = os.listdir(path)
-        return [f for f in files if vmdk_is_a_descriptor(os.path.join(path, f))]
+        return [f for f in files
+                if vmdk_is_a_descriptor(os.path.join(path, f))]
     except OSError as e:
         # dockvols may not exists on a datastore, so skip it
         return []
+
 
 def vmdk_is_a_descriptor(filepath):
     """
@@ -81,9 +88,11 @@ def vmdk_is_a_descriptor(filepath):
                 line = f.readline()
                 return line.startswith('# Disk DescriptorFile')
         except:
-            logging.warning("Failed to open {0} for descriptor check".format(filepath))
+            logging.warning("Failed to open {0} for descriptor check".format(
+                filepath))
 
     return False
+
 
 def strip_vmdk_extension(filename):
     """ Remove the .vmdk file extension from a string """

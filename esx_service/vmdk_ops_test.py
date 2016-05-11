@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 '''
 Tests for basic vmdk Operations
 
@@ -45,7 +43,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         self.name = vmdk_ops.getVmdkName(path, self.volName)
         self.policy_names = ['good', 'impossible']
         policy_content = ('(("proportionalCapacity" i50) '
-                               '("hostFailuresToTolerate" i0))')
+                          '("hostFailuresToTolerate" i0))')
         for n in self.policy_names:
             vsan_policy.create(n, policy_content)
 
@@ -57,16 +55,18 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     def testCreateDelete(self):
         err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName)
         self.assertEqual(err, None, err)
-        self.assertEqual(os.path.isfile(self.name), True,
-                    "VMDK {0} is missing after create.".format(self.name))
+        self.assertEqual(
+            os.path.isfile(self.name), True,
+            "VMDK {0} is missing after create.".format(self.name))
         err = vmdk_ops.removeVMDK(self.name)
         self.assertEqual(err, None, err)
-        self.assertEqual(os.path.isfile(self.name), False,
-                    "VMDK {0} is still present after delete.".format(self.name))
-
+        self.assertEqual(
+            os.path.isfile(self.name), False,
+            "VMDK {0} is still present after delete.".format(self.name))
 
     def testBadOpts(self):
-        err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName,
+        err = vmdk_ops.createVMDK(vmdkPath=self.name,
+                                  volName=self.volName,
                                   opts=self.badOpts)
         logging.info(err)
         self.assertNotEqual(err, None, err)
@@ -78,22 +78,25 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     def testPolicy(self):
         # info for testPolicy
         testInfo = [
-        #    size     policy   expected success?
-            ["2gb",     "good",     True],
-            ["14000pb", "good",     False ],
-            ["bad size","good",     False],
+            #    size     policy   expected success?
+            ["2gb", "good", True],
+            ["14000pb", "good", False],
+            ["bad size", "good", False],
             ["100mb", "impossible", True],
-            ["100mb",  "good",      True],
-            ]
+            ["100mb", "good", True],
+        ]
         for unit in testInfo:
             # create a volume with requestes size/policy and check vs expected result
-            err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName,
-                                      opts={'vsan-policy-name': unit[1], 'size':unit[0]})
-            self.assertEqual(err == None, unit[2] , err)
+            err = vmdk_ops.createVMDK(vmdkPath=self.name,
+                                      volName=self.volName,
+                                      opts={'vsan-policy-name': unit[1],
+                                            'size': unit[0]})
+            self.assertEqual(err == None, unit[2], err)
 
             # clean up should fail if the created should have failed.
             err = vmdk_ops.removeVMDK(self.name)
             self.assertEqual(err == None, unit[2], err)
+
 
 class ValidationTestCase(unittest.TestCase):
     """ Test validation of -o options on create """
@@ -122,11 +125,12 @@ class ValidationTestCase(unittest.TestCase):
 
     def test_failure(self):
         bad = [{'size': '2'}, {'vsan-policy-name': 'bad-policy'},
-               {'size': 'mb'}, {'bad-option': '4'},
-               {'bad-option': 'what', 'size': '4mb'}]
+               {'size': 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
+                                                     'size': '4mb'}]
         for opts in bad:
             with self.assertRaises(vmdk_ops.ValidationError):
                 vmdk_ops.validate_opts(opts)
+
 
 if __name__ == '__main__':
     log_config.configure()
@@ -135,23 +139,23 @@ if __name__ == '__main__':
     # Calculate the path
     paths = glob.glob("/vmfs/volumes/[a-z]*/dockvols")
     if paths:
-      # WARNING: for many datastores with dockvols, this picks up the first
-      path=paths[0]
+        # WARNING: for many datastores with dockvols, this picks up the first
+        path = paths[0]
     else:
-       # create dir in a datastore (just pick first datastore if needed)
-      path=glob.glob("/vmfs/volumes/[a-z]*")[0] + "/dockvols"
-      logging.debug("Directory does not exist - creating %s", path)
-      os.makedirs(path)
+        # create dir in a datastore (just pick first datastore if needed)
+        path = glob.glob("/vmfs/volumes/[a-z]*")[0] + "/dockvols"
+        logging.debug("Directory does not exist - creating %s", path)
+        os.makedirs(path)
 
     logging.info("Directory used in test - %s", path)
 
     try:
-       unittest.main()
+        unittest.main()
     except:
-       pass
+        pass
     finally:
-       if not paths:
-          logging.debug("Directory clean up - removing  %s", path)
-          os.removedirs(path)
+        if not paths:
+            logging.debug("Directory clean up - removing  %s", path)
+            os.removedirs(path)
     #suite = unittest.TestLoader().loadTestsFromTestCase(TestStringMethods)
     #unittest.TextTestRunner(verbosity=2).run(suite)

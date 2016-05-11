@@ -19,6 +19,7 @@ import os
 import vmdk_utils
 import volume_kv as kv
 
+
 def create(name, content):
     """
     Create a new storage policy and save it as dockvols/policies/name in
@@ -33,6 +34,7 @@ def create(name, content):
         return 'Error: Invalid policy string'
 
     return create_policy_file(name, content)
+
 
 def create_policy_file(name, content):
     """
@@ -59,6 +61,7 @@ def create_policy_file(name, content):
 
     return None
 
+
 def delete(name):
     """
     Remove a given policy. If the policy does not exist return an error string,
@@ -75,6 +78,7 @@ def delete(name):
 
     return None
 
+
 def get_policies():
     """ Return a dict of all policies. """
     policies = {}
@@ -85,6 +89,7 @@ def get_policies():
         policies[name] = content
     return policies
 
+
 def list_volumes_and_policies():
     """ Return a list of vmdks and the policies in use"""
     vmdks_and_policies = []
@@ -94,13 +99,16 @@ def list_volumes_and_policies():
         vmdks_and_policies.append({'volume': vmdk, 'policy': policy})
     return vmdks_and_policies
 
+
 def policy_exists(name):
     """ Check if the policy file exists """
     return os.path.isfile(policy_path(name))
 
+
 def policy_path(name):
     """ Return the path to a given policy file """
     return os.path.join(vmdk_utils.get_vsan_datastore(), 'policies', name)
+
 
 def kv_get_vsan_policy_name(path):
     """
@@ -114,6 +122,7 @@ def kv_get_vsan_policy_name(path):
     else:
         return None
 
+
 def policy_in_use(path, name):
     """
     Check if a policy is in use by a VMDK and return the name of the first VMDK
@@ -124,6 +133,7 @@ def policy_in_use(path, name):
         if policy == name:
             return vmdk
     return None
+
 
 def validate_vsan_policy_string(content):
     """
