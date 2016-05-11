@@ -2,7 +2,7 @@ FROM alpine
 
 MAINTAINER cna-storage@vmware.com
 
-RUN mkdir -p /build-output/bin /build-output/logs
+RUN mkdir -p /build-output/build /build-output/logs
 
-COPY ./bin /build-output/bin
+COPY ./build /build-output/build
 COPY ./run.log /build-output/logs
