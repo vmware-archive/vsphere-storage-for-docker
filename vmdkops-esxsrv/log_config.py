@@ -29,12 +29,12 @@ import os.path
 # If the file does not exist, we create it from from LOG_CONFIG_DEFAULT dictionary.
 # Note: the file handler name MUST be "rotate_file",
 # since we rely on it to locate log file name after config is loaded.
-LOG_CONFIG_FILE="/etc/vmware/vmdkops/log_config.json"
+LOG_CONFIG_FILE = "/etc/vmware/vmdkops/log_config.json"
 
 # Defaults for log files - used to generate conf file if it is missing
 # Note: log file location should be synced with CI and 'make'
 LOG_FILE = "/var/log/vmware/vmdk_ops.log"
-LOG_MAX_BYTES   = 10485760 # 10MB
+LOG_MAX_BYTES = 10485760 # 10MB
 LOG_MAX_BACKUPS = 5
 LOG_CONFIG_DEFAULT = {
     "info": [
@@ -90,23 +90,23 @@ def configure(config_file=LOG_CONFIG_FILE):
         except:
             pass
         with open(config_file, 'w') as f:
-            json.dump(LOG_CONFIG_DEFAULT, f, sort_keys = False, indent = 4)
+            json.dump(LOG_CONFIG_DEFAULT, f, sort_keys=False, indent=4)
         generatedConf = True
 
     # Get the configuration info - now it *has* to be there
     with open(config_file) as f:
-        conf=json.load(f)
+        conf = json.load(f)
 
     # make sure the dir for logs exists
-    log=conf['handlers']['rotate_file']['filename']
-    dir=os.path.dirname(log)
-    if not os.path.isdir(dir):
-        os.makedirs(dir)
+    log = conf['handlers']['rotate_file']['filename']
+    dir_name = os.path.dirname(log)
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
 
     # Now configure logging
     logging.config.dictConfig(conf)
     if generatedConf:
-        logging.info("Log configuration generated - '%s'." % config_file)
+        logging.info("Log configuration generated - '{0}'.".format(config_file))
     return log
 
 

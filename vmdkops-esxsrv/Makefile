@@ -19,6 +19,8 @@
 # Prepares payload folder for vibauthor and builds/places neede stuff there
 # We expect the actual vibauthor to be run via dedicated container upstair
 #
+# Python lint
+PYLINT := /usr/bin/pylint
 
 # deliverables (placed by build)
 BIN := ../bin
@@ -66,6 +68,12 @@ VIBAUTHOR_PARAMS := --debug --compose \
 	--stage-dir $(WDIR) \
 	--offline-depot $(BIN)/$(OFFLINE_DEPOT) \
 	--force
+# Run lint on python source.
+.PHONY: lint
+lint: $(PY_SRC)
+	@echo "Running $@"
+	@for file in $(PY_SRC); do \
+		$(PYLINT) -f text -r y $$file > .pylint-$$file 2>&1; done
 
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build

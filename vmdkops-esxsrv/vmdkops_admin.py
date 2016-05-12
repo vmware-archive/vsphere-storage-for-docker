@@ -22,6 +22,7 @@ import subprocess
 import volumeKVStore as kv
 import cli_table
 import vmdk_ops
+import sys
 
 import pyVim.connect
 
@@ -240,10 +241,10 @@ def create_parser():
     add_subparser(parser, commands())
     return parser
 
-def add_subparser(parser, commands):
+def add_subparser(parser, commandDict):
     """ Recursively add subcommand parsers based on a dictionary of commands """
     subparsers = parser.add_subparsers()
-    for cmd, attributes in commands.iteritems():
+    for cmd, attributes in commandDict.iteritems():
         subparser = subparsers.add_parser(cmd, help=attributes['help'])
         if 'func' in attributes:
             subparser.set_defaults(func=attributes['func'])
@@ -257,8 +258,8 @@ def add_subparser(parser, commands):
 def build_argparse_opts(opts):
     if 'choices' in opts:
         opts['type'] = make_list_of_values(opts['choices'])
-        help = opts['help']
-        opts['help'] = '{0}: Choices = {1}'.format(help, opts['choices'])
+        helpOpts = opts['help']
+        opts['help'] = '{0}: Choices = {1}'.format(helpOpts, opts['choices'])
         del opts['choices']
     return opts
 
@@ -395,8 +396,8 @@ def get_volumes():
     """ Return dicts of docker volumes, their datastore and their paths """
     volumes = []
     for (datastore, path) in get_datastores():
-        for file in list_vmdks(path):
-            volumes.append({'path': path, 'filename': file, 'datastore': datastore})
+        for fileName in list_vmdks(path):
+            volumes.append({'path': path, 'filename': fileName, 'datastore': datastore})
     return volumes
 
 def get_metadata(volPath):

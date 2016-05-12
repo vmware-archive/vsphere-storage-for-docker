@@ -45,7 +45,7 @@ def create(volPath, status, opts):
    res = kvESX.create(volPath, volMeta)
 
    if res != True:
-      logging.debug ("KV store create failed.")
+      logging.debug("KV store create failed.")
       return False
 
    return True
@@ -66,7 +66,7 @@ def setAll(volPath, volMeta):
    return True
 
 # Set a string value for a given key(index)
-def set(volPath, key, val):
+def setKV(volPath, key, val):
    volMeta = kvESX.load(volPath)
 
    if not volMeta:
@@ -79,7 +79,7 @@ def set(volPath, key, val):
 
 # Get value for a given key (index), returns a string thats the value
 # for the key
-def get(volPath, key):
+def getKV(volPath, key):
    volMeta = kvESX.load(volPath)
 
    if not volMeta:

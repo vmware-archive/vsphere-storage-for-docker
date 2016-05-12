@@ -130,6 +130,7 @@ lint:
 	${GOPATH}/bin/golint vmdkops
 	${GOPATH}/bin/golint config
 	${GOPATH}/bin/golint fs
+	#@cd  $(ESX_SRC)  ; $(MAKE)  $@
 
 .PHONY: vet
 vet:
