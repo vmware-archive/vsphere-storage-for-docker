@@ -27,7 +27,7 @@ export ESX=$1
 export VM1=$2
 export VM2=$3
 export BUILD_NUMBER=$4
-"
+
 if [ $# -lt 3 ]
 then
   usage
@@ -35,7 +35,7 @@ then
 fi
 
 . ./drone-scripts/cleanup.sh
-. ./drone-scripts/tools.sh
+. ./drone-scripts/dump_log.sh
 
 echo "*************************************************************************"
 echo "tests starting"

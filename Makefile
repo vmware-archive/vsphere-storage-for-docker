@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This Makefile has 2 purposes:
-#   - convenience: redirects tarets to ./vmdk_plugin so 'make'
+#   - convenience: redirects targets to ./vmdk_plugin so 'make'
 #                  can be run from the top
 #   - drone invariant: defines deb/rpm/build/testasroot targets so drone.yml
 #                   can be kept as-is 
