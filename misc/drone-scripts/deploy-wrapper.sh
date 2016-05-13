@@ -38,9 +38,9 @@ export VM2=$3
 SCP="scp -o StrictHostKeyChecking=no"
 SSH="ssh -o StrictHostKeyChecking=no"
 USER=root
-. ./drone-scripts/cleanup.sh
+. ./misc/drone-scripts/cleanup.sh
 
-$SCP ./drone-scripts/lock.sh $VM1:/tmp/
+$SCP ./misc/drone-scripts/lock.sh $VM1:/tmp/
 
 # Unlock performed in stop_build in cleanup.sh
 until $SSH $USER@$VM1 /tmp/lock.sh lock $BUILD_NUMBER
@@ -87,7 +87,7 @@ else
   echo "deploy failed cleaning up"
   echo "*************************************************************************"
  echo " Dumping logs..."
- . ./drone-scripts/dump_log.sh
+ . ./misc/drone-scripts/dump_log.sh
  dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
   exit 1

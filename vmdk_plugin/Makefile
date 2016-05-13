@@ -34,7 +34,7 @@ EPOCH := 0
 BIN := ../build
 
 # Location for scripts
-SCRIPTS     := ../scripts
+SCRIPTS     := ../misc/scripts
 
 # Packaging variables
 PLUGNAME  := docker-volume-vsphere
@@ -137,7 +137,7 @@ DOCKER = $(DEBUG) docker
 .PHONY: fpm-docker
 fpm-docker:
 	@echo "Building FPM container. It could take a while, please stand by..."
-	$(DOCKER) build -t cnastorage/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
+	$(DOCKER) build -t cnastorage/fpm -f misc/dockerfiles/Dockerfile.fpm . > /dev/null
 
 .PHONY: pkg
 pkg: dockerdeb dockerrpm

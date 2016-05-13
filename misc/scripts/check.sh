@@ -42,7 +42,7 @@ then
  exit 0
 fi
 
-# pgk build just needs FPM (it is taken care of by Dockerfiles/Dockerfile.fpm)
+# pgk build just needs FPM (it is taken care of by misc/dockerfiles/Dockerfile.fpm)
 
 if [ "$1" == "pkg" ]
 then
