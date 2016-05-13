@@ -21,10 +21,10 @@
 # and clean up
 #
 # Usage:
-#       ./scripts/deploy-tools function-name function-params
+#       ./misc/scripts/deploy-tools function-name function-params
 #
 # e.g.
-#      ./scripts/deploy-tools deployvm "ip-addresses" "target-bin" "binaries"
+#      ./misc/scripts/deploy-tools deployvm "ip-addresses" "target-bin" "binaries"
 #
 
 # on failure, exit right away 
@@ -47,7 +47,7 @@ SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 # We remove VIB by internal name, not file name. See description.xml in VIB
 internal_vib_name=vmware-esx-vmdkops-service
 
-script_loc=../scripts
+script_loc=../misc/scripts
 tmp_loc=/tmp/docker-volume-vsphere
 
 # ====== define functions =======
@@ -94,7 +94,7 @@ function deploy_helper {
 # Plugin and test binaries (mentioned in $files) are copied to $bin_remote_location
 # for each ip in $ip_list
 #
-# All scripts from ./scripts are copied to $tmp_loc (location hardcoded)
+# All scripts from ./misc/scripts are copied to $tmp_loc (location hardcoded)
 
 function deployvm {
    startsvc=startvm.sh

@@ -34,8 +34,8 @@ then
   exit 1
 fi
 
-. ./drone-scripts/cleanup.sh
-. ./drone-scripts/dump_log.sh
+. ./misc/drone-scripts/cleanup.sh
+. ./misc/drone-scripts/dump_log.sh
 
 echo "*************************************************************************"
 echo "tests starting"

@@ -29,7 +29,7 @@ build:
       # Needed for creating docker images
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - docker build -t vmware/fpm -f dockerfiles/Dockerfile.fpm . > /dev/null
+      - docker build -t vmware/fpm -f misc/dockerfiles/Dockerfile.fpm . > /dev/null
 
   package:
     image: vmware/fpm
@@ -58,8 +58,8 @@ build:
     commands:
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip photon.rc`
-      - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./misc/drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./misc/drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push, pull_request]
 
@@ -75,8 +75,8 @@ build:
       - export PKG_VERSION=$$TAG
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip ubuntu-2`
-      - ./drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - ./drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./misc/drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./misc/drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: tag
 
@@ -93,7 +93,7 @@ publish:
     tag:
       - "latest"
       - $$BRANCH-$$BUILD_NUMBER
-    file: dockerfiles/Dockerfile.vmdk-plugin
+    file: misc/dockerfiles/Dockerfile.vmdk-plugin
     privileged: true
     storage_driver: overlay
     when:
