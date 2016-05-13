@@ -28,10 +28,6 @@ export VM1=$2
 export VM2=$3
 export BUILD_NUMBER=$4
 
-SSH="ssh -o StrictHostKeyChecking=no"
-USER=root
-LOGFILE="/var/log/docker-volume-vsphere.log"
-STDLOG="/tmp/plugin.log"
 if [ $# -lt 3 ]
 then
   usage
@@ -39,54 +35,24 @@ then
 fi
 
 . ./drone-scripts/cleanup.sh
+. ./drone-scripts/dump_log.sh
 
 echo "*************************************************************************"
 echo "tests starting"
 echo "*************************************************************************"
-
-dump_log_esx() {
-  echo ""
-  echo " ESX Config info ***************"
-  cmd='vmware -l; uname -a; df; ls -ld /vmfs/volumes/*'
-  echo $cmd ; $SSH $USER@$ESX $cmd
-
-  echo "*** dumping log: ESX " $ESX
-  echo "*************************************************************************"
-  set -x
-  $SSH $USER@$ESX cat /var/log/vmware/vmdk_ops.log
-  set +x
-  echo "*************************************************************************"
-}
-
-dump_log_vm(){
-  echo ""
-  echo "*** dumping log: VM " $1
-  echo "*************************************************************************"
-  set -x
-  $SSH $USER@$1 cat $STDLOG
-  $SSH $USER@$1 cat $LOGFILE
-  set +x
-  echo "*************************************************************************"
-}
-
-dump_log() {
-  dump_log_esx
-  dump_log_vm $VM1
-  dump_log_vm $VM2
-}
 
 if make testasroot testremote TEST_VOL_NAME=vol-build$BUILD_NUMBER
 then
   echo "*************************************************************************"
   echo "tests done"
   echo ""
-  dump_log
+  dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
 else
   echo "*************************************************************************"
   echo "tests failed"
   echo ""
-  dump_log
+  dump_log $VM1 $VM2 $ESX
   echo "*************************************************************************"
   echo "cleaning up"
   echo "*************************************************************************"

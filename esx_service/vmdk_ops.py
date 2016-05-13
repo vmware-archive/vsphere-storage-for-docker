@@ -33,6 +33,7 @@ Commands ("cmd" in request):
 from ctypes import *
 import json
 import os
+import os.path
 import subprocess
 import atexit
 import time
@@ -40,7 +41,6 @@ import logging
 import signal
 import sys
 import re
-sys.dont_write_bytecode = True
 
 from vmware import vsi
 
@@ -51,20 +51,31 @@ from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
 
+sys.dont_write_bytecode = True
+
+# Location of utils used by the plugin.
+TOP_DIR = "/usr/lib/vmware/vmdkops"
+BIN_LOC  = os.path.join(TOP_DIR, "bin")
+LIB_LOC  = os.path.join(TOP_DIR, "lib")
+PY_LOC  = os.path.join(TOP_DIR, "Python")
+
+# vmdkops python utils are in PY_LOC, so add to path. 
+sys.path.insert(0, PY_LOC)
+
+
 import log_config
 import volume_kv as kv
 import vmdk_utils
 import vsan_policy
 
-# Location of utils used by the plugin.
-BinLoc = "/usr/lib/vmware/vmdkops/bin/"
 
 # External tools used by the plugin.
 objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u "
 osfsMkdirCmd = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
-mkfsCmd = "/usr/lib/vmware/vmdkops/bin/mkfs.ext4 -qF -L "
 vmdkCreateCmd = "/sbin/vmkfstools -d thin -c "
 vmdkDeleteCmd = "/sbin/vmkfstools -U "
+
+mkfsCmd = BIN_LOC + "/mkfs.ext4 -qF -L "
 
 # Defaults
 DockVolsDir = "dockvols"  # place in the same (with Docker VM) datastore
@@ -604,7 +615,7 @@ def signal_handler_stop(signalnum, frame):
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests():
     # Load and use DLL with vsocket shim to listen for docker requests
-    lib = cdll.LoadLibrary(BinLoc + "/libvmci_srv.so")
+    lib = cdll.LoadLibrary(os.path.join(LIB_LOC,"libvmci_srv.so"))
 
     bsize = MaxJsonSize
     txt = create_string_buffer(bsize)

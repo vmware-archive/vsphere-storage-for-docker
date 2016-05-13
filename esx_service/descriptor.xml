@@ -1,7 +1,21 @@
-<!--  dockervolagent VIB descriptor.xml. Used to generate installable VIBs-->
+<!--
+# Copyright 2016 VMware, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+ -->
 
-
-<!--  ACTUAL PAYLOAD CONTENT is expected in ../payloads/payload1/... -->
+<!--  VIB descriptor.xml. Used to generate installable VIBs  -->
+<!--  Content is expected in payloads/vmdkops (see <payloads>) -->
 
 
 <vib version="6.0">
@@ -12,8 +26,7 @@
    <summary>ESX-side daemon supporting basic VMDK operations requested by a guest</summary>
 
    <description>
-   This daemon executes VMDK operations requested 
-   by in-the-guest apps.
+   Executes VMDK operations requested by an in-the-guest application.
    </description>
 
    <payloads>

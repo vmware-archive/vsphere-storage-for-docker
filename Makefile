@@ -13,9 +13,10 @@
 # limitations under the License.
 
 # This Makefile has 2 purposes:
-#   - convenience: redirects tarets to ./vmdk_plugin so 'make' cat be run from the top
-#   - drone invariant: defines deb/rpm/build/testasroot targets so drone.yml can be kept as-is
-# 
+#   - convenience: redirects targets to ./vmdk_plugin so 'make'
+#                  can be run from the top
+#   - drone invariant: defines deb/rpm/build/testasroot targets so drone.yml
+#                   can be kept as-is 
 
 TARGETS := all \
 	deploy-all deploy-esx deploy-vm deploy\
