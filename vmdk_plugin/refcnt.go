@@ -81,7 +81,7 @@ import (
 const (
 	apiVersion              = "v1.22"
 	dockerUSocket           = "unix:///var/run/docker.sock"
-	defaultSleepIntervalSec = 3
+	defaultSleepIntervalSec = 1
 
 	// consts for finding and parsing linux mount information
 	linuxMountsFile = "/proc/mounts"
@@ -134,28 +134,31 @@ func (r refCountsMap) Init(d *vmdkDriver) {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
 			dockerUSocket, err)
 	}
-
-	// connects (and polls if needed) and then calls discovery
-	log.Infof("Getting volume data from to %s", dockerUSocket)
-	err = r.discoverAndSync(c, d)
-	attempt := 1
-	for err != nil {
-		// stay here forever, until connected to Docker or killed
-		attempt++
-		if (attempt-2)%10 == 0 { // throttle to each 10th attempt
-			log.Warningf("Failed to get data from Docker, retrying. (err: %v)", err)
-		}
-		time.Sleep(reconnectSleepInterval)
+	go func() {
+		d.m.Lock()
+		defer d.m.Unlock()
+		// connects (and polls if needed) and then calls discovery
+		log.Infof("Getting volume data from to %s", dockerUSocket)
 		err = r.discoverAndSync(c, d)
-	}
-
-	log.Infof("Discovered %d volumes in use or mounted.", len(r))
-	if log.GetLevel() == log.DebugLevel {
-		for name, cnt := range r {
-			log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
-				name, cnt.count, cnt.mounted, cnt.dev)
+		attempt := 1
+		for err != nil {
+			// stay here forever, until connected to Docker or killed
+			attempt++
+			if (attempt-2)%30 == 0 { // throttle to each 30th attempt
+				log.Warningf("Failed to get data from Docker, retrying. (err: %v)", err)
+			}
+			time.Sleep(reconnectSleepInterval)
+			err = r.discoverAndSync(c, d)
 		}
-	}
+
+		log.Infof("Discovered %d volumes in use or mounted.", len(r))
+		if log.GetLevel() == log.DebugLevel {
+			for name, cnt := range r {
+				log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
+					name, cnt.count, cnt.mounted, cnt.dev)
+			}
+		}
+	}()
 }
 
 // Returns ref count for the volume.
