@@ -60,9 +60,9 @@ def get_volumes():
     """ Return dicts of docker volumes, their datastore and their paths """
     volumes = []
     for (datastore, path) in get_datastores():
-        for file in list_vmdks(path):
+        for file_name in list_vmdks(path):
             volumes.append({'path': path,
-                            'filename': file,
+                            'filename': file_name,
                             'datastore': datastore})
     return volumes
 
@@ -89,8 +89,7 @@ def vmdk_is_a_descriptor(filepath):
                 line = f.readline()
                 return line.startswith('# Disk DescriptorFile')
         except:
-            logging.warning("Failed to open {0} for descriptor check".format(
-                filepath))
+            logging.warning("Failed to open %s for descriptor check", filepath)
 
     return False
 

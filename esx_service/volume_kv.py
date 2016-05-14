@@ -32,17 +32,17 @@ import kvESX
 #              created.
 
 
-# Create a kv store object for this volume identified by volPath
+# Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.
 def init():
     kvESX.kvESXInit()
 
 
 # Create a side car KV store for given volpath
-def create(volPath, status, opts):
-    volMeta = {'status': status, 'volOpts': opts}
+def create(vol_path, status, opts):
+    vol_meta = {'status': status, 'volOpts': opts}
 
-    res = kvESX.create(volPath, volMeta)
+    res = kvESX.create(vol_path, vol_meta)
 
     if res != True:
         logging.debug("KV store create failed.")
@@ -51,59 +51,59 @@ def create(volPath, status, opts):
     return True
 
 
-# Delete a kv store object for this volume identified by volPath
-def delete(volPath):
-    return kvESX.delete(volPath)
+# Delete a kv store object for this volume identified by vol_path
+def delete(vol_path):
+    return kvESX.delete(vol_path)
 
 
 # Return the entire meta-data for the given volpath
-def getAll(volPath):
-    return kvESX.load(volPath)
+def getAll(vol_path):
+    return kvESX.load(vol_path)
 
 
 # Store the meta-data for a given vol-path
-def setAll(volPath, volMeta):
-    if volMeta:
-        return kvESX.save(volPath, volMeta)
+def setAll(vol_path, vol_meta):
+    if vol_meta:
+        return kvESX.save(vol_path, vol_meta)
     # No data to save .
     return True
 
 
 # Set a string value for a given key(index)
-def set(volPath, key, val):
-    volMeta = kvESX.load(volPath)
+def set_kv(vol_path, key, val):
+    vol_meta = kvESX.load(vol_path)
 
-    if not volMeta:
+    if not vol_meta:
         return False
 
-    volMeta[key] = val
+    vol_meta[key] = val
 
-    return kvESX.save(volPath, volMeta)
+    return kvESX.save(vol_path, vol_meta)
 
 
 # Get value for a given key (index), returns a string thats the value
 # for the key
-def get(volPath, key):
-    volMeta = kvESX.load(volPath)
+def get_kv(vol_path, key):
+    vol_meta = kvESX.load(vol_path)
 
-    if not volMeta:
+    if not vol_meta:
         return None
 
-    if key in volMeta:
-        return volMeta[key]
+    if key in vol_meta:
+        return vol_meta[key]
     else:
         return None
 
 
 # No-op for side car based KV pairs, once added KV pairs live till
 # the side car is deleted.
-def remove(volPath, key):
-    volMeta = kvESX.load(volPath)
+def remove(vol_path, key):
+    vol_meta = kvESX.load(vol_path)
 
-    if not volMeta:
+    if not vol_meta:
         return False
 
-    if key in volMeta:
-        del volMeta[key]
+    if key in vol_meta:
+        del vol_meta[key]
 
-    return kvESX.save(volPath, volMeta)
+    return kvESX.save(vol_path, vol_meta)

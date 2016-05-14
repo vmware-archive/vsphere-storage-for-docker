@@ -20,6 +20,9 @@
 # We expect the actual vibauthor to be run via dedicated container upstair
 #
 
+# Python lint
+PYLINT := /usr/bin/pylint
+
 # build places binaries here:
 BIN := ../build
 
@@ -104,6 +107,16 @@ $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
+
+# Run lint on python source. Currently this is run manually and
+# needs pylint and dependent packages to be installed.
+# TODO: Automate.
+.PHONY: lint
+lint:
+	@echo "Running $@"
+	@rm -f ./.pylint
+	@for file in $(PY_SRC) $(PY_UTILS) $(PY_CLI); do \
+		$(PYLINT) -f text -r y $$file >> .pylint.out 2>&1; done
 
 .PHONY:	clean
 clean:

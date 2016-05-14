@@ -249,10 +249,10 @@ def create_parser():
     return parser
 
 
-def add_subparser(parser, commands):
+def add_subparser(parser, cmds_dict):
     """ Recursively add subcommand parsers based on a dictionary of commands """
     subparsers = parser.add_subparsers()
-    for cmd, attributes in commands.iteritems():
+    for cmd, attributes in cmds_dict.iteritems():
         subparser = subparsers.add_parser(cmd, help=attributes['help'])
         if 'func' in attributes:
             subparser.set_defaults(func=attributes['func'])
@@ -267,8 +267,8 @@ def add_subparser(parser, commands):
 def build_argparse_opts(opts):
     if 'choices' in opts:
         opts['type'] = make_list_of_values(opts['choices'])
-        help = opts['help']
-        opts['help'] = '{0}: Choices = {1}'.format(help, opts['choices'])
+        help_opts = opts['help']
+        opts['help'] = '{0}: Choices = {1}'.format(help_opts, opts['choices'])
         del opts['choices']
     return opts
 

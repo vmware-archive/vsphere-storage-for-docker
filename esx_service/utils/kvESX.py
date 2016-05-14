@@ -30,14 +30,14 @@ KV_SIDECAR_CREATE = 0
 KV_CREATE_SIZE = 0
 
 # VSphere lib to access ESX proprietary APIs.
-diskLib = "/lib/libvmsnapshot.so"
+DISK_LIB = "/lib/libvmsnapshot.so"
 lib = None
 useSideCarCreate = False
-dVolKey = "vmdk-plugin-vol"
+DVOL_KEY = "docker-volume-vsphere"
 
 # Maps to OPEN_BUFFERED | OPEN_LOCK | OPEN_NOFILTERS
 # all vmdks are opened with these flags
-vmdkOpenFlags = 524312
+VMDK_OPEN_FLAGS = 524312
 
 
 # Load the disk lib API library
@@ -45,7 +45,7 @@ def loadDiskLib():
     global lib
 
     if not lib:
-        lib = CDLL(diskLib)
+        lib = CDLL(DISK_LIB)
         lib.DiskLib_Init.argtypes = []
         lib.DiskLib_Init.restype = c_bool
         lib.DiskLib_Init()
@@ -110,7 +110,7 @@ def volOpenPath(volpath):
     ihandle = c_uint32(0)
     key = c_uint32(0)
 
-    res = lib.DiskLib_OpenWithInfo(volpath, vmdkOpenFlags, byref(key),
+    res = lib.DiskLib_OpenWithInfo(volpath, VMDK_OPEN_FLAGS, byref(key),
                                    byref(dhandle), byref(ihandle))
 
     if res != 0:
@@ -130,10 +130,10 @@ def create(volpath, kvDict):
         return False
 
     if useSideCarCreate:
-        res = lib.DiskLib_SidecarCreate(disk, dVolKey, KV_CREATE_SIZE,
+        res = lib.DiskLib_SidecarCreate(disk, DVOL_KEY, KV_CREATE_SIZE,
                                         KV_SIDECAR_CREATE, byref(objHandle))
     else:
-        res = lib.DiskLib_SidecarOpen(disk, dVolKey, KV_SIDECAR_CREATE,
+        res = lib.DiskLib_SidecarOpen(disk, DVOL_KEY, KV_SIDECAR_CREATE,
                                       byref(objHandle))
 
     if res != 0:
@@ -141,7 +141,7 @@ def create(volpath, kvDict):
         lib.DiskLib_Close(disk)
         return False
 
-    lib.DiskLib_SidecarClose(disk, dVolKey, byref(objHandle))
+    lib.DiskLib_SidecarClose(disk, DVOL_KEY, byref(objHandle))
     lib.DiskLib_Close(disk)
 
     return save(volpath, kvDict)
@@ -156,7 +156,7 @@ def delete(volpath):
     if disk == c_uint32(0):
         return False
 
-    res = lib.DiskLib_SidecarDelete(disk, dVolKey)
+    res = lib.DiskLib_SidecarDelete(disk, DVOL_KEY)
     if res != 0:
         logging.warning("Side car delete for %s failed - %x", volpath, res)
         lib.DiskLib_Close(disk)
@@ -168,7 +168,7 @@ def delete(volpath):
 
 # Load and return dictionary from the sidecar
 def load(volpath):
-    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
+    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, DVOL_KEY)
 
     try:
         fh = open(metaFile, "r+")
@@ -184,7 +184,7 @@ def load(volpath):
 
 # Save the dictionary to side car.
 def save(volpath, kvDict):
-    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, dVolKey)
+    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, DVOL_KEY)
 
     try:
         fh = open(metaFile, "w+")

@@ -59,7 +59,7 @@ BIN_LOC  = os.path.join(TOP_DIR, "bin")
 LIB_LOC  = os.path.join(TOP_DIR, "lib")
 PY_LOC  = os.path.join(TOP_DIR, "Python")
 
-# vmdkops python utils are in PY_LOC, so add to path. 
+# vmdkops python utils are in PY_LOC, so add to path.
 sys.path.insert(0, PY_LOC)
 
 
@@ -70,18 +70,17 @@ import vsan_policy
 
 
 # External tools used by the plugin.
-objToolCmd = "/usr/lib/vmware/osfs/bin/objtool open -u "
-osfsMkdirCmd = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
-vmdkCreateCmd = "/sbin/vmkfstools -d thin -c "
-vmdkDeleteCmd = "/sbin/vmkfstools -U "
-
-mkfsCmd = BIN_LOC + "/mkfs.ext4 -qF -L "
+OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
+OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
+MKFS_CMD = BIN_LOC + "/mkfs.ext4 -qF -L "
+VMDK_CREATE_CMD = "/sbin/vmkfstools -d thin -c "
+VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
 # Defaults
-DockVolsDir = "dockvols"  # place in the same (with Docker VM) datastore
-MaxJsonSize = 1024 * 4  # max buf size for query json strings. Queries are limited in size
-MaxSkipCount = 100  # max retries on VMCI Get Ops failures
-DefaultDiskSize = "100mb"
+DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
+MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
+MAX_SKIP_COUNT = 100  # max retries on VMCI Get Ops failures
+DEFAULT_DISK_SIZE = "100mb" # default volume size
 
 # Service instance provide from connection to local hostd
 si = None
@@ -97,7 +96,7 @@ def RunCommand(cmd):
 
    @param command to execute
    """
-    logging.debug("Running cmd %s" % cmd)
+    logging.debug("Running cmd %s", cmd)
 
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
@@ -115,10 +114,10 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdkPath, volName, opts={}):
-    logging.info("*** createVMDK: %s opts=%s" % (vmdkPath, opts))
-    if os.path.isfile(vmdkPath):
-        return err("File %s already exists" % vmdkPath)
+def createVMDK(vmdk_path, vol_name, opts={}):
+    logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
+    if os.path.isfile(vmdk_path):
+        return err("File %s already exists" % vmdk_path)
 
     try:
         validate_opts(opts)
@@ -126,35 +125,35 @@ def createVMDK(vmdkPath, volName, opts={}):
         return err(e.msg)
 
     if not "size" in opts:
-        size = DefaultDiskSize
-        logging.debug("SETTING DEFAULT SIZE to " + size)
+        size = DEFAULT_DISK_SIZE
+        logging.debug("SETTING DEFAULT SIZE to %s", size)
     else:
         size = str(opts["size"])
-        logging.debug("SETTING  SIZE to " + size)
+        logging.debug("SETTING  SIZE to %s", size)
 
     if 'vsan-policy-name' in opts:
         # Note that the --policyFile option gets ignored if the
         # datastore is not VSAN
         policy_file = vsan_policy.policy_path(opts['vsan-policy-name'])
-        cmd = "{0} {1} --policyFile {2} {3}".format(vmdkCreateCmd, size,
-                                                    policy_file, vmdkPath)
+        cmd = "{0} {1} --policyFile {2} {3}".format(VMDK_CREATE_CMD, size,
+                                                    policy_file, vmdk_path)
     else:
-        cmd = "{0} {1} {2}".format(vmdkCreateCmd, size, vmdkPath)
+        cmd = "{0} {1} {2}".format(VMDK_CREATE_CMD, size, vmdk_path)
     rc, out = RunCommand(cmd)
 
     if rc != 0:
-        return err("Failed to create %s. %s" % (vmdkPath, out))
+        return err("Failed to create %s. %s" % (vmdk_path, out))
 
     # Create the kv store for the disk before its attached
-    ret = kv.create(vmdkPath, "detached", opts)
+    ret = kv.create(vmdk_path, "detached", opts)
 
     if ret != True:
-        msg = "Failed to create meta-data store for {0}".format(vmdkPath)
+        msg = "Failed to create meta-data store for {0}".format(vmdk_path)
         logging.warning(msg)
-        removeVMDK(vmdkPath)
+        removeVMDK(vmdk_path)
         return err(msg)
 
-    return formatVmdk(vmdkPath, volName)
+    return formatVmdk(vmdk_path, vol_name)
 
 
 def validate_opts(opts):
@@ -164,7 +163,7 @@ def validate_opts(opts):
      * vsan-policy-name - The name of an existing policy to use
     """
     valid_opts = ['size', 'vsan-policy-name']
-    defaults = [DefaultDiskSize, '[VSAN default']
+    defaults = [DEFAULT_DISK_SIZE, '[VSAN default']
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -199,8 +198,8 @@ def validate_vsan_policy_name(policy_name):
         raise ValidationError('Policy {0} does not exist'.format(policy_name))
 
 
-def getVMDKUuid(vmdkPath):
-    f = open(vmdkPath)
+def getVMDKUuid(vmdk_path):
+    f = open(vmdk_path)
     data = f.read()
     f.close()
 
@@ -215,18 +214,18 @@ def getVMDKUuid(vmdkPath):
 
 # Return a backing file path for given vmdk path or none
 # if a backing can't be found.
-def getVMDKBacking(vmdkPath):
-    flatBacking = vmdkPath.replace(".vmdk", "-flat.vmdk")
+def getVMDKBacking(vmdk_path):
+    flatBacking = vmdk_path.replace(".vmdk", "-flat.vmdk")
     if os.path.isfile(flatBacking):
         return flatBacking
 
-    uuid = getVMDKUuid(vmdkPath)
+    uuid = getVMDKUuid(vmdk_path)
 
     if uuid:
-        logging.debug("Got volume UUID %s" % uuid)
+        logging.debug("Got volume UUID %s", uuid)
         # Objtool creates a link thats usable to format the
         # vsan object.
-        cmd = "{0} {1}".format(objToolCmd, uuid)
+        cmd = "{0} {1}".format(OBJ_TOOL_CMD, uuid)
         rc, out = RunCommand(cmd)
         fpath = "/vmfs/devices/vsan/{0}".format(uuid)
         if rc == 0 and os.path.isfile(fpath):
@@ -234,36 +233,36 @@ def getVMDKBacking(vmdkPath):
     return None
 
 
-def formatVmdk(vmdkPath, volName):
+def formatVmdk(vmdk_path, vol_name):
     # Get backing for given vmdk path.
-    backing = getVMDKBacking(vmdkPath)
+    backing = getVMDKBacking(vmdk_path)
 
     if backing is None:
-        logging.warning("Failed to format %s." % vmdkPath)
-        return err("Failed to format %s." % vmdkPath)
+        logging.warning("Failed to format %s.", vmdk_path)
+        return err("Failed to format %s." % vmdk_path)
 
     # Format it as ext4.
-    cmd = "{0} {1} {2}".format(mkfsCmd, volName, backing)
+    cmd = "{0} {1} {2}".format(MKFS_CMD, vol_name, backing)
     rc, out = RunCommand(cmd)
 
     if rc != 0:
-        logging.warning("Failed to format %s. %s" % (vmdkPath, out))
-        if removeVMDK(vmdkPath) == None:
-            return err("Failed to format %s." % vmdkPath)
+        logging.warning("Failed to format %s - %s", vmdk_path, out)
+        if removeVMDK(vmdk_path) == None:
+            return err("Failed to format %s." % vmdk_path)
         else:
             return err(
                 "Unable to format %s and unable to delete volume. Please delete it manually."
-                % vmdkPath)
+                % vmdk_path)
     return None
 
 
 #returns error, or None for OK
-def removeVMDK(vmdkPath):
-    logging.info("*** removeVMDK: " + vmdkPath)
-    cmd = "{0} {1}".format(vmdkDeleteCmd, vmdkPath)
+def removeVMDK(vmdk_path):
+    logging.info("*** removeVMDK: %s", vmdk_path)
+    cmd = "{0} {1}".format(VMDK_DELETE_CMD, vmdk_path)
     rc, out = RunCommand(cmd)
     if rc != 0:
-        return err("Failed to remove %s. %s" % (vmdkPath, out))
+        return err("Failed to remove %s. %s" % (vmdk_path, out))
 
     return None
 
@@ -277,41 +276,41 @@ def listVMDK(path):
 
 
 # Find VM , reconnect if needed. throws on error
-def findVmByName(vmName):
+def findVmByName(vm_name):
     vm = None
     try:
-        vm = FindChild(GetVmFolder(), vmName)
+        vm = FindChild(GetVmFolder(), vm_name)
     except vim.fault.NotAuthenticated:
         connectLocal()  #  retry
-        vm = FindChild(GetVmFolder(), vmName)
+        vm = FindChild(GetVmFolder(), vm_name)
 
     if not vm:
-        raise Exception("VM" + vmName + "not found")
+        raise Exception("VM" + vm_name + "not found")
 
     return vm
 
 
 #returns error, or None for OK
-def attachVMDK(vmdkPath, vmName):
-    vm = findVmByName(vmName)
-    logging.info("*** attachVMDK: " + vmdkPath + " to " + vmName + " uuid=" +
-                 vm.config.uuid)
-    return disk_attach(vmdkPath, vm)
+def attachVMDK(vmdk_path, vm_name):
+    vm = findVmByName(vm_name)
+    logging.info("*** attachVMDK: %s to %s VM uuid = %s",
+                 vmdk_path, vm_name, vm.config.uuid)
+    return disk_attach(vmdk_path, vm)
 
 
 #returns error, or None for OK
-def detachVMDK(vmdkPath, vmName):
-    vm = findVmByName(vmName)
-    logging.info("*** detachVMDK: " + vmdkPath + " from " + vmName +
-                 " VM uuid=" + vm.config.uuid)
-    return disk_detach(vmdkPath, vm)
+def detachVMDK(vmdk_path, vm_name):
+    vm = findVmByName(vm_name)
+    logging.info("*** detachVMDK: %s from %s VM uuid = %s",
+                 vmdk_path, vm_name, vm.config.uuid)
+    return disk_detach(vmdk_path, vm)
 
 
 # Check existence (and creates if needed) the path
-def getVolPath(vmConfigPath):
+def getVolPath(vm_config_path):
     # The volumes folder is created in the parent of the given VM's folder.
     path = os.path.join(
-        os.path.dirname(os.path.dirname(vmConfigPath)), DockVolsDir)
+        os.path.dirname(os.path.dirname(vm_config_path)), DOCK_VOLS_DIR)
 
     if os.path.isdir(path):
         # If the path exists then return it as is.
@@ -319,7 +318,7 @@ def getVolPath(vmConfigPath):
         return path
 
     # The osfs tools are usable for all datastores
-    cmd = "{0} {1}".format(osfsMkdirCmd, path)
+    cmd = "{0} {1}".format(OSFS_MKDIR_CMD, path)
     rc, out = RunCommand(cmd)
     if rc != 0:
         logging.warning("Failed to create %s", path)
@@ -330,34 +329,35 @@ def getVolPath(vmConfigPath):
     return None
 
 
-def getVmdkName(path, volName):
+def getVmdkName(path, vol_name):
     # form full name as <path-to-volumes>/<volname>.vmdk
-    return os.path.join(path, "%s.vmdk" % volName)
+    return os.path.join(path, "%s.vmdk" % vol_name)
 
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
-def executeRequest(vmName, vmId, configPath, cmd, volName, opts):
+def executeRequest(vm_name, config_path, cmd, vol_name, opts):
     # get /vmfs/volumes/<volid> path on ESX:
-    path = getVolPath(configPath)
+    path = getVolPath(config_path)
 
     if path is None:
         return err("Failed initializing volume path {0}".format(path))
 
-    vmdkPath = getVmdkName(path, volName)
+    vmdk_path = getVmdkName(path, vol_name)
 
     if cmd == "create":
-        return createVMDK(vmdkPath, volName, opts)
+        response = createVMDK(vmdk_path, vol_name, opts)
     elif cmd == "remove":
-        return removeVMDK(vmdkPath)
+        response = removeVMDK(vmdk_path)
     elif cmd == "list":
-        return listVMDK(path)
+        response = listVMDK(path)
     elif cmd == "attach":
-        return attachVMDK(vmdkPath, vmName)
+        response = attachVMDK(vmdk_path, vm_name)
     elif cmd == "detach":
-        return detachVMDK(vmdkPath, vmName)
+        response = detachVMDK(vmdk_path, vm_name)
     else:
         return err("Unknown command:" + cmd)
 
+    return response
 
 def connectLocal():
     '''
@@ -380,7 +380,7 @@ def connectLocal():
     return si
 
 
-def findDeviceByPath(vmdkPath, vm):
+def findDeviceByPath(vmdk_path, vm):
 
     for d in vm.config.hardware.device:
         if type(d) != vim.vm.device.VirtualDisk:
@@ -391,76 +391,76 @@ def findDeviceByPath(vmdkPath, vm):
 # virtual disk by name and can be used to try a match
 # with the given name. Filename has format like,
 # "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>".
-        backingDisk = d.backing.fileName.split(" ")[1]
+        backing_disk = d.backing.fileName.split(" ")[1]
 
         # Construct the parent dir and vmdk name, resolving
         # links if any.
-        dvolDir = os.path.dirname(vmdkPath)
-        realDvolDir = os.path.basename(os.path.realpath(dvolDir))
-        virtualDisk = realDvolDir + "/" + os.path.basename(vmdkPath)
-        if virtualDisk == backingDisk:
-            logging.debug("findDeviceByPath: MATCH: " + backingDisk)
+        dvol_dir = os.path.dirname(vmdk_path)
+        real_vol_dir = os.path.basename(os.path.realpath(dvol_dir))
+        virtual_disk = real_vol_dir + "/" + os.path.basename(vmdk_path)
+        if virtual_disk == backing_disk:
+            logging.debug("findDeviceByPath: MATCH: %s", backing_disk)
             return d
     return None
 
 
-def busInfo(unitNumber, busNumber):
+def busInfo(unit_number, bus_number):
     '''Return a dictionary with Unit/Bus for the vmdk (or error)'''
-    return {'Unit': str(unitNumber), 'Bus': str(busNumber)}
+    return {'Unit': str(unit_number), 'Bus': str(bus_number)}
 
 
-def setStatusAttached(vmdkPath, uuid):
-    '''Sets metadata for vmdkPath to (attached, attachedToVM=uuid'''
-    logging.debug("Set status=attached disk={0} VM={1}".format(vmdkPath, uuid))
-    volMeta = kv.getAll(vmdkPath)
-    if not volMeta:
-        volMeta = []
-    volMeta['status'] = 'attached'
-    volMeta['attachedVMUuid'] = uuid
-    if not kv.setAll(vmdkPath, volMeta):
-        logging.warning("Attach: Failed to save Disk metadata for %s", vmdkPath)
+def setStatusAttached(vmdk_path, uuid):
+    '''Sets metadata for vmdk_path to (attached, attachedToVM=uuid'''
+    logging.debug("Set status=attached disk=%s VM uuid=%s", vmdk_path, uuid)
+    vol_meta = kv.getAll(vmdk_path)
+    if not vol_meta:
+        vol_meta = []
+    vol_meta['status'] = 'attached'
+    vol_meta['attachedVMUuid'] = uuid
+    if not kv.setAll(vmdk_path, vol_meta):
+        logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
 
 
-def setStatusDetached(vmdkPath):
-    '''Sets metadata for vmdkPath to "detached"'''
-    logging.debug("Set status=detached disk={0}".format(vmdkPath))
-    volMeta = kv.getAll(vmdkPath)
-    if not volMeta:
-        volMeta = []
-    volMeta['status'] = 'detached'
-    if 'attachedVMUuid' in volMeta:
-        del volMeta['attachedVMUuid']
-    if not kv.setAll(vmdkPath, volMeta):
-        logging.warning("Detach: Failed to save Disk metadata for %s", vmdkPath)
+def setStatusDetached(vmdk_path):
+    '''Sets metadata for vmdk_path to "detached"'''
+    logging.debug("Set status=detached disk=%s", vmdk_path)
+    vol_meta = kv.getAll(vmdk_path)
+    if not vol_meta:
+        vol_meta = []
+    vol_meta['status'] = 'detached'
+    if 'attachedVMUuid' in vol_meta:
+        del vol_meta['attachedVMUuid']
+    if not kv.setAll(vmdk_path, vol_meta):
+        logging.warning("Detach: Failed to save Disk metadata for %s", vmdk_path)
 
 
-def getStatusAttached(vmdkPath):
+def getStatusAttached(vmdk_path):
     '''Returns (attached, uuid) tuple. For 'detached' status uuid is None'''
 
-    volMeta = kv.getAll(vmdkPath)
-    if not volMeta or 'status' not in volMeta:
+    vol_meta = kv.getAll(vmdk_path)
+    if not vol_meta or 'status' not in vol_meta:
         return False, None
-    attached = (volMeta['status'] == "attached")
+    attached = (vol_meta['status'] == "attached")
     try:
-        uuid = volMeta['attachedVMUuid']
+        uuid = vol_meta['attachedVMUuid']
     except:
         uuid = None
     return attached, uuid
 
 
-def disk_attach(vmdkPath, vm):
+def disk_attach(vmdk_path, vm):
     '''
 Attaches *existing* disk to a vm on a PVSCI controller
 (we need PVSCSI to avoid SCSI rescans in the guest)
 return error or unit:bus numbers of newly attached disk.
 '''
 
-    # NOTE: vSphere is very picky about unitNumbers and controllers of virtual
+    # NOTE: vSphere is very picky about unit numbers and controllers of virtual
     # disks. Every controller supports 15 virtual disks, and the unit
     # numbers need to be unique within the controller and range from
     # 0 to 15 with 7 being reserved (for older SCSI controllers).
     # It is up to the API client to add controllers as needed.
-    # SCSI Controller keys are in the range of 1000 to 1003 (1000 + busNumber).
+    # SCSI Controller keys are in the range of 1000 to 1003 (1000 + bus_number).
     offset_from_bus_number = 1000
     max_scsi_controllers = 4
 
@@ -480,16 +480,16 @@ return error or unit:bus numbers of newly attached disk.
     pvsci = [d for d in controllers
              if type(d) == vim.ParaVirtualSCSIController]
     if len(pvsci) > 0:
-        diskSlot = None  # need to find out
-        controllerKey = pvsci[0].key
-        busNumber = pvsci[0].busNumber
+        disk_slot = None  # need to find out
+        controller_key = pvsci[0].key
+        bus_number = pvsci[0].busNumber
     else:
         logging.warning(
             "Warning: PVSCI adapter is missing - trying to add one...")
-        diskSlot = 0  # starting on a fresh controller
+        disk_slot = 0  # starting on a fresh controller
         if len(controllers) >= max_scsi_controllers:
             msg = "Failed to place PVSCI adapter - out of bus slots"
-            logging.error(msg + " VM={0}".format(vm.config.uuid))
+            logging.error(msg + " VM=%s", vm.config.uuid)
             return err(msg)
 
         # find empty bus slot for the controller:
@@ -497,55 +497,55 @@ return error or unit:bus numbers of newly attached disk.
         avail = set(range(0, max_scsi_controllers)) - taken
 
         key = avail.pop()  # bus slot
-        controllerKey = key + offset_from_bus_number
-        diskSlot = 0
-        busNumber = key
+        controller_key = key + offset_from_bus_number
+        disk_slot = 0
+        bus_number = key
         controller_spec = vim.VirtualDeviceConfigSpec(
             operation='add',
-            device=vim.ParaVirtualSCSIController(key=controllerKey,
+            device=vim.ParaVirtualSCSIController(key=controller_key,
                                                  busNumber=key,
                                                  sharedBus='noSharing', ), )
         dev_changes.append(controller_spec)
 
     # Check if this disk is already attached, and if it is - skip the attach
-    device = findDeviceByPath(vmdkPath, vm)
+    device = findDeviceByPath(vmdk_path, vm)
     if device:
         # Disk is already attached.
-        logging.warning("Disk {0} already attached. VM={1}".format(
-            vmdkPath, vm.config.uuid))
-        setStatusAttached(vmdkPath, vm.config.uuid)
+        logging.warning("Disk %s already attached. VM=%s",
+                        vmdk_path, vm.config.uuid)
+        setStatusAttached(vmdk_path, vm.config.uuid)
         return busInfo(device.unitNumber,
                        device.controllerKey - offset_from_bus_number)
 
     # Find a slot on the controller, issue attach task and wait for completion
-    if not diskSlot:
+    if not disk_slot:
         taken = set([dev.unitNumber
                      for dev in devices
                      if type(dev) == vim.VirtualDisk and dev.controllerKey ==
-                     controllerKey])
+                     controller_key])
         # search in 15 slots, with unit_number 7 reserved for scsi controller
         availSlots = set(range(0, 6) + range(8, 16)) - taken
 
         if len(availSlots) == 0:
             msg = "Failed to place new disk - out of disk slots"
-            logging.error(msg + " VM={0}".format(vm.config.uuid))
+            logging.error(msg + " VM=%s", vm.config.uuid)
             return err(msg)
 
-        diskSlot = availSlots.pop()
-        logging.debug(" controllerKey=%d slot=%d" % (controllerKey, diskSlot))
+        disk_slot = availSlots.pop()
+        logging.debug("controller_key = %d slot = %d", controller_key, disk_slot)
     # add disk here
     disk_spec = vim.VirtualDeviceConfigSpec(
         operation='add',
         device=
         vim.VirtualDisk(backing=vim.VirtualDiskFlatVer2BackingInfo(
-            fileName="[] " + vmdkPath,
+            fileName="[] " + vmdk_path,
             diskMode='persistent', ),
                         deviceInfo=vim.Description(
                             # TODO: use docker volume name here. Issue #292
                             label="dockerDataVolume",
                             summary="dockerDataVolume", ),
-                        unitNumber=diskSlot,
-                        controllerKey=controllerKey, ), )
+                        unitNumber=disk_slot,
+                        controllerKey=controller_key, ), )
     dev_changes.append(disk_spec)
 
     spec = vim.vm.ConfigSpec()
@@ -556,33 +556,33 @@ return error or unit:bus numbers of newly attached disk.
     except vim.fault.VimFault as ex:
         msg = ex.msg
         # Use metadata (KV) for extra logging
-        kvStatusAttached, kvUuid = getStatusAttached(vmdkPath)
-        if kvStatusAttached and kvUuid != vm.config.uuid:
+        kv_status_attached, kv_uuid = getStatusAttached(vmdk_path)
+        if kv_status_attached and kv_uuid != vm.config.uuid:
             # KV  claims we are attached to a different VM'.
-            msg += " disk {0} already attached to VM={1}".format(vmdkPath,
-                                                                 kvUuid)
+            msg += " disk {0} already attached to VM={1}".format(vmdk_path,
+                                                                 kv_uuid)
         return err(msg)
 
-    setStatusAttached(vmdkPath, vm.config.uuid)
-    logging.info("Disk %s successfully attached. diskSlot=%d, busNumber=%d" %
-                 (vmdkPath, diskSlot, busNumber))
-    return busInfo(diskSlot, busNumber)
+    setStatusAttached(vmdk_path, vm.config.uuid)
+    logging.info("Disk %s successfully attached. disk_slot = %d, bus_number = %d",
+                 vmdk_path, disk_slot, bus_number)
+    return busInfo(disk_slot, bus_number)
 
 
 def err(string):
     return {u'Error': string}
 
 
-def disk_detach(vmdkPath, vm):
+def disk_detach(vmdk_path, vm):
     """detach disk (by full path) from a vm amd return None or err(msg)"""
 
-    device = findDeviceByPath(vmdkPath, vm)
+    device = findDeviceByPath(vmdk_path, vm)
 
     if not device:
         # Could happen if the disk attached to a different VM - attach fails
         # and docker will insist to sending "unmount/detach" which also fails.
         msg = "*** Detach failed: disk={0} not found. VM={1}".format(
-            vmdkPath, vm.config.uuid)
+            vmdk_path, vm.config.uuid)
         logging.warning(msg)
         return err(msg)
 
@@ -600,58 +600,52 @@ def disk_detach(vmdkPath, vm):
     except vim.fault.GenericVmConfigFault as ex:
         for f in ex.faultMessage:
             logging.warning(f.message)
-        return err("Failed to detach " + vmdkPath)
+        return err("Failed to detach " + vmdk_path)
 
-    setStatusDetached(vmdkPath)
-    logging.info("Disk detached " + vmdkPath)
+    setStatusDetached(vmdk_path)
+    logging.info("Disk detached %s", vmdk_path)
     return None
 
 
 def signal_handler_stop(signalnum, frame):
-    logging.warn("Received stop signal num: " + ` signalnum `)
+    logging.warn("Received signal num: ' %d '", signalnum)
     sys.exit(0)
 
 
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests():
     # Load and use DLL with vsocket shim to listen for docker requests
-    lib = cdll.LoadLibrary(os.path.join(LIB_LOC,"libvmci_srv.so"))
+    lib = cdll.LoadLibrary(os.path.join(LIB_LOC, "libvmci_srv.so"))
 
-    bsize = MaxJsonSize
+    bsize = MAX_JSON_SIZE
     txt = create_string_buffer(bsize)
 
     cartel = c_int32()
     sock = lib.vmci_init()
-    skipCount = MaxSkipCount  # retries for vmci_get_one_op failures
+    skip_count = MAX_SKIP_COUNT  # retries for vmci_get_one_op failures
     while True:
         c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
-        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'" %
-                      (c, txt.value))
+        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
+                      c, txt.value)
 
         if c == -1:
             # VMCI Get Ops can self-correct by reoping sockets internally. Give it a chance.
             logging.warning("VMCI Get Ops failed - ignoring and moving on.")
-            skipCount = skipCount - 1
-            if skipCount <= 0:
+            skip_count = skip_count - 1
+            if skip_count <= 0:
                 raise Exception(
                     "Too many errors from VMCI Get Ops - giving up.")
             continue
         else:
-            skipCount = MaxSkipCount  # reset the counter, just in case
+            skip_count = MAX_SKIP_COUNT  # reset the counter, just in case
 
         # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
-        vmmLeader = vsi.get("/userworld/cartel/%s/vmmLeader" %
+        vmm_leader = vsi.get("/userworld/cartel/%s/vmmLeader" %
                             str(cartel.value))
-        groupInfo = vsi.get("/vm/%s/vmmGroupInfo" % vmmLeader)
+        group_info = vsi.get("/vm/%s/vmmGroupInfo" % vmm_leader)
 
-        # vmId - get and convert to format understood by vmodl as a VM key
-        # end result should be like this 564d6865-2f33-29ad-6feb-87ea38f9083b"
-        # see KB http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1880
-        s = groupInfo["uuid"]
-        vmId = "{0}-{1}-{2}-{3}-{4}".format(s[0:8], s[9:12], s[12:16],
-                                            s[16:20], s[20:32])
-        vmName = groupInfo["displayName"]
-        cfgPath = groupInfo["cfgPath"]
+        vm_name = group_info["displayName"]
+        cfg_path = group_info["cfgPath"]
 
         try:
             req = json.loads(txt.value, "utf-8")
@@ -660,12 +654,12 @@ def handleVmciRequests():
         else:
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else {}
-            ret = executeRequest(vmName, vmId, cfgPath, req["cmd"],
+            ret = executeRequest(vm_name, cfg_path, req["cmd"],
                                  details["Name"], opts)
-            logging.debug("executeRequest ret = %s" % ret)
+            logging.debug("executeRequest ret = %s", ret)
 
-        err = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
-        logging.debug("lib.vmci_reply: VMCI replied with errcode %s " % err)
+        response = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
+        logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
 
     lib.close(sock)  # close listening socket when the loop is over
 
@@ -685,7 +679,7 @@ def main():
         logging.exception(e)
 
 
-def getTaskList(propCollector, tasks):
+def getTaskList(prop_collector, tasks):
     # Create filter
     obj_specs = [vmodl.query.PropertyCollector.ObjectSpec(obj=task)
                  for task in tasks]
@@ -695,7 +689,7 @@ def getTaskList(propCollector, tasks):
     filter_spec = vmodl.query.PropertyCollector.FilterSpec()
     filter_spec.objectSet = obj_specs
     filter_spec.propSet = [property_spec]
-    return propCollector.CreateFilter(filter_spec, True)
+    return prop_collector.CreateFilter(filter_spec, True)
 
 #-----------------------------------------------------------
 #
