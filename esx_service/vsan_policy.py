@@ -116,9 +116,9 @@ def kv_get_vsan_policy_name(path):
     doesn't
     """
     metadata = kv.getAll(path)
-    volOpts = metadata[u'volOpts']
-    if volOpts and 'vsan-policy-name' in volOpts:
-        return volOpts['vsan-policy-name']
+    vol_opts = metadata[u'vol_opts']
+    if vol_opts and 'vsan-policy-name' in vol_opts:
+        return vol_opts['vsan-policy-name']
     else:
         return None
 

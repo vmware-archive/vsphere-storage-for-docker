@@ -16,7 +16,7 @@
 
 import subprocess
 
-spaces = 2
+SPACES = 2
 
 
 def create(header, data):
@@ -32,11 +32,11 @@ def create(header, data):
     """
     max_sizes = max_column_sizes(header, data)
     ### Subtract the number of spaces between columns from the term width
-    width = term_width() - spaces * (len(header) - 1)
+    width = term_width() - SPACES * (len(header) - 1)
     sizes = shrink_to_fit(max_sizes, width)
     header = truncate([header], sizes)[0]
     data = truncate(data, sizes)
-    return format(header, data, sizes)
+    return format_table2string(header, data, sizes)
 
 
 def term_width():
@@ -53,7 +53,7 @@ def term_width():
         return 80
 
 
-def shrink_to_fit(column_sizes, term_width):
+def shrink_to_fit(column_sizes, terminal_width):
     """
     If the total size of all columns exceeds the terminal width, then we need to shrink the
     individual column sizes to fit. In most tables, there are one or two columns that are much
@@ -72,7 +72,7 @@ def shrink_to_fit(column_sizes, term_width):
     on it's own line and truncate them to fit. This may be a useful enhancement to make later.
     """
     total_size = sum(column_sizes)
-    if total_size <= term_width:
+    if total_size <= terminal_width:
         return column_sizes
 
     # Put the columns in sorted order (largest to smallest)
@@ -88,7 +88,7 @@ def shrink_to_fit(column_sizes, term_width):
         column_sizes[index] = 0
 
     # Shrink the sorted columns until they fit the terminal width
-    while total_size > term_width:
+    while total_size > terminal_width:
         largest = sorted_sizes[0]
         num_largest_columns = sorted_sizes.count(largest)
         if num_largest_columns != len(sorted_sizes):
@@ -97,7 +97,7 @@ def shrink_to_fit(column_sizes, term_width):
             # All columns are the same size, so just shrink each one until they fit
             next_largest = 0
 
-        to_remove = total_size - term_width
+        to_remove = total_size - terminal_width
         gap = largest - next_largest
 
         if gap * num_largest_columns > to_remove:
@@ -124,7 +124,7 @@ def shrink_to_fit(column_sizes, term_width):
     return column_sizes
 
 
-def format(header, data, sizes):
+def format_table2string(header, data, sizes):
     """ Actually create the table as a string """
     s = value_row(header, sizes) + '\n'
     s = s + divider_row(sizes) + '\n'
@@ -137,7 +137,7 @@ def value_row(values, sizes):
     """ Create a one line string of left justified values using the column sizes in sizes """
     s = ''
     for i in range(len(values)):
-        s = s + values[i].ljust(sizes[i] + spaces)
+        s = s + values[i].ljust(sizes[i] + SPACES)
     return s
 
 
