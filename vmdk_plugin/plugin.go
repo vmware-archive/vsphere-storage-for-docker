@@ -75,6 +75,7 @@ func getMountPoint(volName string) string {
 
 }
 
+// Get info about a single volume
 func (d *vmdkDriver) Get(r volume.Request) volume.Response {
 	_, err := d.ops.Get(r.Name)
 	if err != nil {
@@ -84,6 +85,7 @@ func (d *vmdkDriver) Get(r volume.Request) volume.Response {
 	return volume.Response{Volume: &volume.Volume{Name: r.Name, Mountpoint: mountpoint}}
 }
 
+// List volumes known to the driver
 func (d *vmdkDriver) List(r volume.Request) volume.Response {
 	volumes, err := d.ops.List()
 	if err != nil {
@@ -153,6 +155,7 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 	return volume.Response{Err: ""}
 }
 
+// removes individual volume. Docker would call it only if is not using it anymore
 func (d *vmdkDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
 
