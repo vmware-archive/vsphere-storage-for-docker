@@ -26,11 +26,8 @@ TARGETS := all \
 	deb rpm package
 
 # default target
-default: dockerbuild
+default: build-all
 
 # redirect all
 $(TARGETS):
 	$(MAKE) --directory=vmdk_plugin $@
-#
-
-

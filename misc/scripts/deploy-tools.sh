@@ -24,167 +24,195 @@
 #       ./misc/scripts/deploy-tools function-name function-params
 #
 # e.g.
-#      ./misc/scripts/deploy-tools deployvm "ip-addresses" "target-bin" "binaries"
+#      ./misc/scripts/deploy-tools deployvm "ip-addresses" "package folder"
 #
 
-# on failure, exit right away 
-set -e
+. ../misc/scripts/commands.sh
 
-# ==== set globals ====
-
-
-# define what we use for SCP and SSH commands
-#
-# Note: DEBUG is debug assistance, i.e. if DEBUG is empty/not defined, 
-# the actual command is executed.  If 'DEBUG=echo' is typed before 'make', 
-# then instead of command (e.g. scp) "echo scp" will be executed so it will 
-# print out the commands. Super convenient for debugging.
-SCP="$DEBUG scp -r -q -o StrictHostKeyChecking=no"
-SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
-
-# consts
-
-# We remove VIB by internal name, not file name. See description.xml in VIB
-internal_vib_name=esx-vmdkops-service
-
-script_loc=../misc/scripts
 tmp_loc=/tmp/docker-volume-vsphere
 
-# ====== define functions =======
-
-# deploy_helper
-#
-# deploys scripts to fixed remote location, copies binaries and starts services
-#       Params: startsv-script-name stopsvc-script-name
-#
-# Relies on globals to pass all info in
-
-function deploy_helper {
-   for ip in $ip_list
-   do
-        target=root@$ip
-   
-        echo Deploying to $target...
-   
-        echo "  Copy Helper Scripts..."
-        $SSH $target mkdir -p $tmp_loc
-        $SCP $script_loc/* $target:$tmp_loc
-   
-        echo "  Stop services using $stopsvc..."
-        $SSH $target  $tmp_loc/$stopsvc $service_name
-   
-        echo "  Copy Binaries..."
-        for file in $files
-        do
-                $SCP $file $target:$bin_remote_location
-        done
-   
-        echo "  Start Services using $startsvc..."
-        $SSH $target $tmp_loc/$startsvc $service_file
-
-   done
-}
-
-
-# deployvm 
-#
-# Deploys docker-volume-vsphere and tests to a set of Lunix Guest VMs.
-#   Also stops and starts services as needed.
-#
-# Plugin and test binaries (mentioned in $files) are copied to $bin_remote_location
-# for each ip in $ip_list
-#
-# All scripts from ./misc/scripts are copied to $tmp_loc (location hardcoded)
+# VM Functions
 
 function deployvm {
-   startsvc=startvm.sh
-   stopsvc=cleanvm.sh
-   
-   # hardcoded since it'll be dropped in favor of apt-get anyways:
-   service_file=$bin_remote_location/docker-volume-vsphere
-   service_name=$service_file
-
-   deploy_helper
-
-   echo "  Test Docker TCP connection..."
-   for ip in $ip_list
-   do
-      echo "  $SSH root@$ip docker -H tcp://$ip:2375 ps > /dev/null"
-      $SSH root@$ip docker -H tcp://$ip:2375 ps > /dev/null
-   done
+    for ip in $IP_LIST
+    do
+        TARGET=root@$ip
+        setupVMType
+        echo "=> $TARGET : $FILE_EXT"
+        deployVMPre
+        deployVMInstall
+        deployVMPost
+    done
 }
 
+function setupVMType {
+    $SSH $TARGET "$GREP -i photon /etc/os-release" > /dev/null
+    if [ "$?" == "0" ]
+    then
+        FILE_EXT="rpm"
+        return 0;
+    fi
+
+    $SSH $TARGET "$GREP -i ubuntu /etc/os-release" > /dev/null
+    if [ "$?" == "0" ]
+    then
+        FILE_EXT="deb"
+        return 0
+    else
+        echo "Unsupported VM Type $TARGET"
+        exit 1
+    fi
+}
+
+function deployVMPre {
+    $SSH $TARGET $MKDIR_P $tmp_loc
+    $SCP $SOURCE/*.$FILE_EXT $TARGET:$tmp_loc
+}
+
+function deployVMInstall {
+    echo "=> VM Installing"
+    set -e
+    case $FILE_EXT in
+    deb)
+        $SSH $TARGET "$DEB_INSTALL $tmp_loc/*.deb" > /dev/null 2>&1
+        $SSH $TARGET "$DEB_QUERY -s docker-volume-vsphere"
+        ;;
+    rpm)
+        $SSH $TARGET "$RPM_INSTALL $tmp_loc/*.rpm > /dev/null"
+        $SSH $TARGET "$RPM_QUERY docker-volume-vsphere"
+        ;;
+    esac
+    set +e
+}
+
+function deployVMPost {
+   echo "=> VM Post"
+   $SSH $TARGET "$PS | $GREP docker-volume-vsphere| $GREP -v $GREP"
+   if [ $? -ne 0 ] 
+   then
+      echo "docker-volume-vsphere is not running on $TARGET"
+      exit 1
+   fi
+}
+
+# ESX Functions
 
 # deployesx
 #
-# Deploys plugin code on ESX(s) using VIB mentioned in $files :
-#       Copies service scripts and VIB to ESX and reinstalls the VIB
+# Deploys plugin code on ESX(s) using VIB mentioned in $SOURCE :
 
 function deployesx {
-   startsvc=startesx.sh
-   stopsvc=cleanesx.sh
-   # we support only 1 VIB file, so treat $files as a single name
-   service_file="$bin_remote_location/$(basename $files)"
-   service_name=$internal_vib_name
-
-   deploy_helper
+    for ip in $IP_LIST
+    do
+        TARGET=root@$ip
+        deployESXPre
+        deployESXInstall
+        deployESXPost
+    done
 }
 
+function deployESXPre {
+    $SSH $TARGET $MKDIR_P $tmp_loc
+    $SCP $SOURCE $TARGET:$tmp_loc
+}
+
+function deployESXInstall {
+    $SSH $TARGET $VIB_INSTALL --no-sig-check -v $tmp_loc/*.vib
+    if [ $? -ne 0 ] 
+    then
+        echo "Installation hit an error on $TARGET"
+        exit 2
+    fi
+}
+
+function deployESXPost {
+    $SSH $TARGET $VMDK_OPSD status 
+    if [ $? -ne 0 ] 
+    then
+        echo "Service is not running on $TARGET"
+        exit 3
+    fi
+    $SSH $TARGET $SCHED_GRP list| $GREP vmdkops | $GREP python> /dev/null
+    if [ $? -ne 0 ] 
+    then
+        echo "Service is not configured on $TARGET"
+        exit 4
+    fi
+}
 
 # cleanesx
 #
 # Does vib and tmp files cleanup on ESX
 
 function cleanesx {
-    stopsvc=cleanesx.sh
- 
-    for ip in $ip_list
+    for ip in $IP_LIST
     do
         echo "Cleaning up on ESX $ip..."
-        target=root@$ip
-        $SSH $target mkdir -p $tmp_loc
-        $SCP $script_loc/$stopsvc $target:$tmp_loc
-        $SSH $target $tmp_loc/$stopsvc $internal_vib_name
-        $SSH $target "rm -rf $tmp_loc"
+        TARGET=root@$ip
+	$SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service 
+	$SSH $TARGET $SCHED_GRP list \
+            --group-path=host/vim/vimuser/cnastorage/ > /dev/null 2>&1
+	if [ $? -eq 0 ];
+	then
+	    echo "Failed to clean up resource groups!"
+	    exit 1
+	fi
+        $SSH $TARGET "$RM_RF $tmp_loc"
     done
 }
-
 
 # cleanvm
 #
 # Does vib and tmp files cleanup on Linux guests
 
 function cleanvm {
-   remote_binaries=`for f in $files ; do echo "$bin_remote_location/$(basename $f)"; done`
-   stopsvc=cleanvm.sh
-   # We kill process by name:
-   name=docker-volume-vsphere
-
-   for ip in $ip_list
-   do
-        echo "Cleaning up on VM $ip..."
-        # First make sure the helper scripts are on the target box
-        target=root@$ip
-        $SSH $target mkdir -p $tmp_loc
-        $SCP $script_loc/$stopsvc $target:$tmp_loc
-
-        echo "   Asking docker to remove volumes ($volumes)..."
-        # and now clean up
-        for vol in $volumes
-        do
-           $SSH $target "if docker volume ls | grep -q $vol; then \
-                        docker volume rm $vol; fi "
-        done
-        
-        echo "   Stopping services..."
-        $SSH $target $tmp_loc/$stopsvc $name
-        $SSH $target "rm -rf $tmp_loc"
-   
-        echo "   Removing binaries..."
-        $SSH $target rm -f $remote_binaries
-   done
+    NAME=docker-volume-vsphere
+    for IP in $IP_LIST
+    do
+        echo "Cleaning up on VM $IP..."
+        TARGET=root@$IP
+        cleanupVolumes
+        setupVMType
+        cleanupVMPre
+        cleanupVM
+        cleanupVMPost
+    done
 }
 
+function cleanupVolumes {
+    echo "=> Asking docker to remove volumes ($VOLUMES)"
+    for vol in $VOLUMES
+    do
+        $SSH $TARGET "if docker volume ls | $GREP -q $vol; then \
+        docker volume rm $vol; fi "
+    done
+}
+
+function cleanupVMPre {
+    $SSH $TARGET systemctl stop $NAME
+}
+
+function cleanupVM {
+    case $FILE_EXT in
+    deb)
+        $SSH $TARGET dpkg -P $NAME
+        ;;
+    rpm)
+        $SSH $TARGET rpm -e $NAME
+        ;;
+    esac
+}
+
+function cleanupVMPost {
+    $SSH $TARGET "ps au | $GREP $NAME | $GREP -v $GREP"
+    if [ "$?" == "0" ]
+    then 
+        echo "Service still running on $TARGET"
+        exit 4
+    fi
+
+    $SSH $TARGET "$RM_RF $tmp_loc"
+}
 
 #
 # define usage message
@@ -198,12 +226,11 @@ binaries to ESX and to guest VMs.
 Usage:  deploy-tools.sh command params...
 
 Comands and params are as follows: 
-deployesx "esx-ips"  vib-file-name
-deployvm  "vm-ips"  "binaries-to-deploy" bin-remote-location 
+deployesx "esx-ips"  "vib file"
+deployvm  "vm-ips"  "folder containig deb or rpm"
 cleanesx  "esx-ips" 
-cleanvm   "vm_ips"  "binaries-to-clean"  bin-remote-location "test-volumes-to-clean"
+cleanvm   "vm_ips"  "test-volumes-to-clean"
 EOF
-
     exit 1
 }
 
@@ -213,40 +240,43 @@ EOF
 
 
 # first param is always function name to invoke
-function_name=$1 ; shift
+FUNCTION_NAME=$1 ; shift
 
 # globals used in misc. functions instead of params (to avoid extra parse)
-ip_list=`echo $1 | xargs -n1 | sort -u | xargs` # dedup the IP list
-files="$2"
-bin_remote_location="$3"
-volumes="$4"
+IP_LIST=`echo $1 | xargs -n1 | sort -u | xargs` # dedup the IP list
 
 # check that all params are present:
-if [ -z "$function_name" -o  -z "$ip_list" ]
+if [ -z "$FUNCTION_NAME" -o  -z "$IP_LIST" ]
 then 
    usage "Missing parameters: need at least \"func-name ipaddr\""
 fi
 
-
-case $function_name in
+case $FUNCTION_NAME in
 deployesx)
-        if [ -z "$files" ] ; then usage "Missing params: vib-name" ; fi
-        bin_remote_location=$tmp_loc  # copy VIB here, and install from here
+        SOURCE="$2"
+        if [ -z "$SOURCE" ]
+        then 
+            usage "Missing params: folder hosting vib-name" ; 
+        fi
         deployesx
         ;;
 cleanesx)
         cleanesx
         ;;
 deployvm)
-        if [ -z "$files" -o -z "$bin_remote_location" ] ; then usage "Missing params: files or rem_location" ; fi
+        SOURCE="$2"
+        if [ -z "$SOURCE" ] ; then usage "Missing params: folder" ; fi
         deployvm
         ;;
 cleanvm)
-        if [ -z "$files" -o -z "$bin_remote_location" -o -z "$volumes" ] ; then usage "Missing params: files, bin_remote_location or volume"; fi
+        VOLUMES="$2"
+        if [ -z "$VOLUMES" ]
+        then 
+            usage "Missing params: volume"
+        fi
         cleanvm
         ;;
 *)
-        usage "Unknown function:  \"$function_name\""
+        usage "Unknown function:  \"$FUNCTION_NAME\""
         ;;
 esac
-

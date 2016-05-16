@@ -245,9 +245,8 @@ deploy-esx:
 
 VMS= $(VM1) $(VM2)
 
-# deploys to "GLOC" on vm1 and vm2
 deploy-vm:
-	$(DEPLOY_VM_SH) "$(VMS)" "$(VM_BINS)" $(GLOC)
+	$(DEPLOY_VM_SH) "$(VMS)" $(BIN)
 
 deploy-all: deploy-esx deploy-vm
 deploy: deploy-all
@@ -299,7 +298,7 @@ test-all:  test testremote
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
-	$(CLEANVM_SH) "$(VMS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
+	$(CLEANVM_SH) "$(VMS)" "$(TEST_VOL_NAME)"
 
 clean-esx:
 	$(CLEANESX_SH) "$(ESX)" esx-vmdkops-service
