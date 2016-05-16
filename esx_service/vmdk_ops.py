@@ -67,6 +67,7 @@ import log_config
 import volume_kv as kv
 import vmdk_utils
 import vsan_policy
+import vsan_info
 
 
 # External tools used by the plugin.
@@ -120,7 +121,7 @@ def createVMDK(vmdk_path, vol_name, opts={}):
         return err("File %s already exists" % vmdk_path)
 
     try:
-        validate_opts(opts)
+        validate_opts(opts, vmdk_path)
     except ValidationError as e:
         return err(e.msg)
 
@@ -156,7 +157,7 @@ def createVMDK(vmdk_path, vol_name, opts={}):
     return formatVmdk(vmdk_path, vol_name)
 
 
-def validate_opts(opts):
+def validate_opts(opts, vmdk_path):
     """
     Validate available options. Current options are:
      * size - The size of the disk to create
@@ -174,7 +175,7 @@ def validate_opts(opts):
     if 'size' in opts:
         validate_size(opts['size'])
     if 'vsan-policy-name' in opts:
-        validate_vsan_policy_name(opts['vsan-policy-name'])
+        validate_vsan_policy_name(opts['vsan-policy-name'], vmdk_path)
 
 
 def validate_size(size):
@@ -190,10 +191,13 @@ def validate_size(size):
         raise ValidationError(msg)
 
 
-def validate_vsan_policy_name(policy_name):
+def validate_vsan_policy_name(policy_name, vmdk_path):
     """
     Ensure that the policy file exists
     """
+    if not vsan_info.is_on_vsan(vmdk_path):
+        raise ValidationError('Cannot use a VSAN policy on a non-VSAN datastore')
+
     if not vsan_policy.policy_exists(policy_name):
         raise ValidationError('Policy {0} does not exist'.format(policy_name))
 

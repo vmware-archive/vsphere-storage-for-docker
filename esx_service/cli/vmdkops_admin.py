@@ -19,11 +19,16 @@ import argparse
 import os
 import subprocess
 import sys
+
+import vmdk_ops
+# vmdkops python utils are in PY_LOC, so add to path.
+sys.path.insert(0, vmdk_ops.PY_LOC)
+
 import volume_kv as kv
 import cli_table
 import vsan_policy
 import vmdk_utils
-import vmdk_ops
+import vsan_info
 
 
 def main():
@@ -383,7 +388,10 @@ def generate_ls_dash_l_rows():
         if volOpts and 'vsan-policy-name' in volOpts:
             policy = volOpts['vsan-policy-name']
         else:
-            policy = '[VSAN default]'
+            if vsan_info.is_on_vsan(path):
+                policy = '[VSAN default]'
+            else:
+                policy = 'N/A'
         size_info = get_vmdk_size_info(path)
         rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to,
                      policy, size_info['capacity'], size_info['used']])

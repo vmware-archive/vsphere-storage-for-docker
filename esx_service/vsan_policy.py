@@ -19,6 +19,7 @@ import os
 import vmdk_utils
 import volume_kv as kv
 
+ERROR_NO_VSAN_DATASTORE = 'Error: VSAN datastore does not exist'
 
 def create(name, content):
     """
@@ -27,31 +28,40 @@ def create(name, content):
     the same name, creation will fail. Return a string on error and None on
     success.
     """
-    if policy_exists(name):
+    datastore_path = vmdk_utils.get_vsan_dockvols_path()
+    if not datastore_path:
+        return ERROR_NO_VSAN_DATASTORE
+
+    policies_dir = make_policies_dir(datastore_path)
+    filename = os.path.join(policies_dir, name)
+    if os.path.isfile(filename):
         return 'Error: Policy already exists'
 
     if not validate_vsan_policy_string(content):
         return 'Error: Invalid policy string'
 
-    return create_policy_file(name, content)
+    return create_policy_file(filename, content)
 
 
-def create_policy_file(name, content):
+def make_policies_dir(datastore_path):
     """
-    Create a storage policy file in {path}/policies/name. If the policy
-    already exists return an error string, otherwise return None.
+    Create the policies dir if it doesn't exist and return the path.
+    This function assumes that datastore_path is a VSAN datastore,
+    although it won't fail if it isn't.
     """
-    path = vmdk_utils.get_vsan_datastore()
-    policies_dir = os.path.join(path, 'policies')
+    policies_dir = os.path.join(datastore_path, 'policies')
     try:
         os.mkdir(policies_dir)
     except OSError:
         pass
+    return policies_dir
 
-    filename = os.path.join(policies_dir, name)
-    if os.path.isfile(filename):
-        return 'Error: {0} already exists'.format(name)
 
+def create_policy_file(filename, content):
+    """
+    Create a storage policy file in filename. Returns an error string on
+    failure and None on success.
+    """
     try:
         with open(filename, 'w') as f:
             f.write(content)
@@ -67,7 +77,10 @@ def delete(name):
     Remove a given policy. If the policy does not exist return an error string,
     otherwise return None
     """
-    path = vmdk_utils.get_vsan_datastore()
+    path = vmdk_utils.get_vsan_dockvols_path()
+    if not path:
+        return ERROR_NO_VSAN_DATASTORE
+
     vmdk = policy_in_use(path, name)
     if vmdk:
         return 'Error: Cannot remove. Policy is in use by {0}'.format(vmdk)
@@ -80,9 +93,13 @@ def delete(name):
 
 
 def get_policies():
-    """ Return a dict of all policies. """
+    """ Return a dict of all VSAN policy names to policy content. """
     policies = {}
-    path = os.path.join(vmdk_utils.get_vsan_datastore(), 'policies')
+    path = vmdk_utils.get_vsan_dockvols_path()
+    if not path:
+        return {}
+
+    path = os.path.join(path, 'policies')
     for name in os.listdir(path):
         with open(os.path.join(path, name)) as f:
             content = f.read()
@@ -93,21 +110,29 @@ def get_policies():
 def list_volumes_and_policies():
     """ Return a list of vmdks and the policies in use"""
     vmdks_and_policies = []
-    path = vmdk_utils.get_vsan_datastore()
+    path = vmdk_utils.get_vsan_dockvols_path()
+    if not path:
+        return []
+
     for vmdk in vmdk_utils.list_vmdks(path):
         policy = kv_get_vsan_policy_name(os.path.join(path, vmdk))
         vmdks_and_policies.append({'volume': vmdk, 'policy': policy})
     return vmdks_and_policies
 
-
 def policy_exists(name):
     """ Check if the policy file exists """
     return os.path.isfile(policy_path(name))
 
-
 def policy_path(name):
-    """ Return the path to a given policy file """
-    return os.path.join(vmdk_utils.get_vsan_datastore(), 'policies', name)
+    """
+    Return the path to a given policy file or None if VSAN datastore doesn't
+    exist
+    """
+    path = vmdk_utils.get_vsan_dockvols_path()
+    if not path:
+        return None
+
+    return os.path.join(path, 'policies', name)
 
 
 def kv_get_vsan_policy_name(path):

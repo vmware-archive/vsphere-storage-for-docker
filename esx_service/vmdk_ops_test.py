@@ -25,8 +25,9 @@ import os, os.path
 
 import vmdk_ops
 import log_config
-import volume_kv as kv
+import volume_kv
 import vsan_policy
+import vsan_info
 
 # will do creation/deletion in this folder:
 global path
@@ -75,6 +76,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         logging.info(err)
         self.assertNotEqual(err, None, err)
 
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                    "VSAN is not found - skipping vsan_info tests")
     def testPolicy(self):
         # info for testPolicy
         testInfo = [
@@ -100,6 +103,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
 class ValidationTestCase(unittest.TestCase):
     """ Test validation of -o options on create """
+
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                     "VSAN is not found - skipping vsan_info tests")
 
     def setUp(self):
         """ Create a bunch of policies """
@@ -139,7 +145,7 @@ class ValidationTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     log_config.configure()
-    kv.init()
+    volume_kv.init()
 
     # Calculate the path
     paths = glob.glob("/vmfs/volumes/[a-z]*/dockvols")
