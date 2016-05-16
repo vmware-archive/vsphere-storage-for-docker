@@ -20,7 +20,7 @@
 
 <vib version="6.0">
 
-   <name>vmware-esx-vmdkops-service</name>
+   <name>esx-vmdkops-service</name>
    <version>1.0.0-0.0.1</version>
    <vendor>VMWare</vendor>
    <summary>ESX-side daemon supporting basic VMDK operations requested by a guest</summary>
