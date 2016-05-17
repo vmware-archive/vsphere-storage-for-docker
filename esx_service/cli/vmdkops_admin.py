@@ -369,7 +369,7 @@ def format_header_as_arg(header):
 
 def all_ls_headers():
     """ Return a list of all header for ls -l """
-    return ['Volume', 'Datastore', 'Created By', 'Created', 'Last Attached',
+    return ['Volume', 'Datastore', 'Created By', 'Created',
             'Attached To', 'Policy', 'Capacity', 'Used']
 
 
@@ -380,22 +380,45 @@ def generate_ls_dash_l_rows():
         path = os.path.join(v['path'], v['filename'])
         name = vmdk_utils.strip_vmdk_extension(v['filename'])
         metadata = get_metadata(path)
-        if metadata[u'status'] == u'attached':
-            attached_to = metadata[u'attachedVMUuid']
-        else:
-            attached_to = 'detached'
-        volOpts = metadata[u'volOpts']
-        if volOpts and 'vsan-policy-name' in volOpts:
-            policy = volOpts['vsan-policy-name']
-        else:
-            if vsan_info.is_on_vsan(path):
-                policy = '[VSAN default]'
-            else:
-                policy = 'N/A'
+        attached_to = get_attached_to(metadata)
+        policy = get_policy(metadata, path)
         size_info = get_vmdk_size_info(path)
-        rows.append([name, v['datastore'], 'N/A', 'N/A', 'N/A', attached_to,
+        created, created_by = get_creation_info(metadata)
+        rows.append([name, v['datastore'], created_by, created, attached_to,
                      policy, size_info['capacity'], size_info['used']])
     return rows
+
+
+def get_creation_info(metadata):
+    """
+    Return the creation time and creation vm for a volume given it's metadata
+    """
+    # If created exists, then so does created-by
+    if 'created' in metadata:
+        return (metadata['created'], metadata['created-by'])
+
+    # For backwards compatibility
+    return ('N/A', 'N/A')
+
+
+def get_attached_to(metadata):
+    """ Return which VM a volume is attached to based on its metadata """
+    if metadata[u'status'] == u'attached':
+        return metadata[u'attachedVMUuid']
+
+    return 'detached'
+
+
+def get_policy(metadata, path):
+    """ Return the policy for a volume given it's volume options """
+    vol_opts = metadata[u'volOpts']
+    if vol_opts and 'vsan-policy-name' in vol_opts:
+        return vol_opts['vsan-policy-name']
+
+    if vsan_info.is_on_vsan(path):
+        return '[VSAN default]'
+    else:
+        return 'N/A'
 
 
 def get_metadata(volPath):
