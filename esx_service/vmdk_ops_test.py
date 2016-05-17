@@ -53,7 +53,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             vsan_policy.delete(n)
 
     def testCreateDelete(self):
-        err = vmdk_ops.createVMDK(vmdkPath=self.name, volName=self.volName)
+        err = vmdk_ops.createVMDK(vmdk_path=self.name, vol_name=self.volName)
         self.assertEqual(err, None, err)
         self.assertEqual(
             os.path.isfile(self.name), True,
@@ -65,8 +65,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             "VMDK {0} is still present after delete.".format(self.name))
 
     def testBadOpts(self):
-        err = vmdk_ops.createVMDK(vmdkPath=self.name,
-                                  volName=self.volName,
+        err = vmdk_ops.createVMDK(vmdk_path=self.name,
+                                  vol_name=self.volName,
                                   opts=self.badOpts)
         logging.info(err)
         self.assertNotEqual(err, None, err)
@@ -87,8 +87,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         ]
         for unit in testInfo:
             # create a volume with requestes size/policy and check vs expected result
-            err = vmdk_ops.createVMDK(vmdkPath=self.name,
-                                      volName=self.volName,
+            err = vmdk_ops.createVMDK(vmdk_path=self.name,
+                                      vol_name=self.volName,
                                       opts={'vsan-policy-name': unit[1],
                                             'size': unit[0]})
             self.assertEqual(err == None, unit[2], err)
@@ -107,11 +107,16 @@ class ValidationTestCase(unittest.TestCase):
         self.policy_content = ('(("proportionalCapacity" i50) '
                                '("hostFailuresToTolerate" i0))')
         for n in self.policy_names:
-            vsan_policy.create(n, self.policy_content)
+            result = vsan_policy.create(n, self.policy_content)
+            self.assertEquals(None, result, 
+                              "failed creating policy %s (%s)" % (n, result))
 
     def tearDown(self):
         for n in self.policy_names:
-            vsan_policy.delete(n)
+            try:
+                vsan_policy.delete(n)
+            except:
+                pass
 
     def test_success(self):
         sizes = ['2gb', '200tb', '200mb', '5kb']

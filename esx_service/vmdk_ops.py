@@ -414,7 +414,7 @@ def setStatusAttached(vmdk_path, uuid):
     logging.debug("Set status=attached disk=%s VM uuid=%s", vmdk_path, uuid)
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
-        vol_meta = []
+        vol_meta = {}
     vol_meta['status'] = 'attached'
     vol_meta['attachedVMUuid'] = uuid
     if not kv.setAll(vmdk_path, vol_meta):
@@ -426,7 +426,7 @@ def setStatusDetached(vmdk_path):
     logging.debug("Set status=detached disk=%s", vmdk_path)
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
-        vol_meta = []
+        vol_meta = {}
     vol_meta['status'] = 'detached'
     if 'attachedVMUuid' in vol_meta:
         del vol_meta['attachedVMUuid']
