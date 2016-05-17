@@ -45,7 +45,7 @@ SSH="$DEBUG ssh -o StrictHostKeyChecking=no"
 # consts
 
 # We remove VIB by internal name, not file name. See description.xml in VIB
-internal_vib_name=vmware-esx-vmdkops-service
+internal_vib_name=esx-vmdkops-service
 
 script_loc=../misc/scripts
 tmp_loc=/tmp/docker-volume-vsphere

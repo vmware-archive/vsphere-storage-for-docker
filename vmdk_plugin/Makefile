@@ -302,7 +302,7 @@ clean-vm:
 	$(CLEANVM_SH) "$(VMS)" "$(VM_BINS)" "$(GLOC)"  "$(TEST_VOL_NAME)"
 
 clean-esx:
-	$(CLEANESX_SH) "$(ESX)" vmware-esx-vmdkops-service
+	$(CLEANESX_SH) "$(ESX)" esx-vmdkops-service
 
 # rm ALL containers and volumes. Useful for post-failure force cleanup
 clean-docker:
