@@ -16,14 +16,18 @@ import unittest
 import os, os.path
 import vsan_policy
 import vmdk_utils
-import volume_kv as kv
+import volume_kv
+import vsan_info
 
 
 class TestVsanPolicy(unittest.TestCase):
     """ Test VSAN Policy code """
 
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                     "VSAN is not found - skipping vsan_info tests")
+
     def setUp(self):
-        self.policy_path = os.path.join(vmdk_utils.get_vsan_datastore(),
+        self.policy_path = os.path.join(vmdk_utils.get_vsan_dockvols_path(),
                                         'policies/test_policy')
         self.name = 'test_policy'
         self.content = ('(("proportionalCapacity" i50) '
@@ -66,5 +70,5 @@ class TestVsanPolicy(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    kv.init()
+    volume_kv.init()
     unittest.main()

@@ -18,6 +18,7 @@
 import os
 import logging
 import pyVim.connect
+import vsan_info
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -48,12 +49,16 @@ def get_datastores():
     return datastores
 
 
-def get_vsan_datastore():
+def get_vsan_dockvols_path():
     """
     Return the VSAN datastore dockvols path for a given cluster. Default to the
     first datastore for now, so we can test without VSAN.
     """
-    return get_datastores()[0][1]
+    datastore = vsan_info.get_vsan_datastore()
+    if datastore:
+        return os.path.join(datastore.info.url, 'dockvols')
+    else:
+        return None
 
 
 def get_volumes():
