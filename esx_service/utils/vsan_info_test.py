@@ -26,6 +26,8 @@ import pyVim.connect
 import vsan_info
 
 
+@unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                "VSAN is not found - skipping vsan_info tests")
 class TestVsanInfo(unittest.TestCase):
     """ Test VSAN Info API """
 
@@ -38,10 +40,8 @@ class TestVsanInfo(unittest.TestCase):
     # make sure dir is there, failure "already exits" is OK here
     vmdk_ops.RunCommand("/usr/lib/vmware/osfs/bin/osfs-mkdir " + TEST_DIR)
 
-    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
-                     "VSAN is not found - skipping vsan_info tests")
-
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(TestVsanInfo, self).__init__(*args, **kwargs)
         self.si = None
 
     def setUp(self):
