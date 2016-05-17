@@ -114,7 +114,7 @@ def commands():
             'args': {
                 '-l': {
                     'help': 'List detailed information about volumes',
-                    'action': 'store_true',
+                    'action': 'store_true'
                 },
                 '-c': {
                     'help': 'Display selected columns',
@@ -428,7 +428,10 @@ def get_metadata(volPath):
 
 def get_vmdk_size_info(path):
     """
-    Get the capacity and used space for a given VMDK given its absolute path
+    Get the capacity and used space for a given VMDK given its absolute path.
+    If 'human_readable' = True, then values in bytes are converted to MB or GB
+    depending on size.
+
     Currently this data is retrieved via a call to vmkfstools.
     The output being parsed looks like the following:
 
@@ -440,10 +443,34 @@ def get_vmdk_size_info(path):
         cmd = "vmkfstools --extendedstatinfo {0}".format(path).split()
         output = subprocess.check_output(cmd)
         lines = output.split('\n')
-        return {'capacity': lines[0].split()[2], 'used': lines[1].split()[2]}
+        capacity_in_bytes = lines[0].split()[2]
+        used_in_bytes = lines[1].split()[2]
+        return {'capacity': human_sized(int(capacity_in_bytes)),
+                'used': human_sized(int(used_in_bytes))}
     except subprocess.CalledProcessError:
         sys.exit("Failed to stat {0}.".format(path) \
             + " VMDK corrupted. Please remove and then retry")
+
+
+KB = 1024
+MB = 1024*KB
+GB = 1024*MB
+TB = 1024*GB
+def human_sized(size_in_bytes):
+    """
+    Take an integer size in bytes and convert it to MB, GB, or TB depending
+    upon size.
+    """
+    if size_in_bytes >= TB:
+        return '{:.2f}TB'.format(size_in_bytes/TB)
+    if size_in_bytes >= GB:
+        return '{:.2f}GB'.format(size_in_bytes/GB)
+    if size_in_bytes >= MB:
+        return '{:.2f}MB'.format(size_in_bytes/MB)
+    if size_in_bytes >= KB:
+        return '{:.2f}KB'.format(size_in_bytes/KB)
+
+    return '{0}B'.format(size_in_bytes)
 
 
 def policy_create(args):
