@@ -138,7 +138,9 @@ test-esx:
 	$(SSH) root@$(ESX) 'mkdir -p $(TMP_LOC)'
 	$(SCP) $(TEST_FILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)
 	$(SSH) root@$(ESX) \
-		'for i in $(TMP_LOC)/*_test.py; \
-				do echo Running unit tests in $$i... ; python $$i ;\
-		done'
+		'for i in $(TMP_LOC)/*_test.py ; \
+				do echo Running unit tests in $$i... ; python $$i ; \
+				status=$$((status + $$?)) ;\
+		done; \
+		exit $$status'
 	#$(SSH) root@$(ESX) rm -rf $(TMP_LOC)
