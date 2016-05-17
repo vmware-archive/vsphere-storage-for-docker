@@ -157,8 +157,8 @@ class TestLs(unittest.TestCase):
                 volName = 'testvol' + str(id)
                 fullpath = os.path.join(path, volName + '.vmdk')
                 self.assertEqual(None,
-                                 vmdk_ops.createVMDK(vmdkPath=fullpath,
-                                                     volName=volName))
+                                 vmdk_ops.createVMDK(vmdk_path=fullpath,
+                                                     vol_name=volName))
                 self.vol_count += 1
 
     def tearDown(self):

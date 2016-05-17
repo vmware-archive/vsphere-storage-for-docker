@@ -70,7 +70,7 @@ def delete(name):
     path = vmdk_utils.get_vsan_datastore()
     vmdk = policy_in_use(path, name)
     if vmdk:
-        return 'Error: Cannnot remove. Policy in use by {0}'.format(vmdk)
+        return 'Error: Cannot remove. Policy is in use by {0}'.format(vmdk)
     try:
         os.remove(policy_path(name))
     except:
@@ -115,11 +115,10 @@ def kv_get_vsan_policy_name(path):
     Take a path for a vmdk and return a policy name if it exists or None if it
     doesn't
     """
-    metadata = kv.getAll(path)
-    vol_opts = metadata[u'vol_opts']
-    if vol_opts and 'vsan-policy-name' in vol_opts:
-        return vol_opts['vsan-policy-name']
-    else:
+
+    try:
+        return kv.getAll(path)[u'volOpts']['vsan-policy-name']
+    except:
         return None
 
 
