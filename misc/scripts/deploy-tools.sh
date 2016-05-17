@@ -33,6 +33,16 @@ tmp_loc=/tmp/docker-volume-vsphere
 
 # VM Functions
 
+function deployvmtest {
+    for ip in $IP_LIST
+    do
+        TARGET=root@$ip
+	$SSH $TARGET $MKDIR_P $tmp_loc
+	$SCP $SOURCE/*.test $TARGET:$tmp_loc
+        $SCP $SCRIPTS/refcnt_test.sh $TARGET:$tmp_loc
+    done
+}
+
 function deployvm {
     for ip in $IP_LIST
     do
@@ -228,6 +238,7 @@ Usage:  deploy-tools.sh command params...
 Comands and params are as follows: 
 deployesx "esx-ips"  "vib file"
 deployvm  "vm-ips"  "folder containig deb or rpm"
+deployvmtest "vm-ips" "folder containing test binaries" "folder containing scripts"
 cleanesx  "esx-ips" 
 cleanvm   "vm_ips"  "test-volumes-to-clean"
 EOF
@@ -265,8 +276,20 @@ cleanesx)
         ;;
 deployvm)
         SOURCE="$2"
-        if [ -z "$SOURCE" ] ; then usage "Missing params: folder" ; fi
+        if [ -z "$SOURCE" ]
+	then 
+	    usage "Missing params: folder"
+	fi
         deployvm
+        ;;
+deployvmtest)
+        SOURCE="$2"
+	SCRIPTS="$3"
+        if [ -z "$SOURCE" -o -z "$SCRIPTS" ]
+	then 
+	    usage "Missing params: binary or scripts folder"
+	fi
+        deployvmtest
         ;;
 cleanvm)
         VOLUMES="$2"

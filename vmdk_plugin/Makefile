@@ -226,11 +226,12 @@ VM2_DOCKER = tcp://$(VM2):2375
 SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
 
 # bin locations on target guest
-GLOC := /usr/local/bin
+TMP_LOC := /tmp/$(PLUGNAME)
 
 # script sources live here. All scripts are copied to test VM during deployment
 # scripts started locally to deploy to and clean up test machines
 DEPLOY_VM_SH  := $(SCRIPTS)/deploy-tools.sh deployvm
+DEPLOY_VM_TEST_SH  := $(SCRIPTS)/deploy-tools.sh deployvmtest
 DEPLOY_ESX_SH := $(SCRIPTS)/deploy-tools.sh deployesx
 CLEANVM_SH    := $(SCRIPTS)/deploy-tools.sh cleanvm
 CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
@@ -239,7 +240,7 @@ CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 #
 # Deploy to existing testbed, Expects ESX VM1 and VM2 env vars
 #
-.PHONY: deploy-esx deploy-vm deploy deploy-all deploy
+.PHONY: deploy-esx deploy-vm deploy-vm-test deploy deploy-all deploy
 deploy-esx:
 	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
 
@@ -247,8 +248,10 @@ VMS= $(VM1) $(VM2)
 
 deploy-vm:
 	$(DEPLOY_VM_SH) "$(VMS)" $(BIN)
+deploy-vm-test:
+	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 
-deploy-all: deploy-esx deploy-vm
+deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
 
 #
@@ -283,9 +286,9 @@ checkremote:
 .PHONY: test-vm test-esx test-all testremote
 # test-vm runs GO unit tests and plugin test suite on a guest VM
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
-test-vm: checkremote
-	$(SSH) $(TEST_VM) $(GLOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
-	$(SSH) $(TEST_VM) $(GLOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
+test-vm: checkremote deploy-vm-test
+	$(SSH) $(TEST_VM) $(TMP_LOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
+	$(SSH) $(TEST_VM) $(TMP_LOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
 
