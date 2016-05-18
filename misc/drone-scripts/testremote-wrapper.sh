@@ -14,6 +14,8 @@
 # limitations under the License.
 
 
+. ./misc/scripts/commands.sh
+
 # This scripts runs the end to end tests.
 
 usage() {
@@ -37,25 +39,17 @@ fi
 . ./misc/drone-scripts/cleanup.sh
 . ./misc/drone-scripts/dump_log.sh
 
-echo "*************************************************************************"
-echo "tests starting"
-echo "*************************************************************************"
+log "tests starting"
 
 if make testasroot testremote TEST_VOL_NAME=vol-build$BUILD_NUMBER
 then
-  echo "*************************************************************************"
-  echo "tests done"
-  echo ""
+  log "tests done"
   dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
 else
-  echo "*************************************************************************"
-  echo "tests failed"
-  echo ""
+  log "tests failed"
   dump_log $VM1 $VM2 $ESX
-  echo "*************************************************************************"
-  echo "cleaning up"
-  echo "*************************************************************************"
+  log "cleaning up"
 
   stop_build $VM1 $BUILD_NUMBER
   exit 1

@@ -35,10 +35,9 @@ export ESX=$1
 export VM1=$2
 export VM2=$3
 
-SCP="scp -o StrictHostKeyChecking=no"
-SSH="ssh -o StrictHostKeyChecking=no"
 USER=root
 . ./misc/drone-scripts/cleanup.sh
+. ./misc/scripts/commands.sh
 
 $SCP ./misc/drone-scripts/lock.sh $VM1:/tmp/
 
@@ -46,7 +45,7 @@ $SCP ./misc/drone-scripts/lock.sh $VM1:/tmp/
 until $SSH $USER@$VM1 /tmp/lock.sh lock $BUILD_NUMBER
  do
   sleep 30
-  echo "Retrying acquire lock"
+  log "Retrying acquire lock"
 done 
 
 dump_vm_info() {
@@ -63,32 +62,23 @@ dump_esx_info() {
   set +x
 }
 
-echo "Acquired lock for build $BUILD_NUMBER"
+log "Acquired lock for build $BUILD_NUMBER"
 
-echo "*************************************************************************"
-echo "cleanup stale state"
-echo "*************************************************************************"
-cleanup
+log "starting deploy"
 
-echo "*************************************************************************"
-echo "starting deploy"
-echo "*************************************************************************"
+make clean-esx clean-vm
 
 if make deploy-esx deploy-vm;
 then
   dump_esx_info $ESX
   dump_vm_info $VM1
   dump_vm_info $VM2
-  echo "*************************************************************************"
-  echo "deploy done"
-  echo "*************************************************************************"
+  log "deploy done"
 else
-  echo "*************************************************************************"
-  echo "deploy failed cleaning up"
-  echo "*************************************************************************"
- echo " Dumping logs..."
- . ./misc/drone-scripts/dump_log.sh
- dump_log $VM1 $VM2 $ESX
+  log "deploy failed cleaning up"
+  log " Dumping logs..."
+  . ./misc/drone-scripts/dump_log.sh
+  dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
   exit 1
 fi

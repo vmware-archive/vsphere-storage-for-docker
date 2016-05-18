@@ -22,3 +22,4 @@ then
 else
   service docker-volume-vsphere stop
 fi
+exit 0

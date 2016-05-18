@@ -19,18 +19,15 @@
 #                   can be kept as-is 
 
 TARGETS := all \
-	deploy-all deploy-esx deploy-vm deploy\
+	deploy-all deploy-esx deploy-vm deploy-vm-test deploy\
 	test-all test-vm test-esx testremote testasroot\
 	clean-all clean clean-vm clean-esx \
 	build-all build dockerbuild \
 	deb rpm package
 
 # default target
-default: dockerbuild
+default: build-all
 
 # redirect all
 $(TARGETS):
 	$(MAKE) --directory=vmdk_plugin $@
-#
-
-
