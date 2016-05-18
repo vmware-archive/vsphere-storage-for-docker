@@ -157,7 +157,8 @@ class TestLs(unittest.TestCase):
                 volName = 'testvol' + str(id)
                 fullpath = os.path.join(path, volName + '.vmdk')
                 self.assertEqual(None,
-                                 vmdk_ops.createVMDK(vmdk_path=fullpath,
+                                 vmdk_ops.createVMDK(vm_name='test-vm',
+                                                     vmdk_path=fullpath,
                                                      vol_name=volName))
                 self.vol_count += 1
 

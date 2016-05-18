@@ -19,7 +19,6 @@
 ## on the kv store. Currently uses side cars to keep KV pairs for
 ## a given volume.
 
-import logging
 import kvESX
 
 # Default meta-data for a volume created by the plugin, keys can be
@@ -28,7 +27,9 @@ import kvESX
 #
 # 1. status - the status of the volume, whether its attached or
 #             not to a VM.
-# 2. volOpts - the string of options with which the volume was
+# 2. created - timestamp of creation
+# 3. created-by - The VM that created the volume
+# 4. volOpts - the string of options with which the volume was
 #              created.
 
 
@@ -38,34 +39,38 @@ def init():
     kvESX.kvESXInit()
 
 
-# Create a side car KV store for given volpath
-def create(vol_path, status, opts):
-    vol_meta = {'status': status, 'volOpts': opts}
-
-    res = kvESX.create(vol_path, vol_meta)
-
-    if res != True:
-        logging.debug("KV store create failed.")
-        return False
-
-    return True
+def create(vol_path, vol_meta):
+    """
+    Create a side car KV store for given vol_path.
+    Return true if successful, false otherwise
+    """
+    return kvESX.create(vol_path, vol_meta)
 
 
-# Delete a kv store object for this volume identified by vol_path
 def delete(vol_path):
+    """
+    Delete a kv store object for this volume identified by vol_path.
+    Return true if successful, false otherwise
+    """
     return kvESX.delete(vol_path)
 
 
-# Return the entire meta-data for the given volpath
 def getAll(vol_path):
+    """
+    Return the entire meta-data for the given vol_path.
+    Return true if successful, false otherwise
+    """
     return kvESX.load(vol_path)
 
 
-# Store the meta-data for a given vol-path
 def setAll(vol_path, vol_meta):
+    """
+    Store the meta-data for a given vol-path
+    Return true if successful, false otherwise
+    """
     if vol_meta:
         return kvESX.save(vol_path, vol_meta)
-    # No data to save .
+    # No data to save
     return True
 
 
@@ -81,9 +86,10 @@ def set_kv(vol_path, key, val):
     return kvESX.save(vol_path, vol_meta)
 
 
-# Get value for a given key (index), returns a string thats the value
-# for the key
 def get_kv(vol_path, key):
+    """
+    Return a string value for the given key, or None if the key is not present.
+    """
     vol_meta = kvESX.load(vol_path)
 
     if not vol_meta:
@@ -95,9 +101,11 @@ def get_kv(vol_path, key):
         return None
 
 
-# No-op for side car based KV pairs, once added KV pairs live till
-# the side car is deleted.
 def remove(vol_path, key):
+    """
+    Remove a key/value pair from the store. Return true on success, false on
+    error.
+    """
     vol_meta = kvESX.load(vol_path)
 
     if not vol_meta:

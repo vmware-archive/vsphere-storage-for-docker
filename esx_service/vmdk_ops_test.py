@@ -39,6 +39,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     volName = "vol_UnitTest_Create"
     badOpts = {u'policy': u'good', u'size': u'12unknown'}
     name = ""
+    vm_name = 'test-vm'
 
     def setUp(self):
         self.name = vmdk_ops.getVmdkName(path, self.volName)
@@ -54,7 +55,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             vsan_policy.delete(n)
 
     def testCreateDelete(self):
-        err = vmdk_ops.createVMDK(vmdk_path=self.name, vol_name=self.volName)
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName)
         self.assertEqual(err, None, err)
         self.assertEqual(
             os.path.isfile(self.name), True,
@@ -66,7 +69,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             "VMDK {0} is still present after delete.".format(self.name))
 
     def testBadOpts(self):
-        err = vmdk_ops.createVMDK(vmdk_path=self.name,
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
                                   vol_name=self.volName,
                                   opts=self.badOpts)
         logging.info(err)
@@ -114,7 +118,7 @@ class ValidationTestCase(unittest.TestCase):
                                '("hostFailuresToTolerate" i0))')
         for n in self.policy_names:
             result = vsan_policy.create(n, self.policy_content)
-            self.assertEquals(None, result, 
+            self.assertEquals(None, result,
                               "failed creating policy %s (%s)" % (n, result))
 
     def tearDown(self):

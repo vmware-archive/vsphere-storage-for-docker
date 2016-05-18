@@ -41,6 +41,7 @@ import logging
 import signal
 import sys
 import re
+import time
 
 from vmware import vsi
 
@@ -115,7 +116,7 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdk_path, vol_name, opts={}):
+def createVMDK(vm_name, vmdk_path, vol_name, opts={}):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
@@ -125,36 +126,45 @@ def createVMDK(vmdk_path, vol_name, opts={}):
     except ValidationError as e:
         return err(e.msg)
 
-    if not "size" in opts:
-        size = DEFAULT_DISK_SIZE
-        logging.debug("SETTING DEFAULT SIZE to %s", size)
-    else:
-        size = str(opts["size"])
-        logging.debug("SETTING  SIZE to %s", size)
-
-    if 'vsan-policy-name' in opts:
-        # Note that the --policyFile option gets ignored if the
-        # datastore is not VSAN
-        policy_file = vsan_policy.policy_path(opts['vsan-policy-name'])
-        cmd = "{0} {1} --policyFile {2} {3}".format(VMDK_CREATE_CMD, size,
-                                                    policy_file, vmdk_path)
-    else:
-        cmd = "{0} {1} {2}".format(VMDK_CREATE_CMD, size, vmdk_path)
+    cmd = make_create_cmd(opts, vmdk_path)
     rc, out = RunCommand(cmd)
-
     if rc != 0:
         return err("Failed to create %s. %s" % (vmdk_path, out))
 
-    # Create the kv store for the disk before its attached
-    ret = kv.create(vmdk_path, "detached", opts)
-
-    if ret != True:
-        msg = "Failed to create meta-data store for {0}".format(vmdk_path)
+    if not create_kv_store(vm_name, vmdk_path, opts):
+        msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
         logging.warning(msg)
         removeVMDK(vmdk_path)
         return err(msg)
 
     return formatVmdk(vmdk_path, vol_name)
+
+
+def make_create_cmd(opts, vmdk_path):
+    """ Return the command used to create a VMDK """
+    if not "size" in opts:
+        size = DEFAULT_DISK_SIZE
+    else:
+        size = str(opts["size"])
+    logging.debug("SETTING VMDK SIZE to %s for %s", size, vmdk_path)
+
+    if 'vsan-policy-name' in opts:
+        # Note that the --policyFile option gets ignored if the
+        # datastore is not VSAN
+        policy_file = vsan_policy.policy_path(opts['vsan-policy-name'])
+        return "{0} {1} --policyFile {2} {3}".format(VMDK_CREATE_CMD, size,
+                                                    policy_file, vmdk_path)
+    else:
+        return "{0} {1} {2}".format(VMDK_CREATE_CMD, size, vmdk_path)
+
+
+def create_kv_store(vm_name, vmdk_path, opts):
+    """ Create the metadata kv store for a volume """
+    vol_meta = {'status': 'detached',
+                'volOpts': opts,
+                'created': time.asctime(time.gmtime()),
+                'created-by': vm_name}
+    return kv.create(vmdk_path, vol_meta)
 
 
 def validate_opts(opts, vmdk_path):
@@ -349,7 +359,7 @@ def executeRequest(vm_name, config_path, cmd, vol_name, opts):
     vmdk_path = getVmdkName(path, vol_name)
 
     if cmd == "create":
-        response = createVMDK(vmdk_path, vol_name, opts)
+        response = createVMDK(vm_name, vmdk_path, vol_name, opts)
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
     elif cmd == "list":
