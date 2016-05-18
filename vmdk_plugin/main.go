@@ -81,7 +81,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 	log.SetLevel(level)
 
 	if usingConfigDefaults {
-		log.Warn("No config file found. Using defaults.")
+		log.Info("No config file found. Using defaults.")
 	}
 	return usingConfigDefaults
 }
