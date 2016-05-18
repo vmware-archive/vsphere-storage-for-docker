@@ -8,6 +8,7 @@
 ## Code Contribution guidelines
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
+   * Branch should be suffixed with github user id: (branch name).(github user id) Example: mydevbranch.kerneltime
 * Each PR must be accompanied with unit/integration tests
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
