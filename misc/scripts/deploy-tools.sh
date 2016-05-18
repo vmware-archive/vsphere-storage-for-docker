@@ -29,7 +29,8 @@
 
 . ../misc/scripts/commands.sh
 
-tmp_loc=/tmp/docker-volume-vsphere
+PLUGIN_NAME=docker-volume-vsphere
+TMP_LOC=/tmp/$PLUGIN_NAME
 
 # VM Functions
 
@@ -37,9 +38,10 @@ function deployvmtest {
     for ip in $IP_LIST
     do
         TARGET=root@$ip
-	$SSH $TARGET $MKDIR_P $tmp_loc
-	$SCP $SOURCE/*.test $TARGET:$tmp_loc
-        $SCP $SCRIPTS/refcnt_test.sh $TARGET:$tmp_loc
+	log "Deploying test code to $TARGET"
+	$SSH $TARGET $MKDIR_P $TMP_LOC
+	$SCP $SOURCE/*.test $TARGET:$TMP_LOC
+        $SCP $SCRIPTS/refcnt_test.sh $TARGET:$TMP_LOC
     done
 }
 
@@ -48,7 +50,7 @@ function deployvm {
     do
         TARGET=root@$ip
         setupVMType
-        echo "=> $TARGET : $FILE_EXT"
+	log "Deploying $TARGET : $FILE_EXT"
         deployVMPre
         deployVMInstall
         deployVMPost
@@ -56,53 +58,59 @@ function deployvm {
 }
 
 function setupVMType {
-    $SSH $TARGET "$GREP -i photon /etc/os-release" > /dev/null
+    $SSH $TARGET "$IS_RPM" > /dev/null
     if [ "$?" == "0" ]
     then
         FILE_EXT="rpm"
         return 0;
     fi
 
-    $SSH $TARGET "$GREP -i ubuntu /etc/os-release" > /dev/null
+    $SSH $TARGET "$IS_DEB" > /dev/null
     if [ "$?" == "0" ]
     then
         FILE_EXT="deb"
         return 0
     else
-        echo "Unsupported VM Type $TARGET"
+        log "setupVMType: Unsupported VM Type $TARGET"
         exit 1
     fi
 }
 
 function deployVMPre {
-    $SSH $TARGET $MKDIR_P $tmp_loc
-    $SCP $SOURCE/*.$FILE_EXT $TARGET:$tmp_loc
+    $SSH $TARGET $MKDIR_P $TMP_LOC
+    $SCP $SOURCE/*.$FILE_EXT $TARGET:$TMP_LOC
 }
 
 function deployVMInstall {
-    echo "=> VM Installing"
     set -e
     case $FILE_EXT in
     deb)
-        $SSH $TARGET "$DEB_INSTALL $tmp_loc/*.deb" > /dev/null 2>&1
-        $SSH $TARGET "$DEB_QUERY -s docker-volume-vsphere"
+        $SSH $TARGET "$DEB_INSTALL $TMP_LOC/*.deb > /dev/null"
+        $SSH $TARGET "$DEB_QUERY -s $PLUGIN_NAME"
         ;;
     rpm)
-        $SSH $TARGET "$RPM_INSTALL $tmp_loc/*.rpm > /dev/null"
-        $SSH $TARGET "$RPM_QUERY docker-volume-vsphere"
+        $SSH $TARGET "$RPM_INSTALL $TMP_LOC/*.rpm > /dev/null"
+        $SSH $TARGET "$RPM_QUERY $PLUGIN_NAME"
         ;;
     esac
     set +e
 }
 
 function deployVMPost {
-   echo "=> VM Post"
-   $SSH $TARGET "$PS | $GREP docker-volume-vsphere| $GREP -v $GREP"
-   if [ $? -ne 0 ] 
-   then
-      echo "docker-volume-vsphere is not running on $TARGET"
-      exit 1
-   fi
+    $SSH $TARGET "$IS_SYSTEMD"
+    if [ $? -eq 0 ]
+    then
+        systemctl restart docker
+    else
+        service docker restart
+    fi
+
+    $SSH $TARGET "$PIDOF $PLUGIN_NAME"
+    if [ $? -ne 0 ]
+    then
+        log "deployVMPost: $PLUGIN_NAME is not running on $TARGET"
+        exit 1
+    fi
 }
 
 # ESX Functions
@@ -115,6 +123,7 @@ function deployesx {
     for ip in $IP_LIST
     do
         TARGET=root@$ip
+	log "Deploying to ESX $TARGET"
         deployESXPre
         deployESXInstall
         deployESXPost
@@ -122,15 +131,15 @@ function deployesx {
 }
 
 function deployESXPre {
-    $SSH $TARGET $MKDIR_P $tmp_loc
-    $SCP $SOURCE $TARGET:$tmp_loc
+    $SSH $TARGET $MKDIR_P $TMP_LOC
+    $SCP $SOURCE $TARGET:$TMP_LOC
 }
 
 function deployESXInstall {
-    $SSH $TARGET $VIB_INSTALL --no-sig-check -v $tmp_loc/*.vib
+    $SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/*.vib
     if [ $? -ne 0 ] 
     then
-        echo "Installation hit an error on $TARGET"
+        log "deployESXInstall: Installation hit an error on $TARGET"
         exit 2
     fi
 }
@@ -139,13 +148,13 @@ function deployESXPost {
     $SSH $TARGET $VMDK_OPSD status 
     if [ $? -ne 0 ] 
     then
-        echo "Service is not running on $TARGET"
+        log "deployESXPost: Service is not running on $TARGET"
         exit 3
     fi
     $SSH $TARGET $SCHED_GRP list| $GREP vmdkops | $GREP python> /dev/null
     if [ $? -ne 0 ] 
     then
-        echo "Service is not configured on $TARGET"
+        log "deployESXPost: Service is not configured on $TARGET"
         exit 4
     fi
 }
@@ -157,17 +166,17 @@ function deployESXPost {
 function cleanesx {
     for ip in $IP_LIST
     do
-        echo "Cleaning up on ESX $ip..."
+        log "Cleaning up on ESX $ip"
         TARGET=root@$ip
 	$SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service 
 	$SSH $TARGET $SCHED_GRP list \
             --group-path=host/vim/vimuser/cnastorage/ > /dev/null 2>&1
 	if [ $? -eq 0 ];
 	then
-	    echo "Failed to clean up resource groups!"
+	    log "cleanesx: Failed to clean up resource groups!"
 	    exit 1
 	fi
-        $SSH $TARGET "$RM_RF $tmp_loc"
+        $SSH $TARGET "$RM_RF $TMP_LOC"
     done
 }
 
@@ -176,13 +185,13 @@ function cleanesx {
 # Does vib and tmp files cleanup on Linux guests
 
 function cleanvm {
-    NAME=docker-volume-vsphere
+    set +e
     for IP in $IP_LIST
     do
-        echo "Cleaning up on VM $IP..."
         TARGET=root@$IP
         cleanupVolumes
         setupVMType
+        log "cleanvm: Cleaning up on $TARGET : $FILE_EXT"
         cleanupVMPre
         cleanupVM
         cleanupVMPost
@@ -190,7 +199,7 @@ function cleanvm {
 }
 
 function cleanupVolumes {
-    echo "=> Asking docker to remove volumes ($VOLUMES)"
+    log "cleanupVolumes: Asking docker $TARGET to remove volumes ($VOLUMES)"
     for vol in $VOLUMES
     do
         $SSH $TARGET "if docker volume ls | $GREP -q $vol; then \
@@ -199,29 +208,36 @@ function cleanupVolumes {
 }
 
 function cleanupVMPre {
-    $SSH $TARGET systemctl stop $NAME
+    $SSH $TARGET "$IS_SYSTEMD"
+    if [ $? -eq 0 ]
+    then
+        $SSH $TARGET systemctl stop $PLUGIN_NAME
+	$SSH $TARGET $PIDOF $PLUGIN_NAME
+    else
+        $SSH $TARGET service $PLUGIN_NAME stop
+    fi
 }
 
 function cleanupVM {
     case $FILE_EXT in
     deb)
-        $SSH $TARGET dpkg -P $NAME
+        $SSH $TARGET $DEB_PURGE $PLUGIN_NAME
         ;;
     rpm)
-        $SSH $TARGET rpm -e $NAME
+        $SSH $TARGET $RPM_ERASE $PLUGIN_NAME
         ;;
     esac
 }
 
 function cleanupVMPost {
-    $SSH $TARGET "ps au | $GREP $NAME | $GREP -v $GREP"
+    $SSH $TARGET "$PIDOF $PLUGIN_NAME"
     if [ "$?" == "0" ]
     then 
-        echo "Service still running on $TARGET"
+        log "cleanupVMPost: Service still running on $TARGET"
         exit 4
     fi
 
-    $SSH $TARGET "$RM_RF $tmp_loc"
+    $SSH $TARGET "$RM_RF $TMP_LOC"
 }
 
 #
@@ -230,7 +246,7 @@ function cleanupVMPost {
 function usage {
    echo $1
    echo <<EOF
-deploy-tools.sh provideds a set of helpers for deploying docker-volume-vsphere
+deploy-tools.sh provideds a set of helpers for deploying $PLUGIN_NAME
 binaries to ESX and to guest VMs. 
 
 Usage:  deploy-tools.sh command params...
