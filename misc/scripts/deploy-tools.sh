@@ -100,9 +100,9 @@ function deployVMPost {
     $SSH $TARGET "$IS_SYSTEMD"
     if [ $? -eq 0 ]
     then
-        systemctl restart docker
+        $SSH $TARGET systemctl restart docker
     else
-        service docker restart
+        $SSH $TARGET service docker restart
     fi
 
     $SSH $TARGET "$PIDOF $PLUGIN_NAME"
