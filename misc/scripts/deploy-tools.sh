@@ -38,9 +38,9 @@ function deployvmtest {
     for ip in $IP_LIST
     do
         TARGET=root@$ip
-	log "Deploying test code to $TARGET"
-	$SSH $TARGET $MKDIR_P $TMP_LOC
-	$SCP $SOURCE/*.test $TARGET:$TMP_LOC
+        log "Deploying test code to $TARGET"
+        $SSH $TARGET $MKDIR_P $TMP_LOC
+        $SCP $SOURCE/*.test $TARGET:$TMP_LOC
         $SCP $SCRIPTS/refcnt_test.sh $TARGET:$TMP_LOC
     done
 }
@@ -50,7 +50,7 @@ function deployvm {
     do
         TARGET=root@$ip
         setupVMType
-	log "Deploying $TARGET : $FILE_EXT"
+        log "Deploying $TARGET : $FILE_EXT"
         deployVMPre
         deployVMInstall
         deployVMPost
@@ -123,7 +123,7 @@ function deployesx {
     for ip in $IP_LIST
     do
         TARGET=root@$ip
-	log "Deploying to ESX $TARGET"
+        log "Deploying to ESX $TARGET"
         deployESXPre
         deployESXInstall
         deployESXPost
@@ -168,14 +168,14 @@ function cleanesx {
     do
         log "Cleaning up on ESX $ip"
         TARGET=root@$ip
-	$SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service 
-	$SSH $TARGET $SCHED_GRP list \
+        $SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service 
+        $SSH $TARGET $SCHED_GRP list \
             --group-path=host/vim/vimuser/cnastorage/ > /dev/null 2>&1
-	if [ $? -eq 0 ];
-	then
-	    log "cleanesx: Failed to clean up resource groups!"
-	    exit 1
-	fi
+        if [ $? -eq 0 ];
+        then
+            log "cleanesx: Failed to clean up resource groups!"
+            exit 1
+        fi
         $SSH $TARGET "$RM_RF $TMP_LOC"
     done
 }
@@ -212,7 +212,7 @@ function cleanupVMPre {
     if [ $? -eq 0 ]
     then
         $SSH $TARGET systemctl stop $PLUGIN_NAME
-	$SSH $TARGET $PIDOF $PLUGIN_NAME
+        $SSH $TARGET $PIDOF $PLUGIN_NAME
     else
         $SSH $TARGET service $PLUGIN_NAME stop
     fi
@@ -275,7 +275,7 @@ IP_LIST=`echo $1 | xargs -n1 | sort -u | xargs` # dedup the IP list
 # check that all params are present:
 if [ -z "$FUNCTION_NAME" -o  -z "$IP_LIST" ]
 then 
-   usage "Missing parameters: need at least \"func-name ipaddr\""
+    usage "Missing parameters: need at least \"func-name ipaddr\""
 fi
 
 case $FUNCTION_NAME in
@@ -293,18 +293,18 @@ cleanesx)
 deployvm)
         SOURCE="$2"
         if [ -z "$SOURCE" ]
-	then 
-	    usage "Missing params: folder"
-	fi
+  then 
+        usage "Missing params: folder"
+  fi
         deployvm
         ;;
 deployvmtest)
         SOURCE="$2"
-	SCRIPTS="$3"
+        SCRIPTS="$3"
         if [ -z "$SOURCE" -o -z "$SCRIPTS" ]
-	then 
-	    usage "Missing params: binary or scripts folder"
-	fi
+        then 
+            usage "Missing params: binary or scripts folder"
+        fi
         deployvmtest
         ;;
 cleanvm)
