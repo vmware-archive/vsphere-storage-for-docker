@@ -4,7 +4,7 @@ Docker Volume Driver for vSphere
 ================================
 
 This repo hosts the Docker Volume Driver for vSphere. The plugin integrated with [docker volume
-plugin framework](https://docs.docker.com/engine/extend/plugins_volume/) will help customers address persistence storage requirements of docker containers backed by vSphere storage (vSAN, VMFS, NFS etc). 
+plugin framework](https://docs.docker.com/engine/extend/plugins_volume/) will help customers address persistence storage requirements of docker containers backed by vSphere storage (vSAN, VMFS, NFS etc).
 
 To read more about code development and testing read
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
@@ -17,13 +17,13 @@ We use [Github releases] (https://github.com/vmware/docker-volume-vsphere/releas
 The download consists of 2 parts
 
 1. The ESX side code packaged as a [vib or an offline depot] (http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
-2. The VM side docker plugin packaged as a deb or rpm file. 
+2. The VM side docker plugin packaged as a deb or rpm file.
 
 Please pick the latest release and use the same version of ESX and VM release.
 
 ## Contact us
 
-Please let us know what you think! Contact us at 
+Please let us know what you think! Contact us at
 
 * [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
 * [Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
@@ -54,7 +54,12 @@ For e.g.:
 # Using local setup
 esxcli software vib install --no-sig-check  -v /vmfs/volumes/Datastore/DirectoryName/<vib_name>.vib
 ```
+Make sure you provide the **absolute path** to the `.vib` file or the install will fail.
 ### On Docker Host (VM)
+
+The Docker volume plugin requires the docker engine to be installed as a prerequisite. This requires
+Ubuntu users to configure the docker repository and pull the `docker-engine` package from there.
+Ubuntu users can find instructions [here](https://docs.docker.com/engine/installation/linux/ubuntulinux/).
 
 ```
 # DEB
