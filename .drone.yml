@@ -107,5 +107,4 @@ publish:
       - build/*.vib
       - build/*.zip
     when:
-      repo: vmware/docker-volume-vpshere
       event: tag
