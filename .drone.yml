@@ -102,10 +102,10 @@ publish:
   github_release:
     api_key: $$GITHUB_TOKEN
     files:
-      - bin/*.deb
-      - bin/*.rpm
-      - bin/*.vib
-      - bin/*.zip
+      - build/*.deb
+      - build/*.rpm
+      - build/*.vib
+      - build/*.zip
     when:
       repo: vmware/docker-volume-vpshere
       event: tag
