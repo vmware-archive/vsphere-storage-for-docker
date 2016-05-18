@@ -30,6 +30,7 @@ import vsan_policy
 import vmdk_utils
 import vsan_info
 
+NOT_AVAILABLE = 'N/A'
 
 def main():
     kv.init()
@@ -391,14 +392,14 @@ def generate_ls_dash_l_rows():
 
 def get_creation_info(metadata):
     """
-    Return the creation time and creation vm for a volume given it's metadata
+    Return the creation time and creation vm for a volume given its metadata
     """
     # If created exists, then so does created-by
     if 'created' in metadata:
         return (metadata['created'], metadata['created-by'])
 
     # For backwards compatibility
-    return ('N/A', 'N/A')
+    return (NOT_AVAILABLE, NOT_AVAILABLE)
 
 
 def get_attached_to(metadata):
@@ -410,7 +411,7 @@ def get_attached_to(metadata):
 
 
 def get_policy(metadata, path):
-    """ Return the policy for a volume given it's volume options """
+    """ Return the policy for a volume given its volume options """
     vol_opts = metadata[u'volOpts']
     if vol_opts and 'vsan-policy-name' in vol_opts:
         return vol_opts['vsan-policy-name']
@@ -418,7 +419,7 @@ def get_policy(metadata, path):
     if vsan_info.is_on_vsan(path):
         return '[VSAN default]'
     else:
-        return 'N/A'
+        return NOT_AVAILABLE
 
 
 def get_metadata(volPath):
@@ -429,8 +430,7 @@ def get_metadata(volPath):
 def get_vmdk_size_info(path):
     """
     Get the capacity and used space for a given VMDK given its absolute path.
-    If 'human_readable' = True, then values in bytes are converted to MB or GB
-    depending on size.
+    Values are returned as strings in human readable form (e.g. 10.00MB)
 
     Currently this data is retrieved via a call to vmkfstools.
     The output being parsed looks like the following:
@@ -445,8 +445,8 @@ def get_vmdk_size_info(path):
         lines = output.split('\n')
         capacity_in_bytes = lines[0].split()[2]
         used_in_bytes = lines[1].split()[2]
-        return {'capacity': human_sized(int(capacity_in_bytes)),
-                'used': human_sized(int(used_in_bytes))}
+        return {'capacity': human_readable(int(capacity_in_bytes)),
+                'used': human_readable(int(used_in_bytes))}
     except subprocess.CalledProcessError:
         sys.exit("Failed to stat {0}.".format(path) \
             + " VMDK corrupted. Please remove and then retry")
@@ -456,7 +456,7 @@ KB = 1024
 MB = 1024*KB
 GB = 1024*MB
 TB = 1024*GB
-def human_sized(size_in_bytes):
+def human_readable(size_in_bytes):
     """
     Take an integer size in bytes and convert it to MB, GB, or TB depending
     upon size.
