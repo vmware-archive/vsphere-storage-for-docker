@@ -106,7 +106,12 @@ fi
 
 echo "Checking recovery for VMDK plugin kill -9"
 kill -9 `pidof docker-volume-vsphere`
-sleep 1; sync  # give log the time to flush
+until pids=$(pidof docker-volume-vsphere)
+do
+   echo "Waiting for docker-volume-vsphere to restart"
+   sleep 1
+done
+sync  # give log the time to flush
 line=`tail -4 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
 expected="name=$vname count=$count mounted=true"
 

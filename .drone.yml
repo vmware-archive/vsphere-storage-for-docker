@@ -58,8 +58,7 @@ build:
     commands:
       - export VM1=`govc vm.ip ubuntu`
       - export VM2=`govc vm.ip photon.rc`
-      - ./misc/drone-scripts/deploy-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - ./misc/drone-scripts/testremote-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push, pull_request]
 

@@ -40,8 +40,13 @@ VMware ESXi:
 Docker: 1.9 and higher
 
 Guest Operating System:
-- Photon 1.0 RC
-- Ubuntu 14.04 or higher (64 bit) (needs Upstart or systemctl to start and stop the plugin)
+- [Photon 1.0 RC] (https://vmware.github.io/photon/) (Includes open-vm-tools)
+- Ubuntu 14.04 or higher (64 bit)
+   - Needs Upstart or systemctl to start and stop the plugin
+   - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340)
+```
+sudo apt-get install open-vm-tools
+```
 
 ## Installation Instructions
 ### On ESX

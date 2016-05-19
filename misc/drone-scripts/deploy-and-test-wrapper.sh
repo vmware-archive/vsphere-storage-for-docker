@@ -17,13 +17,13 @@
 # This script sets up the testbed.
 
 usage() {
-  echo "./setup.sh <ESX IP> <VM1 IP> <VM2 IP> <Optional Build id>"
+  echo "$0 <ESX IP> <VM1 IP> <VM2 IP> <Build id>"
   echo "root user will be used for all operations"
   echo "Advisable to setup ssh keys."
   echo "run this script from the root of the repo"
 }
 
-if [ $# -lt 3 ] 
+if [ $# -lt 3 ]
 then
   usage
   exit 1
@@ -62,18 +62,35 @@ dump_esx_info() {
   set +x
 }
 
+truncate_vm_logs() {
+  $SSH $USER@$1 "cat /dev/null > /var/log/docker-volume-vsphere.log"
+}
+
+truncate_esx_logs() {
+  $SSH $USER@$ESX "cat /dev/null > /var/log/vmware/vmdk_ops.log"
+}
+
 log "Acquired lock for build $BUILD_NUMBER"
 
-log "starting deploy"
+log "truncate vm logs"
+truncate_vm_logs $VM1
+truncate_vm_logs $VM2
 
-make clean-esx clean-vm
+log "truncate esx logs"
+truncate_esx_logs
 
-if make deploy-esx deploy-vm;
+log "starting deploy and test"
+
+make clean-vm
+make clean-esx
+
+if make deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol-build$BUILD_NUMBER;
 then
   dump_esx_info $ESX
   dump_vm_info $VM1
   dump_vm_info $VM2
-  log "deploy done"
+  dump_log $VM1 $VM2 $ESX
+  stop_build $VM1 $BUILD_NUMBER
 else
   log "deploy failed cleaning up"
   log " Dumping logs..."
