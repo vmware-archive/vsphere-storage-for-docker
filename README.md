@@ -79,8 +79,8 @@ sudo rpm -ivh <name>.rpm
 $ docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 $ docker volume ls
 $ docker volume inspect MyVolume
-$ docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
-$ docker rm my_container
+$ docker run --rm -it -v MyVolume:/mnt/myvol busybox
+$ cd /mnt/myvol # to access volume inside container, exit to quit
 $ docker volume rm MyVolume
 ```
 
