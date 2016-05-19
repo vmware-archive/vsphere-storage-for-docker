@@ -110,8 +110,6 @@ var (
 
 	// header for Docker Remote API
 	defaultHeaders map[string]string
-
-	initInProgress bool
 )
 
 // local init() for initializing stuff in before running any code in this file
@@ -123,11 +121,9 @@ func init() {
 }
 
 // Init Refcounts. Discover volume usage refcounts from Docker.
-// This will poll until replied to.
+// This functions does not sync with mount/unmount handlers and should be called
+// and completed BEFORE we start accepting Mount/unmount requests.
 func (r refCountsMap) Init(d *vmdkDriver) {
-	initInProgress = true
-	defer func() { initInProgress = false }()
-
 	c, err := client.NewClient(dockerUSocket, apiVersion, nil, defaultHeaders)
 	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",

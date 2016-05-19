@@ -187,9 +187,6 @@ func (d *vmdkDriver) Path(r volume.Request) volume.Response {
 // We need to keep refcount and unmount on refcount drop to 0
 func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
-	if initInProgress {
-		return volume.Response{Err: "Initializing - the mount request declined"}
-	}
 	d.m.Lock()
 	defer d.m.Unlock()
 
@@ -202,7 +199,7 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
 
 	refcnt := d.incrRefCount(r.Name) // save map traversal
-	log.Debugf("refcnt=%d", refcnt)
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
 	if refcnt > 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
@@ -226,9 +223,6 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 // unmount and detach from VM
 func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
-	if initInProgress {
-		return volume.Response{Err: "Initializing - the unmount request declined"}
-	}
 	d.m.Lock()
 	defer d.m.Unlock()
 
@@ -240,7 +234,7 @@ func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Error("Refcount error - still trying to unmount...")
 	}
-	log.Debugf("refcnt=%d", refcnt)
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
 	if refcnt >= 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
