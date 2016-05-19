@@ -40,8 +40,13 @@ VMware ESXi:
 Docker: 1.9 and higher
 
 Guest Operating System:
-- Photon 1.0 RC
-- Ubuntu 14.04 or higher (64 bit) (needs Upstart or systemctl to start and stop the plugin)
+- [Photon 1.0 RC] (https://vmware.github.io/photon/) (Includes open-vm-tools)
+- Ubuntu 14.04 or higher (64 bit)
+   - Needs Upstart or systemctl to start and stop the plugin
+   - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340)
+```
+sudo apt-get install open-vm-tools
+```
 
 ## Installation Instructions
 ### On ESX
@@ -74,8 +79,8 @@ sudo rpm -ivh <name>.rpm
 $ docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 $ docker volume ls
 $ docker volume inspect MyVolume
-$ docker run --name=my_container -it -v MyVolume:/mnt/myvol -w /mnt/myvol busybox sh
-$ docker rm my_container
+$ docker run --rm -it -v MyVolume:/mnt/myvol busybox
+$ cd /mnt/myvol # to access volume inside container, exit to quit
 $ docker volume rm MyVolume
 ```
 
