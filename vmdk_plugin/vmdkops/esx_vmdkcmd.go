@@ -28,6 +28,7 @@ import (
 )
 
 /*
+#include "vmci/connection_errors.h"
 #include "vmci/vmci_client.c"
 */
 import "C"
@@ -86,7 +87,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	if ret != 0 {
 		msg := "Failed to connect to ESX over vsocket"
 		// TODO: per-errcode msg, when vmci_client.c err return is fixed. Issue #206
-		log.Warn(msg)
+		log.Warnf("%s (return %d)", msg, ret)
 		return nil, errors.New(msg)
 	}
 	response := []byte(C.GoString(ans.buf))
