@@ -30,18 +30,18 @@
 //
 // Note: when Docker Is properly restarted ('service docker restart'), it shuts
 // down accurately  and sends unmounts so refcounts stays in sync. In this case
-// there is no need to do anything special in the plugin. Thus all this code is
-// mainly for crash recovery and cleanup.
+// there is no need to do anything special in the plugin. Thus all discovery
+// code is mainly for crash recovery and cleanup.
 //
-// Refcounts are tracked in Mount/Unmount. The code in this file provides
-// generic reccnt API and also supports refcount discovery on restarts:
+// Refcounts are changed in Mount/Unmount. The code in this file provides
+// generic refcnt API and also supports refcount discovery on restarts:
 // - Connects to Docker over unix socket, enumerates Volume Mounts and builds
 //   "volume mounts refcount" map as Docker sees it.
 // - Gets actual mounts from /proc/mounts, and makes sure the refcounts and
 //   actual mounts are in sync.
 //
-// The process is initiated on plugin start.  If it fails (e.g. docker is not
-//    running), we sleep/retry until Docker answers.
+// The process is initiated on plugin start,and ONLY if Docker is already
+// running and thus answering client.Info() request.
 //
 // After refcount discovery, results are compared to /proc/mounts content.
 //
@@ -49,13 +49,13 @@
 // unount stuff there at will - this place SHOULD NOT be used for manual mounts.
 //
 // If a volume IS mounted, but should not be (refcount = 0)
-//   - we assume there was a restart of either Docker or VM or even ESX, and
+//   - we assume there was a restart of VM or even ESX, and
 //     the mount is stale (since Docker does not need it)
 //   - we unmount / detach it
 //
 // If a volume is NOT mounted, but should be (refcount > 0)
 //   - this should never happen since Docker using volume means bind mount is
-//     active so the disk could not have been unmounted
+//     active so the disk should not have been unmounted
 //   - we just log an error and keep going. Recovery in this case is manual
 //
 // We assume that mounted (in Docker VM) and attached (to Docker VM) is the
@@ -75,7 +75,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 const (
@@ -111,54 +110,51 @@ var (
 
 	// header for Docker Remote API
 	defaultHeaders map[string]string
-
-	// wait time for reconnect
-	reconnectSleepInterval time.Duration
 )
 
-// file init() these things before running any code
+// local init() for initializing stuff in before running any code in this file
 func init() {
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 
 	// defaults: in test they can be overwritten (see sanity_test.go)
-	reconnectSleepInterval = defaultSleepIntervalSec * time.Second
 	driverName = "vmdk"
 }
 
 // Init Refcounts. Discover volume usage refcounts from Docker.
-// This will poll until replied to.
+// This functions does not sync with mount/unmount handlers and should be called
+// and completed BEFORE we start accepting Mount/unmount requests.
 func (r refCountsMap) Init(d *vmdkDriver) {
-
 	c, err := client.NewClient(dockerUSocket, apiVersion, nil, defaultHeaders)
 	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
 			dockerUSocket, err)
 	}
-	go func() {
-		d.m.Lock()
-		defer d.m.Unlock()
-		// connects (and polls if needed) and then calls discovery
-		log.Infof("Getting volume data from to %s", dockerUSocket)
-		err = r.discoverAndSync(c, d)
-		attempt := 1
-		for err != nil {
-			// stay here forever, until connected to Docker or killed
-			attempt++
-			if (attempt-2)%30 == 0 { // throttle to each 30th attempt
-				log.Warningf("Failed to get data from Docker, retrying. (err: %v)", err)
-			}
-			time.Sleep(reconnectSleepInterval)
-			err = r.discoverAndSync(c, d)
-		}
+	log.Infof("Getting volume data from %s", dockerUSocket)
+	info, err := c.Info()
+	if err != nil {
+		log.Infof("Can't connect to %s, skipping discovery", dockerUSocket)
+		// TODO: Issue #369
+		// Docker is not running, inform ESX to detach docker volumes, if any
+		// d.detachAllVolumes()
+		return
+	}
+	log.Debugf("Docker info: version=%s, root=%s, OS=%s",
+		info.ServerVersion, info.DockerRootDir, info.OperatingSystem)
 
-		log.Infof("Discovered %d volumes in use or mounted.", len(r))
-		if log.GetLevel() == log.DebugLevel {
-			for name, cnt := range r {
-				log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
-					name, cnt.count, cnt.mounted, cnt.dev)
-			}
+	// connects (and polls if needed) and then calls discovery
+	err = r.discoverAndSync(c, d)
+	if err != nil {
+		log.Errorf("Failed to discover mount refcounts(%v)", err)
+		return
+	}
+
+	log.Infof("Discovered %d volumes in use.", len(r))
+	if log.GetLevel() == log.DebugLevel {
+		for name, cnt := range r {
+			log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
+				name, cnt.count, cnt.mounted, cnt.dev)
 		}
-	}()
+	}
 }
 
 // Returns ref count for the volume.
@@ -194,7 +190,7 @@ func (r refCountsMap) decr(vol string) (uint, error) {
 
 	if rc.count == 0 {
 		// we should NEVER get here. Even if Docker sends Unmount before Mount,
-		// it should be caught in precious check. So delete the entry (in case
+		// it should be caught in previous check. So delete the entry (in case
 		// someone upstairs does 'recover', and panic.
 		delete(r, vol)
 		log.Panicf("decr: refcnt corruption (rc.count=0), name=%s", vol)
@@ -217,6 +213,7 @@ func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 	filters := filters.NewArgs()
 	filters.Add("status", "running")
 	filters.Add("status", "paused")
+	filters.Add("status", "restarting")
 	containers, err := c.ContainerList(types.ContainerListOptions{
 		All:    true,
 		Filter: filters,
@@ -321,7 +318,7 @@ func (r refCountsMap) getMountInfo() error {
 		refInfo.mounted = true
 		refInfo.dev = field[0]
 		r[volName] = refInfo
-		log.Debugf("Found a mounted volume %s (%#v)", volName, refInfo)
+		log.Debugf("Found '%s' in /proc/mount, ref=(%#v)", volName, refInfo)
 	}
 
 	return nil

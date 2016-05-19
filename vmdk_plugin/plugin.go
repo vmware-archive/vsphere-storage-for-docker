@@ -186,9 +186,9 @@ func (d *vmdkDriver) Path(r volume.Request) volume.Response {
 // Provide a volume to docker container - called once per container start.
 // We need to keep refcount and unmount on refcount drop to 0
 func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
+	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 	d.m.Lock()
 	defer d.m.Unlock()
-	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
 	// If the volume is already mounted , just increase the refcount.
 	//
@@ -199,6 +199,7 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
 
 	refcnt := d.incrRefCount(r.Name) // save map traversal
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
 	if refcnt > 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
@@ -221,9 +222,9 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 // Unmount request from Docker. If mount refcount is drop to 0,
 // unmount and detach from VM
 func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
+	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 	d.m.Lock()
 	defer d.m.Unlock()
-	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)
@@ -233,6 +234,7 @@ func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Error("Refcount error - still trying to unmount...")
 	}
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
 	if refcnt >= 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},

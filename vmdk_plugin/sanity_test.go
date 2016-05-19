@@ -30,7 +30,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"golang.org/x/net/context"
 	"testing"
-	"time"
 )
 
 const (
@@ -52,7 +51,6 @@ var (
 // actuallu replyimg). As any other init(), it is called somewhere during init phase
 // so do not expect ALL inits from other tests (if any) to compete by now.
 func init() {
-	waitSec := flag.Int("t", defaultSleepIntervalSec, "Reconnect polling time, in seconds")
 	logLevel := flag.String("log_level", "debug", "Logging Level")
 	logFile := flag.String("log_file", config.DefaultLogPath, "Log file path")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
@@ -66,12 +64,10 @@ func init() {
 
 	usingConfigFileDefaults := logInit(logLevel, logFile, configFile)
 
-	reconnectSleepInterval = time.Duration(*waitSec) * time.Second
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 
 	log.WithFields(log.Fields{
 		"driver":                   driverName,
-		"waitSec":                  *waitSec,
 		"log_level":                *logLevel,
 		"log_file":                 *logFile,
 		"conf_file":                *configFile,
