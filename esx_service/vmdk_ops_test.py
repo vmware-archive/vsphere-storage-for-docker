@@ -94,7 +94,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         ]
         for unit in testInfo:
             # create a volume with requestes size/policy and check vs expected result
-            err = vmdk_ops.createVMDK(vmdk_path=self.name,
+            err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                      vmdk_path=self.name,
                                       vol_name=self.volName,
                                       opts={'vsan-policy-name': unit[1],
                                             'size': unit[0]})
