@@ -512,28 +512,31 @@ def policy_ls(args):
     print cli_table.create(header, rows)
 
 
+NOT_IMPLEMENTED = "Not implemented"
+
+
 def role_create(args):
-    print "Called role_create with args {0}".format(args)
+    print NOT_IMPLEMENTED
 
 
 def role_rm(args):
-    print "Called role_rm with args {0}".format(args)
+    print NOT_IMPLEMENTED
 
 
 def role_ls(args):
-    print "Called role_ls with args {0}".format(args)
+    print NOT_IMPLEMENTED
 
 
 def role_set(args):
-    print "Called role_set with args {0}".format(args)
+    print NOT_IMPLEMENTED
 
 
 def role_get(args):
-    print "Called role_get with args {0}".format(args)
+    print NOT_IMPLEMENTED
 
 
 def status(args):
-    print "Called status with args {0}".format(args)
+    print NOT_IMPLEMENTED
 
 
 if __name__ == "__main__":
