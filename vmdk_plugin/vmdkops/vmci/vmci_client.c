@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 #include "vmci_sockets.h"
+#include "connection_errors.h"
 
 // operations status. 0 is OK
 typedef int be_sock_status;
@@ -109,7 +110,6 @@ be_funcs backends[] =
       {
       0 } };
 
-#define BAD_BE_NAME -10  // Used internally, does not need to be be expose
 
 // Get backend by name
 static be_funcs *
@@ -184,12 +184,12 @@ vsock_init(be_sock_id *id, int cid, int port)
 
    if ((af = vsock_get_family()) == -1) {
       perror("Failed to get address family.");
-      return -1;
+      return CONN_NO_VMCI_ADDRESS_FAMILY;
    }
    sock = socket(af, SOCK_STREAM, 0);
    if (sock == -1) {
       perror("Failed to open socket");
-      return -1;
+      return CONN_FAILED_VSOCKET_OPEN;
    }
 
    id->sock_id = sock;
@@ -203,7 +203,7 @@ vsock_init(be_sock_id *id, int cid, int port)
    if (ret == -1) {
       perror("Failed to connect");
       vsock_release(id);
-      return -1;
+      return CONN_FAILED_TO_CONNECT;
    }
 
    return ret;
@@ -228,21 +228,21 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    if (ret == -1 || ret != sizeof b) {
       fprintf(stderr, "Failed to send magic: ret %d (%s) expected ret %lu\n",
                ret, strerror(errno), sizeof b);
-      return -1;
+      return CONN_FAILED_MAGIC_SEND;
    }
 
    ret = send(s->sock_id, &r->mlen, sizeof r->mlen, 0);
    if (ret == -1 || ret != sizeof r->mlen) {
       fprintf(stderr, "Failed to send len: ret %d (%s) expected ret %lu\n",
                ret, strerror(errno), sizeof r->mlen);
-      return -1;
+      return CONN_FAILED_LEN_SEND;
    }
 
    ret = send(s->sock_id, r->msg, r->mlen, 0);
    if (ret == -1 || ret != r->mlen) {
       fprintf(stderr, "Failed to send content: ret %d (%s) expected ret %d\n",
                ret, strerror(errno), r->mlen);
-      return -1;
+      return CONN_FAILED_CONTENT_SEND;
    }
 
    // Now get the reply (blocking, wait on ESX-side execution):
@@ -253,7 +253,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    if (ret == -1 || ret != sizeof b || b != MAGIC) {
       fprintf(stderr, "Failed to receive magic: ret %d (%s) got 0x%x magic 0x%x\n",
                ret, strerror(errno), b, MAGIC);
-      return -1;
+      return CONN_FAILED_MAGIC_RECIEVE;
    }
 
    // length
@@ -261,13 +261,13 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
       fprintf(stderr, "Failed to receive len: ret %d (%s)\n", ret, strerror(errno));
-      return -1;
+      return CONN_FAILED_LEN_RECEIVE;
    }
 
    a->buf = calloc(1, b);
    if (!a->buf) {
       fprintf(stderr, "Memory allocation failure: request for %d bytes failed\n", b);
-      return -1;
+      return CONN_MALLOC_FAILED;
    }
 
    ret = recv(s->sock_id, a->buf, b, 0);
@@ -275,7 +275,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
       fprintf(stderr, "Failed to receive msg: ret %d (%s) expected ret %d\n",
                ret, strerror(errno), b);
       free(a->buf);
-      return -1;
+      return CONN_FAILED_CONTENT_RECIEVE;
    }
 
    return 0;
@@ -325,7 +325,7 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
    be_funcs *be = get_backend(be_name);
 
    if (be == NULL) {
-      return BAD_BE_NAME;
+      return CONN_BAD_BE_NAME;
    }
 
    req.mlen = strnlen(json_request, MAXBUF) + 1;

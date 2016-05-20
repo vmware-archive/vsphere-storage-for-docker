@@ -71,13 +71,9 @@ func executeScript(t *testing.T, name string) error {
 
 	scanner := bufio.NewScanner(cmdReader)
 	go func() {
-		var since time.Duration
-		start := time.Now()
-		t.Log("Duration    Info\n")
+		t.Log("Time     Info\n")
 		for scanner.Scan() {
-			since = time.Since(start)
-			start = time.Now()
-			t.Logf("%2.3fs  %s\n", since.Seconds(), scanner.Text())
+			t.Logf("%s %s\n", time.Now().Format(time.RFC3339), scanner.Text())
 		}
 	}()
 
