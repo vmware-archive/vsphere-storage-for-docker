@@ -31,6 +31,7 @@ import vsan_info
 class TestVsanInfo(unittest.TestCase):
     """ Test VSAN Info API """
 
+    VM_NAME = "test-vm"
     VSAN_DS = "/vmfs/volumes/vsanDatastore"
     TEST_DIR = os.path.join(VSAN_DS, "vsan_info_test")
     TEST_VOL = "test_policy_vol"
@@ -48,7 +49,7 @@ class TestVsanInfo(unittest.TestCase):
         """create a vmdk before each test (method) in this class"""
         self.si = vmdk_ops.connectLocal()
         # create VMDK
-        err = vmdk_ops.createVMDK(self.VMDK_PATH, "test_policy_vol")
+        err = vmdk_ops.createVMDK(self.VM_NAME, self.VMDK_PATH, "test_policy_vol")
         self.assertEqual(err, None, err)
 
     def tearDown(self):

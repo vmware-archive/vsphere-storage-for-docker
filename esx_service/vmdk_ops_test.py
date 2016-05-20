@@ -28,6 +28,7 @@ import log_config
 import volume_kv
 import vsan_policy
 import vsan_info
+import vmdk_utils
 
 # will do creation/deletion in this folder:
 global path
@@ -86,22 +87,28 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         # info for testPolicy
         testInfo = [
             #    size     policy   expected success?
-            ["2gb", "good", True],
+            ["2000kb", "good", True],
             ["14000pb", "good", False],
             ["bad size", "good", False],
             ["100mb", "impossible", True],
             ["100mb", "good", True],
         ]
+        path = vmdk_utils.get_vsan_dockvols_path()
+        i = 0
         for unit in testInfo:
+            vol_name = '{0}{1}'.format(self.volName, i)
+            vmdk_path = vmdk_ops.getVmdkName(path,vol_name)
+            i = i+1
             # create a volume with requestes size/policy and check vs expected result
-            err = vmdk_ops.createVMDK(vmdk_path=self.name,
-                                      vol_name=self.volName,
+            err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                      vmdk_path=vmdk_path,
+                                      vol_name=vol_name,
                                       opts={'vsan-policy-name': unit[1],
                                             'size': unit[0]})
             self.assertEqual(err == None, unit[2], err)
 
             # clean up should fail if the created should have failed.
-            err = vmdk_ops.removeVMDK(self.name)
+            err = vmdk_ops.removeVMDK(vmdk_path)
             self.assertEqual(err == None, unit[2], err)
 
 
@@ -116,6 +123,7 @@ class ValidationTestCase(unittest.TestCase):
         self.policy_names = ['name1', 'name2', 'name3']
         self.policy_content = ('(("proportionalCapacity" i50) '
                                '("hostFailuresToTolerate" i0))')
+        self.path = vsan_info.get_vsan_datastore().info.url
         for n in self.policy_names:
             result = vsan_policy.create(n, self.policy_content)
             self.assertEquals(None, result,
@@ -134,9 +142,10 @@ class ValidationTestCase(unittest.TestCase):
         for s in sizes:
             for p in self.policy_names:
                 # An exception should not be raised
-                vmdk_ops.validate_opts({'size': s, 'vsan-policy-name': p})
-                vmdk_ops.validate_opts({'size': s})
-                vmdk_ops.validate_opts({'vsan-policy-name': p})
+                vmdk_ops.validate_opts({'size': s, 'vsan-policy-name': p},
+                                       self.path)
+                vmdk_ops.validate_opts({'size': s}, self.path)
+                vmdk_ops.validate_opts({'vsan-policy-name': p}, self.path)
 
     def test_failure(self):
         bad = [{'size': '2'}, {'vsan-policy-name': 'bad-policy'},
@@ -144,7 +153,7 @@ class ValidationTestCase(unittest.TestCase):
                                                      'size': '4mb'}]
         for opts in bad:
             with self.assertRaises(vmdk_ops.ValidationError):
-                vmdk_ops.validate_opts(opts)
+                vmdk_ops.validate_opts(opts, self.path)
 
 
 if __name__ == '__main__':
