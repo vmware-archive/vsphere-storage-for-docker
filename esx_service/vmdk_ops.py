@@ -547,13 +547,13 @@ return error or unit:bus numbers of newly attached disk.
 
         disk_slot = availSlots.pop()
         logging.debug("controller_key = %d slot = %d", controller_key, disk_slot)
-    # add disk here
+    # add disk as independent, so it won't be snapshotted with the Docker VM
     disk_spec = vim.VirtualDeviceConfigSpec(
         operation='add',
         device=
         vim.VirtualDisk(backing=vim.VirtualDiskFlatVer2BackingInfo(
             fileName="[] " + vmdk_path,
-            diskMode='persistent', ),
+            diskMode='independent_persistent', ),
                         deviceInfo=vim.Description(
                             # TODO: use docker volume name here. Issue #292
                             label="dockerDataVolume",
