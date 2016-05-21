@@ -111,8 +111,10 @@ do
    echo "Waiting for docker-volume-vsphere to restart"
    sleep 1
 done
+echo "Waiting for plugin init"
+sleep 3
 sync  # give log the time to flush
-line=`tail -4 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
+line=`tail -10 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
 expected="name=$vname count=$count mounted=true"
 
 echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then
