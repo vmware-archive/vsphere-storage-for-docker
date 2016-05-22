@@ -99,7 +99,7 @@ def get_policies():
     if not path:
         return {}
 
-    path = os.path.join(path, 'policies')
+    path = make_policies_dir(path)
     for name in os.listdir(path):
         with open(os.path.join(path, name)) as f:
             content = f.read()

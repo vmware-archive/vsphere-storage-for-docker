@@ -412,9 +412,10 @@ def get_attached_to(metadata):
 
 def get_policy(metadata, path):
     """ Return the policy for a volume given its volume options """
-    vol_opts = metadata[u'volOpts']
-    if vol_opts and 'vsan-policy-name' in vol_opts:
-        return vol_opts['vsan-policy-name']
+    try:
+        return metadata[u'volOpts']['vsan-policy-name']
+    except:
+        pass
 
     if vsan_info.is_on_vsan(path):
         return '[VSAN default]'
