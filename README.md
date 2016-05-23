@@ -54,23 +54,59 @@ sudo apt-get install open-vm-tools
 Install vSphere Installation Bundle (VIB).  [Please refer to
 vSphere documentation.](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
 
-For e.g.:
+Install using localcli on an ESX node
 ```
 # Using local setup
-esxcli software vib install --no-sig-check  -v /vmfs/volumes/Datastore/DirectoryName/<vib_name>.vib
+esxcli software vib install --no-sig-check  -v /tmp/<vib_name>.vib
 ```
+
 Make sure you provide the **absolute path** to the `.vib` file or the install will fail.
+
 ### On Docker Host (VM)
 
 The Docker volume plugin requires the docker engine to be installed as a prerequisite. This requires
 Ubuntu users to configure the docker repository and pull the `docker-engine` package from there.
 Ubuntu users can find instructions [here](https://docs.docker.com/engine/installation/linux/ubuntulinux/).
 
+[Docker recommends that the docker engine should start after the plugins.] (https://docs.docker.com/engine/extend/plugin_api/)
+
+Install Deb
 ```
-# DEB
 sudo dpkg -i <name>.deb
-# RPM
+```
+
+Install RPM
+```
 sudo rpm -ivh <name>.rpm
+```
+
+## Upgrade
+
+To install a new version, uninstall the older version first and then install the newer version.
+Docker must be stopped when installing the newer version the plugin.
+
+```
+localcli software vib remove --vibname esx-vmdkops-service
+rpm -e docker-volume-vsphere
+dep -P docker-volume-vsphere
+```
+
+## Restarting Docker and Docker-Volume-vSphere plugin
+
+The volume plugin needs to be started up before starting docker.
+
+```
+service docker stop
+service docker-volume-vsphere restart
+service docker start
+``` 
+
+using systemctl
+
+```
+systemctl stop docker 
+systemctl restart docker-volume-vsphere
+systemctl start docker
 ```
 
 ## Using Docker CLI
