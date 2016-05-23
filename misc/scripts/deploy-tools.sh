@@ -128,7 +128,7 @@ function deployESXPre {
 }
 
 function deployESXInstall {
-    $SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/*.vib
+    $SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)
     if [ $? -ne 0 ] 
     then
         log "deployESXInstall: Installation hit an error on $TARGET"
