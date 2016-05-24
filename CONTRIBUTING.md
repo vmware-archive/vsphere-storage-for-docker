@@ -240,47 +240,12 @@ cd $GOPATH/src/github.com/vmware
 git clone https://github.com/vmware/docker-volume-vsphere.git
 ```
 
-* Edit the .drone.yml file to reflect the dev setup.
-If the machine running drone is also one of the target machines, edit the Makefile to not restart docker.
+Use the .drone.dev.yml file as the drone file.
 
-Sample .drone.yml :
 ```
-diff --git a/.drone.yml b/.drone.yml
-index 5550172..9a4b872 100644
---- a/.drone.yml
-+++ b/.drone.yml
-@@ -5,13 +5,13 @@ build:
-       # Needed for creating docker images
-       - /var/run/docker.sock:/var/run/docker.sock
-     environment:
--      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
--      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
-+      - GOVC_USERNAME=root
-+      - GOVC_PASSWORD=
-       - GOVC_INSECURE=1
--      - GOVC_URL=$$CI_ESX_IP
-+      - GOVC_URL=10.20.105.54
-     commands:
--      - export VM1=`govc vm.ip ubuntu`
--      - export VM2=`govc vm.ip ubuntu-2`
-+      - export VM1=10.20.105.121
-+      - export VM2=10.20.104.210
+cp .drone.dev.yml .drone.yml
 ```
 
-Do not restart docker if machine running drone is also a VM in the devsetup.
-```
---- a/scripts/deploy-tools.sh
-+++ b/scripts/deploy-tools.sh
-@@ -151,7 +151,7 @@ function cleanvm {
- 
-         echo "   Asking docker to remove volumes ($volumes)..."
-         # make sure docker engine is not hanging due to old/dead plugins
--        $SSH $target service docker restart
-+        #$SSH $target service docker restart
-         # and now clean up
-         for vol in $volumes
-         do
-```
 #### Setup ssh keys on linux nodes & ESX
 
 Linux:
@@ -299,5 +264,5 @@ Test SSH keys, login form the drone node should not require typing in a password
 
 ```
 cd $GOPATH/src/github.com/vmware/docker-volume-vsphere/
-drone exec --trusted -i ~/.ssh/id_rsa
+drone exec --trusted -i ~/.ssh/id_rsa -e VM1=<ip VM1> -e VM2=<ip VM2> -e ESX=<ip ESX>
 ```

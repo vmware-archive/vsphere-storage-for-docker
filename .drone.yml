@@ -22,24 +22,15 @@ build:
     when:
       event: tag
 
-  fpm:
-    privileged: true
-    image: docker
-    volumes:
-      # Needed for creating docker images
-      - /var/run/docker.sock:/var/run/docker.sock
-    commands:
-      - docker build -t vmware/fpm -f misc/dockerfiles/Dockerfile.fpm . > /dev/null
-
   package:
-    image: vmware/fpm
+    image: cnastorage/fpm
     commands:
       - make deb rpm
     when:
       event: [push, pull_request]
 
   package_tag:
-    image: vmware/fpm
+    image: cnastorage/fpm
     commands:
       - export PKG_VERSION=$$TAG
       - echo $PKG_VERSION
