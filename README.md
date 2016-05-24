@@ -3,12 +3,10 @@
 Docker Volume Driver for vSphere
 ================================
 
-This repo hosts the Docker Volume Driver for vSphere. The plugin integrated with [docker volume
-plugin framework](https://docs.docker.com/engine/extend/plugins_volume/) will help customers address persistence storage requirements of docker containers backed by vSphere storage (vSAN, VMFS, NFS etc).
+This repo hosts the Docker Volume Driver for vSphere. Docker Volume Driver enables customers to address persistent storage requirements for Docker containers in vSphere environments. This plugin is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS) to address persistency requirements of containerized cloud native apps using Docker Ecosystem. 
 
 To read more about code development and testing read
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
-
 
 ## Download
 
@@ -21,34 +19,8 @@ The download consists of 2 parts
 
 Please pick the latest release and use the same version of ESX and VM release.
 
-## Contact us
-
-Please let us know what you think! Contact us at
-
-* [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
-* [Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
-* [Telegram] (https://telegram.me/cnastorage)
-* [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
-
-## Tested on
-
-VMware ESXi:
-- 6.0
-- 6.0 u1
-- 6.0 u2
-
-Docker: 1.9 and higher
-
-Guest Operating System:
-- [Photon 1.0 RC] (https://vmware.github.io/photon/) (Includes open-vm-tools)
-- Ubuntu 14.04 or higher (64 bit)
-   - Needs Upstart or systemctl to start and stop the plugin
-   - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340)
-```
-sudo apt-get install open-vm-tools
-```
-
 ## Installation Instructions
+
 ### On ESX
 
 Install vSphere Installation Bundle (VIB).  [Please refer to
@@ -56,7 +28,6 @@ vSphere documentation.](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.v
 
 Install using localcli on an ESX node
 ```
-# Using local setup
 esxcli software vib install --no-sig-check  -v /tmp/<vib_name>.vib
 ```
 
@@ -70,43 +41,9 @@ Ubuntu users can find instructions [here](https://docs.docker.com/engine/install
 
 [Docker recommends that the docker engine should start after the plugins.] (https://docs.docker.com/engine/extend/plugin_api/)
 
-Install Deb
 ```
-sudo dpkg -i <name>.deb
-```
-
-Install RPM
-```
-sudo rpm -ivh <name>.rpm
-```
-
-## Upgrade
-
-To install a new version, uninstall the older version first and then install the newer version.
-Docker must be stopped when installing the newer version the plugin.
-
-```
-localcli software vib remove --vibname esx-vmdkops-service
-rpm -e docker-volume-vsphere
-dep -P docker-volume-vsphere
-```
-
-## Restarting Docker and Docker-Volume-vSphere plugin
-
-The volume plugin needs to be started up before starting docker.
-
-```
-service docker stop
-service docker-volume-vsphere restart
-service docker start
-``` 
-
-using systemctl
-
-```
-systemctl stop docker 
-systemctl restart docker-volume-vsphere
-systemctl start docker
+sudo dpkg -i <name>.deb # Ubuntu or deb based distros
+sudo rpm -ivh <name>.rpm # Photon or rpm based distros
 ```
 
 ## Using Docker CLI
@@ -125,9 +62,69 @@ $ docker volume rm MyVolume
 $ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
 ```
 
+## Restarting Docker and Docker-Volume-vSphere plugin
+
+The volume plugin needs to be started up before starting docker.
+
+```
+service docker stop
+service docker-volume-vsphere restart
+service docker start
+```
+
+using systemctl
+
+```
+systemctl stop docker
+systemctl restart docker-volume-vsphere
+systemctl start docker
+```
+
+## Logging
+The relevant logging for debugging consists of
+
+Docker logs: https://docs.docker.com/engine/admin/logging/overview/
+```
+/var/log/upstart/docker.log # Upstart
+journalctl -fu docker.service # Journalctl/Systemd
+```
+
+VM Plugin logs
+```
+/var/log/docker-volume-vsphere.log
+```
+
+ESX Plugin logs
+```
+/var/log/vmware/vmdk_ops.log
+```
+
+## Tested on
+
+VMware ESXi:
+- 6.0
+- 6.0 u1
+- 6.0 u2
+
+Docker: 1.9 and higher
+
+Guest Operating System:
+- [Photon 1.0 RC] (https://vmware.github.io/photon/) (Includes open-vm-tools)
+- Ubuntu 14.04 or higher (64 bit)
+   - Needs Upstart or systemctl to start and stop the plugin
+   - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340) ```sudo apt-get install open-vm-tools```
+
 # Known Issues
 1. Operations are serialized. Thus, if a large volume is created, other operations will block till the format is complete. [#35](/../../issues/35)
-2. VM level snapshots do not include docker data volumes. [#390](/../../issues/390)
-3. ESX Admin CLI is only partially implemented.
-4. Exiting bug in Docker around cleanup if mounting of volume fails when -w command is passed. [Docker Issue #22564] (https://github.com/docker/docker/issues/22564)
-5. VIB, RPM and Deb files are not signed.[#273](/../../issues/273)
+2. VM level snapshots do not include docker data volumes. [#60](/../../issues/60)
+3. Exiting bug in Docker around cleanup if mounting of volume fails when -w command is passed. [Docker Issue #22564] (https://github.com/docker/docker/issues/22564)
+4. VIB, RPM and Deb files are not signed.[#273](/../../issues/273)
+
+## Contact us
+
+Please let us know what you think! Contact us at
+
+* [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
+* [Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
+* [Telegram] (https://telegram.me/cnastorage)
+* [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
