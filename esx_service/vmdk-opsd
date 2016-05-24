@@ -86,7 +86,7 @@ start() {
 }
 
 stop() {
-   ${WATCHDOG} -k ${OPSD_TAG}
+   ${WATCHDOG} -n -k ${OPSD_TAG}
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
@@ -118,7 +118,7 @@ stop() {
       echo "Failed to stop $OPSD_TAG"
       exit 5
    fi 
-   exit 0
+   return 0
 }
 
 check_running_status () {
