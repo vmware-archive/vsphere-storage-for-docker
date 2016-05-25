@@ -21,17 +21,29 @@
 
 import kvESX
 
-# Default meta-data for a volume created by the plugin, keys can be
-# added or removed during the life of a volume. The below list
-# is whats included by default when a kv store is created.
-#
-# 1. status - the status of the volume, whether its attached or
-#             not to a VM.
-# 2. created - timestamp of creation
-# 3. created-by - The VM that created the volume
-# 4. volOpts - the string of options with which the volume was
-#              created.
+# All possible metadata keys for the volume. New keys should be added here as
+# constants pointing to strings.
 
+# The status of the volume, whether its attached or not to a VM.
+STATUS = 'status'
+# Timestamp of volume creation
+CREATED = 'created'
+# Name of the VM that created the volume
+CREATED_BY = 'created-by'
+# The name of the VM that the volume is attached to
+ATTACHED_VM_NAME = 'attachedVMName'
+# The UUID of the VM that the volume is attached to
+ATTACHED_VM_UUID = 'attachedVMUuid'
+
+# Dictionary of options passed in by the user
+VOL_OPTS = 'volOpts'
+# Options below this line are keys in the VOL_OPTS dict.
+
+# The name of the VSAN policy applied to the VSAN volume. Invalid for Non-VSAN
+# volumes.
+VSAN_POLICY_NAME = 'vsan-policy-name'
+# The size of the volume
+SIZE = 'size'
 
 # Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.

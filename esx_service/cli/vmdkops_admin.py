@@ -395,8 +395,8 @@ def get_creation_info(metadata):
     Return the creation time and creation vm for a volume given its metadata
     """
     # If created exists, then so does created-by
-    if 'created' in metadata:
-        return (metadata['created'], metadata['created-by'])
+    if kv.CREATED in metadata:
+        return (metadata[kv.CREATED], metadata[kv.CREATED_BY])
 
     # For backwards compatibility
     return (NOT_AVAILABLE, NOT_AVAILABLE)
@@ -405,7 +405,7 @@ def get_creation_info(metadata):
 def get_attached_to(metadata):
     """ Return which VM a volume is attached to based on its metadata """
     try:
-        return metadata['attachedVMName']
+        return metadata[kv.ATTACHED_VM_NAME]
     except:
         return NOT_AVAILABLE
 
@@ -415,7 +415,7 @@ def get_attached_to(metadata):
 def get_policy(metadata, path):
     """ Return the policy for a volume given its volume options """
     try:
-        return metadata[u'volOpts']['vsan-policy-name']
+        return metadata[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
     except:
         pass
 
