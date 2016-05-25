@@ -423,14 +423,16 @@ def busInfo(unit_number, bus_number):
     return {'Unit': str(unit_number), 'Bus': str(bus_number)}
 
 
-def setStatusAttached(vmdk_path, uuid):
+def setStatusAttached(vmdk_path, vm):
     '''Sets metadata for vmdk_path to (attached, attachedToVM=uuid'''
-    logging.debug("Set status=attached disk=%s VM uuid=%s", vmdk_path, uuid)
+    logging.debug("Set status=attached disk=%s VM name=%s uuid=%s", vmdk_path,
+                  vm.config.name, vm.config.uuid)
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
         vol_meta = {}
     vol_meta['status'] = 'attached'
-    vol_meta['attachedVMUuid'] = uuid
+    vol_meta['attachedVMUuid'] = vm.config.uuid
+    vol_meta['attachedVMName'] = vm.config.name
     if not kv.setAll(vmdk_path, vol_meta):
         logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
 
@@ -442,8 +444,12 @@ def setStatusDetached(vmdk_path):
     if not vol_meta:
         vol_meta = {}
     vol_meta['status'] = 'detached'
-    if 'attachedVMUuid' in vol_meta:
+    # If attachedVMName is present, so is attachedVMUuid
+    try:
         del vol_meta['attachedVMUuid']
+        del vol_meta['attachedVMName']
+    except:
+        pass
     if not kv.setAll(vmdk_path, vol_meta):
         logging.warning("Detach: Failed to save Disk metadata for %s", vmdk_path)
 
@@ -527,7 +533,7 @@ return error or unit:bus numbers of newly attached disk.
         # Disk is already attached.
         logging.warning("Disk %s already attached. VM=%s",
                         vmdk_path, vm.config.uuid)
-        setStatusAttached(vmdk_path, vm.config.uuid)
+        setStatusAttached(vmdk_path, vm)
         return busInfo(device.unitNumber,
                        device.controllerKey - offset_from_bus_number)
 
@@ -577,7 +583,7 @@ return error or unit:bus numbers of newly attached disk.
                                                                  kv_uuid)
         return err(msg)
 
-    setStatusAttached(vmdk_path, vm.config.uuid)
+    setStatusAttached(vmdk_path, vm)
     logging.info("Disk %s successfully attached. disk_slot = %d, bus_number = %d",
                  vmdk_path, disk_slot, bus_number)
     return busInfo(disk_slot, bus_number)

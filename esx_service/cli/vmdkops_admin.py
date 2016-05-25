@@ -404,8 +404,10 @@ def get_creation_info(metadata):
 
 def get_attached_to(metadata):
     """ Return which VM a volume is attached to based on its metadata """
-    if metadata[u'status'] == u'attached':
-        return metadata[u'attachedVMUuid']
+    try:
+        return metadata['attachedVMName']
+    except:
+        return NOT_AVAILABLE
 
     return 'detached'
 
