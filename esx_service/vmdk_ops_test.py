@@ -38,7 +38,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     """Unit test for VMDK Create and Remove ops"""
 
     volName = "vol_UnitTest_Create"
-    badOpts = {u'policy': u'good', u'size': u'12unknown'}
+    badOpts = {u'policy': u'good', volume_kv.SIZE: u'12unknown'}
     name = ""
     vm_name = 'test-vm'
 
@@ -103,8 +103,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             err = vmdk_ops.createVMDK(vm_name=self.vm_name,
                                       vmdk_path=vmdk_path,
                                       vol_name=vol_name,
-                                      opts={'vsan-policy-name': unit[1],
-                                            'size': unit[0]})
+                                      opts={volume_kv.VSAN_POLICY_NAME: unit[1],
+                                            volume_kv.SIZE: unit[0]})
             self.assertEqual(err == None, unit[2], err)
 
             # clean up should fail if the created should have failed.
@@ -142,15 +142,15 @@ class ValidationTestCase(unittest.TestCase):
         for s in sizes:
             for p in self.policy_names:
                 # An exception should not be raised
-                vmdk_ops.validate_opts({'size': s, 'vsan-policy-name': p},
+                vmdk_ops.validate_opts({volume_kv.SIZE: s, volume_kv.VSAN_POLICY_NAME: p},
                                        self.path)
-                vmdk_ops.validate_opts({'size': s}, self.path)
-                vmdk_ops.validate_opts({'vsan-policy-name': p}, self.path)
+                vmdk_ops.validate_opts({volume_kv.SIZE: s}, self.path)
+                vmdk_ops.validate_opts({volume_kv.VSAN_POLICY_NAME: p}, self.path)
 
     def test_failure(self):
-        bad = [{'size': '2'}, {'vsan-policy-name': 'bad-policy'},
-               {'size': 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
-                                                     'size': '4mb'}]
+        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'},
+               {volume_kv.SIZE: 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
+                                                             volume_kv.SIZE: '4mb'}]
         for opts in bad:
             with self.assertRaises(vmdk_ops.ValidationError):
                 vmdk_ops.validate_opts(opts, self.path)

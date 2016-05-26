@@ -148,10 +148,10 @@ def make_create_cmd(opts, vmdk_path):
         size = str(opts["size"])
     logging.debug("SETTING VMDK SIZE to %s for %s", size, vmdk_path)
 
-    if 'vsan-policy-name' in opts:
+    if kv.VSAN_POLICY_NAME in opts:
         # Note that the --policyFile option gets ignored if the
         # datastore is not VSAN
-        policy_file = vsan_policy.policy_path(opts['vsan-policy-name'])
+        policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
         return "{0} {1} --policyFile {2} {3}".format(VMDK_CREATE_CMD, size,
                                                     policy_file, vmdk_path)
     else:
@@ -160,10 +160,10 @@ def make_create_cmd(opts, vmdk_path):
 
 def create_kv_store(vm_name, vmdk_path, opts):
     """ Create the metadata kv store for a volume """
-    vol_meta = {'status': 'detached',
-                'volOpts': opts,
-                'created': time.asctime(time.gmtime()),
-                'created-by': vm_name}
+    vol_meta = {kv.STATUS: kv.DETACHED,
+                kv.VOL_OPTS: opts,
+                kv.CREATED: time.asctime(time.gmtime()),
+                kv.CREATED_BY: vm_name}
     return kv.create(vmdk_path, vol_meta)
 
 
@@ -173,8 +173,8 @@ def validate_opts(opts, vmdk_path):
      * size - The size of the disk to create
      * vsan-policy-name - The name of an existing policy to use
     """
-    valid_opts = ['size', 'vsan-policy-name']
-    defaults = [DEFAULT_DISK_SIZE, '[VSAN default']
+    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME]
+    defaults = [DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -182,10 +182,10 @@ def validate_opts(opts, vmdk_path):
                + '{0}'.format(zip(list(valid_opts), defaults))
         raise ValidationError(msg)
 
-    if 'size' in opts:
-        validate_size(opts['size'])
-    if 'vsan-policy-name' in opts:
-        validate_vsan_policy_name(opts['vsan-policy-name'], vmdk_path)
+    if kv.SIZE in opts:
+        validate_size(opts[kv.SIZE])
+    if kv.VSAN_POLICY_NAME in opts:
+        validate_vsan_policy_name(opts[kv.VSAN_POLICY_NAME], vmdk_path)
 
 
 def validate_size(size):
@@ -430,9 +430,9 @@ def setStatusAttached(vmdk_path, vm):
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
         vol_meta = {}
-    vol_meta['status'] = 'attached'
-    vol_meta['attachedVMUuid'] = vm.config.uuid
-    vol_meta['attachedVMName'] = vm.config.name
+    vol_meta[kv.STATUS] = kv.ATTACHED
+    vol_meta[kv.ATTACHED_VM_UUID] = vm.config.uuid
+    vol_meta[kv.ATTACHED_VM_NAME] = vm.config.name
     if not kv.setAll(vmdk_path, vol_meta):
         logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
 
@@ -443,11 +443,11 @@ def setStatusDetached(vmdk_path):
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
         vol_meta = {}
-    vol_meta['status'] = 'detached'
+    vol_meta[kv.STATUS] = kv.DETACHED
     # If attachedVMName is present, so is attachedVMUuid
     try:
-        del vol_meta['attachedVMUuid']
-        del vol_meta['attachedVMName']
+        del vol_meta[kv.ATTACHED_VM_UUID]
+        del vol_meta[kv.ATTACHED_VM_NAME]
     except:
         pass
     if not kv.setAll(vmdk_path, vol_meta):
@@ -458,11 +458,11 @@ def getStatusAttached(vmdk_path):
     '''Returns (attached, uuid) tuple. For 'detached' status uuid is None'''
 
     vol_meta = kv.getAll(vmdk_path)
-    if not vol_meta or 'status' not in vol_meta:
+    if not vol_meta or kv.STATUS not in vol_meta:
         return False, None
-    attached = (vol_meta['status'] == "attached")
+    attached = (vol_meta[kv.STATUS] == kv.ATTACHED)
     try:
-        uuid = vol_meta['attachedVMUuid']
+        uuid = vol_meta[kv.ATTACHED_VM_UUID]
     except:
         uuid = None
     return attached, uuid

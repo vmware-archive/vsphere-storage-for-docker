@@ -142,7 +142,7 @@ def kv_get_vsan_policy_name(path):
     """
 
     try:
-        return kv.getAll(path)[u'volOpts']['vsan-policy-name']
+        return kv.getAll(path)[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
     except:
         return None
 
