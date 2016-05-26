@@ -16,5 +16,5 @@
 
 stop_build() {
   make clean-vm clean-esx TEST_VOL_NAME=vol-build$BUILD_NUMBER
-  $SSH $VM1 /tmp/lock.sh unlock $BUILD_NUMBER
+  $SSH $ESX "sh /tmp/lock.sh unlock $BUILD_NUMBER"
 }
