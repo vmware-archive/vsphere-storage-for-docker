@@ -160,7 +160,7 @@ def make_create_cmd(opts, vmdk_path):
 
 def create_kv_store(vm_name, vmdk_path, opts):
     """ Create the metadata kv store for a volume """
-    vol_meta = {kv.STATUS: 'detached',
+    vol_meta = {kv.STATUS: kv.DETACHED,
                 kv.VOL_OPTS: opts,
                 kv.CREATED: time.asctime(time.gmtime()),
                 kv.CREATED_BY: vm_name}
@@ -174,7 +174,7 @@ def validate_opts(opts, vmdk_path):
      * vsan-policy-name - The name of an existing policy to use
     """
     valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME]
-    defaults = [DEFAULT_DISK_SIZE, '[VSAN default']
+    defaults = [DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -430,7 +430,7 @@ def setStatusAttached(vmdk_path, vm):
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
         vol_meta = {}
-    vol_meta[kv.STATUS] = 'attached'
+    vol_meta[kv.STATUS] = kv.ATTACHED
     vol_meta[kv.ATTACHED_VM_UUID] = vm.config.uuid
     vol_meta[kv.ATTACHED_VM_NAME] = vm.config.name
     if not kv.setAll(vmdk_path, vol_meta):
@@ -443,7 +443,7 @@ def setStatusDetached(vmdk_path):
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
         vol_meta = {}
-    vol_meta[kv.STATUS] = 'detached'
+    vol_meta[kv.STATUS] = kv.DETACHED
     # If attachedVMName is present, so is attachedVMUuid
     try:
         del vol_meta[kv.ATTACHED_VM_UUID]
@@ -460,7 +460,7 @@ def getStatusAttached(vmdk_path):
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta or kv.STATUS not in vol_meta:
         return False, None
-    attached = (vol_meta[kv.STATUS] == "attached")
+    attached = (vol_meta[kv.STATUS] == kv.ATTACHED)
     try:
         uuid = vol_meta[kv.ATTACHED_VM_UUID]
     except:

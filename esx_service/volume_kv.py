@@ -45,6 +45,15 @@ VSAN_POLICY_NAME = 'vsan-policy-name'
 # The size of the volume
 SIZE = 'size'
 
+## Values for given keys
+
+## Value for VSAN_POLICY_NAME
+DEFAULT_VSAN_POLICY = '[VSAN default]'
+
+## Values for STATUS
+ATTACHED = 'attached'
+DETACHED = 'detached'
+
 # Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.
 def init():

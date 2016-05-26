@@ -407,9 +407,7 @@ def get_attached_to(metadata):
     try:
         return metadata[kv.ATTACHED_VM_NAME]
     except:
-        return NOT_AVAILABLE
-
-    return 'detached'
+        return kv.DETACHED
 
 
 def get_policy(metadata, path):
@@ -420,7 +418,7 @@ def get_policy(metadata, path):
         pass
 
     if vsan_info.is_on_vsan(path):
-        return '[VSAN default]'
+        return kv.DEFAULT_VSAN_POLICY
     else:
         return NOT_AVAILABLE
 
