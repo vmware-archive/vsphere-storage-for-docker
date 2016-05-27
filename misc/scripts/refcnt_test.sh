@@ -14,7 +14,6 @@
 # limitations under the License.
 
 
-
 # A simple test to validate refcounts.
 
 # Creates $count running containers using a VMDK volume, checks refcount
@@ -28,10 +27,14 @@
 # For now (TP) we still need basic validation
 #
 
+DIR=$(dirname ${BASH_SOURCE[0]})
+. $DIR/wait_for.sh
+
 log=/var/log/docker-volume-vsphere.log
 count=5
 vname=refCountTestVol
 mount=/mnt/vmdk/$vname
+timeout=60
 
 function cleanup_containers {
    to_kill=`docker ps -q`
@@ -51,6 +54,30 @@ function cleanup {
 }
 trap cleanup EXIT
 
+function check_files {
+    # Check how many files we see in the still-mounted volume
+    files=`$DOCKER run -v $vname:/v busybox sh -c 'ls -1 /v/file*'`
+    c=`echo $files | wc -w`
+    echo "Found $c files. Expected $count"
+    if [ $c -ne $count ] ; then
+       echo files: \"$files\"
+       return 1
+    fi
+    return 0
+}
+
+function check_recovery_record {
+    line=`tail -10 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
+    expected="name=$vname count=$count mounted=true"
+
+    echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then
+       echo Found:  \"$line\"
+       echo Expected pattern: \"$expected\"
+       return 1
+    fi
+    return 0
+}
+
 DOCKER="$DEBUG docker"
 GREP="$DEBUG grep"
 
@@ -63,19 +90,14 @@ $DOCKER volume create --driver=vmdk --name=$vname
 echo "$(docker volume ls)"
 for i in `seq 1 $count`
 do
-  $DOCKER run -d -v $vname:/v busybox sh -c "touch /v/file$i; sync ; sleep 60"
+  $DOCKER run -d -v $vname:/v busybox sh -c "touch /v/file$i; sync ; \
+      sleep $timeout"
 done
 
 echo "Checking volume content"
-# give OS schedule time to execute the 'touches' from the above docker runs
-sleep 5
-# now check how many files we see in the still-mounted volume
-files=`$DOCKER run -v $vname:/v busybox sh -c 'ls -1 /v/file*'`
-c=`echo $files | wc -w`
-echo "Found $c files. Expected $count"
-if [ $c -ne $count ] ; then
+wait_for check_files $timeout
+if [ "$?" -ne 0 ] ; then
    echo FAILED CONTENT TEST - not enough files in /$vname/file\*
-   echo files: \"$files\"
    exit 1
 fi
 
@@ -91,9 +113,8 @@ fi
 $GREP -q $mount /proc/mounts ; if [ $? -ne 0 ] ; then
    echo "FAILED MOUNT TEST 1"
    echo \"$mount\" is not found in /proc/mounts
-	exit 1
+   exit 1
 fi
-
 
 # should fail 'volume rm', so checking it
 echo "Checking 'docker volume rm'"
@@ -103,7 +124,6 @@ $DOCKER volume rm $vname 2> /dev/null ; if [ $? -eq 0 ] ; then
    exit 1
 fi
 
-
 echo "Checking recovery for VMDK plugin kill -9"
 kill -9 `pidof docker-volume-vsphere`
 until pids=$(pidof docker-volume-vsphere)
@@ -111,16 +131,13 @@ do
    echo "Waiting for docker-volume-vsphere to restart"
    sleep 1
 done
+
 echo "Waiting for plugin init"
 sleep 3
 sync  # give log the time to flush
-line=`tail -10 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
-expected="name=$vname count=$count mounted=true"
-
-echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then
+wait_for check_recovery_record $timeout
+if [ "$?" -ne 0 ] ; then
    echo PLUGIN RESTART TEST FAILED. Did not find proper recovery record
-   echo Found:  \"$line\"
-   echo Expected pattern: \"$expected\"
    exit 1
 fi
 
