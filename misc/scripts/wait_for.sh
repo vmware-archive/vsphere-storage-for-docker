@@ -27,9 +27,9 @@
 # for $2 seconds total. wait_for will return 0 as soon as $1 returns true, or
 # return 1 on timeout.
 function wait_for {
-    sleep 1
     for i in `seq 1 $2`
     do
+      sleep 1
       $1
       if [ "$?" -eq 0 ] ; then
           return 0
