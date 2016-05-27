@@ -292,17 +292,25 @@ def listVMDK(path):
 # Find VM , reconnect if needed. throws on error
 def findVmByName(vm_name):
     vm = None
-    try:
-        vm = FindChild(GetVmFolder(), vm_name)
-    except vim.fault.NotAuthenticated:
-        connectLocal()  #  retry
-        vm = FindChild(GetVmFolder(), vm_name)
+    vm, _ = find_child(vm_name)
+    if not vm:
+        # try again
+        connectLocal()
+        vm, e = find_child(vm_name)
 
     if not vm:
-        raise Exception("VM" + vm_name + "not found")
+        logging.error("VM {0} not found".format(vm_name))
+        raise e
 
     return vm
 
+def find_child(vm_name):
+    e = None
+    try:
+        vm = FindChild(GetVmFolder(), vm_name)
+    except Exception as e:
+        vm = None
+    return vm, e
 
 #returns error, or None for OK
 def attachVMDK(vmdk_path, vm_name):
