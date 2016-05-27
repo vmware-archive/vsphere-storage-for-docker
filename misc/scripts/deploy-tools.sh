@@ -31,6 +31,7 @@
 
 PLUGIN_NAME=docker-volume-vsphere
 TMP_LOC=/tmp/$PLUGIN_NAME
+VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
 
 # VM Functions
 
@@ -169,6 +170,7 @@ function cleanesx {
             exit 1
         fi
         $SSH $TARGET "$RM_RF $TMP_LOC"
+        $SSH $TARGET "$RM_RF $VMDK_OPS_UNITTEST"
     done
 }
 
