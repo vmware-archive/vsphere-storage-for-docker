@@ -39,10 +39,11 @@ USER=root
 . ./misc/drone-scripts/cleanup.sh
 . ./misc/scripts/commands.sh
 
-$SCP ./misc/drone-scripts/lock.sh $VM1:/tmp/
+echo "Setting up lock on $ESX"
+$SCP ./misc/drone-scripts/lock.sh $ESX:/tmp/
 
 # Unlock performed in stop_build in cleanup.sh
-until $SSH $USER@$VM1 /tmp/lock.sh lock $BUILD_NUMBER
+until $SSH $USER@$ESX "sh /tmp/lock.sh lock $BUILD_NUMBER"
  do
   sleep 30
   log "Retrying acquire lock"
