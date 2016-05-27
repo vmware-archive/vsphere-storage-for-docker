@@ -394,12 +394,10 @@ def get_creation_info(metadata):
     """
     Return the creation time and creation vm for a volume given its metadata
     """
-    # If created exists, then so does created-by
-    if kv.CREATED in metadata:
+    try:
         return (metadata[kv.CREATED], metadata[kv.CREATED_BY])
-
-    # For backwards compatibility
-    return (NOT_AVAILABLE, NOT_AVAILABLE)
+    except:
+        return (NOT_AVAILABLE, NOT_AVAILABLE)
 
 
 def get_attached_to(metadata):
