@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''
-ESX-side service  handling VMDK create/attach requests from VMCI clients
+ESX-side service  handling VMDK requests from VMCI clients
 
-The requests (create/delete/attach/detach) are JSON formatted.
+The requests are JSON formatted.
 
 All operations are using requester VM (docker host) datastore and
 "Name" in request refers to vmdk basename
@@ -24,7 +24,7 @@ VMDK name is formed as [vmdatastore] dockvols/"Name".vmdk
 Commands ("cmd" in request):
 		"create" - create a VMDK in "[vmdatastore] dvol"
 		"remove" - remove a VMDK. We assume it's not open, and fail if it is
-		"list"   - [future, need docker support] enumerate related VMDK
+		"list"   - enumerate VMDKs
 		"attach" - attach a VMDK to the requesting VM
 		"detach" - detach a VMDK from the requesting VM (assuming it's unmounted)
 
@@ -478,10 +478,10 @@ def getStatusAttached(vmdk_path):
 
 def disk_attach(vmdk_path, vm):
     '''
-Attaches *existing* disk to a vm on a PVSCI controller
-(we need PVSCSI to avoid SCSI rescans in the guest)
-return error or unit:bus numbers of newly attached disk.
-'''
+    Attaches *existing* disk to a vm on a PVSCI controller
+    (we need PVSCSI to avoid SCSI rescans in the guest)
+    return error or unit:bus numbers of newly attached disk.
+    '''
 
     # NOTE: vSphere is very picky about unit numbers and controllers of virtual
     # disks. Every controller supports 15 virtual disks, and the unit
@@ -492,8 +492,6 @@ return error or unit:bus numbers of newly attached disk.
     offset_from_bus_number = 1000
     max_scsi_controllers = 4
 
-    # changes spec content goes here
-    dev_changes = []
 
     devices = vm.config.hardware.device
 
@@ -533,7 +531,18 @@ return error or unit:bus numbers of newly attached disk.
             device=vim.ParaVirtualSCSIController(key=controller_key,
                                                  busNumber=key,
                                                  sharedBus='noSharing', ), )
-        dev_changes.append(controller_spec)
+        # changes spec content goes here
+        pvscsi_change = []
+        pvscsi_change.append(controller_spec)
+        spec = vim.vm.ConfigSpec()
+        spec.deviceChange = pvscsi_change
+
+        try:
+            wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
+        except vim.fault.VimFault as ex:
+            msg=("Failed to add PVSCSI Controller: %s", ex.msg)
+            return err(msg)
+
 
     # Check if this disk is already attached, and if it is - skip the attach
     device = findDeviceByPath(vmdk_path, vm)
@@ -561,6 +570,7 @@ return error or unit:bus numbers of newly attached disk.
 
         disk_slot = availSlots.pop()
         logging.debug("controller_key = %d slot = %d", controller_key, disk_slot)
+
     # add disk as independent, so it won't be snapshotted with the Docker VM
     disk_spec = vim.VirtualDeviceConfigSpec(
         operation='add',
@@ -574,10 +584,11 @@ return error or unit:bus numbers of newly attached disk.
                             summary="dockerDataVolume", ),
                         unitNumber=disk_slot,
                         controllerKey=controller_key, ), )
-    dev_changes.append(disk_spec)
+    disk_changes = []
+    disk_changes.append(disk_spec)
 
     spec = vim.vm.ConfigSpec()
-    spec.deviceChange = dev_changes
+    spec.deviceChange = disk_changes
 
     try:
         wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
