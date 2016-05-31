@@ -113,15 +113,10 @@ def commands():
             'func': ls,
             'help': 'List volumes',
             'args': {
-                '-l': {
-                    'help': 'List detailed information about volumes',
-                    'action': 'store_true'
-                },
                 '-c': {
                     'help': 'Display selected columns',
                     'choices': ['volume', 'datastore', 'created-by', 'created',
-                                'last-attached', 'attached-to', 'policy',
-                                'capacity', 'used'],
+                                'attached-to', 'policy', 'capacity', 'used'],
                     'metavar': 'Col1,Col2,...'
                 }
             }
@@ -315,38 +310,18 @@ def ls(args):
     If args.c is not empty only display columns given in args.c (implies -l).
     """
     if args.c:
-        (header, data) = ls_dash_c(args.c)
-    elif args.l:
-        (header, data) = ls_dash_l()
+        (header, rows) = ls_dash_c(args.c)
     else:
-        (header, data) = ls_no_args()
-    print cli_table.create(header, data)
+        header = all_ls_headers()
+        rows = generate_ls_rows()
 
-
-def ls_no_args():
-    """
-    Collect all volume names and their datastores as lists,
-    stripping the '.vmdk' from the volume name
-    """
-    header = ['Volume', 'Datastore']
-    data = [[vmdk_utils.strip_vmdk_extension(v['filename']), v['datastore']]
-            for v in vmdk_utils.get_volumes()]
-    return (header, data)
-
-
-def ls_dash_l():
-    """
-    List all volumes and relevant metadata
-    """
-    header = all_ls_headers()
-    rows = generate_ls_dash_l_rows()
-    return (header, rows)
+    print cli_table.create(header, rows)
 
 
 def ls_dash_c(columns):
     """ Return only the columns requested in the format required for table construction """
     all_headers = all_ls_headers()
-    all_rows = generate_ls_dash_l_rows()
+    all_rows = generate_ls_rows()
     indexes = []
     headers = []
     for i in range(len(all_headers)):
@@ -374,7 +349,7 @@ def all_ls_headers():
             'Attached To', 'Policy', 'Capacity', 'Used']
 
 
-def generate_ls_dash_l_rows():
+def generate_ls_rows():
     """ Gather all volume metadata into rows that can be used to format a table """
     rows = []
     for v in vmdk_utils.get_volumes():

@@ -36,10 +36,9 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         # a tty here)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
         lines = output.split('\n')
-        header1, header2 = lines[0].split()
-        self.assertEqual(header1, 'Volume')
-        self.assertEqual(header2, 'Datastore')
-        for string in lines[1].split():
+        divider_columns = lines[1].split()
+        self.assertEqual(8, len(divider_columns))
+        for string in divider_columns:
             self.assertTrue(all_dashes(string))
 
     def test_policy_ls(self):
