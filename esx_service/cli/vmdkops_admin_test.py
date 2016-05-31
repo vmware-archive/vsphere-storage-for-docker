@@ -33,21 +33,13 @@ class TestParsing(unittest.TestCase):
     def test_parse_ls_no_options(self):
         args = self.parser.parse_args(['ls'])
         self.assertEqual(args.func, vmdkops_admin.ls)
-        self.assertEqual(args.l, False)
-        self.assertEqual(args.c, None)
-
-    def test_parse_ls_dash_l(self):
-        args = self.parser.parse_args('ls -l'.split())
-        self.assertEqual(args.func, vmdkops_admin.ls)
-        self.assertEqual(args.l, True)
         self.assertEqual(args.c, None)
 
     def test_parse_ls_dash_c(self):
         args = self.parser.parse_args(
-            'ls -c created-by,created,last-attached'.split())
+            'ls -c created-by,created'.split())
         self.assertEqual(args.func, vmdkops_admin.ls)
-        self.assertEqual(args.l, False)
-        self.assertEqual(args.c, ['created-by', 'created', 'last-attached'])
+        self.assertEqual(args.c, ['created-by', 'created'])
 
     def test_parse_ls_dash_c_invalid_argument(self):
         self.assert_parse_error('ls -c personality')
@@ -196,11 +188,12 @@ class TestLs(unittest.TestCase):
 
     def test_ls_no_args(self):
         volumes = vmdk_utils.get_volumes()
-        (header, data) = vmdkops_admin.ls_no_args()
-        self.assertEqual(2, len(header))
-        self.assertEqual(len(volumes), len(data))
+        header = vmdkops_admin.all_ls_headers()
+        rows = vmdkops_admin.generate_ls_rows()
+        self.assertEqual(8, len(header))
+        self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
-            self.assertEqual(volumes[i]['filename'], data[i][0] + '.vmdk')
+            self.assertEqual(volumes[i]['filename'], rows[i][0] + '.vmdk')
 
 
 if __name__ == '__main__':
