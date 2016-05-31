@@ -16,8 +16,8 @@
 
 #
 # deploy-tools.sh
-# 
-# Has a set of functions to deploy to ESX and guests, start and stop services 
+#
+# Has a set of functions to deploy to ESX and guests, start and stop services
 # and clean up
 #
 # Usage:
@@ -43,6 +43,7 @@ function deployvmtest {
         $SSH $TARGET $MKDIR_P $TMP_LOC
         $SCP $SOURCE/*.test $TARGET:$TMP_LOC
         $SCP $SCRIPTS/refcnt_test.sh $TARGET:$TMP_LOC
+        $SCP $SCRIPTS/wait_for.sh $TARGET:$TMP_LOC
     done
 }
 
@@ -130,7 +131,7 @@ function deployESXPre {
 
 function deployESXInstall {
     $SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)
-    if [ $? -ne 0 ] 
+    if [ $? -ne 0 ]
     then
         log "deployESXInstall: Installation hit an error on $TARGET"
         exit 2
@@ -138,14 +139,14 @@ function deployESXInstall {
 }
 
 function deployESXPost {
-    $SSH $TARGET $VMDK_OPSD status 
-    if [ $? -ne 0 ] 
+    $SSH $TARGET $VMDK_OPSD status
+    if [ $? -ne 0 ]
     then
         log "deployESXPost: Service is not running on $TARGET"
         exit 3
     fi
     $SSH $TARGET $SCHED_GRP list| $GREP vmdkops | $GREP python> /dev/null
-    if [ $? -ne 0 ] 
+    if [ $? -ne 0 ]
     then
         log "deployESXPost: Service is not configured on $TARGET"
         exit 4
@@ -161,7 +162,7 @@ function cleanesx {
     do
         log "Cleaning up on ESX $ip"
         TARGET=root@$ip
-        $SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service 
+        $SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service
         $SSH $TARGET $SCHED_GRP list \
             --group-path=host/vim/vimuser/cnastorage/ > /dev/null 2>&1
         if [ $? -eq 0 ];
@@ -226,7 +227,7 @@ function cleanupVM {
 function cleanupVMPost {
     $SSH $TARGET "$PIDOF $PLUGIN_NAME"
     if [ "$?" == "0" ]
-    then 
+    then
         log "cleanupVMPost: Service still running on $TARGET"
         exit 4
     fi
@@ -241,15 +242,15 @@ function usage {
    echo $1
    echo <<EOF
 deploy-tools.sh provideds a set of helpers for deploying $PLUGIN_NAME
-binaries to ESX and to guest VMs. 
+binaries to ESX and to guest VMs.
 
 Usage:  deploy-tools.sh command params...
 
-Comands and params are as follows: 
+Comands and params are as follows:
 deployesx "esx-ips"  "vib file"
 deployvm  "vm-ips"  "folder containig deb or rpm"
 deployvmtest "vm-ips" "folder containing test binaries" "folder containing scripts"
-cleanesx  "esx-ips" 
+cleanesx  "esx-ips"
 cleanvm   "vm_ips"  "test-volumes-to-clean"
 EOF
     exit 1
@@ -257,7 +258,7 @@ EOF
 
 # ============= "main" ===============
 #
-# Check params, and call the requested function 
+# Check params, and call the requested function
 
 
 # first param is always function name to invoke
@@ -268,7 +269,7 @@ IP_LIST=`echo $1 | xargs -n1 | sort -u | xargs` # dedup the IP list
 
 # check that all params are present:
 if [ -z "$FUNCTION_NAME" -o  -z "$IP_LIST" ]
-then 
+then
     usage "Missing parameters: need at least \"func-name ipaddr\""
 fi
 
@@ -276,8 +277,8 @@ case $FUNCTION_NAME in
 deployesx)
         SOURCE="$2"
         if [ -z "$SOURCE" ]
-        then 
-            usage "Missing params: folder hosting vib-name" ; 
+        then
+            usage "Missing params: folder hosting vib-name" ;
         fi
         deployesx
         ;;
@@ -287,7 +288,7 @@ cleanesx)
 deployvm)
         SOURCE="$2"
         if [ -z "$SOURCE" ]
-  then 
+  then
         usage "Missing params: folder"
   fi
         deployvm
@@ -296,7 +297,7 @@ deployvmtest)
         SOURCE="$2"
         SCRIPTS="$3"
         if [ -z "$SOURCE" -o -z "$SCRIPTS" ]
-        then 
+        then
             usage "Missing params: binary or scripts folder"
         fi
         deployvmtest
@@ -304,7 +305,7 @@ deployvmtest)
 cleanvm)
         VOLUMES="$2"
         if [ -z "$VOLUMES" ]
-        then 
+        then
             usage "Missing params: volume"
         fi
         cleanvm
