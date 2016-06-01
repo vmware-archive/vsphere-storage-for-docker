@@ -32,7 +32,7 @@
 #include "connection_errors.h"
 
 // operations status. 0 is OK
-typedef int be_sock_status;
+typedef VMCI_ConnectionError be_sock_status;
 
 //
 // Booking structure for opened VMCI / vSocket
@@ -134,7 +134,7 @@ dummy_init(be_sock_id *id, int cid, int port)
 {
    // printf connecting
    printf("dummy_init: connected.\n");
-   return 0;
+   return CONN_SUCCESS;
 }
 
 static void
@@ -151,7 +151,7 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
    a->buf = strdup("none");
    a->status = 0;
 
-   return 0;
+   return CONN_SUCCESS;
 }
 
 // vsocket interface implementation
@@ -184,7 +184,7 @@ vsock_init(be_sock_id *id, int cid, int port)
 
    if ((af = vsock_get_family()) == -1) {
       perror("Failed to get address family.");
-      return CONN_NO_VMCI_ADDRESS_FAMILY;
+      return CONN_FAILED_VMCI_ADDRESS_FAMILY_GET;
    }
    sock = socket(af, SOCK_STREAM, 0);
    if (sock == -1) {
@@ -200,13 +200,13 @@ vsock_init(be_sock_id *id, int cid, int port)
    id->addr.svm_cid = cid;
    id->addr.svm_port = port;
    ret = connect(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
-   if (ret == -1) {
+   if (ret != 0) {
       perror("Failed to connect");
       vsock_release(id);
       return CONN_FAILED_TO_CONNECT;
    }
 
-   return ret;
+   return CONN_SUCCESS;
 }
 
 //
@@ -278,7 +278,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
       return CONN_FAILED_CONTENT_RECIEVE;
    }
 
-   return 0;
+   return CONN_SUCCESS;
 }
 
 // release socket and vmci info
@@ -314,10 +314,10 @@ host_request(be_funcs *be, be_request* req, be_answer* ans, int cid, int port)
 
 //
 //
-// Entry point for vsocket requests
+// Entry point for vsocket requests. Returns NULL for success, or error message.
 // <ans> is allocated upstairs
 //
-be_sock_status
+const char*
 Vmci_GetReply(int port, const char* json_request, const char* be_name,
               be_answer* ans)
 {
@@ -325,11 +325,16 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
    be_funcs *be = get_backend(be_name);
 
    if (be == NULL) {
-      return CONN_BAD_BE_NAME;
+      return VMCI_ErrorStr(CONN_BAD_BE_NAME);
    }
 
    req.mlen = strnlen(json_request, MAXBUF) + 1;
    req.msg = json_request;
 
-   return host_request(be, &req, ans, ESX_VMCI_CID, port);
+   be_sock_status ret;
+   if ( (ret = host_request(be, &req, ans, ESX_VMCI_CID, port)) != CONN_SUCCESS) {
+      return VMCI_ErrorStr(ret);
+   }
+
+   return NULL;
 }

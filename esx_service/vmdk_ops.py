@@ -81,7 +81,7 @@ VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 # Defaults
 DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
 MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
-MAX_SKIP_COUNT = 100  # max retries on VMCI Get Ops failures
+MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 DEFAULT_DISK_SIZE = "100mb" # default volume size
 
 # Service instance provide from connection to local hostd

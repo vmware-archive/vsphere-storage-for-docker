@@ -13,23 +13,9 @@
 // limitations under the License.
 
 
-/*********************************************************
- * Copyright (C) 2007-2015 VMware, Inc. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation version 2.1 and no later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the Lesser GNU General Public
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA.
- *
- *********************************************************/
+/* **********************************************************
+ * Copyright (c) 2007-2015 VMware, Inc.  All rights reserved.
+ * **********************************************************/
 
 /*
  * vmci_sockets.h --
@@ -54,9 +40,7 @@
 #  if defined(__APPLE__)
 #    include <sys/socket.h>
 #    include <string.h>
-#  elif defined(__FreeBSD__)
-#     include <sys/socket.h>
-#  endif // __FreeBSD__
+#  endif // __APPLE__
 #endif // linux && !VMKERNEL
 #endif
 
@@ -398,9 +382,9 @@
  */
 
 struct sockaddr_vm {
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__)
    unsigned char svm_len;
-#endif // __APPLE__ || __FreeBSD__
+#endif // __APPLE__
 
    /** \brief Address family. \see VMCISock_GetAFValueFd() */
    sa_family_t svm_family;
@@ -852,19 +836,7 @@ struct uuid_2_cid {
       return io.u2c_context_id;
    }
 #  endif // __KERNEL__
-#elif defined(__FreeBSD__)
-   /*
-    * No FreeBSD support yet, but it might appear in the future. Just define
-    * some stubs that return errors - that way a client doesn't have to ifdef
-    * the calls (assuming it can handle the failures).
-    */
-#  define VMCISock_Version()                    VMCI_SOCKETS_INVALID_VERSION
-#  define VMCISock_GetAFValueFd(outFd)          (-1)
-#  define VMCISock_GetAFValue()                 VMCISock_GetAFValueFd(NULL)
-#  define VMCISock_ReleaseAFValueFd(fd)         do { } while (0)
-#  define VMCISock_GetLocalCID()                VMADDR_CID_ANY
-#  define VMCISock_Uuid2ContextId(uuidString)   VMADDR_CID_ANY
-#endif // __FreeBSD__
+#endif // linux && !VMKERNEL
 #endif // _WIN32
 
 

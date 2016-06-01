@@ -33,6 +33,7 @@
 #include <stdint.h>
 
 #include "vmci_sockets.h"
+#include "connection_errors.h"
 
 #define MAGIC 0xbadbeef
 
@@ -68,7 +69,7 @@ vmci_init(void)
    af = vsock_get_family();
    if (af == -1) {
       fprintf(stderr, "Failed to get address family.\n");
-      return -1;
+      return CONN_FAILED_VMCI_ADDRESS_FAMILY_GET;
    }
 
    /*
@@ -78,7 +79,7 @@ vmci_init(void)
    s = socket(af, SOCK_STREAM, 0);
    if (s == -1) {
       perror("Failed to open socket");
-      return -1;
+      return CONN_FAILED_VSOCKET_OPEN;
    }
 
    /*
@@ -95,7 +96,7 @@ vmci_init(void)
    if (ret == -1) {
       perror("Failed to bind socket");
       close(s);
-      return -1;
+      return CONN_FAILED_VSOCKET_BIND;
    }
 
    /*
@@ -108,7 +109,7 @@ vmci_init(void)
    if (ret == -1) {
       perror("Failed to get socket address");
       close(s);
-      return -1;
+      return CONN_FAILED_SOCKADDR_GET;
    }
 
    /*
@@ -141,7 +142,7 @@ vmci_get_one_op(const int s,    // socket to listen on
 
    if (af == -1)  {
       fprintf(stderr, "Internal error - FAMILY (af) value is not set\n");
-      return -1;
+      return CONN_FAILED_VMCI_ADDRESS_FAMILY_MISSING;
    }
    /*
     * listen for client connections.
@@ -149,14 +150,14 @@ vmci_get_one_op(const int s,    // socket to listen on
    ret = listen(s, 1);
    if (ret == -1) {
       perror("Failed to listen on socket");
-      return -1;
+      return CONN_FAILED_VSOCKET_LISTEN;
    }
 
    addrLen = sizeof addr;
    c = accept(s, (struct sockaddr *) &addr, &addrLen);
    if (c == -1) {
       perror("Failed to accept connection");
-      return -1;
+      return CONN_FAILED_VSOCKET_ACCEPT;
    }
 
    // get VMID. We really get CartelID for VM, but it will make do
@@ -179,7 +180,7 @@ vmci_get_one_op(const int s,    // socket to listen on
       fprintf(stderr, "Failed to receive magic: ret %d (%s) got 0x%x (expected 0x%x)\n",
                ret, strerror(errno), b, MAGIC);
       close(c);
-      return -1;
+      return CONN_FAILED_MAGIC_RECIEVE;
    }
 
    // length:
@@ -189,14 +190,14 @@ vmci_get_one_op(const int s,    // socket to listen on
       fprintf(stderr, "Failed to receive len: ret %d (%s) got %d\n",
                ret, strerror(errno), b);
       close(c);
-      return -1;
+      return CONN_FAILED_LEN_RECEIVE;
    }
 
    if (b > bsize) {
       // passed in buffer too small !
       printf("Query is too large, can't handle: %d (max %d)\n", b, bsize);
       close(c);
-      return -1;
+      return CONN_BUF_TOO_SMALL;
    }
 
    memset(buf, 0, b);
@@ -205,14 +206,14 @@ vmci_get_one_op(const int s,    // socket to listen on
       fprintf(stderr, "Failed to receive content: ret %d (%s) expected %d\n",
              ret, strerror(errno), b);
       close(c);
-      return -1;
+      return CONN_FAILED_CONTENT_RECIEVE;
    }
    // protocol sanity check
    if (strlen(buf) + 1 != b) {
       fprintf(stderr, "Protocol error: len mismatch, expected %d, got %d\n",
                strlen(buf), b);
       close(c);
-      return -1;
+      return CONN_LEN_MISMATCH;
    }
 
    return c;
@@ -244,7 +245,7 @@ vmci_reply(const int c,      // socket to use
       fprintf(stderr, "%s: ret %d (%s) expected size %d\n",
                reply, ret, strerror(errno), sizeof(b));
       close(c);
-      return -1;
+      return CONN_FAILED_MAGIC_SEND;
    }
 
    b = strlen(reply) + 1; // send the string and trailing \0
@@ -254,7 +255,7 @@ vmci_reply(const int c,      // socket to use
       fprintf(stderr, "%s: ret %d (%s) expected size %d\n",
                reply, ret, strerror(errno), sizeof(b));
       close(c);
-      return -1;
+      return CONN_FAILED_LEN_SEND;
    }
 
    ret = send(c, reply, b, 0);
@@ -262,11 +263,11 @@ vmci_reply(const int c,      // socket to use
       fprintf(stderr, "Failed to send content: ret %d (%s) expected size %d\n",
                ret, strerror(errno), b);
       close(c);
-      return -1;
+      return CONN_FAILED_CONTENT_SEND;
    }
 
    close(c);
-   return 0;
+   return CONN_SUCCESS;
 }
 
 void

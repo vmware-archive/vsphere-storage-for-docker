@@ -28,8 +28,8 @@ import (
 )
 
 /*
-#include "vmci/connection_errors.h"
-#include "vmci/vmci_client.c"
+#cgo CFLAGS: -I ../../esx_service/vmci
+#include "vmci_client.c"
 */
 import "C"
 
@@ -84,10 +84,11 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	// connect, send command, get reply, disconnect - all in one shot
 	ret := C.Vmci_GetReply(C.int(vmciEsxPort), cmdS, beS, ans)
 
-	if ret != 0 {
-		msg := "Failed to connect to ESX over vsocket"
+	if ret != nil {
+		msg := fmt.Sprintf("Failed to communicate with ESX (%v)",
+			C.GoString(ret))
 		// TODO: per-errcode msg, when vmci_client.c err return is fixed. Issue #206
-		log.Warnf("%s (return %d)", msg, ret)
+		log.Warnf(msg)
 		return nil, errors.New(msg)
 	}
 	response := []byte(C.GoString(ans.buf))

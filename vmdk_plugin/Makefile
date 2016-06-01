@@ -63,6 +63,7 @@ UPSTART_INIT := $(PACKAGE)/etc/init/
 
 # esx service for docker volume ops
 ESX_SRC     := ../esx_service
+VMCI_SRC    := $(ESX_SRC)/vmci/*.[ch]
 
 #  binaries location
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
@@ -81,7 +82,7 @@ FPM := fpm
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
 VMDKOPS_MODULE := vmdkops
-VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMDKOPS_MODULE)/vmci/*.[ch]
+VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
 SRC = plugin.go main.go log_formatter.go refcnt.go \
