@@ -63,7 +63,7 @@ UPSTART_INIT := $(PACKAGE)/etc/init/
 
 # esx service for docker volume ops
 ESX_SRC     := ../esx_service
-VMCI_SRC    := $(ESX_SRC)/vmci/*.[ch]
+VMCI_SRC    := $(ESX_SRC)/vmci/*.h $(ESX_SRC)/vmci/vmci_client.c
 
 #  binaries location
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)

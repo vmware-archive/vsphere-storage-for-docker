@@ -20,7 +20,6 @@
 //
 // API: Exposes only Vmci_GetReply. The call is blocking.
 //
-// TODO: Clean up error handing. Issue #206
 //
 
 #include <stdio.h>
@@ -29,10 +28,10 @@
 #include <stdint.h>
 
 #include "vmci_sockets.h"
-#include "connection_errors.h"
+#include "connection_types.h"
 
 // operations status. 0 is OK
-typedef VMCI_ConnectionError be_sock_status;
+typedef int be_sock_status;
 
 //
 // Booking structure for opened VMCI / vSocket
@@ -45,7 +44,7 @@ typedef struct {
 //
 // Protocol message structure: request and reply
 //
-#define MAGIC 0xbadbeef
+
 typedef struct be_request {
    uint32_t mlen;   // length of message (including trailing \0)
    const char *msg; // null-terminated immutable JSON string.
@@ -54,7 +53,6 @@ typedef struct be_request {
 #define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
 
 typedef struct be_answer {
-   int status;  // TODO: OK, parse error, access denied, etc.... Issue #206
    char *buf;   // calloced, so needs to be free()
 } be_answer;
 
@@ -149,7 +147,6 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
    printf("dummy_get_reply: got request %s.\n", r->msg);
    printf("dummy_get_reply: replying empty (for now).\n");
    a->buf = strdup("none");
-   a->status = 0;
 
    return CONN_SUCCESS;
 }
@@ -157,24 +154,10 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
 // vsocket interface implementation
 //---------------------------------
 
-// Get socket family for VMCI. Returns -1 on failure
-// Actually opens and keep FD to /dev/vsock to indicate
-// to the kernel that VMCI driver is used by this process.
-// Need to be inited once.
-// Can be released explicitly on exit, or left as is and process completion
-// will clean it up
-static int
-vsock_get_family(void)
-{
-   static int af = -1;
 
-   if (af == -1) { // TODO: for multi-thread will need a lock. Issue #35
-      af = VMCISock_GetAFValue();
-   }
-   return af;
-}
 
 // Create and connect VMCI socket.
+// return CONN_SUCCESS (0) or CONN_FAILURE (-1)
 static be_sock_status
 vsock_init(be_sock_id *id, int cid, int port)
 {
@@ -183,13 +166,11 @@ vsock_init(be_sock_id *id, int cid, int port)
    int sock;     // socket id
 
    if ((af = vsock_get_family()) == -1) {
-      perror("Failed to get address family.");
-      return CONN_FAILED_VMCI_ADDRESS_FAMILY_GET;
+      return CONN_FAILURE;
    }
    sock = socket(af, SOCK_STREAM, 0);
    if (sock == -1) {
-      perror("Failed to open socket");
-      return CONN_FAILED_VSOCKET_OPEN;
+      return CONN_FAILURE;
    }
 
    id->sock_id = sock;
@@ -201,9 +182,10 @@ vsock_init(be_sock_id *id, int cid, int port)
    id->addr.svm_port = port;
    ret = connect(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
    if (ret != 0) {
-      perror("Failed to connect");
+      int old_errno = errno;
       vsock_release(id);
-      return CONN_FAILED_TO_CONNECT;
+      errno = old_errno;
+      return CONN_FAILURE;
    }
 
    return CONN_SUCCESS;
@@ -226,23 +208,17 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    b = MAGIC;
    ret = send(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
-      fprintf(stderr, "Failed to send magic: ret %d (%s) expected ret %lu\n",
-               ret, strerror(errno), sizeof b);
-      return CONN_FAILED_MAGIC_SEND;
+      return CONN_FAILURE;
    }
 
    ret = send(s->sock_id, &r->mlen, sizeof r->mlen, 0);
    if (ret == -1 || ret != sizeof r->mlen) {
-      fprintf(stderr, "Failed to send len: ret %d (%s) expected ret %lu\n",
-               ret, strerror(errno), sizeof r->mlen);
-      return CONN_FAILED_LEN_SEND;
+      return CONN_FAILURE;
    }
 
    ret = send(s->sock_id, r->msg, r->mlen, 0);
    if (ret == -1 || ret != r->mlen) {
-      fprintf(stderr, "Failed to send content: ret %d (%s) expected ret %d\n",
-               ret, strerror(errno), r->mlen);
-      return CONN_FAILED_CONTENT_SEND;
+      return CONN_FAILURE;
    }
 
    // Now get the reply (blocking, wait on ESX-side execution):
@@ -250,10 +226,13 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    // MAGIC:
    b = 0;
    ret = recv(s->sock_id, &b, sizeof b, 0);
-   if (ret == -1 || ret != sizeof b || b != MAGIC) {
-      fprintf(stderr, "Failed to receive magic: ret %d (%s) got 0x%x magic 0x%x\n",
-               ret, strerror(errno), b, MAGIC);
-      return CONN_FAILED_MAGIC_RECIEVE;
+   if (ret == -1 || ret != sizeof b ) {
+      return CONN_FAILURE;
+   }
+   if (b != MAGIC) {
+      fprintf(stderr, "Wrong magic: got 0x%x expected 0x%x\n", b, MAGIC);
+      errno = EBADMSG;
+      return CONN_FAILURE;
    }
 
    // length
@@ -261,21 +240,18 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
       fprintf(stderr, "Failed to receive len: ret %d (%s)\n", ret, strerror(errno));
-      return CONN_FAILED_LEN_RECEIVE;
+      return CONN_FAILURE;
    }
 
    a->buf = calloc(1, b);
    if (!a->buf) {
-      fprintf(stderr, "Memory allocation failure: request for %d bytes failed\n", b);
-      return CONN_MALLOC_FAILED;
+      return CONN_FAILURE;
    }
 
    ret = recv(s->sock_id, a->buf, b, 0);
    if (ret == -1 || ret != b) {
-      fprintf(stderr, "Failed to receive msg: ret %d (%s) expected ret %d\n",
-               ret, strerror(errno), b);
       free(a->buf);
-      return CONN_FAILED_CONTENT_RECIEVE;
+      return CONN_FAILURE;
    }
 
    return CONN_SUCCESS;
@@ -314,10 +290,11 @@ host_request(be_funcs *be, be_request* req, be_answer* ans, int cid, int port)
 
 //
 //
-// Entry point for vsocket requests. Returns NULL for success, or error message.
+// Entry point for vsocket requests.
+// Returns NULL for success, -1 for err, and sets errno if needed
 // <ans> is allocated upstairs
 //
-const char*
+const be_sock_status
 Vmci_GetReply(int port, const char* json_request, const char* be_name,
               be_answer* ans)
 {
@@ -325,16 +302,12 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
    be_funcs *be = get_backend(be_name);
 
    if (be == NULL) {
-      return VMCI_ErrorStr(CONN_BAD_BE_NAME);
+      errno = ENXIO; // reusing "no such device or adress" for wrong BE name
+      return CONN_FAILURE;
    }
 
    req.mlen = strnlen(json_request, MAXBUF) + 1;
    req.msg = json_request;
 
-   be_sock_status ret;
-   if ( (ret = host_request(be, &req, ans, ESX_VMCI_CID, port)) != CONN_SUCCESS) {
-      return VMCI_ErrorStr(ret);
-   }
-
-   return NULL;
+   return host_request(be, &req, ans, ESX_VMCI_CID, port);
 }

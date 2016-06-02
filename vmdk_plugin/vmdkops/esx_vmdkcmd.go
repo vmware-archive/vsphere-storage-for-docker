@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"syscall"
 	"unsafe"
 )
 
@@ -82,12 +83,15 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	defer C.free(unsafe.Pointer(ans))
 
 	// connect, send command, get reply, disconnect - all in one shot
-	ret := C.Vmci_GetReply(C.int(vmciEsxPort), cmdS, beS, ans)
+	_, err = C.Vmci_GetReply(C.int(vmciEsxPort), cmdS, beS, ans)
 
-	if ret != nil {
-		msg := fmt.Sprintf("Failed to communicate with ESX (%v)",
-			C.GoString(ret))
-		// TODO: per-errcode msg, when vmci_client.c err return is fixed. Issue #206
+	if err != nil {
+		var errno syscall.Errno
+		errno = err.(syscall.Errno)
+		msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
+		if errno == syscall.ECONNRESET {
+			msg += " Check that ESX service is running."
+		}
 		log.Warnf(msg)
 		return nil, errors.New(msg)
 	}
