@@ -45,12 +45,13 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     def setUp(self):
         self.name = vmdk_ops.getVmdkName(path, self.volName)
         self.policy_names = ['good', 'impossible']
-        policy_content = ('(("proportionalCapacity" i50) '
-                          '("hostFailuresToTolerate" i0))')
+        self.orig_policy_content = '(("hostFailuresToTolerate" i1))'
+        self.new_policy_conent = '(("hostFailuresToTolerate" i0))'
         for n in self.policy_names:
-            vsan_policy.create(n, policy_content)
+            vsan_policy.create(n, self.orig_policy_content)
 
     def tearDown(self):
+        vmdk_ops.removeVMDK(self.name)
         self.vmdk = None
         for n in self.policy_names:
             vsan_policy.delete(n)
@@ -80,6 +81,30 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         err = vmdk_ops.removeVMDK(self.name)
         logging.info(err)
         self.assertNotEqual(err, None, err)
+
+
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                    "VSAN is not found - skipping vsan_info tests")
+    def testPolicyUpdate(self):
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts={'vsan-policy-name': 'good'})
+        self.assertEqual(err, None, err)
+        self.assertEqual(None, vsan_policy.update('good',
+                                                  self.new_policy_conent))
+        # Setting an identical policy returns an error msg
+        self.assertNotEqual(None, vsan_policy.update('good',
+                                                     self.new_policy_conent))
+
+        backup_policy_file = vsan_policy.backup_policy_filename(self.name)
+        #Ensure there is no backup policy file
+        self.assertFalse(os.path.isfile(backup_policy_file))
+
+        # Fail to update because of a bad policy, and ensure there is no backup
+        self.assertNotEqual(None, vsan_policy.update('good', 'blah'))
+        self.assertFalse(os.path.isfile(backup_policy_file))
+
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")

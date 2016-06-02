@@ -17,8 +17,10 @@
 
 import os
 import logging
+import shutil
 import vmdk_utils
 import volume_kv as kv
+import vsan_info
 
 ERROR_NO_VSAN_DATASTORE = 'Error: VSAN datastore does not exist'
 
@@ -42,6 +44,119 @@ def create(name, content):
         return 'Error: Invalid policy string'
 
     return create_policy_file(filename, content)
+
+
+def update(name, content):
+    """
+    Update the content of an existing VSAN policy in the VSAN datastore.
+    Update the policy content in each VSAN object currently using the policy. If
+    a VSAN policy of the given name does not exist return an error string.
+    Return None on success.
+    """
+    path = policy_path(name)
+    if not path:
+        return ERROR_NO_VSAN_DATASTORE
+
+    err = update_policy_file_content(path, content)
+    if err:
+        return err
+
+    return update_vsan_objects_with_policy(name, content)
+
+
+def update_policy_file_content(path, content):
+    """
+    Update the VSAN policy file content. Return an error msg or None on success.
+    """
+    try:
+        with open(path) as f:
+            existing_content = f.read()
+    except OSError as e:
+        if not os.path.isfile(path):
+            return 'Error: Policy {0} does not exist'.format(
+                    os.path.basename(path))
+        else:
+            return 'Error opening existing policy file {0}: {1}'.format(path, e)
+
+    if existing_content.strip() == content.strip():
+            return 'Error: New policy is identical to old policy. Ignoring.'
+
+    # Create a temporary file so we don't corrupt an existing policy file
+    tmpfile = '{0}.tmp'.format(path)
+    err = create_policy_file(tmpfile, content)
+    if err:
+        return err
+
+    # Copy the original policy file to a backup file (.old)
+    # The backup will be maintained in case the policy content is invalid, when
+    # attempting to apply it to existing volumes.
+    # Do an atomic rename of the tmpfile to the real policy file name
+    try:
+        shutil.copy(path, backup_policy_filename(path))
+        os.rename(tmpfile, path)
+    except OSError:
+        print ('Internal Error: Failed to update policy file contents: '
+                '{0}').format(path)
+        raise
+
+    return None
+
+
+def update_vsan_objects_with_policy(name, content):
+    """
+    Find all VSAN objects using the policy given by `name` and update the policy
+    contents in their objects. Returns an error string containing the list of
+    volumes that failed to update, or a msg if there were no volumes to update.
+    Returns None if all volumes were updated successfully.
+
+    Note: This function assumes datastore_path exists.
+    """
+    update_count = 0
+    failed_updates = []
+    dockvols_path = vmdk_utils.get_vsan_dockvols_path()
+    print "This operation may take a while. Please be patient."
+    for v in list_volumes_and_policies():
+        if v['policy'] == name:
+            volume_name = v['volume']
+            vmdk_path = os.path.join(dockvols_path, volume_name)
+            if vsan_info.set_policy(vmdk_path, content):
+                update_count = 1
+            else:
+                failed_updates.append(volume_name)
+
+    if len(failed_updates) != 0:
+        if update_count == 0:
+            # All volumes failed to update, so reset the original policy
+            os.rename(policy_path(backup_policy_filename(name)),
+                      policy_path(name))
+        else:
+            log_failed_updates(failed_updates, name)
+
+        return ('Successfully updated {0} volumes.\n'
+                'Failed to update volumes: {0}').format(update_count,
+                                                        failed_updates)
+
+    # Remove old policy file on success
+    os.remove(policy_path(backup_policy_filename(name)))
+    return None
+
+def backup_policy_filename(name):
+    """ Generate a .old file from a policy name or path """
+    return '{0}.old'.format(name)
+
+def log_failed_updates(volumes, policy_name):
+    """
+    During policy update, some volumes may fail to have their VSAN policies
+    updated. We create a file containing these volumes for debugging purposes.
+    """
+    filename = policy_path('{0}.failed_volume_updates'.format(policy_name))
+    try:
+        with open(filename, 'w') as f:
+            f.write(volumes)
+            f.write('\n')
+    except:
+        print ("Failed to save volume names that failed to update to file."
+                "Please record them for future use.")
 
 
 def make_policies_dir(datastore_path):
@@ -68,8 +183,11 @@ def create_policy_file(filename, content):
             f.write(content)
             f.write('\n')
     except:
-        logging.exception("Failed to open %s for writing", filename)
-        return 'Error: Failed to open {0} for writing'.format(filename)
+        msg = 'Error: Failed to open {0} for writing'.format(filename)
+        logging.exception(msg)
+        if os.path.isfile(filename):
+            os.remove(filename)
+        return msg
 
     return None
 
@@ -122,9 +240,11 @@ def list_volumes_and_policies():
         vmdks_and_policies.append({'volume': vmdk, 'policy': policy})
     return vmdks_and_policies
 
+
 def policy_exists(name):
     """ Check if the policy file exists """
     return os.path.isfile(policy_path(name))
+
 
 def policy_path(name):
     """
@@ -143,7 +263,6 @@ def kv_get_vsan_policy_name(path):
     Take a path for a vmdk and return a policy name if it exists or None if it
     doesn't
     """
-
     try:
         return kv.getAll(path)[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
     except:

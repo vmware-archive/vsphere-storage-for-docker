@@ -53,13 +53,15 @@ vmdkops-admin ls -f 'AttachedTo = Test*'
 ```
 
 ##### `policy`
-Create, configure and show the storage policy names and their corresponding vsan policies. Also show which datastores they
-apply to.
+Create, configure and show the VSAN policy names and their corresponding VSAN policies. Also show whether or not they are in use.
+
 
 Examples:
  * `vmdkops-admin policy create --name=myPolicy --content="string"` - Create a new policy
  * `vmdkops-admin policy rm myPolicy` - Remove the given policy
  * `vmdkops-admin policy ls` - List policies and the Volumes that are using that policy.
+ * `vmdkops-admin policy update --name=myPolicy --content="string"` - Update an existing VSAN policy and
+   any volumes currently using that policy
 
 Note that on volume creation from docker, a policy name will be passed with a `-o` option.
 

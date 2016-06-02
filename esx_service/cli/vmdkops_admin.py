@@ -151,6 +151,21 @@ def commands():
                     'func': policy_ls,
                     'help':
                     'List storage policies and volumes using those policies'
+                },
+                'update': {
+                    'func': policy_update,
+                    'help': ('Update the definition of a storage policy and all'
+                              'VSAN objects using that policy'),
+                    'args': {
+                        '--name': {
+                            'help': 'The name of the policy',
+                            'required': True
+                        },
+                        '--content': {
+                            'help': 'The VSAN policy string',
+                            'required': True
+                        }
+                    }
                 }
             }
         },
@@ -484,6 +499,14 @@ def policy_ls(args):
         rows.append([name, content.strip(), active])
 
     print cli_table.create(header, rows)
+
+
+def policy_update(args):
+    output = vsan_policy.update(args.name, args.content)
+    if output:
+        print output
+    else:
+        print 'Successfully updated policy: {0}'.format(args.name)
 
 
 NOT_IMPLEMENTED = "Not implemented"
