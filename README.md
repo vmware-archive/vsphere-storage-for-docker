@@ -3,6 +3,8 @@
 Docker Volume Driver for vSphere
 ================================
 
+[![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This repo hosts the Docker Volume Driver for vSphere. Docker Volume Driver enables customers to address persistent storage requirements for Docker containers in vSphere environments. This plugin is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS) to address persistency requirements of containerized cloud native apps using Docker Ecosystem. 
 
 To read more about code development and testing read
