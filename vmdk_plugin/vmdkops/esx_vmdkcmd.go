@@ -38,7 +38,6 @@ import "C"
 type EsxVmdkCmd struct{}
 
 const (
-	vmciEsxPort     int    = 15000 // port we are connecting on
 	commBackendName string = "vsocket"
 )
 
@@ -57,6 +56,8 @@ type VolumeInfo struct {
 type vmciError struct {
 	Error string `json:",omitempty"`
 }
+
+var EsxPort int
 
 // Run command Guest VM requests on ESX via vmdkops_serv.py listening on vSocket
 // *
@@ -83,7 +84,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	defer C.free(unsafe.Pointer(ans))
 
 	// connect, send command, get reply, disconnect - all in one shot
-	_, err = C.Vmci_GetReply(C.int(vmciEsxPort), cmdS, beS, ans)
+	_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
 
 	if err != nil {
 		var errno syscall.Errno

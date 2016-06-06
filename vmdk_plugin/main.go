@@ -24,6 +24,7 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -90,17 +91,19 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 // Parses flags, inits mount refcounters and finally services Docker requests
 func main() {
 	// connect to this socket
-	port := flag.Int("port", 15000, "Default port for vmci")
+	port := flag.Int("port", 1019, "Default port for vmci")
 	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
 	logLevel := flag.String("log_level", "debug", "Logging Level")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 	flag.Parse()
 
+	vmdkops.EsxPort = *port
+
 	logInit(logLevel, nil, configFile)
 
 	log.WithFields(log.Fields{
 		"version":   version,
-		"port":      *port,
+		"port":      vmdkops.EsxPort,
 		"mock_esx":  *useMockEsx,
 		"log_level": *logLevel,
 		"config":    *configFile,
