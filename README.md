@@ -125,9 +125,10 @@ Guest Operating System:
 
 ## Contact us
 
-Please let us know what you think! Contact us at
-
+### Public
 * [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
-* [Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
 * [Telegram] (https://telegram.me/cnastorage)
 * [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
+
+### Internal
+* [VMware Internal Slack] (https://vmware.slack.com/archives/docker-volume-vsphere) 
