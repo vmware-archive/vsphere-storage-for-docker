@@ -38,7 +38,7 @@
 // Returns vSocket to listen on, or -1.
 // errno indicates the reason for a failure, if any.
 int
-vmci_init(void)
+vmci_init(unsigned int port)
 {
    struct sockaddr_vm addr;
    socklen_t addrLen;
@@ -70,7 +70,7 @@ vmci_init(void)
    memset(&addr, 0, sizeof addr);
    addr.svm_family = af;
    addr.svm_cid = VMADDR_CID_ANY;
-   addr.svm_port = 15000;
+   addr.svm_port = port;
    ret = bind(socket_fd, (const struct sockaddr *) &addr, sizeof addr);
    if (ret == -1) {
       saved_errno = errno;

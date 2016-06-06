@@ -18,8 +18,6 @@ OPSD_GROUP_NAME="vmdkops"
 OPSD_GROUP="$OPSD_GROUP_PATH/$OPSD_GROUP_NAME"
 OPSD_SCHED_PARAM="++memreliable,group=$OPSD_GROUP"
 
-# Pass these params to service.
-OPSD_PARAMS="--log-level=info"
 
 LOCAL_CLI_SCHED="localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group"
 
@@ -29,6 +27,14 @@ MAX_RETRY=10
 MAX_QUICK_FAILURES=5
 SIGTERM=15
 SIGKILL=9
+
+# Config
+VMDK_OPSD_PORT=1019 # Override using CONFIG_FILE
+
+# Create the following file if defaults need to be overridden
+# Example:
+# export VMDK_OPSD_PORT=1020
+CONFIG_FILE=/etc/vmware/vmdkops/service_config.sh
 
 # The numbers below are to setup the framework for
 # resource limits but not setting them up. -1 is unlimited
@@ -47,6 +53,12 @@ getpid() {
 }
 
 start() {
+   if [ -f $CONFIG_FILE ]
+   then
+      echo "Loading $CONFIG_FILE"
+      . $CONFIG_FILE
+   fi
+
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
       echo "Failed to start. $OPSD_TAG already running."
@@ -64,6 +76,9 @@ start() {
       fi
    fi
 
+
+   # Pass these params to service.
+   OPSD_PARAMS="-p $VMDK_OPSD_PORT"
 
    ${LOCAL_CLI_SCHED} setmemconfig -g ${OPSD_GROUP} --min=${MINMEM} --max=${MAXMEM} --minlimit=${MINLIMIT} -u mb
    ${LOCAL_CLI_SCHED} setcpuconfig -g ${OPSD_GROUP} --min=${MINCPU} --max=${MAXCPU} -u pct
@@ -111,13 +126,13 @@ stop() {
          check_running_status
          exit 4
       fi
-   fi 
+   fi
 
    check_running_status
    if [ $? -eq 0 ]; then
       echo "Failed to stop $OPSD_TAG"
       exit 5
-   fi 
+   fi
    return 0
 }
 

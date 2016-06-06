@@ -30,18 +30,18 @@ Commands ("cmd" in request):
 
 '''
 
-from ctypes import *
+import atexit
+import getopt
 import json
+import logging
 import os
 import os.path
-import subprocess
-import atexit
-import time
-import logging
-import signal
-import sys
 import re
+import signal
+import subprocess
+import sys
 import time
+from ctypes import *
 
 from vmware import vsi
 
@@ -652,7 +652,7 @@ def signal_handler_stop(signalnum, frame):
 
 
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
-def handleVmciRequests():
+def handleVmciRequests(port):
     VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
     # Load and use DLL with vsocket shim to listen for docker requests
     lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
@@ -661,7 +661,7 @@ def handleVmciRequests():
     txt = create_string_buffer(bsize)
 
     cartel = c_int32()
-    sock = lib.vmci_init()
+    sock = lib.vmci_init(c_uint(port))
     if sock == VMCI_ERROR:
         errno = get_errno()
         raise OSError("Failed to initialize vSocket listener: %s (errno=%d)" \
@@ -715,18 +715,33 @@ def handleVmciRequests():
 
     lib.close(sock)  # close listening socket when the loop is over
 
+def usage():
+    print "Usage: %s -p <vSocket Port to listen on>" % sys.argv[0]
 
 def main():
     log_config.configure()
-    logging.info("=== Starting vmdkops service ===")
-
+    logging.info("=== Starting vmdkops service ====")
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
+    try:
+        port=1019
+        opts, args = getopt.getopt(sys.argv[1:], 'hp:')
+    except getopt.error, msg:
+        if msg:
+            print >> sys.stderr, msg
+        usage()
+        return(1)
+    for a,v in opts:
+        if a == '-p':
+            port=int(v)
+        if a == '-h':
+            usage()
+            return(0)
 
     try:
         kv.init()
         connectLocal()
-        handleVmciRequests()
+        handleVmciRequests(port)
     except Exception, e:
         logging.exception(e)
 
