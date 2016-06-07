@@ -17,7 +17,7 @@
 # A simple test to validate refcounts.
 
 # Creates $count running containers using a VMDK volume, checks refcount
-# by grepping the log (assumes DEBUG log level), touches files within and
+# by grepping the log, touches files within and
 # checks the files are all there, Then removes the containers and the volume
 #
 # *** Caveat: at exit, it kills all containers and cleans all volumes on the box !

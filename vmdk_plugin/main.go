@@ -93,7 +93,7 @@ func main() {
 	// connect to this socket
 	port := flag.Int("port", 1019, "Default port for vmci")
 	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
-	logLevel := flag.String("log_level", "debug", "Logging Level")
+	logLevel := flag.String("log_level", "info", "Logging Level")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 	flag.Parse()
 

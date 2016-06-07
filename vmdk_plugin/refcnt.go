@@ -149,11 +149,9 @@ func (r refCountsMap) Init(d *vmdkDriver) {
 	}
 
 	log.Infof("Discovered %d volumes in use.", len(r))
-	if log.GetLevel() == log.DebugLevel {
-		for name, cnt := range r {
-			log.Debugf("Volume name=%s count=%d mounted=%t device='%s'",
-				name, cnt.count, cnt.mounted, cnt.dev)
-		}
+	for name, cnt := range r {
+		log.Infof("Volume name=%s count=%d mounted=%t device='%s'",
+			name, cnt.count, cnt.mounted, cnt.dev)
 	}
 }
 
