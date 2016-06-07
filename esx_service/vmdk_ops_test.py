@@ -161,13 +161,13 @@ if __name__ == '__main__':
     volume_kv.init()
 
     # Calculate the path
-    paths = glob.glob("/vmfs/volumes/[a-z]*/dockvols")
+    paths = glob.glob("/vmfs/volumes/[a-zA-Z]*/dockvols")
     if paths:
         # WARNING: for many datastores with dockvols, this picks up the first
         path = paths[0]
     else:
         # create dir in a datastore (just pick first datastore if needed)
-        path = glob.glob("/vmfs/volumes/[a-z]*")[0] + "/dockvols"
+        path = glob.glob("/vmfs/volumes/[a-zA-Z]*")[0] + "/dockvols"
         logging.debug("Directory does not exist - creating %s", path)
         os.makedirs(path)
 
