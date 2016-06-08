@@ -173,6 +173,7 @@ def load(volpath):
     try:
         fh = open(metaFile, "r+")
     except IOError:
+        logging.exception("Failed to open %s", metaFile);
         return None
 
     kvDict = json.load(fh)
@@ -189,6 +190,7 @@ def save(volpath, kvDict):
     try:
         fh = open(metaFile, "w+")
     except IOError:
+        logging.exception("Failed to open %s", metaFile);
         return False
 
     json.dump(kvDict, fh)

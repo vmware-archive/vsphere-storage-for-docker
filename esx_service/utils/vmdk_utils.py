@@ -94,7 +94,7 @@ def vmdk_is_a_descriptor(filepath):
                 line = f.readline()
                 return line.startswith('# Disk DescriptorFile')
         except:
-            logging.warning("Failed to open %s for descriptor check", filepath)
+            logging.exception("Failed to open %s for descriptor check", filepath)
 
     return False
 
