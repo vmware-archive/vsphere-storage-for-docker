@@ -16,6 +16,7 @@
 # Module for VSAN storage policy creation and configuration
 
 import os
+import logging
 import vmdk_utils
 import volume_kv as kv
 
