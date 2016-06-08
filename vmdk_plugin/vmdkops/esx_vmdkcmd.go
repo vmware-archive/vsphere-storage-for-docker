@@ -57,6 +57,7 @@ type vmciError struct {
 	Error string `json:",omitempty"`
 }
 
+// EsxPort used to connect to ESX, passed in as command line param
 var EsxPort int
 
 // Run command Guest VM requests on ESX via vmdkops_serv.py listening on vSocket

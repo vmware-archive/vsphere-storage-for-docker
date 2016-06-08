@@ -16,6 +16,7 @@
 # Module for VSAN storage policy creation and configuration
 
 import os
+import logging
 import vmdk_utils
 import volume_kv as kv
 
@@ -67,6 +68,7 @@ def create_policy_file(filename, content):
             f.write(content)
             f.write('\n')
     except:
+        logging.exception("Failed to open %s for writing", filename)
         return 'Error: Failed to open {0} for writing'.format(filename)
 
     return None
@@ -87,6 +89,7 @@ def delete(name):
     try:
         os.remove(policy_path(name))
     except:
+        logging.exception("Failed to remove %s policy file", name)
         return 'Error: {0} does not exist'.format(name)
 
     return None
