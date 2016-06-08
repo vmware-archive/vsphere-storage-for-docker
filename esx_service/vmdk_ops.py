@@ -309,6 +309,7 @@ def find_child(vm_name):
     try:
         vm = FindChild(GetVmFolder(), vm_name)
     except Exception as e:
+        logging.exception("Failed to find vm: %s", vm_name) 
         vm = None
     return vm, e
 
