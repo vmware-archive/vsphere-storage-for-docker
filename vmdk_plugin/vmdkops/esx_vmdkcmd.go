@@ -92,7 +92,8 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		errno = err.(syscall.Errno)
 		msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
 		if errno == syscall.ECONNRESET {
-			msg += " Check that ESX service is running."
+			msg += " Hit communication issue with ESX (vmci or ESX service)\n"
+			msg += " Please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
 		}
 		log.Warnf(msg)
 		return nil, errors.New(msg)
