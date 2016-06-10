@@ -40,6 +40,7 @@ import re
 import signal
 import subprocess
 import sys
+import threading
 import time
 from ctypes import *
 
@@ -702,6 +703,7 @@ def handleVmciRequests(port):
         else:
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else {}
+            threading.currentThread().setName(vm_name)
             ret = executeRequest(vm_name, cfg_path, req["cmd"],
                                  details["Name"], opts)
             logging.info("executeRequest '%s' completed with ret=%s",

@@ -51,7 +51,7 @@ LOG_CONFIG_DEFAULT = {
     "formatters": {
         "standard": {
             "format":
-            "%(asctime)-12s %(process)d [%(levelname)-7s] %(message)s",
+            "%(asctime)-12s %(process)d [%(threadName)s] [%(levelname)-7s] %(message)s",
             "datefmt": "%x %X",
         }
     },
