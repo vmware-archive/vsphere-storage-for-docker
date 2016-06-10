@@ -345,8 +345,8 @@ def format_header_as_arg(header):
 
 def all_ls_headers():
     """ Return a list of all header for ls -l """
-    return ['Volume', 'Datastore', 'Created By', 'Created',
-            'Attached To', 'Policy', 'Capacity', 'Used']
+    return ['Volume', 'Datastore', 'Created By VM', 'Created',
+            'Attached To VM', 'Policy', 'Capacity', 'Used']
 
 
 def generate_ls_rows():
