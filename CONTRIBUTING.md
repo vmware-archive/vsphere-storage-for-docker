@@ -6,6 +6,8 @@
 * [Testing and CI](#testing-and-ci)
 
 ## Code Contribution guidelines
+### Dev Setup and debugging help
+Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
    * Branch should be suffixed with github user id: (branch name).(github user id) Example: mydevbranch.kerneltime
