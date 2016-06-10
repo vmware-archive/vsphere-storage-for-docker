@@ -45,9 +45,9 @@ REPO_URL    := https://github.com/$(GOPATH_ORG)/$(PLUGNAME)
 MIN_DOCKER_VERSION :=1.9
 DOCKER_PACKAGE_DEB := docker-engine
 DOCKER_PACKAGE_RPM := docker
-AFTER_INSTALL  := $(SCRIPTS)/install/systemd-after-install.sh
-BEFORE_REMOVE  := $(SCRIPTS)/install/systemd-before-remove.sh
-AFTER_REMOVE   := $(SCRIPTS)/install/systemd-after-remove.sh
+AFTER_INSTALL  := $(SCRIPTS)/install/after-install.sh
+BEFORE_REMOVE  := $(SCRIPTS)/install/before-remove.sh
+AFTER_REMOVE   := $(SCRIPTS)/install/after-remove.sh
 
 #
 # Scripts to deploy and control services - used from Makefile and from Drone CI
