@@ -48,7 +48,6 @@ from vmware import vsi
 
 import pyVim
 from pyVim.connect import Connect, Disconnect
-from pyVim.invt import GetVmFolder, FindChild
 from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
@@ -117,7 +116,7 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vm_name, vmdk_path, vol_name, opts={}):
+def createVMDK(vmdk_path, vm_name, vol_name, opts={}):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
@@ -271,7 +270,7 @@ def formatVmdk(vmdk_path, vol_name):
     return None
 
 
-#returns error, or None for OK
+# Return error, or None for OK
 def removeVMDK(vmdk_path):
     logging.info("*** removeVMDK: %s", vmdk_path)
     cmd = "{0} {1}".format(VMDK_DELETE_CMD, vmdk_path)
@@ -290,51 +289,47 @@ def listVMDK(path):
              u'Attributes': {}} for x in vmdks]
 
 
-# Find VM , reconnect if needed. throws on error
-def findVmByName(vm_name):
-    vm = None
-    vm, _ = find_child(vm_name)
-    if not vm:
-        # try again
-        connectLocal()
-        vm, e = find_child(vm_name)
-
-    if not vm:
-        logging.error("VM {0} not found".format(vm_name))
-        raise e
-
+# Return VM managed object, reconnect if needed. Throws if fails twice.
+def findVmByUuid(vm_uuid):
+    try:
+        vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
+        if vm:
+            return vm
+    except Exception as e:
+        logging.exception("Failed to find VM uuid=%s (traceback below), " \
+                          "retrying...", vm_uuid)
+    #
+    # Retry. It can throw if connect/search fails. But search can't return None
+    # since we get UUID from VMM so VM must exist
+    #
+    connectLocal()
+    vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
+    logging.info("Found VM name=%s, id=%s ", vm.config.name, vm_uuid)
     return vm
 
-def find_child(vm_name):
-    e = None
-    try:
-        vm = FindChild(GetVmFolder(), vm_name)
-    except Exception as e:
-        logging.exception("Failed to find vm: %s", vm_name) 
-        vm = None
-    return vm, e
 
-#returns error, or None for OK
-def attachVMDK(vmdk_path, vm_name):
-    vm = findVmByName(vm_name)
+# Return error, or None for OK.
+def attachVMDK(vmdk_path, vm_uuid):
+    vm = findVmByUuid(vm_uuid)
     logging.info("*** attachVMDK: %s to %s VM uuid = %s",
-                 vmdk_path, vm_name, vm.config.uuid)
+                 vmdk_path, vm.config.name, vm_uuid)
     return disk_attach(vmdk_path, vm)
 
 
-#returns error, or None for OK
-def detachVMDK(vmdk_path, vm_name):
-    vm = findVmByName(vm_name)
+# Return error, or None for OK.
+def detachVMDK(vmdk_path, vm_uuid):
+    vm = findVmByUuid(vm_uuid)
     logging.info("*** detachVMDK: %s from %s VM uuid = %s",
-                 vmdk_path, vm_name, vm.config.uuid)
+                 vmdk_path, vm.config.name, vm_uuid)
     return disk_detach(vmdk_path, vm)
 
 
 # Check existence (and creates if needed) the path
 def getVolPath(vm_config_path):
-    # The volumes folder is created in the parent of the given VM's folder.
-    path = os.path.join(
-        os.path.dirname(os.path.dirname(vm_config_path)), DOCK_VOLS_DIR)
+    # The folder for Docker volumes is created on <vm_datastore>/DOCK_VOLS_DIR
+    # On ESX the path is always /vmfs/volume/datastore/... , so we can do this:
+    vm_datastore = "/".join(vm_config_path.split("/")[0:4])
+    path = os.path.join(vm_datastore, DOCK_VOLS_DIR)
 
     if os.path.isdir(path):
         # If the path exists then return it as is.
@@ -359,7 +354,7 @@ def getVmdkName(path, vol_name):
 
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
-def executeRequest(vm_name, config_path, cmd, vol_name, opts):
+def executeRequest(vm_uuid, vm_name, config_path, cmd, vol_name, opts):
     # get /vmfs/volumes/<volid> path on ESX:
     path = getVolPath(config_path)
 
@@ -369,15 +364,15 @@ def executeRequest(vm_name, config_path, cmd, vol_name, opts):
     vmdk_path = getVmdkName(path, vol_name)
 
     if cmd == "create":
-        response = createVMDK(vm_name, vmdk_path, vol_name, opts)
+        response = createVMDK(vmdk_path, vm_name, vol_name, opts)
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
     elif cmd == "list":
         response = listVMDK(path)
     elif cmd == "attach":
-        response = attachVMDK(vmdk_path, vm_name)
+        response = attachVMDK(vmdk_path, vm_uuid)
     elif cmd == "detach":
-        response = detachVMDK(vmdk_path, vm_name)
+        response = detachVMDK(vmdk_path, vm_uuid)
     else:
         return err("Unknown command:" + cmd)
 
@@ -405,23 +400,22 @@ def connectLocal():
 
 
 def findDeviceByPath(vmdk_path, vm):
-
     for d in vm.config.hardware.device:
         if type(d) != vim.vm.device.VirtualDisk:
             continue
 
-# Disks of all backing have a backing object with
-# a filename attribute in it. The filename identifies the
-# virtual disk by name and can be used to try a match
-# with the given name. Filename has format like,
-# "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>".
+        # Disks of all backing have a backing object with a filename attribute.
+        # The filename identifies the virtual disk by name and can be used
+        # to match with the given name.
+        # Filename format is as follows:
+        #   "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>"
         backing_disk = d.backing.fileName.split(" ")[1]
 
         # Construct the parent dir and vmdk name, resolving
         # links if any.
         dvol_dir = os.path.dirname(vmdk_path)
         real_vol_dir = os.path.basename(os.path.realpath(dvol_dir))
-        virtual_disk = real_vol_dir + "/" + os.path.basename(vmdk_path)
+        virtual_disk = os.path.join(real_vol_dir, os.path.basename(vmdk_path))
         if virtual_disk == backing_disk:
             logging.debug("findDeviceByPath: MATCH: %s", backing_disk)
             return d
@@ -605,8 +599,8 @@ def disk_attach(vmdk_path, vm):
         return err(msg)
 
     setStatusAttached(vmdk_path, vm)
-    logging.info("Disk %s successfully attached. disk_slot = %d, bus_number = %d",
-                 vmdk_path, disk_slot, bus_number)
+    logging.info("Disk %s successfully attached. bus_number=%d, disk_slot=%d",
+                 vmdk_path, bus_number, disk_slot)
     return busInfo(disk_slot, bus_number)
 
 
@@ -695,6 +689,11 @@ def handleVmciRequests(port):
 
         vm_name = group_info["displayName"]
         cfg_path = group_info["cfgPath"]
+        uuid = group_info["uuid"]
+        # pyVmomi expects uuid like this one: 564dac12-b1a0-f735-0df3-bceb00b30340
+        # to get it from uuid in VSI vms/<id>/vmmGroup, we use the following format:
+        UUID_FORMAT = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}"
+        vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split()) 
 
         try:
             req = json.loads(txt.value, "utf-8")
@@ -704,7 +703,7 @@ def handleVmciRequests(port):
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else {}
             threading.currentThread().setName(vm_name)
-            ret = executeRequest(vm_name, cfg_path, req["cmd"],
+            ret = executeRequest(vm_uuid, vm_name, cfg_path, req["cmd"],
                                  details["Name"], opts)
             logging.info("executeRequest '%s' completed with ret=%s",
                          req["cmd"], ret)

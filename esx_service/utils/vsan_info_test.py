@@ -49,7 +49,9 @@ class TestVsanInfo(unittest.TestCase):
         """create a vmdk before each test (method) in this class"""
         self.si = vmdk_ops.connectLocal()
         # create VMDK
-        err = vmdk_ops.createVMDK(self.VM_NAME, self.VMDK_PATH, "test_policy_vol")
+        err = vmdk_ops.createVMDK(vmdk_path=self.VMDK_PATH,
+                                  vm_name=self.VM_NAME,
+                                  vol_name="test_policy_vol")
         self.assertEqual(err, None, err)
 
     def tearDown(self):
