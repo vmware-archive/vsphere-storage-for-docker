@@ -1,5 +1,5 @@
 [![Build Status](https://ci.vmware.run/api/badges/vmware/docker-volume-vsphere/status.svg)](https://ci.vmware.run/vmware/docker-volume-vsphere)
-
+**Build is failing due to CI cluster being down.**
 Docker Volume Driver for vSphere
 ================================
 
