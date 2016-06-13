@@ -74,20 +74,6 @@ matrix:
     - 1.6
 
 publish:
-  docker:
-    username: $$DOCKER_USER
-    password: $$DOCKER_PASS
-    email: $$DOCKER_EMAIL
-    repo: vmware/docker-volume-vsphere
-    tag:
-      - "latest"
-      - $$BRANCH-$$BUILD_NUMBER
-    file: misc/dockerfiles/Dockerfile.vmdk-plugin
-    privileged: true
-    storage_driver: overlay
-    when:
-      branch: master
-
   github_release:
     api_key: $$GITHUB_TOKEN
     files:
