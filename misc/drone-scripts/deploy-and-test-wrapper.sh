@@ -36,8 +36,9 @@ export VM1=$2
 export VM2=$3
 
 USER=root
-. ./misc/drone-scripts/cleanup.sh
 . ./misc/scripts/commands.sh
+. ./misc/drone-scripts/cleanup.sh
+. ./misc/drone-scripts/dump_log.sh
 
 echo "Setting up lock on $ESX"
 $SCP ./misc/drone-scripts/lock.sh $ESX:/tmp/
@@ -95,7 +96,6 @@ then
 else
   log "deploy failed cleaning up"
   log " Dumping logs..."
-  . ./misc/drone-scripts/dump_log.sh
   dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
   exit 1
