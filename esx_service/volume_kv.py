@@ -45,7 +45,16 @@ VSAN_POLICY_NAME = 'vsan-policy-name'
 # The size of the volume
 SIZE = 'size'
 
+# The disk allocation format for vmdk
+DISK_ALLOCATION_FORMAT = 'diskformat'
+
+VALID_ALLOCATION_FORMATS = ["zeroedthick", "thin", "eagerzeroedthick"]
+
+DEFAULT_ALLOCATION_FORMAT = 'thin'
+
 ## Values for given keys
+
+
 
 ## Value for VSAN_POLICY_NAME
 DEFAULT_VSAN_POLICY = '[VSAN default]'

@@ -75,7 +75,7 @@ import vsan_info
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
 MKFS_CMD = BIN_LOC + "/mkfs.ext4 -qF -L "
-VMDK_CREATE_CMD = "/sbin/vmkfstools -d thin -c "
+VMDK_CREATE_CMD = "/sbin/vmkfstools"
 VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
 # Defaults
@@ -146,16 +146,22 @@ def make_create_cmd(opts, vmdk_path):
         size = DEFAULT_DISK_SIZE
     else:
         size = str(opts["size"])
-    logging.debug("SETTING VMDK SIZE to %s for %s", size, vmdk_path)
+    logging.debug("Setting vmdk size to %s for %s", size, vmdk_path)
+
+    if not kv.DISK_ALLOCATION_FORMAT in opts:
+        format = kv.DEFAULT_ALLOCATION_FORMAT
+    else:
+        format = str(opts[kv.DISK_ALLOCATION_FORMAT])
+    logging.debug("Setting vmdk disk allocation format to %s for %s", format, vmdk_path)
 
     if kv.VSAN_POLICY_NAME in opts:
         # Note that the --policyFile option gets ignored if the
         # datastore is not VSAN
         policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
-        return "{0} {1} --policyFile {2} {3}".format(VMDK_CREATE_CMD, size,
+        return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, format, size,
                                                     policy_file, vmdk_path)
     else:
-        return "{0} {1} {2}".format(VMDK_CREATE_CMD, size, vmdk_path)
+        return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, format, size, vmdk_path)
 
 
 def create_kv_store(vm_name, vmdk_path, opts):
@@ -172,20 +178,23 @@ def validate_opts(opts, vmdk_path):
     Validate available options. Current options are:
      * size - The size of the disk to create
      * vsan-policy-name - The name of an existing policy to use
+     * diskformat - The allocation format of allocated disk
     """
-    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME]
-    defaults = [DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY]
+    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT]
+    defaults = [DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY, kv.DEFAULT_ALLOCATION_FORMAT]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
                + 'Valid options and defaults: ' \
                + '{0}'.format(zip(list(valid_opts), defaults))
         raise ValidationError(msg)
-
+    
     if kv.SIZE in opts:
         validate_size(opts[kv.SIZE])
     if kv.VSAN_POLICY_NAME in opts:
         validate_vsan_policy_name(opts[kv.VSAN_POLICY_NAME], vmdk_path)
+    if kv.DISK_ALLOCATION_FORMAT in opts:
+        validate_disk_allocation_format(opts[kv.DISK_ALLOCATION_FORMAT])
 
 
 def validate_size(size):
@@ -210,6 +219,13 @@ def validate_vsan_policy_name(policy_name, vmdk_path):
 
     if not vsan_policy.policy_exists(policy_name):
         raise ValidationError('Policy {0} does not exist'.format(policy_name))
+
+def validate_disk_allocation_format(format):
+    """
+    Ensure format is valid.
+    """
+    if not format.lower() in kv.VALID_ALLOCATION_FORMATS :
+        raise ValidationError('Disk Allocation Format {0} does not exist. Valid options are: {1}'.format(format, kv.VALID_ALLOCATION_FORMATS))
 
 
 def getVMDKUuid(vmdk_path):

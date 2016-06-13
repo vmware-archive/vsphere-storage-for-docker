@@ -38,7 +38,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     """Unit test for VMDK Create and Remove ops"""
 
     volName = "vol_UnitTest_Create"
-    badOpts = {u'policy': u'good', volume_kv.SIZE: u'12unknown'}
+    badOpts = {u'policy': u'good', volume_kv.SIZE: u'12unknown', volume_kv.DISK_ALLOCATION_FORMAT: u'5disk'}
     name = ""
     vm_name = 'test-vm'
 
@@ -87,11 +87,11 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         # info for testPolicy
         testInfo = [
             #    size     policy   expected success?
-            ["2000kb", "good", True],
-            ["14000pb", "good", False],
-            ["bad size", "good", False],
-            ["100mb", "impossible", True],
-            ["100mb", "good", True],
+            ["2000kb", "good", True, "zeroedthick"],
+            ["14000pb", "good", False, "zeroedthick"],
+            ["bad size", "good", False, "eagerzeroedthick"],
+            ["100mb", "impossible", True, "eagerzeroedthick"],
+            ["100mb", "good", True, "thin"],
         ]
         path = vmdk_utils.get_vsan_dockvols_path()
         i = 0
@@ -104,7 +104,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
                                       vmdk_path=vmdk_path,
                                       vol_name=vol_name,
                                       opts={volume_kv.VSAN_POLICY_NAME: unit[1],
-                                            volume_kv.SIZE: unit[0]})
+                                            volume_kv.SIZE: unit[0],
+                                            volume_kv.DISK_ALLOCATION_FORMAT: unit[3]})
             self.assertEqual(err == None, unit[2], err)
 
             # clean up should fail if the created should have failed.
@@ -139,17 +140,23 @@ class ValidationTestCase(unittest.TestCase):
     def test_success(self):
         sizes = ['2gb', '200tb', '200mb', '5kb']
         sizes.extend([s.upper() for s in sizes])
+        
+        diskformats = ["zeroedthick", "thin", "eagerzeroedthick"]
+        diskformats.extend([diskformat.upper() for diskformat in diskformats])
+
         for s in sizes:
             for p in self.policy_names:
+                for d in diskformats:
                 # An exception should not be raised
-                vmdk_ops.validate_opts({volume_kv.SIZE: s, volume_kv.VSAN_POLICY_NAME: p},
+                    vmdk_ops.validate_opts({volume_kv.SIZE: s, volume_kv.VSAN_POLICY_NAME: p, volume_kv.DISK_ALLOCATION_FORMAT : d},
                                        self.path)
-                vmdk_ops.validate_opts({volume_kv.SIZE: s}, self.path)
-                vmdk_ops.validate_opts({volume_kv.VSAN_POLICY_NAME: p}, self.path)
+                    vmdk_ops.validate_opts({volume_kv.SIZE: s}, self.path)
+                    vmdk_ops.validate_opts({volume_kv.VSAN_POLICY_NAME: p}, self.path)
+                    vmdk_ops.validate_opts({volume_kv.DISK_ALLOCATION_FORMAT: d}, self.path)
 
     def test_failure(self):
-        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'},
-               {volume_kv.SIZE: 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
+        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'}, 
+        {volume_kv.DISK_ALLOCATION_FORMAT: 'bad-format'}, {volume_kv.SIZE: 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
                                                              volume_kv.SIZE: '4mb'}]
         for opts in bad:
             with self.assertRaises(vmdk_ops.ValidationError):
