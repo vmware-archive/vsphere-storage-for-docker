@@ -15,10 +15,6 @@
 
 # A few helper functions for dumping logs
 
-
-SSH="ssh -o StrictHostKeyChecking=no"
-USER=root
-
 VM_LOGFILE="/var/log/docker-volume-vsphere.log"
 VM_STDLOG="/tmp/plugin.log"
 ESX_LOGFILE="/var/log/vmware/vmdk_ops.log"
