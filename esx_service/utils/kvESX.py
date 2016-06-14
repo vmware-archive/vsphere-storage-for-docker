@@ -35,10 +35,12 @@ lib = None
 useSideCarCreate = False
 DVOL_KEY = "docker-volume-vsphere"
 
-# Maps to OPEN_BUFFERED | OPEN_LOCK | OPEN_NOFILTERS
+# Results in a buffered, locked, filter-less open,
 # all vmdks are opened with these flags
 VMDK_OPEN_FLAGS = 524312
 
+# Default kv side car alignment
+KV_ALIGN = 4096
 
 # Load the disk lib API library
 def loadDiskLib():
@@ -120,7 +122,7 @@ def volOpenPath(volpath):
 
 
 # Create the side car for the volume identified by volpath.
-def create(volpath, kvDict):
+def create(volpath, kv_dict):
     disk = c_uint32(0)
     objHandle = c_uint32(0)
 
@@ -144,7 +146,7 @@ def create(volpath, kvDict):
     lib.DiskLib_SidecarClose(disk, DVOL_KEY, byref(objHandle))
     lib.DiskLib_Close(disk)
 
-    return save(volpath, kvDict)
+    return save(volpath, kv_dict)
 
 
 # Delete the the side car for the given volume
@@ -166,35 +168,44 @@ def delete(volpath):
     return True
 
 
+# Align a given string to the specified block boundary.
+def align_str(kv_str, block):
+   # Align string to the next block boundary. The -1 is to accommodate
+   # a newline at the end of the string.
+   aligned_len = int((len(kv_str) + block - 1) / block) * block - 1
+   return '{:<{width}}\n'.format(kv_str, width=aligned_len)
+
+
 # Load and return dictionary from the sidecar
 def load(volpath):
     metaFile = lib.DiskLib_SidecarMakeFileName(volpath, DVOL_KEY)
 
     try:
-        fh = open(metaFile, "r+")
-    except IOError:
-        logging.exception("Failed to open %s", metaFile);
+       with open(metaFile, "r") as fh:
+          kv_str = fh.read()
+    except:
+        logging.exception("Failed to access %s", metaFile);
         return None
 
-    kvDict = json.load(fh)
-
-    fh.close()
-
-    return kvDict
+    try:
+       return json.loads(kv_str)
+    except ValueError:
+       logging.exception("Failed to decode meta-data for %s", volpath);
+       return None
 
 
 # Save the dictionary to side car.
-def save(volpath, kvDict):
+def save(volpath, kv_dict):
     metaFile = lib.DiskLib_SidecarMakeFileName(volpath, DVOL_KEY)
 
+    kv_str = json.dumps(kv_dict)
+
     try:
-        fh = open(metaFile, "w+")
-    except IOError:
-        logging.exception("Failed to open %s", metaFile);
+       with open(metaFile, "w") as fh:
+          fh.write(align_str(kv_str, KV_ALIGN))
+    except:
+        logging.exception("Failed to save meta-data for %s", volpath);
         return False
 
-    json.dump(kvDict, fh)
-    fh.write("\n")  # newline makes it easier for human to read
-
-    fh.close()
     return True
+
