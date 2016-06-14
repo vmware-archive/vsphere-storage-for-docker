@@ -50,6 +50,9 @@ build:
       - export VM1=`govc vm.ip photon.rc.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - export VM1=`govc vm.ip photon.rc.vsan`
+      - export VM2=`govc vm.ip photon.rc.vsan.2`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push, pull_request]
 
@@ -65,6 +68,9 @@ build:
       - export PKG_VERSION=$$TAG
       - export VM1=`govc vm.ip photon.rc.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - export VM1=`govc vm.ip photon.rc.vsan`
+      - export VM2=`govc vm.ip photon.rc.vsan.2`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: tag
