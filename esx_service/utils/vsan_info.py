@@ -41,6 +41,18 @@ def get_vsan_datastore():
         return None
 
 
+def get_vsan_dockvols_path():
+    """
+    Return the VSAN datastore dockvols path for a given cluster. Default to the
+    first datastore for now, so we can test without VSAN.
+    """
+    datastore = get_vsan_datastore()
+    if datastore:
+        return os.path.join(datastore.info.url, 'dockvols')
+    else:
+        return None
+
+
 def is_on_vsan(vmdk_path):
     """Returns True if path is on VSAN datastore, False otherwise"""
     ds = get_vsan_datastore()
