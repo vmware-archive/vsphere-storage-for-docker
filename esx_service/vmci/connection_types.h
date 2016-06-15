@@ -25,6 +25,9 @@
 // 0 is usually success. Note: sometimes we return socket FD on success
 #define CONN_SUCCESS  (0)
 
+// First non privileged port
+#define START_NON_PRIVILEGED_PORT 1024
+
 /*
  * This function acquires and returns address family for vSockets.
  * On failure returns -1 an sets errno (if not set by VMCISock_GetAFValue ())

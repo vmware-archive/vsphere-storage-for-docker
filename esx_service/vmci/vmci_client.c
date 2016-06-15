@@ -175,11 +175,28 @@ vsock_init(be_sock_id *id, int cid, int port)
 
    id->sock_id = sock;
 
+   memset(&id->addr, 0, sizeof id->addr);
+   id->addr.svm_family = af;
+   id->addr.svm_cid = VMCISock_GetLocalCID();
+   id->addr.svm_port = port;
+
+   // Bind a port. If less than 1024 it insures the client is capable of
+   // binding a port lower than 1024 which is typically a root process or
+   // a process given capabilities by root.
+   ret = bind(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
+   if (ret != 0) {
+      int old_errno = errno;
+      vsock_release(id);
+      errno = old_errno;
+      return CONN_FAILURE;
+   }
+
    // Connect to the server.
    memset(&id->addr, 0, sizeof id->addr);
    id->addr.svm_family = af;
    id->addr.svm_cid = cid;
    id->addr.svm_port = port;
+
    ret = connect(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
    if (ret != 0) {
       int old_errno = errno;

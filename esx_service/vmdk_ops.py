@@ -669,6 +669,7 @@ def signal_handler_stop(signalnum, frame):
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests(port):
     VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
+    ECONNABORTED = 103 # Error on non privileged client
     # Load and use DLL with vsocket shim to listen for docker requests
     lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
 
@@ -688,9 +689,12 @@ def handleVmciRequests(port):
         logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
                       c, txt.value)
 
+        errno = get_errno()
+        if errno == ECONNABORTED:
+            logging.warn("Client with non privileged port attempted a request")
+            continue
         if c == VMCI_ERROR:
             # We can self-correct by reoping sockets internally. Give it a chance.
-            errno = get_errno()
             logging.warning("vmci_get_one_op failed ret=%d: %s (errno=%d) Retrying...",
                             c, os.strerror(errno), errno)
             skip_count = skip_count - 1
