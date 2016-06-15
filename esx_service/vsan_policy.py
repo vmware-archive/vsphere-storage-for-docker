@@ -18,6 +18,7 @@
 import os
 import logging
 import vmdk_utils
+import vsan_info
 import volume_kv as kv
 
 ERROR_NO_VSAN_DATASTORE = 'Error: VSAN datastore does not exist'
@@ -29,7 +30,7 @@ def create(name, content):
     the same name, creation will fail. Return a string on error and None on
     success.
     """
-    datastore_path = vmdk_utils.get_vsan_dockvols_path()
+    datastore_path = vsan_info.get_vsan_dockvols_path()
     if not datastore_path:
         return ERROR_NO_VSAN_DATASTORE
 
@@ -79,7 +80,7 @@ def delete(name):
     Remove a given policy. If the policy does not exist return an error string,
     otherwise return None
     """
-    path = vmdk_utils.get_vsan_dockvols_path()
+    path = vsan_info.get_vsan_dockvols_path()
     if not path:
         return ERROR_NO_VSAN_DATASTORE
 
@@ -98,7 +99,7 @@ def delete(name):
 def get_policies():
     """ Return a dict of all VSAN policy names to policy content. """
     policies = {}
-    path = vmdk_utils.get_vsan_dockvols_path()
+    path = vsan_info.get_vsan_dockvols_path()
     if not path:
         return {}
 
@@ -113,7 +114,7 @@ def get_policies():
 def list_volumes_and_policies():
     """ Return a list of vmdks and the policies in use"""
     vmdks_and_policies = []
-    path = vmdk_utils.get_vsan_dockvols_path()
+    path = vsan_info.get_vsan_dockvols_path()
     if not path:
         return []
 
@@ -131,7 +132,7 @@ def policy_path(name):
     Return the path to a given policy file or None if VSAN datastore doesn't
     exist
     """
-    path = vmdk_utils.get_vsan_dockvols_path()
+    path = vsan_info.get_vsan_dockvols_path()
     if not path:
         return None
 

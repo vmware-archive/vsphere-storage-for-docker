@@ -93,7 +93,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             ["100mb", "impossible", True, "eagerzeroedthick"],
             ["100mb", "good", True, "thin"],
         ]
-        path = vmdk_utils.get_vsan_dockvols_path()
+        path = vsan_info.get_vsan_dockvols_path()
         i = 0
         for unit in testInfo:
             vol_name = '{0}{1}'.format(self.volName, i)

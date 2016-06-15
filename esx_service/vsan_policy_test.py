@@ -27,7 +27,7 @@ class TestVsanPolicy(unittest.TestCase):
                      "VSAN is not found - skipping vsan_info tests")
 
     def setUp(self):
-        self.policy_path = os.path.join(vmdk_utils.get_vsan_dockvols_path(),
+        self.policy_path = os.path.join(vsan_info.get_vsan_dockvols_path(),
                                         'policies/test_policy')
         self.name = 'test_policy'
         self.content = ('(("proportionalCapacity" i50) '
