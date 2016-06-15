@@ -225,8 +225,8 @@ def validate_disk_allocation_format(format):
     """
     Ensure format is valid.
     """
-    if not format.lower() in kv.VALID_ALLOCATION_FORMATS :
-        raise ValidationError('Disk Allocation Format {0} does not exist. Valid options are: {1}'.format(format, kv.VALID_ALLOCATION_FORMATS))
+    if not format in kv.VALID_ALLOCATION_FORMATS :
+        raise ValidationError('Disk Allocation Format \'{0}\' does not exist. Valid options are: {1}'.format(format, kv.VALID_ALLOCATION_FORMATS))
 
 
 def getVMDKUuid(vmdk_path):
