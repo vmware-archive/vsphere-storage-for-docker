@@ -40,6 +40,7 @@ import re
 import signal
 import subprocess
 import sys
+import traceback
 import threading
 import time
 from ctypes import *
@@ -307,13 +308,14 @@ def listVMDK(path):
 
 # Return VM managed object, reconnect if needed. Throws if fails twice.
 def findVmByUuid(vm_uuid):
+    vm = None
     try:
         vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
-        if vm:
-            return vm
-    except Exception as e:
-        logging.exception("Failed to find VM uuid=%s (traceback below), " \
-                          "retrying...", vm_uuid)
+    except Exception as ex:
+        logging.warning("Failed to find VM by uuid=%s, retrying...\n%s",
+                        vm_uuid, str(ex))
+    if vm:
+        return vm
     #
     # Retry. It can throw if connect/search fails. But search can't return None
     # since we get UUID from VMM so VM must exist
@@ -648,10 +650,11 @@ def disk_detach(vmdk_path, vm):
 
     try:
         wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
-    except vim.fault.GenericVmConfigFault as ex:
-        for f in ex.faultMessage:
-            logging.warning(f.message)
-        return err("Failed to detach " + vmdk_path)
+    except vim.Fault.VimFault as ex:
+        ex_type, ex_value, ex_traceback = sys.exc_info()
+        msg = "Failed to detach %s: %s" % (vmdk_path, ex.msg)
+        logging.warning("%s\n%s", msg, "".join(traceback.format_tb(ex_traceback)))
+        return err(msg)
 
     setStatusDetached(vmdk_path)
     logging.info("Disk detached %s", vmdk_path)
