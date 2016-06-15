@@ -557,7 +557,7 @@ def get_listening_port(pid):
 def get_version():
     """ Return the version of the installed VIB """
     try:
-        cmd = 'esxcli software vib list | grep esx-vmdkops-service'
+        cmd = 'localcli software vib list | grep esx-vmdkops-service'
         return subprocess.check_output(cmd, shell=True).split()[1]
     except:
         return NOT_AVAILABLE
