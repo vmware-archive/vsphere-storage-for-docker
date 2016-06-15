@@ -116,18 +116,18 @@ simplest implementation and isolation of admin information inside a single scrip
 
 #### `Status`
 Show any interesting information about the service. This includes file paths of config files, version
-information, and location of running service. A simple example is shown here, although it's likely
+information, and PID of running service. A simple example is shown here, although it's possible
 that the exact format may be somewhat different.
 
 ```
->vmdkops-admin service status
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
+Version: 1.0.0-0.0.1
 Status: Running
-Health: Healthy
-Version: 1.0.0
-LogFile: /var/log/vmdkops.log
-LogLevel: Debug
-Datastore: DS1, Size: 100GB, Used: 10GB
-Datastore: DS2, Size: 50GB, Used: 0GB
+Pid: 73114
+Port: 1019
+LogConfigFile: /etc/vmware/vmdkops/log_config.json
+LogFile: /var/log/vmware/vmdk_ops.log
+LogLevel: INFO
 ```
 
 #### `help`

@@ -29,6 +29,7 @@ import cli_table
 import vsan_policy
 import vmdk_utils
 import vsan_info
+import log_config
 
 NOT_AVAILABLE = 'N/A'
 
@@ -509,6 +510,59 @@ def policy_update(args):
         print 'Successfully updated policy: {0}'.format(args.name)
 
 
+def status(args):
+    print "Version: {0}".format(get_version())
+    (status, pid) = get_service_status()
+    print "Status: {0}".format(status)
+    if pid:
+        print "Pid: {0}".format(pid)
+        print "Port: {0}".format(get_listening_port(pid))
+    print "LogConfigFile: {0}".format(log_config.LOG_CONFIG_FILE)
+    print "LogFile: {0}".format(log_config.LOG_FILE)
+    print "LogLevel: {0}".format(log_config.get_log_level())
+
+
+VMDK_OPSD = '/etc/init.d/vmdk-opsd'
+PS = 'ps -c | grep '
+GREP_V_GREP = ' | grep -v grep'
+NOT_RUNNING_STATUS = ("Stopped", None)
+
+def get_service_status():
+    """
+    Determine whether the service is running and it's PID. Return the 2 tuple
+    containing a status string and PID. If the service is not running, PID is
+    None
+    """
+    try:
+        output = subprocess.check_output([VMDK_OPSD, "status"]).split()
+        if output[2] == "not":
+            return NOT_RUNNING_STATUS
+
+        pid = output[3].split("=")[1]
+        return ("Running", pid)
+    except subprocess.CalledProcessError:
+        return NOT_RUNNING_STATUS
+
+
+def get_listening_port(pid):
+    """ Return the configured port that the service is listening on """
+    try:
+        cmd = "{0}{1}{2}".format(PS, pid, GREP_V_GREP)
+        output = subprocess.check_output(cmd, shell=True).split()[6]
+        return output
+    except:
+        return NOT_AVAILABLE
+
+
+def get_version():
+    """ Return the version of the installed VIB """
+    try:
+        cmd = 'esxcli software vib list | grep esx-vmdkops-service'
+        return subprocess.check_output(cmd, shell=True).split()[1]
+    except:
+        return NOT_AVAILABLE
+
+
 NOT_IMPLEMENTED = "Not implemented"
 
 
@@ -529,10 +583,6 @@ def role_set(args):
 
 
 def role_get(args):
-    print NOT_IMPLEMENTED
-
-
-def status(args):
     print NOT_IMPLEMENTED
 
 

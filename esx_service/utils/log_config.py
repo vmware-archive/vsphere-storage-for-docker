@@ -30,6 +30,8 @@ import os.path
 # since we rely on it to locate log file name after config is loaded.
 LOG_CONFIG_FILE = "/etc/vmware/vmdkops/log_config.json"
 
+LOG_LEVEL_DEFAULT = 'INFO'
+
 # Defaults for log files - used to generate conf file if it is missing
 # Note: log file location should be synced with CI and 'make'
 LOG_FILE = "/var/log/vmware/vmdk_ops.log"
@@ -110,6 +112,18 @@ def configure(config_file=LOG_CONFIG_FILE):
     if generatedConf:
         logging.info("Log configuration generated - '%s'." % config_file)
     return log
+
+
+def get_log_level(config_file=LOG_CONFIG_FILE):
+    """ Return the configured log level """
+    try:
+        with open(config_file) as f:
+            conf = json.load(f)
+        return conf['loggers']['']['level']
+    except:
+        # The log config file doesn't currently exist. Use the default.
+        return LOG_LEVEL_DEFAULT
+
 
 # manual test: "sudo python log_config.py"
 if __name__ == "__main__":

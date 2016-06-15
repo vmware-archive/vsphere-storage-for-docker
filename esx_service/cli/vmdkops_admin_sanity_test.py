@@ -18,7 +18,7 @@ import subprocess
 import unittest
 import os
 
-admin_cli = '/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py'
+ADMIN_CLI = '/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py'
 
 class TestVmdkopsAdminSanity(unittest.TestCase):
     """ Test output from running vmdkops_admin.py """
@@ -31,7 +31,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         self.devnull.close()
 
     def test_ls(self):
-        cmd = '{0} ls'.format(admin_cli)
+        cmd = '{0} ls'.format(ADMIN_CLI)
         # Don't print errors about stty using a bad ioctl (we aren't attached to
         # a tty here)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
@@ -42,7 +42,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
             self.assertTrue(all_dashes(string))
 
     def test_policy_ls(self):
-        cmd = '{0} policy ls'.format(admin_cli)
+        cmd = '{0} policy ls'.format(ADMIN_CLI)
         # Don't print errors about stty using a bad ioctl (we aren't attached to
         # a tty here)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
@@ -52,6 +52,18 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
                          headers)
         for string in lines[1].split():
             self.assertTrue(all_dashes(string))
+
+    def test_status(self):
+        cmd = '{0} status'.format(ADMIN_CLI)
+        output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
+        # Remove the last "line" which is just the empty string from the split
+        lines = output.split('\n')[:-1]
+        self.assertEqual(len(lines), 7)
+        expected_headers = ['Version', 'Status', 'Pid', 'Port', 'LogConfigFile',
+                           'LogFile', 'LogLevel']
+        headers = map(lambda s: s.split(': ')[0], lines)
+        self.assertEqual(expected_headers, headers)
+
 
 def all_dashes(string):
     return all(map(lambda char: char == '-', string))
