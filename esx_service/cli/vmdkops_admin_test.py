@@ -142,7 +142,7 @@ class TestLs(unittest.TestCase):
         """ Setup run before each test """
         self.vol_count = 0
         self.cleanup()
-        for (datastore, path) in vmdk_utils.get_datastores():
+        for (datastore, url_name, path) in vmdk_utils.get_datastores():
             if not self.mkdir(path):
                 continue
             for id in range(5):

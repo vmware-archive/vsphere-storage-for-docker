@@ -33,6 +33,33 @@ import vmdk_utils
 # will do creation/deletion in this folder:
 global path
 
+class VolumeNamingTestCase(unittest.TestCase):
+    """Unit test for operations with volume names (volume@datastore)"""
+
+    def test_name_parse(self):
+        """checks name parsing and error checks 
+        'volume[@datastore]' -> volume and datastore"""
+        testInfo = [
+            #    full_name                       vol_name   datastore  success ?
+            ["MyVolume123-a_.vol@vsanDatastore", "MyVolume123-a_.vol", "vsanDatastore", True],
+            ["Spaces NotGood@vsan",              None,                 None,            False],
+            ["SGoodVold@bad ds with spaces",     None,                 None,            False],
+            ["Volume-123@dots.dot",              "Volume-123",        "dots.dot",       True],
+            ["simple_volume",                    "simple_volume",      None,            True],
+        ]
+        for unit in testInfo:
+            full_name, expected_vol_name, expected_ds_name, expected_result = unit
+            try:
+                vol, ds = vmdk_ops.parse_vol_name(full_name)
+                self.assertTrue(expected_result,
+                          "Expected volume name parsing to succeed for '%s'" % full_name)
+                self.assertEqual(vol, expected_vol_name,
+                                 "Vol name mismatch '%s' expected '%s'" % (vol, expected_vol_name))
+                self.assertEqual(vol, expected_vol_name,
+                                 "Datastore name mismatch '%s' expected '%s'" % (ds, expected_ds_name))
+            except vmdk_ops.ValidationError as ex:
+                self.assertFalse(expected_result, "Expected volume name parsing to fail for '%s'" % full_name)
+
 
 class VmdkCreateRemoveTestCase(unittest.TestCase):
     """Unit test for VMDK Create and Remove ops"""
@@ -43,7 +70,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     vm_name = 'test-vm'
 
     def setUp(self):
-        self.name = vmdk_ops.getVmdkName(path, self.volName)
+        self.name = vmdk_utils.get_vmdk_path(path, self.volName)
         self.policy_names = ['good', 'impossible']
         self.orig_policy_content = '(("hostFailuresToTolerate" i1))'
         self.new_policy_conent = '(("hostFailuresToTolerate" i0))'
@@ -122,9 +149,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         i = 0
         for unit in testInfo:
             vol_name = '{0}{1}'.format(self.volName, i)
-            vmdk_path = vmdk_ops.getVmdkName(path,vol_name)
+            vmdk_path = vmdk_utils.get_vmdk_path(path,vol_name)
             i = i+1
-            # create a volume with requestes size/policy and check vs expected result
+            # create a volume with requests size/policy and check vs expected result
             err = vmdk_ops.createVMDK(vm_name=self.vm_name,
                                       vmdk_path=vmdk_path,
                                       vol_name=vol_name,
@@ -136,6 +163,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             # clean up should fail if the created should have failed.
             err = vmdk_ops.removeVMDK(vmdk_path)
             self.assertEqual(err == None, unit[2], err)
+
 
 
 class ValidationTestCase(unittest.TestCase):

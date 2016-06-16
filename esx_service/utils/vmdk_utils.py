@@ -29,8 +29,11 @@ MAX_DESCR_SIZE = 10000
 
 def get_datastores():
     """
-    Return pairs of datastore names and absolute paths to dockvols directory,
-    after following the symlink
+    Returns a list of (name, url-name, dockvol_path), with an element per datastore
+    where:
+    'name' is datastore name (e.g. 'vsanDatastore') , 
+    'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
+    'dockvol-path; is a full path to 'dockvols' folder on datastore 
     """
 
     global datastores
@@ -39,9 +42,11 @@ def get_datastores():
 
     si = pyVim.connect.Connect()
     #  We are connected to ESX so childEntity[0] is current DC/Host
-    ds_objects = si.content.rootFolder.childEntity[
-        0].datastoreFolder.childEntity
-    datastores = [(d.info.name, os.path.join(d.info.url, 'dockvols'))
+    ds_objects = \
+      si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
+    datastores = [(d.info.name,
+                   os.path.split(d.info.url)[1],
+                   os.path.join(d.info.url, 'dockvols'))
                   for d in ds_objects]
     pyVim.connect.Disconnect(si)
 
@@ -50,7 +55,7 @@ def get_datastores():
 def get_volumes():
     """ Return dicts of docker volumes, their datastore and their paths """
     volumes = []
-    for (datastore, path) in get_datastores():
+    for (datastore, url_name, path) in get_datastores():
         for file_name in list_vmdks(path):
             volumes.append({'path': path,
                             'filename': file_name,
@@ -58,11 +63,15 @@ def get_volumes():
     return volumes
 
 
+def get_vmdk_path(path, vol_name):
+    """ forms full path as <path-to-volumes>/<volname>.vmdk"""
+    return os.path.join(path, "{0}.vmdk".format(vol_name))
+
+
 def list_vmdks(path):
     """ Return a list all VMDKs in a given path """
     try:
-        files = os.listdir(path)
-        return [f for f in files
+        return [f for f in os.listdir(path)
                 if vmdk_is_a_descriptor(os.path.join(path, f))]
     except OSError as e:
         # dockvols may not exists on a datastore, so skip it

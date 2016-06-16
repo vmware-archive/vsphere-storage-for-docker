@@ -298,12 +298,17 @@ def removeVMDK(vmdk_path):
     return None
 
 
-def listVMDK(path):
-    """ returns a list of volume names (note: may be an empty list) """
-    vmdks = vmdk_utils.list_vmdks(path)
-    # fully qualified path
-    return [{u'Name': vmdk_utils.strip_vmdk_extension(x),
-             u'Attributes': {}} for x in vmdks]
+def listVMDK(vm_datastore):
+    """
+    Returns a list of volume names (note: may be an empty list). 
+    Each volume name is returned as either `volume@datastore`, or just `volume`
+    for volumes on vm_datastore
+    """
+    vmdks = vmdk_utils.get_volumes()
+    # build  fully qualified vol name for each volume found 
+    return [{u'Name': get_full_vol_name(x['filename'], x['datastore'], vm_datastore),
+             u'Attributes': {}} \
+            for x in vmdks]
 
 
 # Return VM managed object, reconnect if needed. Throws if fails twice.
@@ -342,51 +347,109 @@ def detachVMDK(vmdk_path, vm_uuid):
     return disk_detach(vmdk_path, vm)
 
 
-# Check existence (and creates if needed) the path
-def getVolPath(vm_config_path):
-    # The folder for Docker volumes is created on <vm_datastore>/DOCK_VOLS_DIR
-    # On ESX the path is always /vmfs/volume/datastore/... , so we can do this:
-    vm_datastore = "/".join(vm_config_path.split("/")[0:4])
-    path = os.path.join(vm_datastore, DOCK_VOLS_DIR)
-
+# Check existence (and creates if needed) the path for docker volume VMDKs
+def get_vol_path(datastore):
+    # The folder for Docker volumes is created on <datastore>/DOCK_VOLS_DIR
+    path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
+    
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
         return path
-
+    
     # The osfs tools are usable for all datastores
     cmd = "{0} {1}".format(OSFS_MKDIR_CMD, path)
     rc, out = RunCommand(cmd)
-    if rc != 0:
-        logging.warning("Failed to create %s", path)
-    else:
+    if rc == 0:
         logging.info("Created %s", path)
         return path
-
+    
+    logging.warning("Failed to create %s", path)
     return None
 
 
-def getVmdkName(path, vol_name):
-    # form full name as <path-to-volumes>/<volname>.vmdk
-    return os.path.join(path, "%s.vmdk" % vol_name)
+def known_datastores():
+    """returns names of know datastores"""
+    return [i[0] for i in vmdk_utils.get_datastores()]
 
+def parse_vol_name(full_vol_name):
+    """
+    Parses volume[@datastore] and returns (volume, datastore)
+    On parse errors raises ValidationError with syntax explanation
+    """
+    # note: \w in regexp is [a-zA-Z0-9_]
+    groups = re.match("\A([\w\-.]+)@?([\w\-.]+)?$", full_vol_name)
+    if not groups:
+        raise ValidationError("Invalid syntax: '{0}'. " \
+                           "Valid syntax is volume@datastore, where volume or datastore" \
+                           "can contain [a-zA-Z0-9_-.]".format(full_vol_name))
+    return groups.groups()[0], groups.groups()[1]
+
+
+def get_full_vol_name(vmdk_name, datastore, vm_datastore):
+    """
+    Forms full volume name from vmdk file name an datastore as volume@datastore
+    For volumes on vm_datastore, just returns volume name
+    """
+    vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
+    logging.debug("get_full_vol_name: %s %s %s", vmdk_name, datastore, vm_datastore)
+    if datastore == vm_datastore:
+        return vol_name
+    return "{0}@{1}".format(vol_name, datastore)
+
+
+# TBD - move to vmdk_utils
+def get_datastore_name(config_path):
+    """Returns datastore NAME in config_path (not url-name which may be used in path)"""
+    # path is always /vmfs/volumes/<datastore>/... , so extract datastore:
+    config_ds_name = config_path.split("/")[3]
+    ds_name = [x[0] for x in vmdk_utils.get_datastores() \
+                    if x[0] == config_ds_name or x[1] == config_ds_name ]
+    if len(ds_name) != 1:
+        logging.error("get_datastore_name: found more than one match: %s" % ds_name)
+    logging.debug("get_datastore_name: path=%s name=%s" % (config_ds_name, ds_name))
+    return ds_name[0]
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
-def executeRequest(vm_uuid, vm_name, config_path, cmd, vol_name, opts):
-    # get /vmfs/volumes/<volid> path on ESX:
-    path = getVolPath(config_path)
+def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
+    """
+    Executes a <cmd> request issused from a VM.
+    The request is about volume <full_volume_name> in format volume@datastore. 
+    If @datastore is omitted, the one where the VM resides is used. 
+    For VM, the function gets vm_uuid, vm_name and config_path
+    <opts> is a json options string blindly passed to a specific operation
+    
+    Returns None (if all OK) or error string
+    """
+    
+    vm_datastore = get_datastore_name(config_path)
+    if cmd == "list":
+        return listVMDK(vm_datastore)
+    
+    try:
+        vol_name, datastore = parse_vol_name(full_vol_name)
+    except ValidationError as ex:
+        return err(str(ex))
+    if not datastore:
+        datastore = vm_datastore
+    elif datastore not in known_datastores():
+        return err("Invalid datastore '%s'.\n" \
+                   "Known datastores: %s.\n" \
+                   "Default datastore: %s" \
+                   % (datastore, ", ".join(known_datastores()), vm_datastore))
+    
+    # get /vmfs/volumes/<volid>/dockvols path on ESX:
+    path = get_vol_path(datastore)
 
     if path is None:
-        return err("Failed initializing volume path {0}".format(path))
+        return err("Failed to initialize volume path {0}".format(path))
 
-    vmdk_path = getVmdkName(path, vol_name)
+    vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
     if cmd == "create":
         response = createVMDK(vmdk_path, vm_name, vol_name, opts)
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
-    elif cmd == "list":
-        response = listVMDK(path)
     elif cmd == "attach":
         response = attachVMDK(vmdk_path, vm_uuid)
     elif cmd == "detach":
@@ -726,8 +789,12 @@ def handleVmciRequests(port):
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else {}
             threading.currentThread().setName(vm_name)
-            ret = executeRequest(vm_uuid, vm_name, cfg_path, req["cmd"],
-                                 details["Name"], opts)
+            ret = executeRequest(vm_uuid=vm_uuid,
+                                 vm_name=vm_name,
+                                 config_path=cfg_path,
+                                 cmd=req["cmd"],
+                                 full_vol_name=details["Name"],
+                                 opts=opts)
             logging.info("executeRequest '%s' completed with ret=%s",
                          req["cmd"], ret)
 
