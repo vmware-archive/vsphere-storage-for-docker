@@ -75,12 +75,7 @@ def vmdk_is_a_descriptor(filepath):
     and has a size less than MAX_DESCR_SIZE is a desciptor file.
     """
     if filepath.endswith('.vmdk') and os.stat(filepath).st_size < MAX_DESCR_SIZE:
-        try:
-            with open(filepath) as f:
-                line = f.readline()
-                return line.startswith('# Disk DescriptorFile')
-        except:
-            logging.exception("Failed to open %s for descriptor check", filepath)
+       return True
 
     return False
 
