@@ -120,6 +120,13 @@ vmci_get_one_op(const int s,    // socket to listen on
       return CONN_FAILURE;
    }
 
+   if (addr.svm_port >= START_NON_PRIVILEGED_PORT) {
+      fprintf(stderr, "Connection from non root port=%d, cid=%d\n", addr.svm_port, addr.svm_cid);
+      close(client_socket);
+      errno=ECONNABORTED;
+      return CONN_FAILURE;
+   }
+
    // get VMID. We really get CartelID for VM, but it will make do
    socklen_t len = sizeof(*vmid);
    if (getsockopt(client_socket, af, SO_VMCI_PEER_HOST_VM_ID, vmid, &len) == -1 || len
