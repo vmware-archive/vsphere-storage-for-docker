@@ -42,8 +42,9 @@ class VolumeNamingTestCase(unittest.TestCase):
         testInfo = [
             #    full_name                       vol_name   datastore  success ?
             ["MyVolume123-a_.vol@vsanDatastore", "MyVolume123-a_.vol", "vsanDatastore", True],
-            ["Spaces NotGood@vsan",              None,                 None,           False],
-            ["Volume-123@nodots.dot",            None,                 None,           False],
+            ["Spaces NotGood@vsan",              None,                 None,            False],
+            ["SGoodVold@bad ds with spaces",     None,                 None,            False],
+            ["Volume-123@dots.dot",              "Volume-123",        "dots.dot",       True],
             ["simple_volume",                    "simple_volume",      None,            True],
         ]
         for unit in testInfo:
@@ -69,7 +70,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     vm_name = 'test-vm'
 
     def setUp(self):
-        self.name = vmdk_utils.get_vmdk_name(path, self.volName)
+        self.name = vmdk_utils.get_vmdk_path(path, self.volName)
         self.policy_names = ['good', 'impossible']
         self.orig_policy_content = '(("hostFailuresToTolerate" i1))'
         self.new_policy_conent = '(("hostFailuresToTolerate" i0))'
@@ -148,7 +149,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         i = 0
         for unit in testInfo:
             vol_name = '{0}{1}'.format(self.volName, i)
-            vmdk_path = vmdk_utils.get_vmdk_name(path,vol_name)
+            vmdk_path = vmdk_utils.get_vmdk_path(path,vol_name)
             i = i+1
             # create a volume with requests size/policy and check vs expected result
             err = vmdk_ops.createVMDK(vm_name=self.vm_name,

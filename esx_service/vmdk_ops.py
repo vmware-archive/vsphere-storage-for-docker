@@ -377,12 +377,12 @@ def parse_vol_name(full_vol_name):
     Parses volume[@datastore] and returns (volume, datastore)
     On parse errors raises ValidationError with syntax explanation
     """
-    groups = re.match("\A([\w\-.]+)@?(\w+)?$", full_vol_name)
+    # note: \w in regexp is [a-zA-Z0-9_]
+    groups = re.match("\A([\w\-.]+)@?([\w\-.]+)?$", full_vol_name)
     if not groups:
-        raise ValidationError("Invalid syntax: '%s'. " \
-                           "Valid syntax is volume@datastore, where volume is " \
-                           "[a-zA-Z0-9_-. and datastore is [a-zA-Z0-9_]" % 
-                           full_vol_name)
+        raise ValidationError("Invalid syntax: '{0}'. " \
+                           "Valid syntax is volume@datastore, where volume or datastore" \
+                           "can contain [a-zA-Z0-9_-.]".format(full_vol_name))
     return groups.groups()[0], groups.groups()[1]
 
 
@@ -444,7 +444,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     if path is None:
         return err("Failed to initialize volume path {0}".format(path))
 
-    vmdk_path = vmdk_utils.get_vmdk_name(path, vol_name)
+    vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
     if cmd == "create":
         response = createVMDK(vmdk_path, vm_name, vol_name, opts)

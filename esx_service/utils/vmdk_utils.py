@@ -63,9 +63,9 @@ def get_volumes():
     return volumes
 
 
-def get_vmdk_name(path, vol_name):
-    """ forms full name as <path-to-volumes>/<volname>.vmdk"""
-    return os.path.join(path, "%s.vmdk" % vol_name)
+def get_vmdk_path(path, vol_name):
+    """ forms full path as <path-to-volumes>/<volname>.vmdk"""
+    return os.path.join(path, "{0}.vmdk".format(vol_name))
 
 
 def list_vmdks(path):
