@@ -25,6 +25,7 @@ Commands ("cmd" in request):
 		"create" - create a VMDK in "[vmdatastore] dvol"
 		"remove" - remove a VMDK. We assume it's not open, and fail if it is
 		"list"   - enumerate VMDKs
+		"get"    - get info about an individual volume (vmdk)
 		"attach" - attach a VMDK to the requesting VM
 		"detach" - detach a VMDK from the requesting VM (assuming it's unmounted)
 
@@ -294,7 +295,14 @@ def removeVMDK(vmdk_path):
     rc, out = RunCommand(cmd)
     if rc != 0:
         return err("Failed to remove %s. %s" % (vmdk_path, out))
+    return None
 
+
+def getVMDK(vmdk_path, vol_name):
+    """Checks if the volume exists, and returns error if it does not"""
+    # Note: will return more Volume info here, when Docker API actually accepts it
+    if not os.path.isfile(vmdk_path):
+        return err("Volume {0} not found (file: {1})".format(vol_name, vmdk_path))
     return None
 
 
@@ -446,7 +454,9 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
-    if cmd == "create":
+    if cmd == "get":
+        response = getVMDK(vmdk_path, vol_name)
+    elif cmd == "create":
         response = createVMDK(vmdk_path, vm_name, vol_name, opts)
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
