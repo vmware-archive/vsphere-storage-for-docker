@@ -35,9 +35,9 @@ lib = None
 useSideCarCreate = False
 DVOL_KEY = "docker-volume-vsphere"
 
-# Results in a buffered, locked, filter-less open,
+# Results in a no-io, filter-less open,
 # all vmdks are opened with these flags
-VMDK_OPEN_FLAGS = 524312
+VMDK_OPEN_FLAGS = 524289
 
 # Default kv side car alignment
 KV_ALIGN = 4096
@@ -128,7 +128,7 @@ def create(volpath, kv_dict):
 
     disk = volOpenPath(volpath)
 
-    if disk == c_uint32(0):
+    if disk.value == c_uint32(0).value:
         return False
 
     if useSideCarCreate:
@@ -155,7 +155,7 @@ def delete(volpath):
 
     disk = volOpenPath(volpath)
 
-    if disk == c_uint32(0):
+    if disk.value == c_uint32(0).value:
         return False
 
     res = lib.DiskLib_SidecarDelete(disk, DVOL_KEY)
