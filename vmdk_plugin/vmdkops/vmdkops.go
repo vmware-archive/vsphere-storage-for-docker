@@ -18,7 +18,6 @@ package vmdkops
 
 import (
 	"encoding/json"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -96,14 +95,10 @@ func (v VmdkOps) List() ([]VolumeData, error) {
 // Get for volume
 func (v VmdkOps) Get(name string) (VolumeData, error) {
 	log.Debugf("vmdkOps.Get name=%s", name)
-	volumes, err := v.List()
+	_, err := v.Cmd.Run("get", name, make(map[string]string))
 	if err != nil {
 		return VolumeData{}, err
 	}
-	for _, vol := range volumes {
-		if vol.Name == name {
-			return vol, nil
-		}
-	}
-	return VolumeData{}, fmt.Errorf("Volume does not exist: %s", name)
+
+	return VolumeData{Name: name}, nil
 }

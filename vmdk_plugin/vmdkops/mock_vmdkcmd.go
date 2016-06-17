@@ -60,6 +60,8 @@ func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) 
 		return nil, err
 	case "list":
 		return list()
+	case "get":
+		return nil, get(name)
 	case "attach":
 		return nil, nil
 	case "detach":
@@ -81,6 +83,11 @@ func list() ([]byte, error) {
 		volumes = append(volumes, VolumeData{Name: file.Name()})
 	}
 	return json.Marshal(volumes)
+}
+
+// validates that the volume exists, returs error or nil (for OK)
+func get(name string) error {
+	return nil
 }
 
 func remove(name string) error {
