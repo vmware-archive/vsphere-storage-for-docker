@@ -85,25 +85,37 @@ systemctl start docker
 ```
 
 ## Logging
-The relevant logging for debugging consists of
+The relevant logging for debugging consists of the following:
+* Docker Logs
+* Plugin logs - VM (docker-side)
+* Plugin logs - ESX (server-side)
 
-Docker logs: https://docs.docker.com/engine/admin/logging/overview/
+**Docker logs**: see https://docs.docker.com/engine/admin/logging/overview/
 ```
 /var/log/upstart/docker.log # Upstart
 journalctl -fu docker.service # Journalctl/Systemd
 ```
 
-VM Plugin logs
+**VM (Docker-side) Plugin logs**
 
 * Log location: `/var/log/docker-volume-vsphere.log`
-* Config file location: `/etc/docker-volume-vsphere.conf`
-* Turning on debug logging: stop the service and manually run with ``--log_level=debug` flag
+* Config file location: `/etc/docker-volume-vsphere.conf`. 
+ * This JSON-formatted file controls logs retention, size for rotation
+ and log location. Example:
+```
+ {"MaxLogAgeDays": 28,
+ "MaxLogSizeMb": 100,
+ "LogPath": "/var/log/docker-volume-vsphere.log"}
+```
+* **Turning on debug logging**: stop the service and manually run with ``--log_level=debug` flag
 
-ESX Plugin logs
+**ESX Plugin logs**
 
 * Log location: `/var/log/vmware/vmdk_ops.log`
-* Config file location: `/etc/vmware/vmdkops/log_config.json` 
-* Turning on debug logging: replace all 'INFO' with 'DEBUG' in config file, restart the service
+* Config file location: `/etc/vmware/vmdkops/log_config.json`  See Python
+logging config format for content details.
+* **Turning on debug logging**: replace all 'INFO' with 'DEBUG' in config file, restart the service
+
 
 ## Tested on
 
