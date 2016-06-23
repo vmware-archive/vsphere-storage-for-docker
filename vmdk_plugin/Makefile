@@ -242,12 +242,12 @@ CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
 # Deploy to existing testbed, Expects ESX VM1 and VM2 env vars
 #
 .PHONY: deploy-esx deploy-vm deploy-vm-test deploy deploy-all deploy
-deploy-esx:
+deploy-esx: clean-esx
 	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
 
 VMS= $(VM1) $(VM2)
 
-deploy-vm:
+deploy-vm: clean-vm
 	$(DEPLOY_VM_SH) "$(VMS)" $(BIN)
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
