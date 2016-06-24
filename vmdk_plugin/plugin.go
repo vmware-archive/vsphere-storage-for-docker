@@ -32,6 +32,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 const (
@@ -120,6 +121,8 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 	if err != nil {
 		return mountpoint, err
 	}
+
+	time.Sleep(3 * time.Second)
 
 	if d.useMockEsx {
 		return mountpoint, fs.Mount(mountpoint, nil, "ext4")
