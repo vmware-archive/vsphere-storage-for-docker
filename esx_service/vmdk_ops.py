@@ -62,6 +62,10 @@ BIN_LOC  = os.path.join(TOP_DIR, "bin")
 LIB_LOC  = os.path.join(TOP_DIR, "lib")
 PY_LOC  = os.path.join(TOP_DIR, "Python")
 
+# We won't accept names longer than that
+MAX_VOL_NAME_LEN = 100
+MAX_DS_NAME_LEN  = 100
+
 # vmdkops python utils are in PY_LOC, so add to path.
 sys.path.insert(0, PY_LOC)
 
@@ -371,7 +375,7 @@ def get_vol_path(datastore):
     if rc == 0:
         logging.info("Created %s", path)
         return path
-    
+
     logging.warning("Failed to create %s", path)
     return None
 
@@ -386,12 +390,19 @@ def parse_vol_name(full_vol_name):
     On parse errors raises ValidationError with syntax explanation
     """
     # note: \w in regexp is [a-zA-Z0-9_]
-    groups = re.match("\A([\w\-.]+)@?([\w\-.]+)?$", full_vol_name)
+    groups = re.match(r"\A([a-zA-Z_][\w\_.]+)(@([a-zA-Z_][\w\_\-.]+))?$", full_vol_name)
     if not groups:
-        raise ValidationError("Invalid syntax: '{0}'. " \
-                           "Valid syntax is volume@datastore, where volume or datastore" \
-                           "can contain [a-zA-Z0-9_-.]".format(full_vol_name))
-    return groups.groups()[0], groups.groups()[1]
+        raise ValidationError("Invalid syntax: '{0}'.\n"
+                              "Valid syntax is volume@datastore, where 'volume' or 'datastore' "
+                              "should start with a letter or _,  and contain only "
+                              "allowed characters ([a-zA-Z0-9_.])"
+                              .format(full_vol_name))
+    vol_name, ds_name = groups.groups()[0], groups.groups()[2]
+    if len(vol_name) > MAX_VOL_NAME_LEN:
+        raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))
+    if ds_name and len(ds_name) > MAX_DS_NAME_LEN:
+        raise ValidationError("Datastore name is too long (max len is {0})".format(MAX_DS_NAME_LEN))
+    return vol_name, ds_name
 
 
 def get_full_vol_name(vmdk_name, datastore, vm_datastore):

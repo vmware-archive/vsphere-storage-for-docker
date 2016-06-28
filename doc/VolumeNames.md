@@ -1,17 +1,17 @@
 # Short Volume names
 Short Volume Name can contain alphanumeric characters, underscores and dots. Examples: `MyVolume_fast.12` or `_12SuperStorage`.
-Volume name is limited to 128 characters. 
+Volume name is limited to 100 characters. 
 
 # Full volume names
-Full volume name is a combination of Short Volume name and Datastore name, separated by @ sign.
-Datastore name is a vSphere datastore , e.g. vsanDatastore. Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`
+Full volume name is a combination of Short Volume name and datastore name, separated by @ sign.
+Datastore name is a vSphere Datastore , e.g. vsanDatastore. Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`
 
 
 # Default datastore 
 
 Our approach is `if you do not care about specific datastore, use just the volume name and the rest will be taken care of`.
 
-If Datastore Name is ommited, the name of the datastore where Docker VM is located will be used.
+If datastore Name is ommited, the name of the datastore where Docker VM is located will be used.
 E.g. if Docker VM is located on `vsanDatastore`, then 
 `myVolume@vsanDatastore` is the same as `myVolume`. 
 
@@ -27,7 +27,7 @@ the following:
 $ docker volume ls
 DRIVER       VOLUME NAME
 vmdk         volume1
-vmdk         volume 2
+vmdk         volume2
 vmdk         volume1@vsanDatastore
 vmdk         volume2@vsanDatastore
 ```
@@ -35,5 +35,5 @@ vmdk         volume2@vsanDatastore
 # Volume name usage
 volume@datastore can be used anywhere where `volume name` is needed - i.e. in 'docker run -v **volume**:/path ...' ,
 'docker volume create', 'docker volume rm', docker volume inspect'. In all cases, using short volume name (with no datastore) will refer to the volume 
-with the given name located on the same datastore where the Docker VM is located
+with the given name located on the same datastore where the Docker VM is located.
 

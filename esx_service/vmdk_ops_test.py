@@ -41,10 +41,11 @@ class VolumeNamingTestCase(unittest.TestCase):
         'volume[@datastore]' -> volume and datastore"""
         testInfo = [
             #    full_name                       vol_name   datastore  success ?
-            ["MyVolume123-a_.vol@vsanDatastore", "MyVolume123-a_.vol", "vsanDatastore", True],
+            ["MyVolume123_a_.vol@vsanDatastore_11", "MyVolume123_a_.vol", "vsanDatastore_11", True],
+            ["no-dashes-please@datastore",       None,                 None,            False],
             ["Spaces NotGood@vsan",              None,                 None,            False],
             ["SGoodVold@bad ds with spaces",     None,                 None,            False],
-            ["Volume-123@dots.dot",              "Volume-123",        "dots.dot",       True],
+            ["Volume.123@dots.dot",              "Volume.123",        "dots.dot",       True],
             ["simple_volume",                    "simple_volume",      None,            True],
         ]
         for unit in testInfo:
