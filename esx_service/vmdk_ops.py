@@ -77,7 +77,7 @@ import vsan_info
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
 MKFS_CMD = BIN_LOC + "/mkfs.ext4 -qF -L "
-VMDK_CREATE_CMD = "/sbin/vmkfstools"
+VMDK_CREATE_CMD = "/sbin/vmkfstools -v 10 "
 VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
 # Defaults
