@@ -1,17 +1,19 @@
 # Short Volume names
-Short Volume Name can contain alphanumeric characters, underscores and dots. Examples: `MyVolume_fast.12` or `_12SuperStorage`.
-Volume name is limited to 100 characters. 
+Short Volume Name start with a letter or underscore and can contain alphanumeric characters, underscores and dots.
+Examples: `MyVolume_fast.12` or `_12SuperStorage`. Volume name length is limited to 100 characters. 
 
 # Full volume names
 Full volume name is a combination of Short Volume name and datastore name, separated by @ sign.
-Datastore name is a vSphere Datastore , e.g. vsanDatastore. Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`
+Datastore name is a vSphere Datastore , e.g. vsanDatastore. Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`.
+Datastore name length is also limited to 100 characters, and datastore name should start with a letter or underscore and can contain 
+alphanumeric characters, underscores, hyphens and dots.
 
 
 # Default datastore 
 
 Our approach is `if you do not care about specific datastore, use just the volume name and the rest will be taken care of`.
 
-If datastore Name is ommited, the name of the datastore where Docker VM is located will be used.
+If datastore name is omitted, the name of the datastore where Docker VM is located will be used.
 E.g. if Docker VM is located on `vsanDatastore`, then 
 `myVolume@vsanDatastore` is the same as `myVolume`. 
 
@@ -20,7 +22,7 @@ Full volume names are unique, but short volume names are unique only within a sp
 to `myVolume@datastore266` - which are different volumes. However, in both VMs `myVolume@vsanDatastore` and `myvolume@datastore266` can be used to 
 uniquely identify the volume.
 
-Note that `docker volume ls` command will strip Datastore from the volumes on the VM datastore. For example, if the Docker VM runs on `datastore266`
+Note that `docker volume ls` command will strip datastore name from the volumes on the Docker VM datastore. For example, if the Docker VM runs on `datastore266`
 and there are 2 volumes on this datastore, and there are also 2 volumes with the same names on vsanDatastore, then 'docker volume ls' will show
 the following:
 ```
