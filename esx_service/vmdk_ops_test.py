@@ -41,14 +41,17 @@ class VolumeNamingTestCase(unittest.TestCase):
         """checks name parsing and error checks
         'volume[@datastore]' -> volume and datastore"""
         testInfo = [
-            #    full_name                       vol_name   datastore  success ?
+            #  [ full_name. expected_vol_name, expected_datastore_name,  expected_success? ]
             ["MyVolume123_a_.vol@vsanDatastore_11", "MyVolume123_a_.vol", "vsanDatastore_11", True],
             ["a1@x",                            "a1",                  "x",             True],
             ["a1",                              "a1",                  None,            True],
-            ["1",                               None,                  None,            False],
+            ["1",                                None,                 None,            False],
             ["no-dashes-please@datastore",       None,                 None,            False],
             ["Spaces NotGood@vsan",              None,                 None,            False],
-            ["SGoodVold@bad ds with spaces",     None,                 None,            False],
+            ["GoodVolume@bad ds with spaces",    None,                 None,            False],
+            ["TooLong0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", None, None, False],
+            ["Just100Chars0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567", 
+                           "Just100Chars0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567", None, True],
             ["Volume.123@dots.dot",              "Volume.123",        "dots.dot",       True],
             ["simple_volume",                    "simple_volume",      None,            True],
         ]
