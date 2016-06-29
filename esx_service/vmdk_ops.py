@@ -110,7 +110,15 @@ def RunCommand(cmd):
     s = p.returncode
     logging.warning("command o/p - %s", o)
     if s != 0:
-        return (s, e)
+       p = subprocess.Popen('/bin/lsof',
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True)
+       o, e = p.communicate()
+       s = p.returncode
+       logging.warning("command o/p - %s", o)
+        
+       return (s, e)
 
     return (s, o)
 
