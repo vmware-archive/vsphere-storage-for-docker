@@ -108,7 +108,7 @@ def RunCommand(cmd):
                          shell=True)
     o, e = p.communicate()
     s = p.returncode
-
+    logging.warning("command o/p - %s", o)
     if s != 0:
         return (s, e)
 
