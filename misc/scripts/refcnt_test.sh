@@ -27,6 +27,13 @@
 # For now (TP) we still need basic validation
 #
 
+# make sure all vars are set before usage
+set -o nounset
+
+# make sure scripts terminate (and test fails) on first failure
+set -e
+
+
 DIR=$(dirname ${BASH_SOURCE[0]})
 . $DIR/wait_for.sh
 
