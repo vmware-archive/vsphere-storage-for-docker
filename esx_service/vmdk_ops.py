@@ -389,14 +389,16 @@ def parse_vol_name(full_vol_name):
     Parses volume[@datastore] and returns (volume, datastore)
     On parse errors raises ValidationError with syntax explanation
     """
-    # note: \w in regexp is [a-zA-Z0-9_]
-    groups = re.match(r"\A([a-zA-Z_][\w\_.]*)(@([a-zA-Z_][\w\_\-.]*))?$", full_vol_name)
+    # Parse volume name with regexp package
+    # Note: we do not want '-' in volume name to make sure names like 'disk-0001.vmdk' cannot
+    # be created using this API.
+    # on regexp:  '\w'' in regexp is [a-zA-Z0-9_]
+    groups = re.match(r"\A([\w\_.]+)(@([\w\_.\-]+))?$", full_vol_name)
     if not groups:
         raise ValidationError("Invalid syntax: '{0}'.\n"
                               "Valid syntax is volume@datastore, where 'volume' or 'datastore' "
-                              "should start with a letter or _,  and contain only "
-                              "allowed characters ([a-zA-Z0-9_.])"
-                              .format(full_vol_name))
+                              "contain up to {1} of allowed characters ([a-zA-Z0-9_.]) each"
+                              .format(full_vol_name, MAX_VOL_NAME_LEN))
     vol_name, ds_name = groups.groups()[0], groups.groups()[2]
     if len(vol_name) > MAX_VOL_NAME_LEN:
         raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))

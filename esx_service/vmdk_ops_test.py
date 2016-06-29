@@ -45,7 +45,7 @@ class VolumeNamingTestCase(unittest.TestCase):
             ["MyVolume123_a_.vol@vsanDatastore_11", "MyVolume123_a_.vol", "vsanDatastore_11", True],
             ["a1@x",                            "a1",                  "x",             True],
             ["a1",                              "a1",                  None,            True],
-            ["1",                                None,                 None,            False],
+            ["1",                                "1",                 None,             True],
             ["no-dashes-please@datastore",       None,                 None,            False],
             ["Spaces NotGood@vsan",              None,                 None,            False],
             ["GoodVolume@bad ds with spaces",    None,                 None,            False],
