@@ -165,7 +165,7 @@ def make_create_cmd(opts, vmdk_path):
         # datastore is not VSAN
         policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
         return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, format, size,
-                                                    policy_file, vmdk_path)
+                                                               policy_file, vmdk_path)
     else:
         return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, format, size, vmdk_path)
 
@@ -390,7 +390,7 @@ def parse_vol_name(full_vol_name):
     On parse errors raises ValidationError with syntax explanation
     """
     # note: \w in regexp is [a-zA-Z0-9_]
-    groups = re.match(r"\A([a-zA-Z_][\w\_.]+)(@([a-zA-Z_][\w\_\-.]+))?$", full_vol_name)
+    groups = re.match(r"\A([a-zA-Z_][\w\_.]*)(@([a-zA-Z_][\w\_\-.]*))?$", full_vol_name)
     if not groups:
         raise ValidationError("Invalid syntax: '{0}'.\n"
                               "Valid syntax is volume@datastore, where 'volume' or 'datastore' "
@@ -837,19 +837,19 @@ def main():
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
     try:
-        port=1019
+        port = 1019
         opts, args = getopt.getopt(sys.argv[1:], 'hp:')
     except getopt.error, msg:
         if msg:
             print >> sys.stderr, msg
         usage()
-        return(1)
-    for a,v in opts:
+        return 1
+    for a, v in opts:
         if a == '-p':
-            port=int(v)
+            port = int(v)
         if a == '-h':
             usage()
-            return(0)
+            return 0
 
     try:
         kv.init()

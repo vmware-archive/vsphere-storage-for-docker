@@ -21,7 +21,8 @@ import unittest
 import sys
 import logging
 import glob
-import os, os.path
+import os
+import os.path
 
 import vmdk_ops
 import log_config
@@ -42,6 +43,9 @@ class VolumeNamingTestCase(unittest.TestCase):
         testInfo = [
             #    full_name                       vol_name   datastore  success ?
             ["MyVolume123_a_.vol@vsanDatastore_11", "MyVolume123_a_.vol", "vsanDatastore_11", True],
+            ["a1@x",                            "a1",                  "x",             True],
+            ["a1",                              "a1",                  None,            True],
+            ["1",                               None,                  None,            False],
             ["no-dashes-please@datastore",       None,                 None,            False],
             ["Spaces NotGood@vsan",              None,                 None,            False],
             ["SGoodVold@bad ds with spaces",     None,                 None,            False],
@@ -53,13 +57,14 @@ class VolumeNamingTestCase(unittest.TestCase):
             try:
                 vol, ds = vmdk_ops.parse_vol_name(full_name)
                 self.assertTrue(expected_result,
-                          "Expected volume name parsing to succeed for '%s'" % full_name)
-                self.assertEqual(vol, expected_vol_name,
-                                 "Vol name mismatch '%s' expected '%s'" % (vol, expected_vol_name))
-                self.assertEqual(vol, expected_vol_name,
-                                 "Datastore name mismatch '%s' expected '%s'" % (ds, expected_ds_name))
+                                "Expected volume name parsing to fail for '{0}'".format(full_name))
+                self.assertEqual(vol, expected_vol_name, "Vol name mismatch '{0}' expected '{1}'" \
+                                                         .format(vol, expected_vol_name))
+                self.assertEqual(vol, expected_vol_name, "Datastore name: '{0}' expected: '{1}'" \
+                                                         .format(ds, expected_ds_name))
             except vmdk_ops.ValidationError as ex:
-                self.assertFalse(expected_result, "Expected volume name parsing to fail for '%s'" % full_name)
+                self.assertFalse(expected_result, "Expected vol name parsing to succeed for '{0}'"
+                                 .format(full_name))
 
 
 class VmdkCreateRemoveTestCase(unittest.TestCase):

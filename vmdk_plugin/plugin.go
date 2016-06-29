@@ -17,7 +17,7 @@ package main
 //
 // VMWare VMDK Docker Data Volume plugin.
 //
-// Provide suport for --driver=vmdk in Docker, when Docker VM is running under ESX.
+// Provide support for --driver=vmdk in Docker, when Docker VM is running under ESX.
 //
 // Serves requests from Docker Engine related to VMDK volume operations.
 // Depends on vmdk-opsd service to be running on hosting ESX
@@ -26,13 +26,14 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
-	"path/filepath"
-	"sync"
-	"time"
 )
 
 const (
@@ -164,7 +165,7 @@ func (d *vmdkDriver) Remove(r volume.Request) volume.Response {
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
 	if d.getRefCount(r.Name) != 0 {
-		msg := fmt.Sprintf("Remove faiure - volume is still mounted. "+
+		msg := fmt.Sprintf("Remove failure - volume is still mounted. "+
 			" volume=%s, refcount=%d", r.Name, d.getRefCount(r.Name))
 		log.Error(msg)
 		return volume.Response{Err: msg}
