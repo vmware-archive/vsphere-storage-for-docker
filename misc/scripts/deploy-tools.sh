@@ -184,21 +184,11 @@ function cleanvm {
     for IP in $IP_LIST
     do
         TARGET=root@$IP
-        cleanupVolumes
         setupVMType
         log "cleanvm: Cleaning up on $TARGET : $FILE_EXT"
         cleanupVMPre
         cleanupVM
         cleanupVMPost
-    done
-}
-
-function cleanupVolumes {
-    log "cleanupVolumes: Asking docker $TARGET to remove volumes ($VOLUMES)"
-    for vol in $VOLUMES
-    do
-        $SSH $TARGET "if docker volume ls | $GREP -q $vol; then \
-        docker volume rm $vol; fi "
     done
 }
 
@@ -208,8 +198,10 @@ function cleanupVMPre {
     then
         $SSH $TARGET systemctl stop $PLUGIN_NAME
         $SSH $TARGET $PIDOF $PLUGIN_NAME
+        $SSH $TARGET systemctl restart docker
     else
         $SSH $TARGET service $PLUGIN_NAME stop
+        $SSH $TARGET service docker restart
     fi
 }
 

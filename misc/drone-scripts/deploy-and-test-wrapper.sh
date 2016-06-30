@@ -83,9 +83,6 @@ truncate_esx_logs
 
 log "starting deploy and test"
 
-make clean-vm
-make clean-esx
-
 if make deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol-build$BUILD_NUMBER;
 then
   dump_esx_info $ESX
