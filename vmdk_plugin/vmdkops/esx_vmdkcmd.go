@@ -88,7 +88,8 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 
 	// connect, send command, get reply, disconnect - all in one shot
 	retryCount := 0
-	for {
+
+   for {
 		retryCount++
 		_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
 		if err == nil {
@@ -105,9 +106,15 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 				log.Warnf(msg)
 				return nil, errors.New(msg)
 			}
-			msg += fmt.Sprintf(" retryCount=%d Retrying Request\n", retryCount)
-			log.Warnf(msg)
-			time.Sleep(3 * time.Millisecond)
+
+         if errno == syscall.ECONNRESET {
+            msg += fmt.Sprintf(" retryCount=%d Retrying Request\n", retryCount)
+            log.Warnf(msg)
+            time.Sleep(3 * time.Millisecond)
+         } else {
+            log.Errorf(msg)
+            return nil, errors.New(msg)
+         }
 		}
 	}
 
