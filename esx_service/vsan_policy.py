@@ -114,7 +114,7 @@ def update_vsan_objects_with_policy(name, content):
     """
     update_count = 0
     failed_updates = []
-    dockvols_path = vmdk_utils.get_vsan_dockvols_path()
+    dockvols_path = vsan_info.get_vsan_dockvols_path()
     print "This operation may take a while. Please be patient."
     for v in list_volumes_and_policies():
         if v['policy'] == name:
