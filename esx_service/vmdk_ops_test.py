@@ -37,7 +37,7 @@ class VolumeNamingTestCase(unittest.TestCase):
     """Unit test for operations with volume names (volume@datastore)"""
 
     def test_name_parse(self):
-        """checks name parsing and error checks 
+        """checks name parsing and error checks
         'volume[@datastore]' -> volume and datastore"""
         testInfo = [
             #    full_name                       vol_name   datastore  success ?
@@ -205,7 +205,7 @@ class ValidationTestCase(unittest.TestCase):
                     vmdk_ops.validate_opts({volume_kv.DISK_ALLOCATION_FORMAT: d}, self.path)
 
     def test_failure(self):
-        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'}, 
+        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'},
         {volume_kv.DISK_ALLOCATION_FORMAT: 'thiN'}, {volume_kv.SIZE: 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
                                                              volume_kv.SIZE: '4mb'}]
         for opts in bad:
@@ -238,5 +238,6 @@ if __name__ == '__main__':
         if not paths:
             logging.debug("Directory clean up - removing  %s", path)
             os.removedirs(path)
-    #suite = unittest.TestLoader().loadTestsFromTestCase(TestStringMethods)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+
+        # If the unittest failed, re-raise the error
+        raise
