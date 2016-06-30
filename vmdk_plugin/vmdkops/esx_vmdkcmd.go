@@ -25,6 +25,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -39,6 +40,7 @@ type EsxVmdkCmd struct{}
 
 const (
 	commBackendName string = "vsocket"
+	maxRetryCount          = 5
 )
 
 // A request to be passed to ESX service
@@ -85,19 +87,30 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	defer C.free(unsafe.Pointer(ans))
 
 	// connect, send command, get reply, disconnect - all in one shot
-	_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
-
-	if err != nil {
-		var errno syscall.Errno
-		errno = err.(syscall.Errno)
-		msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
-		if errno == syscall.ECONNRESET {
-			msg += " Hit communication issue with ESX (vmci or ESX service)\n"
-			msg += " Please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
+	retryCount := 0
+	for {
+		retryCount++
+		_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
+		if err == nil {
+			break
+		} else {
+			var errno syscall.Errno
+			errno = err.(syscall.Errno)
+			msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
+			if retryCount >= maxRetryCount {
+				if errno == syscall.ECONNRESET {
+					msg += " Hit communication issue with ESX (vmci or ESX service)\n"
+					msg += " Please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
+				}
+				log.Warnf(msg)
+				return nil, errors.New(msg)
+			}
+			msg += fmt.Sprintf(" retryCount=%d Retrying Request\n", retryCount)
+			log.Warnf(msg)
+			time.Sleep(3 * time.Millisecond)
 		}
-		log.Warnf(msg)
-		return nil, errors.New(msg)
 	}
+
 	response := []byte(C.GoString(ans.buf))
 	C.free(unsafe.Pointer(ans.buf))
 	err = unmarshalError(response)
