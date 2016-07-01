@@ -851,6 +851,7 @@ def main():
     try:
         resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
         x = resource.getrlimit(resource.RLIMIT_NOFILE)
+        logging.warning("================= limit ===================")
         print(x)
         kv.init()
         connectLocal()
