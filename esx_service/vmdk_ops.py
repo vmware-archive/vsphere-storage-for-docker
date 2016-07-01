@@ -842,7 +842,7 @@ def main():
             return(0)
 
     try:
-        resource.setrlimit(resource.RLIMIT_NOFILE, 65536)
+        resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
         kv.init()
         connectLocal()
         handleVmciRequests(port)
