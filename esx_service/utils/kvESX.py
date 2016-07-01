@@ -145,12 +145,11 @@ def volOpenPath(volpath):
 
 # Create the side car for the volume identified by volpath.
 def create(volpath, kv_dict):
-    disk = c_uint32(0)
     objHandle = c_uint32(0)
 
     disk = volOpenPath(volpath)
 
-    if disk == c_uint32(0):
+    if disk.value == c_uint32(0).value:
         logging.warning("Disk open for %s failed", volpath)
         return False
 
@@ -177,11 +176,9 @@ def create(volpath, kv_dict):
 
 # Delete the the side car for the given volume
 def delete(volpath):
-    disk = c_uint32(0)
-
     disk = volOpenPath(volpath)
 
-    if disk == c_uint32(0):
+    if disk.value == c_uint32(0).value:
         return False
 
     res = lib.DiskLib_SidecarDelete(disk, DVOL_KEY)
@@ -209,6 +206,7 @@ def load(volpath):
     try:
        with open(metaFile, "r") as fh:
           kv_str = fh.read()
+          close(fh)
     except:
         logging.exception("Failed to access %s", metaFile);
         return None
@@ -229,6 +227,7 @@ def save(volpath, kv_dict):
     try:
        with open(metaFile, "w") as fh:
           fh.write(align_str(kv_str, KV_ALIGN))
+          close(fh)
     except:
         logging.exception("Failed to save meta-data for %s", volpath);
         return False
