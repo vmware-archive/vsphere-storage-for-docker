@@ -206,7 +206,7 @@ def load(volpath):
     try:
        with open(metaFile, "r") as fh:
           kv_str = fh.read()
-          close(fh)
+          fh.close()
     except:
         logging.exception("Failed to access %s", metaFile);
         return None
@@ -227,7 +227,7 @@ def save(volpath, kv_dict):
     try:
        with open(metaFile, "w") as fh:
           fh.write(align_str(kv_str, KV_ALIGN))
-          close(fh)
+          fh.close()
     except:
         logging.exception("Failed to save meta-data for %s", volpath);
         return False
