@@ -144,6 +144,7 @@ def create(volpath, kv_dict):
     disk = volOpenPath(volpath)
 
     if disk == c_uint32(0):
+        logging.warning("Disk open for %s failed", volpath)
         return False
 
     if useSideCarCreate:
@@ -155,6 +156,7 @@ def create(volpath, kv_dict):
 
     if res != 0:
         logging.warning("Side car create for %s failed - %x", volpath, res)
+        logging.warning("Closing disk %s with handle - %x", volpath, disk)
         lib.DiskLib_Close(disk)
         return False
 
