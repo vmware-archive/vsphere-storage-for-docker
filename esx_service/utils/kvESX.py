@@ -118,6 +118,11 @@ def volOpenPath(volpath):
     ihandle = c_uint32(0)
     key = c_uint32(0)
 
+    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+    x = resource.getrlimit(resource.RLIMIT_NOFILE)
+    logging.warning("================= limit ===================")
+    logging.warning(x)
+
     res = lib.DiskLib_OpenWithInfo(volpath, VMDK_OPEN_FLAGS, byref(key),
                                    byref(dhandle), byref(ihandle))
 
