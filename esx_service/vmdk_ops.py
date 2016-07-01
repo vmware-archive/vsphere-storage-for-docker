@@ -852,7 +852,7 @@ def main():
         resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
         x = resource.getrlimit(resource.RLIMIT_NOFILE)
         logging.warning("================= limit ===================")
-        print(x)
+        logging.warning(x)
         kv.init()
         connectLocal()
         handleVmciRequests(port)
