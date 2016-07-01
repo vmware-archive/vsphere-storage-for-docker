@@ -23,6 +23,7 @@ from ctypes import \
 import json
 import logging
 import resource
+import subprocess
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
