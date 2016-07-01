@@ -103,6 +103,13 @@ def RunCommand(cmd):
    """
     logging.debug("Running cmd %s", cmd)
 
+    p = subprocess.Popen('ulimit -n 65536',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
@@ -843,6 +850,8 @@ def main():
 
     try:
         resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+        x = resource.getrlimit(resource.RLIMIT_NOFILE)
+        print(x)
         kv.init()
         connectLocal()
         handleVmciRequests(port)
