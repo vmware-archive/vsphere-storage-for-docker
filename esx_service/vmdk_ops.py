@@ -44,6 +44,7 @@ import sys
 import traceback
 import threading
 import time
+import resource
 from ctypes import *
 
 from vmware import vsi
@@ -841,6 +842,7 @@ def main():
             return(0)
 
     try:
+        resource.setrlimit(resource.RLIMIT_NOFILE, 65536)
         kv.init()
         connectLocal()
         handleVmciRequests(port)
