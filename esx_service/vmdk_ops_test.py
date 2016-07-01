@@ -239,5 +239,6 @@ if __name__ == '__main__':
         if not paths:
             logging.debug("Directory clean up - removing  %s", path)
             os.removedirs(path)
-    #suite = unittest.TestLoader().loadTestsFromTestCase(TestStringMethods)
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+
+        # If the unittest failed, re-raise the error
+        raise
