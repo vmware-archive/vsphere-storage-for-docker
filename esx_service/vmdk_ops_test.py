@@ -37,7 +37,7 @@ class VolumeNamingTestCase(unittest.TestCase):
     """Unit test for operations with volume names (volume@datastore)"""
 
     def test_name_parse(self):
-        """checks name parsing and error checks 
+        """checks name parsing and error checks
         'volume[@datastore]' -> volume and datastore"""
         testInfo = [
             #    full_name                       vol_name   datastore  success ?
@@ -72,8 +72,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     def setUp(self):
         self.name = vmdk_utils.get_vmdk_path(path, self.volName)
         self.policy_names = ['good', 'impossible']
-        self.orig_policy_content = '(("hostFailuresToTolerate" i1))'
-        self.new_policy_conent = '(("hostFailuresToTolerate" i0))'
+        self.orig_policy_content = ('(("proportionalCapacity" i0) '
+                                     '("hostFailuresToTolerate" i0))')
+        self.new_policy_content = '(("hostFailuresToTolerate" i0))'
         for n in self.policy_names:
             vsan_policy.create(n, self.orig_policy_content)
 
@@ -119,10 +120,10 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
                                   opts={'vsan-policy-name': 'good'})
         self.assertEqual(err, None, err)
         self.assertEqual(None, vsan_policy.update('good',
-                                                  self.new_policy_conent))
+                                                  self.new_policy_content))
         # Setting an identical policy returns an error msg
         self.assertNotEqual(None, vsan_policy.update('good',
-                                                     self.new_policy_conent))
+                                                     self.new_policy_content))
 
         backup_policy_file = vsan_policy.backup_policy_filename(self.name)
         #Ensure there is no backup policy file
@@ -205,7 +206,7 @@ class ValidationTestCase(unittest.TestCase):
                     vmdk_ops.validate_opts({volume_kv.DISK_ALLOCATION_FORMAT: d}, self.path)
 
     def test_failure(self):
-        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'}, 
+        bad = [{volume_kv.SIZE: '2'}, {volume_kv.VSAN_POLICY_NAME: 'bad-policy'},
         {volume_kv.DISK_ALLOCATION_FORMAT: 'thiN'}, {volume_kv.SIZE: 'mb'}, {'bad-option': '4'}, {'bad-option': 'what',
                                                              volume_kv.SIZE: '4mb'}]
         for opts in bad:
