@@ -111,6 +111,37 @@ def kvESXInit():
     logging.warning("================= limit ===================")
     logging.warning(x)
 
+    p = subprocess.Popen('ulimit -n 65536',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+
+    p = subprocess.Popen('ulimit -n 65536',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+    logging.warning(o)
+
+    p = subprocess.Popen('cat /etc/security/limits.conf',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+    logging.warning(o)
+
+    p = subprocess.Popen('cat /etc/pam.d/login',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+    logging.warning(o)
+
     return None
 
 
