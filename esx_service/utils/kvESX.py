@@ -39,7 +39,8 @@ DVOL_KEY = "docker-volume-vsphere"
 
 # Results in a buffered, locked, filter-less open,
 # all vmdks are opened with these flags
-VMDK_OPEN_FLAGS = 524312
+#VMDK_OPEN_FLAGS = 524312
+VMDK_OPEN_FLAGS = 524297
 
 # Default kv side car alignment
 KV_ALIGN = 4096
