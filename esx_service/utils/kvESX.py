@@ -129,6 +129,10 @@ def volOpenPath(volpath):
     if res != 0:
         logging.warning("Open %s failed - %x", volpath, res)
 
+    if res == 40:
+       with open(volpath, "r") as fh:
+          print("opened file")
+
     return dhandle
 
 
