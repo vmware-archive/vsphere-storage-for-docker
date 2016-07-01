@@ -22,6 +22,7 @@ from ctypes import \
         c_void_p, c_char_p, c_int32, c_bool, c_uint32, c_uint64
 import json
 import logging
+import resource
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -101,6 +102,11 @@ def kvESXInit():
 
     lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
     lib.DiskLib_DBSet.restype = c_uint32
+
+    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+    x = resource.getrlimit(resource.RLIMIT_NOFILE)
+    logging.warning("================= limit ===================")
+    logging.warning(x)
 
     return None
 
