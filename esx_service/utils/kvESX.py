@@ -156,7 +156,7 @@ def create(volpath, kv_dict):
 
     if res != 0:
         logging.warning("Side car create for %s failed - %x", volpath, res)
-        logging.warning("Closing disk %s with handle - %x", volpath, disk)
+        logging.warning("Closing disk %s with handle", volpath)
         lib.DiskLib_Close(disk)
         return False
 
