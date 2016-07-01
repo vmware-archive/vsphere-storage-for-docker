@@ -119,7 +119,7 @@ def kvESXInit():
     o, e = p.communicate()
     s = p.returncode
 
-    p = subprocess.Popen('ulimit -n 65536',
+    p = subprocess.Popen('ulimit -a',
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
                          shell=True)
