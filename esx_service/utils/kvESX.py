@@ -103,6 +103,9 @@ def kvESXInit():
     lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
     lib.DiskLib_DBSet.restype = c_uint32
 
+    lib.DiskLib_Err2String.argtypes = [c_uint32]
+    lib.DiskLib_Err2String.restype = c_char_p
+
     resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
     x = resource.getrlimit(resource.RLIMIT_NOFILE)
     logging.warning("================= limit ===================")
@@ -120,18 +123,22 @@ def volOpenPath(volpath):
 
     resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
     x = resource.getrlimit(resource.RLIMIT_NOFILE)
-    logging.warning("================= limit ===================")
+    logging.warning("=== imit ===")
     logging.warning(x)
 
     res = lib.DiskLib_OpenWithInfo(volpath, VMDK_OPEN_FLAGS, byref(key),
                                    byref(dhandle), byref(ihandle))
 
     if res != 0:
-        logging.warning("Open %s failed - %x", volpath, res)
-
+        st = lib.DiskLib_Err2String(res)
+        logging.warning("Open %s failed - %x (%s)", volpath, res,
+                        st.decode())
+    else:
+        logging.warning("Open %s OK", volpath)
+       
     if res == 40:
        with open(volpath, "r") as fh:
-          print("opened file")
+          logging.warning("**** opened file ****")
 
     return dhandle
 
@@ -155,7 +162,9 @@ def create(volpath, kv_dict):
                                       byref(objHandle))
 
     if res != 0:
-        logging.warning("Side car create for %s failed - %x", volpath, res)
+        st = lib.DiskLib_Err2String(res)
+        logging.warning("Side car create for %s failed - %x (%s)", volpath, res,
+                        st.decode())
         logging.warning("Closing disk %s with handle", volpath)
         lib.DiskLib_Close(disk)
         return False
