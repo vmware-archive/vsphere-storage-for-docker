@@ -165,13 +165,14 @@ def volOpenPath(volpath):
         st = lib.DiskLib_Err2String(res)
         logging.warning("Open %s failed - %x (%s)", volpath, res,
                         st.decode())
+        if res == 40:
+           with open(volpath, "r") as fh:
+              logging.warning("**** opened file ****")
+              logging.warning(volpath)
+              fh.close()
     else:
         logging.warning("Open %s OK", volpath)
        
-    if res == 40:
-       with open(volpath, "r") as fh:
-          logging.warning("**** opened file ****")
-
     return dhandle
 
 
