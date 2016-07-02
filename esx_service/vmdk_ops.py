@@ -62,6 +62,10 @@ BIN_LOC  = os.path.join(TOP_DIR, "bin")
 LIB_LOC  = os.path.join(TOP_DIR, "lib")
 PY_LOC  = os.path.join(TOP_DIR, "Python")
 
+# We won't accept names longer than that
+MAX_VOL_NAME_LEN = 100
+MAX_DS_NAME_LEN  = 100
+
 # vmdkops python utils are in PY_LOC, so add to path.
 sys.path.insert(0, PY_LOC)
 
@@ -161,7 +165,7 @@ def make_create_cmd(opts, vmdk_path):
         # datastore is not VSAN
         policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
         return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, format, size,
-                                                    policy_file, vmdk_path)
+                                                               policy_file, vmdk_path)
     else:
         return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, format, size, vmdk_path)
 
@@ -371,7 +375,7 @@ def get_vol_path(datastore):
     if rc == 0:
         logging.info("Created %s", path)
         return path
-    
+
     logging.warning("Failed to create %s", path)
     return None
 
@@ -385,13 +389,22 @@ def parse_vol_name(full_vol_name):
     Parses volume[@datastore] and returns (volume, datastore)
     On parse errors raises ValidationError with syntax explanation
     """
-    # note: \w in regexp is [a-zA-Z0-9_]
-    groups = re.match("\A([\w\-.]+)@?([\w\-.]+)?$", full_vol_name)
+    # Parse volume name with regexp package
+    # Note: we do not want '-' in volume name to make sure names like 'disk-0001.vmdk' cannot
+    # be created using this API.
+    # on regexp:  '\w'' in regexp is [a-zA-Z0-9_]
+    groups = re.match(r"\A([\w\_.]+)(@([\w\_.\-]+))?$", full_vol_name)
     if not groups:
-        raise ValidationError("Invalid syntax: '{0}'. " \
-                           "Valid syntax is volume@datastore, where volume or datastore" \
-                           "can contain [a-zA-Z0-9_-.]".format(full_vol_name))
-    return groups.groups()[0], groups.groups()[1]
+        raise ValidationError("Invalid syntax: '{0}'.\n"
+                              "Valid syntax is volume@datastore, where 'volume' or 'datastore' "
+                              "contain up to {1} of allowed characters ([a-zA-Z0-9_.]) each"
+                              .format(full_vol_name, MAX_VOL_NAME_LEN))
+    vol_name, ds_name = groups.groups()[0], groups.groups()[2]
+    if len(vol_name) > MAX_VOL_NAME_LEN:
+        raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))
+    if ds_name and len(ds_name) > MAX_DS_NAME_LEN:
+        raise ValidationError("Datastore name is too long (max len is {0})".format(MAX_DS_NAME_LEN))
+    return vol_name, ds_name
 
 
 def get_full_vol_name(vmdk_name, datastore, vm_datastore):
@@ -826,19 +839,19 @@ def main():
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
     try:
-        port=1019
+        port = 1019
         opts, args = getopt.getopt(sys.argv[1:], 'hp:')
     except getopt.error, msg:
         if msg:
             print >> sys.stderr, msg
         usage()
-        return(1)
-    for a,v in opts:
+        return 1
+    for a, v in opts:
         if a == '-p':
-            port=int(v)
+            port = int(v)
         if a == '-h':
             usage()
-            return(0)
+            return 0
 
     try:
         kv.init()
