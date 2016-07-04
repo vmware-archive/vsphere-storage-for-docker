@@ -22,6 +22,8 @@ from ctypes import \
         c_void_p, c_char_p, c_int32, c_bool, c_uint32, c_uint64
 import json
 import logging
+import resource
+import subprocess
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -102,6 +104,45 @@ def kvESXInit():
     lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
     lib.DiskLib_DBSet.restype = c_uint32
 
+    lib.DiskLib_Err2String.argtypes = [c_uint32]
+    lib.DiskLib_Err2String.restype = c_char_p
+
+    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+    x = resource.getrlimit(resource.RLIMIT_NOFILE)
+    logging.warning("================= limit ===================")
+    logging.warning(x)
+
+    p = subprocess.Popen('ulimit -n 65536',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+
+    p = subprocess.Popen('ulimit -a',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+    logging.warning(o)
+
+    p = subprocess.Popen('cat /etc/security/limits.conf',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+    logging.warning(o)
+
+    p = subprocess.Popen('cat /etc/pam.d/login',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
+    logging.warning(o)
+
     return None
 
 
@@ -112,23 +153,37 @@ def volOpenPath(volpath):
     ihandle = c_uint32(0)
     key = c_uint32(0)
 
+    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+    x = resource.getrlimit(resource.RLIMIT_NOFILE)
+    logging.warning("=== imit ===")
+    logging.warning(x)
+
     res = lib.DiskLib_OpenWithInfo(volpath, VMDK_OPEN_FLAGS, byref(key),
                                    byref(dhandle), byref(ihandle))
 
     if res != 0:
-        logging.warning("Open %s failed - %x", volpath, res)
-
+        st = lib.DiskLib_Err2String(res)
+        logging.warning("Open %s failed - %x (%s)", volpath, res,
+                        st.decode())
+        if res == 40:
+           with open(volpath, "r") as fh:
+              logging.warning("**** opened file ****")
+              logging.warning(volpath)
+              fh.close()
+    else:
+        logging.warning("Open %s OK", volpath)
+       
     return dhandle
 
 
 # Create the side car for the volume identified by volpath.
 def create(volpath, kv_dict):
-    disk = c_uint32(0)
     objHandle = c_uint32(0)
 
     disk = volOpenPath(volpath)
 
-    if disk == c_uint32(0):
+    if disk.value == c_uint32(0).value:
+        logging.warning("Disk open for %s failed", volpath)
         return False
 
     if useSideCarCreate:
@@ -139,7 +194,10 @@ def create(volpath, kv_dict):
                                       byref(objHandle))
 
     if res != 0:
-        logging.warning("Side car create for %s failed - %x", volpath, res)
+        st = lib.DiskLib_Err2String(res)
+        logging.warning("Side car create for %s failed - %x (%s)", volpath, res,
+                        st.decode())
+        logging.warning("Closing disk %s with handle", volpath)
         lib.DiskLib_Close(disk)
         return False
 
@@ -151,11 +209,9 @@ def create(volpath, kv_dict):
 
 # Delete the the side car for the given volume
 def delete(volpath):
-    disk = c_uint32(0)
-
     disk = volOpenPath(volpath)
 
-    if disk == c_uint32(0):
+    if disk.value == c_uint32(0).value:
         return False
 
     res = lib.DiskLib_SidecarDelete(disk, DVOL_KEY)
@@ -183,6 +239,7 @@ def load(volpath):
     try:
        with open(metaFile, "r") as fh:
           kv_str = fh.read()
+          fh.close()
     except:
         logging.exception("Failed to access %s", metaFile);
         return None
@@ -203,6 +260,7 @@ def save(volpath, kv_dict):
     try:
        with open(metaFile, "w") as fh:
           fh.write(align_str(kv_str, KV_ALIGN))
+          fh.close()
     except:
         logging.exception("Failed to save meta-data for %s", volpath);
         return False

@@ -44,6 +44,7 @@ import sys
 import traceback
 import threading
 import time
+import resource
 from ctypes import *
 
 from vmware import vsi
@@ -105,6 +106,13 @@ def RunCommand(cmd):
    @param command to execute
    """
     logging.debug("Running cmd %s", cmd)
+
+    p = subprocess.Popen('ulimit -n 65536',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         shell=True)
+    o, e = p.communicate()
+    s = p.returncode
 
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
@@ -854,6 +862,10 @@ def main():
             return 0
 
     try:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+        x = resource.getrlimit(resource.RLIMIT_NOFILE)
+        logging.warning("================= limit ===================")
+        logging.warning(x)
         kv.init()
         connectLocal()
         handleVmciRequests(port)
