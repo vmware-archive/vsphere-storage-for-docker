@@ -96,7 +96,7 @@ def update_policy_file_content(path, content):
         shutil.copy(path, backup_policy_filename(path))
         os.rename(tmpfile, path)
     except OSError:
-        print ('Internal Error: Failed to update policy file contents: '
+        print('Internal Error: Failed to update policy file contents: '
                 '{0}').format(path)
         raise
 
@@ -115,7 +115,7 @@ def update_vsan_objects_with_policy(name, content):
     update_count = 0
     failed_updates = []
     dockvols_path = vsan_info.get_vsan_dockvols_path()
-    print "This operation may take a while. Please be patient."
+    print("This operation may take a while. Please be patient.")
     for v in list_volumes_and_policies():
         if v['policy'] == name:
             volume_name = v['volume']
@@ -156,7 +156,7 @@ def log_failed_updates(volumes, policy_name):
             f.write(volumes)
             f.write('\n')
     except:
-        print ("Failed to save volume names that failed to update to file."
+        print("Failed to save volume names that failed to update to file."
                 "Please record them for future use.")
 
 
