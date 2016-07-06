@@ -60,6 +60,7 @@ sys.dont_write_bytecode = True
 TOP_DIR = "/usr/lib/vmware/vmdkops"
 BIN_LOC  = os.path.join(TOP_DIR, "bin")
 LIB_LOC  = os.path.join(TOP_DIR, "lib")
+LIB_LOC64 = os.path.join(TOP_DIR, "lib64")
 PY_LOC  = os.path.join(TOP_DIR, "Python")
 
 # We won't accept names longer than that
@@ -76,6 +77,8 @@ import vmdk_utils
 import vsan_policy
 import vsan_info
 
+# Python version 3.5.1
+PYTHON64_VERSION = 50659824
 
 # External tools used by the plugin.
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
@@ -93,6 +96,8 @@ DEFAULT_DISK_SIZE = "100mb" # default volume size
 # Service instance provide from connection to local hostd
 si = None
 
+# VMCI library used to communicate with clients
+lib = None
 
 # Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
 # Returns the integer return value and the stdout str on success and integer return value and
@@ -661,7 +666,7 @@ def disk_attach(vmdk_path, vm):
                      if type(dev) == vim.VirtualDisk and dev.controllerKey ==
                      controller_key])
         # search in 15 slots, with unit_number 7 reserved for scsi controller
-        availSlots = set(range(0, 6) + range(8, 16)) - taken
+        availSlots = (set(range(0, 7)) | set(range(8, 16))) - taken
 
         if len(availSlots) == 0:
             msg = "Failed to place new disk - out of disk slots"
@@ -751,13 +756,19 @@ def signal_handler_stop(signalnum, frame):
     logging.warn("Received signal num: ' %d '", signalnum)
     sys.exit(0)
 
+def load_vmci():
+   global lib
+
+   logging.info("Loading VMCI server lib.")
+   if sys.hexversion >= PYTHON64_VERSION:
+       lib = CDLL(os.path.join(LIB_LOC64, "libvmci_srv.so"), use_errno=True)
+   else:
+       lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
 
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests(port):
     VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
     ECONNABORTED = 103 # Error on non privileged client
-    # Load and use DLL with vsocket shim to listen for docker requests
-    lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
 
     bsize = MAX_JSON_SIZE
     txt = create_string_buffer(bsize)
@@ -805,7 +816,7 @@ def handleVmciRequests(port):
         vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split()) 
 
         try:
-            req = json.loads(txt.value, "utf-8")
+            req = json.loads(txt.value.decode('utf-8'))
         except ValueError as e:
             ret = {u'Error': "Failed to parse json '%s'." % txt.value}
         else:
@@ -821,7 +832,8 @@ def handleVmciRequests(port):
             logging.info("executeRequest '%s' completed with ret=%s",
                          req["cmd"], ret)
 
-        response = lib.vmci_reply(c, c_char_p(json.dumps(ret)))
+        ret_string = json.dumps(ret)
+        response = lib.vmci_reply(c, c_char_p(ret_string.encode()))
         errno = get_errno()
         logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
         if response == VMCI_ERROR:
@@ -831,7 +843,7 @@ def handleVmciRequests(port):
     lib.close(sock)  # close listening socket when the loop is over
 
 def usage():
-    print "Usage: %s -p <vSocket Port to listen on>" % sys.argv[0]
+    print("Usage: %s -p <vSocket Port to listen on>" % sys.argv[0])
 
 def main():
     log_config.configure()
@@ -841,9 +853,9 @@ def main():
     try:
         port = 1019
         opts, args = getopt.getopt(sys.argv[1:], 'hp:')
-    except getopt.error, msg:
+    except getopt.error as msg:
         if msg:
-            print >> sys.stderr, msg
+           logging.exception(msg)
         usage()
         return 1
     for a, v in opts:
@@ -851,13 +863,16 @@ def main():
             port = int(v)
         if a == '-h':
             usage()
-            return 0
+            return 0 
 
     try:
+        # Load and use DLL with vsocket shim to listen for docker requests
+        load_vmci()
+
         kv.init()
         connectLocal()
         handleVmciRequests(port)
-    except Exception, e:
+    except Exception as e:
         logging.exception(e)
 
 

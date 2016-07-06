@@ -22,6 +22,10 @@ from ctypes import \
         c_void_p, c_char_p, c_int32, c_bool, c_uint32, c_uint64
 import json
 import logging
+import sys
+
+# Python version 3.5.1
+PYTHON64_VERSION = 50659824
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -30,9 +34,10 @@ KV_SIDECAR_CREATE = 0
 KV_CREATE_SIZE = 0
 
 # VSphere lib to access ESX proprietary APIs.
+DISK_LIB64 = "/lib64/libvmsnapshot.so"
 DISK_LIB = "/lib/libvmsnapshot.so"
 lib = None
-useSideCarCreate = False
+use_sidecar_create = False
 DVOL_KEY = "docker-volume-vsphere"
 
 # Results in a buffered, locked, filter-less open,
@@ -42,131 +47,160 @@ VMDK_OPEN_FLAGS = 524312
 # Default kv side car alignment
 KV_ALIGN = 4096
 
+# Flag to track the version of Python on the platform
+is_64bits = False
+
 # Load the disk lib API library
-def loadDiskLib():
+def load_disk_lib(lib_name):
     global lib
 
     if not lib:
-        lib = CDLL(DISK_LIB)
-        lib.DiskLib_Init.argtypes = []
-        lib.DiskLib_Init.restype = c_bool
-        lib.DiskLib_Init()
+       lib = CDLL(lib_name)
+       lib.DiskLib_Init.argtypes = []
+       lib.DiskLib_Init.restype = c_bool
+       lib.DiskLib_Init()
 
+    return
 
-# Loads the ESX library used to access proprietary ESX disk lib API.
-# Create arg/result definitions for those that we use.
-def kvESXInit():
-    global useSideCarCreate
+# Initialize disk lib interfaces
+def disk_lib_init():
+    global is_64bits
+    global use_sidecar_create
 
-    # Load disklib APIs
-    loadDiskLib()
+    # Define arg types for disk lib apis.
+    if sys.hexversion >= PYTHON64_VERSION:
+       is_64bits = True
+       load_disk_lib(DISK_LIB64)
+       lib.DiskLib_OpenWithInfo.argtypes = [c_char_p, c_int32,
+                                            POINTER(c_uint32),
+                                            POINTER(c_uint64),
+                                            POINTER(c_uint64)]
+       lib.DiskLib_Close.argtypes = [c_uint64]
 
-    # Define all of the functions we are interested in
-    lib.DiskLib_OpenWithInfo.argtypes = [c_char_p, c_int32, POINTER(c_uint32),
-                                         POINTER(c_uint32), POINTER(c_uint32)]
-    lib.DiskLib_OpenWithInfo.restype = int
+       lib.DiskLib_SidecarOpen.argtypes = [c_uint64, c_char_p, c_int32,
+                                           POINTER(c_uint64)]
+       lib.DiskLib_SidecarClose.argtypes = [c_uint64, c_char_p,
+                                            POINTER(c_uint64)]
+       lib.DiskLib_DBGet.argtypes = [c_uint64, c_char_p, POINTER(c_char_p)]
+       lib.DiskLib_DBSet.argtypes = [c_uint64, c_char_p, c_char_p]
+       # Check if this library supports create API
+       try:
+           lib.DiskLib_SidecarCreate.argtypes = [c_uint64, c_char_p, c_uint64,
+                                                 c_int32, POINTER(c_uint64)]
+           lib.DiskLib_SidecarCreate.restype = int
+           use_sidecar_create = True
+       except:
+           logging.debug(
+              "ESX version doesn't support create API, using open instead.")
+           pass
+    else:
+       load_disk_lib(DISK_LIB)
+       lib.DiskLib_OpenWithInfo.argtypes = [c_char_p, c_int32,
+                                            POINTER(c_uint32),
+                                            POINTER(c_uint32),
+                                            POINTER(c_uint32)]
+       lib.DiskLib_Close.argtypes = [c_uint32]
+       lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32,
+                                           POINTER(c_uint32)]
+       lib.DiskLib_SidecarClose.argtypes = [c_uint32, c_char_p,
+                                            POINTER(c_uint32)]
+       lib.DiskLib_DBGet.argtypes = [c_uint32, c_char_p, POINTER(c_char_p)]
+       lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
 
-    lib.DiskLib_Close.argtypes = [c_uint32]
-    lib.DiskLib_Close.restype = int
-
-    # Check if this library supports create API
-    try:
-        lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64,
-                                              c_int32, POINTER(c_uint32)]
-        lib.DiskLib_SidecarCreate.restype = int
-        useSideCarCreate = True
-    except:
-        # do nothing
-        logging.debug(
-            "ESX version doesn't support create API, using open instead.")
-
-    lib.DiskLib_SidecarOpen.argtypes = [c_uint32, c_char_p, c_int32,
-                                        POINTER(c_uint32)]
-    lib.DiskLib_SidecarOpen.restype = int
-
-    lib.DiskLib_SidecarClose.argtypes = [c_uint32, c_char_p, POINTER(c_uint32)]
-    lib.DiskLib_SidecarClose.restype = int
+       # Check if this library supports create API
+       try:
+           lib.DiskLib_SidecarCreate.argtypes = [c_uint32, c_char_p, c_uint64,
+                                                 c_int32, POINTER(c_uint32)]
+           lib.DiskLib_SidecarCreate.restype = int
+           use_sidecar_create = True
+       except:
+          logging.debug(
+             "ESX version doesn't support create API, using open instead.")
+          pass
 
     lib.DiskLib_SidecarMakeFileName.argtypes = [c_char_p, c_char_p]
+
+    # Define result types for disk lib apis.
+    lib.DiskLib_OpenWithInfo.restype = int
+    lib.DiskLib_Close.restype = int
+    lib.DiskLib_SidecarOpen.restype = int
+    lib.DiskLib_SidecarClose.restype = int
     lib.DiskLib_SidecarMakeFileName.restype = c_char_p
-
-    lib.ObjLib_Pread.argtypes = [c_uint32, c_void_p, c_uint64, c_uint64]
-    lib.ObjLib_Pread.restype = c_int32
-
-    lib.ObjLib_Pwrite.argtypes = [c_uint32, c_void_p, c_uint64, c_uint64]
-    lib.ObjLib_Pwrite.restype = c_int32
-
-    lib.DiskLib_DBGet.argtypes = [c_uint32, c_char_p, POINTER(c_char_p)]
     lib.DiskLib_DBGet.restype = c_uint32
-
-    lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
     lib.DiskLib_DBSet.restype = c_uint32
 
-    return None
+    return
 
+def kv_esx_init():
+   disk_lib_init()
+
+def get_uint(val):
+   if is_64bits:
+      return c_uint64(val)
+   else:
+      return c_uint32(val)
+
+def disk_is_valid(dhandle):
+   if is_64bits:
+      return dhandle.value != c_uint64(0).value
+   else:
+      return dhandle.value != c_uint32(0).value
 
 # Open a VMDK given its path, the VMDK is opened locked just to
 # ensure we have exclusive access and its not already in use.
-def volOpenPath(volpath):
-    dhandle = c_uint32(0)
-    ihandle = c_uint32(0)
+def vol_open_path(volpath):
+    dhandle = get_uint(0)
+    ihandle = get_uint(0)
     key = c_uint32(0)
 
-    res = lib.DiskLib_OpenWithInfo(volpath, VMDK_OPEN_FLAGS, byref(key),
-                                   byref(dhandle), byref(ihandle))
+    res = lib.DiskLib_OpenWithInfo(volpath.encode(), VMDK_OPEN_FLAGS,
+                                   byref(key), byref(dhandle),
+                                   byref(ihandle))
 
     if res != 0:
         logging.warning("Open %s failed - %x", volpath, res)
 
     return dhandle
 
-
 # Create the side car for the volume identified by volpath.
 def create(volpath, kv_dict):
-    disk = c_uint32(0)
-    objHandle = c_uint32(0)
+    obj_handle = get_uint(0)
+    dhandle = vol_open_path(volpath)
 
-    disk = volOpenPath(volpath)
-
-    if disk == c_uint32(0):
-        return False
-
-    if useSideCarCreate:
-        res = lib.DiskLib_SidecarCreate(disk, DVOL_KEY, KV_CREATE_SIZE,
-                                        KV_SIDECAR_CREATE, byref(objHandle))
+    if not disk_is_valid(dhandle):
+       return False
+    if use_sidecar_create:
+       res = lib.DiskLib_SidecarCreate(dhandle, DVOL_KEY.encode(),
+                                       KV_CREATE_SIZE, KV_SIDECAR_CREATE,
+                                       byref(obj_handle))
     else:
-        res = lib.DiskLib_SidecarOpen(disk, DVOL_KEY, KV_SIDECAR_CREATE,
-                                      byref(objHandle))
-
+       res = lib.DiskLib_SidecarOpen(dhandle, DVOL_KEY.encode(),
+                                     KV_SIDECAR_CREATE,
+                                     byref(obj_handle))
     if res != 0:
-        logging.warning("Side car create for %s failed - %x", volpath, res)
-        lib.DiskLib_Close(disk)
-        return False
+       logging.warning("Side car create for %s failed - %x", volpath, res)
+       lib.DiskLib_Close(dhandle)
+       return False
 
-    lib.DiskLib_SidecarClose(disk, DVOL_KEY, byref(objHandle))
-    lib.DiskLib_Close(disk)
+    lib.DiskLib_SidecarClose(dhandle, DVOL_KEY.encode(), byref(obj_handle))
+    lib.DiskLib_Close(dhandle)
 
     return save(volpath, kv_dict)
 
-
 # Delete the the side car for the given volume
 def delete(volpath):
-    disk = c_uint32(0)
+    dhandle = vol_open_path(volpath)
 
-    disk = volOpenPath(volpath)
-
-    if disk == c_uint32(0):
-        return False
-
-    res = lib.DiskLib_SidecarDelete(disk, DVOL_KEY)
+    if not disk_is_valid(dhandle):
+       return False
+    res = lib.DiskLib_SidecarDelete(dhandle, DVOL_KEY.encode())
     if res != 0:
-        logging.warning("Side car delete for %s failed - %x", volpath, res)
-        lib.DiskLib_Close(disk)
-        return False
+       logging.warning("Side car delete for %s failed - %x", volpath, res)
+       lib.DiskLib_Close(dhandle)
+       return False
 
-    lib.DiskLib_Close(disk)
+    lib.DiskLib_Close(dhandle)
     return True
-
 
 # Align a given string to the specified block boundary.
 def align_str(kv_str, block):
@@ -178,13 +212,14 @@ def align_str(kv_str, block):
 
 # Load and return dictionary from the sidecar
 def load(volpath):
-    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, DVOL_KEY)
+    meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
+                                                DVOL_KEY.encode())
 
     try:
-       with open(metaFile, "r") as fh:
+       with open(meta_file, "r") as fh:
           kv_str = fh.read()
     except:
-        logging.exception("Failed to access %s", metaFile);
+        logging.exception("Failed to access %s", meta_file)
         return None
 
     try:
@@ -196,12 +231,13 @@ def load(volpath):
 
 # Save the dictionary to side car.
 def save(volpath, kv_dict):
-    metaFile = lib.DiskLib_SidecarMakeFileName(volpath, DVOL_KEY)
+    meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
+                                                DVOL_KEY.encode())
 
     kv_str = json.dumps(kv_dict)
 
     try:
-       with open(metaFile, "w") as fh:
+       with open(meta_file, "w") as fh:
           fh.write(align_str(kv_str, KV_ALIGN))
     except:
         logging.exception("Failed to save meta-data for %s", volpath);

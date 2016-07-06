@@ -33,7 +33,10 @@ OFFLINE_DEPOT := vmware-esx-vmdkops-$(PKG_VERSION).zip
 VIB_BIN  = $(BIN)/$(VIB)
 
 # Shared lib. Note that it is referred by name from vmci_srv.py
-VMCI_SRV_LIB := $(BIN)/libvmci_srv.so
+VMCI_SRV_LIB_NAME := libvmci_srv.so
+VMCI_SRV_LIB   := $(BIN)/$(VMCI_SRV_LIB_NAME)
+VMCI_SRV_LIB64 := $(BIN)/$(VMCI_SRV_LIB_NAME).64
+VMCI_SRV_LIBS  := $(VMCI_SRV_LIB) $(VMCI_SRV_LIB64)
 
 # Source code - all .py stuff which is not tests
 PY_SRC   := $(filter-out %_test.py, $(wildcard *.py))
@@ -41,11 +44,11 @@ PY_CLI   := $(filter-out %_test.py, $(wildcard cli/*.py))
 PY_UTILS := $(filter-out %_test.py, $(wildcard utils/*.py))
 
 C_SRC  := vmci/vmci_server.c
-# We need to build C code as 32 bits.
-# Reason: vSockets return cartelId to ID connecting VM. We use VSI to convert
-#       it to VM name/ID. ESX is shipped with 32bit VSI python module only, so
-#       we use 32bit python and 32 bit shared libs for VMCI/vSockets
+
+# Build both a 32-bit and a 64-bit library for vmci.
 CFLAGS  := -fPIC -m32 -shared
+CFLAGS64  := -fPIC -shared
+
 cc := gcc
 
 INIT_SCRIPT := vmdk-opsd
@@ -79,6 +82,7 @@ VMDKOPS_PAYLOAD := $(PAYLOAD)/vmdkops
 VMDKOPS_BIN     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/bin
 VMDKOPS_PY      := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/Python
 VMDKOPS_LIB     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib
+VMDKOPS_LIB64   := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib64
 VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
 
 # this is used from a Makefile upstairs, and could be used manually
@@ -89,24 +93,28 @@ build: $(VIB_BIN)
 TO_WDIR := $(DESCRIPTOR)
 TO_ESX_BIN := $(PY_SRC) $(PY_CLI) $(TOOLS)
 TO_ESX_PY  := $(PY_UTILS)
-TO_ESX_LIB := $(VMCI_SRV_LIB)
+TO_ESX_LIB := $(VMCI_SRV_LIBS)
 TO_ESX_INITD := $(INIT_SCRIPT)
 
 # copy files to staging area and then build the VIB
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)
 	@echo === Staging in $(PAYLOAD) ===
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_INITD)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
 	@chmod -R a+w $(PAYLOAD)
 	@cp $(TO_WDIR) $(WDIR)
 	@cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
 	@cp $(TO_ESX_PY)  $(VMDKOPS_PY)
-	@cp $(TO_ESX_LIB) $(VMDKOPS_LIB)
+	@cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
+	@cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
 	@cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
 
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
+
+$(VMCI_SRV_LIB64): $(C_SRC)
+	$(CC) $(CFLAGS64) -o $@ $(C_SRC)
 
 # Run lint on python source. Currently this is run manually and
 # needs pylint and dependent packages to be installed.
@@ -120,7 +128,7 @@ lint:
 
 .PHONY:	clean
 clean:
-	rm -rf $(VIB) $(VMCI_SRV_LIB) $(WDIR)/$(DESCRIPTOR) $(PAYLOAD)
+	rm -rf $(VIB) $(VMCI_SRV_LIBS) $(WDIR)/$(DESCRIPTOR) $(PAYLOAD)
 
 .PHONY: test
 test: test-esx build

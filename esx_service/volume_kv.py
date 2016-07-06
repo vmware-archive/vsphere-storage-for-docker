@@ -54,8 +54,6 @@ DEFAULT_ALLOCATION_FORMAT = 'thin'
 
 ## Values for given keys
 
-
-
 ## Value for VSAN_POLICY_NAME
 DEFAULT_VSAN_POLICY = '[VSAN default]'
 
@@ -66,8 +64,7 @@ DETACHED = 'detached'
 # Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.
 def init():
-    kvESX.kvESXInit()
-
+    kvESX.kv_esx_init()
 
 def create(vol_path, vol_meta):
     """

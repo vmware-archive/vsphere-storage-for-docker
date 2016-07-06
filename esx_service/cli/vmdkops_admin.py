@@ -331,7 +331,7 @@ def ls(args):
         header = all_ls_headers()
         rows = generate_ls_rows()
 
-    print cli_table.create(header, rows)
+    print(cli_table.create(header, rows))
 
 
 def ls_dash_c(columns):
@@ -466,17 +466,17 @@ def human_readable(size_in_bytes):
 def policy_create(args):
     output = vsan_policy.create(args.name, args.content)
     if output:
-        print output
+        print(output)
     else:
-        print 'Successfully created policy: {0}'.format(args.name)
+        print('Successfully created policy: {0}'.format(args.name))
 
 
 def policy_rm(args):
     output = vsan_policy.delete(args.name)
     if output:
-        print output
+        print(output)
     else:
-        print 'Successfully removed policy: {0}'.format(args.name)
+        print('Successfully removed policy: {0}'.format(args.name))
 
 
 def policy_ls(args):
@@ -499,27 +499,27 @@ def policy_ls(args):
             active = 'Unused'
         rows.append([name, content.strip(), active])
 
-    print cli_table.create(header, rows)
+    print(cli_table.create(header, rows))
 
 
 def policy_update(args):
     output = vsan_policy.update(args.name, args.content)
     if output:
-        print output
+        print(output)
     else:
-        print 'Successfully updated policy: {0}'.format(args.name)
+        print('Successfully updated policy: {0}'.format(args.name))
 
 
 def status(args):
-    print "Version: {0}".format(get_version())
+    print("Version: {0}".format(get_version()))
     (status, pid) = get_service_status()
-    print "Status: {0}".format(status)
+    print("Status: {0}".format(status))
     if pid:
-        print "Pid: {0}".format(pid)
-        print "Port: {0}".format(get_listening_port(pid))
-    print "LogConfigFile: {0}".format(log_config.LOG_CONFIG_FILE)
-    print "LogFile: {0}".format(log_config.LOG_FILE)
-    print "LogLevel: {0}".format(log_config.get_log_level())
+        print("Pid: {0}".format(pid))
+        print("Port: {0}".format(get_listening_port(pid)))
+    print("LogConfigFile: {0}".format(log_config.LOG_CONFIG_FILE))
+    print("LogFile: {0}".format(log_config.LOG_FILE))
+    print("LogLevel: {0}".format(log_config.get_log_level()))
 
 
 VMDK_OPSD = '/etc/init.d/vmdk-opsd'
@@ -567,23 +567,23 @@ NOT_IMPLEMENTED = "Not implemented"
 
 
 def role_create(args):
-    print NOT_IMPLEMENTED
+    print(NOT_IMPLEMENTED)
 
 
 def role_rm(args):
-    print NOT_IMPLEMENTED
+    print(NOT_IMPLEMENTED)
 
 
 def role_ls(args):
-    print NOT_IMPLEMENTED
+    print(NOT_IMPLEMENTED)
 
 
 def role_set(args):
-    print NOT_IMPLEMENTED
+    print(NOT_IMPLEMENTED)
 
 
 def role_get(args):
-    print NOT_IMPLEMENTED
+    print(NOT_IMPLEMENTED)
 
 
 if __name__ == "__main__":
