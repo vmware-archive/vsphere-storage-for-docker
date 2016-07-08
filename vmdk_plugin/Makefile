@@ -102,6 +102,10 @@ dockerbuild:
 build: prereqs .code_verify $(VM_BINS)
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
+.PHONY: gvt
+gvt:
+	$(BUILD) gvt
+
 .PHONY: prereqs
 prereqs:
 	@$(CHECK)
