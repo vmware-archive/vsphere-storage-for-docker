@@ -1,4 +1,4 @@
-# Contributing 
+# Contributing
 
 ## Topics
 * [Code contribution guidelines](#code-contribution-guidelines)
@@ -14,19 +14,19 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * Each PR must be accompanied with unit/integration tests
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
-* Locally run integration tests. 
+* Locally run integration tests.
 * Squash your commits before you publish pull request.
 * If there are any documentation changes then they must be in the same PR.
 * We don't have formal coding conventions at this point.
 Make sure your code follows same style and convention as existing code.
 
-See  [Typical Developer Workflow](#typical-developer-workflow) to get started. 
+See  [Typical Developer Workflow](#typical-developer-workflow) to get started.
 
 
 ### Merge Approvals:
 * Pull request requires a minimum of 2 approvals, given via "Ship it",
 "LGTM" or "+1" comments.
-* Author is responsible for resolving conflicts, if any, and merging pull request. 
+* Author is responsible for resolving conflicts, if any, and merging pull request.
 * After merge, you must ensure integration tests pass successfully.
 Failure to pass test would result in reverting a change.
 
@@ -51,7 +51,7 @@ Expected Result:
 Actual Result:
 
 Triage:
-Copy-paste relevant snippets from log file, code. Use github markdown language for basic formatting. 
+Copy-paste relevant snippets from log file, code. Use github markdown language for basic formatting.
 
 ```
 ## Typical Developer Workflow
@@ -66,7 +66,7 @@ In order to test locally, you'd need a test setup. Local test setup automation i
 Test environment  typically consist of 1 ESX and 2  guest VMs running inside of the
 ESX. We also support 1 ESX and 1 guest VM. We require ESX 6.0 and later,
 and a Linux VM running  Docker 1.10+ enabled for  plain text TCP connection, i.e.
-Docker Daemon running with "-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock" 
+Docker Daemon running with "-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"
 options. Note that both tcp: and unix: need to be present
 Please check  "Configuring and running Docker"
 (https://docs.docker.com/engine/admin/configuring/)  page on how to configure this - also there is a github link at the bottom, for systemd config files.
@@ -112,13 +112,13 @@ Login to the machine kill the binary and re-run it manually.
 
 ```
 Standard invocation on ESX:
-python -B /usr/lib/vmware/vmdkops/bin/vmdk_ops.py 
+python -B /usr/lib/vmware/vmdkops/bin/vmdk_ops.py
 
 Standard invocation on VM: (as root)
 /usr/local/bin/docker-volume-vsphere
 ```
 
-To remove the code from the testbed, use the same steps as above (i.e define 
+To remove the code from the testbed, use the same steps as above (i.e define
 ESX, VM1 and VM2) and use the following make targets:
 
 ```
@@ -155,10 +155,10 @@ to GitHub and make sure CI passes
 * when you branch is ready, rebase to latest master
 and squash commit if needed (e.g. `git fetch origin; git rebase -i origin/master`).
 Each commit should have
-a distinct functionality you want to handle as a unit of work. Then re-push your 
+a distinct functionality you want to handle as a unit of work. Then re-push your
 branch, with `git push origin <your_branch>`, or, if needed,
 `git push -f origin <your_branch>`
-* create a PR on github using already pushed branch. Please make sure the title, 
+* create a PR on github using already pushed branch. Please make sure the title,
 description and "tested:" section are accurate.
 * When applying review comments, create a new commit so the diff can be easily seen
 by reviewers.
@@ -173,9 +173,11 @@ This is done to make sure CI still passes.
 Use [gvt](https://github.com/FiloSottile/gvt) and check in the dependency.
 Example:
 ```
+make gvt # Start docker image used to build which includes gvt
 gvt fetch github.com/docker/go-plugins-helpers/volume
 git add vendor
 git commit -m "Added new dependency go-plugins-helpers"
+exit
 ```
 
 ## Testing and CI
@@ -202,7 +204,7 @@ A typical workflow for a developer should be.
 - Create a branch, push changes and make sure tests do not break as reported
   by the CI system.
 - When ready post a PR. This will trigger a full set of tests on ESX. After all
-  the tests pass and the review is complete the PR will be merged in. If the PR 
+  the tests pass and the review is complete the PR will be merged in. If the PR
   depends on new code checked into master, merge in the changes as a rebase and
   push the changes to the branch.
 - When the PR is merged in the CI system will re-run the tests against the master.
