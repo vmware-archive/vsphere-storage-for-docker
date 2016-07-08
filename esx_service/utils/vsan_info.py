@@ -67,7 +67,7 @@ def set_policy(vmdk_path, policy_string):
     Sets policy for an object backing <vmdk_path> to <policy>.
     Returns True on success
     """
-    uuid = vmdk_ops.getVMDKUuid(vmdk_path)
+    uuid = vmdk_ops.get_vsan_uuid(vmdk_path)
     rc, out = vmdk_ops.RunCommand(OBJTOOL_SET_POLICY.format(uuid,
                                                             policy_string))
     if rc != 0:
@@ -91,7 +91,7 @@ def get_policy(vmdk_path):
     Returns VSAN policy string for VSAN object backing <vmdk_path>
     Throws exception if the path is not found or it is not a VSAN object
     """
-    uuid = vmdk_ops.getVMDKUuid(vmdk_path)
+    uuid = vmdk_ops.get_vsan_uuid(vmdk_path)
     rc, out = vmdk_ops.RunCommand(OBJTOOL_GET_ATTR.format(uuid))
     if rc != 0:
         logging.warning("Failed to get policy for %s : %s", vmdk_path, out)
