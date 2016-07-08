@@ -26,14 +26,13 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
-	"sync"
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
+	"golang.org/x/exp/inotify"
+	"path/filepath"
+	"sync"
 )
 
 const (
@@ -117,19 +116,53 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 		return mountpoint, err
 	}
 
+	watcher, err := inotify.NewWatcher()
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name, "dir": mountpoint},
+		).Error("Failed to create watcher ")
+		return mountpoint, err
+	}
+	err = watcher.Watch("/dev/disk/by-path")
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name, "dir": mountpoint},
+		).Error("Failed to watch /dev ")
+		return mountpoint, err
+	}
+
 	// Have ESX attach the disk
 	dev, err := d.ops.Attach(name, nil)
 	if err != nil {
 		return mountpoint, err
 	}
 
-	time.Sleep(3 * time.Second)
-
-	if d.useMockEsx {
-		return mountpoint, fs.Mount(mountpoint, nil, "ext4")
+	device, err := fs.GetDevicePath(dev)
+	if err != nil {
+		return mountpoint, err
 	}
 
-	return mountpoint, fs.Mount(mountpoint, dev, "ext2")
+	select {
+	case ev := <-watcher.Event:
+		log.Debug("event: ", ev)
+		if ev.Name == device {
+			// Log when the device is discovered
+			log.WithFields(
+				log.Fields{"name": name, "event": ev},
+			).Info("Attach complete ")
+			break
+		}
+	case err := <-watcher.Error:
+		log.WithFields(
+			log.Fields{"name": name, "dir": mountpoint, "error": err},
+		).Error("Hit error during watch")
+		break
+	}
+
+	if d.useMockEsx {
+		return mountpoint, fs.Mount(mountpoint, "ext4", device)
+	}
+	return mountpoint, fs.Mount(mountpoint, "ext2", device)
 }
 
 // Unmounts the volume and then requests detach

@@ -55,21 +55,13 @@ func Mkdir(path string) error {
 
 // Mount discovers which devices are for which volume using blkid.
 // It then mounts the filesystem (`fs`) on the device at the given mountpoint.
-func Mount(mountpoint string, devSpec []byte, fs string) error {
-	var device string
-	if devSpec == nil {
-		return fmt.Errorf("No device to mount.")
-	}
-	device, err := GetDevicePath(devSpec)
-	if err != nil {
-		return err
-	}
+func Mount(mountpoint string, fs string, device string) error {
 	log.WithFields(log.Fields{
 		"device":     device,
 		"mountpoint": mountpoint,
 	}).Debug("Calling syscall.Mount() ")
 
-	err = syscall.Mount(device, mountpoint, fs, 0, "")
+	err := syscall.Mount(device, mountpoint, fs, 0, "")
 	if err != nil {
 		return fmt.Errorf("Failed to mount device %s at %s: %s", device, mountpoint, err)
 	}
