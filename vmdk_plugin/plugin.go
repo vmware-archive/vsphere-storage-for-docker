@@ -26,18 +26,21 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
-	"sync"
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
+	"golang.org/x/exp/inotify"
+	"path/filepath"
+	"sync"
+	"time"
 )
 
 const (
-	mountRoot = "/mnt/vmdk" // VMDK block devices are mounted here
+	devWaitTimeout   = 1 * time.Second
+	mountRoot        = "/mnt/vmdk" // VMDK block devices are mounted here
+	sleepBeforeMount = 1 * time.Second
+	watchPath        = "/dev/disk/by-path"
 )
 
 type vmdkDriver struct {
@@ -117,19 +120,70 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 		return mountpoint, err
 	}
 
+	if d.useMockEsx {
+		return mountpoint, fmt.Errorf("No device to mount.")
+	}
+
+	skipInotify := false
+
+	watcher, err := inotify.NewWatcher()
+
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name, "dir": mountpoint},
+		).Error("Failed to create watcher, skip inotify ")
+		skipInotify = true
+	} else {
+		err = watcher.Watch(watchPath)
+		if err != nil {
+			log.WithFields(
+				log.Fields{"name": name, "dir": mountpoint},
+			).Error("Failed to watch /dev, skip inotify ")
+			skipInotify = true
+		}
+	}
+
 	// Have ESX attach the disk
 	dev, err := d.ops.Attach(name, nil)
 	if err != nil {
 		return mountpoint, err
 	}
 
-	time.Sleep(3 * time.Second)
-
-	if d.useMockEsx {
-		return mountpoint, fs.Mount(mountpoint, nil, "ext4")
+	device, err := fs.GetDevicePath(dev)
+	if err != nil {
+		return mountpoint, err
 	}
 
-	return mountpoint, fs.Mount(mountpoint, dev, "ext2")
+	if skipInotify {
+		time.Sleep(sleepBeforeMount)
+		return mountpoint, fs.Mount(mountpoint, "ext2", device)
+	}
+loop:
+	for {
+		select {
+		case ev := <-watcher.Event:
+			log.Debug("event: ", ev)
+			if ev.Name == device {
+				// Log when the device is discovered
+				log.WithFields(
+					log.Fields{"name": name, "event": ev},
+				).Info("Attach complete ")
+				break loop
+			}
+		case err := <-watcher.Error:
+			log.WithFields(
+				log.Fields{"name": name, "device": device, "error": err},
+			).Error("Hit error during watch ")
+			break loop
+		case <-time.After(devWaitTimeout):
+			log.WithFields(
+				log.Fields{"name": name, "timeout": devWaitTimeout, "device": device},
+			).Error("Reached timeout while waiting for device ")
+			break loop
+		}
+	}
+
+	return mountpoint, fs.Mount(mountpoint, "ext2", device)
 }
 
 // Unmounts the volume and then requests detach
