@@ -1,16 +1,21 @@
 clone:
     path: github.com/vmware/docker-volume-vsphere
+    branch: 
+      include: [master, runci/*]
     tags: true
+    when:
+      event: [push, pull_request, tag]
 
 build:
   build_dev:
     image: cnastorage/vibauthor-and-go:0.6
+    branch: 
+      include: [master, runci/*]
     commands:
       - go get github.com/golang/lint/golint
       - make build
     when:
       event: [push, pull_request]
-
 
   build_tag:
     image: cnastorage/vibauthor-and-go:0.6
@@ -24,6 +29,8 @@ build:
 
   package:
     image: cnastorage/fpm
+    branch: 
+      include: [master, runci/*]
     commands:
       - make deb rpm
     when:
@@ -41,6 +48,8 @@ build:
   test:
     image: cnastorage/vibauthor-and-go:0.6
     privileged: true
+    branch: 
+      include: [master, runci/*]
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
       - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
