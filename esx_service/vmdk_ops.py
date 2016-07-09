@@ -199,7 +199,7 @@ def validate_opts(opts, vmdk_path):
                + 'Valid options and defaults: ' \
                + '{0}'.format(zip(list(valid_opts), defaults))
         raise ValidationError(msg)
-    
+
     if kv.SIZE in opts:
         validate_size(opts[kv.SIZE])
     if kv.VSAN_POLICY_NAME in opts:
@@ -239,7 +239,8 @@ def validate_disk_allocation_format(format):
         raise ValidationError('Disk Allocation Format \'{0}\' does not exist. Valid options are: {1}'.format(format, kv.VALID_ALLOCATION_FORMATS))
 
 
-def getVMDKUuid(vmdk_path):
+# Returns the UUID if the vmdk_path is for a VSAN backed.
+def get_vsan_uuid(vmdk_path):
     f = open(vmdk_path)
     data = f.read()
     f.close()
@@ -252,31 +253,64 @@ def getVMDKUuid(vmdk_path):
     except:
         return None
 
+# Create and return the devFS path for a VSAN object UUID.
+# Also returns true if clean up is needed.
+# cleanup_vsan_devfs should be called to clean up before
+# removing the VSAN object.
+def get_vsan_devfs_path(uuid):
+
+    logging.debug("Got volume UUID %s", uuid)
+
+    # Objtool creates a link thats usable to 
+    # read write to vsan object.
+    cmd = "{0} {1}".format(OBJ_TOOL_CMD, uuid)
+    rc, out = RunCommand(cmd)
+    fpath="/vmfs/devices/vsan/{0}".format(uuid)
+    if rc == 0 and os.path.isfile(fpath):
+        return fpath, True
+    logging.error("Failed to create devFS node for %s", uuid)
+    return None, False
+
+# Clean up vsan devfs path
+def cleanup_vsan_devfs_path(devfs_path):
+    try:
+        os.remove(devfs_path)
+        logging.debug("Unlinked %s", devfs_path)
+	return True
+    except OSError as ex:
+        logging.error("Failed to remove backing device %s",
+                      devfs_path, str(ex))
+    return False
+
+# Returns the flat file for a VMDK.
+def get_backing_flat_file(vmdk_path):
+    return vmdk_path.replace(".vmdk", "-flat.vmdk")
 
 # Return a backing file path for given vmdk path or none
-# if a backing can't be found.
-def getVMDKBacking(vmdk_path):
-    flatBacking = vmdk_path.replace(".vmdk", "-flat.vmdk")
+# if a backing can't be found. Returns True if clean up 
+# is needed. Do not forget to call cleanup_backing_device when done.
+def get_backing_device(vmdk_path):
+    flatBacking = get_backing_flat_file(vmdk_path)
     if os.path.isfile(flatBacking):
-        return flatBacking
+        return flatBacking, False
 
-    uuid = getVMDKUuid(vmdk_path)
+    uuid = get_vsan_uuid(vmdk_path)
 
     if uuid:
-        logging.debug("Got volume UUID %s", uuid)
-        # Objtool creates a link thats usable to format the
-        # vsan object.
-        cmd = "{0} {1}".format(OBJ_TOOL_CMD, uuid)
-        rc, out = RunCommand(cmd)
-        fpath = "/vmfs/devices/vsan/{0}".format(uuid)
-        if rc == 0 and os.path.isfile(fpath):
-            return fpath
-    return None
 
+        return get_vsan_devfs_path(uuid)
+
+    return None, False
+
+def cleanup_backing_device(backing, cleanup_device):
+    if cleanup_device:
+    	return cleanup_vsan_devfs_path(backing)
+    return True
 
 def formatVmdk(vmdk_path, vol_name):
-    # Get backing for given vmdk path.
-    backing = getVMDKBacking(vmdk_path)
+    # Get backing for given vmdk path. This is the backing
+    # device that will be formatted.
+    backing, needs_cleanup = get_backing_device(vmdk_path)
 
     if backing is None:
         logging.warning("Failed to format %s.", vmdk_path)
@@ -285,6 +319,10 @@ def formatVmdk(vmdk_path, vol_name):
     # Format it as ext4.
     cmd = "{0} {1} {2}".format(MKFS_CMD, vol_name, backing)
     rc, out = RunCommand(cmd)
+
+    # clean up any resources backing file might have created
+    # during get_backing_device function call.
+    cleanup_backing_device(backing, needs_cleanup)
 
     if rc != 0:
         logging.warning("Failed to format %s - %s", vmdk_path, out)
@@ -296,7 +334,6 @@ def formatVmdk(vmdk_path, vol_name):
                 % vmdk_path)
     return None
 
-
 # Return error, or None for OK
 def removeVMDK(vmdk_path):
     logging.info("*** removeVMDK: %s", vmdk_path)
@@ -304,6 +341,7 @@ def removeVMDK(vmdk_path):
     rc, out = RunCommand(cmd)
     if rc != 0:
         return err("Failed to remove %s. %s" % (vmdk_path, out))
+
     return None
 
 
@@ -317,12 +355,12 @@ def getVMDK(vmdk_path, vol_name):
 
 def listVMDK(vm_datastore):
     """
-    Returns a list of volume names (note: may be an empty list). 
+    Returns a list of volume names (note: may be an empty list).
     Each volume name is returned as either `volume@datastore`, or just `volume`
     for volumes on vm_datastore
     """
     vmdks = vmdk_utils.get_volumes()
-    # build  fully qualified vol name for each volume found 
+    # build  fully qualified vol name for each volume found
     return [{u'Name': get_full_vol_name(x['filename'], x['datastore'], vm_datastore),
              u'Attributes': {}} \
             for x in vmdks]
@@ -368,12 +406,12 @@ def detachVMDK(vmdk_path, vm_uuid):
 def get_vol_path(datastore):
     # The folder for Docker volumes is created on <datastore>/DOCK_VOLS_DIR
     path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
-    
+
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
         return path
-    
+
     # The osfs tools are usable for all datastores
     cmd = "{0} {1}".format(OSFS_MKDIR_CMD, path)
     rc, out = RunCommand(cmd)
@@ -440,18 +478,18 @@ def get_datastore_name(config_path):
 def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     """
     Executes a <cmd> request issused from a VM.
-    The request is about volume <full_volume_name> in format volume@datastore. 
-    If @datastore is omitted, the one where the VM resides is used. 
+    The request is about volume <full_volume_name> in format volume@datastore.
+    If @datastore is omitted, the one where the VM resides is used.
     For VM, the function gets vm_uuid, vm_name and config_path
     <opts> is a json options string blindly passed to a specific operation
-    
+
     Returns None (if all OK) or error string
     """
-    
+
     vm_datastore = get_datastore_name(config_path)
     if cmd == "list":
         return listVMDK(vm_datastore)
-    
+
     try:
         vol_name, datastore = parse_vol_name(full_vol_name)
     except ValidationError as ex:
@@ -463,7 +501,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
                    "Known datastores: %s.\n" \
                    "Default datastore: %s" \
                    % (datastore, ", ".join(known_datastores()), vm_datastore))
-    
+
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
     path = get_vol_path(datastore)
 
@@ -813,7 +851,7 @@ def handleVmciRequests(port):
         # pyVmomi expects uuid like this one: 564dac12-b1a0-f735-0df3-bceb00b30340
         # to get it from uuid in VSI vms/<id>/vmmGroup, we use the following format:
         UUID_FORMAT = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}"
-        vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split()) 
+        vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split())
 
         try:
             req = json.loads(txt.value.decode('utf-8'))
@@ -863,7 +901,7 @@ def main():
             port = int(v)
         if a == '-h':
             usage()
-            return 0 
+            return 0
 
     try:
         # Load and use DLL with vsocket shim to listen for docker requests

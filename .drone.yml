@@ -1,6 +1,9 @@
 clone:
     path: github.com/vmware/docker-volume-vsphere
     tags: true
+    when:
+      event: [push, pull_request, tag]
+      branch: [master, runci/*]
 
 build:
   build_dev:
@@ -10,7 +13,7 @@ build:
       - make build
     when:
       event: [push, pull_request]
-
+      branch: [master, runci/*]
 
   build_tag:
     image: cnastorage/vibauthor-and-go:0.6
@@ -28,6 +31,7 @@ build:
       - make deb rpm
     when:
       event: [push, pull_request]
+      branch: [master, runci/*]
 
   package_tag:
     image: cnastorage/fpm
@@ -55,6 +59,7 @@ build:
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push, pull_request]
+      branch: [master, runci/*]
 
   test_tag:
     image: cnastorage/vibauthor-and-go:0.6

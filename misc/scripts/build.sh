@@ -91,6 +91,9 @@ then
     -w $dir \
     $plug_pkg_container \
     $MAKE $1
+elif [ "$1" == "gvt" ]
+then
+  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $plug_container bash
 else
   docker_socket=/var/run/docker.sock
   $DOCKER run --privileged --rm \
