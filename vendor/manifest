@@ -218,6 +218,15 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "golang.org/x/exp/inotify",
+			"repository": "https://go.googlesource.com/exp",
+			"vcs": "git",
+			"revision": "d7547cb8f08b1a7db6aecdc9f793fa87e22b03dc",
+			"branch": "master",
+			"path": "/inotify",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/net/context",
 			"repository": "https://go.googlesource.com/net",
 			"vcs": "",
