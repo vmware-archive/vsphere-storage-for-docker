@@ -11,6 +11,7 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
    * Branch should be suffixed with github user id: (branch name).(github user id) Example: mydevbranch.kerneltime
+   * If you want to trigger CI test runs for pushing into a branch prefix the branch with runci/ Example: runci/mylatestchange.kerneltime
 * Each PR must be accompanied with unit/integration tests
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
