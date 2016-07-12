@@ -21,14 +21,15 @@ package vmdkops
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 )
 
 // MockVmdkCmd struct
@@ -85,7 +86,7 @@ func list() ([]byte, error) {
 	return json.Marshal(volumes)
 }
 
-// validates that the volume exists, returs error or nil (for OK)
+// validates that the volume exists, returns error or nil (for OK)
 func get(name string) error {
 	return nil
 }
