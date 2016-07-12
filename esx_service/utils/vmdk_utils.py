@@ -62,7 +62,7 @@ def get_datastores():
 def get_volumes():
     """ Return dicts of docker volumes, their datastore and their paths """
     volumes = []
-    for (datastore, url_name, path) in get_datastores():
+    for (datastore, url_name, path, scope) in get_datastores():
         for file_name in list_vmdks(path):
             volumes.append({'path': path,
                             'filename': file_name,
