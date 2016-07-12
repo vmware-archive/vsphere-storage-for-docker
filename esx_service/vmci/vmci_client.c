@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "vmci_sockets.h"
 #include "connection_types.h"
@@ -51,6 +52,11 @@ typedef struct be_request {
 } be_request;
 
 #define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
+#define MAX_CLIENT_PORT 1023 // Last privileged port
+#define START_CLIENT_PORT 1000 // Where to start client port
+
+// Retry entire range on bind failures
+#define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
 
 typedef struct be_answer {
    char *buf;   // calloced, so needs to be free()
@@ -151,6 +157,7 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
    return CONN_SUCCESS;
 }
 
+
 // vsocket interface implementation
 //---------------------------------
 
@@ -161,9 +168,10 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
 static be_sock_status
 vsock_init(be_sock_id *id, int cid, int port)
 {
+   static int round_robin = START_CLIENT_PORT; // Round robin client bind port
    int ret;
    int af;    // family id
-   int sock;     // socket id
+   int sock;  // socket id
 
    if ((af = vsock_get_family()) == -1) {
       return CONN_FAILURE;
@@ -174,16 +182,31 @@ vsock_init(be_sock_id *id, int cid, int port)
    }
 
    id->sock_id = sock;
-
    memset(&id->addr, 0, sizeof id->addr);
    id->addr.svm_family = af;
    id->addr.svm_cid = VMCISock_GetLocalCID();
-   id->addr.svm_port = port;
 
-   // Bind a port. If less than 1024 it insures the client is capable of
-   // binding a port lower than 1024 which is typically a root process or
-   // a process given capabilities by root.
-   ret = bind(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
+   int retryCount = 0;
+
+   while (retryCount++ < BIND_RETRY_COUNT) {
+      id->addr.svm_port = round_robin;
+      if (round_robin == MAX_CLIENT_PORT) {
+         round_robin = START_CLIENT_PORT;
+      } else {
+         round_robin++;
+      }
+
+      assert((round_robin >= START_CLIENT_PORT) && (round_robin <= MAX_CLIENT_PORT));
+
+      // Bind a port. If less than 1024 it insures the client is capable of
+      // binding a port lower than 1024 which is typically a root process or
+      // a process given capabilities by root.
+      ret = bind(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);
+      if (ret == 0) {
+         break;
+      }
+   }
+
    if (ret != 0) {
       int old_errno = errno;
       vsock_release(id);
