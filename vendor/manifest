@@ -176,9 +176,10 @@
 			"importpath": "github.com/docker/go-plugins-helpers/volume",
 			"repository": "https://github.com/docker/go-plugins-helpers",
 			"vcs": "git",
-			"revision": "726bdcf4333dc9bd02860d7397a4ab4797864ea5",
+			"revision": "dd9c6831a796ea025dfae8448d6a34d081b99898",
 			"branch": "master",
-			"path": "/volume"
+			"path": "/volume",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/docker/go-units",

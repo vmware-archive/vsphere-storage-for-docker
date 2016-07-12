@@ -102,3 +102,14 @@ func (v VmdkOps) Get(name string) (VolumeData, error) {
 
 	return VolumeData{Name: name}, nil
 }
+
+// Capabilities for volume
+func (v VmdkOps) Capabilities() (string, error) {
+	var scope string
+	str, err := v.Cmd.Run("capabilities", "", make(map[string]string))
+	if err != nil {
+		return "null", err
+	}
+	json.Unmarshal(str, &scope)
+	return scope, nil
+}

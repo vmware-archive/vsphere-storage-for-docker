@@ -29,11 +29,13 @@ MAX_DESCR_SIZE = 10000
 
 def get_datastores():
     """
-    Returns a list of (name, url-name, dockvol_path), with an element per datastore
+    Returns a list of (name, url-name, dockvol_path, boolean), with an
+    element per datastore.
     where:
     'name' is datastore name (e.g. 'vsanDatastore') , 
     'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore 
+    boolean indicating whether the volume is a local device attached to the host
     """
 
     global datastores
@@ -44,10 +46,15 @@ def get_datastores():
     #  We are connected to ESX so childEntity[0] is current DC/Host
     ds_objects = \
       si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
-    datastores = [(d.info.name,
+    datastores = [[d.info.name,
                    os.path.split(d.info.url)[1],
-                   os.path.join(d.info.url, 'dockvols'))
+                   os.path.join(d.info.url, 'dockvols'), True]
                   for d in ds_objects]
+    for d in ds_objects:
+       ds = [x for x in datastores if x[0] == d.info.name]
+       if d.summary.type == 'VMFS':
+          ds[0][3] = d.info.vmfs.local
+
     pyVim.connect.Disconnect(si)
 
     return datastores

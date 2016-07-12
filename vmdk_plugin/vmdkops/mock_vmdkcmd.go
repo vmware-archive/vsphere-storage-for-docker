@@ -69,6 +69,8 @@ func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) 
 	case "remove":
 		err := remove(name)
 		return nil, err
+	case "capabilities":
+		return []byte("local"), nil
 	}
 	return []byte("null"), nil
 }

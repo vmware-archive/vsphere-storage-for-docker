@@ -310,3 +310,11 @@ func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 	}
 	return volume.Response{Err: ""}
 }
+
+func (d *vmdkDriver) Capabilities(r volume.Request) volume.Response {
+	scope, err := d.ops.Capabilities()
+	if err != nil {
+		return volume.Response{Err: err.Error()}
+	}
+	return volume.Response{Capabilities: volume.Capability{Scope: scope}}
+}
