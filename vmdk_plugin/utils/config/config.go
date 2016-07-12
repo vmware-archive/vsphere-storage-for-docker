@@ -23,14 +23,14 @@ import (
 )
 
 const (
-	// Default pathes - used in log init in main() and test:
+	// Default paths - used in log init in main() and test:
 
 	// DefaultConfigPath is the default location of Log configuration file
 	DefaultConfigPath = "/etc/docker-volume-vsphere.conf"
 	// DefaultLogPath is the default location of log (trace) file
 	DefaultLogPath = "/var/log/docker-volume-vsphere.log"
 
-	// Local consts
+	// Local constants
 	defaultMaxLogSizeMb  = 100
 	defaultMaxLogAgeDays = 28
 )

@@ -36,7 +36,7 @@ type VolumeDevSpec struct {
 	Bus  string
 }
 
-// Mkdir creates a directory at the specifiied path
+// Mkdir creates a directory at the specified path
 func Mkdir(path string) error {
 	stat, err := os.Lstat(path)
 	if os.IsNotExist(err) {
@@ -53,8 +53,7 @@ func Mkdir(path string) error {
 	return nil
 }
 
-// Mount discovers which devices are for which volume using blkid.
-// It then mounts the filesystem (`fs`) on the device at the given mountpoint.
+// Mounts the filesystem (`fs`) on the device at the given mount point.
 func Mount(mountpoint string, fs string, device string) error {
 	log.WithFields(log.Fields{
 		"device":     device,
@@ -68,7 +67,7 @@ func Mount(mountpoint string, fs string, device string) error {
 	return nil
 }
 
-// Unmount a device from the given mountpoint.
+// Unmount a device from the given mount point.
 func Unmount(mountpoint string) error {
 	return syscall.Unmount(mountpoint, 0)
 }

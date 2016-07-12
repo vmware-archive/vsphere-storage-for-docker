@@ -20,15 +20,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
 )
 
 const (
@@ -40,14 +41,14 @@ const (
 // An equivalent function is not exported from the SDK.
 // API supports passing a full address instead of just name.
 // Using the full path during creation and deletion. The path
-// is the same as the one generated interally. Ideally SDK
+// is the same as the one generated internally. Ideally SDK
 // should have ability to clean up sock file instead of replicating
 // it here.
 func fullSocketAddress(pluginName string) string {
 	return filepath.Join(pluginSockDir, pluginName+".sock")
 }
 
-// init log with passed logLevel (and get config from configFIle if it's present)
+// init log with passed logLevel (and get config from configFile if it's present)
 // returns True if using defaults,  False if using config file
 func logInit(logLevel *string, logFile *string, configFile *string) bool {
 	level, err := log.ParseLevel(*logLevel)
@@ -88,7 +89,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 }
 
 // main for docker-volume-vsphere
-// Parses flags, inits mount refcounters and finally services Docker requests
+// Parses flags, initializes and mounts refcounters and finally services Docker requests
 func main() {
 	// connect to this socket
 	port := flag.Int("port", 1019, "Default port for vmci")

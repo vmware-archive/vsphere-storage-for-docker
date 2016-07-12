@@ -26,14 +26,15 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
 	"golang.org/x/exp/inotify"
-	"path/filepath"
-	"sync"
-	"time"
 )
 
 const (
@@ -105,9 +106,9 @@ func (d *vmdkDriver) List(r volume.Request) volume.Response {
 	return volume.Response{Volumes: responseVolumes}
 }
 
-// request attach and them mounts the volume
-// actual mount - send attach to ESX and do the in-guest magix
-// returns mount point and  error (or nil)
+// Request attach and them mounts the volume.
+// Actual mount - send attach to ESX and do the in-guest magic
+// Returns mount point and  error (or nil)
 func (d *vmdkDriver) mountVolume(name string) (string, error) {
 	mountpoint := getMountPoint(name)
 
