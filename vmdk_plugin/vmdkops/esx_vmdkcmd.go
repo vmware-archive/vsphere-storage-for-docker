@@ -25,7 +25,6 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -86,36 +85,16 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	ans := (*C.be_answer)(C.malloc(C.sizeof_struct_be_answer))
 	defer C.free(unsafe.Pointer(ans))
 
-	// connect, send command, get reply, disconnect - all in one shot
-	retryCount := 0
-
-	for {
-		retryCount++
-		_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
-		if err == nil {
-			break
-		} else {
-			var errno syscall.Errno
-			errno = err.(syscall.Errno)
-			msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
-			if retryCount >= maxRetryCount {
-				if errno == syscall.ECONNRESET {
-					msg += " Hit communication issue with ESX (vmci or ESX service)\n"
-					msg += " Please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
-				}
-				log.Warnf(msg)
-				return nil, errors.New(msg)
-			}
-
-			if errno == syscall.ECONNRESET {
-				msg += fmt.Sprintf(" retryCount=%d Retrying Request\n", retryCount)
-				log.Warnf(msg)
-				time.Sleep(3 * time.Millisecond)
-			} else {
-				log.Errorf(msg)
-				return nil, errors.New(msg)
-			}
+	_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
+	if err != nil {
+		var errno syscall.Errno
+		errno = err.(syscall.Errno)
+		msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
+		if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
+			msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
 		}
+		log.Warnf(msg)
+		return nil, errors.New(msg)
 	}
 
 	response := []byte(C.GoString(ans.buf))
