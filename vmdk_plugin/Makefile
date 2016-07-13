@@ -130,7 +130,7 @@ clean: pkg-post
 DIRS_TO_VERIFY := . utils/fs utils/config vmdkops
 FILES_TO_VERIFY := $(foreach dir, $(DIRS_TO_VERIFY), $(dir)/*.go)
 .code_verify: $(FILES_TO_VERIFY)
-	@for i in $(DIRS_TO_VERIFY) ; do echo golint $$i; ${GOPATH}/bin/golint $$i ; done
+	@for i in $(DIRS_TO_VERIFY) ; do ${GOPATH}/bin/golint $$i ; done
 	go tool vet .
 	gofmt -s -l -w .
 	@touch $@
@@ -265,14 +265,22 @@ deploy: deploy-all
 #  reason: ssh keys for accessing remote hosts are not in container used by ./build.sh
 # ----------
 
+define log =
+@echo
+@echo "=> Running target $@"
+@echo "=>" `date --rfc-2822`
+@echo
+endef
 
 # this is a set of unit tests run on build machine
 .PHONY: test
 test:
+	@$(log)
 	$(SCRIPTS)/build.sh testasroot
 
 .PHONY: testasroot
 testasroot:
+	@$(log)
 	$(GO) test $(PLUGIN)/vmdkops
 	$(GO) test $(PLUGIN)/utils/config
 
@@ -292,6 +300,7 @@ checkremote:
 # test-vm runs GO unit tests and plugin test suite on a guest VM
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
 test-vm: checkremote deploy-vm-test
+	@$(log)
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
@@ -299,6 +308,7 @@ test-vm: checkremote deploy-vm-test
 
 # test-esx is a quick unittest for ESX Python code.
 test-esx:
+	@$(log)
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
 testremote: test-esx test-vm

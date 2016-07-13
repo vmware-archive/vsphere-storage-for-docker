@@ -22,7 +22,7 @@
 
 DEB_INSTALL="dpkg -i"
 DEB_PURGE="dpkg -P"
-DEB_QUERY="dpkg-query"
+DEB_QUERY="dpkg-query -l"
 IS_DEB="grep -i ubuntu /etc/os-release"
 IS_RPM="grep -i photon /etc/os-release"
 IS_SYSTEMD="stat /proc/1/exe | grep File | grep systemd"
@@ -36,13 +36,15 @@ RPM_INSTALL="rpm -ivh"
 RPM_QUERY="rpm -q"
 SCHED_GRP="localcli --plugin-dir=/usr/lib/vmware/esxcli/int sched group"
 SCP="$DEBUG scp -r -q -o StrictHostKeyChecking=no"
-SSH="$DEBUG ssh -kTax -o StrictHostKeyChecking=no"
+SSH="$DEBUG ssh -kTax -q -o StrictHostKeyChecking=no"
 VIB_INSTALL="localcli software vib install"
 VIB_REMOVE="localcli software vib remove"
+VIB_LIST="localcli software vib list"
 VMDK_OPSD="/etc/init.d/vmdk-opsd"
 
 function log {
     echo 
     echo "=> $1"
+    echo "=>" `date --rfc-2822`
     echo
 }

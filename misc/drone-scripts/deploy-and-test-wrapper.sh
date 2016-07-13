@@ -40,7 +40,6 @@ USER=root
 . ./misc/drone-scripts/cleanup.sh
 . ./misc/drone-scripts/dump_log.sh
 
-echo "Setting up lock on $ESX"
 $SCP ./misc/drone-scripts/lock.sh $ESX:/tmp/
 
 # Unlock performed in stop_build in cleanup.sh
@@ -58,10 +57,30 @@ dump_vm_info() {
 }
 
 dump_esx_info() {
-  set -x
+  echo
   $SSH $USER@$ESX uname -a
+  echo
   $SSH $USER@$ESX vmware -vl
-  set +x
+  echo
+  $SSH $USER@$ESX df
+  echo
+  $SSH $USER@$ESX ls -ld /vmfs/volumes/*
+  echo
+}
+
+dump_logs() {
+  log "Info ESX $ESX"
+  dump_esx_info $ESX
+  log "Info VM1 $VM1"
+  dump_vm_info $VM1
+  log "Info VM2 $VM2"
+  dump_vm_info $VM2
+  log "log ESX $ESX"
+  dump_log_esx $ESX
+  log "Log VM1 $VM1"
+  dump_log_vm $VM1
+  log "Log VM2 $VM2"
+  dump_log_vm $VM2
 }
 
 truncate_vm_logs() {
@@ -72,7 +91,7 @@ truncate_esx_logs() {
   $SSH $USER@$ESX "cat /dev/null > /var/log/vmware/vmdk_ops.log"
 }
 
-log "Acquired lock for build $BUILD_NUMBER"
+log "Acquired lock for build $BUILD_NUMBER on ESX=$ESX"
 
 log "truncate vm logs"
 truncate_vm_logs $VM1
@@ -83,17 +102,18 @@ truncate_esx_logs
 
 log "starting deploy and test"
 
-if make deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol.build$BUILD_NUMBER;
+if make -s deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol.build$BUILD_NUMBER;
 then
-  dump_esx_info $ESX
-  dump_vm_info $VM1
-  dump_vm_info $VM2
-  dump_log $VM1 $VM2 $ESX
-  stop_build $VM1 $BUILD_NUMBER
+ dump_logs
+ stop_build $VM1 $BUILD_NUMBER
 else
-  log "deploy failed cleaning up"
-  log " Dumping logs..."
+  log "Build + Test not successful"
   dump_log $VM1 $VM2 $ESX
   stop_build $VM1 $BUILD_NUMBER
   exit 1
+fi
+
+if [ $1 == "dump_logs" ]
+then
+  dump_logs
 fi
