@@ -20,33 +20,10 @@ VM_STDLOG="/tmp/plugin.log"
 ESX_LOGFILE="/var/log/vmware/vmdk_ops.log"
 
 dump_log_esx() {
-  echo ""
-  echo " ESX Config info for $1 ***************"
-  cmd='vmware -l; uname -a; df; ls -ld /vmfs/volumes/*'
-  echo $cmd ; $SSH $USER@$1 $cmd
-
-  echo "*** dumping log: ESX $1"
-  echo "*************************************************************************"
-  set -x
   $SSH $USER@$1 cat $ESX_LOGFILE
-  set +x
-  echo "*************************************************************************"
 }
 
 dump_log_vm(){
-  echo ""
-  echo "*** dumping log: VM $1"
-  echo "*************************************************************************"
-  set -x
   $SSH $USER@$1 cat $VM_STDLOG
   $SSH $USER@$1 cat $VM_LOGFILE
-  set +x
-  echo "*************************************************************************"
-}
-
-# dump log vm1 vm2 esx
-dump_log() { 
-  dump_log_esx $3
-  dump_log_vm $1
-  dump_log_vm $2
 }

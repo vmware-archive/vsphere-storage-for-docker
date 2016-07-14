@@ -30,6 +30,7 @@
 . ../misc/scripts/commands.sh
 
 PLUGIN_NAME=docker-volume-vsphere
+VIB_NAME=esx-vmdkops-service
 TMP_LOC=/tmp/$PLUGIN_NAME
 VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
 
@@ -60,14 +61,14 @@ function deployvm {
 }
 
 function setupVMType {
-    $SSH $TARGET "$IS_RPM" > /dev/null
+    $SSH $TARGET "$IS_RPM > /dev/null"
     if [ "$?" == "0" ]
     then
         FILE_EXT="rpm"
         return 0;
     fi
 
-    $SSH $TARGET "$IS_DEB" > /dev/null
+    $SSH $TARGET "$IS_DEB > /dev/null"
     if [ "$?" == "0" ]
     then
         FILE_EXT="deb"
@@ -87,12 +88,10 @@ function deployVMInstall {
     set -e
     case $FILE_EXT in
     deb)
-        $SSH $TARGET "$DEB_INSTALL $TMP_LOC/*.deb > /dev/null"
-        $SSH $TARGET "$DEB_QUERY -s $PLUGIN_NAME"
+        $SSH $TARGET "$DEB_INSTALL $TMP_LOC/*.deb"
         ;;
     rpm)
-        $SSH $TARGET "$RPM_INSTALL $TMP_LOC/*.rpm > /dev/null"
-        $SSH $TARGET "$RPM_QUERY $PLUGIN_NAME"
+        $SSH $TARGET "$RPM_INSTALL $TMP_LOC/*.rpm"
         ;;
     esac
     set +e
@@ -162,7 +161,11 @@ function cleanesx {
     do
         log "Cleaning up on ESX $ip"
         TARGET=root@$ip
-        $SSH $TARGET $VIB_REMOVE --vibname esx-vmdkops-service
+        $SSH $TARGET "$VIB_LIST | $GREP $VIB_NAME 2&>1 > /dev/null"
+        if [ $? -eq 0 ];
+        then
+            $SSH $TARGET $VIB_REMOVE --vibname $VIB_NAME
+        fi
         $SSH $TARGET $SCHED_GRP list \
             --group-path=host/vim/vimuser/cnastorage/ > /dev/null 2>&1
         if [ $? -eq 0 ];
@@ -193,25 +196,57 @@ function cleanvm {
 }
 
 function cleanupVMPre {
-    $SSH $TARGET "$IS_SYSTEMD"
-    if [ $? -eq 0 ]
+    case $FILE_EXT in
+    deb)
+        $SSH $TARGET "$DEB_QUERY $PLUGIN_NAME > /dev/null"
+        if [ $? -eq 0 ]
+        then
+            let PLUGIN_INSTALLED=0
+        else
+            let PLUGIN_INSTALLED=1
+        fi
+        ;;
+    rpm)
+        $SSH $TARGET "$RPM_QUERY $PLUGIN_NAME > /dev/null"
+        if [ $? -eq 0 ]
+        then
+            let PLUGIN_INSTALLED=0
+        else
+            let PLUGIN_INSTALLED=1
+        fi
+        ;;
+    esac
+
+    if [ $PLUGIN_INSTALLED -eq 0 ]
     then
-        $SSH $TARGET systemctl stop $PLUGIN_NAME
-        $SSH $TARGET $PIDOF $PLUGIN_NAME
-        $SSH $TARGET systemctl restart docker
-    else
-        $SSH $TARGET service $PLUGIN_NAME stop
-        $SSH $TARGET service docker restart
+        $SSH $TARGET "$IS_SYSTEMD > /dev/null"
+        if [ $? -eq 0 ]
+        then
+            $SSH $TARGET systemctl stop docker
+            $SSH $TARGET systemctl stop $PLUGIN_NAME
+            $SSH $TARGET $PIDOF $PLUGIN_NAME
+            $SSH $TARGET systemctl start docker
+        else
+            $SSH $TARGET service docker stop
+            $SSH $TARGET service $PLUGIN_NAME stop
+            $SSH $TARGET service docker start
+        fi
     fi
 }
 
 function cleanupVM {
     case $FILE_EXT in
     deb)
-        $SSH $TARGET $DEB_PURGE $PLUGIN_NAME
+        if [ $PLUGIN_INSTALLED -eq 0 ]
+        then
+            $SSH $TARGET $DEB_PURGE $PLUGIN_NAME
+        fi
         ;;
     rpm)
-        $SSH $TARGET $RPM_ERASE $PLUGIN_NAME
+        if [ $PLUGIN_INSTALLED -eq 0 ]
+        then
+            $SSH $TARGET $RPM_ERASE $PLUGIN_NAME
+        fi
         ;;
     esac
 }

@@ -22,7 +22,6 @@ LOCK_DIR='/tmp/docker-volume-vsphere.lock'
 if [ "$OPERATION" == "lock" ]; then
   if mkdir "$LOCK_DIR";
   then
-    echo "$BUILD_NUMBER has the lock"
     echo "$BUILD_NUMBER" > $LOCK_DIR/build
     exit 0
   else
