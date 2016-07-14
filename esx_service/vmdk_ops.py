@@ -160,19 +160,20 @@ def make_create_cmd(opts, vmdk_path):
     logging.debug("Setting vmdk size to %s for %s", size, vmdk_path)
 
     if not kv.DISK_ALLOCATION_FORMAT in opts:
-        format = kv.DEFAULT_ALLOCATION_FORMAT
+        disk_format = kv.DEFAULT_ALLOCATION_FORMAT
     else:
-        format = str(opts[kv.DISK_ALLOCATION_FORMAT])
-    logging.debug("Setting vmdk disk allocation format to %s for %s", format, vmdk_path)
+        disk_format = str(opts[kv.DISK_ALLOCATION_FORMAT])
+    logging.debug("Setting vmdk disk allocation format to %s for %s", disk_format, vmdk_path)
 
     if kv.VSAN_POLICY_NAME in opts:
         # Note that the --policyFile option gets ignored if the
         # datastore is not VSAN
         policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
-        return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, format, size,
+        return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD,
+                                                               disk_format, size,
                                                                policy_file, vmdk_path)
     else:
-        return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, format, size, vmdk_path)
+        return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, disk_format, size, vmdk_path)
 
 
 def create_kv_store(vm_name, vmdk_path, opts):
@@ -276,7 +277,7 @@ def cleanup_vsan_devfs_path(devfs_path):
     try:
         os.remove(devfs_path)
         logging.debug("Unlinked %s", devfs_path)
-	return True
+        return True
     except OSError as ex:
         logging.error("Failed to remove backing device %s",
                       devfs_path, str(ex))
@@ -365,6 +366,15 @@ def listVMDK(vm_datastore):
              u'Attributes': {}} \
             for x in vmdks]
 
+def getScope():
+    """
+    Returns global scope if there is at least one datastore thats not local.
+    """
+    global_ds = [x[0] for x in vmdk_utils.get_datastores() if x[3]]
+    if len(global_ds): 
+       return 'global'
+    else:
+       return 'local'
 
 # Return VM managed object, reconnect if needed. Throws if fails twice.
 def findVmByUuid(vm_uuid):
@@ -489,6 +499,8 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     vm_datastore = get_datastore_name(config_path)
     if cmd == "list":
         return listVMDK(vm_datastore)
+    elif cmd == "capabilities":
+        return getScope()
 
     try:
         vol_name, datastore = parse_vol_name(full_vol_name)
