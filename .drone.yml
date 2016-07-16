@@ -48,9 +48,10 @@ build:
     commands:
       - export VM1=`govc vm.ip photon.rc.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
-      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - export VM1=`govc vm.ip photon.rc.vsan`
-      - export VM2=`govc vm.ip photon.rc.vsan.2`
+      - echo
+      - echo "=> Running tests on VSAN"
+      - echo "=>" `date --rcf-2822`
+      - echo
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push]
@@ -67,13 +68,6 @@ build:
     commands:
       - export VM1=`govc vm.ip photon.rc.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
-      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - echo
-      - echo "=> Running tests on VSAN"
-      - echo "=>" `date --rcf-2822`
-      - echo
-      - export VM1=`govc vm.ip photon.rc.vsan`
-      - export VM2=`govc vm.ip photon.rc.vsan.2`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [pull_request]
@@ -92,6 +86,10 @@ build:
       - export VM1=`govc vm.ip photon.rc.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - echo
+      - echo "=> Running tests on VSAN"
+      - echo "=>" `date --rcf-2822`
+      - echo
       - export VM1=`govc vm.ip photon.rc.vsan`
       - export VM2=`govc vm.ip photon.rc.vsan.2`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null

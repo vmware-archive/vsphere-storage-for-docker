@@ -53,7 +53,7 @@ func Mkdir(path string) error {
 	return nil
 }
 
-// Mounts the filesystem (`fs`) on the device at the given mount point.
+// Mount the filesystem (`fs`) on the device at the given mount point.
 func Mount(mountpoint string, fs string, device string) error {
 	log.WithFields(log.Fields{
 		"device":     device,

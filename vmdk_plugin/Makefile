@@ -266,10 +266,10 @@ deploy: deploy-all
 # ----------
 
 define log =
-@echo
-@echo "=> Running target $@"
-@echo "=>" `date --rfc-2822`
-@echo
+echo
+echo "=> Running target $@"
+echo "=>" `date --rfc-2822`
+echo
 endef
 
 # this is a set of unit tests run on build machine

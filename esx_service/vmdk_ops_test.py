@@ -122,29 +122,6 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
-    def testPolicyUpdate(self):
-        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
-                                  vmdk_path=self.name,
-                                  vol_name=self.volName,
-                                  opts={'vsan-policy-name': 'good'})
-        self.assertEqual(err, None, err)
-        self.assertEqual(None, vsan_policy.update('good',
-                                                  self.new_policy_content))
-        # Setting an identical policy returns an error msg
-        self.assertNotEqual(None, vsan_policy.update('good',
-                                                     self.new_policy_content))
-
-        backup_policy_file = vsan_policy.backup_policy_filename(self.name)
-        #Ensure there is no backup policy file
-        self.assertFalse(os.path.isfile(backup_policy_file))
-
-        # Fail to update because of a bad policy, and ensure there is no backup
-        self.assertNotEqual(None, vsan_policy.update('good', 'blah'))
-        self.assertFalse(os.path.isfile(backup_policy_file))
-
-
-    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
-                    "VSAN is not found - skipping vsan_info tests")
     def testPolicy(self):
         # info for testPolicy
         testInfo = [

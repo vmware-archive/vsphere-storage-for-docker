@@ -45,6 +45,6 @@ VMDK_OPSD="/etc/init.d/vmdk-opsd"
 function log {
     echo 
     echo "=> $1"
-    echo "=>" `date --rfc-2822`
+    echo "=>" `date`
     echo
 }

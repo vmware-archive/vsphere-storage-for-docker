@@ -108,7 +108,7 @@ then
  stop_build $VM1 $BUILD_NUMBER
 else
   log "Build + Test not successful"
-  dump_log $VM1 $VM2 $ESX
+  dump_logs
   stop_build $VM1 $BUILD_NUMBER
   exit 1
 fi
