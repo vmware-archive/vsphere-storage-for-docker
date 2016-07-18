@@ -88,6 +88,14 @@ VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 SRC = plugin.go main.go log_formatter.go refcnt.go \
 	utils/fs/fs.go utils/config/config.go
 
+# Canned recipe
+define log_target
+@echo
+@echo "=> Running target $@"
+@echo "=>" `date`
+@echo
+endef
+
 # The default build is using a prebuilt docker image that has all dependencies.
 .PHONY: dockerbuild build-all
 build-all: dockerbuild package
@@ -265,22 +273,15 @@ deploy: deploy-all
 #  reason: ssh keys for accessing remote hosts are not in container used by ./build.sh
 # ----------
 
-define log =
-echo
-echo "=> Running target $@"
-echo "=>" `date --rfc-2822`
-echo
-endef
-
 # this is a set of unit tests run on build machine
 .PHONY: test
 test:
-	@$(log)
+	$(log_target)
 	$(SCRIPTS)/build.sh testasroot
 
 .PHONY: testasroot
 testasroot:
-	@$(log)
+	$(log_target)
 	$(GO) test $(PLUGIN)/vmdkops
 	$(GO) test $(PLUGIN)/utils/config
 
@@ -300,7 +301,7 @@ checkremote:
 # test-vm runs GO unit tests and plugin test suite on a guest VM
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
 test-vm: checkremote deploy-vm-test
-	@$(log)
+	$(log_target)
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
@@ -308,7 +309,7 @@ test-vm: checkremote deploy-vm-test
 
 # test-esx is a quick unittest for ESX Python code.
 test-esx:
-	@$(log)
+	$(log_target)
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
 testremote: test-esx test-vm

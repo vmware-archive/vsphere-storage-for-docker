@@ -98,7 +98,7 @@ TO_ESX_INITD := $(INIT_SCRIPT)
 
 # copy files to staging area and then build the VIB
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)
-	@echo === Staging in $(PAYLOAD) ===
+	@echo Staging in $(PAYLOAD)
 	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
 	@chmod -R a+w $(PAYLOAD)
 	@cp $(TO_WDIR) $(WDIR)
