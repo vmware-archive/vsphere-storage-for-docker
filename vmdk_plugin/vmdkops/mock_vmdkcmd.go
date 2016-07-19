@@ -42,7 +42,7 @@ const (
 
 func getBackingFileName(nameBase string) string {
 	// make unique name - avoid clashes shall we find any garbage in the directory
-	name := fmt.Sprintf("%s/%s-%d", backingRoot, nameBase, os.Getpid())
+	name := fmt.Sprintf("%s/%d/%s", backingRoot, os.Getpid(), nameBase)
 	log.WithFields(log.Fields{"name": name}).Debug("Created tmp file for loopback")
 	return name
 }
@@ -50,7 +50,8 @@ func getBackingFileName(nameBase string) string {
 // Run returns JSON responses to each command or an error
 func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
 	// We store no in memory state, so just try to recreate backingRoot every time
-	err := fs.Mkdir(backingRoot)
+	rootName := fmt.Sprintf("%s/%d", backingRoot, os.Getpid())
+	err := fs.Mkdir(rootName)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) 
 	case "get":
 		return nil, get(name)
 	case "attach":
-		return nil, nil
+		return getBlockDeviceForName(name)
 	case "detach":
 		return nil, nil
 	case "remove":
@@ -75,7 +76,8 @@ func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) 
 }
 
 func list() ([]byte, error) {
-	files, err := ioutil.ReadDir(backingRoot)
+	rootName := fmt.Sprintf("%s/%d", backingRoot, os.Getpid())
+	files, err := ioutil.ReadDir(rootName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read %s", backingRoot)
 	}
@@ -88,6 +90,12 @@ func list() ([]byte, error) {
 
 // validates that the volume exists, returns error or nil (for OK)
 func get(name string) error {
+	filePath := getBackingFileName(name)
+	if _, err := os.Lstat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("Unknown volume %s", name)
+	} else if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -131,6 +139,16 @@ func createBlockDevice(label string) error {
 		return err
 	}
 	return makeFilesystem(device, label)
+}
+
+func getBlockDeviceForName(name string) ([]byte, error) {
+	backing := getBackingFileName(name)
+	out, err := exec.Command("blkid", []string{"-L", name}...).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find device for backing file %s via blkid", backing)
+	}
+	device := strings.TrimRight(string(out), " \n")
+	return []byte(device), nil
 }
 
 func getMaxLoopbackCount() int {

@@ -59,6 +59,7 @@ func newVmdkDriver(useMockEsx bool) *vmdkDriver {
 			m:          &sync.Mutex{},
 			useMockEsx: true,
 			ops:        vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}},
+			refCounts:  make(refCountsMap),
 		}
 	} else {
 		d = &vmdkDriver{
@@ -121,10 +122,6 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 		return mountpoint, err
 	}
 
-	if d.useMockEsx {
-		return mountpoint, fmt.Errorf("No device to mount.")
-	}
-
 	skipInotify := false
 
 	watcher, err := inotify.NewWatcher()
@@ -148,6 +145,10 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 	dev, err := d.ops.Attach(name, nil)
 	if err != nil {
 		return mountpoint, err
+	}
+
+	if d.useMockEsx {
+		return mountpoint, fs.Mount(mountpoint, "ext4", string(dev[:]))
 	}
 
 	device, err := fs.GetDevicePath(dev)
@@ -314,5 +315,5 @@ func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 
 // Report plugin scope to Docker
 func (d *vmdkDriver) Capabilities(r volume.Request) volume.Response {
-	return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
+      return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
 }
