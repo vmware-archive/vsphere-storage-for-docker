@@ -1,11 +1,14 @@
-package volume
+package shim
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/docker/docker/volume"
 	"github.com/docker/go-connections/sockets"
+	volumeplugin "github.com/docker/go-plugins-helpers/volume"
 )
 
 type testVolumeDriver struct{}
@@ -22,6 +25,7 @@ func (testVolumeDriver) Create(string, map[string]string) (volume.Volume, error)
 func (testVolumeDriver) Remove(volume.Volume) error                              { return nil }
 func (testVolumeDriver) List() ([]volume.Volume, error)                          { return nil, nil }
 func (testVolumeDriver) Get(name string) (volume.Volume, error)                  { return nil, nil }
+func (testVolumeDriver) Scope() string                                           { return "local" }
 
 func TestVolumeDriver(t *testing.T) {
 	h := NewHandlerFromVolumeDriver(testVolumeDriver{})
@@ -33,11 +37,29 @@ func TestVolumeDriver(t *testing.T) {
 		Dial: l.Dial,
 	}}
 
-	resp, err := pluginRequest(client, createPath, Request{Name: "foo"})
+	resp, err := pluginRequest(client, "/VolumeDriver.Create", volumeplugin.Request{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if resp.Err != "" {
 		t.Fatalf("error while creating volume: %v", err)
 	}
+}
+
+func pluginRequest(client *http.Client, method string, req volumeplugin.Request) (*volumeplugin.Response, error) {
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Post("http://localhost"+method, "application/json", bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+	var vResp volumeplugin.Response
+	err = json.NewDecoder(resp.Body).Decode(&vResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &vResp, nil
 }
