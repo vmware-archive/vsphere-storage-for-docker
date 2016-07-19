@@ -50,7 +50,7 @@ class VolumeNamingTestCase(unittest.TestCase):
             ["Spaces NotGood@vsan",              None,                 None,            False],
             ["GoodVolume@bad ds with spaces",    None,                 None,            False],
             ["TooLong0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", None, None, False],
-            ["Just100Chars0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567", 
+            ["Just100Chars0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567",
                            "Just100Chars0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567", None, True],
             ["Volume.123@dots.dot",              "Volume.123",        "dots.dot",       True],
             ["simple_volume",                    "simple_volume",      None,            True],
@@ -118,6 +118,31 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         err = vmdk_ops.removeVMDK(self.name)
         logging.info(err)
         self.assertNotEqual(err, None, err)
+
+
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                    "VSAN is not found - skipping vsan_info tests")
+    def testPolicyUpdate(self):
+        path = vsan_info.get_vsan_dockvols_path()
+        vmdk_path = vmdk_utils.get_vmdk_path(path, self.volName)
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=vmdk_path,
+                                  vol_name=self.volName,
+                                  opts={'vsan-policy-name': 'good'})
+        self.assertEqual(err, None, err)
+        self.assertEqual(None, vsan_policy.update('good',
+                                                  self.new_policy_content))
+        # Setting an identical policy returns an error msg
+        self.assertNotEqual(None, vsan_policy.update('good',
+                                                     self.new_policy_content))
+
+        backup_policy_file = vsan_policy.backup_policy_filename(self.name)
+        #Ensure there is no backup policy file
+        self.assertFalse(os.path.isfile(backup_policy_file))
+
+        # Fail to update because of a bad policy, and ensure there is no backup
+        self.assertNotEqual(None, vsan_policy.update('good', 'blah'))
+        self.assertFalse(os.path.isfile(backup_policy_file))
 
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
