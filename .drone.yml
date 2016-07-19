@@ -46,12 +46,15 @@ build:
       - GOVC_INSECURE=1
       - GOVC_URL=$$CI_ESX_IP
     commands:
-      - export VM1=`govc vm.ip photon.rc.vmfs`
+      - export VM1=`govc vm.ip photon.ga.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - echo
       - echo "=> Running tests on VSAN"
-      - echo "=>" `date --rcf-2822`
+      - echo "=>" `date`
       - echo
+      - export VM1=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push]
@@ -66,8 +69,15 @@ build:
       - GOVC_INSECURE=1
       - GOVC_URL=$$CI_ESX_IP
     commands:
-      - export VM1=`govc vm.ip photon.rc.vmfs`
+      - export VM1=`govc vm.ip photon.ga.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - echo
+      - echo "=> Running tests on VSAN"
+      - echo "=>" `date`
+      - echo
+      - export VM1=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [pull_request]
@@ -83,15 +93,15 @@ build:
       - GOVC_URL=$$CI_ESX_IP
     commands:
       - export PKG_VERSION=$$TAG
-      - export VM1=`govc vm.ip photon.rc.vmfs`
+      - export VM1=`govc vm.ip photon.ga.vmfs`
       - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - echo
       - echo "=> Running tests on VSAN"
-      - echo "=>" `date --rcf-2822`
+      - echo "=>" `date`
       - echo
-      - export VM1=`govc vm.ip photon.rc.vsan`
-      - export VM2=`govc vm.ip photon.rc.vsan.2`
+      - export VM1=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: tag
