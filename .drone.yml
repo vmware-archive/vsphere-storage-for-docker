@@ -53,7 +53,7 @@ build:
       - echo "=> Running tests on VSAN"
       - echo "=>" `date`
       - echo
-      - export VM1=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM1=`govc vm.ip photon.ga.vsan`
       - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
@@ -76,7 +76,7 @@ build:
       - echo "=> Running tests on VSAN"
       - echo "=>" `date`
       - echo
-      - export VM1=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM1=`govc vm.ip photon.ga.vsan`
       - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
@@ -100,7 +100,7 @@ build:
       - echo "=> Running tests on VSAN"
       - echo "=>" `date`
       - echo
-      - export VM1=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM1=`govc vm.ip photon.ga.vsan`
       - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
