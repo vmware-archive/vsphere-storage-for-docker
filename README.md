@@ -23,6 +23,10 @@ The download consists of 2 parts
 
 Please pick the latest release and use the same version of ESX and VM release.
 
+## Demos
+
+The demos are located on the project [wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Demos)
+
 ## Installation Instructions
 
 ### On ESX
