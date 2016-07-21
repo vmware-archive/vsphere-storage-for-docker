@@ -315,5 +315,5 @@ func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
 
 // Report plugin scope to Docker
 func (d *vmdkDriver) Capabilities(r volume.Request) volume.Response {
-      return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
+	return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
 }
