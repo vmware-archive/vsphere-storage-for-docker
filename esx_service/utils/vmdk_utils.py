@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Utility functions for dealing with vmdks and datastores
+# Utility functions for dealing with VMDKs and datastores
 
 import os
 import os.path
@@ -75,10 +75,10 @@ def list_vmdks(path, volname="", show_snapshots=False):
     files.
 
     Params:
-    path -  where the vmdks are looked for
-    volname - if passed, only files related to this vmdks will be returned. Usefule when
+    path -  where the VMDKs are looked for
+    volname - if passed, only files related to this VMDKs will be returned. Useful when
             doing volume snapshot inspect
-    show_snapshots - if set to False, all VMDKS (including delta files) will be returned
+    show_snapshots - if set to True, all VMDKs (including delta files) will be returned
     """
 
     # dockvols may not exists on a datastore

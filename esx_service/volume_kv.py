@@ -63,7 +63,10 @@ DEFAULT_ALLOCATION_FORMAT = 'thin'
 # attach type. Default is independent.
 ATTACH_AS = 'attach_as'
 
-# actual values to pass to VM reconfig events
+# actual values to pass to VM reconfig events. The values are defined in
+# vSphere SDK , and for pythin can be found here:
+# https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/device/VirtualDiskOption/DiskMode.rst
+# We support the following ones:
 INDEPENDENT = 'independent_persistent'  # does not participate in vm snashot
 DEPENDENT   = 'persistent' # does participated in VM snapshot
 DEFAULT_ATTACH_AS = INDEPENDENT
