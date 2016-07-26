@@ -91,7 +91,6 @@ VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
 MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
 MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
-DEFAULT_DISK_SIZE = "100mb" # default volume size
 
 # Service instance provide from connection to local hostd
 si = None
@@ -154,7 +153,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}):
 def make_create_cmd(opts, vmdk_path):
     """ Return the command used to create a VMDK """
     if not "size" in opts:
-        size = DEFAULT_DISK_SIZE
+        size = kv.DEFAULT_DISK_SIZE
     else:
         size = str(opts["size"])
     logging.debug("Setting vmdk size to %s for %s", size, vmdk_path)
@@ -191,8 +190,8 @@ def validate_opts(opts, vmdk_path):
      * vsan-policy-name - The name of an existing policy to use
      * diskformat - The allocation format of allocated disk
     """
-    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT]
-    defaults = [DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY, kv.DEFAULT_ALLOCATION_FORMAT]
+    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT, kv.ATTACH_AS]
+    defaults = [kv.DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY, kv.DEFAULT_ALLOCATION_FORMAT, kv.DEFAULT_ATTACH_AS]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -206,6 +205,8 @@ def validate_opts(opts, vmdk_path):
         validate_vsan_policy_name(opts[kv.VSAN_POLICY_NAME], vmdk_path)
     if kv.DISK_ALLOCATION_FORMAT in opts:
         validate_disk_allocation_format(opts[kv.DISK_ALLOCATION_FORMAT])
+    if kv.ATTACH_AS in opts:
+        validate_attach_as(opts[kv.ATTACH_AS])
 
 
 def validate_size(size):
@@ -231,13 +232,21 @@ def validate_vsan_policy_name(policy_name, vmdk_path):
     if not vsan_policy.policy_exists(policy_name):
         raise ValidationError('Policy {0} does not exist'.format(policy_name))
 
-def validate_disk_allocation_format(format):
+def validate_disk_allocation_format(alloc_format):
     """
     Ensure format is valid.
     """
-    if not format in kv.VALID_ALLOCATION_FORMATS :
-        raise ValidationError('Disk Allocation Format \'{0}\' does not exist. Valid options are: {1}'.format(format, kv.VALID_ALLOCATION_FORMATS))
+    if not alloc_format in kv.VALID_ALLOCATION_FORMATS :
+        raise ValidationError("Disk Allocation Format \'{0}\' is not supported."
+                              " Valid options are: {1}".format(alloc_format, kv.VALID_ALLOCATION_FORMATS))
 
+def validate_attach_as(attach_type):
+    """
+    Ensure that we recognize the attach type
+    """
+    if not attach_type in kv.ATTACH_AS_TYPES :
+        raise ValidationError("Attach type '{0}' is not supported." 
+                              " Valid options are: {1}".format(attach_type, kv.ATTACH_AS_TYPES))
 
 # Returns the UUID if the vmdk_path is for a VSAN backed.
 def get_vsan_uuid(vmdk_path):
@@ -433,8 +442,10 @@ def parse_vol_name(full_vol_name):
     On parse errors raises ValidationError with syntax explanation
     """
     # Parse volume name with regexp package
-    # Note: we do not want '-' in volume name to make sure names like 'disk-0001.vmdk' cannot
-    # be created using this API.
+    #
+    # Caveat: we block '-' in volume name to make sure names like 'disk-0001.vmdk' cannot
+    # be created using this API. vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
+    #
     # on regexp:  '\w'' in regexp is [a-zA-Z0-9_]
     groups = re.match(r"\A([\w\_.]+)(@([\w\_.\-]+))?$", full_vol_name)
     if not groups:
@@ -606,17 +617,23 @@ def setStatusDetached(vmdk_path):
 
 
 def getStatusAttached(vmdk_path):
-    '''Returns (attached, uuid) tuple. For 'detached' status uuid is None'''
+    '''Returns (attached, uuid, attach_as) tuple. For 'detached' status uuid is None'''
 
     vol_meta = kv.getAll(vmdk_path)
+    try:
+        attach_as = vol_meta[kv.VOL_OPTS][kv.ATTACH_AS]
+    except:
+        attach_as = kv.DEFAULT_ATTACH_AS
+
     if not vol_meta or kv.STATUS not in vol_meta:
-        return False, None
+        return False, None, attach_as
+
     attached = (vol_meta[kv.STATUS] == kv.ATTACHED)
     try:
         uuid = vol_meta[kv.ATTACHED_VM_UUID]
     except:
         uuid = None
-    return attached, uuid
+    return attached, uuid, attach_as
 
 
 def disk_attach(vmdk_path, vm):
@@ -625,6 +642,9 @@ def disk_attach(vmdk_path, vm):
     (we need PVSCSI to avoid SCSI rescans in the guest)
     return error or unit:bus numbers of newly attached disk.
     '''
+
+    kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
+    logging.info("Attaching {0} as {1}".format(vmdk_path, attach_mode))
 
     # NOTE: vSphere is very picky about unit numbers and controllers of virtual
     # disks. Every controller supports 15 virtual disks, and the unit
@@ -720,7 +740,7 @@ def disk_attach(vmdk_path, vm):
         device=
         vim.VirtualDisk(backing=vim.VirtualDiskFlatVer2BackingInfo(
             fileName="[] " + vmdk_path,
-            diskMode='independent_persistent', ),
+            diskMode=attach_mode, ),
                         deviceInfo=vim.Description(
                             # TODO: use docker volume name here. Issue #292
                             label="dockerDataVolume",
@@ -738,7 +758,6 @@ def disk_attach(vmdk_path, vm):
     except vim.fault.VimFault as ex:
         msg = ex.msg
         # Use metadata (KV) for extra logging
-        kv_status_attached, kv_uuid = getStatusAttached(vmdk_path)
         if kv_status_attached and kv_uuid != vm.config.uuid:
             # KV  claims we are attached to a different VM'.
             msg += " disk {0} already attached to VM={1}".format(vmdk_path,

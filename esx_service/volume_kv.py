@@ -26,6 +26,11 @@ import kvESX
 
 # The status of the volume, whether its attached or not to a VM.
 STATUS = 'status'
+
+## Values for STATUS
+ATTACHED = 'attached'
+DETACHED = 'detached'
+
 # Timestamp of volume creation
 CREATED = 'created'
 # Name of the VM that created the volume
@@ -42,24 +47,30 @@ VOL_OPTS = 'volOpts'
 # The name of the VSAN policy applied to the VSAN volume. Invalid for Non-VSAN
 # volumes.
 VSAN_POLICY_NAME = 'vsan-policy-name'
-# The size of the volume
-SIZE = 'size'
-
-# The disk allocation format for vmdk
-DISK_ALLOCATION_FORMAT = 'diskformat'
-
-VALID_ALLOCATION_FORMATS = ["zeroedthick", "thin", "eagerzeroedthick"]
-
-DEFAULT_ALLOCATION_FORMAT = 'thin'
-
-## Values for given keys
 
 ## Value for VSAN_POLICY_NAME
 DEFAULT_VSAN_POLICY = '[VSAN default]'
 
-## Values for STATUS
-ATTACHED = 'attached'
-DETACHED = 'detached'
+# The size of the volume
+SIZE = 'size'
+DEFAULT_DISK_SIZE = "100mb"
+
+# The disk allocation format for vmdk
+DISK_ALLOCATION_FORMAT = 'diskformat'
+VALID_ALLOCATION_FORMATS = ["zeroedthick", "thin", "eagerzeroedthick"]
+DEFAULT_ALLOCATION_FORMAT = 'thin'
+
+# attach type. Default is independent.
+ATTACH_AS = 'attach_as'
+
+# actual values to pass to VM reconfig events. The values are defined in
+# vSphere SDK , and for pythin can be found here:
+# https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/device/VirtualDiskOption/DiskMode.rst
+# We support the following ones:
+INDEPENDENT = 'independent_persistent'  # does not participate in vm snashot
+DEPENDENT   = 'persistent' # does participated in VM snapshot
+DEFAULT_ATTACH_AS = INDEPENDENT
+ATTACH_AS_TYPES = [INDEPENDENT, DEPENDENT]
 
 # Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.

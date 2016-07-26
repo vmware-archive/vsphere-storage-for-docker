@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Utility functions for dealing with vmdks and datastores
+# Utility functions for dealing with VMDKs and datastores
 
 import os
+import os.path
+import glob
 import logging
 import pyVim.connect
 
@@ -24,7 +26,7 @@ import pyVim.connect
 datastores = None
 
 # we assume files smaller that that to be descriptor files
-MAX_DESCR_SIZE = 10000
+MAX_DESCR_SIZE = 5000
 
 
 def get_datastores():
@@ -68,14 +70,33 @@ def get_vmdk_path(path, vol_name):
     return os.path.join(path, "{0}.vmdk".format(vol_name))
 
 
-def list_vmdks(path):
-    """ Return a list all VMDKs in a given path """
-    try:
-        return [f for f in os.listdir(path)
-                if vmdk_is_a_descriptor(os.path.join(path, f))]
-    except OSError as e:
-        # dockvols may not exists on a datastore, so skip it
+def list_vmdks(path, volname="", show_snapshots=False):
+    """ Return a list of VMDKs in a given path. Filters out non-descriptor
+    files.
+
+    Params:
+    path -  where the VMDKs are looked for
+    volname - if passed, only files related to this VMDKs will be returned. Useful when
+            doing volume snapshot inspect
+    show_snapshots - if set to True, all VMDKs (including delta files) will be returned
+    """
+
+    # dockvols may not exists on a datastore
+    if not os.path.exists(path):
         return []
+
+    glob_pattern = "{0}/{1}*.vmdk".format(path, volname)
+    vmdks = [os.path.basename(f) for f in glob.glob(glob_pattern)
+            if vmdk_is_a_descriptor(os.path.join(path, f))]
+
+    # For hiding snapshots we rely on volume names NOT having a '-' symbol,
+    # so all files with '-' must be delta disks, digest and the likes, and
+    # need to be hidden from further processing.
+    # see vmdk_ops.py:parse_vol_name() which enforces the "no -" rule.
+    if not show_snapshots:
+        vmdks = [f for f in vmdks if f.find('-') == -1]
+    
+    return vmdks
 
 
 def vmdk_is_a_descriptor(filepath):
