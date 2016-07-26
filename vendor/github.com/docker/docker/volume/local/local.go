@@ -248,6 +248,11 @@ func (r *Root) Get(name string) (volume.Volume, error) {
 	return v, nil
 }
 
+// Scope returns the local volume scope
+func (r *Root) Scope() string {
+	return volume.LocalScope
+}
+
 func (r *Root) validateName(name string) error {
 	if !volumeNameRegex.MatchString(name) {
 		return validationError{fmt.Errorf("%q includes invalid characters for a local volume name, only %q are allowed", name, utils.RestrictedNameChars)}
@@ -287,7 +292,7 @@ func (v *localVolume) Path() string {
 }
 
 // Mount implements the localVolume interface, returning the data location.
-func (v *localVolume) Mount() (string, error) {
+func (v *localVolume) Mount(id string) (string, error) {
 	v.m.Lock()
 	defer v.m.Unlock()
 	if v.opts != nil {
@@ -303,7 +308,7 @@ func (v *localVolume) Mount() (string, error) {
 }
 
 // Umount is for satisfying the localVolume interface and does not do anything in this driver.
-func (v *localVolume) Unmount() error {
+func (v *localVolume) Unmount(id string) error {
 	v.m.Lock()
 	defer v.m.Unlock()
 	if v.opts != nil {

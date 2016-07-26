@@ -3,19 +3,21 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
 func TestContainerDiffError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerDiff("nothing")
+	_, err := client.ContainerDiff(context.Background(), "nothing")
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -23,8 +25,12 @@ func TestContainerDiffError(t *testing.T) {
 }
 
 func TestContainerDiff(t *testing.T) {
+	expectedURL := "/containers/container_id/changes"
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
 			b, err := json.Marshal([]types.ContainerChange{
 				{
 					Kind: 0,
@@ -45,7 +51,7 @@ func TestContainerDiff(t *testing.T) {
 		}),
 	}
 
-	changes, err := client.ContainerDiff("container_id")
+	changes, err := client.ContainerDiff(context.Background(), "container_id")
 	if err != nil {
 		t.Fatal(err)
 	}

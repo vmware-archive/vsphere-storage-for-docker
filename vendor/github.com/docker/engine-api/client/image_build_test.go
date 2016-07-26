@@ -11,7 +11,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/go-units"
@@ -19,9 +18,9 @@ import (
 
 func TestImageBuildError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ImageBuild(context.Background(), types.ImageBuildOptions{})
+	_, err := client.ImageBuild(context.Background(), nil, types.ImageBuildOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -158,7 +157,7 @@ func TestImageBuild(t *testing.T) {
 	for _, buildCase := range buildCases {
 		expectedURL := "/build"
 		client := &Client{
-			transport: transport.NewMockClient(nil, func(r *http.Request) (*http.Response, error) {
+			transport: newMockClient(nil, func(r *http.Request) (*http.Response, error) {
 				if !strings.HasPrefix(r.URL.Path, expectedURL) {
 					return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, r.URL)
 				}
@@ -198,7 +197,7 @@ func TestImageBuild(t *testing.T) {
 				}, nil
 			}),
 		}
-		buildResponse, err := client.ImageBuild(context.Background(), buildCase.buildOptions)
+		buildResponse, err := client.ImageBuild(context.Background(), nil, buildCase.buildOptions)
 		if err != nil {
 			t.Fatal(err)
 		}

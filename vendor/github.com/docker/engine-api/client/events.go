@@ -33,14 +33,14 @@ func (cli *Client) Events(ctx context.Context, options types.EventsOptions) (io.
 		query.Set("until", ts)
 	}
 	if options.Filters.Len() > 0 {
-		filterJSON, err := filters.ToParam(options.Filters)
+		filterJSON, err := filters.ToParamWithVersion(cli.version, options.Filters)
 		if err != nil {
 			return nil, err
 		}
 		query.Set("filters", filterJSON)
 	}
 
-	serverResponse, err := cli.getWithContext(ctx, "/events", query, nil)
+	serverResponse, err := cli.get(ctx, "/events", query, nil)
 	if err != nil {
 		return nil, err
 	}

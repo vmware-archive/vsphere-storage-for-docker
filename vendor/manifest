@@ -28,7 +28,7 @@
 			"importpath": "github.com/docker/docker/pkg/archive",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "9fc2eee2b5b3c0cbc392a7ce6c085984871fb770",
 			"branch": "master",
 			"path": "/pkg/archive",
 			"notests": true
@@ -37,7 +37,7 @@
 			"importpath": "github.com/docker/docker/pkg/fileutils",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/fileutils",
 			"notests": true
@@ -46,7 +46,7 @@
 			"importpath": "github.com/docker/docker/pkg/idtools",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/idtools",
 			"notests": true
@@ -55,7 +55,7 @@
 			"importpath": "github.com/docker/docker/pkg/ioutils",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/ioutils",
 			"notests": true
@@ -64,7 +64,7 @@
 			"importpath": "github.com/docker/docker/pkg/locker",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/locker",
 			"notests": true
@@ -73,7 +73,7 @@
 			"importpath": "github.com/docker/docker/pkg/mount",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/mount",
 			"notests": true
@@ -82,7 +82,7 @@
 			"importpath": "github.com/docker/docker/pkg/plugins",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/plugins",
 			"notests": true
@@ -91,7 +91,7 @@
 			"importpath": "github.com/docker/docker/pkg/pools",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/pools",
 			"notests": true
@@ -100,7 +100,7 @@
 			"importpath": "github.com/docker/docker/pkg/promise",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/promise",
 			"notests": true
@@ -109,7 +109,7 @@
 			"importpath": "github.com/docker/docker/pkg/random",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/random",
 			"notests": true
@@ -118,7 +118,7 @@
 			"importpath": "github.com/docker/docker/pkg/stringid",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/stringid",
 			"notests": true
@@ -127,7 +127,7 @@
 			"importpath": "github.com/docker/docker/pkg/system",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/pkg/system",
 			"notests": true
@@ -136,7 +136,7 @@
 			"importpath": "github.com/docker/docker/utils",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/utils",
 			"notests": true
@@ -145,7 +145,7 @@
 			"importpath": "github.com/docker/docker/volume",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "a8c5ba75172686a2be2119a3b46c6acda02f0a36",
+			"revision": "bad654b00c954e31007c5004629e236c06ca4046",
 			"branch": "master",
 			"path": "/volume",
 			"notests": true
@@ -153,22 +153,22 @@
 		{
 			"importpath": "github.com/docker/engine-api",
 			"repository": "https://github.com/docker/engine-api",
-			"vcs": "",
-			"revision": "5e2f1200890487b77c90933f7e4955290b3380cb",
+			"vcs": "git",
+			"revision": "a52656d77f09d394104c1639824eada038bfdb89",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/docker/go-connections",
 			"repository": "https://github.com/docker/go-connections",
-			"vcs": "",
-			"revision": "34b5052da6b11e27f5f2e357b38b571ddddd3928",
+			"vcs": "git",
+			"revision": "990a1a1a70b0da4c4cb70e117971a4f0babfbf1a",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/docker/go-plugins-helpers/sdk",
 			"repository": "https://github.com/docker/go-plugins-helpers",
 			"vcs": "git",
-			"revision": "726bdcf4333dc9bd02860d7397a4ab4797864ea5",
+			"revision": "dd9c6831a796ea025dfae8448d6a34d081b99898",
 			"branch": "master",
 			"path": "/sdk"
 		},
@@ -183,8 +183,8 @@
 		{
 			"importpath": "github.com/docker/go-units",
 			"repository": "https://github.com/docker/go-units",
-			"vcs": "",
-			"revision": "5d2041e26a699eaca682e2ea41c8f891e1060444",
+			"vcs": "git",
+			"revision": "f2d77a61e3c169b43402a0a1e84f06daf29b8190",
 			"branch": "master"
 		},
 		{

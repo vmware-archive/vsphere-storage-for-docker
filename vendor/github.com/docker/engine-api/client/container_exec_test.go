@@ -6,25 +6,34 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
+	"golang.org/x/net/context"
+
 	"github.com/docker/engine-api/types"
 )
 
 func TestContainerExecCreateError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerExecCreate(types.ExecConfig{})
+	_, err := client.ContainerExecCreate(context.Background(), "container_id", types.ExecConfig{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
 func TestContainerExecCreate(t *testing.T) {
+	expectedURL := "/containers/container_id/exec"
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
+			if req.Method != "POST" {
+				return nil, fmt.Errorf("expected POST method, got %s", req.Method)
+			}
 			// FIXME validate the content is the given ExecConfig ?
 			if err := req.ParseForm(); err != nil {
 				return nil, err
@@ -33,8 +42,8 @@ func TestContainerExecCreate(t *testing.T) {
 			if err := json.NewDecoder(req.Body).Decode(execConfig); err != nil {
 				return nil, err
 			}
-			if execConfig.Container != "container_id" {
-				return nil, fmt.Errorf("expected an execConfig with Container == 'container_id', got %v", execConfig)
+			if execConfig.User != "user" {
+				return nil, fmt.Errorf("expected an execConfig with User == 'user', got %v", execConfig)
 			}
 			b, err := json.Marshal(types.ContainerExecCreateResponse{
 				ID: "exec_id",
@@ -49,8 +58,8 @@ func TestContainerExecCreate(t *testing.T) {
 		}),
 	}
 
-	r, err := client.ContainerExecCreate(types.ExecConfig{
-		Container: "container_id",
+	r, err := client.ContainerExecCreate(context.Background(), "container_id", types.ExecConfig{
+		User: "user",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -62,17 +71,21 @@ func TestContainerExecCreate(t *testing.T) {
 
 func TestContainerExecStartError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerExecStart("nothing", types.ExecStartCheck{})
+	err := client.ContainerExecStart(context.Background(), "nothing", types.ExecStartCheck{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
 func TestContainerExecStart(t *testing.T) {
+	expectedURL := "/exec/exec_id/start"
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
 			if err := req.ParseForm(); err != nil {
 				return nil, err
 			}
@@ -91,7 +104,7 @@ func TestContainerExecStart(t *testing.T) {
 		}),
 	}
 
-	err := client.ContainerExecStart("exec_id", types.ExecStartCheck{
+	err := client.ContainerExecStart(context.Background(), "exec_id", types.ExecStartCheck{
 		Detach: true,
 		Tty:    false,
 	})
@@ -102,17 +115,21 @@ func TestContainerExecStart(t *testing.T) {
 
 func TestContainerExecInspectError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerExecInspect("nothing")
+	_, err := client.ContainerExecInspect(context.Background(), "nothing")
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
 func TestContainerExecInspect(t *testing.T) {
+	expectedURL := "/exec/exec_id/json"
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
 			b, err := json.Marshal(types.ContainerExecInspect{
 				ExecID:      "exec_id",
 				ContainerID: "container_id",
@@ -127,7 +144,7 @@ func TestContainerExecInspect(t *testing.T) {
 		}),
 	}
 
-	inspect, err := client.ContainerExecInspect("exec_id")
+	inspect, err := client.ContainerExecInspect(context.Background(), "exec_id")
 	if err != nil {
 		t.Fatal(err)
 	}

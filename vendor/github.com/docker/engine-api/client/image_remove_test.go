@@ -9,16 +9,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
 func TestImageRemoveError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
 
-	_, err := client.ImageRemove(types.ImageRemoveOptions{})
+	_, err := client.ImageRemove(context.Background(), "image_id", types.ImageRemoveOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -49,7 +49,7 @@ func TestImageRemove(t *testing.T) {
 	}
 	for _, removeCase := range removeCases {
 		client := &Client{
-			transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
 				if !strings.HasPrefix(req.URL.Path, expectedURL) {
 					return nil, fmt.Errorf("expected URL '%s', got '%s'", expectedURL, req.URL)
 				}
@@ -81,8 +81,7 @@ func TestImageRemove(t *testing.T) {
 				}, nil
 			}),
 		}
-		imageDeletes, err := client.ImageRemove(types.ImageRemoveOptions{
-			ImageID:       "image_id",
+		imageDeletes, err := client.ImageRemove(context.Background(), "image_id", types.ImageRemoveOptions{
 			Force:         removeCase.force,
 			PruneChildren: removeCase.pruneChildren,
 		})

@@ -25,7 +25,7 @@ const (
 type Request struct {
 	Name    string
 	Options map[string]string `json:"Opts,omitempty"`
-	MountID string            `json:",omitempty"`
+	ID string            `json:",omitempty"`
 }
 
 // Response is the strucutre that the plugin's responses are serialized to.

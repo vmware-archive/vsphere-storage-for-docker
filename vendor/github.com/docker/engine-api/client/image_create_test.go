@@ -10,15 +10,14 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
 )
 
 func TestImageCreateError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ImageCreate(context.Background(), types.ImageCreateOptions{})
+	_, err := client.ImageCreate(context.Background(), "reference", types.ImageCreateOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server error, got %v", err)
 	}
@@ -26,11 +25,12 @@ func TestImageCreateError(t *testing.T) {
 
 func TestImageCreate(t *testing.T) {
 	expectedURL := "/images/create"
-	expectedImage := "my_image"
-	expectedTag := "another:image"
+	expectedImage := "test:5000/my_image"
+	expectedTag := "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+	expectedReference := fmt.Sprintf("%s@%s", expectedImage, expectedTag)
 	expectedRegistryAuth := "eyJodHRwczovL2luZGV4LmRvY2tlci5pby92MS8iOnsiYXV0aCI6ImRHOTBid289IiwiZW1haWwiOiJqb2huQGRvZS5jb20ifX0="
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(r *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(r *http.Request) (*http.Response, error) {
 			if !strings.HasPrefix(r.URL.Path, expectedURL) {
 				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, r.URL)
 			}
@@ -57,9 +57,7 @@ func TestImageCreate(t *testing.T) {
 		}),
 	}
 
-	createResponse, err := client.ImageCreate(context.Background(), types.ImageCreateOptions{
-		Parent:       expectedImage,
-		Tag:          expectedTag,
+	createResponse, err := client.ImageCreate(context.Background(), expectedReference, types.ImageCreateOptions{
 		RegistryAuth: expectedRegistryAuth,
 	})
 	if err != nil {

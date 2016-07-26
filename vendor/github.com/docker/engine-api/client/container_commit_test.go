@@ -6,26 +6,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
 func TestContainerCommitError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerCommit(types.ContainerCommitOptions{
-		ContainerID: "nothing",
-	})
+	_, err := client.ContainerCommit(context.Background(), "nothing", types.ContainerCommitOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
 func TestContainerCommit(t *testing.T) {
+	expectedURL := "/commit"
 	expectedContainerID := "container_id"
+	specifiedReference := "repository_name:tag"
 	expectedRepositoryName := "repository_name"
 	expectedTag := "tag"
 	expectedComment := "comment"
@@ -33,7 +34,10 @@ func TestContainerCommit(t *testing.T) {
 	expectedChanges := []string{"change1", "change2"}
 
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
 			query := req.URL.Query()
 			containerID := query.Get("container")
 			if containerID != expectedContainerID {
@@ -76,14 +80,12 @@ func TestContainerCommit(t *testing.T) {
 		}),
 	}
 
-	r, err := client.ContainerCommit(types.ContainerCommitOptions{
-		ContainerID:    expectedContainerID,
-		RepositoryName: expectedRepositoryName,
-		Tag:            expectedTag,
-		Comment:        expectedComment,
-		Author:         expectedAuthor,
-		Changes:        expectedChanges,
-		Pause:          false,
+	r, err := client.ContainerCommit(context.Background(), expectedContainerID, types.ContainerCommitOptions{
+		Reference: specifiedReference,
+		Comment:   expectedComment,
+		Author:    expectedAuthor,
+		Changes:   expectedChanges,
+		Pause:     false,
 	})
 	if err != nil {
 		t.Fatal(err)
