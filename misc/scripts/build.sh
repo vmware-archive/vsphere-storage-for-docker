@@ -74,6 +74,7 @@ plug_pkg_container_version=latest
 plug_pkg_container=cnastorage/fpm:$plug_pkg_container_version
 dockerfile=Dockerfile.vibauthor-and-go
 go_container=golang
+docs_container=cnastorage/gh-documentation
 # mount point within the container.
 dir=/go/src/github.com/vmware/docker-volume-vsphere
 # We need to mount this into the container:
@@ -94,6 +95,9 @@ then
 elif [ "$1" == "gvt" ]
 then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $go_container bash -c "go get -u github.com/FiloSottile/gvt; bash"
+elif [ "$1" == "documentation" ]
+then
+  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir -p 8000:8000 $docs_container bash 
 else
   docker_socket=/var/run/docker.sock
   $DOCKER run --privileged --rm \

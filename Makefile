@@ -23,7 +23,7 @@ TARGETS := all \
 	test-all test-vm test-esx testremote testasroot\
 	clean-all clean clean-vm clean-esx \
 	build-all build dockerbuild \
-	deb rpm package gvt
+	deb rpm package gvt documentation
 
 # default target
 default: build-all
