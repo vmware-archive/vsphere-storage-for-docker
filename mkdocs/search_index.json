@@ -2,13 +2,18 @@
     "docs": [
         {
             "location": "/",
-            "text": "Introduction to Docker Volume Driver for vSphere\n\u00b6\n\n\nDocker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.\n\n\nSome of the high level features for the plugin are: \n\n\n\n\nDesigned to run over shared storage in a cluster (Single node\n setup for testing is supported)\n\n\nEasy to deploy and manage. There is zero configuration and \nzero credential management. \n\n\nSupport for VSAN policy.\n\n\nIntegration with vCenter (under development)\n\n\nBackup of Docker volumes (under development)\n\n\n\n\nThis plugin is integrated with \nDocker Volume Plugin framework\n. This plugin does not need credential management or configuration management. \n\n\nDocumentation Version\n\u00b6\n\n\nThe documentation here is for the latest release. The current master documentation can be found in markdown format in the \ndocumentation folder\n. For older releases, browse to \nreleases\n select the release, click on the tag for the release and browse the docs folder.",
+            "text": "Introduction to Docker Volume Driver for vSphere\n\u00b6\n\n\nDocker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.\n\n\nSome of the high level features for the plugin are: \n\n\n\n\nDesigned to run over shared storage in a cluster (Single node\n setup for testing is supported)\n\n\nEasy to deploy and manage. There is zero configuration and \nzero credential management. \n\n\nSupport for VSAN policy.\n\n\nIntegration with vCenter (under development)\n\n\nBackup of Docker volumes (under development)\n\n\n\n\nThis plugin is integrated with \nDocker Volume Plugin framework\n. This plugin does not need credential management or configuration management. \n\n\nFeedback\n\u00b6\n\n\nWe track all our on going work and feature requests using \nGitHub Issues\n. Please feel free to file \nissues\n or email \ncna-storage@vmware.com\n\n\nDocumentation Version\n\u00b6\n\n\nThe documentation here is for the latest release. The current master documentation can be found in markdown format in the \ndocumentation folder\n. For older releases, browse to \nreleases\n select the release, click on the tag for the release and browse the docs folder.",
             "title": "Home"
         },
         {
             "location": "/#introduction-to-docker-volume-driver-for-vsphere",
             "text": "Docker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.  Some of the high level features for the plugin are:    Designed to run over shared storage in a cluster (Single node\n setup for testing is supported)  Easy to deploy and manage. There is zero configuration and \nzero credential management.   Support for VSAN policy.  Integration with vCenter (under development)  Backup of Docker volumes (under development)   This plugin is integrated with  Docker Volume Plugin framework . This plugin does not need credential management or configuration management.",
             "title": "Introduction to Docker Volume Driver for vSphere"
+        },
+        {
+            "location": "/#feedback",
+            "text": "We track all our on going work and feature requests using  GitHub Issues . Please feel free to file  issues  or email  cna-storage@vmware.com",
+            "title": "Feedback"
         },
         {
             "location": "/#documentation-version",
