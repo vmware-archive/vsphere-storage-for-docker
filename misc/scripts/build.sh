@@ -86,7 +86,7 @@ DOCKER="$DEBUG docker"
 
 if [ "$1" == "rpm" ] || [ "$1" == "deb" ]
 then
-  $DOCKER run --rm  \
+  $DOCKER run --rm  -it \
     -e "PKG_VERSION=$PKG_VERSION" \
     -v $PWD/..:$dir \
     -w $dir \
@@ -100,7 +100,7 @@ then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir -p 8000:8000 $docs_container bash 
 else
   docker_socket=/var/run/docker.sock
-  $DOCKER run --privileged --rm \
+  $DOCKER run --privileged --rm -it \
     -e "PKG_VERSION=$PKG_VERSION" \
     -v $docker_socket:$docker_socket  \
     -v $PWD/..:$dir -w $dir $plug_container $MAKE $1

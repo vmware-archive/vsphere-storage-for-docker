@@ -558,13 +558,14 @@ def connectLocal():
 
 
 def findDeviceByPath(vmdk_path, vm):
+    logging.debug("findDeviceByPath: Looking for device {0}".format(vmdk_path))
     for d in vm.config.hardware.device:
         if type(d) != vim.vm.device.VirtualDisk:
             continue
 
         # Disks of all backing have a backing object with a filename attribute.
         # The filename identifies the virtual disk by name and can be used
-        # to match with the given name.
+        # to match with the given volume name.
         # Filename format is as follows:
         #   "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>"
         backing_disk = d.backing.fileName.split(" ")[1]
@@ -758,10 +759,12 @@ def disk_attach(vmdk_path, vm):
     except vim.fault.VimFault as ex:
         msg = ex.msg
         # Use metadata (KV) for extra logging
-        if kv_status_attached and kv_uuid != vm.config.uuid:
+        if kv_status_attached:
             # KV  claims we are attached to a different VM'.
             msg += " disk {0} already attached to VM={1}".format(vmdk_path,
                                                                  kv_uuid)
+            if kv_uuid == vm.config.uuid:
+                msg += "(Current VM)"
         return err(msg)
 
     setStatusAttached(vmdk_path, vm)
