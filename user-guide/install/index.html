@@ -41,7 +41,7 @@
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-      ga('create', 'UA-81413942-1', 'vmware.github.io/docker-volume-vsphere');
+      ga('create', 'UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/');
       ga('send', 'pageview');
   </script>
   
@@ -104,6 +104,9 @@
         <a class="current" href="./">Installation and Deployment</a>
         
             <ul>
+            
+                <li class="toctree-l3"><a href="#introduction">Introduction</a></li>
+                
             
                 <li class="toctree-l3"><a href="#install-on-esx">Install on ESX</a></li>
                 
@@ -170,21 +173,6 @@
     </li>
 <li>
           
-            <li>
-    <ul class="subnav">
-    <li><span>Blog</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../blog/storage-availability/">Docker Volume and Storage Availability</a>
-        
-    </li>
-
-        
-    </ul>
-<li>
-          
         </ul>
       </div>
       &nbsp;
@@ -221,10 +209,19 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="install-on-esx">Install on ESX<a class="headerlink" href="#install-on-esx" title="Permanent link">&para;</a></h1>
-<p><script type="text/javascript" src="https://asciinema.org/a/80405.js" id="asciicast-80405" async></script></p>
+                <h1 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h1>
+<p>Docker volume vSphere plugin requires is simple to install. It has zero configuration and and zero credential management post install.</p>
+<p><a href="https://github.com/vmware/docker-volume-vsphere/releases">Tagged releases</a> include the software bundles to install on ESX and on the VM.</p>
+<p>In addition the <code>make build-all</code> will generate the packages.</p>
+<h1 id="install-on-esx">Install on ESX<a class="headerlink" href="#install-on-esx" title="Permanent link">&para;</a></h1>
+<p><a href="http://blogs.vmware.com/vsphere/2011/09/whats-in-a-vib.html">VIB</a> and <a href="https://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html?resultof=%2522%256f%2566%2566%256c%2569%256e%2565%2522%2520%2522%256f%2566%2566%256c%2569%256e%2522%2520%2522%2564%2565%2570%256f%2574%2522%2520">Offline Depot</a> are the packages built to install the backend for the plugin on ESX. The backend can be installed using esxcli or vmware tools such as <a href="http://pubs.vmware.com/vsphere-60/topic/com.vmware.ICbase/PDF/vsphere-update-manager-601-install-administration-guide.pdf">VUM</a></p>
+<p>Here is a demo show casing esxcli</p>
+<script type="text/javascript" src="https://asciinema.org/a/80405.js" id="asciicast-80405" async></script>
+
 <h1 id="install-on-vm">Install on VM<a class="headerlink" href="#install-on-vm" title="Permanent link">&para;</a></h1>
-<p><script type="text/javascript" src="https://asciinema.org/a/80412.js" id="asciicast-80412" async></script></p>
+<p>We currently package the plugin as a RPM and Deb package. This is to be able to start the plugin before Docker engine starts. We will also support Docker plugin framework once it is ready.</p>
+<p>Here is a demo showcasing the install in a Photon OS VM.</p>
+<script type="text/javascript" src="https://asciinema.org/a/80412.js" id="asciicast-80412" async></script>
               
             </div>
           </div>

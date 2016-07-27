@@ -47,17 +47,22 @@
         },
         {
             "location": "/user-guide/install/",
-            "text": "Install on ESX\n\u00b6\n\n\n\n\nInstall on VM\n\u00b6",
+            "text": "Introduction\n\u00b6\n\n\nDocker volume vSphere plugin requires is simple to install. It has zero configuration and and zero credential management post install.\n\n\nTagged releases\n include the software bundles to install on ESX and on the VM.\n\n\nIn addition the \nmake build-all\n will generate the packages.\n\n\nInstall on ESX\n\u00b6\n\n\nVIB\n and \nOffline Depot\n are the packages built to install the backend for the plugin on ESX. The backend can be installed using esxcli or vmware tools such as \nVUM\n\n\nHere is a demo show casing esxcli\n\n\n\n\n\nInstall on VM\n\u00b6\n\n\nWe currently package the plugin as a RPM and Deb package. This is to be able to start the plugin before Docker engine starts. We will also support Docker plugin framework once it is ready.\n\n\nHere is a demo showcasing the install in a Photon OS VM.",
             "title": "Installation and Deployment"
         },
         {
+            "location": "/user-guide/install/#introduction",
+            "text": "Docker volume vSphere plugin requires is simple to install. It has zero configuration and and zero credential management post install.  Tagged releases  include the software bundles to install on ESX and on the VM.  In addition the  make build-all  will generate the packages.",
+            "title": "Introduction"
+        },
+        {
             "location": "/user-guide/install/#install-on-esx",
-            "text": "",
+            "text": "VIB  and  Offline Depot  are the packages built to install the backend for the plugin on ESX. The backend can be installed using esxcli or vmware tools such as  VUM  Here is a demo show casing esxcli",
             "title": "Install on ESX"
         },
         {
             "location": "/user-guide/install/#install-on-vm",
-            "text": "",
+            "text": "We currently package the plugin as a RPM and Deb package. This is to be able to start the plugin before Docker engine starts. We will also support Docker plugin framework once it is ready.  Here is a demo showcasing the install in a Photon OS VM.",
             "title": "Install on VM"
         },
         {
@@ -199,11 +204,6 @@
             "location": "/user-guide/faq/#i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause",
             "text": "97 is a standard linux error  #define EAFNOSUPPORT    97      /* Address family not supported by protocol */ . It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read \u201cWhat is VMCI and vSock and why is it needed?\u201d above.",
             "title": "I see \"address family not supported by protocol (errno=97)\" in the plugin logs, what is the cause?"
-        },
-        {
-            "location": "/blog/storage-availability/",
-            "text": "",
-            "title": "Docker Volume and Storage Availability"
         }
     ]
 }
