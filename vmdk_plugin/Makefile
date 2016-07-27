@@ -114,6 +114,10 @@ build: prereqs .code_verify $(VM_BINS)
 gvt:
 	$(BUILD) gvt
 
+.PHONY: documentation
+documentation:
+	$(BUILD) documentation
+
 .PHONY: prereqs
 prereqs:
 	@$(CHECK)
