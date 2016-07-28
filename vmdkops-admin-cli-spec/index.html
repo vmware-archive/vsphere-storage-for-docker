@@ -6,12 +6,13 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  
+  <meta name="author" content="cna-storage@vmware.com">
   
   <title>Admin CLI - Docker Volume Driver for vSphere</title>
   
 
-  <link rel="shortcut icon" href="../img/favicon.ico">
+  <link rel="shortcut icon" href="../favicon.ico">
+  
 
   
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
@@ -40,7 +41,7 @@
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-      ga('create', 'UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/');
+      ga('create', 'UA-81413942-1', 'vmware.github.io/docker-volume-vsphere');
       ga('send', 'pageview');
   </script>
   
@@ -86,7 +87,8 @@
             
                 <li class="toctree-l3"><a href="#ls">ls</a></li>
                 
-                    <li><a class="toctree-l4" href="#policy">policy</a></li>
+            
+                <li class="toctree-l3"><a href="#policy">policy</a></li>
                 
             
                 <li class="toctree-l3"><a href="#role">role</a></li>
@@ -194,7 +196,16 @@
           <div role="main">
             <div class="section">
               
-                <p>In order to manage the inventory of VMDKs created and used by multiple docker engines we must have
+                <div class="toc">
+<ul>
+<li><a href="#ls">ls</a></li>
+<li><a href="#policy">policy</a></li>
+<li><a href="#role">role</a></li>
+<li><a href="#status">Status</a></li>
+<li><a href="#help">help</a></li>
+</ul>
+</div>
+<p>In order to manage the inventory of VMDKs created and used by multiple docker engines we must have
 an administrative CLI that lives on ESX. This administrative CLI can provide additional status such
 as access control, storage policies, and disk usage and capacity.</p>
 <p>The admin cli itself is non-interactive. All commands are of the form <code>vmdkops-admin &lt;Cmd&gt; [Arg1, Arg2,...]</code></p>
@@ -207,7 +218,7 @@ tests for stateless logic can be fed mock input representing data from sidecar a
 These techniques should be sufficient enough to provide confidence in the implementation.</p>
 <p>The rest of this specification will detail the commands to be implemented in the admin cli. Note
 that the commands covered in this document only operate on a single ESX host.</p>
-<h4 id="ls"><code>ls</code></h4>
+<h1 id="ls">ls<a class="headerlink" href="#ls" title="Permanent link">&para;</a></h1>
 <p>List all volumes by reading the <code>dockvols</code> directories and metadata stored in Sidecar files.
 Volumes in all datastores will be shown with the volume name in the first column and the datastore
 in the second.</p>
@@ -240,7 +251,7 @@ vmdkops-admin ls -f 'LastAttachedTime &gt; 2016-03-11'
 vmdkops-admin ls -f 'AttachedTo = Test*'
 </code></pre>
 
-<h5 id="policy"><code>policy</code></h5>
+<h1 id="policy">policy<a class="headerlink" href="#policy" title="Permanent link">&para;</a></h1>
 <p>Create, configure and show the VSAN policy names and their corresponding VSAN policies. Also show whether or not they are in use.</p>
 <p>Examples:
  * <code>vmdkops-admin policy create --name=myPolicy --content="string"</code> - Create a new policy
@@ -249,10 +260,10 @@ vmdkops-admin ls -f 'AttachedTo = Test*'
  * <code>vmdkops-admin policy update --name=myPolicy --content="string"</code> - Update an existing VSAN policy and
    any volumes currently using that policy</p>
 <p>Note that on volume creation from docker, a policy name will be passed with a <code>-o</code> option.</p>
-<h4 id="role"><code>role</code></h4>
+<h1 id="role">role<a class="headerlink" href="#role" title="Permanent link">&para;</a></h1>
 <p>Create, delete, configure and show access control settings. Access control settings are assigned via a
 VM naming convention, although a specific convention is not required. An example will help clarify
-this. Let's say that an administrator wants to allow any <code>Test</code> VM to create, delete and mount
+this. Let&rsquo;s say that an administrator wants to allow any <code>Test</code> VM to create, delete and mount
 volumes, and only allow creation of volumes of a maximum size of 2TB. The admin would first create a
 <code>Test</code> role specifying these permissions, as well as a glob indicating the vm naming convention that
 the role should be applied to. In this instance the permissions in the role <code>Test</code> will be applied to any VM with a
@@ -278,20 +289,21 @@ only. Finally, there needs to be a way to check permissions. This can be perform
 get</code> command. <code>role get</code> takes a VM name and returns both a list of the rights granted to the VM and
 the roles that the VM matches on separate lines.</p>
 <p>Examples are provided below.</p>
-<p>Examples:
- * <code>vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount</code>
- * <code>vmdkops-admin role rm myrole</code>
- * <code>vmdkops-admin role ls</code>
- * <code>vmdkops-admin role set --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=4TB --rights=create,mount</code>
- * <code>vmdkops-admin role get &lt;VmName&gt;</code></p>
+<pre><code> vmdkops-admin role create --name=myrole --matches-vm=&quot;glob expression over vm names&quot; --volume-maxsize=2TB --rights=create,delete,mount
+ vmdkops-admin role rm myrole
+ vmdkops-admin role ls
+ vmdkops-admin role set --name=myrole --matches-vm=&quot;glob expression over vm names&quot; --volume-maxsize=4TB --rights=create,mount
+ vmdkops-admin role get &lt;VmName&gt;
+</code></pre>
+
 <p>Role information is stored in a flat file, for lack of a better solution. The format of the file
 is JSON, but the schema is currently undefined. Permission checking will need to be performed at
 runtime by the ESX service, using the information provided by <code>vmdkops-admin role get &lt;VmName&gt;</code>. It
 does seem inefficient to call out to a separate command to perform the check, but this allows the
 simplest implementation and isolation of admin information inside a single script.</p>
-<h4 id="status"><code>Status</code></h4>
+<h1 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h1>
 <p>Show any interesting information about the service. This includes file paths of config files, version
-information, and PID of running service. A simple example is shown here, although it's possible
+information, and PID of running service. A simple example is shown here, although it&rsquo;s possible
 that the exact format may be somewhat different.</p>
 <pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
 Version: 1.0.0-0.0.1
@@ -303,7 +315,7 @@ LogFile: /var/log/vmware/vmdk_ops.log
 LogLevel: INFO
 </code></pre>
 
-<h4 id="help"><code>help</code></h4>
+<h1 id="help">help<a class="headerlink" href="#help" title="Permanent link">&para;</a></h1>
 <p>Show help as described in this doc.</p>
               
             </div>

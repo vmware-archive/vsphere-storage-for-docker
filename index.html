@@ -6,12 +6,13 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  
+  <meta name="author" content="cna-storage@vmware.com">
   
   <title>Docker Volume Driver for vSphere</title>
   
 
-  <link rel="shortcut icon" href="./img/favicon.ico">
+  <link rel="shortcut icon" href="favicon.ico">
+  
 
   
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
@@ -40,7 +41,7 @@
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-      ga('create', 'UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/');
+      ga('create', 'UA-81413942-1', 'vmware.github.io/docker-volume-vsphere');
       ga('send', 'pageview');
   </script>
   
@@ -71,6 +72,9 @@
             <ul>
             
                 <li class="toctree-l3"><a href="#introduction-to-docker-volume-driver-for-vsphere">Introduction to Docker Volume Driver for vSphere</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#documentation-version">Documentation Version</a></li>
                 
             
             </ul>
@@ -183,17 +187,19 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="introduction-to-docker-volume-driver-for-vsphere">Introduction to Docker Volume Driver for vSphere</h1>
+                <h1 id="introduction-to-docker-volume-driver-for-vsphere">Introduction to Docker Volume Driver for vSphere<a class="headerlink" href="#introduction-to-docker-volume-driver-for-vsphere" title="Permanent link">&para;</a></h1>
 <p>Docker volume driver is designed to solve persistency needs for 
-stateful containers running on top of VMware's stack.</p>
+stateful containers running on top of VMware&rsquo;s stack.</p>
 <p>Some of the high level features for the plugin are: </p>
 <ol>
 <li>Designed to run over shared storage in a cluster (Single node 
 test setups supported as well)</li>
 <li>Easy to deploy and manage. There is zero configuration and 
 zero credential management.</li>
-<li>Integrated with vCenter and Photon Controller</li>
+<li>Support for VSAN policy.</li>
 </ol>
+<h1 id="documentation-version">Documentation Version<a class="headerlink" href="#documentation-version" title="Permanent link">&para;</a></h1>
+<p>The documentation here is for the latest release. The current master documentation can be found in markdown format in the <a href="https://github.com/vmware/docker-volume-vsphere/tree/master/docs">documentation folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
               
             </div>
           </div>
@@ -239,5 +245,5 @@ zero credential management.</li>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2016-07-27 03:26:03.662741
+Build Date UTC : 2016-07-28 05:40:19.075359
 -->

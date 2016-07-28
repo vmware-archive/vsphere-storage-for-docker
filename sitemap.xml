@@ -3,24 +3,24 @@
 
     
     <url>
-     <loc>None/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>None/install/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//install/</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>None/vmdkops-admin-cli-spec/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//vmdkops-admin-cli-spec/</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -28,24 +28,14 @@
     
         
     <url>
-     <loc>None/docker-volume-cli/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//docker-volume-cli/</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/datastores/</loc>
-     <lastmod>2016-07-27</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    
-
-    
-        
-    <url>
-     <loc>None/esx-overview/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//datastores/</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -54,14 +44,24 @@
     
         
     <url>
-     <loc>None/vcenter/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//esx-overview/</loc>
+     <lastmod>2016-07-28</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//vcenter/</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/vsan-policy/</loc>
-     <lastmod>2016-07-27</lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//vsan-policy/</loc>
+     <lastmod>2016-07-28</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
