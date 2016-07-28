@@ -8,31 +8,31 @@
   
   <meta name="author" content="cna-storage@vmware.com">
   
-  <title>Basic commands - Docker Volume Driver for vSphere</title>
+  <title>Installation and Deployment - Docker Volume Driver for vSphere</title>
   
 
-  <link rel="shortcut icon" href="../favicon.ico">
+  <link rel="shortcut icon" href="../../favicon.ico">
   
 
   
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
 
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Basic commands";
-    var mkdocs_page_input_path = "docker-volume-cli.md";
-    var mkdocs_page_url = "/docker-volume-cli/";
+    var mkdocs_page_name = "Installation and Deployment";
+    var mkdocs_page_input_path = "user-guide/install.md";
+    var mkdocs_page_url = "/user-guide/install/";
   </script>
   
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script>
-  <script src="../js/theme.js"></script> 
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script> 
 
   
   <script>
@@ -54,9 +54,9 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Docker Volume Driver for vSphere</a>
+        <a href="../.." class="icon icon-home"> Docker Volume Driver for vSphere</a>
         <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
   </form>
 </div>
@@ -67,40 +67,70 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="..">Home</a>
-        
-    </li>
-<li>
-          
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../vmdkops-admin-cli-spec/">Admin CLI</a>
+        <a class="" href="../..">Home</a>
         
     </li>
 <li>
           
             <li>
     <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
+    <li><span>Features</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vsan-policy/">VSAN Policy</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Documentation</span></li>
 
         
             
     <li class="toctree-l1 current">
-        <a class="current" href="./">Basic commands</a>
+        <a class="current" href="./">Installation and Deployment</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#using-the-plugin-in-docker">Using the plugin in Docker</a></li>
+                <li class="toctree-l3"><a href="#install-on-esx">Install on ESX</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#install-on-vm">Install on VM</a></li>
                 
             
             </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../vmdkops-admin-cli-spec/">Admin CLI</a>
+        
+    </li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Docker Volume CLI</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../docker-volume-cli/">Basic commands</a>
         
     </li>
 
@@ -113,9 +143,9 @@
 
         
     </ul>
-<li>
-          
-            <li>
+
+        
+            
     <ul class="subnav">
     <li><span>Backend ESX Overview</span></li>
 
@@ -128,23 +158,26 @@
 
         
     </ul>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../faq/">FAQ</a>
+        
+    </li>
 <li>
           
             <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>Blog</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../vcenter/">Integration with vCenter</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../vsan-policy/">VSAN Policy</a>
+        <a class="" href="../../blog/storage-availability/">Docker Volume and Storage Availability</a>
         
     </li>
 
@@ -162,7 +195,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Docker Volume Driver for vSphere</a>
+        <a href="../..">Docker Volume Driver for vSphere</a>
       </nav>
 
       
@@ -170,15 +203,15 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="..">Docs</a> &raquo;</li>
+    <li><a href="../..">Docs</a> &raquo;</li>
     
       
         
-          <li>Docker Volume CLI &raquo;</li>
+          <li>Documentation &raquo;</li>
         
       
     
-    <li>Basic commands</li>
+    <li>Installation and Deployment</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -188,8 +221,10 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="using-the-plugin-in-docker">Using the plugin in Docker<a class="headerlink" href="#using-the-plugin-in-docker" title="Permanent link">&para;</a></h1>
-<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
+                <h1 id="install-on-esx">Install on ESX<a class="headerlink" href="#install-on-esx" title="Permanent link">&para;</a></h1>
+<p><script type="text/javascript" src="https://asciinema.org/a/80405.js" id="asciicast-80405" async></script></p>
+<h1 id="install-on-vm">Install on VM<a class="headerlink" href="#install-on-vm" title="Permanent link">&para;</a></h1>
+<p><script type="text/javascript" src="https://asciinema.org/a/80412.js" id="asciicast-80412" async></script></p>
               
             </div>
           </div>
@@ -197,10 +232,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../datastores/" class="btn btn-neutral float-right" title="Multiple Datastores">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../vmdkops-admin-cli-spec/" class="btn btn-neutral float-right" title="Admin CLI">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../vmdkops-admin-cli-spec/" class="btn btn-neutral" title="Admin CLI"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../features/vsan-policy/" class="btn btn-neutral" title="VSAN Policy"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -226,10 +261,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../vmdkops-admin-cli-spec/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../../features/vsan-policy/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../datastores/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../vmdkops-admin-cli-spec/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

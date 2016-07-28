@@ -83,71 +83,101 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="vmdkops-admin-cli-spec/">Admin CLI</a>
-        
-    </li>
-<li>
-          
-            <li>
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="docker-volume-cli/">Basic commands</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="datastores/">Multiple Datastores</a>
-        
-    </li>
-
-        
-    </ul>
-<li>
-          
-            <li>
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="esx-overview/">Volume Layout</a>
-        
-    </li>
-
-        
-    </ul>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Features</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="vcenter/">Integration with vCenter</a>
+        <a class="" href="features/vcenter/">Integration with vCenter</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="vsan-policy/">VSAN Policy</a>
+        <a class="" href="features/vsan-policy/">VSAN Policy</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Documentation</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/install/">Installation and Deployment</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/vmdkops-admin-cli-spec/">Admin CLI</a>
+        
+    </li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Docker Volume CLI</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/docker-volume-cli/">Basic commands</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/datastores/">Multiple Datastores</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Backend ESX Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/esx-overview/">Volume Layout</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/faq/">FAQ</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Blog</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="blog/storage-availability/">Docker Volume and Storage Availability</a>
         
     </li>
 
@@ -192,12 +222,15 @@
 stateful containers running on top of VMware&rsquo;s stack.</p>
 <p>Some of the high level features for the plugin are: </p>
 <ol>
-<li>Designed to run over shared storage in a cluster (Single node 
-test setups supported as well)</li>
+<li>Designed to run over shared storage in a cluster (Single node
+ setup for testing is supported)</li>
 <li>Easy to deploy and manage. There is zero configuration and 
-zero credential management.</li>
+zero credential management. </li>
 <li>Support for VSAN policy.</li>
+<li>Integration with vCenter (under development)</li>
+<li>Backup of Docker volumes (under development)</li>
 </ol>
+<p>This plugin is integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>. This plugin does not need credential management or configuration management. </p>
 <h1 id="documentation-version">Documentation Version<a class="headerlink" href="#documentation-version" title="Permanent link">&para;</a></h1>
 <p>The documentation here is for the latest release. The current master documentation can be found in markdown format in the <a href="https://github.com/vmware/docker-volume-vsphere/tree/master/docs">documentation folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
               
@@ -207,7 +240,7 @@ zero credential management.</li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="install/" class="btn btn-neutral float-right" title="Installation and Deployment">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="features/vcenter/" class="btn btn-neutral float-right" title="Integration with vCenter">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -235,7 +268,7 @@ zero credential management.</li>
       
       
       
-        <span style="margin-left: 15px"><a href="install/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="features/vcenter/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -245,5 +278,5 @@ zero credential management.</li>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2016-07-28 05:40:19.075359
+Build Date UTC : 2016-07-28 15:33:12.587738
 -->

@@ -2,12 +2,12 @@
     "docs": [
         {
             "location": "/",
-            "text": "Introduction to Docker Volume Driver for vSphere\n\u00b6\n\n\nDocker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.\n\n\nSome of the high level features for the plugin are: \n\n\n\n\nDesigned to run over shared storage in a cluster (Single node \ntest setups supported as well)\n\n\nEasy to deploy and manage. There is zero configuration and \nzero credential management.\n\n\nSupport for VSAN policy.\n\n\n\n\nDocumentation Version\n\u00b6\n\n\nThe documentation here is for the latest release. The current master documentation can be found in markdown format in the \ndocumentation folder\n. For older releases, browse to \nreleases\n select the release, click on the tag for the release and browse the docs folder.",
+            "text": "Introduction to Docker Volume Driver for vSphere\n\u00b6\n\n\nDocker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.\n\n\nSome of the high level features for the plugin are: \n\n\n\n\nDesigned to run over shared storage in a cluster (Single node\n setup for testing is supported)\n\n\nEasy to deploy and manage. There is zero configuration and \nzero credential management. \n\n\nSupport for VSAN policy.\n\n\nIntegration with vCenter (under development)\n\n\nBackup of Docker volumes (under development)\n\n\n\n\nThis plugin is integrated with \nDocker Volume Plugin framework\n. This plugin does not need credential management or configuration management. \n\n\nDocumentation Version\n\u00b6\n\n\nThe documentation here is for the latest release. The current master documentation can be found in markdown format in the \ndocumentation folder\n. For older releases, browse to \nreleases\n select the release, click on the tag for the release and browse the docs folder.",
             "title": "Home"
         },
         {
             "location": "/#introduction-to-docker-volume-driver-for-vsphere",
-            "text": "Docker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.  Some of the high level features for the plugin are:    Designed to run over shared storage in a cluster (Single node \ntest setups supported as well)  Easy to deploy and manage. There is zero configuration and \nzero credential management.  Support for VSAN policy.",
+            "text": "Docker volume driver is designed to solve persistency needs for \nstateful containers running on top of VMware\u2019s stack.  Some of the high level features for the plugin are:    Designed to run over shared storage in a cluster (Single node\n setup for testing is supported)  Easy to deploy and manage. There is zero configuration and \nzero credential management.   Support for VSAN policy.  Integration with vCenter (under development)  Backup of Docker volumes (under development)   This plugin is integrated with  Docker Volume Plugin framework . This plugin does not need credential management or configuration management.",
             "title": "Introduction to Docker Volume Driver for vSphere"
         },
         {
@@ -16,89 +16,194 @@
             "title": "Documentation Version"
         },
         {
-            "location": "/install/",
+            "location": "/features/vcenter/",
+            "text": "vCenter Integration\n\u00b6\n\n\nvCenter Plugin integration is under development.\nPlease file any requirements as \nGitHub Issues\n or email  \ncna-storage@vmware.com",
+            "title": "Integration with vCenter"
+        },
+        {
+            "location": "/features/vcenter/#vcenter-integration",
+            "text": "vCenter Plugin integration is under development.\nPlease file any requirements as  GitHub Issues  or email   cna-storage@vmware.com",
+            "title": "vCenter Integration"
+        },
+        {
+            "location": "/features/vsan-policy/",
+            "text": "What is VSAN\n\u00b6\n\n\nVSAN\n is a shared storage (all ESX nodes in a cluster can access the same VSAN store), hyper-converged (VSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.\n\n\nVSAN Policy\n\u00b6\n\n\nVSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.\n\n\nMapping Docker volumes to VSAN objects with policy\n\u00b6\n\n\nUsing the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.\n\n\nvmdkops-admin policy create --name=myPolicy --content=\"string\"\ndocker volume create -o policy=myPolicy",
+            "title": "VSAN Policy"
+        },
+        {
+            "location": "/features/vsan-policy/#what-is-vsan",
+            "text": "VSAN  is a shared storage (all ESX nodes in a cluster can access the same VSAN store), hyper-converged (VSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.",
+            "title": "What is VSAN"
+        },
+        {
+            "location": "/features/vsan-policy/#vsan-policy",
+            "text": "VSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.",
+            "title": "VSAN Policy"
+        },
+        {
+            "location": "/features/vsan-policy/#mapping-docker-volumes-to-vsan-objects-with-policy",
+            "text": "Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.  vmdkops-admin policy create --name=myPolicy --content=\"string\"\ndocker volume create -o policy=myPolicy",
+            "title": "Mapping Docker volumes to VSAN objects with policy"
+        },
+        {
+            "location": "/user-guide/install/",
             "text": "Install on ESX\n\u00b6\n\n\n\n\nInstall on VM\n\u00b6",
             "title": "Installation and Deployment"
         },
         {
-            "location": "/install/#install-on-esx",
+            "location": "/user-guide/install/#install-on-esx",
             "text": "",
             "title": "Install on ESX"
         },
         {
-            "location": "/install/#install-on-vm",
+            "location": "/user-guide/install/#install-on-vm",
             "text": "",
             "title": "Install on VM"
         },
         {
-            "location": "/vmdkops-admin-cli-spec/",
+            "location": "/user-guide/vmdkops-admin-cli-spec/",
             "text": "ls\n\n\npolicy\n\n\nrole\n\n\nStatus\n\n\nhelp\n\n\n\n\n\n\nIn order to manage the inventory of VMDKs created and used by multiple docker engines we must have\nan administrative CLI that lives on ESX. This administrative CLI can provide additional status such\nas access control, storage policies, and disk usage and capacity.\n\n\nThe admin cli itself is non-interactive. All commands are of the form \nvmdkops-admin <Cmd> [Arg1, Arg2,...]\n\n\nAll output from the admin cli defaults to human readable formats. It will be made easily grepable.\n\n\nThe majority of testing will be automated. We can ensure that parsing calls the right callbacks with\nthe right information by generating representative input and mocking the callbacks to assert that\nthe right information is parsed and delivered correctly. Additionally, and specifically for testing\nroles, we can create roles and then test that they act as expected by calling \nrole get\n. Unit\ntests for stateless logic can be fed mock input representing data from sidecar and the filesystem.\nThese techniques should be sufficient enough to provide confidence in the implementation.\n\n\nThe rest of this specification will detail the commands to be implemented in the admin cli. Note\nthat the commands covered in this document only operate on a single ESX host.\n\n\nls\n\u00b6\n\n\nList all volumes by reading the \ndockvols\n directories and metadata stored in Sidecar files.\nVolumes in all datastores will be shown with the volume name in the first column and the datastore\nin the second.\n\n\nls\n supports the following options:\n  * No options - List the names of all volumes\n  * \nls -l\n - List all volumes and their corresponding metadata. Note that missing metadata will be\n    marked \nN/A\n.\n    * Created by (VM Name)\n    * Creation Time\n    * Last Attached Time\n    * Datastore\n    * Policy Name\n    * Capacity\n    * Used Space\n    * Attached To (VM Name)\n  * \nls -c [Column1, Column2, ...]\n - List only the columns specified, implies \n-l\n\n  * \nls -f <ColumnName Pattern Value>\n - Filter output by only including volumes whose columns match the\n                                         sort pattern (See below). Note that the priority is P2 on\n                                         this and it may be developed after the initial release\n                                         depending on timing/effort.\n\n\nSort patterns are used for filtering. The argument, \nX\n, itself is of a type specific to the attribute. All dates are given in \nISO 8601 format\n\n\n\n\n> X\n The attribute is greater than X\n\n\n< X\n The attribute is equal to X\n\n\n= X\n The attribute matches a Glob X\n\n\n\n\nExamples:\n\n\nvmdkops-admin ls -c CreatedBy,CreationTime,Datastore,PolicyName\nvmdkops-admin ls -f 'LastAttachedTime > 2016-03-11'\nvmdkops-admin ls -f 'AttachedTo = Test*'\n\n\n\n\npolicy\n\u00b6\n\n\nCreate, configure and show the VSAN policy names and their corresponding VSAN policies. Also show whether or not they are in use.\n\n\nExamples:\n * \nvmdkops-admin policy create --name=myPolicy --content=\"string\"\n - Create a new policy\n * \nvmdkops-admin policy rm myPolicy\n - Remove the given policy\n * \nvmdkops-admin policy ls\n - List policies and the Volumes that are using that policy.\n * \nvmdkops-admin policy update --name=myPolicy --content=\"string\"\n - Update an existing VSAN policy and\n   any volumes currently using that policy\n\n\nNote that on volume creation from docker, a policy name will be passed with a \n-o\n option.\n\n\nrole\n\u00b6\n\n\nCreate, delete, configure and show access control settings. Access control settings are assigned via a\nVM naming convention, although a specific convention is not required. An example will help clarify\nthis. Let\u2019s say that an administrator wants to allow any \nTest\n VM to create, delete and mount\nvolumes, and only allow creation of volumes of a maximum size of 2TB. The admin would first create a\n\nTest\n role specifying these permissions, as well as a glob indicating the vm naming convention that\nthe role should be applied to. In this instance the permissions in the role \nTest\n will be applied to any VM with a\nname ending in \nTest\n. Since the admin creates the VMs they can control the naming convention and\npermissions in a straightforward manner.\n\n\nvmdkops-admin role create --name=Test --matches-vm=\\*Test --volume-maxsize=2TB --rights=create,delete,mount\n\n\nrole create\n accepts the following options as shown in the prior example:\n * \n--name=<Name>\n - The name of the role to be created\n * \n--matches-vm=<Glob>\n - The glob that matches VM names where the role should be applied. This\n                           flag may be applied multiple times, where a VM matching any of the globs would\n                           apply.\n * \n--rights=<Perm1,Perm2,...>\n - The permissions granted to matching VMs. The list of applicable rights is:\n   * \ncreate\n - Allow volume creation. If the \n--volume-maxsize\n parameter is given it applies to create, otherwise size is unlimited.\n   * \nrm\n - Allow volume deletion\n   * \nmount\n - Allow volume mounting\n\n\nCurrently the idea is to allow volume deletion and mounting of any volume if the rights are granted.\nHowever it may make sense to limit these to specific volumes, perhaps via a glob match.\n\n\nNote that the \n--volume-maxsize\n parameter is human readable and given in the following format: \nMB | GB | TB\n.\n\n\nBesides \nrole create\n, there are 4 other commands with regards to roles. Roles can be deleted with\n\nrole rm\n and listed with \nrole ls\n. Listing of roles will show all roles and the VMs they apply\nto. \nrole set\n takes identical paramters to role create, except it will update an existing role\nonly. Finally, there needs to be a way to check permissions. This can be performed with the \nrole\nget\n command. \nrole get\n takes a VM name and returns both a list of the rights granted to the VM and\nthe roles that the VM matches on separate lines.\n\n\nExamples are provided below.\n\n\n vmdkops-admin role create --name=myrole --matches-vm=\"glob expression over vm names\" --volume-maxsize=2TB --rights=create,delete,mount\n vmdkops-admin role rm myrole\n vmdkops-admin role ls\n vmdkops-admin role set --name=myrole --matches-vm=\"glob expression over vm names\" --volume-maxsize=4TB --rights=create,mount\n vmdkops-admin role get <VmName>\n\n\n\n\nRole information is stored in a flat file, for lack of a better solution. The format of the file\nis JSON, but the schema is currently undefined. Permission checking will need to be performed at\nruntime by the ESX service, using the information provided by \nvmdkops-admin role get <VmName>\n. It\ndoes seem inefficient to call out to a separate command to perform the check, but this allows the\nsimplest implementation and isolation of admin information inside a single script.\n\n\nStatus\n\u00b6\n\n\nShow any interesting information about the service. This includes file paths of config files, version\ninformation, and PID of running service. A simple example is shown here, although it\u2019s possible\nthat the exact format may be somewhat different.\n\n\n[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status\nVersion: 1.0.0-0.0.1\nStatus: Running\nPid: 73114\nPort: 1019\nLogConfigFile: /etc/vmware/vmdkops/log_config.json\nLogFile: /var/log/vmware/vmdk_ops.log\nLogLevel: INFO\n\n\n\n\nhelp\n\u00b6\n\n\nShow help as described in this doc.",
             "title": "Admin CLI"
         },
         {
-            "location": "/vmdkops-admin-cli-spec/#ls",
+            "location": "/user-guide/vmdkops-admin-cli-spec/#ls",
             "text": "List all volumes by reading the  dockvols  directories and metadata stored in Sidecar files.\nVolumes in all datastores will be shown with the volume name in the first column and the datastore\nin the second.  ls  supports the following options:\n  * No options - List the names of all volumes\n  *  ls -l  - List all volumes and their corresponding metadata. Note that missing metadata will be\n    marked  N/A .\n    * Created by (VM Name)\n    * Creation Time\n    * Last Attached Time\n    * Datastore\n    * Policy Name\n    * Capacity\n    * Used Space\n    * Attached To (VM Name)\n  *  ls -c [Column1, Column2, ...]  - List only the columns specified, implies  -l \n  *  ls -f <ColumnName Pattern Value>  - Filter output by only including volumes whose columns match the\n                                         sort pattern (See below). Note that the priority is P2 on\n                                         this and it may be developed after the initial release\n                                         depending on timing/effort.  Sort patterns are used for filtering. The argument,  X , itself is of a type specific to the attribute. All dates are given in  ISO 8601 format   > X  The attribute is greater than X  < X  The attribute is equal to X  = X  The attribute matches a Glob X   Examples:  vmdkops-admin ls -c CreatedBy,CreationTime,Datastore,PolicyName\nvmdkops-admin ls -f 'LastAttachedTime > 2016-03-11'\nvmdkops-admin ls -f 'AttachedTo = Test*'",
             "title": "ls"
         },
         {
-            "location": "/vmdkops-admin-cli-spec/#policy",
+            "location": "/user-guide/vmdkops-admin-cli-spec/#policy",
             "text": "Create, configure and show the VSAN policy names and their corresponding VSAN policies. Also show whether or not they are in use.  Examples:\n *  vmdkops-admin policy create --name=myPolicy --content=\"string\"  - Create a new policy\n *  vmdkops-admin policy rm myPolicy  - Remove the given policy\n *  vmdkops-admin policy ls  - List policies and the Volumes that are using that policy.\n *  vmdkops-admin policy update --name=myPolicy --content=\"string\"  - Update an existing VSAN policy and\n   any volumes currently using that policy  Note that on volume creation from docker, a policy name will be passed with a  -o  option.",
             "title": "policy"
         },
         {
-            "location": "/vmdkops-admin-cli-spec/#role",
+            "location": "/user-guide/vmdkops-admin-cli-spec/#role",
             "text": "Create, delete, configure and show access control settings. Access control settings are assigned via a\nVM naming convention, although a specific convention is not required. An example will help clarify\nthis. Let\u2019s say that an administrator wants to allow any  Test  VM to create, delete and mount\nvolumes, and only allow creation of volumes of a maximum size of 2TB. The admin would first create a Test  role specifying these permissions, as well as a glob indicating the vm naming convention that\nthe role should be applied to. In this instance the permissions in the role  Test  will be applied to any VM with a\nname ending in  Test . Since the admin creates the VMs they can control the naming convention and\npermissions in a straightforward manner.  vmdkops-admin role create --name=Test --matches-vm=\\*Test --volume-maxsize=2TB --rights=create,delete,mount  role create  accepts the following options as shown in the prior example:\n *  --name=<Name>  - The name of the role to be created\n *  --matches-vm=<Glob>  - The glob that matches VM names where the role should be applied. This\n                           flag may be applied multiple times, where a VM matching any of the globs would\n                           apply.\n *  --rights=<Perm1,Perm2,...>  - The permissions granted to matching VMs. The list of applicable rights is:\n   *  create  - Allow volume creation. If the  --volume-maxsize  parameter is given it applies to create, otherwise size is unlimited.\n   *  rm  - Allow volume deletion\n   *  mount  - Allow volume mounting  Currently the idea is to allow volume deletion and mounting of any volume if the rights are granted.\nHowever it may make sense to limit these to specific volumes, perhaps via a glob match.  Note that the  --volume-maxsize  parameter is human readable and given in the following format:  MB | GB | TB .  Besides  role create , there are 4 other commands with regards to roles. Roles can be deleted with role rm  and listed with  role ls . Listing of roles will show all roles and the VMs they apply\nto.  role set  takes identical paramters to role create, except it will update an existing role\nonly. Finally, there needs to be a way to check permissions. This can be performed with the  role\nget  command.  role get  takes a VM name and returns both a list of the rights granted to the VM and\nthe roles that the VM matches on separate lines.  Examples are provided below.   vmdkops-admin role create --name=myrole --matches-vm=\"glob expression over vm names\" --volume-maxsize=2TB --rights=create,delete,mount\n vmdkops-admin role rm myrole\n vmdkops-admin role ls\n vmdkops-admin role set --name=myrole --matches-vm=\"glob expression over vm names\" --volume-maxsize=4TB --rights=create,mount\n vmdkops-admin role get <VmName>  Role information is stored in a flat file, for lack of a better solution. The format of the file\nis JSON, but the schema is currently undefined. Permission checking will need to be performed at\nruntime by the ESX service, using the information provided by  vmdkops-admin role get <VmName> . It\ndoes seem inefficient to call out to a separate command to perform the check, but this allows the\nsimplest implementation and isolation of admin information inside a single script.",
             "title": "role"
         },
         {
-            "location": "/vmdkops-admin-cli-spec/#status",
+            "location": "/user-guide/vmdkops-admin-cli-spec/#status",
             "text": "Show any interesting information about the service. This includes file paths of config files, version\ninformation, and PID of running service. A simple example is shown here, although it\u2019s possible\nthat the exact format may be somewhat different.  [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status\nVersion: 1.0.0-0.0.1\nStatus: Running\nPid: 73114\nPort: 1019\nLogConfigFile: /etc/vmware/vmdkops/log_config.json\nLogFile: /var/log/vmware/vmdk_ops.log\nLogLevel: INFO",
             "title": "Status"
         },
         {
-            "location": "/vmdkops-admin-cli-spec/#help",
+            "location": "/user-guide/vmdkops-admin-cli-spec/#help",
             "text": "Show help as described in this doc.",
             "title": "help"
         },
         {
-            "location": "/docker-volume-cli/",
-            "text": "Using the plugin in Docker\n\u00b6",
+            "location": "/user-guide/docker-volume-cli/",
+            "text": "Using the plugin in Docker\n\n\nDocker volume create options\n\n\nsize\n\n\npolicy\n\n\ndiskformat\n\n\nattach_as\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUsing the plugin in Docker\n\u00b6\n\n\nThe plugin works with existing Docker volume commands.\n\n\n\n\nDocker volume create\n\n\nDocker volume inspect\n\n\nDocker volume ls\n\n\nDocker volume rm\n\n\n\n\n\n\n\nDocker volume create options\n\u00b6\n\n\nsize\n\u00b6\n\n\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb\n\n\n\n\nThe volume units can be \nkb, mb, gb and tb\n\n\nThe default volume size is 100mb\n\n\npolicy\n\u00b6\n\n\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o policy=allflash\n\n\n\n\nPolicy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the \n-o policy\n flag.\n\n\ndiskformat\n\u00b6\n\n\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=zeroedthick\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=thin\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=eagerzeroedthick\n\n\n\n\nDocker volumes are backed by VMDKs. VMDKs support multiple \ntypes\n\n\nCurrently the following are supported\n\n\n\n\nThick Provision Lazy Zeroed (\nzeroedthick\n)\n\n\nThin Provision (\nthin\n)\n\n\nThick Provision Eager Zeroed (\neagerzeroedthick\n)\n\n\n\n\nattach_as\n\u00b6\n\n\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=independent_persistent\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=persistent\n\n\n\n\nDocker volumes are backed by VMDKs. VMDKs are attached to the VM in which Docker is requesting for a volume during Docker run. VMDKs can be attached in \ndifferent modes.\n\n\nCurrently the following are supported\n\n\n\n\npersistent\n: If the VMDK is attached as persistent it will be part of a VM snapshot. If a VM snapshot has been taken while the Docker volume is attached to a VM, the Docker volume then continues to be attached to the VM that was snapshotted.\n\n\nindependent_persistent\n: If the VMDK is attached as independent_persistent it will not be part of a VM snapshot. The Docker volume can be attached to any VM that can access the datastore independent of snapshots.",
             "title": "Basic commands"
         },
         {
-            "location": "/docker-volume-cli/#using-the-plugin-in-docker",
-            "text": "",
+            "location": "/user-guide/docker-volume-cli/#using-the-plugin-in-docker",
+            "text": "The plugin works with existing Docker volume commands.   Docker volume create  Docker volume inspect  Docker volume ls  Docker volume rm",
             "title": "Using the plugin in Docker"
         },
         {
-            "location": "/datastores/",
-            "text": "Consuming multiple data stores\n\u00b6",
+            "location": "/user-guide/docker-volume-cli/#docker-volume-create-options",
+            "text": "",
+            "title": "Docker volume create options"
+        },
+        {
+            "location": "/user-guide/docker-volume-cli/#size",
+            "text": "docker volume create --driver=vmdk --name=MyVolume -o size=10gb  The volume units can be  kb, mb, gb and tb  The default volume size is 100mb",
+            "title": "size"
+        },
+        {
+            "location": "/user-guide/docker-volume-cli/#policy",
+            "text": "docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o policy=allflash  Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the  -o policy  flag.",
+            "title": "policy"
+        },
+        {
+            "location": "/user-guide/docker-volume-cli/#diskformat",
+            "text": "docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=zeroedthick\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=thin\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=eagerzeroedthick  Docker volumes are backed by VMDKs. VMDKs support multiple  types  Currently the following are supported   Thick Provision Lazy Zeroed ( zeroedthick )  Thin Provision ( thin )  Thick Provision Eager Zeroed ( eagerzeroedthick )",
+            "title": "diskformat"
+        },
+        {
+            "location": "/user-guide/docker-volume-cli/#attach_as",
+            "text": "docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=independent_persistent\ndocker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=persistent  Docker volumes are backed by VMDKs. VMDKs are attached to the VM in which Docker is requesting for a volume during Docker run. VMDKs can be attached in  different modes.  Currently the following are supported   persistent : If the VMDK is attached as persistent it will be part of a VM snapshot. If a VM snapshot has been taken while the Docker volume is attached to a VM, the Docker volume then continues to be attached to the VM that was snapshotted.  independent_persistent : If the VMDK is attached as independent_persistent it will not be part of a VM snapshot. The Docker volume can be attached to any VM that can access the datastore independent of snapshots.",
+            "title": "attach_as"
+        },
+        {
+            "location": "/user-guide/datastores/",
+            "text": "Consuming multiple data stores\n\u00b6\n\n\nThe plugin by default creates a volume in the datastore that hosts the VM. Optionally Docker volumes can be provisioned on a specific datastore by directly addressing the datastore when specifying the name in the format <volume name>@<datastore name>",
             "title": "Multiple Datastores"
         },
         {
-            "location": "/datastores/#consuming-multiple-data-stores",
-            "text": "",
+            "location": "/user-guide/datastores/#consuming-multiple-data-stores",
+            "text": "The plugin by default creates a volume in the datastore that hosts the VM. Optionally Docker volumes can be provisioned on a specific datastore by directly addressing the datastore when specifying the name in the format <volume name>@<datastore name>",
             "title": "Consuming multiple data stores"
         },
         {
-            "location": "/esx-overview/",
-            "text": "Docker volumes on ESX\n\u00b6",
+            "location": "/user-guide/esx-overview/",
+            "text": "Docker volumes on ESX\n\u00b6\n\n\nDocker volumes on vSphere are powered by \nVMDKs\n. VMDKs can reside on datastores created on top of varying backends (NFS, SAN, VSAN, vVol). Docker-volume-vsphere plugin supports high availability for Docker volumes and allows for any VM requesting for the volume to gain access to it. The ability to attach the VMDK(Docker volume) to any VM when paired with a cluster manager such as Swarm allows a persistent container to be highly available.\n\n\nThe VMDKs on ESX are stored on the datastore in a folder that is independent of a VM.",
             "title": "Volume Layout"
         },
         {
-            "location": "/esx-overview/#docker-volumes-on-esx",
-            "text": "",
+            "location": "/user-guide/esx-overview/#docker-volumes-on-esx",
+            "text": "Docker volumes on vSphere are powered by  VMDKs . VMDKs can reside on datastores created on top of varying backends (NFS, SAN, VSAN, vVol). Docker-volume-vsphere plugin supports high availability for Docker volumes and allows for any VM requesting for the volume to gain access to it. The ability to attach the VMDK(Docker volume) to any VM when paired with a cluster manager such as Swarm allows a persistent container to be highly available.  The VMDKs on ESX are stored on the datastore in a folder that is independent of a VM.",
             "title": "Docker volumes on ESX"
         },
         {
-            "location": "/vcenter/",
-            "text": "",
-            "title": "Integration with vCenter"
+            "location": "/user-guide/faq/",
+            "text": "FAQ\n\n\nGeneral\n\n\nWhere do I get the binaries ? What about the source ?\n\n\nHow to install and use the driver?\n\n\nHow do I run the setup on my laptop?\n\n\n\n\n\n\nTroubleshooting\n\n\nDocker Plugin to ESX Backend Communication.\n\n\nWhat is VMCI and vSock and why is it needed?\n\n\nI see \u201cconnection reset by peer (errno=104)\u201d in the plugin logs, what is the cause?\n\n\nI see \u201caddress family not supported by protocol (errno=97)\u201d in the plugin logs, what is the cause?\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFAQ\n\u00b6\n\n\nGeneral\n\u00b6\n\n\nWhere do I get the binaries ? What about the source ?\n\u00b6\n\n\n\n\nPlease look at \nGitHub Releases\n for binaries. Github releases allow downloading of source for a release in addition to git clone.\n\n\n\n\nHow to install and use the driver?\n\u00b6\n\n\n\n\nPlease see README.md in the for the release by clicking on the tag for the release. Example: \nREADME\n\n\n\n\nHow do I run the setup on my laptop?\n\u00b6\n\n\n\n\nFollow the \nguide on the wiki\n\n\n\n\nTroubleshooting\n\u00b6\n\n\nDocker Plugin to ESX Backend Communication.\n\u00b6\n\n\nWhat is VMCI and vSock and why is it needed?\n\u00b6\n\n\nThe docker volume plugin for vSphere uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow \nVMware tools installation\n or use open vmtools \napt-get install open-vm-tools\n. Additional reading for differences between VMware tools and open vm tools: \nOpen-VM-Tools (OVT): The Future Of VMware Tools For Linux\n and \nVMware Tools vs Open VM Tools\n\n\nI see \u201cconnection reset by peer (errno=104)\u201d in the \nplugin logs\n, what is the cause?\n\u00b6\n\n\n104 is a standard linux error \n#define ECONNRESET      104     /* Connection reset by peer */\n. It occurs if the Docker volume plugin cannot communicate to the ESX back end. This can happen if:\n   * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read \u201cWhat is VMCI and vSock and why is it needed?\u201d above.\n   * ESX service is not running. \n/etc/init.d/vmdk-opsd status\n. Check \nESX Logs\n\n   * ESX service and the plugin are not communicating on the same port. \nps -c | grep vmdk #On ESX\n and \nps aux| grep docker-volume-vsphere # On VM\n check the port param passed in and make sure they are the same\n\n\nI see \u201caddress family not supported by protocol (errno=97)\u201d in the \nplugin logs\n, what is the cause?\n\u00b6\n\n\n97 is a standard linux error \n#define EAFNOSUPPORT    97      /* Address family not supported by protocol */\n. It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read \u201cWhat is VMCI and vSock and why is it needed?\u201d above.",
+            "title": "FAQ"
         },
         {
-            "location": "/vsan-policy/",
+            "location": "/user-guide/faq/#faq",
             "text": "",
-            "title": "VSAN Policy"
+            "title": "FAQ"
+        },
+        {
+            "location": "/user-guide/faq/#general",
+            "text": "",
+            "title": "General"
+        },
+        {
+            "location": "/user-guide/faq/#where-do-i-get-the-binaries-what-about-the-source",
+            "text": "Please look at  GitHub Releases  for binaries. Github releases allow downloading of source for a release in addition to git clone.",
+            "title": "Where do I get the binaries ? What about the source ?"
+        },
+        {
+            "location": "/user-guide/faq/#how-to-install-and-use-the-driver",
+            "text": "Please see README.md in the for the release by clicking on the tag for the release. Example:  README",
+            "title": "How to install and use the driver?"
+        },
+        {
+            "location": "/user-guide/faq/#how-do-i-run-the-setup-on-my-laptop",
+            "text": "Follow the  guide on the wiki",
+            "title": "How do I run the setup on my laptop?"
+        },
+        {
+            "location": "/user-guide/faq/#troubleshooting",
+            "text": "",
+            "title": "Troubleshooting"
+        },
+        {
+            "location": "/user-guide/faq/#docker-plugin-to-esx-backend-communication",
+            "text": "",
+            "title": "Docker Plugin to ESX Backend Communication."
+        },
+        {
+            "location": "/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed",
+            "text": "The docker volume plugin for vSphere uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow  VMware tools installation  or use open vmtools  apt-get install open-vm-tools . Additional reading for differences between VMware tools and open vm tools:  Open-VM-Tools (OVT): The Future Of VMware Tools For Linux  and  VMware Tools vs Open VM Tools",
+            "title": "What is VMCI and vSock and why is it needed?"
+        },
+        {
+            "location": "/user-guide/faq/#i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause",
+            "text": "104 is a standard linux error  #define ECONNRESET      104     /* Connection reset by peer */ . It occurs if the Docker volume plugin cannot communicate to the ESX back end. This can happen if:\n   * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read \u201cWhat is VMCI and vSock and why is it needed?\u201d above.\n   * ESX service is not running.  /etc/init.d/vmdk-opsd status . Check  ESX Logs \n   * ESX service and the plugin are not communicating on the same port.  ps -c | grep vmdk #On ESX  and  ps aux| grep docker-volume-vsphere # On VM  check the port param passed in and make sure they are the same",
+            "title": "I see \"connection reset by peer (errno=104)\" in the plugin logs, what is the cause?"
+        },
+        {
+            "location": "/user-guide/faq/#i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause",
+            "text": "97 is a standard linux error  #define EAFNOSUPPORT    97      /* Address family not supported by protocol */ . It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read \u201cWhat is VMCI and vSock and why is it needed?\u201d above.",
+            "title": "I see \"address family not supported by protocol (errno=97)\" in the plugin logs, what is the cause?"
+        },
+        {
+            "location": "/blog/storage-availability/",
+            "text": "",
+            "title": "Docker Volume and Storage Availability"
         }
     ]
 }
