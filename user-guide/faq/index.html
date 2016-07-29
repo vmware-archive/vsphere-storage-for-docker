@@ -159,11 +159,18 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#faq">FAQ</a></li>
+                <li class="toctree-l3"><a href="#general">General</a></li>
                 
-                    <li><a class="toctree-l4" href="#general">General</a></li>
+                    <li><a class="toctree-l4" href="#where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries ? What about the source ?</a></li>
                 
-                    <li><a class="toctree-l4" href="#troubleshooting">Troubleshooting</a></li>
+                    <li><a class="toctree-l4" href="#how-to-install-and-use-the-driver">How to install and use the driver?</a></li>
+                
+                    <li><a class="toctree-l4" href="#how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#troubleshooting">Troubleshooting</a></li>
+                
+                    <li><a class="toctree-l4" href="#docker-plugin-to-esx-backend-communication">Docker Plugin to ESX Backend Communication.</a></li>
                 
             
             </ul>
@@ -205,7 +212,6 @@
               
                 <div class="toc">
 <ul>
-<li><a href="#faq">FAQ</a><ul>
 <li><a href="#general">General</a><ul>
 <li><a href="#where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries ? What about the source ?</a></li>
 <li><a href="#how-to-install-and-use-the-driver">How to install and use the driver?</a></li>
@@ -222,34 +228,33 @@
 </ul>
 </li>
 </ul>
-</li>
-</ul>
 </div>
-<h1 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h1>
-<h2 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h2>
-<h3 id="where-do-i-get-the-binaries-what-about-the-source"><strong>Where do I get the binaries ? What about the source ?</strong><a class="headerlink" href="#where-do-i-get-the-binaries-what-about-the-source" title="Permanent link">&para;</a></h3>
+<h1 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h1>
+<h2 id="where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries ? What about the source ?<a class="headerlink" href="#where-do-i-get-the-binaries-what-about-the-source" title="Permanent link">&para;</a></h2>
+<p>Please look at <a href="https://github.com/vmware/docker-volume-vsphere/releases">GitHub Releases</a> for binaries. Github releases allow downloading of source for a release in addition to git clone.</p>
+<h2 id="how-to-install-and-use-the-driver">How to install and use the driver?<a class="headerlink" href="#how-to-install-and-use-the-driver" title="Permanent link">&para;</a></h2>
+<p>Please see README.md in the for the release by clicking on the tag for the release. Example: <a href="https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2">README</a></p>
+<h2 id="how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?<a class="headerlink" href="#how-do-i-run-the-setup-on-my-laptop" title="Permanent link">&para;</a></h2>
+<p>Follow the <a href="https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></p>
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<h2 id="docker-plugin-to-esx-backend-communication">Docker Plugin to ESX Backend Communication.<a class="headerlink" href="#docker-plugin-to-esx-backend-communication" title="Permanent link">&para;</a></h2>
+<h3 id="what-is-vmci-and-vsock-and-why-is-it-needed">What is VMCI and vSock and why is it needed?<a class="headerlink" href="#what-is-vmci-and-vsock-and-why-is-it-needed" title="Permanent link">&para;</a></h3>
+<p>The docker volume plugin for vSphere uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow <a href="http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F">VMware tools installation</a> or use open vmtools 
+<code>apt-get install open-vm-tools</code>. 
+Additional reading for differences between VMware tools and open vm tools: </p>
 <ul>
-<li>Please look at <a href="https://github.com/vmware/docker-volume-vsphere/releases">GitHub Releases</a> for binaries. Github releases allow downloading of source for a release in addition to git clone.</li>
+<li><a href="http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html">Open-VM-Tools (OVT): The Future Of VMware Tools For Linux</a> </li>
+<li><a href="http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools">VMware Tools vs Open VM Tools</a></li>
 </ul>
-<h3 id="how-to-install-and-use-the-driver"><strong>How to install and use the driver?</strong><a class="headerlink" href="#how-to-install-and-use-the-driver" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Please see README.md in the for the release by clicking on the tag for the release. Example: <a href="https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2">README</a></li>
-</ul>
-<h3 id="how-do-i-run-the-setup-on-my-laptop"><strong>How do I run the setup on my laptop?</strong><a class="headerlink" href="#how-do-i-run-the-setup-on-my-laptop" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Follow the <a href="https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></li>
-</ul>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="docker-plugin-to-esx-backend-communication">Docker Plugin to ESX Backend Communication.<a class="headerlink" href="#docker-plugin-to-esx-backend-communication" title="Permanent link">&para;</a></h3>
-<h4 id="what-is-vmci-and-vsock-and-why-is-it-needed"><strong>What is VMCI and vSock and why is it needed?</strong><a class="headerlink" href="#what-is-vmci-and-vsock-and-why-is-it-needed" title="Permanent link">&para;</a></h4>
-<p>The docker volume plugin for vSphere uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow <a href="http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F">VMware tools installation</a> or use open vmtools <code>apt-get install open-vm-tools</code>. Additional reading for differences between VMware tools and open vm tools: <a href="http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html">Open-VM-Tools (OVT): The Future Of VMware Tools For Linux</a> and <a href="http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools">VMware Tools vs Open VM Tools</a></p>
-<h4 id="i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause"><strong>I see &ldquo;connection reset by peer (errno=104)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">plugin logs</a>, what is the cause?</strong><a class="headerlink" href="#i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause" title="Permanent link">&para;</a></h4>
-<p>104 is a standard linux error <code>#define ECONNRESET      104     /* Connection reset by peer */</code>. It occurs if the Docker volume plugin cannot communicate to the ESX back end. This can happen if:
+<h3 id="i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">plugin logs</a>, what is the cause?<a class="headerlink" href="#i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
+<p>104 is a standard linux error (<code>#define ECONNRESET      104     /* Connection reset by peer */</code>)</p>
+<p>It occurs if the Docker volume plugin cannot communicate to the ESX back end. This can happen if:
    * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read &ldquo;What is VMCI and vSock and why is it needed?&rdquo; above.
    * ESX service is not running. <code>/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/docker-volume-vsphere#logging">ESX Logs</a>
    * ESX service and the plugin are not communicating on the same port. <code>ps -c | grep vmdk #On ESX</code> and <code>ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</p>
-<h4 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause"><strong>I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">plugin logs</a>, what is the cause?</strong><a class="headerlink" href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause" title="Permanent link">&para;</a></h4>
-<p>97 is a standard linux error <code>#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>. It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read &ldquo;What is VMCI and vSock and why is it needed?&rdquo; above.</p>
+<h3 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">plugin logs</a>, what is the cause?<a class="headerlink" href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
+<p>97 is a standard linux error (<code>#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>)</p>
+<p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">&ldquo;What is VMCI and vSock and why is it needed?&rdquo;</a> above.</p>
               
             </div>
           </div>
