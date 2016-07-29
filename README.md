@@ -27,6 +27,10 @@ Please pick the latest release and use the same version of ESX and VM release.
 
 The demos are located on the project [wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Demos)
 
+## Project Website
+
+Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere](https://vmware.github.io/docker-volume-vsphere) 
+
 ## Installation Instructions
 
 ### On ESX
