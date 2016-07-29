@@ -180,7 +180,7 @@ loop:
 		case <-time.After(devWaitTimeout):
 			log.WithFields(
 				log.Fields{"name": name, "timeout": devWaitTimeout, "device": device},
-			).Error("Reached timeout while waiting for device ")
+			).Warning("Reached timeout while waiting for device, trying to mount anyways ")
 			break loop
 		}
 	}

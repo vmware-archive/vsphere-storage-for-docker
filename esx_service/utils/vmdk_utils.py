@@ -33,7 +33,7 @@ def get_datastores():
     """
     Returns a list of (name, url-name, dockvol_path), with an element per datastore
     where:
-    'name' is datastore name (e.g. 'vsanDatastore') , 
+    'name' is datastore name (e.g. 'vsanDatastore') ,
     'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore 
     """
@@ -66,13 +66,27 @@ def get_volumes():
 
 
 def get_vmdk_path(path, vol_name):
-    """ forms full path as <path-to-volumes>/<volname>.vmdk"""
-    return os.path.join(path, "{0}.vmdk".format(vol_name))
+    """If the volume-related VMDK exists, returns full path to the latest
+    VMDK disk in the disk chain, be it volume-xxxxx.vmdk or volume.vmdk.
+    If the disk does not exists, returns full path to the disk for create().
+    """
+
+    # Get a delta disk list, and if it's empty - return the full path for volume VMDK base file
+    # Note: we rely on NEVER allowing '-' in volume name and on the fact that ESXi
+    # always creates deltadisks as <name>-DDDDDD.vmdk (D is a digit) for delta disks
+    delta_disks = glob.glob("{0}/{1}-*[0-9].vmdk".format(path, vol_name))
+    if not delta_disks:
+        return os.path.join(path, "{0}.vmdk".format(vol_name))
+
+    # this funky code gets the name of the youngest delta disk:
+    latest = sorted([(vmdk, os.stat(vmdk).st_ctime) for vmdk in delta_disks], key=lambda d: d[1], reverse=True)[0][0]
+    logging.debug("The youngest delta disk is %s. All delta disks: %s", latest, delta_disks)
+    return latest
 
 
 def list_vmdks(path, volname="", show_snapshots=False):
     """ Return a list of VMDKs in a given path. Filters out non-descriptor
-    files.
+    files and delta disks.
 
     Params:
     path -  where the VMDKs are looked for
