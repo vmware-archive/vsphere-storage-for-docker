@@ -7,23 +7,25 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
 func TestContainerTopError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerTop("nothing", []string{})
+	_, err := client.ContainerTop(context.Background(), "nothing", []string{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 }
 
 func TestContainerTop(t *testing.T) {
+	expectedURL := "/containers/container_id/top"
 	expectedProcesses := [][]string{
 		{"p1", "p2"},
 		{"p3"},
@@ -31,7 +33,10 @@ func TestContainerTop(t *testing.T) {
 	expectedTitles := []string{"title1", "title2"}
 
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
 			query := req.URL.Query()
 			args := query.Get("ps_args")
 			if args != "arg1 arg2" {
@@ -56,7 +61,7 @@ func TestContainerTop(t *testing.T) {
 		}),
 	}
 
-	processList, err := client.ContainerTop("container_id", []string{"arg1", "arg2"})
+	processList, err := client.ContainerTop(context.Background(), "container_id", []string{"arg1", "arg2"})
 	if err != nil {
 		t.Fatal(err)
 	}

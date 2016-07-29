@@ -9,17 +9,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
+	"golang.org/x/net/context"
 )
 
 func TestImageListError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
 
-	_, err := client.ImageList(types.ImageListOptions{})
+	_, err := client.ImageList(context.Background(), types.ImageListOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -82,7 +82,7 @@ func TestImageList(t *testing.T) {
 	}
 	for _, listCase := range listCases {
 		client := &Client{
-			transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
 				if !strings.HasPrefix(req.URL.Path, expectedURL) {
 					return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
 				}
@@ -111,7 +111,7 @@ func TestImageList(t *testing.T) {
 			}),
 		}
 
-		images, err := client.ImageList(listCase.options)
+		images, err := client.ImageList(context.Background(), listCase.options)
 		if err != nil {
 			t.Fatal(err)
 		}

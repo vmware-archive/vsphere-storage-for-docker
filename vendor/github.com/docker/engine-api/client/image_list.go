@@ -6,15 +6,16 @@ import (
 
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
+	"golang.org/x/net/context"
 )
 
 // ImageList returns a list of images in the docker host.
-func (cli *Client) ImageList(options types.ImageListOptions) ([]types.Image, error) {
+func (cli *Client) ImageList(ctx context.Context, options types.ImageListOptions) ([]types.Image, error) {
 	var images []types.Image
 	query := url.Values{}
 
 	if options.Filters.Len() > 0 {
-		filterJSON, err := filters.ToParam(options.Filters)
+		filterJSON, err := filters.ToParamWithVersion(cli.version, options.Filters)
 		if err != nil {
 			return images, err
 		}
@@ -28,7 +29,7 @@ func (cli *Client) ImageList(options types.ImageListOptions) ([]types.Image, err
 		query.Set("all", "1")
 	}
 
-	serverResp, err := cli.get("/images/json", query, nil)
+	serverResp, err := cli.get(ctx, "/images/json", query, nil)
 	if err != nil {
 		return images, err
 	}

@@ -90,7 +90,7 @@ func runContainerCmd(t *testing.T, client *client.Client, volumeName string,
 	bind := volumeName + ":" + mountPoint
 	t.Logf("Running cmd=%v with vol=%s on client %s", cmd, volumeName, addr)
 
-	r, err := client.ContainerCreate(
+	r, err := client.ContainerCreate(context.Background(),
 		&container.Config{Image: image, Cmd: *cmd,
 			Volumes: map[string]struct{}{mountPoint: {}}},
 		&container.HostConfig{Binds: []string{bind}}, nil, "")
@@ -98,7 +98,8 @@ func runContainerCmd(t *testing.T, client *client.Client, volumeName string,
 		t.Fatalf("\tContainer create failed: %v", err)
 	}
 
-	err = client.ContainerStart(r.ID)
+	err = client.ContainerStart(context.Background(), r.ID,
+		types.ContainerStartOptions{})
 	if err != nil {
 		t.Fatalf("\tContainer start failed: id=%s, err %v", r.ID, err)
 	}
@@ -114,11 +115,11 @@ func runContainerCmd(t *testing.T, client *client.Client, volumeName string,
 		return code
 	}
 
-	err = client.ContainerRemove(types.ContainerRemoveOptions{
-		ContainerID:   r.ID,
-		RemoveVolumes: true,
-		Force:         true,
-	})
+	err = client.ContainerRemove(context.Background(), r.ID,
+		types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			Force:         true,
+		})
 	if err != nil {
 		t.Fatalf("\nContainer removal failed: %v", err)
 	}
@@ -153,7 +154,7 @@ func checkTouch(t *testing.T, c *client.Client, vol string,
 // returns nil for NOT_FOUND and  if volume exists
 // still fails the test if driver for this volume is not vmdk
 func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume {
-	reply, err := c.VolumeList(filters.Args{})
+	reply, err := c.VolumeList(context.Background(), filters.Args{})
 	if err != nil {
 		t.Fatalf("Failed to enumerate  volumes: %v", err)
 	}
@@ -193,7 +194,7 @@ func TestSanity(t *testing.T) {
 
 	c := clients[0].client // this is the endpoint we use as master
 	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
-	_, err := c.VolumeCreate(
+	_, err := c.VolumeCreate(context.Background(),
 		types.VolumeCreateRequest{
 			Name:   volumeName,
 			Driver: driverName,
@@ -218,7 +219,7 @@ func TestSanity(t *testing.T) {
 		}
 	}
 
-	err = c.VolumeRemove(volumeName)
+	err = c.VolumeRemove(context.Background(), volumeName)
 	if err != nil {
 		t.Fatalf("Failed to delete volume, err: %v", err)
 	}
