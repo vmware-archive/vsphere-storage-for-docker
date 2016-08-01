@@ -285,7 +285,7 @@ def cleanup_vsan_devfs_path(devfs_path):
     try:
         os.remove(devfs_path)
         logging.debug("Unlinked %s", devfs_path)
-	return True
+        return True
     except OSError as ex:
         logging.error("Failed to remove backing device %s",
                       devfs_path, str(ex))
@@ -580,10 +580,27 @@ def findDeviceByPath(vmdk_path, vm):
             return d
     return None
 
+# Find the PCI slot number
+def get_controller_pci_slot(vm, pvscsi, key_offset):
+    if pvscsi[0].slotInfo:
+       return str(pvscsi[0].slotInfo.pciSlotNumber)
+    else:
+       # Slot number is got from from the VM config
+       key = 'scsi{0}.pciSlotNumber'.format(pvscsi[0].key -
+                                            key_offset)
+       slot = [cfg for cfg in vm.config.extraConfig \
+               if cfg.key == key]
+       # If the given controller exists
+       if slot:
+          return slot[0].value
+       else:
+          return None
 
-def busInfo(unit_number, bus_number):
+
+def dev_info(unit_number, pci_slot_number):
     '''Return a dictionary with Unit/Bus for the vmdk (or error)'''
-    return {'Unit': str(unit_number), 'Bus': str(bus_number)}
+    return {'Unit': str(unit_number),
+            'ControllerPciSlotNumber': pci_slot_number}
 
 
 def setStatusAttached(vmdk_path, vm):
@@ -659,7 +676,23 @@ def disk_attach(vmdk_path, vm):
 
     devices = vm.config.hardware.device
 
-    # Make sure we have a PVSCI and add it if we don't
+    # Check if this disk is already attached, and if it is - skip the disk
+    # attach and the checks on attaching a controller if needed.
+    device = findDeviceByPath(vmdk_path, vm)
+    if device:
+        # Disk is already attached.
+        logging.warning("Disk %s already attached. VM=%s",
+                        vmdk_path, vm.config.uuid)
+        setStatusAttached(vmdk_path, vm)
+        # Get that controller to which the device is configured for
+        pvsci = [d for d in controllers
+                   if type(d) == vim.ParaVirtualSCSIController and
+                      d.key == device.controllerKey]
+        return dev_info(device.unitNumber,
+                        get_controller_pci_slot(vm, pvsci,
+                                                offset_from_bus_number))
+
+    # Disk isn't attached, make sure we have a PVSCI and add it if we don't
     # TODO: add more controllers if we are out of slots. Issue #38
 
     # get all scsi controllers (pvsci, lsi logic, whatever)
@@ -672,7 +705,8 @@ def disk_attach(vmdk_path, vm):
     if len(pvsci) > 0:
         disk_slot = None  # need to find out
         controller_key = pvsci[0].key
-        bus_number = pvsci[0].busNumber
+        pci_slot_number = get_controller_pci_slot(vm, pvsci,
+                                                  offset_from_bus_number)
     else:
         logging.warning(
             "Warning: PVSCI adapter is missing - trying to add one...")
@@ -689,7 +723,6 @@ def disk_attach(vmdk_path, vm):
         key = avail.pop()  # bus slot
         controller_key = key + offset_from_bus_number
         disk_slot = 0
-        bus_number = key
         controller_spec = vim.VirtualDeviceConfigSpec(
             operation='add',
             device=vim.ParaVirtualSCSIController(key=controller_key,
@@ -706,17 +739,12 @@ def disk_attach(vmdk_path, vm):
         except vim.fault.VimFault as ex:
             msg=("Failed to add PVSCSI Controller: %s", ex.msg)
             return err(msg)
-
-
-    # Check if this disk is already attached, and if it is - skip the attach
-    device = findDeviceByPath(vmdk_path, vm)
-    if device:
-        # Disk is already attached.
-        logging.warning("Disk %s already attached. VM=%s",
-                        vmdk_path, vm.config.uuid)
-        setStatusAttached(vmdk_path, vm)
-        return busInfo(device.unitNumber,
-                       device.controllerKey - offset_from_bus_number)
+        # Find the controller just added
+        pvsci = [d for d in devices
+                 if type(d) == vim.ParaVirtualSCSIController and
+                 d.key == controller_key]
+        pci_slot_number = get_controller_pci_slot(vm, pvsci,
+                                                  offset_from_bus_number)
 
     # Find a slot on the controller, issue attach task and wait for completion
     if not disk_slot:
@@ -768,9 +796,9 @@ def disk_attach(vmdk_path, vm):
         return err(msg)
 
     setStatusAttached(vmdk_path, vm)
-    logging.info("Disk %s successfully attached. bus_number=%d, disk_slot=%d",
-                 vmdk_path, bus_number, disk_slot)
-    return busInfo(disk_slot, bus_number)
+    logging.info("Disk %s successfully attached. controller pci_slot_number=%s, disk_slot=%d",
+                 vmdk_path, pci_slot_number, disk_slot)
+    return dev_info(disk_slot, pci_slot_number)
 
 
 def err(string):
