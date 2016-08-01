@@ -10,16 +10,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
 func TestImageInspectError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
 
-	_, _, err := client.ImageInspectWithRaw("nothing", true)
+	_, _, err := client.ImageInspectWithRaw(context.Background(), "nothing", true)
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -27,12 +27,12 @@ func TestImageInspectError(t *testing.T) {
 
 func TestImageInspectImageNotFound(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusNotFound, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusNotFound, "Server error")),
 	}
 
-	_, _, err := client.ImageInspectWithRaw("unknown", true)
+	_, _, err := client.ImageInspectWithRaw(context.Background(), "unknown", true)
 	if err == nil || !IsErrImageNotFound(err) {
-		t.Fatalf("expected a imageNotFound error, got %v", err)
+		t.Fatalf("expected an imageNotFound error, got %v", err)
 	}
 }
 
@@ -58,7 +58,7 @@ func TestImageInspect(t *testing.T) {
 	}
 	for _, inspectCase := range inspectCases {
 		client := &Client{
-			transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
 				if !strings.HasPrefix(req.URL.Path, expectedURL) {
 					return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
 				}
@@ -83,7 +83,7 @@ func TestImageInspect(t *testing.T) {
 			}),
 		}
 
-		imageInspect, _, err := client.ImageInspectWithRaw("image_id", inspectCase.size)
+		imageInspect, _, err := client.ImageInspectWithRaw(context.Background(), "image_id", inspectCase.size)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -6,27 +6,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
+	"golang.org/x/net/context"
 )
 
 func TestContainerCreateError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	_, err := client.ContainerCreate(nil, nil, nil, "nothing")
+	_, err := client.ContainerCreate(context.Background(), nil, nil, nil, "nothing")
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
 
 	// 404 doesn't automagitally means an unknown image
 	client = &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusNotFound, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusNotFound, "Server error")),
 	}
-	_, err = client.ContainerCreate(nil, nil, nil, "nothing")
+	_, err = client.ContainerCreate(context.Background(), nil, nil, nil, "nothing")
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -34,17 +35,21 @@ func TestContainerCreateError(t *testing.T) {
 
 func TestContainerCreateImageNotFound(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusNotFound, "No such image")),
+		transport: newMockClient(nil, errorMock(http.StatusNotFound, "No such image")),
 	}
-	_, err := client.ContainerCreate(&container.Config{Image: "unknown_image"}, nil, nil, "unknown")
+	_, err := client.ContainerCreate(context.Background(), &container.Config{Image: "unknown_image"}, nil, nil, "unknown")
 	if err == nil || !IsErrImageNotFound(err) {
-		t.Fatalf("expected a imageNotFound error, got %v", err)
+		t.Fatalf("expected an imageNotFound error, got %v", err)
 	}
 }
 
 func TestContainerCreateWithName(t *testing.T) {
+	expectedURL := "/containers/create"
 	client := &Client{
-		transport: transport.NewMockClient(nil, func(req *http.Request) (*http.Response, error) {
+		transport: newMockClient(nil, func(req *http.Request) (*http.Response, error) {
+			if !strings.HasPrefix(req.URL.Path, expectedURL) {
+				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
+			}
 			name := req.URL.Query().Get("name")
 			if name != "container_name" {
 				return nil, fmt.Errorf("container name not set in URL query properly. Expected `container_name`, got %s", name)
@@ -62,7 +67,7 @@ func TestContainerCreateWithName(t *testing.T) {
 		}),
 	}
 
-	r, err := client.ContainerCreate(nil, nil, nil, "container_name")
+	r, err := client.ContainerCreate(context.Background(), nil, nil, nil, "container_name")
 	if err != nil {
 		t.Fatal(err)
 	}

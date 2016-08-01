@@ -34,6 +34,28 @@ Failure to pass test would result in reverting a change.
 Do not hesitate to ask your colleagues if you need help or have questions.
 Post your question to Telegram or drop a line to cna-storage@vmware.com
 
+## Documentation
+
+Documentation is published to [GitHub
+Pages](https://vmware.github.io/docker-volume-vsphere/) using
+[mkdocs](http://www.mkdocs.org/).
+
+1. Documentation is updated each time a release is tagged.
+2. The latest documentation for the master can be found in
+   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/doc) in
+   markdown format
+
+To update documentation
+```
+make documentation # Start the mkdocs docker image
+mkdocs serve -a 0.0.0.0:8000
+# 1. Open browser on same machine and head to 127.0.0.1:8000
+# 2. Make edits and refresh browser
+# 3. Publish changes to gh-pages branch
+# Example:
+mkdocs gh-deploy -c -m “Add documentation for feature XYZ” -b gh-pages
+```
+
 ## Bug filing guidelines
 * Search for duplicates!
 * Include crisp summary of issue in "Title"

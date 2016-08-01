@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/client/transport"
 	"github.com/docker/engine-api/types"
+	"golang.org/x/net/context"
 )
 
 func TestContainerResizeError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerResize(types.ResizeOptions{})
+	err := client.ContainerResize(context.Background(), "container_id", types.ResizeOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -24,9 +24,9 @@ func TestContainerResizeError(t *testing.T) {
 
 func TestContainerExecResizeError(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, transport.ErrorMock(http.StatusInternalServerError, "Server error")),
+		transport: newMockClient(nil, errorMock(http.StatusInternalServerError, "Server error")),
 	}
-	err := client.ContainerExecResize(types.ResizeOptions{})
+	err := client.ContainerExecResize(context.Background(), "exec_id", types.ResizeOptions{})
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -34,11 +34,10 @@ func TestContainerExecResizeError(t *testing.T) {
 
 func TestContainerResize(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, resizeTransport("/containers/container_id/resize")),
+		transport: newMockClient(nil, resizeTransport("/containers/container_id/resize")),
 	}
 
-	err := client.ContainerResize(types.ResizeOptions{
-		ID:     "container_id",
+	err := client.ContainerResize(context.Background(), "container_id", types.ResizeOptions{
 		Height: 500,
 		Width:  600,
 	})
@@ -49,11 +48,10 @@ func TestContainerResize(t *testing.T) {
 
 func TestContainerExecResize(t *testing.T) {
 	client := &Client{
-		transport: transport.NewMockClient(nil, resizeTransport("/exec/exec_id/resize")),
+		transport: newMockClient(nil, resizeTransport("/exec/exec_id/resize")),
 	}
 
-	err := client.ContainerExecResize(types.ResizeOptions{
-		ID:     "exec_id",
+	err := client.ContainerExecResize(context.Background(), "exec_id", types.ResizeOptions{
 		Height: 500,
 		Width:  600,
 	})

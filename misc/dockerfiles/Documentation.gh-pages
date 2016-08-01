@@ -1,0 +1,4 @@
+FROM python
+MAINTAINER cna-storage@vmware.com
+
+RUN pip install mkdocs

@@ -1,0 +1,19 @@
+title: Install VIB on ESX
+scenes: 
+  - name: Download ESX
+    action: echo "Download the latest VIB from GitHub Releases."
+  - name: Curl rpm
+    action: curl -OL https://github.com/vmware/docker-volume-vsphere/releases/download/1.0.beta/vmware-esx-vmdkops-1.0.beta.vib
+    wait: true
+  - name: Copy VIB
+    action: scp docker-volume-vsphere-1.0.beta-1.x86_64.rpm root@$ESX:/tmp
+    wait: true
+  - name: Install VIB
+    action: ssh root@$ESX esxcli software vib install --no-sig-check  -v /tmp/vmware-esx-vmdkops-1.0.beta.vib
+    wait: true
+  - name: Check Status
+    action: ssh root@$ESX /etc/init.d/vmdk-opsd status
+  - name: All done
+    action: echo All done. Simple install, zero config.. 
+  - name: just a pause
+    pause: 3

@@ -57,6 +57,31 @@ func TestToParam(t *testing.T) {
 	}
 }
 
+func TestToParamWithVersion(t *testing.T) {
+	fields := map[string]map[string]bool{
+		"created":    {"today": true},
+		"image.name": {"ubuntu*": true, "*untu": true},
+	}
+	a := Args{fields: fields}
+
+	str1, err := ToParamWithVersion("1.21", a)
+	if err != nil {
+		t.Errorf("failed to marshal the filters with version < 1.22: %s", err)
+	}
+	str2, err := ToParamWithVersion("1.22", a)
+	if err != nil {
+		t.Errorf("failed to marshal the filters with version >= 1.22: %s", err)
+	}
+	if str1 != `{"created":["today"],"image.name":["*untu","ubuntu*"]}` &&
+		str1 != `{"created":["today"],"image.name":["ubuntu*","*untu"]}` {
+		t.Errorf("incorrectly marshaled the filters: %s", str1)
+	}
+	if str2 != `{"created":{"today":true},"image.name":{"*untu":true,"ubuntu*":true}}` &&
+		str2 != `{"created":{"today":true},"image.name":{"ubuntu*":true,"*untu":true}}` {
+		t.Errorf("incorrectly marshaled the filters: %s", str2)
+	}
+}
+
 func TestFromParam(t *testing.T) {
 	invalids := []string{
 		"anything",
@@ -290,6 +315,29 @@ func TestExactMatch(t *testing.T) {
 
 	if f.ExactMatch("status", "paused") {
 		t.Fatalf("Expected to not match `paused` with one of the filters, got true")
+	}
+}
+
+func TestOnlyOneExactMatch(t *testing.T) {
+	f := NewArgs()
+
+	if !f.UniqueExactMatch("status", "running") {
+		t.Fatalf("Expected to match `running` when there are no filters, got false")
+	}
+
+	f.Add("status", "running")
+
+	if !f.UniqueExactMatch("status", "running") {
+		t.Fatalf("Expected to match `running` with one of the filters, got false")
+	}
+
+	if f.UniqueExactMatch("status", "paused") {
+		t.Fatalf("Expected to not match `paused` with one of the filters, got true")
+	}
+
+	f.Add("status", "pause")
+	if f.UniqueExactMatch("status", "running") {
+		t.Fatalf("Expected to not match only `running` with two filters, got true")
 	}
 }
 

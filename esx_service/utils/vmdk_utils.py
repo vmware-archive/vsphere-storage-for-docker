@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Utility functions for dealing with vmdks and datastores
+# Utility functions for dealing with VMDKs and datastores
 
 import os
+import os.path
+import glob
 import logging
 import pyVim.connect
 
@@ -24,14 +26,14 @@ import pyVim.connect
 datastores = None
 
 # we assume files smaller that that to be descriptor files
-MAX_DESCR_SIZE = 10000
+MAX_DESCR_SIZE = 5000
 
 
 def get_datastores():
     """
     Returns a list of (name, url-name, dockvol_path), with an element per datastore
     where:
-    'name' is datastore name (e.g. 'vsanDatastore') , 
+    'name' is datastore name (e.g. 'vsanDatastore') ,
     'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore 
     """
@@ -64,18 +66,51 @@ def get_volumes():
 
 
 def get_vmdk_path(path, vol_name):
-    """ forms full path as <path-to-volumes>/<volname>.vmdk"""
-    return os.path.join(path, "{0}.vmdk".format(vol_name))
+    """If the volume-related VMDK exists, returns full path to the latest
+    VMDK disk in the disk chain, be it volume-xxxxx.vmdk or volume.vmdk.
+    If the disk does not exists, returns full path to the disk for create().
+    """
+
+    # Get a delta disk list, and if it's empty - return the full path for volume VMDK base file
+    # Note: we rely on NEVER allowing '-' in volume name and on the fact that ESXi
+    # always creates deltadisks as <name>-DDDDDD.vmdk (D is a digit) for delta disks
+    delta_disks = glob.glob("{0}/{1}-*[0-9].vmdk".format(path, vol_name))
+    if not delta_disks:
+        return os.path.join(path, "{0}.vmdk".format(vol_name))
+
+    # this funky code gets the name of the youngest delta disk:
+    latest = sorted([(vmdk, os.stat(vmdk).st_ctime) for vmdk in delta_disks], key=lambda d: d[1], reverse=True)[0][0]
+    logging.debug("The youngest delta disk is %s. All delta disks: %s", latest, delta_disks)
+    return latest
 
 
-def list_vmdks(path):
-    """ Return a list all VMDKs in a given path """
-    try:
-        return [f for f in os.listdir(path)
-                if vmdk_is_a_descriptor(os.path.join(path, f))]
-    except OSError as e:
-        # dockvols may not exists on a datastore, so skip it
+def list_vmdks(path, volname="", show_snapshots=False):
+    """ Return a list of VMDKs in a given path. Filters out non-descriptor
+    files and delta disks.
+
+    Params:
+    path -  where the VMDKs are looked for
+    volname - if passed, only files related to this VMDKs will be returned. Useful when
+            doing volume snapshot inspect
+    show_snapshots - if set to True, all VMDKs (including delta files) will be returned
+    """
+
+    # dockvols may not exists on a datastore
+    if not os.path.exists(path):
         return []
+
+    glob_pattern = "{0}/{1}*.vmdk".format(path, volname)
+    vmdks = [os.path.basename(f) for f in glob.glob(glob_pattern)
+            if vmdk_is_a_descriptor(os.path.join(path, f))]
+
+    # For hiding snapshots we rely on volume names NOT having a '-' symbol,
+    # so all files with '-' must be delta disks, digest and the likes, and
+    # need to be hidden from further processing.
+    # see vmdk_ops.py:parse_vol_name() which enforces the "no -" rule.
+    if not show_snapshots:
+        vmdks = [f for f in vmdks if f.find('-') == -1]
+    
+    return vmdks
 
 
 def vmdk_is_a_descriptor(filepath):

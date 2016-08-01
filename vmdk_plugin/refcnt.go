@@ -72,6 +72,7 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
+	"golang.org/x/net/context"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -130,7 +131,7 @@ func (r refCountsMap) Init(d *vmdkDriver) {
 			dockerUSocket, err)
 	}
 	log.Infof("Getting volume data from %s", dockerUSocket)
-	info, err := c.Info()
+	info, err := c.Info(context.Background())
 	if err != nil {
 		log.Infof("Can't connect to %s, skipping discovery", dockerUSocket)
 		// TODO: Issue #369
@@ -212,7 +213,7 @@ func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 	filters.Add("status", "running")
 	filters.Add("status", "paused")
 	filters.Add("status", "restarting")
-	containers, err := c.ContainerList(types.ContainerListOptions{
+	containers, err := c.ContainerList(context.Background(), types.ContainerListOptions{
 		All:    true,
 		Filter: filters,
 	})
@@ -222,7 +223,7 @@ func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 
 	log.Debugf("Found %d running or paused containers", len(containers))
 	for _, ct := range containers {
-		containerJSONInfo, err := c.ContainerInspect(ct.ID)
+		containerJSONInfo, err := c.ContainerInspect(context.Background(), ct.ID)
 		if err != nil {
 			log.Errorf("ContainerInspect failed for %s (err: %v)", ct.Names, err)
 			continue
