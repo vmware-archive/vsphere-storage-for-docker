@@ -245,7 +245,7 @@ func (d *vmdkDriver) Path(r volume.Request) volume.Response {
 
 // Provide a volume to docker container - called once per container start.
 // We need to keep refcount and unmount on refcount drop to 0
-func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
+func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 	d.m.Lock()
 	defer d.m.Unlock()
@@ -281,7 +281,7 @@ func (d *vmdkDriver) Mount(r volume.Request) volume.Response {
 
 // Unmount request from Docker. If mount refcount is drop to 0,
 // unmount and detach from VM
-func (d *vmdkDriver) Unmount(r volume.Request) volume.Response {
+func (d *vmdkDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 	d.m.Lock()
 	defer d.m.Unlock()
