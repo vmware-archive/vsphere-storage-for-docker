@@ -168,7 +168,7 @@
 			"importpath": "github.com/docker/go-plugins-helpers/sdk",
 			"repository": "https://github.com/docker/go-plugins-helpers",
 			"vcs": "git",
-			"revision": "dd9c6831a796ea025dfae8448d6a34d081b99898",
+			"revision": "5030c3ee1a1f7db91a2c2768a5aaf35ad715ee6e",
 			"branch": "master",
 			"path": "/sdk"
 		},
@@ -176,7 +176,7 @@
 			"importpath": "github.com/docker/go-plugins-helpers/volume",
 			"repository": "https://github.com/docker/go-plugins-helpers",
 			"vcs": "git",
-			"revision": "dd9c6831a796ea025dfae8448d6a34d081b99898",
+			"revision": "5030c3ee1a1f7db91a2c2768a5aaf35ad715ee6e",
 			"branch": "master",
 			"path": "/volume"
 		},
