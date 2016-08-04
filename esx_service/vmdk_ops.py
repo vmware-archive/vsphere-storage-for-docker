@@ -443,17 +443,22 @@ def parse_vol_name(full_vol_name):
     """
     # Parse volume name with regexp package
     #
-    # Caveat: we block '-' in volume name to make sure names like 'disk-0001.vmdk' cannot
-    # be created using this API. vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
+    # Caveat: we block '-NNNNNN' in end of volume name to make sure that volume
+    # name never conflicts with VMDK snapshot name (e.g. 'disk-000001.vmdk').
+    # Note that N is a digit and there are exactly 6 of them (hardcoded in ESXi)
+    # vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
     #
-    # on regexp:  '\w'' in regexp is [a-zA-Z0-9_]
-    groups = re.match(r"\A([\w\_.]+)(@([\w\_.\-]+))?$", full_vol_name)
-    if not groups:
-        raise ValidationError("Invalid syntax: '{0}'.\n"
-                              "Valid syntax is volume@datastore, where 'volume' or 'datastore' "
-                              "contain up to {1} of allowed characters ([a-zA-Z0-9_.]) each"
-                              .format(full_vol_name, MAX_VOL_NAME_LEN))
-    vol_name, ds_name = groups.groups()[0], groups.groups()[2]
+    try:
+        at = full_vol_name.rindex('@')
+        vol_name = full_vol_name[:at]
+        ds_name = full_vol_name[at + 1:]
+    except ValueError:
+        # '@' not found
+        vol_name = full_vol_name
+        ds_name = None
+    # now block the '-NNNNN' volume names
+    if re.match(vmdk_utils.SNAP_NAME_REGEXP, vol_name):
+        raise ValidationError("Volume names ending with '-NNNNNN' (where N is a digit) are not supported")
     if len(vol_name) > MAX_VOL_NAME_LEN:
         raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))
     if ds_name and len(ds_name) > MAX_DS_NAME_LEN:

@@ -352,9 +352,9 @@ def ls_dash_c(columns):
 
 def format_header_as_arg(header):
     """
-    Take a header formatted as words seperated by spaces starting with
+    Take a header formatted as words separated by spaces starting with
     capitals and convert it to a cli argument friendly format that is all
-    lowercase with words seperated by dashes. i.e. 'Created By' -> 'created-by'
+    lowercase with words separated by dashes. i.e. 'Created By' -> 'created-by'
     """
     return '-'.join(header.lower().split())
 

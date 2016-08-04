@@ -1,12 +1,19 @@
 # Short Volume names
-Short Volume Name can contain up to a 100 of alphanumeric characters, underscores and dots.
-Examples: `MyVolume_fast.12` or `_12SuperStorage`.
+Short Volume Name can contain up to a 100 characters.
+All characters are allowed, but the last '@' will be interpreted as a separator
+between volume and datastore name (see below).
+As an exception, we do not allow volume names ending with '-NNNNNNN', where
+N is a digit (this limitation is to prevent conflicts with ESXi deltadisks used
+during VM snapshots). Examples: `MyVolume_fast.12`,  `_12SuperStorage`,
+`super-volume-200` are all valid names, while `myVolume-000012` is not valid.
+
 
 # Full volume names
-Full volume name is a combination of Short Volume name and datastore name, separated by @ sign.
-Datastore name is a vSphere Datastore , e.g. vsanDatastore. Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`.
-Datastore name length is also limited to 100 characters, and datastore name can contain
-alphanumeric characters, underscores, hyphens and dots.
+Full volume name is a combination of Short Volume name and datastore name,
+separated by @ symbol.
+Datastore name is a vSphere Datastore , e.g. vsanDatastore.
+Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`.
+Datastore name length is limited to 100 characters.
 
 
 # Default datastore 

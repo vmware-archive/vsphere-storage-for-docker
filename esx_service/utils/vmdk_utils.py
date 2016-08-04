@@ -18,6 +18,7 @@
 import os
 import os.path
 import glob
+import re
 import logging
 import pyVim.connect
 
@@ -27,6 +28,16 @@ datastores = None
 
 # we assume files smaller that that to be descriptor files
 MAX_DESCR_SIZE = 5000
+
+# regexp for finding "snapshot" (aka delta disk) descriptor names
+SNAP_NAME_REGEXP = r"^.*-[0-9]{6}$"        # used for names without .vmdk suffix
+SNAP_VMDK_REGEXP = r"^.*-[0-9]{6}\.vmdk$"  # used for file names
+
+# regexp for finding 'special' vmdk files (they are created by ESXi) 
+SPECIAL_FILES_REGEXP = r"\A.*-(delta|ctk|digest|flat)\.vmdk$"
+
+# glob expression to match end of 'delta' (aka snapshots) file names.
+SNAP_SUFFIX_GLOB = "-[0-9][0-9][0-9][0-9][0-9][0-9].vmdk"
 
 
 def get_datastores():
@@ -67,20 +78,24 @@ def get_volumes():
 
 def get_vmdk_path(path, vol_name):
     """If the volume-related VMDK exists, returns full path to the latest
-    VMDK disk in the disk chain, be it volume-xxxxx.vmdk or volume.vmdk.
+    VMDK disk in the disk chain, be it volume-NNNNNN.vmdk or volume.vmdk.
     If the disk does not exists, returns full path to the disk for create().
     """
 
-    # Get a delta disk list, and if it's empty - return the full path for volume VMDK base file
-    # Note: we rely on NEVER allowing '-' in volume name and on the fact that ESXi
-    # always creates deltadisks as <name>-DDDDDD.vmdk (D is a digit) for delta disks
-    delta_disks = glob.glob("{0}/{1}-*[0-9].vmdk".format(path, vol_name))
+    # Get a delta disk list, and if it's empty - return the full path for volume
+    # VMDK base file.
+    # Note: we rely on NEVER allowing '-NNNNNN' in end of a volume name and on
+    # the fact that ESXi always creates deltadisks as <name>-NNNNNN.vmdk (N is a
+    # digit, and there are exactly 6 digits there) for delta disks
+    #
+    # see vmdk_ops.py:parse_vol_name() which enforces the volume name rules.
+    delta_disks = glob.glob("{0}/{1}{2}".format(path, vol_name, SNAP_SUFFIX_GLOB))
     if not delta_disks:
         return os.path.join(path, "{0}.vmdk".format(vol_name))
 
-    # this funky code gets the name of the youngest delta disk:
+    # this funky code gets the name of the latest delta disk:
     latest = sorted([(vmdk, os.stat(vmdk).st_ctime) for vmdk in delta_disks], key=lambda d: d[1], reverse=True)[0][0]
-    logging.debug("The youngest delta disk is %s. All delta disks: %s", latest, delta_disks)
+    logging.debug("The latest delta disk is %s. All delta disks: %s", latest, delta_disks)
     return latest
 
 
@@ -95,33 +110,44 @@ def list_vmdks(path, volname="", show_snapshots=False):
     show_snapshots - if set to True, all VMDKs (including delta files) will be returned
     """
 
-    # dockvols may not exists on a datastore
+    # dockvols may not exists on a datastore - this is normal.
     if not os.path.exists(path):
         return []
 
-    glob_pattern = "{0}/{1}*.vmdk".format(path, volname)
-    vmdks = [os.path.basename(f) for f in glob.glob(glob_pattern)
-            if vmdk_is_a_descriptor(os.path.join(path, f))]
+    vmdks = [f for f in os.listdir(path) if vmdk_is_a_descriptor(path, f)]
+    if volname:
+        vmdks = [f for f in vmdks if f.startswith(volname)]
 
-    # For hiding snapshots we rely on volume names NOT having a '-' symbol,
-    # so all files with '-' must be delta disks, digest and the likes, and
-    # need to be hidden from further processing.
-    # see vmdk_ops.py:parse_vol_name() which enforces the "no -" rule.
     if not show_snapshots:
-        vmdks = [f for f in vmdks if f.find('-') == -1]
+        expr =  re.compile(SNAP_VMDK_REGEXP)
+        vmdks = [f for f in vmdks if not expr.match(f)]
     
     return vmdks
 
 
-def vmdk_is_a_descriptor(filepath):
+def vmdk_is_a_descriptor(path, file_name):
     """
-    Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk
-    and has a size less than MAX_DESCR_SIZE is a desciptor file.
+    Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk,
+    does not have -delta or -flat or he likes at the end of filename, 
+    and has a size less than MAX_DESCR_SIZE is a descriptor file.
     """
-    if filepath.endswith('.vmdk') and os.stat(filepath).st_size < MAX_DESCR_SIZE:
-       return True
 
-    return False
+    name = file_name.lower()
+
+    # filter out all files with wrong extention
+    # also filter out -delta, -flat, -digest and -ctk VMDK files
+    if not name.endswith('.vmdk') or re.match(SPECIAL_FILES_REGEXP, name):
+        return False
+
+    # Check the size. It's a cheap(ish) way to check for descriptor, 
+    # without actually checking the file content and risking lock conflicts
+    try:
+        if os.stat(os.path.join(path, file_name)).st_size > MAX_DESCR_SIZE:
+            return False
+    except OSError:
+        pass  # if file does not exist, assume it's small enough
+
+    return True
 
 
 def strip_vmdk_extension(filename):
