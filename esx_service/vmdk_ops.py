@@ -92,6 +92,14 @@ DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
 MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
 MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 
+# Volume data returned on Get request
+CAPACITY = 'capacity'
+SIZE = 'size'
+ALLOCATED = 'allocated'
+LOCATION = 'datastore'
+CREATED_BY_VM = 'created by VM'
+ATTACHED_TO_VM = 'attached to VM'
+
 # Service instance provide from connection to local hostd
 si = None
 
@@ -159,19 +167,20 @@ def make_create_cmd(opts, vmdk_path):
     logging.debug("Setting vmdk size to %s for %s", size, vmdk_path)
 
     if not kv.DISK_ALLOCATION_FORMAT in opts:
-        format = kv.DEFAULT_ALLOCATION_FORMAT
+        disk_format = kv.DEFAULT_ALLOCATION_FORMAT
     else:
-        format = str(opts[kv.DISK_ALLOCATION_FORMAT])
-    logging.debug("Setting vmdk disk allocation format to %s for %s", format, vmdk_path)
+        disk_format = str(opts[kv.DISK_ALLOCATION_FORMAT])
+    logging.debug("Setting vmdk disk allocation format to %s for %s",
+                  disk_format, vmdk_path)
 
     if kv.VSAN_POLICY_NAME in opts:
         # Note that the --policyFile option gets ignored if the
         # datastore is not VSAN
         policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
-        return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, format, size,
+        return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, disk_format, size,
                                                                policy_file, vmdk_path)
     else:
-        return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, format, size, vmdk_path)
+        return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, disk_format, size, vmdk_path)
 
 
 def create_kv_store(vm_name, vmdk_path, opts):
@@ -343,6 +352,28 @@ def formatVmdk(vmdk_path, vol_name):
                 % vmdk_path)
     return None
 
+# Return volume ingo
+def vol_info(vol_meta, vol_size_info, datastore):
+    vinfo = {CREATED_BY_VM : vol_meta[kv.CREATED_BY],
+             kv.CREATED : vol_meta[kv.CREATED],
+             kv.STATUS : vol_meta[kv.STATUS]}
+
+    vinfo[CAPACITY] = {}
+    vinfo[CAPACITY][SIZE] = vol_size_info[SIZE]
+    vinfo[CAPACITY][ALLOCATED] = vol_size_info[ALLOCATED]
+    vinfo[LOCATION] = datastore
+
+    if kv.ATTACHED_VM_NAME in vol_meta:
+       vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
+    if kv.VSAN_POLICY_NAME in vol_meta:
+       vinfo[kv.kv.VSAN_POLICY_NAME] = vol_meta[kv.kv.VSAN_POLICY_NAME]
+    if kv.VOL_OPTS in vol_meta and \
+       kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
+       vinfo[kv.DISK_ALLOCATION_FORMAT] = vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
+
+    return vinfo
+
+
 # Return error, or None for OK
 def removeVMDK(vmdk_path):
     logging.info("*** removeVMDK: %s", vmdk_path)
@@ -354,12 +385,14 @@ def removeVMDK(vmdk_path):
     return None
 
 
-def getVMDK(vmdk_path, vol_name):
+def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""
     # Note: will return more Volume info here, when Docker API actually accepts it
     if not os.path.isfile(vmdk_path):
         return err("Volume {0} not found (file: {1})".format(vol_name, vmdk_path))
-    return None
+    # Return volume info - volume policy, size, allocated capacity, allocation
+    # type, creat-by, create time.
+    return vol_info(kv.getAll(vmdk_path), kv.get_vol_info(vmdk_path), datastore)
 
 
 def listVMDK(vm_datastore):
@@ -522,7 +555,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
     if cmd == "get":
-        response = getVMDK(vmdk_path, vol_name)
+        response = getVMDK(vmdk_path, vol_name, datastore)
     elif cmd == "create":
         response = createVMDK(vmdk_path, vm_name, vol_name, opts)
     elif cmd == "remove":

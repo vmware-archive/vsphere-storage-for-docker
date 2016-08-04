@@ -93,12 +93,19 @@ func (v VmdkOps) List() ([]VolumeData, error) {
 }
 
 // Get for volume
-func (v VmdkOps) Get(name string) (VolumeData, error) {
+func (v VmdkOps) Get(name string) (map[string]interface{}, error) {
 	log.Debugf("vmdkOps.Get name=%s", name)
-	_, err := v.Cmd.Run("get", name, make(map[string]string))
+	str, err := v.Cmd.Run("get", name, make(map[string]string))
 	if err != nil {
-		return VolumeData{}, err
+		return nil, err
 	}
 
-	return VolumeData{Name: name}, nil
+	var statusMap map[string]interface{}
+	statusMap = make(map[string]interface{})
+
+	err = json.Unmarshal(str, &statusMap)
+	if err != nil {
+		return nil, err
+	}
+	return statusMap, nil
 }

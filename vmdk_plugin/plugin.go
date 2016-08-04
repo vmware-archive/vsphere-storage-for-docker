@@ -84,12 +84,14 @@ func getMountPoint(volName string) string {
 
 // Get info about a single volume
 func (d *vmdkDriver) Get(r volume.Request) volume.Response {
-	_, err := d.ops.Get(r.Name)
+	status, err := d.ops.Get(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
 	mountpoint := getMountPoint(r.Name)
-	return volume.Response{Volume: &volume.Volume{Name: r.Name, Mountpoint: mountpoint}}
+	return volume.Response{Volume: &volume.Volume{Name: r.Name,
+		Mountpoint: mountpoint,
+		Status:     status}}
 }
 
 // List volumes known to the driver
