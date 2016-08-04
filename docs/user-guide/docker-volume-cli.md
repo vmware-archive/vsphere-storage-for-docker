@@ -1,0 +1,56 @@
+[TOC]
+# Using the plugin in Docker
+The plugin works with existing Docker volume commands.
+
+1. [Docker volume create](https://docs.docker.com/engine/reference/commandline/volume_create/)
+2. [Docker volume inspect](https://docs.docker.com/engine/reference/commandline/volume_inspect/)
+3. [Docker volume ls](https://docs.docker.com/engine/reference/commandline/volume_ls/)
+4. [Docker volume rm](https://docs.docker.com/engine/reference/commandline/volume_rm/)
+
+<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
+
+## Docker volume create options
+### size
+
+```
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+```
+
+The volume units can be ```kb, mb, gb and tb```
+
+The default volume size is 100mb
+
+### policy
+
+```
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o policy=allflash
+```
+
+Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the ```-o policy``` flag.
+
+### diskformat
+```
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=zeroedthick
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=thin
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=eagerzeroedthick
+```
+
+Docker volumes are backed by VMDKs. VMDKs support multiple [types](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)
+
+Currently the following are supported
+
+1. Thick Provision Lazy Zeroed ([zeroedthick]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
+2. Thin Provision ([thin]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
+3. Thick Provision Eager Zeroed ([eagerzeroedthick]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
+
+### attach_as
+```
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=independent_persistent
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=persistent
+```
+Docker volumes are backed by VMDKs. VMDKs are attached to the VM in which Docker is requesting for a volume during Docker run. VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
+
+Currently the following are supported
+
+1. [persistent](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/): If the VMDK is attached as persistent it will be part of a VM snapshot. If a VM snapshot has been taken while the Docker volume is attached to a VM, the Docker volume then continues to be attached to the VM that was snapshotted.
+2. [independent_persistent](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/): If the VMDK is attached as independent_persistent it will not be part of a VM snapshot. The Docker volume can be attached to any VM that can access the datastore independent of snapshots.

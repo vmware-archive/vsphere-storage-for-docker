@@ -1,15 +1,26 @@
 site_name: Docker Volume Driver for vSphere
 pages:
-- Home: index.md
-- Installation and Deployment: install.md
-- Admin CLI: vmdkops-admin-cli-spec.md
-- Docker Volume CLI: 
-  - Basic commands: docker-volume-cli.md
-  - Multiple Datastores: datastores.md
-- Backend ESX Overview: 
-  - 'Volume Layout': esx-overview.md
-- Features:
-  - 'Integration with vCenter': vcenter.md
-  - 'VSAN Policy': vsan-policy.md
+    - Home: index.md
+    - Features:
+        - Integration with vCenter: features/vcenter.md
+        - VSAN Policy: features/vsan-policy.md
+    - Documentation:
+        - Installation and Deployment: user-guide/install.md
+        - Admin CLI: user-guide/vmdkops-admin-cli-spec.md
+        - Docker Volume CLI:
+            - Basic commands: user-guide/docker-volume-cli.md
+            - Multiple Datastores: user-guide/datastores.md
+        - Backend ESX Overview:
+            - 'Volume Layout': user-guide/esx-overview.md
+    - FAQ: user-guide/faq.md
 theme: readthedocs
 google_analytics: ['UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/']
+site_favicon: favicon.ico
+site_author: cna-storage@vmware.com
+site_url: https://vmware.github.io/docker-volume-vsphere/
+dev_addr: 0.0.0.0:8000
+markdown_extensions:
+    - smarty
+    - toc:
+        permalink: True
+    - sane_lists

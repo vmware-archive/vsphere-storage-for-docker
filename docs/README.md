@@ -11,3 +11,10 @@ Documentation intended for publishing should go into the misc folder.
 Please read [CONTRIBUTING.md](
 https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md) for
 best practice for editing and publishing documentation.
+
+## Layout
+The documentation layout is as follows
+- [User guide and CLI documentation](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/user-guide)
+- [Feature Overview](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/features)
+- [Team Blog](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/blog)
+- [Other project docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/misc)

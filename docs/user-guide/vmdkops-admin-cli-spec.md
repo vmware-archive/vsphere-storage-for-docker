@@ -1,3 +1,5 @@
+[TOC]
+
 In order to manage the inventory of VMDKs created and used by multiple docker engines we must have
 an administrative CLI that lives on ESX. This administrative CLI can provide additional status such
 as access control, storage policies, and disk usage and capacity.
@@ -16,7 +18,7 @@ These techniques should be sufficient enough to provide confidence in the implem
 The rest of this specification will detail the commands to be implemented in the admin cli. Note
 that the commands covered in this document only operate on a single ESX host.
 
-#### `ls`
+# ls
 List all volumes by reading the `dockvols` directories and metadata stored in Sidecar files.
 Volumes in all datastores will be shown with the volume name in the first column and the datastore
 in the second.
@@ -52,7 +54,7 @@ vmdkops-admin ls -f 'LastAttachedTime > 2016-03-11'
 vmdkops-admin ls -f 'AttachedTo = Test*'
 ```
 
-##### `policy`
+# policy
 Create, configure and show the VSAN policy names and their corresponding VSAN policies. Also show whether or not they are in use.
 
 
@@ -65,7 +67,7 @@ Examples:
 
 Note that on volume creation from docker, a policy name will be passed with a `-o` option.
 
-#### `role`
+# role
 Create, delete, configure and show access control settings. Access control settings are assigned via a
 VM naming convention, although a specific convention is not required. An example will help clarify
 this. Let's say that an administrator wants to allow any `Test` VM to create, delete and mount
@@ -100,13 +102,13 @@ get` command. `role get` takes a VM name and returns both a list of the rights g
 the roles that the VM matches on separate lines.
 
 Examples are provided below.
-
-Examples:
- * `vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount`
- * `vmdkops-admin role rm myrole`
- * `vmdkops-admin role ls`
- * `vmdkops-admin role set --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=4TB --rights=create,mount`
- * `vmdkops-admin role get <VmName>`
+```
+ vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount
+ vmdkops-admin role rm myrole
+ vmdkops-admin role ls
+ vmdkops-admin role set --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=4TB --rights=create,mount
+ vmdkops-admin role get <VmName>
+```
 
 Role information is stored in a flat file, for lack of a better solution. The format of the file
 is JSON, but the schema is currently undefined. Permission checking will need to be performed at
@@ -114,7 +116,7 @@ runtime by the ESX service, using the information provided by `vmdkops-admin rol
 does seem inefficient to call out to a separate command to perform the check, but this allows the
 simplest implementation and isolation of admin information inside a single script.
 
-#### `Status`
+# Status
 Show any interesting information about the service. This includes file paths of config files, version
 information, and PID of running service. A simple example is shown here, although it's possible
 that the exact format may be somewhat different.
@@ -130,5 +132,5 @@ LogFile: /var/log/vmware/vmdk_ops.log
 LogLevel: INFO
 ```
 
-#### `help`
+# help
 Show help as described in this doc.
