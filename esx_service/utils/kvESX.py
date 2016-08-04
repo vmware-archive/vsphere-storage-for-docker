@@ -18,7 +18,7 @@
 ##
 
 from ctypes import \
-        CDLL, POINTER, byref, \
+        CDLL, POINTER, byref, Structure,\
         c_void_p, c_char_p, c_int32, c_bool, c_uint32, c_uint64
 import json
 import logging
@@ -26,6 +26,11 @@ import sys
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
+
+# Conversion constants
+KB = 1024
+MB = (1024 * 1024)
+GB = (MB * 1024)
 
 # Side car create/open options
 KV_SIDECAR_CREATE = 0
@@ -40,15 +45,28 @@ lib = None
 use_sidecar_create = False
 DVOL_KEY = "docker-volume-vsphere"
 
+# Volume attributes
+VOL_SIZE = 'size'
+VOL_ALLOC = 'allocated'
+
 # Results in a buffered, locked, filter-less open,
 # all vmdks are opened with these flags
-VMDK_OPEN_FLAGS = 524312
+VMDK_OPEN_DEFAULT = 524312
+VMDK_OPEN_NOIO = 524289
 
 # Default kv side car alignment
 KV_ALIGN = 4096
 
 # Flag to track the version of Python on the platform
 is_64bits = False
+
+class disk_info(Structure):
+   _fields_ = [('size', c_uint64),
+               ('allocated', c_uint64),
+               ('fill1', c_uint64),
+               ('fill2', c_uint64),
+               ('fill3', c_uint32),
+               ('fill4', c_uint32)]
 
 # Load the disk lib API library
 def load_disk_lib(lib_name):
@@ -83,6 +101,8 @@ def disk_lib_init():
                                             POINTER(c_uint64)]
        lib.DiskLib_DBGet.argtypes = [c_uint64, c_char_p, POINTER(c_char_p)]
        lib.DiskLib_DBSet.argtypes = [c_uint64, c_char_p, c_char_p]
+       lib.DiskLib_GetSize.argtypes = [c_uint64, c_uint32,
+                                       c_uint32, POINTER(disk_info)]
        # Check if this library supports create API
        try:
            lib.DiskLib_SidecarCreate.argtypes = [c_uint64, c_char_p, c_uint64,
@@ -106,6 +126,8 @@ def disk_lib_init():
                                             POINTER(c_uint32)]
        lib.DiskLib_DBGet.argtypes = [c_uint32, c_char_p, POINTER(c_char_p)]
        lib.DiskLib_DBSet.argtypes = [c_uint32, c_char_p, c_char_p]
+       lib.DiskLib_GetSize.argtypes = [c_uint32, c_uint32,
+                                       c_uint32, POINTER(disk_info)]
 
        # Check if this library supports create API
        try:
@@ -128,6 +150,7 @@ def disk_lib_init():
     lib.DiskLib_SidecarMakeFileName.restype = c_char_p
     lib.DiskLib_DBGet.restype = c_uint32
     lib.DiskLib_DBSet.restype = c_uint32
+    lib.DiskLib_GetSize.restype = c_uint32
 
     return
 
@@ -148,12 +171,12 @@ def disk_is_valid(dhandle):
 
 # Open a VMDK given its path, the VMDK is opened locked just to
 # ensure we have exclusive access and its not already in use.
-def vol_open_path(volpath):
+def vol_open_path(volpath, open_flags=VMDK_OPEN_DEFAULT):
     dhandle = get_uint(0)
     ihandle = get_uint(0)
     key = c_uint32(0)
 
-    res = lib.DiskLib_OpenWithInfo(volpath.encode(), VMDK_OPEN_FLAGS,
+    res = lib.DiskLib_OpenWithInfo(volpath.encode(), open_flags,
                                    byref(key), byref(dhandle),
                                    byref(ihandle))
 
@@ -244,4 +267,32 @@ def save(volpath, kv_dict):
         return False
 
     return True
+
+def convert(size):
+   if size < KB:
+      return size
+   elif size < MB:
+      return '{0}{1}'.format(size / KB, 'KB')
+   elif size < GB:
+      return '{0}{1}'.format(size / MB, 'MB')
+   else:
+      return '{0}{1}'.format(size / GB, 'GB')
+
+# Return disk stats for the volume
+def get_info(volpath):
+    dhandle = vol_open_path(volpath, VMDK_OPEN_NOIO)
+
+    if not disk_is_valid(dhandle):
+       logging.warning("Failed to open disk - %x", volpath)
+       return None
+
+    sinfo = disk_info()
+    res = lib.DiskLib_GetSize(dhandle, 0, 1, byref(sinfo))
+
+    lib.DiskLib_Close(dhandle)
+    if res != 0:
+       logging.warning("Failed to get size of disk - %x", volpath, res)
+       return None
+
+    return {VOL_SIZE: convert(sinfo.size), VOL_ALLOC: convert(sinfo.allocated)}
 

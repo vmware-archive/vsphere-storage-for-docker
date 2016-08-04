@@ -153,3 +153,6 @@ def remove(vol_path, key):
         del vol_meta[key]
 
     return kvESX.save(vol_path, vol_meta)
+
+def get_vol_info(vol_path):
+   return kvESX.get_info(vol_path)
