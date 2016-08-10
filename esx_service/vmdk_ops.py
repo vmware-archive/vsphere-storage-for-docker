@@ -778,6 +778,7 @@ def disk_attach(vmdk_path, vm):
             msg=("Failed to add PVSCSI Controller: %s", ex.msg)
             return err(msg)
         # Find the controller just added
+        devices = vm.config.hardware.device
         pvsci = [d for d in devices
                  if type(d) == vim.ParaVirtualSCSIController and
                  d.key == controller_key]
