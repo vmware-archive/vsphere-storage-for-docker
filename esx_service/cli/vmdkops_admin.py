@@ -311,8 +311,10 @@ def make_list_of_values(allowed):
         given = string.split(',')
         for g in given:
             if g not in allowed:
-                msg = "invalid choice: {0} (choose from {1})".format(g,
-                                                                     allowed)
+                msg = (
+		   'invalid choices: {0} (choices must be a comma separated list of '
+                   'only the following words \n {1}. '  
+		   'No spaces are allowed between choices.)').format(g, repr(allowed).replace(' ', ''))
                 raise argparse.ArgumentTypeError(msg)
         return given
 
@@ -330,7 +332,6 @@ def ls(args):
     else:
         header = all_ls_headers()
         rows = generate_ls_rows()
-
     print(cli_table.create(header, rows))
 
 
@@ -340,23 +341,15 @@ def ls_dash_c(columns):
     all_rows = generate_ls_rows()
     indexes = []
     headers = []
-    for i in range(len(all_headers)):
-        if format_header_as_arg(all_headers[i]) in columns:
+    choices = commands()['ls']['args']['-c']['choices']
+    for i in range(len(choices)):
+        if (choices[i]) in columns:
             indexes.append(i)
             headers.append(all_headers[i])
     rows = []
     for row in all_rows:
         rows.append([row[i] for i in indexes])
     return (headers, rows)
-
-
-def format_header_as_arg(header):
-    """
-    Take a header formatted as words separated by spaces starting with
-    capitals and convert it to a cli argument friendly format that is all
-    lowercase with words separated by dashes. i.e. 'Created By' -> 'created-by'
-    """
-    return '-'.join(header.lower().split())
 
 
 def all_ls_headers():
@@ -503,7 +496,7 @@ def policy_ls(args):
 
 
 def policy_update(args):
-    output = vsan_policy.update(args.name, args.content)
+    output = vsan_policy.update(args.name,  args.content)
     if output:
         print(output)
     else:
