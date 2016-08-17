@@ -6,7 +6,7 @@ pages:
         - VSAN Policy: features/vsan-policy.md
     - Documentation:
         - Installation and Deployment: user-guide/install.md
-        - Admin CLI: user-guide/vmdkops-admin-cli-spec.md
+        - Admin CLI: user-guide/admin-cli.md
         - Docker Volume CLI:
             - Basic commands: user-guide/docker-volume-cli.md
             - Multiple Datastores: user-guide/datastores.md
