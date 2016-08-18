@@ -100,6 +100,9 @@ LOCATION = 'datastore'
 CREATED_BY_VM = 'created by VM'
 ATTACHED_TO_VM = 'attached to VM'
 
+# Virtual machine power states
+VM_POWERED_OFF = "poweredOff"
+
 # Service instance provide from connection to local hostd
 si = None
 
@@ -254,7 +257,7 @@ def validate_attach_as(attach_type):
     Ensure that we recognize the attach type
     """
     if not attach_type in kv.ATTACH_AS_TYPES :
-        raise ValidationError("Attach type '{0}' is not supported." 
+        raise ValidationError("Attach type '{0}' is not supported."
                               " Valid options are: {1}".format(attach_type, kv.ATTACH_AS_TYPES))
 
 # Returns the UUID if the vmdk_path is for a VSAN backed.
@@ -279,7 +282,7 @@ def get_vsan_devfs_path(uuid):
 
     logging.debug("Got volume UUID %s", uuid)
 
-    # Objtool creates a link thats usable to 
+    # Objtool creates a link thats usable to
     # read write to vsan object.
     cmd = "{0} {1}".format(OBJ_TOOL_CMD, uuid)
     rc, out = RunCommand(cmd)
@@ -305,7 +308,7 @@ def get_backing_flat_file(vmdk_path):
     return vmdk_path.replace(".vmdk", "-flat.vmdk")
 
 # Return a backing file path for given vmdk path or none
-# if a backing can't be found. Returns True if clean up 
+# if a backing can't be found. Returns True if clean up
 # is needed. Do not forget to call cleanup_backing_device when done.
 def get_backing_device(vmdk_path):
     flatBacking = get_backing_flat_file(vmdk_path)
@@ -640,6 +643,24 @@ def dev_info(unit_number, pci_slot_number):
     return {'Unit': str(unit_number),
             'ControllerPciSlotNumber': pci_slot_number}
 
+def reset_vol_meta(vmdk_path):
+    '''Clears metadata for vmdk_path'''
+    vol_meta = kv.getAll(vmdk_path)
+    if not vol_meta:
+       vol_meta = {}
+    logging.debug("Reseting meta-data for disk=%s", vmdk_path)
+    if set(vol_meta.keys()) & {kv.STATUS, kv.ATTACHED_VM_UUID, kv.ATTACHED_VM_NAME}:
+          logging.debug("Old meta-data for %s was (status=%s VM name=%s uuid=%s)",
+                        vmdk_path, vol_meta[kv.STATUS],
+                        vol_meta[kv.ATTACHED_VM_NAME],
+                        vol_meta[kv.ATTACHED_VM_UUID])
+    vol_meta[kv.STATUS] = kv.DETACHED
+    vol_meta[kv.ATTACHED_VM_UUID] = None
+    vol_meta[kv.ATTACHED_VM_NAME] = None
+    if not kv.setAll(vmdk_path, vol_meta):
+       msg = "Failed to save volume metadata for {0}.".format(vmdk_path)
+       logging.warning("reset_vol_meta: " + msg)
+       return err(msg)
 
 def setStatusAttached(vmdk_path, vm):
     '''Sets metadata for vmdk_path to (attached, attachedToVM=uuid'''
@@ -691,6 +712,42 @@ def getStatusAttached(vmdk_path):
         uuid = None
     return attached, uuid, attach_as
 
+def handle_stale_attach(vmdk_path, kv_uuid):
+       '''
+       Clear volume state for cases where the VM that attached the disk
+       earlier is powered off or removed. Detach the disk from the VM
+       if it's powered off.
+       '''
+       cur_vm = findVmByUuid(kv_uuid)
+
+       if cur_vm:
+          # Detach the disk only if VM is powered off
+          if cur_vm.runtime.powerState == VM_POWERED_OFF:
+             logging.info("Detaching disk %s from VM(powered off) - %s\n",
+                             vmdk_path, cur_vm.config.name)
+             device = findDeviceByPath(vmdk_path, cur_vm)
+             if device:
+                msg = disk_detach_int(vmdk_path, cur_vm, device)
+                if msg:
+                   msg += " failed to detach disk {0} from VM={1}.".format(vmdk_path,
+                                                                           cur_vm.config.name)
+                   return err(msg)
+             else:
+                logging.warning("Failed to find disk %s in powered off VM - %s, resetting volume metadata\n",
+                                vmdk_path, cur_vm.config.name)
+                ret = reset_vol_meta(vmdk_path)
+                if ret:
+                   return ret
+          else:
+             msg = "Disk {0} already attached to VM={1}".format(vmdk_path,
+                                                                cur_vm.config.name)
+             return err(msg)
+       else:
+          logging.warning("Failed to find VM %s that attached the disk %s, resetting volume metadata",
+                          cur_vm.config.name, vmdk_path)
+          ret = reset_vol_meta(vmdk_path)
+          if ret:
+             return ret
 
 def disk_attach(vmdk_path, vm):
     '''
@@ -701,6 +758,13 @@ def disk_attach(vmdk_path, vm):
 
     kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
     logging.info("Attaching {0} as {1}".format(vmdk_path, attach_mode))
+
+    # If the volume is attached then check if the attach is stale (VM is powered off).
+    # Otherwise, detach the disk from the VM it's attached to.
+    if kv_status_attached and kv_uuid != vm.config.uuid:
+       err = handle_stale_attach(vmdk_path, kv_uuid)
+       if err:
+          return err
 
     # NOTE: vSphere is very picky about unit numbers and controllers of virtual
     # disks. Every controller supports 15 virtual disks, and the unit
@@ -713,6 +777,10 @@ def disk_attach(vmdk_path, vm):
 
 
     devices = vm.config.hardware.device
+
+    # get all scsi controllers (pvsci, lsi logic, whatever)
+    controllers = [d for d in devices
+                   if isinstance(d, vim.VirtualSCSIController)]
 
     # Check if this disk is already attached, and if it is - skip the disk
     # attach and the checks on attaching a controller if needed.
@@ -732,10 +800,6 @@ def disk_attach(vmdk_path, vm):
 
     # Disk isn't attached, make sure we have a PVSCI and add it if we don't
     # TODO: add more controllers if we are out of slots. Issue #38
-
-    # get all scsi controllers (pvsci, lsi logic, whatever)
-    controllers = [d for d in devices
-                   if isinstance(d, vim.VirtualSCSIController)]
 
     # check if we already have a pvsci one
     pvsci = [d for d in controllers
@@ -778,7 +842,6 @@ def disk_attach(vmdk_path, vm):
             msg=("Failed to add PVSCSI Controller: %s", ex.msg)
             return err(msg)
         # Find the controller just added
-        devices = vm.config.hardware.device
         pvsci = [d for d in devices
                  if type(d) == vim.ParaVirtualSCSIController and
                  d.key == controller_key]
@@ -850,13 +913,16 @@ def disk_detach(vmdk_path, vm):
     device = findDeviceByPath(vmdk_path, vm)
 
     if not device:
-        # Could happen if the disk attached to a different VM - attach fails
-        # and docker will insist to sending "unmount/detach" which also fails.
-        msg = "*** Detach failed: disk={0} not found. VM={1}".format(
-            vmdk_path, vm.config.uuid)
-        logging.warning(msg)
-        return err(msg)
+       # Could happen if the disk attached to a different VM - attach fails
+       # and docker will insist to sending "unmount/detach" which also fails.
+       msg = "*** Detach failed: disk={0} not found. VM={1}".format(
+       vmdk_path, vm.config.uuid)
+       logging.warning(msg)
+       return err(msg)
 
+    return disk_detach_int(vmdk_path, vm, device)
+
+def disk_detach_int(vmdk_path, vm, device):
     spec = vim.vm.ConfigSpec()
     dev_changes = []
 
