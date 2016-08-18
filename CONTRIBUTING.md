@@ -42,7 +42,7 @@ Pages](https://vmware.github.io/docker-volume-vsphere/) using
 
 1. Documentation is updated each time a release is tagged.
 2. The latest documentation for the master can be found in
-   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/doc) in
+   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs) in
    markdown format
 
 To update documentation
