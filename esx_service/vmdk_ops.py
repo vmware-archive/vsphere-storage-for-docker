@@ -76,6 +76,7 @@ import volume_kv as kv
 import vmdk_utils
 import vsan_policy
 import vsan_info
+import vmdk_perf as perf
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -356,7 +357,7 @@ def formatVmdk(vmdk_path, vol_name):
     return None
 
 # Return volume ingo
-def vol_info(vol_meta, vol_size_info, datastore):
+def vol_info(vol_meta, vol_size_info, bus_number, unit, datastore):
     vinfo = {CREATED_BY_VM : vol_meta[kv.CREATED_BY],
              kv.CREATED : vol_meta[kv.CREATED],
              kv.STATUS : vol_meta[kv.STATUS]}
@@ -368,13 +369,15 @@ def vol_info(vol_meta, vol_size_info, datastore):
 
     if kv.ATTACHED_VM_NAME in vol_meta:
        vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
+       vm = findVmByUuid(vol_meta[kv.ATTACHED_VM_UUID])
+       # Add IO stats for the volume
+       vinfo[perf.IO_STATS] = perf.get_vol_stats(vm, bus_number, unit)
     if kv.VSAN_POLICY_NAME in vol_meta:
        vinfo[kv.kv.VSAN_POLICY_NAME] = vol_meta[kv.kv.VSAN_POLICY_NAME]
     if kv.VOL_OPTS in vol_meta and \
        kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
        vinfo[kv.DISK_ALLOCATION_FORMAT] = vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
-
-    return vinfo
+    print(vinfo)
 
 
 # Return error, or None for OK
@@ -388,14 +391,25 @@ def removeVMDK(vmdk_path):
     return None
 
 
-def getVMDK(vmdk_path, vol_name, datastore):
+def getVMDK(vmdk_path, vol_name, vm_uuid, datastore):
     """Checks if the volume exists, and returns error if it does not"""
     # Note: will return more Volume info here, when Docker API actually accepts it
     if not os.path.isfile(vmdk_path):
         return err("Volume {0} not found (file: {1})".format(vol_name, vmdk_path))
+
+    vm = findVmByUuid(vm_uuid)
+
+    device = findDeviceByPath(vmdk_path, vm)
+    bus_number = None
+    unit = None
+    if device:
+       bus_number = device.controllerKey - 1000
+       unit = device.unitNumber
+
     # Return volume info - volume policy, size, allocated capacity, allocation
     # type, creat-by, create time.
-    return vol_info(kv.getAll(vmdk_path), kv.get_vol_info(vmdk_path), datastore)
+    return vol_info(kv.getAll(vmdk_path), kv.get_vol_info(vmdk_path),
+                    bus_number, unit, datastore)
 
 
 def listVMDK(vm_datastore):
@@ -563,7 +577,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
     if cmd == "get":
-        response = getVMDK(vmdk_path, vol_name, datastore)
+        response = getVMDK(vmdk_path, vol_name, vm_uuid, datastore)
     elif cmd == "create":
         response = createVMDK(vmdk_path, vm_name, vol_name, opts)
     elif cmd == "remove":
@@ -749,6 +763,22 @@ def handle_stale_attach(vmdk_path, kv_uuid):
           if ret:
              return ret
 
+def is_disk_attached(vmdk_path, vm, controllers):
+    device = findDeviceByPath(vmdk_path, vm)
+    if not device:
+       return False, None
+    # Disk is already attached.
+    logging.warning("Disk %s already attached. VM=%s",
+		    vmdk_path, vm.config.name)
+    setStatusAttached(vmdk_path, vm)
+    # Get that controller to which the device is configured for
+    pvsci = [d for d in controllers
+	       if type(d) == vim.ParaVirtualSCSIController and
+	          d.key == device.controllerKey]
+    return True, dev_info(device.unitNumber,
+		          get_controller_pci_slot(vm, pvsci, 1000))
+
+
 def disk_attach(vmdk_path, vm):
     '''
     Attaches *existing* disk to a vm on a PVSCI controller
@@ -784,19 +814,9 @@ def disk_attach(vmdk_path, vm):
 
     # Check if this disk is already attached, and if it is - skip the disk
     # attach and the checks on attaching a controller if needed.
-    device = findDeviceByPath(vmdk_path, vm)
-    if device:
-        # Disk is already attached.
-        logging.warning("Disk %s already attached. VM=%s",
-                        vmdk_path, vm.config.uuid)
-        setStatusAttached(vmdk_path, vm)
-        # Get that controller to which the device is configured for
-        pvsci = [d for d in controllers
-                   if type(d) == vim.ParaVirtualSCSIController and
-                      d.key == device.controllerKey]
-        return dev_info(device.unitNumber,
-                        get_controller_pci_slot(vm, pvsci,
-                                                offset_from_bus_number))
+    is_attached, dev = is_disk_attached(vmdk_path, vm, controllers)
+    if is_attached:
+       return dev
 
     # Disk isn't attached, make sure we have a PVSCI and add it if we don't
     # TODO: add more controllers if we are out of slots. Issue #38
@@ -897,6 +917,10 @@ def disk_attach(vmdk_path, vm):
             if kv_uuid == vm.config.uuid:
                 msg += "(Current VM)"
         return err(msg)
+
+    # Init perf monitor for this VM, device
+    perf.init_perf_for_vol(vm, controller_key - offset_from_bus_number,
+                           disk_slot)
 
     setStatusAttached(vmdk_path, vm)
     logging.info("Disk %s successfully attached. controller pci_slot_number=%s, disk_slot=%d",
@@ -1065,6 +1089,7 @@ def main():
 
         kv.init()
         connectLocal()
+        perf.init_perf(si)
         handleVmciRequests(port)
     except Exception as e:
         logging.exception(e)
