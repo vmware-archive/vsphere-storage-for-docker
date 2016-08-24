@@ -61,7 +61,7 @@ function deployvm {
 }
 
 function setupVMType {
-    $SSH $TARGET "$IS_RPM > /dev/null"
+    $SSH $TARGET "$IS_PHOTON > /dev/null" || $SSH $TARGET "$IS_RHEL > /dev/null"
     if [ "$?" == "0" ]
     then
         FILE_EXT="rpm"
