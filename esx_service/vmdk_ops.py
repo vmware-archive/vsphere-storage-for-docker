@@ -202,8 +202,10 @@ def validate_opts(opts, vmdk_path):
      * vsan-policy-name - The name of an existing policy to use
      * diskformat - The allocation format of allocated disk
     """
-    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT, kv.ATTACH_AS]
-    defaults = [kv.DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY, kv.DEFAULT_ALLOCATION_FORMAT, kv.DEFAULT_ATTACH_AS]
+    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT, kv.ATTACH_AS, kv.ACCESS]
+    defaults = [kv.DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY,\
+                kv.DEFAULT_ALLOCATION_FORMAT, kv.DEFAULT_ATTACH_AS,\
+                kv.DEFAULT_ACCESS]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -219,6 +221,8 @@ def validate_opts(opts, vmdk_path):
         validate_disk_allocation_format(opts[kv.DISK_ALLOCATION_FORMAT])
     if kv.ATTACH_AS in opts:
         validate_attach_as(opts[kv.ATTACH_AS])
+    if kv.ACCESS in opts:
+        validate_access(opts[kv.ACCESS])
 
 
 def validate_size(size):
@@ -259,6 +263,15 @@ def validate_attach_as(attach_type):
     if not attach_type in kv.ATTACH_AS_TYPES :
         raise ValidationError("Attach type '{0}' is not supported."
                               " Valid options are: {1}".format(attach_type, kv.ATTACH_AS_TYPES))
+
+def validate_access(access_type):
+    """
+    Ensure that we recognize the access type
+    """
+    if not access_type in kv.ACCESS_TYPES :
+       raise ValidationError("Access type '{0}' is not supported."
+                             " Valid options are: {1}".format(access_type,
+                                                              kv.ACCESS_TYPES))
 
 # Returns the UUID if the vmdk_path is for a VSAN backed.
 def get_vsan_uuid(vmdk_path):
@@ -368,11 +381,21 @@ def vol_info(vol_meta, vol_size_info, datastore):
 
     if kv.ATTACHED_VM_NAME in vol_meta:
        vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
-    if kv.VSAN_POLICY_NAME in vol_meta:
-       vinfo[kv.kv.VSAN_POLICY_NAME] = vol_meta[kv.kv.VSAN_POLICY_NAME]
-    if kv.VOL_OPTS in vol_meta and \
-       kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
-       vinfo[kv.DISK_ALLOCATION_FORMAT] = vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
+    if kv.VOL_OPTS in vol_meta:
+       if kv.VSAN_POLICY_NAME in vol_meta[kv.VOL_OPTS]:
+          vinfo[kv.kv.VSAN_POLICY_NAME] = vol_meta[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
+       if kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
+          vinfo[kv.DISK_ALLOCATION_FORMAT] = vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
+       else:
+          vinfo[kv.DISK_ALLOCATION_FORMAT] = kv.DEFAULT_ALLOCATION_FORMAT
+       if kv.ATTACH_AS in vol_meta[kv.VOL_OPTS]:
+          vinfo[kv.ATTACH_AS] = vol_meta[kv.VOL_OPTS][kv.ATTACH_AS]
+       else:
+          vinfo[kv.ATTACH_AS] = kv.DEFAULT_ATTACH_AS
+       if kv.ACCESS in vol_meta[kv.VOL_OPTS]:
+          vinfo[kv.ACCESS] = vol_meta[kv.VOL_OPTS][kv.ACCESS]
+       else:
+          vinfo[kv.ACCESS] = kv.DEFAULT_ACCESS
 
     return vinfo
 
@@ -944,6 +967,35 @@ def disk_detach_int(vmdk_path, vm, device):
     logging.info("Disk detached %s", vmdk_path)
     return None
 
+
+# Edit settings for a volume identified by its full path
+def set_vol_opts(vmdk_path, options):
+    # Create a dict of the options, the options are provided as
+    # "access=read-only" and we get a dict like {'access': 'read-only'}
+    opts_list = "".join(options.replace("=", ":").split())
+    opts = dict(i.split(":") for i in opts_list.split(","))
+
+    # For now only allow resetting the access mode.
+    valid_opts = [kv.ACCESS]
+    invalid = frozenset(opts.keys()).difference(valid_opts)
+    if len(invalid) != 0:
+        msg = 'Invalid options: {0} \n'.format(list(invalid)) \
+               + 'Options that can be edited: ' \
+               + '{0}'.format(list(valid_opts))
+        raise ValidationError(msg)
+
+    if not opts[kv.ACCESS] in kv.ACCESS_TYPES:
+       msg = 'Invalid option value {0}.\n'.format(opts[kv.ACCESS]) +\
+             'Supported values are {0}.\n'.format(kv.ACCESS_TYPES)
+       logging.warning(msg)
+       return False
+
+    vol_meta = kv.getAll(vmdk_path)
+    if vol_meta:
+       vol_meta[kv.VOL_OPTS][kv.ACCESS] = opts[kv.ACCESS]
+       return kv.setAll(vmdk_path, vol_meta)
+
+    return False
 
 def signal_handler_stop(signalnum, frame):
     logging.warn("Received signal num: ' %d '", signalnum)

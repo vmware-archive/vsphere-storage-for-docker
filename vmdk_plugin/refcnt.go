@@ -283,7 +283,16 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 				// but not using files on the volumes, and the volume is (manually?)
 				// unmounted. Unlikely but possible. Mount !
 				log.WithFields(f).Warning("Initiating recovery mount. ")
-				_, err := d.mountVolume(vol)
+				isReadOnly := false
+				status, err := d.ops.Get(vol)
+				if err != nil {
+					log.Warning("Unable to get volume status - mounting as read-only")
+					isReadOnly = true
+				}
+				if status["access"] == "read-only" {
+					isReadOnly = true
+				}
+				_, err = d.mountVolume(vol, isReadOnly)
 				if err != nil {
 					log.Warning("Failed to mount - manual recovery may be needed")
 				}

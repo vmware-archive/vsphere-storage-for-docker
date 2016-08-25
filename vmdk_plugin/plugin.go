@@ -112,7 +112,7 @@ func (d *vmdkDriver) List(r volume.Request) volume.Response {
 // Request attach and them mounts the volume.
 // Actual mount - send attach to ESX and do the in-guest magic
 // Returns mount point and  error (or nil)
-func (d *vmdkDriver) mountVolume(name string) (string, error) {
+func (d *vmdkDriver) mountVolume(name string, isReadOnly bool) (string, error) {
 	mountpoint := getMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
@@ -150,7 +150,7 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 	}
 
 	if d.useMockEsx {
-		return mountpoint, fs.Mount(mountpoint, "ext4", string(dev[:]))
+		return mountpoint, fs.Mount(mountpoint, "ext4", string(dev[:]), false)
 	}
 
 	device, err := fs.GetDevicePath(dev)
@@ -160,7 +160,7 @@ func (d *vmdkDriver) mountVolume(name string) (string, error) {
 
 	if skipInotify {
 		time.Sleep(sleepBeforeMount)
-		return mountpoint, fs.Mount(mountpoint, "ext2", device)
+		return mountpoint, fs.Mount(mountpoint, "ext2", device, false)
 	}
 loop:
 	for {
@@ -187,7 +187,7 @@ loop:
 		}
 	}
 
-	return mountpoint, fs.Mount(mountpoint, "ext2", device)
+	return mountpoint, fs.Mount(mountpoint, "ext2", device, isReadOnly)
 }
 
 // Unmounts the volume and then requests detach
@@ -249,6 +249,7 @@ func (d *vmdkDriver) Path(r volume.Request) volume.Response {
 // We need to keep refcount and unmount on refcount drop to 0
 func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
+
 	d.m.Lock()
 	defer d.m.Unlock()
 
@@ -270,7 +271,17 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	}
 
 	// This is the first time we are asked to mount the volume, so comply
-	mountpoint, err := d.mountVolume(r.Name)
+	status, err := d.ops.Get(r.Name)
+	if err != nil {
+		_, err := d.decrRefCount(r.Name)
+		return volume.Response{Err: err.Error()}
+	}
+	isReadOnly := false
+	if status["access"] == "read-only" {
+		isReadOnly = true
+	}
+
+	mountpoint, err := d.mountVolume(r.Name, isReadOnly)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},

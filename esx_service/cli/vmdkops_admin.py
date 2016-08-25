@@ -255,6 +255,20 @@ def commands():
         'status': {
             'func': status,
             'help': 'Show the status of the vmdk_ops service'
+        },
+        'set': {
+            'func': set_vol_opts,
+            'help': 'Edit settings for a given volume',
+            'args': {
+                '--volume': {
+                    'help': 'Full path of the volume',
+                    'required': True
+                },
+                '--options': {
+                    'help': 'Options (specifically, access) to be set on the volume.',
+                    'required': True
+                }
+            }
         }
     }
 
@@ -269,12 +283,12 @@ def create_parser():
 def add_subparser(parser, cmds_dict):
     """ Recursively add subcommand parsers based on a dictionary of commands """
     subparsers = parser.add_subparsers()
-    for cmd, attributes in cmds_dict.iteritems():
+    for cmd, attributes in cmds_dict.items():
         subparser = subparsers.add_parser(cmd, help=attributes['help'])
         if 'func' in attributes:
             subparser.set_defaults(func=attributes['func'])
         if 'args' in attributes:
-            for arg, opts in attributes['args'].iteritems():
+            for arg, opts in attributes['args'].items():
                 opts = build_argparse_opts(opts)
                 subparser.add_argument(arg, **opts)
         if 'cmds' in attributes:
@@ -485,7 +499,7 @@ def policy_ls(args):
         else:
             used_policies[policy_name] = 1
 
-    for name, content in policies.iteritems():
+    for name, content in policies.items():
         if name in used_policies:
             active = 'In use by {0} volumes'.format(used_policies[name])
         else:
@@ -513,6 +527,14 @@ def status(args):
     print("LogConfigFile: {0}".format(log_config.LOG_CONFIG_FILE))
     print("LogFile: {0}".format(log_config.LOG_FILE))
     print("LogLevel: {0}".format(log_config.get_log_level()))
+
+
+def set_vol_opts(args):
+    set_ok = vmdk_ops.edit_vol_opts(args.volume, args.options) 
+    if set_ok:
+        print('Successfully updated settings for : {0}'.format(args.volume))
+    else:
+        print('Failed to update {0} for {1}.'.format(args.options, args.volume))
 
 
 VMDK_OPSD = '/etc/init.d/vmdk-opsd'
