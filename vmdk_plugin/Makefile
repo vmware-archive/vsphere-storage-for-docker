@@ -43,8 +43,8 @@ GOPATH_ORG :=vmware
 MAINTAINERS := cna-storage@vmware.com
 REPO_URL    := https://github.com/$(GOPATH_ORG)/$(PLUGNAME)
 MIN_DOCKER_VERSION :=1.9
-DOCKER_PACKAGE_DEB := docker-engine
-DOCKER_PACKAGE_RPM := docker
+DOCKER_PACKAGE := docker-engine
+DOCKER_PACKAGE_PHOTON := docker
 AFTER_INSTALL  := $(SCRIPTS)/install/after-install.sh
 BEFORE_REMOVE  := $(SCRIPTS)/install/before-remove.sh
 AFTER_REMOVE   := $(SCRIPTS)/install/after-remove.sh
@@ -190,7 +190,7 @@ FPM_COMMON := -p $(BIN) \
 .PHONY: deb
 deb: pkg-prep deb-pkg-prep
 	@$(CHECK) pkg
-	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE_DEB) > $(MIN_DOCKER_VERSION)' -t deb .
+	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE) > $(MIN_DOCKER_VERSION)' -t deb .
 
 # Upstart needed for older versions of Ubuntu
 .PHONY: deb-pkg-prep
@@ -198,10 +198,13 @@ deb-pkg-prep:
 	@mkdir -p $(UPSTART_INIT)
 	@cp $(UPSTART_CONF) $(UPSTART_INIT)
 
+# Target to build for rpm based systems. Due to variations in how docker is packaged between RHEL and Photon, 
+# skip dependency check vs building 2 different rpm packages.
 .PHONY: rpm
 rpm: pkg-prep
 	@$(CHECK) pkg
-	$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -d '$(DOCKER_PACKAGE_RPM) > $(MIN_DOCKER_VERSION)' -t rpm .
+	#$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -d '$(DOCKER_PACKAGE_PHOTON) > $(MIN_DOCKER_VERSION)' -t rpm .
+	$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -t rpm .
 
 .PHONY: pkg-prep
 pkg-prep:
