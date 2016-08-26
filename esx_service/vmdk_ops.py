@@ -377,7 +377,7 @@ def vol_info(vol_meta, vol_size_info, bus_number, unit, datastore):
     if kv.VOL_OPTS in vol_meta and \
        kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
        vinfo[kv.DISK_ALLOCATION_FORMAT] = vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
-    print(vinfo)
+    return vinfo
 
 
 # Return error, or None for OK
@@ -965,6 +965,8 @@ def disk_detach_int(vmdk_path, vm, device):
         logging.warning("%s\n%s", msg, "".join(traceback.format_tb(ex_traceback)))
         return err(msg)
 
+    perf.delete_perf_for_vol(vm, device.controllerKey - 1000,
+                             device.unitNumber)
     setStatusDetached(vmdk_path)
     logging.info("Disk detached %s", vmdk_path)
     return None
@@ -1089,7 +1091,7 @@ def main():
 
         kv.init()
         connectLocal()
-        perf.init_perf(si)
+        perf.init_perf()
         handleVmciRequests(port)
     except Exception as e:
         logging.exception(e)

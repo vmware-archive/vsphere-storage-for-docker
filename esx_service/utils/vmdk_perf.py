@@ -26,6 +26,7 @@ from pyVim import vmconfig
 from pyVmomi import VmomiSupport, vim, vmodl
 import sys
 import logging
+import atexit
 
 # Format to return stats
 FORMAT_CSV = vim.PerfFormat.csv
@@ -59,15 +60,39 @@ vm_dev_map = {}
 # Performance manager from the service instance
 perfm = None
 
-def init_perf(si):
+# The local service instance used by this module
+si = None
+
+def init_svc_inst():
+    '''
+    connect and do stuff on local machine
+    '''
+    global si
+    global perfm
+
+    # Connect to localhost as dcui
+    # User "dcui" is a local Admin that does not lose permissions
+    # when the host is in lockdown mode.
+    si = pyVim.connect.Connect(host='localhost', user='dcui')
+    if not si:
+        raise SystemExit("Failed to connect to localhost as 'dcui'.")
+
+    atexit.register(pyVim.connect.Disconnect, si)
+
+    # set out ID in context to be used in request - so we'll see it in logs
+    reqCtx = VmomiSupport.GetRequestContext()
+    reqCtx["realUser"] = 'dvolplug'
+
+    service_content = si.RetrieveContent()
+    perfm = service_content.perfManager
+    return si
+
+
+def init_perf():
    global perfm
    global perf_counters_map
-
-   try:
-      service_content = si.RetrieveContent()
-      perfm = service_content.perfManager
-   except vim.fault.NotAuthenticated:
-      return False
+   
+   init_svc_inst()
 
    # Create a map of performance counters that the performance
    # manager supports
@@ -80,11 +105,14 @@ def init_perf_for_vol(vm, bus, unit):
    # Create the map for the given VM and the device at given
    # bus and unit number.
    vm_name = vm.config.name
+   vm_uuid = vm.config.uuid
    try:
       vm_metrics = perfm.QueryAvailablePerfMetric(vm)
-   except vim.RunTimeFault as ex:
+   except vim.fault.NotAuthenticated as ex:
       logging.exception(ex)
-      raise
+      init_svc_inst()
+      nvm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
+      vm_metrics = perfm.QueryAvailablePerfMetric(nvm)
 
    device = "scsi{0}:{1}".format(bus, unit)
 
@@ -100,14 +128,22 @@ def init_perf_for_vol(vm, bus, unit):
          counters += [i.counterId]
    vm_dev_map[vm_name][device] = {COUNTERS: counters}
 
+def delete_perf_for_vol(vm, bus, unit):
+   # Remove the metrics that were created earlier for this volume
+   vm_name = vm.config.name
+   device = "scsi{0}:{1}".format(bus, unit)
+   if vm_name in vm_dev_map:
+      vm_dev_map[vm_name][device] = None
+   
 def get_vol_stats(vm, bus, unit):
    # If the VM or the device was never initialized in the VM device map.
    vm_name = vm.config.name
+   vm_uuid = vm.config.uuid
    device = "scsi{0}:{1}".format(bus, unit)
+
    if not vm_name in vm_dev_map or \
       not device in vm_dev_map[vm_name] or \
       not COUNTERS in vm_dev_map[vm_name][device]:
-     print("not found")
      return None
 
    metric_ids = []
@@ -115,16 +151,29 @@ def get_vol_stats(vm, bus, unit):
       metric_ids += [vim.PerfMetricId(counterId=counter, instance=device)]
 
    pspec = vim.PerfQuerySpec(entity=vm, format=DEFAULT_PERF_FORMAT, \
-           intervalId=COLLECTION_INTERVAL, maxSample=DEFAULT_SAMPLE_SIZE, metricId=metric_ids)
+                             intervalId=COLLECTION_INTERVAL, \
+                             maxSample=DEFAULT_SAMPLE_SIZE, \
+                             metricId=metric_ids)
 
    try:
       metrics = perfm.QueryPerf([pspec])
-   except vim.RunTimeFault as ex:
+   except vim.fault.NotAuthenticated as ex:
       logging.exception(ex)
-      raise
+      init_svc_inst()
+      nvm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
+      pspec = vim.PerfQuerySpec(entity=nvm, format=DEFAULT_PERF_FORMAT, \
+                                intervalId=COLLECTION_INTERVAL, \
+                                maxSample=DEFAULT_SAMPLE_SIZE, \
+                                metricId=metric_ids)
+      metrics = perfm.QueryPerf([pspec])
+
+   if not metrics or metrics == []:
+      logging.warning("No metrics retrieved.");
+      return None
 
    # Build the response with label, summary and value for each counter
    perf_stats = {}
+   print(metrics)
    for metric in metrics[0].value:
       label = perf_counters_map[metric.id.counterId][LABEL]
       summary = perf_counters_map[metric.id.counterId][SUMMARY]
