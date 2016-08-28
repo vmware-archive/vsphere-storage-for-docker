@@ -139,6 +139,7 @@ Guest Operating System:
 - Ubuntu 14.04 or higher (64 bit)
    - Needs Upstart or systemctl to start and stop the plugin
    - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340) ```sudo apt-get install open-vm-tools```
+- RedHat and CentOS
 
 # Known Issues
 1. Operations are serialized. Thus, if a large volume is created, other operations will block till the format is complete. [#35](/../../issues/35)
