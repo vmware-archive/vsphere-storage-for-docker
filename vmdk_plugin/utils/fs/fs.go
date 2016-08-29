@@ -55,13 +55,17 @@ func Mkdir(path string) error {
 }
 
 // Mount the filesystem (`fs`) on the device at the given mount point.
-func Mount(mountpoint string, fs string, device string) error {
+func Mount(mountpoint string, fs string, device string, isReadOnly bool) error {
 	log.WithFields(log.Fields{
 		"device":     device,
 		"mountpoint": mountpoint,
 	}).Debug("Calling syscall.Mount() ")
 
-	err := syscall.Mount(device, mountpoint, fs, 0, "")
+	flags := 0
+	if isReadOnly {
+		flags = syscall.MS_RDONLY
+	}
+	err := syscall.Mount(device, mountpoint, fs, uintptr(flags), "")
 	if err != nil {
 		return fmt.Errorf("Failed to mount device %s at %s: %s", device, mountpoint, err)
 	}

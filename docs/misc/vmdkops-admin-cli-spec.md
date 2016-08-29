@@ -121,6 +121,20 @@ Show any interesting information about the service. This includes file paths of 
 information, and PID of running service. A simple example is shown here, although it's possible
 that the exact format may be somewhat different.
 
+# Set
+Modify attribute settings on a given volume. The volume is identified by its full path on the datastore,
+for example if the volume name is `container-vol` then the volume is specified as "/vmfs/volumes/<datastore>/dockvols/container-vol.vmdk".
+The attributes to set/modify are specified as a comma separated list as "<attr1>=<value>, <attr2>=<value>....". For example,
+a command line would look like this.
+
+```
+$ vmdkops-admin set --volume=<full path of volume> --options="<attr1>=<value>, <attr2>=<value>, ..."
+```
+
+The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
+thats currently using the volume. For the present, only the "access" attribute is supported to be modified via this command, and
+can be set to either of the allowed values "read-only" or "read-write".
+
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
 Version: 1.0.0-0.0.1

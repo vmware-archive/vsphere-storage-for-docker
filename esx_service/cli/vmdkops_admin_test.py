@@ -124,6 +124,27 @@ class TestParsing(unittest.TestCase):
         args = self.parser.parse_args(['status'])
         self.assertEqual(args.func, vmdkops_admin.status)
 
+    def test_set_no_args(self):
+        self.assert_parse_error('set')
+
+    def test_set_no_volname(self):
+        self.assert_parse_error('set --options="access=read-only"')
+
+    def test_set_invalid_options(self):
+        self.assert_parse_error('set --options="size=10gb"')
+
+    def test_set_invalid_options(self):
+        self.assert_parse_error('set --options="acces=read-write"')
+
+    def test_set_no_options(self):
+        self.assert_parse_error('set --volume=volume_name')
+
+    def test_set(self):
+        args = self.parser.parse_args('set --volume=vol_name --options="access=read-only"'.split())
+        self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
+        self.assertEqual(args.volume, 'vol_name')
+        self.assertEqual(args.options, '"access=read-only"')
+
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
     def assert_parse_error(self, command):
         with open('/dev/null', 'w') as f:

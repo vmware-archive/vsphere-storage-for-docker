@@ -72,6 +72,13 @@ DEPENDENT   = 'persistent' # does participated in VM snapshot
 DEFAULT_ATTACH_AS = INDEPENDENT
 ATTACH_AS_TYPES = [INDEPENDENT, DEPENDENT]
 
+# Access types
+ACCESS = 'access'
+ACCESS_READONLY = 'read-only'
+ACCESS_READWRITE = 'read-write'
+DEFAULT_ACCESS = ACCESS_READWRITE
+ACCESS_TYPES = [ACCESS_READWRITE, ACCESS_READONLY]
+
 # Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.
 def init():

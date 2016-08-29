@@ -54,3 +54,11 @@ Currently the following are supported
 
 1. [persistent](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/): If the VMDK is attached as persistent it will be part of a VM snapshot. If a VM snapshot has been taken while the Docker volume is attached to a VM, the Docker volume then continues to be attached to the VM that was snapshotted.
 2. [independent_persistent](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/): If the VMDK is attached as independent_persistent it will not be part of a VM snapshot. The Docker volume can be attached to any VM that can access the datastore independent of snapshots.
+
+### access
+```
+docker volume create --driver=vmdk --name=MyVolume -o access=read-only -o diskformat=thin
+docker volume create --driver=vmdk --name=MyVolume -o access=read-write -o diskformat=thin (default)
+```
+
+The access mode determines if the volume is modifiable by containers in a VM. The access mode allows to first create a volume with write access and initialize it with binary images, libraries (for exmple), and subsequently change the access to "read-only" (via the admin CLI). Thereby, creating content sharable by all containers in a VM.

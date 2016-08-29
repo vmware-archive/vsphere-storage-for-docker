@@ -75,6 +75,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
     volName = "vol_UnitTest_Create"
     badOpts = {u'policy': u'good', volume_kv.SIZE: u'12unknown', volume_kv.DISK_ALLOCATION_FORMAT: u'5disk'}
+    invalid_access_choice = {volume_kv.ACCESS: u'only-read'}
+    invalid_access_opt = {u'acess': u'read-write'}
+    valid_access_opt = {volume_kv.ACCESS: 'read-only'}
     name = ""
     vm_name = 'test-vm'
 
@@ -119,7 +122,32 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         logging.info(err)
         self.assertNotEqual(err, None, err)
 
+    def testAccessOpts(self):
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.invalid_access_choice)
+        logging.info(err)
+        self.assertNotEqual(err, None, err)
 
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.invalid_access_opt)
+        logging.info(err)
+        self.assertNotEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.valid_access_opt)
+        logging.info(err)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name)
+        logging.info(err)
+        self.assertEqual(err, None, err)
+        
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
     def testPolicyUpdate(self):
