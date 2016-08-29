@@ -661,7 +661,7 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
     else:
        # Slot number is got from from the VM config
        key = 'scsi{0}.pciSlotNumber'.format(pvscsi.key -
-                                            key_offset)
+                                            key_offset)                
        slot = [cfg for cfg in vm.config.extraConfig \
                if cfg.key == key]
        # If the given controller exists
@@ -927,7 +927,7 @@ def disk_attach(vmdk_path, vm):
                                                         offset_from_bus_number)
 
         if (ret_err):
-            return ret_err    
+           return ret_err    
             
         # Find the controller just added
         devices = vm.config.hardware.device
@@ -936,7 +936,7 @@ def disk_attach(vmdk_path, vm):
                  d.key == controller_key]
         pci_slot_number = get_controller_pci_slot(vm, pvsci[0],
                                                   offset_from_bus_number)
-        logging.info("Added a PVSCSI controller, controller_key=%d pci_slot_number=%d",
+        logging.info("Added a PVSCSI controller, controller_key=%d pci_slot_number=%s",
                       controller_key, pci_slot_number)
     
     # add disk as independent, so it won't be snapshotted with the Docker VM
