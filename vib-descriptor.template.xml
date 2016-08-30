@@ -1,0 +1,130 @@
+<!-- Template for ESX 5.0+ VIB descriptor.xml -->
+<vib>
+   <!-- The VIB package name must be 35 or less characters and must -->
+   <!-- only contain [0-9a-zA-Z], -, _, and .  Also it is advised -->
+   <!-- that vendor be left out as there is a separate vendor field. -->
+   <name>%%PROJECT%%</name>
+
+   <!-- The VIB version should be of the form: ver-rel, where -->
+   <!-- ver and rel are both strings that must start with digits, -->
+   <!-- and can end with a combination of digits, period, and letters.
+        The entire string should be 35 chars or less.  -->
+   <version>%%VERSION%%-%%BUILDNUMBER%%</version>
+
+   <!-- Vendor has the same formatting restrictions as the name field -->
+   <!-- This value should be the vendor code as configured by the partner -->
+   <!-- in the Makefile/driver scons file and not the free form vendor name-->
+   <vendor>VMware</vendor>
+
+   <!-- A one-line summary of the VIB package contents. 80 chars max. -->
+   <summary>VMware Host Client Example Plugin</summary>
+
+   <description>An example plugin for the embedded web UI for ESXi</description>
+
+   <!-- Used for specifying KB article URLs.  key is a short friendly -->
+   <!-- identifier, no more than 20 characters long, to display instead -->
+   <!-- of or alongside the URL.  -->
+   <urls>
+      <!-- format: <url key="KB1234">http://vmware.com/kb/1234/</url> -->
+      <!-- multiple URL tags can be repeated -->
+   </urls>
+
+   <!-- This section defines a VIB's relationships with other VIBs or with
+        external entities.  These relationships will be checked when image
+	profiles are authored, as well as when image profiles and VIBs
+	are installed on a ESX host.  VUM will also check these relationships.
+     -->
+   <relationships>
+      <!-- depends defines other packages or VMkernel interfaces that this -->
+      <!-- package requires for installation to proceed.                   -->
+      <!-- The name is required, relation and version are optional         -->
+      <!-- relation is one of the following (XML encoded):
+		   &gt;&gt;	greater than
+		   &gt;=	greater than or equal
+		   &lt;&lt;	less than
+		   &lt;=        less than or equal
+		   =            equal
+		   -->
+      <depends>
+	 <!-- <constraint name="some_dep" /> -->
+         <constraint name="esx-version" relation="&gt;=" version="5.0.0"/>
+      </depends>
+
+      <!-- Packages or provides that this package should not be installed with -->
+      <conflicts>
+	 <!-- <constraint name="" relation="" version="" /> -->
+      </conflicts>
+
+      <!-- Packages that this one replaces.  There is no need to enter anything -->
+      <!-- for older versions of the same package name; these will be automatically -->
+      <!-- replaced.  Usually used only when packages have been renamed.  -->
+      <replaces>
+	 <!-- <constraint name="" relation="" version="" /> -->
+      </replaces>
+
+      <!-- Interfaces or virtual packages that this VIB package provides -->
+      <!-- name is required, version is optional -->
+      <provides>
+	 <!-- <provide name="" version="" /> -->
+      </provides>
+
+      <!-- Indicates relationships with software entities outside of the
+           ESX host.  Contains "constraint" elements just like depends.
+			  It's best to leave this blank for now.  -->
+      <compatibleWith />
+   </relationships>
+
+   <software-tags />
+
+   <!-- System installation requirements -->
+   <system-requires>
+      <!-- "true" or "false".  If true, the ESX host will have to be put in
+           maintenance mode before installation.
+			  Note that bootbank installs do not require maintenance mode - that
+			  is the host will not check maintenance mode if both
+			  live-install-allowed and live-removal-allowed are false.
+			  OPTIONAL: maintenance mode can be fine-tuned to be on or off for
+			  new installs of a VIB vs upgrades or removals.  To do this,
+			  specify one of the following attributes:
+			    * on-install="false"/"true"
+				 * on-remove="false"/"true"
+			  An upgrade is considered a remove and a install.
+			  If no attributes are specified, but instead a true/false value
+			  as per the example below, it is the same as setting all attributes
+			  to true/false.
+		-->
+      <maintenance-mode>false</maintenance-mode>
+
+      <!-- One or more hardware platforms that this VIB must be installed on -->
+      <!-- If specified, the vendor is required, the model is optional       -->
+      <!-- <hwplatform vendor="" model="" /> -->
+   </system-requires>
+
+   <!-- VIB acceptance level.  Should be one of -->
+   <!-- certified / accepted / partner / community -->
+   <!-- Defaults to community if not specified    -->
+   <!-- TODO: This value may be overridden by the signing code. -->
+   <acceptance-level>certified</acceptance-level>
+
+   <!-- Defaults to false -->
+   <live-install-allowed>true</live-install-allowed>
+
+   <!-- Both live install and live removes must be true for a live upgrade -->
+   <live-remove-allowed>true</live-remove-allowed>
+
+   <!-- Restart cimom after installation or removal of this VIB.  Applies only
+        to live installation.  Should be set to True for plugins that require
+        cimom to be restarted for activation, such as CIM provider.  Defaults to
+        false.   -->
+   <cimom-restart>false</cimom-restart>
+
+   <!-- Mark this VIB as stateless ready - meaning that this VIB can be booted
+        from a stateless host and its configuration has a host profiles plugin.
+        Defaults to false.  -->
+   <stateless-ready>true</stateless-ready>
+
+   <!-- This VIB overlays files of other VIBs.  -->
+   <!-- Note that the use of overlays must be approved by VMware via
+        the certification or acceptance programs. -->
+   <overlay>false</overlay>
+</vib>
