@@ -1,0 +1,303 @@
+%YAML 1.2
+---
+- client/app/images/oxygen-4.4.5:
+   - name: "oxygen-icons"
+     licenses: [LGPL3.0]
+     version: "4.4.5"
+     modified: false
+     uses: [no_link]
+     url: http://archive.ubuntu.com/ubuntu/pool/main/o/oxygen-icons/oxygen-icons_4.4.5.orig.tar.gz
+
+- client/app/bower_components/angular:
+   - name: "angularjs"
+     licenses: [MIT]
+     version: "1.3.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/angular/bower-angular/tree/v1.3.2
+
+- client/app/bower_components/angular-animate:
+   - name: "angular-animate"
+     licenses: [MIT]
+     version: "1.3.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/angular/bower-angular-animate/tree/v1.3.2
+
+- client/app/bower_components/angular-aria:
+   - name: "angular-aria"
+     licenses: [MIT]
+     version: "1.3.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/angular/bower-angular-aria/tree/v1.3.2
+
+- client/app/bower_components/angular-cookies:
+   - name: "angular-cookies"
+     licenses: [MIT]
+     version: "1.3.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/angular/bower-angular-cookies/tree/v1.3.2
+
+- client/app/bower_components/angular-touch:
+   - name: "angular-touch"
+     licenses: [MIT]
+     version: "1.3.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/angular/bower-angular-touch/tree/v1.3.2
+
+- client/app/bower_components/angular-ui-router:
+   - name: "angular-ui-router"
+     licenses: [MIT]
+     version: "0.2.11"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/angular-ui/ui-router/tree/0.2.11
+
+- client/app/bower_components/angular-logex:
+   - name: "angular-logex"
+     licenses: [MIT]
+     version: "0.0.9"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/lwhiteley/AngularLogExtender/tree/v0.0.9
+
+- client/app/bower_components/ansi_up:
+   - name: "ansi_up"
+     licenses: [MIT]
+     version: "1.3.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/drudru/ansi_up/tree/v1.3.0
+
+- client/app/bower_components/file-saver.js:
+   - name: "FileSaver.js"
+     licenses: [MIT]
+     version: "1.20150507.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/Teleborder/FileSaver.js/tree/v1.20150507.2
+
+- client/app/bower_components/blob-polyfill:
+   - name: "Blob.js"
+     licenses: [MIT]
+     version: "1.20150507.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/bjornstar/blob-polyfill/tree/1.0.20150320
+
+- client/app/bower_components/angular-file-saver:
+   - name: "angular-file-saver"
+     licenses: [MIT]
+     version: "1.0.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/alferov/angular-file-saver/tree/1.0.2
+
+- client/app/bower_components/eonasdan-bootstrap-datetimepicker:
+   - name: "eonasdan-bootstrap-datetimepicker"
+     licenses: [MIT]
+     version: "4.7.14"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/Eonasdan/bootstrap-datetimepicker/tree/4.7.14
+
+- client/app/bower_components/es5-shim:
+   - name: "es5-shim"
+     licenses: [MIT]
+     version: "4.0.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/es-shims/es5-shim/tree/4.0.0
+
+- client/app/bower_components/es6-shim:
+   - name: "es6-shim"
+     licenses: [MIT]
+     version: "0.35.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/paulmillr/es6-shim/tree/0.35.0
+
+- client/app/bower_components/i18n-js:
+   - name: "i18n-js"
+     licenses: [MIT]
+     version: "v3.0.0.rc8"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/fnando/i18n-js/tree/v3.0.0.rc8
+
+- client/app/bower_components/ipaddr:
+   - name: "ipaddr"
+     licenses: [MIT]
+     version: "1.1.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/whitequark/ipaddr.js/tree/v1.1.0
+
+- client/app/bower_components/jquery:
+   - name: "jquery"
+     licenses: [MIT]
+     version: "2.1.4"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/jquery/jquery/tree/2.1.3
+
+- client/app/bower_components/jquery-ui:
+   - name: "jquery-ui"
+     licenses: [MIT]
+     version: "1.11.4"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/jquery/jquery-ui/tree/1.11.4
+
+- client/app/bower_components/jxon:
+   - name: "jxon"
+     licenses: [GPL3.0]
+     version: "1.2.1"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/tyrasd/jxon/tree/1.2.1
+
+- client/app/bower_components/moment:
+   - name: "moment"
+     licenses: [MIT]
+     version: "2.11.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/moment/moment/tree/2.10.2
+
+- client/app/bower_components/requirejs:
+   - name: "requirejs"
+     licenses: [MIT]
+     version: "2.1.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/jrburke/requirejs/tree/2.1.0
+
+- client/app/bower_components/error-stack-parser:
+   - name: "error-stack-parser"
+     licenses: [PublicDomain]
+     version: "1.2.3"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/stacktracejs/error-stack-parser/tree/1.2.3
+
+- client/app/bower_components/stackframe:
+   - name: "stackframe"
+     licenses: [PublicDomain]
+     version: "0.3.1"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/stacktracejs/stackframe/tree/0.3.1
+
+- client/app/bower_components/underscore:
+   - name: "underscore"
+     licenses: [MIT]
+     version: "1.7.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/jashkenas/underscore/tree/1.7.0
+
+- client/app/thirdparty/semver:
+   - name: semver
+     licenses: [MIT]
+     version: "5.1.0"
+     modified: yes
+     uses: [call_class]
+     url: https://github.com/npm/node-semver/tree/v5.1.0
+
+- client/app/thirdparty/bitjs:
+   - name: bitjs
+     licenses: [MIT]
+     version: "e21f7cc244da72013f38b86960a4305565f1f573"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/elesueur/bitjs/tree/e21f7cc244da72013f38b86960a4305565f1f573
+
+- client/app/bower_components/ng-file-upload:
+   - name: ng-file-upload
+     licenses: [MIT]
+     version: 3.2.4
+     modified: false
+     uses: [call_class]
+     url: https://github.com/danialfarid/ng-file-upload/tree/3.2.4
+
+- client/app/scripts/utils/i18n-adapter.js:
+   - name: i18nAdapter
+     licenses: [MIT]
+     version: "1d38afc7ab0e65daf8bba8ae475411b3eac183e0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/cliffmeyers/blog-examples/blob/1d38afc7ab0e65daf8bba8ae475411b3eac183e0/ng-i18n-js/src/js/I18nAdapter.js
+
+- client/app/bower_components/codemirror:
+   - name: codemirror
+     licenses: [MIT]
+     version: "5.2.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/codemirror/CodeMirror/tree/5.2.0
+
+- client/app/bower_components/angular-ui-codemirror:
+   - name: angular-ui-codemirror
+     licenses: [MIT]
+     version: "0.3.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/codemirror/angular-ui-codemirror/tree/v0.3.0
+
+- client/app/bower_components/d3:
+   - name: d3
+     licenses: [MIT]
+     version: "3.5.6"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/mbostock/d3/tree/v3.5.6
+
+- client/app/bower_components/nvd3:
+   - name: nvd3
+     licenses: [MIT]
+     version: "1.8.1"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/novus/nvd3/tree/v1.8.1
+
+- client/app/bower_components/angular-nvd3:
+   - name: angular-nvd3
+     licenses: [MIT]
+     version: "1.0.0-rc.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/krispo/angular-nvd3/tree/v1.0.0-rc.2
+
+- client/app/bower_components/ng-idle:
+   - name: ng-idle
+     licenses: [MIT]
+     version: "1.1.0"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/HackedByChinese/ng-idle/tree/1.1.0
+
+- client/app/scripts/controllers/root.js:
+   - name: iNoBounce
+     licenses: [MIT]
+     version: 0.1.2
+     modified: true
+     uses: [call_class]
+     url: https://github.com/lazd/iNoBounce/blob/v0.1.2/inobounce.js
+
+- client/app/thirdparty/pkijs/pki.concat.js:
+   - name: PKI.js
+     licenses: [BSD]
+     version: "1.2.1"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/GlobalSign/PKI.js/tree/v1.2.1
+   - name: ASN1.js
+     licenses: [BSD]
+     version: "1.2.2"
+     modified: false
+     uses: [call_class]
+     url: https://github.com/GlobalSign/ASN1.js/tree/v1.2.2

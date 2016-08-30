@@ -1,3 +1,4 @@
+<<<<<<< 443efb213f303c7760699f57da3648f6535fc715
 pgk/
 package/
 build/
@@ -11,3 +12,20 @@ src/dvolplug/dvolplug
 *.test
 *~
 .*~
+=======
+#Extensions
+.*.swp
+.*.swo
+.*.swn
+.*.swm
+*.patch
+*.diff
+*.pyc
+*.log
+*.DS_Store
+
+#Directories
+build/
+.sass-cache
+node_modules
+>>>>>>> first commit

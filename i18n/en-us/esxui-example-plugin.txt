@@ -1,0 +1,26 @@
+{
+   "example": {
+      "menu": {
+         "title": "Example plugin",
+         "titleChildOne": "Child item one",
+         "titleChildTwo": "Child item two"
+      },
+      "dialogs": {
+         "about": {
+            "title": "Example dialog title",
+            "content": "Example dialog content"
+         }
+      },
+      "title": "Example plugin",
+      "tabs": {
+         "one": {
+            "label": "Tab one",
+            "tooltip": "Tab one tooltip"
+         },
+         "two": {
+            "label": "Tab two",
+            "tooltip": "Tab two tooltip"
+         }
+      }
+   }
+}

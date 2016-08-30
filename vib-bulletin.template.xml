@@ -1,0 +1,25 @@
+<bulletin>
+    <id>esx-ui-%%VERSION%%-%%BUILDNUMBER%%</id>
+    <vendor>VMware</vendor>
+    <summary>VMware Host Client Update</summary>
+    <severity>general</severity>
+    <category>general</category>
+    <urgency>important</urgency>
+    <releaseType>extension</releaseType>
+    <description>
+        <![CDATA[
+           <ul>
+              <li>test</li>
+           </ul>
+        ]]>
+    </description>
+    <kbUrl>none</kbUrl>
+    <contact>VMware</contact>
+    <releaseDate>2015-08-25T21:59:28.959047+00:00</releaseDate>
+    <platforms>
+        <softwarePlatform locale="" version="%%ESX_TARGET_VERSION%%" productLineID="embeddedEsx"/>
+    </platforms>
+    <vibList>
+        <vibID>VMware_bootbank_%%PROJECT%%_%%VERSION%%-%%BUILDNUMBER%%</vibID>
+    </vibList>
+</bulletin>
