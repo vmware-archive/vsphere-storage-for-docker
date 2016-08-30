@@ -262,29 +262,40 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     volNamePre = "vol_UnitTest_Attach"
     vm_name = 'test-vm'
     max_vol_count = 60
+    datastore_path = None
+    datastore_name = None
     
     def setUp(self):
         """ Setup run before each test """
         logging.debug("VMDKAttachDetachTest setUp path =%s", path)
         self.cleanup()
         
-        writeable_ds_path = 'datastore1'
-        if writeable_ds_path:
-            # get service_instance, and create a VM
-            if not vmdk_ops.si:
-                vmdk_ops.connectLocal()
+        if (not self.datastore_name):
+            datastores = [d for d in vmdk_utils.get_datastores()]
+            datastore = datastores[0]
+            if (not datastore):
+                logging.error("Cannot find a valid datastore")
+                self.assertFalse(True)
+            self.datastore_name = datastore[0]
+            self.datastore_path = datastore[2]
+            logging.debug("datastore_name=%s datastore_path=%s", self.datastore_name,
+                                                                 self.datastore_path)   
+        
+        # get service_instance, and create a VM
+        if not vmdk_ops.si:
+            vmdk_ops.connectLocal()
 
-            self.create_vm(vmdk_ops.si, self.vm_name, writeable_ds_path)
+        self.create_vm(vmdk_ops.si, self.vm_name, self.datastore_name)
 
-            # create max_vol_count+1 VMDK files
-            for id in range(1, self.max_vol_count+2):
-                volName = 'VmdkAttachDetachTestVol' + str(id)
-                fullpath = os.path.join(path, volName + '.vmdk')
-                self.assertEqual(None,
-                                 vmdk_ops.createVMDK(vm_name='test-vm',
-                                                     vmdk_path=fullpath,
-                                                     vol_name=volName))
-                
+        # create max_vol_count+1 VMDK files
+        for id in range(1, self.max_vol_count+2):
+            volName = 'VmdkAttachDetachTestVol' + str(id)
+            fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
+            self.assertEqual(None,
+                                vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                                    vmdk_path=fullpath,
+                                                    vol_name=volName))
+            
     def tearDown(self):
         """ Cleanup after each test """
         logging.debug("VMDKAttachDetachTest tearDown path")
@@ -293,7 +304,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     def create_vm(self, si, vm_name, datastore):
         content = si.RetrieveContent()
         datacenter = content.rootFolder.childEntity[0]
-        vmfolder = datacenter.vmFolder
+        vm_folder = datacenter.vmFolder
         hosts = datacenter.hostFolder.childEntity
         resource_pool = hosts[0].resourcePool
 
@@ -315,22 +326,26 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
                                 version='vmx-11'
                               )
 
-        #logging.debug("Createing VM %s", vm_name)
-        task = vmfolder.CreateVM_Task(config=config, pool=resource_pool)
+        task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)
         vmdk_ops.wait_for_tasks(si, [task])
 
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
-        if (vm):
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
+              if d.config.name == vm_name]
+        if vm:
             logging.debug("Found: VM %s", vm_name)
             if vm[0].runtime.powerState == vim.VirtualMachinePowerState.poweredOff:
                 logging.debug("Attempting to power on %s", vm_name)
                 task = vm[0].PowerOnVM_Task()
                 vmdk_ops.wait_for_tasks(si, [task])
+        else:
+            logging.error("Cannot find the test-vm")
+            self.assertFalse(True) 
     
     def remove_vm(self, si, vm_name):
 
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
-        if (vm):
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
+              if d.config.name == vm_name]
+        if vm:
             logging.debug("Found: VM %s", vm_name)
             #logging.debug("The current powerState is  : %s", format(vm[0].runtime.powerState)))
             if vm[0].runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
@@ -341,23 +356,11 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
             logging.debug("Trying to destroy VM %s", vm_name)    
             task = vm[0].Destroy_Task()
             vmdk_ops.wait_for_tasks(si, [task])
-
-    def mkdir(self, path):
-        """ Create a directory if it doesn't exist. Returns pathname or None. """
-        if not os.path.isdir(path):
-            try:
-                os.mkdir(path)
-            except OSError as e:
-                return None
-        return path
-
+    
     def cleanup(self):
         # remove VM
-        writeable_ds_path = 'datastore1'
-        if writeable_ds_path:
-            # get service_instance, and create a VM
-            if not vmdk_ops.si:
-                vmdk_ops.connectLocal()
+        if not vmdk_ops.si:
+            vmdk_ops.connectLocal()
         self.remove_vm(vmdk_ops.si, self.vm_name)
 
         for v in self.get_testvols():
@@ -377,20 +380,21 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         if not vmdk_ops.si:
             vmdk_ops.connectLocal()
         #find test_vm
-        vm = [d for d in vmdk_ops.si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == self.vm_name]
+        vm = [d for d in vmdk_ops.si.content.rootFolder.childEntity[0].vmFolder.childEntity 
+              if d.config.name == self.vm_name]
         self.assertNotEqual(None, vm)
 
         # attach max_vol_count disks
         for id in range(1, self.max_vol_count+1):
             volName = 'VmdkAttachDetachTestVol' + str(id)
-            fullpath = os.path.join(path, volName + '.vmdk')
+            fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
             ret = vmdk_ops.disk_attach(vmdk_path=fullpath,
                                        vm=vm[0])
             self.assertFalse("Error" in ret)
 
         # attach one more disk, which should fail    
         volName = 'VmdkAttachDetachTestVol' + str(self.max_vol_count+1)
-        fullpath = os.path.join(path, volName + '.vmdk')
+        fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
         ret = vmdk_ops.disk_attach(vmdk_path=fullpath,
                                    vm=vm[0])
         self.assertTrue("Error" in ret)
@@ -398,7 +402,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         # detach all the attached disks
         for id in range(1, self.max_vol_count+1):
             volName = 'VmdkAttachDetachTestVol' + str(id)
-            fullpath = os.path.join(path, volName + '.vmdk')
+            fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
             ret = vmdk_ops.disk_detach(vmdk_path=fullpath,
                                        vm=vm[0])
             self.assertTrue(ret is None)

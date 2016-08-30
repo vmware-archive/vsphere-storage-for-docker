@@ -927,7 +927,7 @@ def disk_attach(vmdk_path, vm):
                                                         offset_from_bus_number)
 
         if (ret_err):
-           return ret_err    
+            return ret_err    
             
         # Find the controller just added
         devices = vm.config.hardware.device
