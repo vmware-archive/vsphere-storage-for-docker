@@ -30,7 +30,7 @@ BIN := ../build
 # suffixed with a sha1 of the most recent commit to the prefix of the
 # most recent tag. Tagged builds use the externally defined version,
 # developer builds use last tagged release and sha1 of the most recent commit.
-# Format: <last tagged release>.<last commit hash> 
+# Format: <last tagged release>.<last commit hash>
 PKG_VERSION ?= $(shell \
 	       git describe --tags `git rev-list --tags --max-count=1` \
 	       ).$(shell \
@@ -76,9 +76,9 @@ VIBAUTHOR_PARAMS := --debug --compose \
 	--stage-dir $(WDIR) \
 	--offline-depot $(BIN)/$(OFFLINE_DEPOT) \
 	--force
-	
 
-# Payload root 
+
+# Payload root
 PAYLOAD=$(WDIR)/payloads
 
 # Location on ESX where the stuff needs to go
@@ -93,6 +93,13 @@ VMDKOPS_PY2     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/Python/2
 VMDKOPS_LIB     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib
 VMDKOPS_LIB64   := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib64
 VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
+
+# build the docker-volume-plugin
+
+UI_FROM := ../ui/build/dist/*
+UI_TO_PART_ONE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
+UI_TO_PART_TWO := /hostd/docroot/ui/plugins/docker-volume-plugin/
+UI_TO := $(UI_TO_PART_ONE)$(UI_TO_PART_TWO)
 
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
@@ -127,6 +134,24 @@ $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) 
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
 
 
+# copy files to staging area and then build the VIB
+$(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
+	@echo Staging in $(PAYLOAD)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
+	@chmod -R u+w $(PAYLOAD)
+	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
+	cp $(TO_ESX_PY)  $(VMDKOPS_PY)
+	cp -R $(PY_SQLITE) $(VMDKOPS_PY2)
+	cp $(SO_SQLITE) $(VMDKOPS_PY2)
+	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
+	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
+	cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
+	@mkdir -p $(UI_TO)
+	@cp $(UI_FROM) $(UI_TO)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
+	@chmod -R u+x $(VMDKOPS_BIN)
+	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
+
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
 
@@ -156,7 +181,7 @@ SSH := $(DEBUG) ssh $(SSH_KEY_OPT) -kTax -o StrictHostKeyChecking=no
 SCP := $(DEBUG) scp $(SSH_KEY_OPT) -r -q -o StrictHostKeyChecking=no
 
 TMP_LOC    := $(shell echo /tmp/vmdk_ops_unittest$$RANDOM)
-TEST_FILES := $(shell find . -name '*_test.py') 
+TEST_FILES := $(shell find . -name '*_test.py')
 
 # By default, we run all *_test.py. Use TEST_PATTERN to narrow the test set, e.g.
 # e.g. make test-esx TEST_PATTERN='*admin*'

@@ -8,8 +8,8 @@ This repo hosts the vSphere Docker Volume Service.
 vSphere Docker Volume Service enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS) to address persistency requirements of containerized cloud native apps using Docker Ecosystem. 
 
 To read more about code development and testing please read
-[CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md) 
-as well as the 
+[CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
+as well as the
 [FAQ on the project site](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/).
 
 ## Download
@@ -31,7 +31,7 @@ The demos are located on the project [site](https://vmware.github.io/docker-volu
 
 ## Project Website
 
-Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere](https://vmware.github.io/docker-volume-vsphere) 
+Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere](https://vmware.github.io/docker-volume-vsphere)
 
 ## Installation Instructions
 
@@ -109,7 +109,7 @@ journalctl -fu docker.service # Journalctl/Systemd
 **VM (Docker-side) Plugin logs**
 
 * Log location: `/var/log/docker-volume-vsphere.log`
-* Config file location: `/etc/docker-volume-vsphere.conf`. 
+* Config file location: `/etc/docker-volume-vsphere.conf`.
  * This JSON-formatted file controls logs retention, size for rotation
  and log location. Example:
 ```
@@ -158,7 +158,7 @@ Guest Operating System:
 * [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
 
 ### Internal
-* [VMware Internal Slack] (https://vmware.slack.com/archives/docker-volume-vsphere) 
+* [VMware Internal Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
 
 # Blogs
 
