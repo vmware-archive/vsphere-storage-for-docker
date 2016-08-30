@@ -439,7 +439,8 @@ def get_vmdk_size_info(path):
     try:
         cmd = "vmkfstools --extendedstatinfo {0}".format(path).split()
         output = subprocess.check_output(cmd)
-        lines = output.split('\n')
+        result = output.decode('utf-8')
+        lines = result.split('\n')
         capacity_in_bytes = lines[0].split()[2]
         used_in_bytes = lines[1].split()[2]
         return {'capacity': human_readable(int(capacity_in_bytes)),
