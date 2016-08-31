@@ -271,7 +271,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         self.cleanup()
         
         if (not self.datastore_name):
-            datastores = [d for d in vmdk_utils.get_datastores()]
+            datastores = vmdk_utils.get_datastores()
             datastore = datastores[0]
             if (not datastore):
                 logging.error("Cannot find a valid datastore")
