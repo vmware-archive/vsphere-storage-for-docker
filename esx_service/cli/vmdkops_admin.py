@@ -36,7 +36,8 @@ NOT_AVAILABLE = 'N/A'
 def main():
     kv.init()
     args = parse_args()
-    args.func(args)
+    if args:
+       args.func(args)
 
 
 def commands():
@@ -306,7 +307,11 @@ def build_argparse_opts(opts):
 
 def parse_args():
     parser = create_parser()
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args != argparse.Namespace():
+       return args
+    else:
+       parser.print_help()
 
 
 def comma_seperated_string(string):
