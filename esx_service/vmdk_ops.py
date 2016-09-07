@@ -1020,12 +1020,39 @@ def disk_detach_int(vmdk_path, vm, device):
 
 
 # Edit settings for a volume identified by its full path
-def set_vol_opts(vmdk_path, options):
+def set_vol_opts(name, options):
     # Create a dict of the options, the options are provided as
     # "access=read-only" and we get a dict like {'access': 'read-only'}
     opts_list = "".join(options.replace("=", ":").split())
     opts = dict(i.split(":") for i in opts_list.split(","))
 
+    # create volume path
+    try:
+       vol_name, datastore = parse_vol_name(name)
+    except ValidationError as ex:
+       logging.exception(ex)
+       return False
+
+    if not datastore:
+       msg = "Invalid datastore '{0}'.\n".format(datastore)
+       logging.warning(msg)
+       return False
+
+    # get /vmfs/volumes/<datastore>/dockvols path on ESX:
+    path = get_vol_path(datastore)
+
+    if path is None:
+       msg = "Failed to get datastore path {0}".format(path)
+       logging.warning(msg)
+       return False
+
+    vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
+
+    if not os.path.isfile(vmdk_path):
+       msg = 'Volume {0} not found.'.format(vol_name)
+       logging.warning(msg)
+       return False
+       
     # For now only allow resetting the access mode.
     valid_opts = [kv.ACCESS]
     invalid = frozenset(opts.keys()).difference(valid_opts)

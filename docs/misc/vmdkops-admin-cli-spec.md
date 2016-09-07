@@ -122,13 +122,13 @@ information, and PID of running service. A simple example is shown here, althoug
 that the exact format may be somewhat different.
 
 # Set
-Modify attribute settings on a given volume. The volume is identified by its full path on the datastore,
-for example if the volume name is `container-vol` then the volume is specified as "/vmfs/volumes/<datastore>/dockvols/container-vol.vmdk".
+Modify attribute settings on a given volume. The volume is identified by its name and datastore, 
+for example if the volume name is `container-vol` then the volume is specified as "container-vol@datastore-name".
 The attributes to set/modify are specified as a comma separated list as "<attr1>=<value>, <attr2>=<value>....". For example,
 a command line would look like this.
 
 ```
-$ vmdkops-admin set --volume=<full path of volume> --options="<attr1>=<value>, <attr2>=<value>, ..."
+$ vmdkops-admin set --volume=<volume@datastore> --options="<attr1>=<value>, <attr2>=<value>, ..."
 ```
 
 The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
