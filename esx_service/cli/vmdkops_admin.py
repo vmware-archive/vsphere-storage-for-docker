@@ -262,7 +262,7 @@ def commands():
             'help': 'Edit settings for a given volume',
             'args': {
                 '--volume': {
-                    'help': 'Full path of the volume',
+                    'help': 'Volume to set options for, specified as "volume@datastore".',
                     'required': True
                 },
                 '--options': {
@@ -536,7 +536,7 @@ def status(args):
 
 
 def set_vol_opts(args):
-    set_ok = vmdk_ops.edit_vol_opts(args.volume, args.options) 
+    set_ok = vmdk_ops.set_vol_opts(args.volume, args.options) 
     if set_ok:
         print('Successfully updated settings for : {0}'.format(args.volume))
     else:
