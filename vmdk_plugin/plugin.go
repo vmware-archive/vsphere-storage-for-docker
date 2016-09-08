@@ -160,7 +160,7 @@ func (d *vmdkDriver) mountVolume(name string, isReadOnly bool) (string, error) {
 
 	if skipInotify {
 		time.Sleep(sleepBeforeMount)
-		return mountpoint, fs.Mount(mountpoint, "ext2", device, false)
+		return mountpoint, fs.Mount(mountpoint, "ext4", device, false)
 	}
 loop:
 	for {
@@ -187,7 +187,7 @@ loop:
 		}
 	}
 
-	return mountpoint, fs.Mount(mountpoint, "ext2", device, isReadOnly)
+	return mountpoint, fs.Mount(mountpoint, "ext4", device, isReadOnly)
 }
 
 // Unmounts the volume and then requests detach
