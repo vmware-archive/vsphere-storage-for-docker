@@ -26,6 +26,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -112,7 +113,7 @@ func (d *vmdkDriver) List(r volume.Request) volume.Response {
 // Request attach and them mounts the volume.
 // Actual mount - send attach to ESX and do the in-guest magic
 // Returns mount point and  error (or nil)
-func (d *vmdkDriver) mountVolume(name string, isReadOnly bool) (string, error) {
+func (d *vmdkDriver) mountVolume(name string, fstype string, isReadOnly bool) (string, error) {
 	mountpoint := getMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
@@ -150,7 +151,7 @@ func (d *vmdkDriver) mountVolume(name string, isReadOnly bool) (string, error) {
 	}
 
 	if d.useMockEsx {
-		return mountpoint, fs.Mount(mountpoint, "ext4", string(dev[:]), false)
+		return mountpoint, fs.Mount(mountpoint, fstype, string(dev[:]), false)
 	}
 
 	device, err := fs.GetDevicePath(dev)
@@ -160,7 +161,7 @@ func (d *vmdkDriver) mountVolume(name string, isReadOnly bool) (string, error) {
 
 	if skipInotify {
 		time.Sleep(sleepBeforeMount)
-		return mountpoint, fs.Mount(mountpoint, "ext4", device, false)
+		return mountpoint, fs.Mount(mountpoint, fstype, device, false)
 	}
 loop:
 	for {
@@ -187,7 +188,7 @@ loop:
 		}
 	}
 
-	return mountpoint, fs.Mount(mountpoint, "ext4", device, isReadOnly)
+	return mountpoint, fs.Mount(mountpoint, fstype, device, isReadOnly)
 }
 
 // Unmounts the volume and then requests detach
@@ -208,11 +209,50 @@ func (d *vmdkDriver) unmountVolume(name string) error {
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 func (d *vmdkDriver) Create(r volume.Request) volume.Response {
-	err := d.ops.Create(r.Name, r.Options)
+	// Defaults to ext4 if not specified
+	if _, ok := r.Options["fstype"]; ok == false {
+		r.Options["fstype"] = "ext4"
+	}
+
+	// Verify the existance of filesystem tools
+	mkfscmd := "/sbin/mkfs." + r.Options["fstype"]
+	_, err := os.Lstat(mkfscmd)
+	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Not found ")
+		return volume.Response{Err: err.Error()}
+	}
+
+	err = d.ops.Create(r.Name, r.Options)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
 		return volume.Response{Err: err.Error()}
 	}
+
+	// Handle filesystem creation
+	dev, err := d.ops.Attach(r.Name, nil)
+	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Attach volume failed ")
+		return volume.Response{Err: err.Error()}
+	}
+
+	device, err := fs.GetDevicePath(dev)
+	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Could not find attached device ")
+		return volume.Response{Err: err.Error()}
+	}
+
+	err = fs.Mkfs(mkfscmd, r.Name, device)
+	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create filesystem failed ")
+		return volume.Response{Err: err.Error()}
+	}
+
+	err = d.ops.Detach(r.Name, nil)
+	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
+		return volume.Response{Err: err.Error()}
+	}
+
 	log.WithFields(log.Fields{"name": r.Name}).Info("Volume created ")
 	return volume.Response{Err: ""}
 }
@@ -281,7 +321,7 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 		isReadOnly = true
 	}
 
-	mountpoint, err := d.mountVolume(r.Name, isReadOnly)
+	mountpoint, err := d.mountVolume(r.Name, status["fstype"].(string), isReadOnly)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},

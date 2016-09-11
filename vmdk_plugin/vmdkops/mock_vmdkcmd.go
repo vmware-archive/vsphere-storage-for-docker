@@ -138,7 +138,7 @@ func createBlockDevice(label string) error {
 	if err != nil {
 		return err
 	}
-	return makeFilesystem(device, label)
+	return nil
 }
 
 func getBlockDeviceForName(name string) ([]byte, error) {
@@ -197,15 +197,6 @@ func setupLoopbackDevice(backing string, device string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to setup loopback device node %s for backing file %s: %s. Output = %s",
 			device, backing, err, out)
-	}
-	return nil
-}
-
-func makeFilesystem(device string, label string) error {
-	out, err := exec.Command("mkfs.ext4", "-T", "ext4", "-L", label, device).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Failed to create filesystem on %s: %s. Output = %s",
-			device, err, out)
 	}
 	return nil
 }

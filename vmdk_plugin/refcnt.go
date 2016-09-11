@@ -68,14 +68,15 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"golang.org/x/net/context"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
 )
 
 const (
@@ -292,7 +293,8 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 				if status["access"] == "read-only" {
 					isReadOnly = true
 				}
-				_, err = d.mountVolume(vol, isReadOnly)
+
+				_, err = d.mountVolume(vol, status["fstype"].(string), isReadOnly)
 				if err != nil {
 					log.Warning("Failed to mount - manual recovery may be needed")
 				}
