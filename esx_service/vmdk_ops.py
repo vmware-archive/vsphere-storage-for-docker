@@ -1052,25 +1052,36 @@ def set_vol_opts(name, options):
        msg = 'Volume {0} not found.'.format(vol_name)
        logging.warning(msg)
        return False
-       
+   
     # For now only allow resetting the access mode.
-    valid_opts = [kv.ACCESS]
+    valid_opts = [kv.ACCESS, kv.ATTACH_AS]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
                + 'Options that can be edited: ' \
                + '{0}'.format(list(valid_opts))
         raise ValidationError(msg)
+    if kv.ACCESS in opts.keys():    
+        if not opts[kv.ACCESS] in kv.ACCESS_TYPES:
+            msg = 'Invalid option value {0}.\n'.format(opts[kv.ACCESS]) +\
+                    'Supported values are {0}.\n'.format(kv.ACCESS_TYPES)
+            logging.warning(msg)
+            return False
 
-    if not opts[kv.ACCESS] in kv.ACCESS_TYPES:
-       msg = 'Invalid option value {0}.\n'.format(opts[kv.ACCESS]) +\
-             'Supported values are {0}.\n'.format(kv.ACCESS_TYPES)
-       logging.warning(msg)
-       return False
+    if kv.ATTACH_AS in opts.keys():    
+        if not opts[kv.ATTACH_AS] in kv.ATTACH_AS_TYPES:
+            msg = 'Invalid option value {0}.\n'.format(opts[kv.ATTACH_AS]) +\
+                    'Supported values are {0}.\n'.format(kv.ATTACH_AS_TYPES)
+            logging.warning(msg)
+            return False
+   
 
     vol_meta = kv.getAll(vmdk_path)
     if vol_meta:
-       vol_meta[kv.VOL_OPTS][kv.ACCESS] = opts[kv.ACCESS]
+       if kv.ACCESS in opts.keys(): 
+           vol_meta[kv.VOL_OPTS][kv.ACCESS] = opts[kv.ACCESS]
+       if kv.ATTACH_AS in opts.keys(): 
+           vol_meta[kv.VOL_OPTS][kv.ATTACH_AS] = opts[kv.ATTACH_AS]    
        return kv.setAll(vmdk_path, vol_meta)
 
     return False

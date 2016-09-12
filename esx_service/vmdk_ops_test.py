@@ -81,6 +81,10 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     invalid_access_choice = {volume_kv.ACCESS: u'only-read'}
     invalid_access_opt = {u'acess': u'read-write'}
     valid_access_opt = {volume_kv.ACCESS: 'read-only'}
+    invalid_attach_as_choice = {volume_kv.ATTACH_AS: u'persisten'}
+    invalid_attach_as_opt = {u'atach_as': u'persistent'}
+    valid_attach_as_opt_1 = {volume_kv.ATTACH_AS: u'persistent'}
+    valid_attach_as_opt_2 = {volume_kv.ATTACH_AS: u'independent_persistent'}
     name = ""
     vm_name = 'test-vm'
 
@@ -126,6 +130,43 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         self.assertNotEqual(err, None, err)
 
     def testAccessOpts(self):
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.invalid_attach_as_choice)
+        logging.info(err)
+        self.assertNotEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.invalid_attach_as_opt)
+        logging.info(err)
+        self.assertNotEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.valid_attach_as_opt_1)
+        logging.info(err)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name)
+        logging.info(err)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                  vmdk_path=self.name,
+                                  vol_name=self.volName,
+                                  opts=self.valid_attach_as_opt_2)
+        logging.info(err)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name)
+        logging.info(err)
+        self.assertEqual(err, None, err)
+    
+    def testAttachAsOpts(self):
         err = vmdk_ops.createVMDK(vm_name=self.vm_name,
                                   vmdk_path=self.name,
                                   vol_name=self.volName,

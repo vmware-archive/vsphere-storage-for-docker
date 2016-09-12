@@ -135,6 +135,7 @@ class TestParsing(unittest.TestCase):
 
     def test_set_invalid_options(self):
         self.assert_parse_error('set --options="acces=read-write"')
+        self.assert_parse_error('set --options="access=persisten"')
 
     def test_set_no_options(self):
         self.assert_parse_error('set --volume=volume_name')
@@ -144,6 +145,16 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name')
         self.assertEqual(args.options, '"access=read-only"')
+
+        args = self.parser.parse_args('set --volume=vol_name --options="attach_as=persistent"'.split())
+        self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
+        self.assertEqual(args.volume, 'vol_name')
+        self.assertEqual(args.options, '"attach_as=persistent"')
+
+        args = self.parser.parse_args('set --volume=vol_name --options="attach_as=independent_persistent"'.split())
+        self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
+        self.assertEqual(args.volume, 'vol_name')
+        self.assertEqual(args.options, '"attach_as=independent_persistent"')
 
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
     def assert_parse_error(self, command):
