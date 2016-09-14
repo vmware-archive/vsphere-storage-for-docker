@@ -37,7 +37,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
         lines = output.split('\n')
         divider_columns = lines[1].split()
-        self.assertEqual(8, len(divider_columns))
+        self.assertEqual(10, len(divider_columns))
         for string in divider_columns:
             self.assertTrue(all_dashes(string))
 

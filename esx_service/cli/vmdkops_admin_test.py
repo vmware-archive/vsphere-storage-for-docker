@@ -135,26 +135,26 @@ class TestParsing(unittest.TestCase):
 
     def test_set_invalid_options(self):
         self.assert_parse_error('set --options="acces=read-write"')
-        self.assert_parse_error('set --options="access=persisten"')
+        self.assert_parse_error('set --options="attach-as=persisten"')
 
     def test_set_no_options(self):
         self.assert_parse_error('set --volume=volume_name')
 
     def test_set(self):
-        args = self.parser.parse_args('set --volume=vol_name --options="access=read-only"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --options="access=read-only"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
-        self.assertEqual(args.volume, 'vol_name')
+        self.assertEqual(args.volume, 'vol_name@datastore')
         self.assertEqual(args.options, '"access=read-only"')
 
-        args = self.parser.parse_args('set --volume=vol_name --options="attach_as=persistent"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --options="attach-as=persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
-        self.assertEqual(args.volume, 'vol_name')
-        self.assertEqual(args.options, '"attach_as=persistent"')
+        self.assertEqual(args.volume, 'vol_name@datastore')
+        self.assertEqual(args.options, '"attach-as=persistent"')
 
-        args = self.parser.parse_args('set --volume=vol_name --options="attach_as=independent_persistent"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --options="attach-as=independent_persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
-        self.assertEqual(args.volume, 'vol_name')
-        self.assertEqual(args.options, '"attach_as=independent_persistent"')
+        self.assertEqual(args.volume, 'vol_name@datastore')
+        self.assertEqual(args.options, '"attach-as=independent_persistent"')
 
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
     def assert_parse_error(self, command):
@@ -222,7 +222,7 @@ class TestLs(unittest.TestCase):
         volumes = vmdk_utils.get_volumes()
         header = vmdkops_admin.all_ls_headers()
         rows = vmdkops_admin.generate_ls_rows()
-        self.assertEqual(8, len(header))
+        self.assertEqual(10, len(header))
         self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
             self.assertEqual(volumes[i]['filename'], rows[i][0] + '.vmdk')
