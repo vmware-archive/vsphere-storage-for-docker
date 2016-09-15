@@ -80,6 +80,7 @@ DEFAULT_ACCESS = ACCESS_READWRITE
 ACCESS_TYPES = [ACCESS_READWRITE, ACCESS_READONLY]
 
 # Filesystem type
+# This option is handled in the volume-plugin at the docker host, and tracked in volume metadata. 
 FILESYSTEM_TYPE = 'fstype'
 DEFAULT_FILESYSTEM_TYPE = ''
 

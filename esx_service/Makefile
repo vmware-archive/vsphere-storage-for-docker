@@ -56,9 +56,6 @@ INIT_SCRIPT := vmdk-opsd
 # Vib layout descriptor
 DESCRIPTOR := descriptor.xml
 
-# extra stuff to copy to vib
-TOOLS := tools/lin32/mkfs.ext4
-
 # vibauthor definitions
 VIBAUTHOR := vibauthor
 WDIR := $(BIN)
@@ -91,7 +88,7 @@ build: $(VIB_BIN)
 
 # What goes where in payloads:
 TO_WDIR := $(DESCRIPTOR)
-TO_ESX_BIN := $(PY_SRC) $(PY_CLI) $(TOOLS)
+TO_ESX_BIN := $(PY_SRC) $(PY_CLI)
 TO_ESX_PY  := $(PY_UTILS)
 TO_ESX_LIB := $(VMCI_SRV_LIBS)
 TO_ESX_INITD := $(INIT_SCRIPT)

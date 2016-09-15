@@ -83,7 +83,6 @@ PYTHON64_VERSION = 50659824
 # External tools used by the plugin.
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
-MKFS_CMD = BIN_LOC + "/mkfs.ext4 -T ext4 -qF -L "
 VMDK_CREATE_CMD = "/sbin/vmkfstools"
 VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 

@@ -25,12 +25,17 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"syscall"
 )
 
 const sysPciDevs = "/sys/bus/pci/devices" // All PCI devices on the host
 const sysPciSlots = "/sys/bus/pci/slots"  // PCI slots on the host
 const pciAddrLen = 10                     // Length of PCI dev addr
+
+// FstypeDefault contains the default FS when not specified by the user
+const FstypeDefault = "ext4"
 
 // VolumeDevSpec - volume spec returned from the server on an attach
 type VolumeDevSpec struct {
@@ -63,6 +68,20 @@ func Mkfs(mkfscmd string, label string, device string) error {
 			device, err, out)
 	}
 	return nil
+}
+
+// MkfsLookup lookups supported filesystems based on mkfs tools
+func MkfsLookup() string {
+	mkftools, _ := filepath.Glob("/sbin/mkfs.*")
+	var supportedFs string
+	for _, fs := range mkftools {
+		if supportedFs != "" {
+			supportedFs += ", "+strings.Split(fs, ".")[1]
+		} else {
+			supportedFs += strings.Split(fs, ".")[1]
+		}
+	}
+	return supportedFs
 }
 
 // Mount the filesystem (`fs`) on the device at the given mount point.

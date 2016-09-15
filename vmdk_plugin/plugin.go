@@ -209,17 +209,17 @@ func (d *vmdkDriver) unmountVolume(name string) error {
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 func (d *vmdkDriver) Create(r volume.Request) volume.Response {
-	// Defaults to ext4 if not specified
+	// Use default fstype if not specified
 	if _, ok := r.Options["fstype"]; ok == false {
-		r.Options["fstype"] = "ext4"
+		r.Options["fstype"] = fs.FstypeDefault
 	}
 
-	// Verify the existance of filesystem tools
+	// Verify the existence of filesystem tools
 	mkfscmd := "/sbin/mkfs." + r.Options["fstype"]
 	_, err := os.Lstat(mkfscmd)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Not found ")
-		return volume.Response{Err: err.Error()}
+		return volume.Response{Err: err.Error() + "\nSupported filesystems found: " + fs.MkfsLookup()}
 	}
 
 	err = d.ops.Create(r.Name, r.Options)
@@ -229,6 +229,8 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 	}
 
 	// Handle filesystem creation
+	log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
+
 	dev, err := d.ops.Attach(r.Name, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Attach volume failed ")
@@ -243,7 +245,9 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 
 	err = fs.Mkfs(mkfscmd, r.Name, device)
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create filesystem failed ")
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create filesystem failed, trying to remove the volume ")
+		err = d.ops.Detach(r.Name, nil)
+		err = d.ops.Remove(r.Name, nil)
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -253,7 +257,7 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: err.Error()}
 	}
 
-	log.WithFields(log.Fields{"name": r.Name}).Info("Volume created ")
+	log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Info("Volume and filesystem created ")
 	return volume.Response{Err: ""}
 }
 
