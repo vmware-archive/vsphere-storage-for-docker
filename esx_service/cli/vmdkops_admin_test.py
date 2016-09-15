@@ -222,7 +222,8 @@ class TestLs(unittest.TestCase):
         volumes = vmdk_utils.get_volumes()
         header = vmdkops_admin.all_ls_headers()
         rows = vmdkops_admin.generate_ls_rows()
-        self.assertEqual(10, len(header))
+        expected_column_count = 10
+        self.assertEqual(expected_column_count, len(header))
         self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
             self.assertEqual(volumes[i]['filename'], rows[i][0] + '.vmdk')
