@@ -22,6 +22,7 @@ import vmdk_ops
 import vmdk_utils
 import volume_kv as kv
 import vmdkops_admin
+import random
 
 
 class TestParsing(unittest.TestCase):
@@ -227,6 +228,85 @@ class TestLs(unittest.TestCase):
         self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
             self.assertEqual(volumes[i]['filename'], rows[i][0] + '.vmdk')
+
+class TestSet(unittest.TestCase):
+    """ Test set functionality """
+
+    def setUp(self):
+        """ Setup run before each test """
+        self.vol_count = 0
+        self.cleanup()
+        for (datastore, url_name, path) in vmdk_utils.get_datastores():
+            if not self.mkdir(path):
+                continue
+            for id in range(5):
+                volName = 'testvol' + str(id)
+                fullpath = os.path.join(path, volName + '.vmdk')
+                self.assertEqual(None,
+                                 vmdk_ops.createVMDK(vm_name='test-vm',
+                                                     vmdk_path=fullpath,
+                                                     vol_name=volName))
+                self.vol_count += 1
+
+    def tearDown(self):
+        """ Cleanup after each test """
+        self.cleanup()
+
+    def mkdir(self, path):
+        """ Create a directory if it doesn't exist. Returns pathname or None. """
+        if not os.path.isdir(path):
+            try:
+                os.mkdir(path)
+            except OSError as e:
+                return None
+        return path
+
+    def cleanup(self):
+        for v in self.get_testvols():
+            self.assertEqual(
+                None,
+                vmdk_ops.removeVMDK(os.path.join(v['path'], v['filename'])))
+
+    def get_testvols(self):
+        return [x
+                for x in vmdk_utils.get_volumes()
+                if x['filename'].startswith('testvol')]
+
+    def test_set_access(self):
+        volumes = self.get_testvols()
+        self.assertEqual(len(volumes), self.vol_count)
+        for v in volumes:
+            attach_as_opt = random.choice(kv.ATTACH_AS_TYPES)
+            vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
+            attach_as_arg = 'attach-as={}'.format(attach_as_opt)
+            set_ok = vmdk_ops.set_vol_opts(vol_arg, attach_as_arg)
+            self.assertTrue(set_ok)
+
+            metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v[
+                'filename']))
+            self.assertNotEqual(None, metadata)
+
+            curr_attach_as = vmdkops_admin.get_attach_as(metadata)
+            self.assertEqual(attach_as_opt, curr_attach_as)
+    
+    def test_set_attach_as(self):
+        volumes = self.get_testvols()
+        self.assertEqual(len(volumes), self.vol_count)
+        for v in volumes:
+            access_opt = random.choice(kv.ACCESS_TYPES)
+            vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
+            access_arg = 'access={}'.format(access_opt)
+            set_ok = vmdk_ops.set_vol_opts(vol_arg, access_arg)
+            self.assertTrue(set_ok)
+
+            metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v[
+                'filename']))
+            self.assertNotEqual(None, metadata)
+
+            curr_access = vmdkops_admin.get_access(metadata)
+            self.assertEqual(access_opt, curr_access)
+    
+        
 
 
 if __name__ == '__main__':

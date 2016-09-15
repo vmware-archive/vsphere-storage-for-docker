@@ -375,7 +375,7 @@ def ls_dash_c(columns):
 def all_ls_headers():
     """ Return a list of all header for ls -l """
     return ['Volume', 'Datastore', 'Created By VM', 'Created',
-            'Attached To VM', 'Policy', 'Capacity', 'Used', 'Access Mode', 'Attach Mode']
+            'Attached To VM', 'Policy', 'Capacity', 'Used', 'Access', 'Attach As']
 
 
 def generate_ls_rows():
@@ -415,7 +415,7 @@ def get_attached_to(metadata):
         return kv.DETACHED
 
 def get_attach_as(metadata):
-    """ Return the attach mode of a volume based on its metadata """
+    """ Return which mode a volume is attached as based on its metadata """
     try:
         return metadata[kv.VOL_OPTS][kv.ATTACH_AS]
     except:

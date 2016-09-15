@@ -126,7 +126,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
         err = vmdk_ops.removeVMDK(self.name)
         self.assertNotEqual(err, None, err)
-    
+
     def testAccessOpts(self):
         err = vmdk_ops.createVMDK(vm_name=self.vm_name,
                                   vmdk_path=self.name,

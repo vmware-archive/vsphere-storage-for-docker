@@ -1053,8 +1053,7 @@ def set_vol_opts(name, options):
        logging.warning(msg)
        return False
    
-    # For now only allow resetting the access and attach_as mode.
-    valid_opts = [kv.ACCESS, kv.ATTACH_AS]
+    # For now only allow resetting the access and attach-as options.
     valid_opts = {
         kv.ACCESS : kv.ACCESS_TYPES,
         kv.ATTACH_AS : kv.ATTACH_AS_TYPES
@@ -1080,7 +1079,7 @@ def set_vol_opts(name, options):
     vol_meta = kv.getAll(vmdk_path)
     if vol_meta:
        if not vol_meta[kv.VOL_OPTS]:
-           vol_mata[kv.VOL_OPTS] = [] 
+           vol_meta[kv.VOL_OPTS] = {} 
        for key in opts.keys():
            vol_meta[kv.VOL_OPTS][key] = opts[key]
        return kv.setAll(vmdk_path, vol_meta)
