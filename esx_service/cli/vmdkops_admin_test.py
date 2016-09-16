@@ -272,12 +272,14 @@ class TestSet(unittest.TestCase):
                 for x in vmdk_utils.get_volumes()
                 if x['filename'].startswith('testvol')]
 
-    def test_set_access(self):
+    def test_set_attach_as(self):
         volumes = self.get_testvols()
         self.assertEqual(len(volumes), self.vol_count)
         for v in volumes:
             attach_as_opt = random.choice(kv.ATTACH_AS_TYPES)
+            # generate string like "testvol0@datastore1"
             vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
+            
             attach_as_arg = 'attach-as={}'.format(attach_as_opt)
             set_ok = vmdk_ops.set_vol_opts(vol_arg, attach_as_arg)
             self.assertTrue(set_ok)
@@ -289,11 +291,12 @@ class TestSet(unittest.TestCase):
             curr_attach_as = vmdkops_admin.get_attach_as(metadata)
             self.assertEqual(attach_as_opt, curr_attach_as)
     
-    def test_set_attach_as(self):
+    def test_set_access(self):
         volumes = self.get_testvols()
         self.assertEqual(len(volumes), self.vol_count)
         for v in volumes:
             access_opt = random.choice(kv.ACCESS_TYPES)
+            # generate string like "testvol0@datastore1"
             vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
             access_arg = 'access={}'.format(access_opt)
             set_ok = vmdk_ops.set_vol_opts(vol_arg, access_arg)
