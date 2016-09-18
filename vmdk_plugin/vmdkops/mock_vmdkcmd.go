@@ -138,7 +138,8 @@ func createBlockDevice(label string) error {
 	if err != nil {
 		return err
 	}
-	return fs.Mkfs("/sbin/mkfs."+fs.FstypeDefault, label, device)
+	mkfscmd := fs.MkfsLookup()[fs.FstypeDefault]
+	return fs.Mkfs(mkfscmd, label, device)
 }
 
 func getBlockDeviceForName(name string) ([]byte, error) {

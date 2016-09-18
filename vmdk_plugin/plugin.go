@@ -26,7 +26,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -209,27 +208,42 @@ func (d *vmdkDriver) unmountVolume(name string) error {
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 func (d *vmdkDriver) Create(r volume.Request) volume.Response {
+
 	// Use default fstype if not specified
-	if _, ok := r.Options["fstype"]; ok == false {
+	if _, result := r.Options["fstype"]; result == false {
 		r.Options["fstype"] = fs.FstypeDefault
 	}
 
-	// Verify the existence of filesystem tools
-	mkfscmd := "/sbin/mkfs." + r.Options["fstype"]
-	_, err := os.Lstat(mkfscmd)
-	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Not found ")
-		return volume.Response{Err: err.Error() + "\nSupported filesystems found: " + fs.MkfsLookup()}
+	// Get existent filesystem tools
+	supportedFs := fs.MkfsLookup()
+
+	// Verify the existence of fstype mkfs
+	mkfscmd, result := supportedFs[r.Options["fstype"]]
+	if result == false {
+		msg := "Not found mkfs for " + r.Options["fstype"]
+		msg += "\nSupported filesystems found: "
+		validfs := ""
+		for fs := range supportedFs {
+			if validfs != "" {
+				validfs += ", " + fs
+			} else {
+				validfs += fs
+			}
+		}
+		log.WithFields(log.Fields{"name": r.Name,
+			"fstype": r.Options["fstype"]}).Error("Not found ")
+		return volume.Response{Err: msg + validfs}
 	}
 
-	err = d.ops.Create(r.Name, r.Options)
+	err := d.ops.Create(r.Name, r.Options)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
 		return volume.Response{Err: err.Error()}
 	}
 
 	// Handle filesystem creation
-	log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
+	log.WithFields(log.Fields{"name": r.Name,
+		"fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
 
 	dev, err := d.ops.Attach(r.Name, nil)
 	if err != nil {
@@ -245,9 +259,18 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 
 	err = fs.Mkfs(mkfscmd, r.Name, device)
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create filesystem failed, trying to remove the volume ")
+		log.WithFields(log.Fields{"name": r.Name,
+			"error": err}).Error("Create filesystem failed, trying to remove the volume ")
 		err = d.ops.Detach(r.Name, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
+			return volume.Response{Err: err.Error()}
+		}
 		err = d.ops.Remove(r.Name, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Remove volume failed ")
+			return volume.Response{Err: err.Error()}
+		}
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -257,7 +280,8 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: err.Error()}
 	}
 
-	log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Info("Volume and filesystem created ")
+	log.WithFields(log.Fields{"name": r.Name,
+		"fstype": r.Options["fstype"]}).Info("Volume and filesystem created ")
 	return volume.Response{Err: ""}
 }
 

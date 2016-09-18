@@ -70,16 +70,12 @@ func Mkfs(mkfscmd string, label string, device string) error {
 	return nil
 }
 
-// MkfsLookup lookups supported filesystems based on mkfs tools
-func MkfsLookup() string {
+// MkfsLookup finds existent filesystem tools
+func MkfsLookup() map[string]string {
 	mkftools, _ := filepath.Glob("/sbin/mkfs.*")
-	var supportedFs string
-	for _, fs := range mkftools {
-		if supportedFs != "" {
-			supportedFs += ", "+strings.Split(fs, ".")[1]
-		} else {
-			supportedFs += strings.Split(fs, ".")[1]
-		}
+	supportedFs := make(map[string]string)
+	for _, mkfs := range mkftools {
+		supportedFs[strings.Split(mkfs, ".")[1]] = mkfs
 	}
 	return supportedFs
 }
