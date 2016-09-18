@@ -58,7 +58,7 @@ func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) 
 	log.WithFields(log.Fields{"cmd": cmd}).Debug("Running Mock Cmd")
 	switch cmd {
 	case "create":
-		err := createBlockDevice(name)
+		err := createBlockDevice(name, opts)
 		return nil, err
 	case "list":
 		return list()
@@ -119,7 +119,7 @@ func remove(name string) error {
 	return os.Remove(device)
 }
 
-func createBlockDevice(label string) error {
+func createBlockDevice(label string, opts map[string]string) error {
 	backing := getBackingFileName(label)
 	err := createBackingFile(backing)
 	if err != nil {
@@ -138,7 +138,11 @@ func createBlockDevice(label string) error {
 	if err != nil {
 		return err
 	}
-	mkfscmd := fs.MkfsLookup()[fs.FstypeDefault]
+	// Use default fstype if not specified
+	if _, result := opts["fstype"]; result == false {
+		opts["fstype"] = fs.FstypeDefault
+	}
+	mkfscmd := fs.MkfsLookup()[opts["fstype"]]
 	return fs.Mkfs(mkfscmd, label, device)
 }
 
