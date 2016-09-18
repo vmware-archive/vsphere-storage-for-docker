@@ -118,7 +118,8 @@ def commands():
                 '-c': {
                     'help': 'Display selected columns',
                     'choices': ['volume', 'datastore', 'created-by', 'created',
-                                'attached-to', 'policy', 'capacity', 'used', 'fstype'],
+                                'attached-to', 'policy', 'capacity', 'used',
+                                'fstype', 'access', 'attach-as'],
                     'metavar': 'Col1,Col2,...'
                 }
             }
@@ -374,8 +375,8 @@ def ls_dash_c(columns):
 def all_ls_headers():
     """ Return a list of all header for ls -l """
     return ['Volume', 'Datastore', 'Created By VM', 'Created',
-            'Attached To VM', 'Policy', 'Capacity', 'Used', 'Filesystem Type']
-
+            'Attached To VM', 'Policy', 'Capacity', 'Used',
+            'Filesystem Type', 'Access', 'Attach As']
 
 def generate_ls_rows():
     """ Gather all volume metadata into rows that can be used to format a table """
@@ -389,8 +390,11 @@ def generate_ls_rows():
         size_info = get_vmdk_size_info(path)
         created, created_by = get_creation_info(metadata)
         fstype = get_fstype(metadata)
+        access = get_access(metadata)
+        attach_as = get_attach_as(metadata)
         rows.append([name, v['datastore'], created_by, created, attached_to,
-                     policy, size_info['capacity'], size_info['used'], fstype])
+                     policy, size_info['capacity'], size_info['used'],
+                     fstype, access, attach_as])
     return rows
 
 
@@ -411,6 +415,20 @@ def get_attached_to(metadata):
     except:
         return kv.DETACHED
 
+def get_attach_as(metadata):
+    """ Return which mode a volume is attached as based on its metadata """
+    try:
+        return metadata[kv.VOL_OPTS][kv.ATTACH_AS]
+    except:
+        return kv.DEFAULT_ATTACH_AS
+
+
+def get_access(metadata):
+    """ Return the access mode of a volume based on its metadata """
+    try:
+       return metadata[kv.VOL_OPTS][kv.ACCESS]
+    except:
+        return kv.DEFAULT_ACCESS
 
 def get_policy(metadata, path):
     """ Return the policy for a volume given its volume options """
