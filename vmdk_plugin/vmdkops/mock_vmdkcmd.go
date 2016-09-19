@@ -142,7 +142,10 @@ func createBlockDevice(label string, opts map[string]string) error {
 	if _, result := opts["fstype"]; result == false {
 		opts["fstype"] = fs.FstypeDefault
 	}
-	mkfscmd := fs.MkfsLookup()[opts["fstype"]]
+	mkfscmd, result := fs.MkfsLookup()[opts["fstype"]]
+	if result == false {
+		return fmt.Errorf("Not found mkfs for %s", opts["fstype"])
+	}
 	return fs.Mkfs(mkfscmd, label, device)
 }
 
