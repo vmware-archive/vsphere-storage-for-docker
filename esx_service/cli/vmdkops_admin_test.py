@@ -223,7 +223,7 @@ class TestLs(unittest.TestCase):
         volumes = vmdk_utils.get_volumes()
         header = vmdkops_admin.all_ls_headers()
         rows = vmdkops_admin.generate_ls_rows()
-        expected_column_count = 10
+        expected_column_count = 11
         self.assertEqual(expected_column_count, len(header))
         self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
