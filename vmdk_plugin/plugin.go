@@ -247,20 +247,37 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 
 	dev, err := d.ops.Attach(r.Name, nil)
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Attach volume failed ")
+		log.WithFields(log.Fields{"name": r.Name,
+			"error": err}).Error("Attach volume failed, removing the volume ")
+		err = d.ops.Remove(r.Name, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Remove volume failed ")
+			return volume.Response{Err: err.Error()}
+		}
 		return volume.Response{Err: err.Error()}
 	}
 
 	device, err := fs.GetDevicePath(dev)
 	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Could not find attached device ")
+		log.WithFields(log.Fields{"name": r.Name,
+			"error": err}).Error("Could not find attached device, removing the volume ")
+		err = d.ops.Detach(r.Name, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
+			return volume.Response{Err: err.Error()}
+		}
+		err = d.ops.Remove(r.Name, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Remove volume failed ")
+			return volume.Response{Err: err.Error()}
+		}
 		return volume.Response{Err: err.Error()}
 	}
 
 	err = fs.Mkfs(mkfscmd, r.Name, device)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name,
-			"error": err}).Error("Create filesystem failed, trying to remove the volume ")
+			"error": err}).Error("Create filesystem failed, removing the volume ")
 		err = d.ops.Detach(r.Name, nil)
 		if err != nil {
 			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
