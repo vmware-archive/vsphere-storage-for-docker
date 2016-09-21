@@ -119,7 +119,7 @@ def commands():
                     'help': 'Display selected columns',
                     'choices': ['volume', 'datastore', 'created-by', 'created',
                                 'attached-to', 'policy', 'capacity', 'used',
-                                'access', 'attach-as'],
+                                'fstype', 'access', 'attach-as'],
                     'metavar': 'Col1,Col2,...'
                 }
             }
@@ -375,8 +375,8 @@ def ls_dash_c(columns):
 def all_ls_headers():
     """ Return a list of all header for ls -l """
     return ['Volume', 'Datastore', 'Created By VM', 'Created',
-            'Attached To VM', 'Policy', 'Capacity', 'Used', 'Access', 'Attach As']
-
+            'Attached To VM', 'Policy', 'Capacity', 'Used',
+            'Filesystem Type', 'Access', 'Attach As']
 
 def generate_ls_rows():
     """ Gather all volume metadata into rows that can be used to format a table """
@@ -389,11 +389,12 @@ def generate_ls_rows():
         policy = get_policy(metadata, path)
         size_info = get_vmdk_size_info(path)
         created, created_by = get_creation_info(metadata)
+        fstype = get_fstype(metadata)
         access = get_access(metadata)
         attach_as = get_attach_as(metadata)
         rows.append([name, v['datastore'], created_by, created, attached_to,
                      policy, size_info['capacity'], size_info['used'],
-                     access, attach_as])
+                     fstype, access, attach_as])
     return rows
 
 
@@ -439,6 +440,14 @@ def get_policy(metadata, path):
     if vsan_info.is_on_vsan(path):
         return kv.DEFAULT_VSAN_POLICY
     else:
+        return NOT_AVAILABLE
+
+
+def get_fstype(metadata):
+    """ Return the Filesystem Type of the volume based on its metadata """
+    try:
+        return metadata[kv.VOL_OPTS][kv.FILESYSTEM_TYPE]
+    except:
         return NOT_AVAILABLE
 
 

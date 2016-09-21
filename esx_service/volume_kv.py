@@ -79,6 +79,11 @@ ACCESS_READWRITE = 'read-write'
 DEFAULT_ACCESS = ACCESS_READWRITE
 ACCESS_TYPES = [ACCESS_READWRITE, ACCESS_READONLY]
 
+# Filesystem type
+# This option is handled in the volume-plugin at the docker host, and tracked in volume metadata. 
+FILESYSTEM_TYPE = 'fstype'
+DEFAULT_FILESYSTEM_TYPE = ''
+
 # Create a kv store object for this volume identified by vol_path
 # Create the side car or open if it exists.
 def init():

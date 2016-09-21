@@ -24,12 +24,18 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"syscall"
 )
 
 const sysPciDevs = "/sys/bus/pci/devices" // All PCI devices on the host
 const sysPciSlots = "/sys/bus/pci/slots"  // PCI slots on the host
 const pciAddrLen = 10                     // Length of PCI dev addr
+
+// FstypeDefault contains the default FS when not specified by the user
+const FstypeDefault = "ext4"
 
 // VolumeDevSpec - volume spec returned from the server on an attach
 type VolumeDevSpec struct {
@@ -54,10 +60,31 @@ func Mkdir(path string) error {
 	return nil
 }
 
+// Mkfs creates a filesystem at the specified device
+func Mkfs(mkfscmd string, label string, device string) error {	
+	out, err := exec.Command(mkfscmd, "-L", label, device).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Failed to create filesystem on %s: %s. Output = %s",
+			device, err, out)
+	}
+	return nil
+}
+
+// MkfsLookup finds existent filesystem tools
+func MkfsLookup() map[string]string {
+	mkftools, _ := filepath.Glob("/sbin/mkfs.*")
+	supportedFs := make(map[string]string)
+	for _, mkfs := range mkftools {
+		supportedFs[strings.Split(mkfs, ".")[1]] = mkfs
+	}
+	return supportedFs
+}
+
 // Mount the filesystem (`fs`) on the device at the given mount point.
-func Mount(mountpoint string, fs string, device string, isReadOnly bool) error {
+func Mount(mountpoint string, fstype string, device string, isReadOnly bool) error {
 	log.WithFields(log.Fields{
 		"device":     device,
+		"fstype":     fstype,
 		"mountpoint": mountpoint,
 	}).Debug("Calling syscall.Mount() ")
 
@@ -65,7 +92,7 @@ func Mount(mountpoint string, fs string, device string, isReadOnly bool) error {
 	if isReadOnly {
 		flags = syscall.MS_RDONLY
 	}
-	err := syscall.Mount(device, mountpoint, fs, uintptr(flags), "")
+	err := syscall.Mount(device, mountpoint, fstype, uintptr(flags), "")
 	if err != nil {
 		return fmt.Errorf("Failed to mount device %s at %s: %s", device, mountpoint, err)
 	}

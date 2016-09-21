@@ -58,7 +58,7 @@ func (mockCmd MockVmdkCmd) Run(cmd string, name string, opts map[string]string) 
 	log.WithFields(log.Fields{"cmd": cmd}).Debug("Running Mock Cmd")
 	switch cmd {
 	case "create":
-		err := createBlockDevice(name)
+		err := createBlockDevice(name, opts)
 		return nil, err
 	case "list":
 		return list()
@@ -119,7 +119,7 @@ func remove(name string) error {
 	return os.Remove(device)
 }
 
-func createBlockDevice(label string) error {
+func createBlockDevice(label string, opts map[string]string) error {
 	backing := getBackingFileName(label)
 	err := createBackingFile(backing)
 	if err != nil {
@@ -138,7 +138,15 @@ func createBlockDevice(label string) error {
 	if err != nil {
 		return err
 	}
-	return makeFilesystem(device, label)
+	// Use default fstype if not specified
+	if _, result := opts["fstype"]; result == false {
+		opts["fstype"] = fs.FstypeDefault
+	}
+	mkfscmd, result := fs.MkfsLookup()[opts["fstype"]]
+	if result == false {
+		return fmt.Errorf("Not found mkfs for %s", opts["fstype"])
+	}
+	return fs.Mkfs(mkfscmd, label, device)
 }
 
 func getBlockDeviceForName(name string) ([]byte, error) {
@@ -197,15 +205,6 @@ func setupLoopbackDevice(backing string, device string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to setup loopback device node %s for backing file %s: %s. Output = %s",
 			device, backing, err, out)
-	}
-	return nil
-}
-
-func makeFilesystem(device string, label string) error {
-	out, err := exec.Command("mkfs.ext4", "-L", label, device).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Failed to create filesystem on %s: %s. Output = %s",
-			device, err, out)
 	}
 	return nil
 }

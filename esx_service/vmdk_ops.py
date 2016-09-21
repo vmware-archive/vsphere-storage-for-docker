@@ -83,7 +83,6 @@ PYTHON64_VERSION = 50659824
 # External tools used by the plugin.
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
-MKFS_CMD = BIN_LOC + "/mkfs.ext4 -qF -L "
 VMDK_CREATE_CMD = "/sbin/vmkfstools"
 VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
@@ -161,7 +160,8 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}):
         removeVMDK(vmdk_path)
         return err(msg)
 
-    return formatVmdk(vmdk_path, vol_name)
+    backing, needs_cleanup = get_backing_device(vmdk_path)
+    cleanup_backing_device(backing, needs_cleanup)
 
 
 def make_create_cmd(opts, vmdk_path):
@@ -205,10 +205,11 @@ def validate_opts(opts, vmdk_path):
      * vsan-policy-name - The name of an existing policy to use
      * diskformat - The allocation format of allocated disk
     """
-    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT, kv.ATTACH_AS, kv.ACCESS]
+    valid_opts = [kv.SIZE, kv.VSAN_POLICY_NAME, kv.DISK_ALLOCATION_FORMAT,
+                kv.ATTACH_AS, kv.ACCESS, kv.FILESYSTEM_TYPE]
     defaults = [kv.DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY,\
                 kv.DEFAULT_ALLOCATION_FORMAT, kv.DEFAULT_ATTACH_AS,\
-                kv.DEFAULT_ACCESS]
+                kv.DEFAULT_ACCESS, kv.DEFAULT_FILESYSTEM_TYPE]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -344,33 +345,6 @@ def cleanup_backing_device(backing, cleanup_device):
     	return cleanup_vsan_devfs_path(backing)
     return True
 
-def formatVmdk(vmdk_path, vol_name):
-    # Get backing for given vmdk path. This is the backing
-    # device that will be formatted.
-    backing, needs_cleanup = get_backing_device(vmdk_path)
-
-    if backing is None:
-        logging.warning("Failed to format %s.", vmdk_path)
-        return err("Failed to format %s." % vmdk_path)
-
-    # Format it as ext4.
-    cmd = "{0} {1} {2}".format(MKFS_CMD, vol_name, backing)
-    rc, out = RunCommand(cmd)
-
-    # clean up any resources backing file might have created
-    # during get_backing_device function call.
-    cleanup_backing_device(backing, needs_cleanup)
-
-    if rc != 0:
-        logging.warning("Failed to format %s - %s", vmdk_path, out)
-        if removeVMDK(vmdk_path) == None:
-            return err("Failed to format %s." % vmdk_path)
-        else:
-            return err(
-                "Unable to format %s and unable to delete volume. Please delete it manually."
-                % vmdk_path)
-    return None
-
 # Return volume ingo
 def vol_info(vol_meta, vol_size_info, datastore):
     vinfo = {CREATED_BY_VM : vol_meta[kv.CREATED_BY],
@@ -385,8 +359,10 @@ def vol_info(vol_meta, vol_size_info, datastore):
     if kv.ATTACHED_VM_NAME in vol_meta:
        vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
     if kv.VOL_OPTS in vol_meta:
+       if kv.FILESYSTEM_TYPE in vol_meta[kv.VOL_OPTS]:
+          vinfo[kv.FILESYSTEM_TYPE] = vol_meta[kv.VOL_OPTS][kv.FILESYSTEM_TYPE]   
        if kv.VSAN_POLICY_NAME in vol_meta[kv.VOL_OPTS]:
-          vinfo[kv.kv.VSAN_POLICY_NAME] = vol_meta[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
+          vinfo[kv.VSAN_POLICY_NAME] = vol_meta[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
        if kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
           vinfo[kv.DISK_ALLOCATION_FORMAT] = vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
        else:

@@ -18,15 +18,16 @@ package vmdkops_test
 // Does not communicate over VMCI
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
-	"testing"
 )
 
 func TestCommands(t *testing.T) {
 	ops := vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}}
 	name := "myVolume"
-	opts := map[string]string{"size": "2gb", "format": "none"}
+	opts := map[string]string{"size": "2gb"}
 	if assert.Nil(t, ops.Create(name, opts)) {
 
 		opts = map[string]string{}
@@ -36,7 +37,12 @@ func TestCommands(t *testing.T) {
 		assert.Nil(t, ops.Remove(name, opts))
 	}
 	if assert.Nil(t, ops.Create("otherVolume",
-		map[string]string{"size": "1gb", "format": "ext4"})) {
+		map[string]string{"size": "1gb", "fstype": "ext3"})) {
 		assert.Nil(t, ops.Remove("otherVolume", opts))
+	}
+
+	if assert.Nil(t, ops.Create("anotherVolume",
+		map[string]string{"size": "1gb", "fstype": "ext2"})) {
+		assert.Nil(t, ops.Remove("anotherVolume", opts))
 	}
 }
