@@ -62,3 +62,12 @@ docker volume create --driver=vmdk --name=MyVolume -o access=read-write -o diskf
 ```
 
 The access mode determines if the volume is modifiable by containers in a VM. The access mode allows to first create a volume with write access and initialize it with binary images, libraries (for exmple), and subsequently change the access to "read-only" (via the admin CLI). Thereby, creating content sharable by all containers in a VM.
+
+### fstype
+```
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=xfs
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=ext4 (default)
+```
+
+Specifies which filesystem will be created on the new volume. The volume-plugin will search for a existing /sbin/mkfs.**fstype** on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs).
+
