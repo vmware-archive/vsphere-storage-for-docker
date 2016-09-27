@@ -69,5 +69,5 @@ docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=xfs
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=ext4 (default)
 ```
 
-Specifies which filesystem will be created on the new volume. The volume-plugin will search for a existing /sbin/mkfs.**fstype** on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs).
+Specifies which filesystem will be created on the new volume. The volume-plugin will search for a existing /sbin/mkfs.**fstype** on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. 
 
