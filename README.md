@@ -142,7 +142,7 @@ Guest Operating System:
 - RedHat and CentOS
 
 # Known Issues
-1. Operations are serialized. Thus, if a large volume is created, other operations will block till the format is complete. [#35](/../../issues/35)
+1. Operations are serialized. Thus, when large volume is formatted, all plugin operations on the same Docker engine will be serialized behind it. [#35](/../../issues/35)
 2. VM level snapshots do not include docker data volumes. [#60](/../../issues/60)
 3. Exiting bug in Docker around cleanup if mounting of volume fails when -w command is passed. [Docker Issue #22564] (https://github.com/docker/docker/issues/22564)
 4. VIB, RPM and Deb files are not signed.[#273](/../../issues/273)
