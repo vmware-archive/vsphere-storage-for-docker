@@ -21,6 +21,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"testing"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
@@ -29,7 +31,6 @@ import (
 	"github.com/docker/engine-api/types/strslice"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"golang.org/x/net/context"
-	"testing"
 )
 
 const (

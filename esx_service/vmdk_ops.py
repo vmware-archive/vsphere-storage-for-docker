@@ -45,6 +45,7 @@ import traceback
 import threading
 import time
 from ctypes import *
+from weakref import WeakValueDictionary
 
 from vmware import vsi
 
@@ -98,6 +99,10 @@ DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
 MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
 MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 
+# Error codes
+VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
+ECONNABORTED = 103 # Error on non privileged client
+
 # Volume data returned on Get request
 CAPACITY = 'capacity'
 SIZE = 'size'
@@ -117,6 +122,10 @@ si = None
 
 # VMCI library used to communicate with clients
 lib = None
+
+# For managing resource locks in getLock.
+managerLock = threading.Lock() # Serialize access to rsrcLocks
+rsrcLocks = WeakValueDictionary() # WeakValueDictionary to track and reuse locks while they're alive
 
 # Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
 # Returns the integer return value and the stdout str on success and integer return value and
@@ -1123,22 +1132,100 @@ def load_vmci():
    else:
        lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
 
+def getLock(lockname):
+    '''
+    Create or return a existing lock identified by lockname.
+    '''
+    global rsrcLocks
+
+    with managerLock:
+        try:
+            lock = rsrcLocks[lockname]
+            logging.debug("getLock(): return existing lock %s", lockname)
+        except KeyError as e:
+            lock = threading.Lock()
+            rsrcLocks[lockname] = lock
+            logging.debug("getLock(): return new lock %s", lockname)
+    return lock
+
+def execRequestThread(client_socket, cartel, request):
+    '''
+    Execute requests in a thread context with a per volume locking.
+    '''
+    # Before we start, block to allow main thread or other running threads to advance.
+    # https://docs.python.org/2/faq/library.html#none-of-my-threads-seem-to-run-why
+    time.sleep(0.001)
+    try:
+        # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
+        vmm_leader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel))
+        group_info = vsi.get("/vm/%s/vmmGroupInfo" % vmm_leader)
+        vm_name = group_info["displayName"]
+        cfg_path = group_info["cfgPath"]
+        uuid = group_info["uuid"]
+        # pyVmomi expects uuid like this one: 564dac12-b1a0-f735-0df3-bceb00b30340
+        # to get it from uuid in VSI vms/<id>/vmmGroup, we use the following format:
+        UUID_FORMAT = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}"
+        vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split())
+
+        try:
+            req = json.loads(request.decode('utf-8'))
+        except ValueError as e:
+            ret_string = {u'Error': "Failed to parse json '%s'." % request}
+            response = lib.vmci_reply(client_socket, c_char_p(ret_string.encode()))
+            errno = get_errno()
+            logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
+            if response == VMCI_ERROR:
+                logging.warning("vmci_reply returned error %s (errno=%d)",
+                                os.strerror(errno), errno)
+        else:
+            details = req["details"]
+            opts = details["Opts"] if "Opts" in details else {}
+
+            # Lock name defaults to volume name, or socket# if request has no volume defined
+            lockname = details["Name"] if len(details["Name"]) > 0 else "socket{0}".format(client_socket)
+            # Set thread name to vm_name-lockname
+            threading.currentThread().setName("{0}-{1}".format(vm_name, lockname))
+
+            # Get a resource lock
+            rsrcLock = getLock(lockname)
+
+            logging.debug("Trying to aquire lock: %s", lockname)
+            with rsrcLock:
+                logging.debug("Aquired lock: %s", lockname)
+
+                ret = executeRequest(vm_uuid=vm_uuid,
+                                    vm_name=vm_name,
+                                    config_path=cfg_path,
+                                    cmd=req["cmd"],
+                                    full_vol_name=details["Name"],
+                                    opts=opts)
+                logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], ret)
+
+                ret_string = json.dumps(ret)
+                response = lib.vmci_reply(client_socket, c_char_p(ret_string.encode()))
+            logging.debug("Released lock: %s", lockname)
+
+            errno = get_errno()
+            logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
+            if response == VMCI_ERROR:
+                logging.warning("vmci_reply returned error %s (errno=%d)",
+                                os.strerror(errno), errno)
+    except Exception as e:
+        logging.exception("message")
+
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests(port):
-    VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
-    ECONNABORTED = 103 # Error on non privileged client
-
+    skip_count = MAX_SKIP_COUNT  # retries for vmci_get_one_op failures
     bsize = MAX_JSON_SIZE
     txt = create_string_buffer(bsize)
-
     cartel = c_int32()
     sock = lib.vmci_init(c_uint(port))
+
     if sock == VMCI_ERROR:
         errno = get_errno()
         raise OSError("Failed to initialize vSocket listener: %s (errno=%d)" \
                         %  (os.strerror(errno), errno))
 
-    skip_count = MAX_SKIP_COUNT  # retries for vmci_get_one_op failures
     while True:
         c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
         logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
@@ -1160,43 +1247,11 @@ def handleVmciRequests(port):
         else:
             skip_count = MAX_SKIP_COUNT  # reset the counter, just in case
 
-        # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
-        vmm_leader = vsi.get("/userworld/cartel/%s/vmmLeader" %
-                            str(cartel.value))
-        group_info = vsi.get("/vm/%s/vmmGroupInfo" % vmm_leader)
-
-        vm_name = group_info["displayName"]
-        cfg_path = group_info["cfgPath"]
-        uuid = group_info["uuid"]
-        # pyVmomi expects uuid like this one: 564dac12-b1a0-f735-0df3-bceb00b30340
-        # to get it from uuid in VSI vms/<id>/vmmGroup, we use the following format:
-        UUID_FORMAT = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}"
-        vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split())
-
-        try:
-            req = json.loads(txt.value.decode('utf-8'))
-        except ValueError as e:
-            ret = {u'Error': "Failed to parse json '%s'." % txt.value}
-        else:
-            details = req["details"]
-            opts = details["Opts"] if "Opts" in details else {}
-            threading.currentThread().setName(vm_name)
-            ret = executeRequest(vm_uuid=vm_uuid,
-                                 vm_name=vm_name,
-                                 config_path=cfg_path,
-                                 cmd=req["cmd"],
-                                 full_vol_name=details["Name"],
-                                 opts=opts)
-            logging.info("executeRequest '%s' completed with ret=%s",
-                         req["cmd"], ret)
-
-        ret_string = json.dumps(ret)
-        response = lib.vmci_reply(c, c_char_p(ret_string.encode()))
-        errno = get_errno()
-        logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
-        if response == VMCI_ERROR:
-            logging.warning("vmci_reply returned error %s (errno=%d)",
-                            os.strerror(errno), errno)
+        client_socket = c # Bind to avoid race conditions.
+        # Fire a thread to execute the request
+        threading.Thread(
+            target=execRequestThread,
+            args=(client_socket, cartel.value, txt.value)).start()
 
     lib.close(sock)  # close listening socket when the loop is over
 
