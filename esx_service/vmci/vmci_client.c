@@ -53,7 +53,7 @@ typedef struct be_request {
 
 #define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
 #define MAX_CLIENT_PORT 1023 // Last privileged port
-#define START_CLIENT_PORT 1000 // Where to start client port
+#define START_CLIENT_PORT 100 // Where to start client port
 
 // Retry entire range on bind failures
 #define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
