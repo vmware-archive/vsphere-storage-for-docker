@@ -4,7 +4,7 @@
     
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//</loc>
-     <lastmod>2016-08-28</lastmod>
+     <lastmod>2016-09-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -13,13 +13,13 @@
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//features/vcenter/</loc>
-     <lastmod>2016-08-28</lastmod>
+     <lastmod>2016-09-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//features/vsan-policy/</loc>
-     <lastmod>2016-08-28</lastmod>
+     <lastmod>2016-09-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -29,13 +29,13 @@
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/install/</loc>
-     <lastmod>2016-08-28</lastmod>
+     <lastmod>2016-09-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/admin-cli/</loc>
-     <lastmod>2016-08-28</lastmod>
+     <lastmod>2016-09-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -56,7 +56,7 @@
     
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/faq/</loc>
-     <lastmod>2016-08-28</lastmod>
+     <lastmod>2016-09-29</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
