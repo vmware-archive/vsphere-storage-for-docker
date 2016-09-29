@@ -61,7 +61,7 @@ func Mkdir(path string) error {
 }
 
 // Mkfs creates a filesystem at the specified device
-func Mkfs(mkfscmd string, label string, device string) error {	
+func Mkfs(mkfscmd string, label string, device string) error {
 	out, err := exec.Command(mkfscmd, "-L", label, device).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to create filesystem on %s: %s. Output = %s",
