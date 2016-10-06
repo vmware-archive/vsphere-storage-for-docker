@@ -20,8 +20,8 @@
 # PKG_VERSION is either set externally as part of a build off a tag or
 # suffixed with a sha1 of the most recent commit to the prefix of the
 # most recent tag. Tagged builds use the externally defined version,
-# developer builds use a sha1 of the most recent commit.
-
+# developer builds use last tagged release and sha1 of the most recent commit.
+# Format: <last tagged release>.<last commit hash> 
 PKG_VERSION ?= $(shell \
 	       git describe --tags `git rev-list --tags --max-count=1` \
 	       ).$(shell \
