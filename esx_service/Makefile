@@ -26,8 +26,19 @@ PYLINT := /usr/bin/pylint
 # build places binaries here:
 BIN := ../build
 
-# VIB version is either set from outside, or includes git commit SHA
-PKG_VERSION ?= 0.1.TP-pre.$(shell git log --pretty=format:'%h' -n 1)
+# PKG_VERSION is either set externally as part of a build off a tag or
+# suffixed with a sha1 of the most recent commit to the prefix of the
+# most recent tag. Tagged builds use the externally defined version,
+# developer builds use last tagged release and sha1 of the most recent commit.
+# Format: <last tagged release>.<last commit hash> 
+PKG_VERSION ?= $(shell \
+	       git describe --tags `git rev-list --tags --max-count=1` \
+	       ).$(shell \
+	       git log --pretty=format:'%h' -n 1)
+
+# Release version needed for vib
+RELEASE_VERSION ?= 0.0.1
+
 VIB := vmware-esx-vmdkops-$(PKG_VERSION).vib
 OFFLINE_DEPOT := vmware-esx-vmdkops-$(PKG_VERSION).zip
 VIB_BIN  = $(BIN)/$(VIB)
@@ -98,12 +109,12 @@ $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)
 	@echo Staging in $(PAYLOAD)
 	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
 	@chmod -R a+w $(PAYLOAD)
-	@cp $(TO_WDIR) $(WDIR)
 	@cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
 	@cp $(TO_ESX_PY)  $(VMDKOPS_PY)
 	@cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	@cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
 	@cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
+	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
 
 
