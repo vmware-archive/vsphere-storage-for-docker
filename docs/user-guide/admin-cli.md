@@ -135,6 +135,31 @@ enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issue
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm some-policy
 Successfully removed policy: some-policy
 ```
+# Set
+Modify attribute settings on a given volume. The volume is identified by its name and datastore, 
+for example if the volume name is `container-vol` then the volume is specified as "container-vol@datastore-name".
+The attributes to set/modify are specified as a comma separated list as "<attr1>=<value>, <attr2>=<value>....". For example,
+a command line would look like this.
+
+```
+$ vmdkops-admin set --volume=<volume@datastore> --options="<attr1>=<value>, <attr2>=<value>, ..."
+```
+
+The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
+thats currently using the volume. For the present, only the "access" attribute is supported to be modified via this command, and
+can be set to either of the allowed values "read-only" or "read-write".
+
+Set command allows the admin to enforce a volume to be read-only. 
+This removes the need to depend on [Docker's run command options for volume access](https://docs.docker.com/engine/tutorials/dockervolumes/) (``` docker run -v /vol:/vol:ro```). 
+
+A sample use case:
+
+1. Create a volume, attach to a container (default is read-write).
+2. Master the volume with libraries commonly used by the target application (or a cluster of apps that form a docker app bundle).
+3. Use admin CLI to flip the access attribute to read-only.
+4. Make those libraries available to the containers in the app bundle and they can all share the same libraries.
+
+The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.
 
 # Status
 
