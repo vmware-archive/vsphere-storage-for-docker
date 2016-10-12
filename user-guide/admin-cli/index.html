@@ -137,6 +137,9 @@
                     <li><a class="toctree-l4" href="#remove">Remove</a></li>
                 
             
+                <li class="toctree-l3"><a href="#set">Set</a></li>
+                
+            
                 <li class="toctree-l3"><a href="#status">Status</a></li>
                 
             
@@ -192,6 +195,37 @@
     </li>
 <li>
           
+            <li>
+    <ul class="subnav">
+    <li><span>Blog</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>2016</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>September</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
         </ul>
       </div>
       &nbsp;
@@ -245,6 +279,7 @@
 <li><a href="#remove">Remove</a></li>
 </ul>
 </li>
+<li><a href="#set">Set</a></li>
 <li><a href="#status">Status</a></li>
 </ul>
 </div>
@@ -353,6 +388,27 @@ enhancement tracked <a href="https://github.com/vmware/docker-volume-vsphere/iss
 Successfully removed policy: some-policy
 </code></pre>
 
+<h1 id="set">Set<a class="headerlink" href="#set" title="Permanent link">&para;</a></h1>
+<p>Modify attribute settings on a given volume. The volume is identified by its name and datastore, 
+for example if the volume name is <code>container-vol</code> then the volume is specified as &ldquo;container-vol@datastore-name&rdquo;.
+The attributes to set/modify are specified as a comma separated list as &ldquo;<attr1>=<value>, <attr2>=<value>....&rdquo;. For example,
+a command line would look like this.</p>
+<pre><code>$ vmdkops-admin set --volume=&lt;volume@datastore&gt; --options=&quot;&lt;attr1&gt;=&lt;value&gt;, &lt;attr2&gt;=&lt;value&gt;, ...&quot;
+</code></pre>
+
+<p>The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
+thats currently using the volume. For the present, only the &ldquo;access&rdquo; attribute is supported to be modified via this command, and
+can be set to either of the allowed values &ldquo;read-only&rdquo; or &ldquo;read-write&rdquo;.</p>
+<p>Set command allows the admin to enforce a volume to be read-only. 
+This removes the need to depend on <a href="https://docs.docker.com/engine/tutorials/dockervolumes/">Docker&rsquo;s run command options for volume access</a> (<code>docker run -v /vol:/vol:ro</code>). </p>
+<p>A sample use case:</p>
+<ol>
+<li>Create a volume, attach to a container (default is read-write).</li>
+<li>Master the volume with libraries commonly used by the target application (or a cluster of apps that form a docker app bundle).</li>
+<li>Use admin CLI to flip the access attribute to read-only.</li>
+<li>Make those libraries available to the containers in the app bundle and they can all share the same libraries.</li>
+</ol>
+<p>The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.</p>
 <h1 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h1>
 <p>Show config and run-time information about the service.</p>
 <pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
