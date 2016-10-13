@@ -158,7 +158,7 @@ Guest Operating System:
 ### Internal
 * [VMware Internal Slack] (https://vmware.slack.com/archives/docker-volume-vsphere) 
 
-# External Blog entries
+# Blogs
 
 - Cormac Hogan
     - Overview
