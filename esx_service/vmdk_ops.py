@@ -1034,12 +1034,14 @@ def set_vol_opts(name, options):
         kv.ACCESS : kv.ACCESS_TYPES,
         kv.ATTACH_AS : kv.ATTACH_AS_TYPES
     }
+
     invalid = frozenset(opts.keys()).difference(valid_opts.keys())
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
                + 'Options that can be edited: ' \
                + '{0}'.format(list(valid_opts))
         raise ValidationError(msg)
+
     has_invalid_opt_value = False   
     for key in opts.keys():
         if key in valid_opts:
