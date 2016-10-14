@@ -235,66 +235,61 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: msg + validfs}
 	}
 
-	err := d.ops.Create(r.Name, r.Options)
-	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Create volume failed ")
-		return volume.Response{Err: err.Error()}
+	errCreate := d.ops.Create(r.Name, r.Options)
+	if errCreate != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": errCreate}).Error("Create volume failed ")
+		return volume.Response{Err: errCreate.Error()}
 	}
 
 	// Handle filesystem creation
 	log.WithFields(log.Fields{"name": r.Name,
 		"fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
 
-	dev, err := d.ops.Attach(r.Name, nil)
-	if err != nil {
+	dev, errAttach := d.ops.Attach(r.Name, nil)
+	if errAttach != nil {
 		log.WithFields(log.Fields{"name": r.Name,
-			"error": err}).Error("Attach volume failed, removing the volume ")
-		err = d.ops.Remove(r.Name, nil)
-		if err != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Remove volume failed ")
-			return volume.Response{Err: err.Error()}
+			"error": errAttach}).Error("Attach volume failed, removing the volume ")
+		errRemove := d.ops.Remove(r.Name, nil)
+		if errRemove != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
 		}
-		return volume.Response{Err: err.Error()}
+		return volume.Response{Err: errAttach.Error()}
 	}
 
-	device, err := fs.GetDevicePath(dev)
-	if err != nil {
+	device, errGetDevicePath := fs.GetDevicePath(dev)
+	if errGetDevicePath != nil {
 		log.WithFields(log.Fields{"name": r.Name,
-			"error": err}).Error("Could not find attached device, removing the volume ")
-		err = d.ops.Detach(r.Name, nil)
-		if err != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
-			return volume.Response{Err: err.Error()}
+			"error": errGetDevicePath}).Error("Could not find attached device, removing the volume ")
+		errDetach := d.ops.Detach(r.Name, nil)
+		if errDetach != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": errDetach}).Warning("Detach volume failed ")
 		}
-		err = d.ops.Remove(r.Name, nil)
-		if err != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Remove volume failed ")
-			return volume.Response{Err: err.Error()}
+		errRemove := d.ops.Remove(r.Name, nil)
+		if errRemove != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
 		}
-		return volume.Response{Err: err.Error()}
+		return volume.Response{Err: errGetDevicePath.Error()}
 	}
 
-	err = fs.Mkfs(mkfscmd, r.Name, device)
-	if err != nil {
+	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
+	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name,
-			"error": err}).Error("Create filesystem failed, removing the volume ")
-		err = d.ops.Detach(r.Name, nil)
-		if err != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
-			return volume.Response{Err: err.Error()}
+			"error": errMkfs}).Error("Create filesystem failed, removing the volume ")
+		errDetach := d.ops.Detach(r.Name, nil)
+		if errDetach != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": errDetach}).Warning("Detach volume failed ")
 		}
-		err = d.ops.Remove(r.Name, nil)
-		if err != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Remove volume failed ")
-			return volume.Response{Err: err.Error()}
+		errRemove := d.ops.Remove(r.Name, nil)
+		if errRemove != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
 		}
-		return volume.Response{Err: err.Error()}
+		return volume.Response{Err: errMkfs.Error()}
 	}
 
-	err = d.ops.Detach(r.Name, nil)
-	if err != nil {
-		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Detach volume failed ")
-		return volume.Response{Err: err.Error()}
+	errDetach := d.ops.Detach(r.Name, nil)
+	if errDetach != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": errDetach}).Error("Detach volume failed ")
+		return volume.Response{Err: errDetach.Error()}
 	}
 
 	log.WithFields(log.Fields{"name": r.Name,
