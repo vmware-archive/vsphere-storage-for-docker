@@ -187,8 +187,9 @@ def commands():
                     'func': tenant_create,
                     'help': 'Create a new tenant',
                     'args': {
-                        'name': {
+                        '--name': {
                             'help': 'The name of the tenant',
+                            'required': True
                         },
                         # a shortcut allowing to add VMs on Tenant Create
                         '--vm-list': {
@@ -203,7 +204,7 @@ def commands():
                     'help': 'Delete a tenant',
                     'args': {
                         'name': {
-                        'help': 'The name of the tenant'
+                            'help': 'The name of the tenant',
                       },
                       '--remove-volumes': {
                         'help': 'BE CAREFUL -  Removes this tenant volumes when removing a tenant'
@@ -282,6 +283,15 @@ def commands():
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                                },
+                                '--volume-maxcount': {
+                                    'help': 
+                                    'Maximum number of volumes to create on the datastore for this tenant'
+                                },
+                                '--volume-totalsize': {
+                                    'help': 
+                                    'Maximum total size of all volume that can be created on the datastore for this tenant',
+                                    'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 }
                             }
                         },
@@ -309,6 +319,15 @@ def commands():
                                 },
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
+                                    'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                                },
+                                '--volume-maxcount': {
+                                    'help': 
+                                    'Maximum number of volumes to create on the datastore for this tenant'
+                                },
+                                '--volume-totalsize': {
+                                    'help': 
+                                    'Maximum total size of all volume that can be created on the datastore for this tenant',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 }
                             }
