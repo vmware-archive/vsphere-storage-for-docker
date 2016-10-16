@@ -11,7 +11,7 @@ All output from the admin cli defaults to human readable formats. It will be mad
 The majority of testing will be automated. We can ensure that parsing calls the right callbacks with
 the right information by generating representative input and mocking the callbacks to assert that
 the right information is parsed and delivered correctly. Additionally, and specifically for testing
-access control, we can create access controk definition (tenants and privileges) 
+access control, we can create access control definition (tenants and privileges) 
 and then test that they act as expected by invoking vmdk_ops commmands on behalf of a fake VM.
 Unit
 tests for stateless logic can be fed mock input representing data from sidecar and the filesystem.

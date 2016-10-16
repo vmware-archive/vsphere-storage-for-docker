@@ -99,7 +99,7 @@ def commands():
              one level of subcommands in this specification. Each subcommand can contain the same
              attributes as top level commands: (func, help, args, cmds). These attributes have
              identical usage to the top-level keys, except they only apply when the subcommand is
-             part of the command. For example the `--matches-vm` argument only applies to `tenant
+             part of the command. For example the `--vm-list` argument only applies to `tenant
              create` or `tenant set` commands. It will be invalid in any other context.
 
              Note that the last subcommand in a chain is the one where the callback function is
@@ -123,7 +123,7 @@ def commands():
                     'metavar': 'Col1,Col2,...'
                 },
                 '--tenant' : {
-                    'help': 'Displays only VMs for a given tenant'
+                    'help': 'Displays VMs for a given tenant'
                 }
             }
         },
@@ -207,7 +207,7 @@ def commands():
                             'help': 'The name of the tenant',
                       },
                       '--remove-volumes': {
-                        'help': 'BE CAREFUL -  Removes this tenant volumes when removing a tenant'
+                        'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant'
                       }
                     }
                 },
@@ -310,12 +310,12 @@ def commands():
                                 '--add-rights': {
                                     'help': 'Datastore access Permissions granted',
                                     'choices': ['create', 'delete', 'mount', 'all'],
-                                    'metavar': 'create,delete,mount'
+                                    'metavar': 'create,delete,mount,all'
                                 }, 
                                 '--rm-rights': {
-                                    'help': 'Datastore access Permissions granted',
+                                    'help': 'Datastore access Permissions removed',
                                     'choices': ['create', 'delete', 'mount', 'all'],
-                                    'metavar': 'create,delete,mount'
+                                    'metavar': 'create,delete,mount,all'
                                 },
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
@@ -429,7 +429,7 @@ def make_list_of_values(allowed):
     """
     Take a list of allowed values for an option and return a function that can be
     used to typecheck a string of given values and ensure they match the allowed
-    values.  This is required to support options that take comma seperated lists
+    values.  This is required to support options that take comma separated lists
     such as --rights in 'tenant set --rights=create,delete,mount'
     """
 
@@ -459,7 +459,7 @@ def ls(args):
         header = all_ls_headers()
         rows = generate_ls_rows()
     if args.tenant:
-        print("TBD: print only VMS for the tenant ", args.tenant)  # TODO
+        print("TBD: print volumes for the given tenant ", args.tenant)  # TODO
     print(cli_table.create(header, rows))
 
 
