@@ -108,12 +108,13 @@ TO_ESX_INITD := $(INIT_SCRIPT)
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)
 	@echo Staging in $(PAYLOAD)
 	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
-	@chmod -R a+w $(PAYLOAD)
+	@chmod -R u+w $(PAYLOAD)
 	@cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
 	@cp $(TO_ESX_PY)  $(VMDKOPS_PY)
 	@cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	@cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
 	@cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
+	@chmod -R u+x $(VMDKOPS_BIN)
 	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
 
@@ -149,12 +150,16 @@ SCP := $(DEBUG) scp -r -q -o StrictHostKeyChecking=no
 TMP_LOC    := $(shell echo /tmp/vmdk_ops_unittest$$RANDOM)
 TEST_FILES := $(shell find . -name '*_test.py')
 
+# By default, we run all *_test.py. Use TEST_PATTERN to narrow the test set, e.g.
+# e.g. make test-esx TEST_PATTERN='*admin*'
+TEST_PATTERN := '*'
+
 test-esx:
 	@echo Copying files to $(ESX):$(TMP_LOC) and running .py unittests ...
 	$(SSH) root@$(ESX) 'mkdir -p $(TMP_LOC)'
 	$(SCP) $(TEST_FILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)
 	$(SSH) root@$(ESX) \
-		'for i in $(TMP_LOC)/*_test.py ; \
+		'for i in $(TMP_LOC)/$(TEST_PATTERN)_test.py ; \
 				do echo Running unit tests in $$i... ; python $$i ; \
 				status=$$((status + $$?)) ;\
 		done; \
