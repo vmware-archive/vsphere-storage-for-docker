@@ -397,8 +397,15 @@ def getVMDK(vmdk_path, vol_name, datastore):
         return err("Volume {0} not found (file: {1})".format(vol_name, vmdk_path))
     # Return volume info - volume policy, size, allocated capacity, allocation
     # type, creat-by, create time.
-    return vol_info(kv.getAll(vmdk_path), kv.get_vol_info(vmdk_path), datastore)
-
+    try:
+        result = vol_info(kv.getAll(vmdk_path),
+                          kv.get_vol_info(vmdk_path),
+                          datastore)
+    except:
+        msg = "Failed to get disk details for %s" % vmdk_path
+        logging.error(msg)
+        result = msg
+    return result
 
 def listVMDK(vm_datastore):
     """
