@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"syscall"
+	"time"
 	"unsafe"
 
 	log "github.com/Sirupsen/logrus"
@@ -40,7 +41,7 @@ type EsxVmdkCmd struct{}
 
 const (
 	commBackendName string = "vsocket"
-	maxRetryCount          = 8
+	maxRetryCount          = 5
 )
 
 // A request to be passed to ESX service
@@ -86,7 +87,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	ans := (*C.be_answer)(C.malloc(C.sizeof_struct_be_answer))
 	defer C.free(unsafe.Pointer(ans))
 
-	for i := 0; i < maxRetryCount; i++ {
+	for i := 0; i <= maxRetryCount; i++ {
 		_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
 		if err != nil {
 			var errno syscall.Errno
@@ -96,6 +97,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 			// Still below maximum number of retries, log and continue
 			if i < maxRetryCount {
 				log.Warnf(msg + " Retrying...")
+				time.Sleep(time.Second * 1)
 				continue
 			}
 
