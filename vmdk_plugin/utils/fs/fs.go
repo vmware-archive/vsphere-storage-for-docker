@@ -37,6 +37,9 @@ const pciAddrLen = 10                     // Length of PCI dev addr
 // FstypeDefault contains the default FS when not specified by the user
 const FstypeDefault = "ext4"
 
+// BinSearchPath contains search paths for host binaries
+var BinSearchPath = []string{"/bin", "/sbin", "/usr/bin", "/usr/sbin"}
+
 // VolumeDevSpec - volume spec returned from the server on an attach
 type VolumeDevSpec struct {
 	Unit                    string
@@ -62,7 +65,17 @@ func Mkdir(path string) error {
 
 // Mkfs creates a filesystem at the specified device
 func Mkfs(mkfscmd string, label string, device string) error {
-	out, err := exec.Command(mkfscmd, "-L", label, device).CombinedOutput()
+	var err error
+	var out []byte
+
+	// Workaround older versions of e2fsprogs, issue 629.
+	// If mkfscmd is of an ext* filesystem use -F flag
+	// to avoid having mkfs command to expect user confirmation.
+	if strings.Split(mkfscmd, ".")[1][0:3] == "ext" {
+		out, err = exec.Command(mkfscmd, "-F", "-L", label, device).CombinedOutput()
+	} else {
+		out, err = exec.Command(mkfscmd, "-L", label, device).CombinedOutput()
+	}
 	if err != nil {
 		return fmt.Errorf("Failed to create filesystem on %s: %s. Output = %s",
 			device, err, out)
@@ -72,10 +85,13 @@ func Mkfs(mkfscmd string, label string, device string) error {
 
 // MkfsLookup finds existent filesystem tools
 func MkfsLookup() map[string]string {
-	mkftools, _ := filepath.Glob("/sbin/mkfs.*")
 	supportedFs := make(map[string]string)
-	for _, mkfs := range mkftools {
-		supportedFs[strings.Split(mkfs, ".")[1]] = mkfs
+
+	for _, sp := range BinSearchPath {
+		mkftools, _ := filepath.Glob(sp + "/mkfs.*")
+		for _, mkfs := range mkftools {
+			supportedFs[strings.Split(mkfs, ".")[1]] = mkfs
+		}
 	}
 	return supportedFs
 }
