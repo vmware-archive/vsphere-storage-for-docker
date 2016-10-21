@@ -11,7 +11,9 @@ All output from the admin cli defaults to human readable formats. It will be mad
 The majority of testing will be automated. We can ensure that parsing calls the right callbacks with
 the right information by generating representative input and mocking the callbacks to assert that
 the right information is parsed and delivered correctly. Additionally, and specifically for testing
-roles, we can create roles and then test that they act as expected by calling `role get`. Unit
+access control, we can create access control definition (tenants and privileges) 
+and then test that they act as expected by invoking vmdk_ops commmands on behalf of a fake VM.
+Unit
 tests for stateless logic can be fed mock input representing data from sidecar and the filesystem.
 These techniques should be sufficient enough to provide confidence in the implementation.
 
@@ -67,9 +69,12 @@ Examples:
 
 Note that on volume creation from docker, a policy name will be passed with a `-o` option.
 
-# role
-Create, delete, configure and show access control settings. Access control settings are assigned via a
-VM naming convention, although a specific convention is not required. An example will help clarify
+# tenant
+Create, delete, configure and show access control settings for a Tenant.
+A tenant is defined as a collection of VMs, so access control settings are assigned via a
+VM naming convention.
+*** The rest of section below needs rework as it represents obsolete "role" design ***
+An example will help clarify
 this. Let's say that an administrator wants to allow any `Test` VM to create, delete and mount
 volumes, and only allow creation of volumes of a maximum size of 2TB. The admin would first create a
 `Test` role specifying these permissions, as well as a glob indicating the vm naming convention that

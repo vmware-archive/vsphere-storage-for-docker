@@ -94,20 +94,20 @@ def commands():
                          to most unix programs.
 
     * cmds - A dictionary of subcommands where the key is the next word in the command line string.
-             For example, in `vmdkops_admin.py role create`, `role` is the command, and `create` is
+             For example, in `vmdkops_admin.py tenant create`, `tenant` is the command, and `create` is
              the subcommand. Subcommands can have further subcommands, but currently there is only
              one level of subcommands in this specification. Each subcommand can contain the same
              attributes as top level commands: (func, help, args, cmds). These attributes have
              identical usage to the top-level keys, except they only apply when the subcommand is
-             part of the command. For example the `--matches-vm` argument only applies to `role
-             create` or `role set` commands. It will be invalid in any other context.
+             part of the command. For example the `--vm-list` argument only applies to `tenant
+             create` or `tenant set` commands. It will be invalid in any other context.
 
              Note that the last subcommand in a chain is the one where the callback function is
-             defined. For example, `role create` has a callback, but if a user runs the program
-             like: `./vmdkops_admin.py role` they will get the following error:
+             defined. For example, `tenant create` has a callback, but if a user runs the program
+             like: `./vmdkops_admin.py tenant` they will get the following error:
              ```
-             usage: vmdkops_admin.py role [-h] {rm,create,set,ls,get} ...
-             vmdkops_admin.py role: error: too few arguments
+             usage: vmdkops_admin.py tenant [-h] {rm,create,set,ls,get} ...
+             vmdkops_admin.py tenant: error: too few arguments
              ```
     """
     return {
@@ -121,6 +121,9 @@ def commands():
                                 'attached-to', 'policy', 'capacity', 'used',
                                 'fstype', 'access', 'attach-as'],
                     'metavar': 'Col1,Col2,...'
+                },
+                '--tenant' : {
+                    'help': 'Displays VMs for a given tenant'
                 }
             }
         },
@@ -172,83 +175,186 @@ def commands():
                 }
             }
         },
-        'role': {
+        #
+        # tenant {create, rm , ls} - manipulates tenants
+        # tenant vm {add, rm, ls}  - manipulates VMs for a tenant
+        # tenant access {add, set, rm, ls} - manipulates datastore access right for a tenant
+        #
+        'tenant': {
             'help': 'Administer and monitor volume access control',
             'cmds': {
                 'create': {
-                    'func': role_create,
-                    'help': 'Create a new role',
+                    'func': tenant_create,
+                    'help': 'Create a new tenant',
                     'args': {
                         '--name': {
-                            'help': 'The name of the role',
+                            'help': 'The name of the tenant',
                             'required': True
                         },
-                        '--matches-vm': {
-                            'help':
-                            'Apply this role to VMS with names matching Glob',
-                            'metavar': 'Glob1,Glob2,...',
-                            'required': True,
+                        # a shortcut allowing to add VMs on Tenant Create
+                        '--vm-list': {
+                            'help': 'A list of VM names to place in this Tenant',
+                            'metavar': 'vm1, vm2, ...',
                             'type': comma_seperated_string
-                        },
-                        '--rights': {
-                            'help': 'Permissions granted to matching VMs',
-                            'required': True,
-                            'choices': ['create', 'delete', 'mount'],
-                            'metavar': 'create,delete,mount'
-                        },
-                        '--volume-maxsize': {
-                            'help':
-                            'Maximum size of the volume that can be created',
-                            'required': True,
-                            'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                         }
                     }
                 },
                 'rm': {
-                    'func': role_rm,
-                    'help': 'Delete a role',
+                    'func': tenant_rm,
+                    'help': 'Delete a tenant',
                     'args': {
                         'name': {
-                            'help': 'The name of the role'
-                        }
+                            'help': 'The name of the tenant',
+                      },
+                      '--remove-volumes': {
+                        'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant'
+                      }
                     }
                 },
                 'ls': {
-                    'func': role_ls,
-                    'help': 'List roles and the VMs they are applied to'
+                    'func': tenant_ls,
+                    'help': 'List tenants and the VMs they are applied to'
                 },
-                'set': {
-                    'func': role_set,
-                    'help': 'Modify an existing role',
-                    'args': {
-                        '--name': {
-                            'help': 'The name of the role',
-                            'required': True
+                'vm': {
+                    'help': 'Add, removes and lists VMs in a tenant',
+                    'cmds': {
+                        'add': {
+                            'help': 'Add a VM(s)  to a tenant',
+                            'func': tenant_vm_add,
+                            'args': {
+                                '--name': {
+                                    'help': "Tenant to add the VM to",
+                                    'required': True
+                                },
+                                '--vm-list': {
+                                    'help': "A list of VM names to add to this Tenant",
+                                    'type': comma_seperated_string,
+                                    'required': True
+                                }
+                            }
                         },
-                        '--matches-vm': {
-                            'help':
-                            'Apply this role to VMS with names matching Glob',
-                            'metavar': 'Glob1,Glob2,...',
-                            'type': comma_seperated_string
+                        'rm': {
+                            'help': 'Remove VM(s) from a tenant',
+                            'func': tenant_vm_rm,
+                            'args': {
+                                '--name': {
+                                    'help': "Tenant to remove the VM from",
+                                    'required': True
+                                },
+                                '--vm-list': {
+                                    'help': "A list of VM names to rm from this Tenant",
+                                    'type': comma_seperated_string,
+                                    'required': True
+                                }
+                            }
                         },
-                        '--rights': {
-                            'help': 'Permissions granted to matching VMs',
-                            'choices': ['create', 'delete', 'mount'],
-                            'metavar': 'create,delete,mount'
-                        },
-                        '--volume-maxsize': {
-                            'help':
-                            'Maximum size of the volume that can be created',
-                            'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                        'ls': {
+                            'help': "list VMs in a tenant",
+                            'func': tenant_vm_ls,
+                            'args': {
+                                '--name': {
+                                    'help': "Tenant to list the VMs for",
+                                    'required': False
+                                }
+                            }
                         }
                     }
                 },
-                'get': {
-                    'func': role_get,
-                    'help': 'Get all roles and permissions for a given VM',
-                    'args': {
-                        'vm_name': {
-                            'help': 'The name of the VM'
+                'access': {
+                    'help': 'Add or remove Datastore access and quotas for a tenant',
+                    'cmds': {
+                        'add': {
+                            'func': tenant_access_add,
+                            'help': 'Add a datastore access for a tenant',
+                            'args': {
+                                '--name': {
+                                    'help': 'The name of the tenant',
+                                    'required': True
+                                },
+                                '--datastore': {
+                                    'help': "Datastore which access is controlled",
+                                    'required': True
+                                },
+                                '--rights': {
+                                    'help': 'Datastore access Permissions granted',
+                                    'choices': ['create', 'delete', 'mount', 'all'],
+                                    'metavar': 'create,delete,mount'
+                                },
+                                '--volume-maxsize': {
+                                    'help': 'Maximum size of the volume that can be created',
+                                    'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                                },
+                                '--volume-maxcount': {
+                                    'help': 
+                                    'Maximum number of volumes to create on the datastore for this tenant'
+                                },
+                                '--volume-totalsize': {
+                                    'help': 
+                                    'Maximum total size of all volume that can be created on the datastore for this tenant',
+                                    'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                                }
+                            }
+                        },
+                        'set': {
+                            'func': tenant_access_set,
+                            'help': 'Modify datastore access for a tenant',
+                            'args': {
+                                '--name': {
+                                    'help': 'Tenant name',
+                                    'required': True
+                                },
+                                '--datastore': {
+                                    'help': "Datastore name",
+                                    'required': True
+                                },
+                                '--add-rights': {
+                                    'help': 'Datastore access Permissions granted',
+                                    'choices': ['create', 'delete', 'mount', 'all'],
+                                    'metavar': 'create,delete,mount,all'
+                                }, 
+                                '--rm-rights': {
+                                    'help': 'Datastore access Permissions removed',
+                                    'choices': ['create', 'delete', 'mount', 'all'],
+                                    'metavar': 'create,delete,mount,all'
+                                },
+                                '--volume-maxsize': {
+                                    'help': 'Maximum size of the volume that can be created',
+                                    'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                                },
+                                '--volume-maxcount': {
+                                    'help': 
+                                    'Maximum number of volumes to create on the datastore for this tenant'
+                                },
+                                '--volume-totalsize': {
+                                    'help': 
+                                    'Maximum total size of all volume that can be created on the datastore for this tenant',
+                                    'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
+                                }
+                            }
+                        },
+                        'rm': {
+                            'func': tenant_access_rm,
+                            'help': "Remove all access to a datastore for a tenant",
+                            'args': {
+                                '--name': {
+                                    'help': 'The name of the tenant',
+                                    'required': True
+                                },
+                                '--datastore': {
+                                    'help': "Datstore which access is controlled",
+                                    'required': True
+                                }
+                            }
+                        },
+                        'ls': {
+                            'func': tenant_access_ls,
+                            'help': 'List all access info for a tenant',
+                            'args': {
+                                '--name': {
+                                    'help': 'The name of the tenant',
+                                    'required': True
+                                }
+                            }
                         }
                     }
                 }
@@ -323,8 +429,8 @@ def make_list_of_values(allowed):
     """
     Take a list of allowed values for an option and return a function that can be
     used to typecheck a string of given values and ensure they match the allowed
-    values.  This is required to support options that take comma seperated lists
-    such as --rights in 'role set --rights=create,delete,mount'
+    values.  This is required to support options that take comma separated lists
+    such as --rights in 'tenant set --rights=create,delete,mount'
     """
 
     def list_of_values(string):
@@ -352,6 +458,8 @@ def ls(args):
     else:
         header = all_ls_headers()
         rows = generate_ls_rows()
+    if args.tenant:
+        print("TBD: print volumes for the given tenant ", args.tenant)  # TODO
     print(cli_table.create(header, rows))
 
 
@@ -618,26 +726,35 @@ def get_version():
 
 NOT_IMPLEMENTED = "Not implemented"
 
-
-def role_create(args):
+def tenant_create(args):
     print(NOT_IMPLEMENTED)
 
-
-def role_rm(args):
+def tenant_rm(args):
     print(NOT_IMPLEMENTED)
 
-
-def role_ls(args):
+def tenant_ls(args):
     print(NOT_IMPLEMENTED)
 
-
-def role_set(args):
+def tenant_vm_add(args):
     print(NOT_IMPLEMENTED)
 
-
-def role_get(args):
+def tenant_vm_rm(args):
     print(NOT_IMPLEMENTED)
 
+def tenant_vm_ls(args):
+    print(NOT_IMPLEMENTED)
+
+def tenant_access_add(args):
+    print(NOT_IMPLEMENTED)
+
+def tenant_access_set(args):
+    print(NOT_IMPLEMENTED)
+
+def tenant_access_rm(args):
+    print(NOT_IMPLEMENTED)
+
+def tenant_access_ls(args):
+    print(NOT_IMPLEMENTED)
 
 if __name__ == "__main__":
     main()
