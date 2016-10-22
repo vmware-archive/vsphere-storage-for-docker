@@ -23,6 +23,8 @@ from ctypes import \
 import json
 import logging
 import sys
+import errno
+import time
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -59,6 +61,10 @@ KV_ALIGN = 4096
 
 # Flag to track the version of Python on the platform
 is_64bits = False
+
+# Number of times and sleep time to retry on IOError EBUSY
+EBUSY_RETRY_COUNT = 8
+EBUSY_RETRY_SLEEP = 0.5
 
 class disk_info(Structure):
    _fields_ = [('size', c_uint64),
@@ -238,12 +244,21 @@ def load(volpath):
     meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
                                                 DVOL_KEY.encode())
 
-    try:
-       with open(meta_file, "r") as fh:
-          kv_str = fh.read()
-    except:
-        logging.exception("Failed to access %s", meta_file)
-        return None
+    retry_count = 0
+    while True:
+        try:
+            with open(meta_file, "r") as fh:
+                kv_str = fh.read()
+            break
+        except Exception as open_error:
+            # This is a workaround to the timing/locking with metadata files issue #626
+            if open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT:
+                logging.warning("Meta file %s busy for load(), retrying...", meta_file)
+                retry_count += 1
+                time.sleep(EBUSY_RETRY_TIME)
+            else:
+                logging.exception("Failed to access %s", meta_file)
+                return None
 
     try:
        return json.loads(kv_str)
@@ -259,12 +274,21 @@ def save(volpath, kv_dict):
 
     kv_str = json.dumps(kv_dict)
 
-    try:
-       with open(meta_file, "w") as fh:
-          fh.write(align_str(kv_str, KV_ALIGN))
-    except:
-        logging.exception("Failed to save meta-data for %s", volpath);
-        return False
+    retry_count = 0
+    while True:
+        try:
+            with open(meta_file, "w") as fh:
+                fh.write(align_str(kv_str, KV_ALIGN))
+            break
+        except Exception as open_error:
+            # This is a workaround to the timing/locking with metadata files issue #626
+            if open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT:
+                logging.warning("Meta file %s busy for save(), retrying...", meta_file)
+                retry_count += 1
+                time.sleep(EBUSY_RETRY_SLEEP)
+            else:
+                logging.exception("Failed to save meta-data for %s", volpath);
+                return False
 
     return True
 
