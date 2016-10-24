@@ -76,6 +76,9 @@ import volume_kv as kv
 import vmdk_utils
 import vsan_policy
 import vsan_info
+import auth
+import sqlite3
+import convert
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -407,13 +410,13 @@ def getVMDK(vmdk_path, vol_name, datastore):
         result = msg
     return result
 
-def listVMDK(vm_datastore):
+def listVMDK(vm_datastore, tenant):
     """
     Returns a list of volume names (note: may be an empty list).
     Each volume name is returned as either `volume@datastore`, or just `volume`
     for volumes on vm_datastore
     """
-    vmdks = vmdk_utils.get_volumes()
+    vmdks = vmdk_utils.get_volumes(tenant)
     # build  fully qualified vol name for each volume found
     return [{u'Name': get_full_vol_name(x['filename'], x['datastore'], vm_datastore),
              u'Attributes': {}} \
@@ -457,10 +460,16 @@ def detachVMDK(vmdk_path, vm_uuid):
 
 
 # Check existence (and creates if needed) the path for docker volume VMDKs
-def get_vol_path(datastore):
-    # The folder for Docker volumes is created on <datastore>/DOCK_VOLS_DIR
-    path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
-
+def get_vol_path(datastore, tenant_name=None):
+    # If the command is NOT running under a tenant, the folder for Docker 
+    # volumes is created on <datastore>/DOCK_VOLS_DIR
+    # If the command is running under a tenant, the foler for Dock volume
+    # is created on <datastore>/DOCK_VOLS_DIR/tenant_name
+    if tenant_name:
+        path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR, tenant_name)
+    else:    
+        path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
+     
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
@@ -546,10 +555,13 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     Returns None (if all OK) or error string
     """
-
     vm_datastore = get_datastore_name(config_path)
+    error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, vm_datastore, cmd, opts)
+    if error_info:
+        return err(error_info)
+
     if cmd == "list":
-        return listVMDK(vm_datastore)
+        return listVMDK(vm_datastore, tenant_name)
 
     try:
         vol_name, datastore = parse_vol_name(full_vol_name)
@@ -564,8 +576,8 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
                    % (datastore, ", ".join(known_datastores()), vm_datastore))
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
-    path = get_vol_path(datastore)
-
+    path = get_vol_path(datastore, tenant_name)
+    logging.debug("executeRequest %s %s", tenant_name, path)
     if path is None:
         return err("Failed to initialize volume path {0}".format(path))
 
@@ -575,6 +587,14 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         response = getVMDK(vmdk_path, vol_name, datastore)
     elif cmd == "create":
         response = createVMDK(vmdk_path, vm_name, vol_name, opts)
+        # create succeed, insert infomation of this volume to volumes table
+        if not response:
+            if tenant_uuid:
+                vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
+                auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
+            else:
+                logging.warning(" VM %s does not belong to any tenant", vm_name)
+                                      
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
     elif cmd == "attach":
@@ -591,7 +611,6 @@ def connectLocal():
 	connect and do stuff on local machine
 	'''
     global si  #
-
     # Connect to localhost as dcui
     # User "dcui" is a local Admin that does not lose permissions
     # when the host is in lockdown mode.
@@ -604,8 +623,15 @@ def connectLocal():
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()
     reqCtx["realUser"] = 'dvolplug'
+    logging.debug("Connect to localhost si:%s", si)
     return si
 
+def get_datastore_url(datastore):
+    global si
+    if not si:
+        connectLocal()
+    res = [d.info.url for d in si.content.rootFolder.childEntity[0].datastore if d.info.name == datastore]
+    return res[0]
 
 def findDeviceByPath(vmdk_path, vm):
     logging.debug("findDeviceByPath: Looking for device {0}".format(vmdk_path))
@@ -617,14 +643,23 @@ def findDeviceByPath(vmdk_path, vm):
         # The filename identifies the virtual disk by name and can be used
         # to match with the given volume name.
         # Filename format is as follows:
-        #   "[<datastore name>] <parent-directory>/<vmdk-descriptor-name>"
+        #   "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
+        logging.debug("d.backing.fileName %s", d.backing.fileName)
         backing_disk = d.backing.fileName.split(" ")[1]
+
+        # datastore='[datastore name]'
+        datastore = d.backing.fileName.split(" ")[0] 
+        datastore = datastore[1:-1]
 
         # Construct the parent dir and vmdk name, resolving
         # links if any.
         dvol_dir = os.path.dirname(vmdk_path)
-        real_vol_dir = os.path.basename(os.path.realpath(dvol_dir))
+        datastore_url = get_datastore_url(datastore)
+        datastore_prefix = os.path.realpath(datastore_url) + '/'
+        real_vol_dir = os.path.realpath(dvol_dir).replace(datastore_prefix, "")
         virtual_disk = os.path.join(real_vol_dir, os.path.basename(vmdk_path))
+        logging.debug("dvol_dir=%s datastore_prefix=%s real_vol_dir=%s", dvol_dir, datastore_prefix,real_vol_dir)
+        logging.debug("backing_disk=%s virtual_disk=%s", backing_disk, virtual_disk)
         if virtual_disk == backing_disk:
             logging.debug("findDeviceByPath: MATCH: %s", backing_disk)
             return d

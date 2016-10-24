@@ -489,7 +489,7 @@ def all_ls_headers():
 def generate_ls_rows():
     """ Gather all volume metadata into rows that can be used to format a table """
     rows = []
-    for v in vmdk_utils.get_volumes():
+    for v in vmdk_utils.get_volumes(None):
         path = os.path.join(v['path'], v['filename'])
         name = vmdk_utils.strip_vmdk_extension(v['filename'])
         metadata = get_metadata(path)
