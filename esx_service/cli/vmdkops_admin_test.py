@@ -175,7 +175,7 @@ class TestLs(unittest.TestCase):
 
     def get_testvols(self):
         return [x
-                for x in vmdk_utils.get_volumes()
+                for x in vmdk_utils.get_volumes(None)
                 if x['filename'].startswith('testvol')]
 
     def test_ls_helpers(self):
@@ -187,9 +187,9 @@ class TestLs(unittest.TestCase):
             self.assertNotEqual(None, metadata)
 
     def test_ls_no_args(self):
-        volumes = vmdk_utils.get_volumes()
+        volumes = vmdk_utils.get_volumes(None)
         header = vmdkops_admin.all_ls_headers()
-        rows = vmdkops_admin.generate_ls_rows()
+        rows = vmdkops_admin.generate_ls_rows(None)
         expected_column_count = 11
         self.assertEqual(expected_column_count, len(header))
         self.assertEqual(len(volumes), len(rows))
@@ -236,7 +236,7 @@ class TestSet(unittest.TestCase):
 
     def get_testvols(self):
         return [x
-                for x in vmdk_utils.get_volumes()
+                for x in vmdk_utils.get_volumes(None)
                 if x['filename'].startswith('testvol')]
 
     def test_set_attach_as(self):

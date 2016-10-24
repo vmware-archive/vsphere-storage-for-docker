@@ -148,14 +148,14 @@ SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
 SCP := $(DEBUG) scp -r -q -o StrictHostKeyChecking=no
 
 TMP_LOC    := $(shell echo /tmp/vmdk_ops_unittest$$RANDOM)
-TEST_FILES := $(shell find . -name '*_test.py')
+TEST_FILES := $(shell find . -name '*_test.py') 
 
 # By default, we run all *_test.py. Use TEST_PATTERN to narrow the test set, e.g.
 # e.g. make test-esx TEST_PATTERN='*admin*'
 TEST_PATTERN := '*'
 
 test-esx:
-	@echo Copying files to $(ESX):$(TMP_LOC) and running .py unittests ...
+	@echo "Copying files to $(ESX):$(TMP_LOC) and running .py unittests ..."
 	$(SSH) root@$(ESX) 'mkdir -p $(TMP_LOC)'
 	$(SCP) $(TEST_FILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)
 	$(SSH) root@$(ESX) \
