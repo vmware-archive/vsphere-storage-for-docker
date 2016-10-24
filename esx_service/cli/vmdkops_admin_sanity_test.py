@@ -35,6 +35,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         # Don't print errors about stty using a bad ioctl (we aren't attached to
         # a tty here)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
+        output = output.decode('utf-8')
         lines = output.split('\n')
         divider_columns = lines[1].split()
         expected_column_count = 11
@@ -47,6 +48,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         # Don't print errors about stty using a bad ioctl (we aren't attached to
         # a tty here)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
+        output = output.decode('utf-8')
         lines = output.split('\n')
         headers = lines[0].split()
         self.assertEqual(['Policy', 'Name', 'Policy', 'Content', 'Active'],
@@ -57,6 +59,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
     def test_status(self):
         cmd = '{0} status'.format(ADMIN_CLI)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)
+        output = output.decode('utf-8')
         # Remove the last "line" which is just the empty string from the split
         lines = output.split('\n')[:-1]
         self.assertEqual(len(lines), 7)

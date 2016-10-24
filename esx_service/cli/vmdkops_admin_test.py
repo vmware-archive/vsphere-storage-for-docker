@@ -279,7 +279,7 @@ class TestSet(unittest.TestCase):
             attach_as_opt = random.choice(kv.ATTACH_AS_TYPES)
             # generate string like "testvol0@datastore1"
             vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
-            
+
             attach_as_arg = 'attach-as={}'.format(attach_as_opt)
             set_ok = vmdk_ops.set_vol_opts(vol_arg, attach_as_arg)
             self.assertTrue(set_ok)
@@ -290,7 +290,7 @@ class TestSet(unittest.TestCase):
 
             curr_attach_as = vmdkops_admin.get_attach_as(metadata)
             self.assertEqual(attach_as_opt, curr_attach_as)
-    
+
     def test_set_access(self):
         volumes = self.get_testvols()
         self.assertEqual(len(volumes), self.vol_count)
@@ -308,9 +308,12 @@ class TestSet(unittest.TestCase):
 
             curr_access = vmdkops_admin.get_access(metadata)
             self.assertEqual(access_opt, curr_access)
-    
-        
 
+class TestStatus(unittest.TestCase):
+    """ Test status functionality """
+    def test_status(self):
+        ok = vmdkops_admin.status(None)
+        self.assertEqual(ok, None)
 
 if __name__ == '__main__':
     kv.init()
