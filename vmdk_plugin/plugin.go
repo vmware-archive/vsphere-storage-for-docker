@@ -361,7 +361,15 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 		isReadOnly = true
 	}
 
-	mountpoint, err := d.mountVolume(r.Name, status["fstype"].(string), isReadOnly)
+	fstype, exists := status["fstype"].(string)
+
+	if !exists {
+		msg := fmt.Sprintf("Got invalid filesystem type for %s, attempting mount with type ext2.", r.Name)
+		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
+		// Fail back to a default version that we can try with.
+		fstype = "ext2"
+	}
+	mountpoint, err := d.mountVolume(r.Name, fstype, isReadOnly)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
