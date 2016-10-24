@@ -176,7 +176,6 @@ function cleanesx {
         $SSH $TARGET "$RM_RF $TMP_LOC"
         $SSH $TARGET "$RM_RF $VMDK_OPS_UNITTEST"
     done
-    rm -f /etc/vmware/vmdkops/log_config.json 
 }
 
 # cleanvm

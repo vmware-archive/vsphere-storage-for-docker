@@ -62,7 +62,7 @@ LOG_CONFIG_DEFAULT = {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": LOG_FILE,
             "formatter": "standard",
-            "level": LOG_LEVEL_DEFAULT,
+            "level": "INFO",
             "maxBytes": LOG_MAX_BYTES,
             "backupCount": LOG_MAX_BACKUPS,
             "encoding": "utf8",
@@ -71,7 +71,7 @@ LOG_CONFIG_DEFAULT = {
     "loggers": {
         "": {
             "handlers": ["rotate_file"],
-            "level": LOG_LEVEL_DEFAULT,
+            "level": "INFO",
         },
     }
 }
