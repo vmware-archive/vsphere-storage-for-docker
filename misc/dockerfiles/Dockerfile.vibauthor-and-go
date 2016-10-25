@@ -1,11 +1,11 @@
 # This docker file is published using the kerneltime account to cnastorage org.
 # To use other account with access to the org update the CI/CD yaml file.
-# If any changes are to be made contact cna-storage@vmware.com 
+# If any changes are to be made contact cna-storage@vmware.com
 # to publish the updates to docker hub.
 # This is published to docker hub for 2 reasons
 # 1. Drone cannot build this image and then use it without forking
-#    a separate repo and adding dependencies between dockerfile 
-#    and the docker-volume-vsphere repo. 
+#    a separate repo and adding dependencies between dockerfile
+#    and the docker-volume-vsphere repo.
 # 2. Others outside the project can find this useful.
 
 
@@ -47,3 +47,7 @@ ENV PATH=$PATH:/usr/local/go/bin:/go/bin \
 
 RUN go get -u github.com/FiloSottile/gvt && \
     go get -u github.com/golang/lint/golint
+
+RUN curl --silent --location https://rpm.nodesource.com/setup_4.x | bash - && \
+    yum -y install nodejs && \
+    npm install -g grunt

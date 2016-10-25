@@ -16,13 +16,13 @@
 #   - convenience: redirects targets to ./vmdk_plugin so 'make'
 #                  can be run from the top
 #   - drone invariant: defines deb/rpm/build/testasroot targets so drone.yml
-#                   can be kept as-is 
+#                   can be kept as-is
 
 TARGETS := all \
 	deploy-all deploy-esx deploy-vm deploy-vm-test deploy\
 	test-all test-vm test-esx testremote testasroot\
-	clean-all clean clean-vm clean-esx \
-	build-all build dockerbuild \
+	clean-all clean clean-vm clean-esx clean-ui \
+	build-all build dockerbuild build-ui \
 	deb rpm package gvt documentation
 
 # default target
@@ -30,4 +30,5 @@ default: build-all
 
 # redirect all
 $(TARGETS):
+	$(MAKE) --directory=ui $@
 	$(MAKE) --directory=vmdk_plugin $@
