@@ -201,7 +201,6 @@ def get_vm_uuid_by_name(vm_name):
         vmdk_ops.connectLocal()
     try:
         vm = [d for d in vmdk_ops.si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
-        print vm
         return vm[0].config.uuid
     except:
         return None

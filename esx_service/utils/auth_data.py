@@ -658,7 +658,7 @@ class AuthorizationDataManager:
                 vmdk_path = os.path.join(vmdk['path'], "{0}".format(vmdk['filename']))
                 if not dir_path:
                     dir_path = vmdk['path']
-                print("path=%s filename=%s", vmdk['path'], vmdk['filename'])    
+                logging.debug("path=%s filename=%s", vmdk['path'], vmdk['filename'])    
                 logging.debug("Deleting volume path%s", vmdk_path)
                 err = vmdk_ops.removeVMDK(vmdk_path)
                 if err:
@@ -691,7 +691,6 @@ class AuthorizationDataManager:
 
         """
         logging.debug("remove_tenant: tenant_id%s, remove_volumes=%d", tenant_id, remove_volumes)
-        print ("remove_tenant: tenant_id%s, remove_volumes=%d", tenant_id, remove_volumes)
         if remove_volumes:
             error_info = self._remove_volumes_for_tenant(tenant_id)
             if error_info:
