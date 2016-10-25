@@ -791,32 +791,21 @@ def tenant_create(args):
     error_info, vms = generate_tuple_from_vm_list(args.vm_list)
     if error_info:
         return operation_fail(error_info)
-    #if error_info:
-    #    print error_info
-    #    return error_info
-    
+      
     name = args.name 
     description = "" 
     default_datastore ="default_ds" 
     default_privileges =  {}
     privileges = []
+
     auth.connect_auth_db()
     error_info, tenant = auth._auth_mgr.create_tenant(name, description, default_datastore, default_privileges, vms, privileges)
-
-    # if error_info:
-    #     print error_info
-    #     return error_info
+    
     if error_info:
         return operation_fail(error_info)
  
 def tenant_rm(args):
     """ Handle tenant rm command """
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-    
-    # if error_info:
-    #     print error_info
-    #     return error_info
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
@@ -827,9 +816,6 @@ def tenant_rm(args):
             remove_volumes = True
 
     error_info = auth._auth_mgr.remove_tenant(tenant.id, remove_volumes)
-    # if error_info:
-    #     print error_info
-    #     return error_info
     if error_info:
         return operation_fail(error_info)
 
@@ -838,9 +824,6 @@ def tenant_ls(args):
     header = tenant_ls_headers()
     auth.connect_auth_db()
     error_info, tenant_list = auth._auth_mgr.list_tenants()
-    # if error_info:
-    #     print error_info
-    #     return error_info
     if error_info:
         return operation_fail(error_info)
 
@@ -850,17 +833,8 @@ def tenant_ls(args):
 def tenant_vm_add(args):
     """ Handle tenant vm add command """
     error_info, vms = generate_tuple_from_vm_list(args.vm_list)
-    # if error_info:
-    #     print error_info
-    #     return error_info
     if error_info:
         return operation_fail(error_info)
-
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-    # if error_info:
-    #     print error_info
-    #     return error_info
 
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
@@ -868,47 +842,31 @@ def tenant_vm_add(args):
     
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
 
     
     error_info = tenant.add_vms(auth._auth_mgr.conn, vms)
-    # if error_info:
-    #     print error_info
-    #     return error_info
+
     if error_info:
         return operation_fail(error_info)
   
 def tenant_vm_rm(args):
     """ Handle tenant vm rm command """
     error_info, vms = generate_tuple_from_vm_list(args.vm_list)
-    # if error_info:
-    #     print error_info
-    #     return error_info
+    
     if error_info:
         return operation_fail(error_info)
-
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-    # if error_info:
-    #     print error_info
-    #     return error_info
-
+    
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
     
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
    
     error_info = tenant.remove_vms(auth._auth_mgr.conn, vms)
-    # if error_info:
-    #     print error_info
-    #     return error_info
+
     if error_info:
         return operation_fail(error_info)
 
@@ -931,19 +889,12 @@ def generate_tenant_vm_ls_rows(vms):
 
 def tenant_vm_ls(args):
     """ Handle tenant vm ls command """
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-    # if error_info:
-    #     print error_info
-    #     return error_info
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
     
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
    
     header = tenant_vm_ls_headers()
@@ -1000,25 +951,18 @@ def tenant_access_add(args):
     # Need to change shcema and corresponding APIs if we need to
     # supoort this
 
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
 
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
 
     privileges = generate_privileges(args)
     print privileges
     error_info = tenant.set_datastore_access_privileges(auth._auth_mgr.conn, [privileges])
-    
-    # if error_info:
-    #     print error_info
-    #     return error_info
+      
     if error_info:
         return operation_fail(error_info)
 
@@ -1061,25 +1005,18 @@ def tenant_access_set(args):
     # Need to change shcema and corresponding APIs if we need to
     # supoort this
 
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
 
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
 
     privileges = [d for d in tenant.privileges if d[auth_data_const.COL_DATASTORE] == args.datastore]
     
     if not privileges:
         error_info = "No privileges exist for ({0}, {1})".format(args.name, args.datastore)
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
     
     privileges_dict = generate_privileges_dict(privileges[0])
@@ -1087,29 +1024,17 @@ def tenant_access_set(args):
     
     error_info = tenant.set_datastore_access_privileges(auth._auth_mgr.conn, [privileges_dict])
 
-    # if error_info:
-    #     print error_info
-    #     return error_info
     if error_info:
         return operation_fail(error_info)
        
 def tenant_access_rm(args):
     """ Handle tenant access rm command """
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-    # if not tenant:
-    #     error_info = "Tenant {0} does not exist".format(args.name)
-    #     print error_info
-    #     return error_info
-
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
 
     error_info = tenant.remove_datastore_access_privileges(auth._auth_mgr.conn, args.datastore)
     if error_info:
-        # print error_info
-        # return error_info
         return operation_fail(error_info)
     
 def tenant_access_ls_headers():
@@ -1135,12 +1060,6 @@ def generate_tenant_access_ls_rows(privileges):
 
 def tenant_access_ls(args):
     """ Handle tenant access ls command """
-    # auth.connect_auth_db()
-    # error_info, tenant = auth._auth_mgr.get_tenant(args.name)
-    # if not tenant:
-    #     error_info = "Tenant {0} does not exist".format(args.name)
-    #     print error_info
-    #     return error_info
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
