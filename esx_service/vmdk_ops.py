@@ -1210,8 +1210,17 @@ def execRequestThread(client_socket, cartel, request):
             if response == VMCI_ERROR:
                 logging.warning("vmci_reply returned error %s (errno=%d)",
                                 os.strerror(errno), errno)
-    except Exception as e:
-        logging.exception("message")
+    except Exception as ex_thr:
+        logging.exception("Unhandled Exception:")
+
+        ret = err("Server returned an error: {0}".format(repr(ex_thr)))
+        ret_string = json.dumps(ret)
+        response = lib.vmci_reply(client_socket, c_char_p(ret_string.encode()))
+        errno = get_errno()
+        logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
+        if response == VMCI_ERROR:
+            logging.warning("vmci_reply returned error %s (errno=%d)",
+                            os.strerror(errno), errno)
 
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests(port):
