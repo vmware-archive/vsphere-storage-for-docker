@@ -62,14 +62,18 @@ BIN_LOC  = os.path.join(TOP_DIR, "bin")
 LIB_LOC  = os.path.join(TOP_DIR, "lib")
 LIB_LOC64 = os.path.join(TOP_DIR, "lib64")
 PY_LOC  = os.path.join(TOP_DIR, "Python")
+PY2_LOC = os.path.join(PY_LOC, "2")
 
 # We won't accept names longer than that
 MAX_VOL_NAME_LEN = 100
 MAX_DS_NAME_LEN  = 100
 
-# vmdkops python utils are in PY_LOC, so add to path.
+# vmdkops python utils are in PY_LOC, so insert to path ahead of other stuff
 sys.path.insert(0, PY_LOC)
 
+# if we are on Python 2, add py2-only stuff as a fallback
+if sys.version_info.major == 2:
+    sys.path.append(PY2_LOC)
 
 import log_config
 import volume_kv as kv
