@@ -869,10 +869,6 @@ def tenant_ls(args):
 
 def tenant_vm_add(args):
     """ Handle tenant vm add command """
-    error_info, vms = generate_tuple_from_vm_list(args.vm_list)
-    if error_info:
-        return operation_fail(error_info)
-
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
@@ -881,7 +877,10 @@ def tenant_vm_add(args):
         error_info = "Tenant {0} does not exist".format(args.name)
         return operation_fail(error_info)
 
-    
+    error_info, vms = generate_tuple_from_vm_list(args.vm_list)
+    if error_info:
+        return operation_fail(error_info)
+ 
     error_info = tenant.add_vms(auth._auth_mgr.conn, vms)
 
     if error_info:
@@ -891,11 +890,6 @@ def tenant_vm_add(args):
   
 def tenant_vm_rm(args):
     """ Handle tenant vm rm command """
-    error_info, vms = generate_tuple_from_vm_list(args.vm_list)
-    
-    if error_info:
-        return operation_fail(error_info)
-    
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
@@ -903,7 +897,12 @@ def tenant_vm_rm(args):
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
         return operation_fail(error_info)
-   
+
+    error_info, vms = generate_tuple_from_vm_list(args.vm_list)
+    
+    if error_info:
+        return operation_fail(error_info)
+      
     error_info = tenant.remove_vms(auth._auth_mgr.conn, vms)
 
     if error_info:
