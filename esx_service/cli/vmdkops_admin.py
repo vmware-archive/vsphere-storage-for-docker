@@ -699,7 +699,9 @@ def get_service_status():
         if output[2] == "not":
             return NOT_RUNNING_STATUS
 
-        pid = output[3].split("=")[1]
+        pidstr = output[3]
+        pidstr = pidstr.decode('utf-8')
+        pid = pidstr.split("=")[1]
         return ("Running", pid)
     except subprocess.CalledProcessError:
         return NOT_RUNNING_STATUS
@@ -710,7 +712,7 @@ def get_listening_port(pid):
     try:
         cmd = "{0}{1}{2}".format(PS, pid, GREP_V_GREP)
         output = subprocess.check_output(cmd, shell=True).split()[6]
-        return output
+        return output.decode('utf-8')
     except:
         return NOT_AVAILABLE
 
@@ -719,7 +721,8 @@ def get_version():
     """ Return the version of the installed VIB """
     try:
         cmd = 'localcli software vib list | grep esx-vmdkops-service'
-        return subprocess.check_output(cmd, shell=True).split()[1]
+        version_str = subprocess.check_output(cmd, shell=True).split()[1]
+        return version_str.decode('utf-8')
     except:
         return NOT_AVAILABLE
 
