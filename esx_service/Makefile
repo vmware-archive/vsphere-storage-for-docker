@@ -89,6 +89,7 @@ ESX_LOC := /usr/lib/vmware/vmdkops
 VMDKOPS_PAYLOAD := $(PAYLOAD)/vmdkops
 VMDKOPS_BIN     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/bin
 VMDKOPS_PY      := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/Python
+VMDKOPS_PY2     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/Python/2
 VMDKOPS_LIB     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib
 VMDKOPS_LIB64   := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib64
 VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
@@ -97,23 +98,30 @@ VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
 .PHONY: build
 build: $(VIB_BIN)
 
-# What goes where in payloads:
+# What needs to be placed in payloads:
 TO_WDIR := $(DESCRIPTOR)
 TO_ESX_BIN := $(PY_SRC) $(PY_CLI)
 TO_ESX_PY  := $(PY_UTILS)
 TO_ESX_LIB := $(VMCI_SRV_LIBS)
 TO_ESX_INITD := $(INIT_SCRIPT)
 
+
+# SQLITE python libs. We need that on ESX before 6.0 U2
+PY_SQLITE := tools/sqlite/sqlite3
+SO_SQLITE := tools/sqlite/*.so
+
 # copy files to staging area and then build the VIB
-$(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)
+$(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
 	@echo Staging in $(PAYLOAD)
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
 	@chmod -R u+w $(PAYLOAD)
-	@cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
-	@cp $(TO_ESX_PY)  $(VMDKOPS_PY)
-	@cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
-	@cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
-	@cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
+	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
+	cp $(TO_ESX_PY)  $(VMDKOPS_PY)
+	cp -R $(PY_SQLITE) $(VMDKOPS_PY2)
+	cp $(SO_SQLITE) $(VMDKOPS_PY2)
+	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
+	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
+	cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
 	@chmod -R u+x $(VMDKOPS_BIN)
 	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
