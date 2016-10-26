@@ -33,6 +33,7 @@ import log_config
 import auth
 import auth_data_const
 import convert
+import auth_data
 
 NOT_AVAILABLE = 'N/A'
 
@@ -259,7 +260,7 @@ def commands():
                             'args': {
                                 '--name': {
                                     'help': "Tenant to list the VMs for",
-                                    'required': False
+                                    'required': True
                                 }
                             }
                         }
@@ -288,10 +289,6 @@ def commands():
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
-                                },
-                                '--volume-maxcount': {
-                                    'help': 
-                                    'Maximum number of volumes to create on the datastore for this tenant'
                                 },
                                 '--volume-totalsize': {
                                     'help': 
@@ -735,9 +732,40 @@ def get_version():
         return NOT_AVAILABLE
 
 def get_tenant_from_db(name):
-    auth.connect_auth_db()
+    try:
+        auth.connect_auth_db()
+    except auth_data.DbConnectionError, e:
+        error_info = "Failed to connect auth DB({0})".format(e)
+        return error_info, None
+    
     error_info, tenant = auth._auth_mgr.get_tenant(name)
     return error_info, tenant
+
+def create_tenant_in_db(name, description, default_datastore, default_privileges, vms, privileges):
+    try:
+        auth.connect_auth_db()
+    except auth_data.DbConnectionError, e:
+        error_info = "Failed to connect auth DB({0})".format(e)
+        return error_info, None
+
+    error_info, tenant = auth._auth_mgr.create_tenant(name = name, 
+                                                      description = description, 
+                                                      default_datastore = default_datastore, 
+                                                      default_privileges = default_privileges, 
+                                                      vms = vms, 
+                                                      privileges = privileges)
+    return error_info, tenant
+
+def get_tenant_list_from_db():
+    try: 
+        auth.connect_auth_db()
+        error_info, tenant_list = auth._auth_mgr.list_tenants()
+    except auth_data.DbConnectionError, e:
+        error_info = "Failed to connect auth DB({0})".format(e)
+        return error_info, None
+
+    error_info, tenant_list = auth._auth_mgr.list_tenants()
+    return error_info, tenant_list
 
 def operation_fail(error_info):
     print error_info
@@ -797,12 +825,18 @@ def tenant_create(args):
     default_datastore ="default_ds" 
     default_privileges =  {}
     privileges = []
-
-    auth.connect_auth_db()
-    error_info, tenant = auth._auth_mgr.create_tenant(name, description, default_datastore, default_privileges, vms, privileges)
     
+    error_info, tenant = create_tenant_in_db(
+                                             name = name, 
+                                             description = description, 
+                                             default_datastore = default_datastore, 
+                                             default_privileges = default_privileges, 
+                                             vms = vms, 
+                                             privileges = privileges)
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant create succeeded"    
  
 def tenant_rm(args):
     """ Handle tenant rm command """
@@ -811,6 +845,8 @@ def tenant_rm(args):
         return operation_fail(error_info)
 
     remove_volumes = False
+    # If args "remove_volumes" is not specified in CLI
+    # args.remove_volumes will be None
     if args.remove_volumes:
         if args.remove_volumes == 'True':
             remove_volumes = True
@@ -818,15 +854,16 @@ def tenant_rm(args):
     error_info = auth._auth_mgr.remove_tenant(tenant.id, remove_volumes)
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant rm succeeded"
 
 def tenant_ls(args):
     """ Handle tenant ls command """
-    header = tenant_ls_headers()
-    auth.connect_auth_db()
-    error_info, tenant_list = auth._auth_mgr.list_tenants()
+    error_info, tenant_list = get_tenant_list_from_db()
     if error_info:
         return operation_fail(error_info)
 
+    header = tenant_ls_headers()
     rows = generate_tenant_ls_rows(tenant_list)
     print(cli_table.create(header, rows)) 
 
@@ -849,6 +886,8 @@ def tenant_vm_add(args):
 
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant vm add succeeded"
   
 def tenant_vm_rm(args):
     """ Handle tenant vm rm command """
@@ -869,6 +908,8 @@ def tenant_vm_rm(args):
 
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant vm rm succeeded"
 
 def tenant_vm_ls_headers():
     """ Return column names for tenant vm ls command """
@@ -947,10 +988,6 @@ def generate_privileges(args):
 
 def tenant_access_add(args):
     """ Handle tenant access command """
-    # TODO in the current privileges table, no volome_maxcount field
-    # Need to change shcema and corresponding APIs if we need to
-    # supoort this
-
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
@@ -965,6 +1002,8 @@ def tenant_access_add(args):
       
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant access add succeeded"
 
 def modify_privileges(privileges, args):
     """ Modify privileges based on CLI argument """
@@ -1001,10 +1040,6 @@ def generate_privileges_dict(privileges):
 
 def tenant_access_set(args):
     """ Handle tenant access set command """
-    # TODO in the current privileges table, no volome_maxcount field
-    # Need to change shcema and corresponding APIs if we need to
-    # supoort this
-
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
@@ -1026,6 +1061,8 @@ def tenant_access_set(args):
 
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant access set succeeded"
        
 def tenant_access_rm(args):
     """ Handle tenant access rm command """
@@ -1036,6 +1073,8 @@ def tenant_access_rm(args):
     error_info = tenant.remove_datastore_access_privileges(auth._auth_mgr.conn, args.datastore)
     if error_info:
         return operation_fail(error_info)
+    else:
+        print "tenant access rm succeeded"
     
 def tenant_access_ls_headers():
     """ Return column names for tenant access ls command """

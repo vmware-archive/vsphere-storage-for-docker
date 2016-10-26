@@ -270,8 +270,12 @@ def authorize(vm_uuid, datastore, cmd, opts):
     logging.debug("Authorize: datastore=%s", datastore)
     logging.debug("Authorize: cmd=%s", cmd)
     logging.debug("Authorize: opt=%s", opts)
-
-    connect_auth_db()
+    
+    try:
+        connect_auth_db()
+    except auth_data.DbConnectionError, e:
+        error_info = "Failed to connect auth DB({0})".format(e)
+        return error_info, None, None
 
     # If table "tenants", "vms", "privileges" or "volumes" does not exist
     # don't need auth check

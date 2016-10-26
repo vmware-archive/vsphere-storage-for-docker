@@ -334,12 +334,12 @@ class AuthorizationDataManager:
             
             
         self.conn = sqlite3.connect(self.db_path)
-
-        # Return rows as Row instances instead of tuples
-        self.conn.row_factory = sqlite3.Row
-
+       
         if not self.conn:
             raise DbConnectionError(self.db_path)
+        
+        # Return rows as Row instances instead of tuples
+        self.conn.row_factory = sqlite3.Row
         
         if need_create_table:
             self.create_tables()
