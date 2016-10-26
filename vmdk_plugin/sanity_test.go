@@ -249,7 +249,7 @@ func TestSanity(t *testing.T) {
 	for idx, elem := range clients {
 		go func(idx int, c *client.Client) {
 			for i := 0; i < parallelVolumes; i++ {
-				volName := "volP" + strconv.Itoa(idx) + strconv.Itoa(i)
+				volName := "volTestP" + strconv.Itoa(idx) + strconv.Itoa(i)
 				createRequest.Name = volName
 				_, err := c.VolumeCreate(context.Background(), createRequest)
 				results <- err
