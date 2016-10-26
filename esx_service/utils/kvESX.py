@@ -252,7 +252,8 @@ def load(volpath):
             break
         except Exception as open_error:
             # This is a workaround to the timing/locking with metadata files issue #626
-            if open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT:
+            if (hasattr(open_error, "errno") and
+                    (open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT)):
                 logging.warning("Meta file %s busy for load(), retrying...", meta_file)
                 retry_count += 1
                 time.sleep(EBUSY_RETRY_TIME)
@@ -282,7 +283,8 @@ def save(volpath, kv_dict):
             break
         except Exception as open_error:
             # This is a workaround to the timing/locking with metadata files issue #626
-            if open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT:
+            if (hasattr(open_error, "errno") and
+                    (open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT)):
                 logging.warning("Meta file %s busy for save(), retrying...", meta_file)
                 retry_count += 1
                 time.sleep(EBUSY_RETRY_SLEEP)
