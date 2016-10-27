@@ -34,17 +34,15 @@ CMD_DETACH = 'detach'
 
 SIZE = 'size'
 
-_auth_mgr = None
-def connect_auth_db():
+def get_auth_mgr():
     """ Get a connection to auth DB. """
-    global _auth_mgr
-    if not _auth_mgr:
-        _auth_mgr = auth_data.AuthorizationDataManager()
-        _auth_mgr.connect()
+    _auth_mgr = auth_data.AuthorizationDataManager()
+    _auth_mgr.connect()
+    return _auth_mgr
        
 def get_tenant(vm_uuid):
     """ Get tenant which owns this VM by querying the auth DB. """
-    global _auth_mgr
+    _auth_mgr = get_auth_mgr()
     try:
         cur = _auth_mgr.conn.execute(
                     "SELECT tenant_id FROM vms WHERE vm_id = ?",
@@ -82,7 +80,7 @@ def get_privileges(tenant_uuid, datastore):
         querying the auth DB.
 
     """
-    global _auth_mgr
+    _auth_mgr = get_auth_mgr()
     privileges = []
     logging.debug("get_privileges tenant_uuid=%s datastore=%s", tenant_uuid, datastore)
     try:
@@ -201,7 +199,7 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
 
 def tables_exist():
     """ Check tables needed for authorization exist or not. """
-    global _auth_mgr
+    _auth_mgr = get_auth_mgr()
 
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'tenants';")
