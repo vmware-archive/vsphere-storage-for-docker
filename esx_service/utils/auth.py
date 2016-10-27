@@ -19,6 +19,7 @@ import random
 import logging
 import auth_data
 import os
+import sqlite3
 import convert
 import auth_data_const
 import volume_kv as kv
