@@ -23,6 +23,7 @@ import sqlite3
 import convert
 import auth_data_const
 import volume_kv as kv
+import threading
 
 # All supported vmdk commands
 CMD_CREATE = 'create'
@@ -34,12 +35,17 @@ CMD_DETACH = 'detach'
 
 SIZE = 'size'
 
+# thread local storage
+thread_local = threading.local()
+
 def get_auth_mgr():
     """ Get a connection to auth DB. """
-    _auth_mgr = auth_data.AuthorizationDataManager()
-    _auth_mgr.connect()
-    return _auth_mgr
-       
+    global thread_local
+    if not hasattr(thread_local, '_auth_mgr'):
+        thread_local._auth_mgr = auth_data.AuthorizationDataManager()
+        thread_local._auth_mgr.connect()
+    return thread_local._auth_mgr
+
 def get_tenant(vm_uuid):
     """ Get tenant which owns this VM by querying the auth DB. """
     _auth_mgr = get_auth_mgr()
