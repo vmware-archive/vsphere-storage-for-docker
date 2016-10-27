@@ -39,7 +39,7 @@ const (
 	// tests are often run under regular account and have no access to /var/log
 	defaultTestLogPath = "/tmp/test-docker-volume-vsphere.log"
 	// Number of volumes per client for parallel tests
-	parallelVolumes = 5
+	parallelVolumes = 9
 )
 
 var (
@@ -237,7 +237,7 @@ func TestSanity(t *testing.T) {
 
 	fmt.Printf("Running parallel tests on %s and %s (may take a while)...\n", endPoint1, endPoint2)
 	// Create a short buffered channel to introduce random pauses
-	results := make(chan error, 5)
+	results := make(chan error, parallelVolumes)
 	createRequest := types.VolumeCreateRequest{
 		Name:   volumeName,
 		Driver: driverName,
