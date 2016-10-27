@@ -1148,6 +1148,15 @@ def getLock(lockname):
             logging.debug("getLock(): return new lock %s", lockname)
     return lock
 
+def send_vmci_reply(client_socket, reply_string):
+    reply = json.dumps(reply_string)
+    response = lib.vmci_reply(client_socket, c_char_p(reply.encode()))
+    errno = get_errno()
+    logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
+    if response == VMCI_ERROR:
+        logging.warning("vmci_reply returned error %s (errno=%d)",
+                        os.strerror(errno), errno)
+
 def execRequestThread(client_socket, cartel, request):
     '''
     Execute requests in a thread context with a per volume locking.
@@ -1170,13 +1179,8 @@ def execRequestThread(client_socket, cartel, request):
         try:
             req = json.loads(request.decode('utf-8'))
         except ValueError as e:
-            ret_string = {u'Error': "Failed to parse json '%s'." % request}
-            response = lib.vmci_reply(client_socket, c_char_p(ret_string.encode()))
-            errno = get_errno()
-            logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
-            if response == VMCI_ERROR:
-                logging.warning("vmci_reply returned error %s (errno=%d)",
-                                os.strerror(errno), errno)
+            reply_string = {u'Error': "Failed to parse json '%s'." % request}
+            send_vmci_reply(client_socket, reply_string)
         else:
             details = req["details"]
             opts = details["Opts"] if "Opts" in details else {}
@@ -1193,34 +1197,21 @@ def execRequestThread(client_socket, cartel, request):
             with rsrcLock:
                 logging.debug("Aquired lock: %s", lockname)
 
-                ret = executeRequest(vm_uuid=vm_uuid,
+                reply_string = executeRequest(vm_uuid=vm_uuid,
                                     vm_name=vm_name,
                                     config_path=cfg_path,
                                     cmd=req["cmd"],
                                     full_vol_name=details["Name"],
                                     opts=opts)
-                logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], ret)
 
-                ret_string = json.dumps(ret)
-                response = lib.vmci_reply(client_socket, c_char_p(ret_string.encode()))
+                logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], reply_string)
+                send_vmci_reply(client_socket, reply_string)
             logging.debug("Released lock: %s", lockname)
 
-            errno = get_errno()
-            logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
-            if response == VMCI_ERROR:
-                logging.warning("vmci_reply returned error %s (errno=%d)",
-                                os.strerror(errno), errno)
     except Exception as ex_thr:
         logging.exception("Unhandled Exception:")
-
-        ret = err("Server returned an error: {0}".format(repr(ex_thr)))
-        ret_string = json.dumps(ret)
-        response = lib.vmci_reply(client_socket, c_char_p(ret_string.encode()))
-        errno = get_errno()
-        logging.debug("lib.vmci_reply: VMCI replied with errcode %s", response)
-        if response == VMCI_ERROR:
-            logging.warning("vmci_reply returned error %s (errno=%d)",
-                            os.strerror(errno), errno)
+        reply_string = err("Server returned an error: {0}".format(repr(ex_thr)))
+        send_vmci_reply(client_socket, reply_string)
 
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests(port):
