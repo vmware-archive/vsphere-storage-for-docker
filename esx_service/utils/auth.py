@@ -15,6 +15,7 @@
 """ Module to provide APIs for authorization checking for VMDK ops.
 
 """
+import sqlite3
 import random
 import logging
 import auth_data
