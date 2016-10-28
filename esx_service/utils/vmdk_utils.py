@@ -22,6 +22,7 @@ import re
 import logging
 import pyVim.connect
 import fnmatch
+import vmdk_ops
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -193,3 +194,14 @@ def vmdk_is_a_descriptor(path, file_name):
 def strip_vmdk_extension(filename):
     """ Remove the .vmdk file extension from a string """
     return filename.replace(".vmdk", "")
+
+def get_vm_uuid_by_name(vm_name):
+    """Returns vm_uuid for given vm_name, or None"""
+    if not vmdk_ops.si:
+        vmdk_ops.connectLocal()
+    try:
+        vm = [d for d in vmdk_ops.si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
+        return vm[0].config.uuid
+    except:
+        return None
+
