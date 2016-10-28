@@ -583,7 +583,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     path = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest %s %s", tenant_name, path)
     if path is None:
-        return err("Failed to initialize volume path {0}".format(path))
+        return err("%s is not writable and hence %s volume creation failed" % (datastore, full_vol_name.split('@')[0]))
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
