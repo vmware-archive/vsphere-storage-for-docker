@@ -1,0 +1,13 @@
+pgk/
+package/
+build/
+src/.DS_Store
+src/dvolplug/dvolplug
+*.a
+*.so
+.code_verify
+*/*.vib
+*/payloads/
+*.test
+*~
+.*~
