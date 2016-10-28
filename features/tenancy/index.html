@@ -8,7 +8,7 @@
   
   <meta name="author" content="cna-storage@vmware.com">
   
-  <title>Installation and Deployment - Docker Volume Driver for vSphere</title>
+  <title>Tenancy - Docker Volume Driver for vSphere</title>
   
 
   <link rel="shortcut icon" href="../../favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Installation and Deployment";
-    var mkdocs_page_input_path = "user-guide/install.md";
-    var mkdocs_page_url = "/user-guide/install/";
+    var mkdocs_page_name = "Tenancy";
+    var mkdocs_page_input_path = "features/tenancy.md";
+    var mkdocs_page_url = "/features/tenancy/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -73,21 +73,8 @@
 <li>
           
             <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Installation and Deployment</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#introduction">Introduction</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#install-on-esx">Install on ESX</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#install-on-vm">Install on VM</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/install/">Installation and Deployment</a>
         
     </li>
 <li>
@@ -98,22 +85,33 @@
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../../features/tenancy/">Tenancy</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Tenancy</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#tenancy">Tenancy</a></li>
+                
+                    <li><a class="toctree-l4" href="#admin-cli">Admin CLI</a></li>
+                
+                    <li><a class="toctree-l4" href="#references">References</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/vsan-policy/">VSAN Policy</a>
+        <a class="" href="../vsan-policy/">VSAN Policy</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
+        <a class="" href="../vcenter/">Integration with vCenter</a>
         
     </li>
 
@@ -133,14 +131,14 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../docker-volume-cli/">Basic commands</a>
+        <a class="" href="../../user-guide/docker-volume-cli/">Basic commands</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../datastores/">Multiple Datastores</a>
+        <a class="" href="../../user-guide/datastores/">Multiple Datastores</a>
         
     </li>
 
@@ -155,7 +153,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../esx-overview/">Volume Layout</a>
+        <a class="" href="../../user-guide/esx-overview/">Volume Layout</a>
         
     </li>
 
@@ -165,7 +163,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../admin-cli/">Admin CLI</a>
+        <a class="" href="../../user-guide/admin-cli/">Admin CLI</a>
         
     </li>
 
@@ -175,7 +173,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../faq/">FAQ</a>
+        <a class="" href="../../user-guide/faq/">FAQ</a>
         
     </li>
 <li>
@@ -247,8 +245,12 @@
     <li><a href="../..">Docs</a> &raquo;</li>
     
       
+        
+          <li>Features &raquo;</li>
+        
+      
     
-    <li>Installation and Deployment</li>
+    <li>Tenancy</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -258,19 +260,24 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h1>
-<p>Docker volume vSphere plugin requires is simple to install. It has zero configuration and and zero credential management post install.</p>
-<p><a href="https://github.com/vmware/docker-volume-vsphere/releases">Tagged releases</a> include the software bundles to install on ESX and on the VM.</p>
-<p>In addition the <code>make build-all</code> will generate the packages.</p>
-<h1 id="install-on-esx">Install on ESX<a class="headerlink" href="#install-on-esx" title="Permanent link">&para;</a></h1>
-<p><a href="http://blogs.vmware.com/vsphere/2011/09/whats-in-a-vib.html">VIB</a> and <a href="https://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html?resultof=%2522%256f%2566%2566%256c%2569%256e%2565%2522%2520%2522%256f%2566%2566%256c%2569%256e%2522%2520%2522%2564%2565%2570%256f%2574%2522%2520">Offline Depot</a> are the packages built to install the backend for the plugin on ESX. The backend can be installed using esxcli or vmware tools such as <a href="http://pubs.vmware.com/vsphere-60/topic/com.vmware.ICbase/PDF/vsphere-update-manager-601-install-administration-guide.pdf">VUM</a></p>
-<p>Here is a demo show casing esxcli</p>
-<script type="text/javascript" src="https://asciinema.org/a/80405.js" id="asciicast-80405" async></script>
-
-<h1 id="install-on-vm">Install on VM<a class="headerlink" href="#install-on-vm" title="Permanent link">&para;</a></h1>
-<p>We currently package the plugin as a RPM and Deb package. This is to be able to start the plugin before Docker engine starts. We will also support Docker plugin framework once it is ready.</p>
-<p>Here is a demo showcasing the install in a Photon OS VM.</p>
-<script type="text/javascript" src="https://asciinema.org/a/80412.js" id="asciicast-80412" async></script>
+                <h1 id="tenancy">Tenancy<a class="headerlink" href="#tenancy" title="Permanent link">&para;</a></h1>
+<p>Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or &ldquo;tenants.&rdquo; Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With tenancy, you can achieve isolation of resources of one tenant from other tenants. </p>
+<p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a tenant.  A tenant can be granted access to create, delete or mount volumes on a specific datastore. VMs assigned to a tenant can then execute Docker volume APIs on an assigned datastores. Within a datastore multiple tenants can store their Docker volumes. A tenant cannot access volumes created by a different tenant i.e. tenants have their own independent namespace, even if tenants share datastores. VMs cannot be shared between tenants.</p>
+<p>Key attributes of tenancy:</p>
+<ul>
+<li>vSphere Administrator can define group of one or more Docker Host (VM) as
+Tenant</li>
+<li>Docker Host (VM) can be a member of one and only one Tenant.</li>
+<li>vSphere Administrator can grant tenant privileges &amp; set resource consumption</li>
+<li>Tenants can share the same underlying storage but preserve volume namespace isolation. 
+limits at granularity of datastore.</li>
+</ul>
+<h2 id="admin-cli">Admin CLI<a class="headerlink" href="#admin-cli" title="Permanent link">&para;</a></h2>
+<p>Tenants can be created and managed via the <a href="../../user-guide/admin-cli/#tenant">Admin CLI</a></p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md">Design Spec for tenancy</a></li>
+</ul>
               
             </div>
           </div>
@@ -278,10 +285,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../features/tenancy/" class="btn btn-neutral float-right" title="Tenancy">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../vsan-policy/" class="btn btn-neutral float-right" title="VSAN Policy">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../.." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../user-guide/install/" class="btn btn-neutral" title="Installation and Deployment"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -307,10 +314,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../../user-guide/install/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../features/tenancy/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../vsan-policy/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
