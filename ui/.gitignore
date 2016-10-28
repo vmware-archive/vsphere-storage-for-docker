@@ -1,18 +1,3 @@
-<<<<<<< 443efb213f303c7760699f57da3648f6535fc715
-pgk/
-package/
-build/
-src/.DS_Store
-src/dvolplug/dvolplug
-*.a
-*.so
-.code_verify
-*/*.vib
-*/payloads/
-*.test
-*~
-.*~
-=======
 #Extensions
 .*.swp
 .*.swo
@@ -28,4 +13,3 @@ src/dvolplug/dvolplug
 build/
 .sass-cache
 node_modules
->>>>>>> first commit
