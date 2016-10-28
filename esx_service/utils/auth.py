@@ -140,6 +140,7 @@ def get_total_storage_used(tenant_uuid, datastore):
         by querying auth DB.
 
     """
+    _auth_mgr = get_auth_mgr()
     total_storage_used = 0
     try:
         cur = _auth_mgr.conn.execute(
@@ -310,6 +311,8 @@ def authorize(vm_uuid, datastore, cmd, opts):
 
 def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB):
     """ Insert volume to volumes table. """
+    _auth_mgr = get_auth_mgr()
+
     logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore,
                   vol_name, vol_size_in_MB)
     try:              
