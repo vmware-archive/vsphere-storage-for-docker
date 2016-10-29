@@ -277,7 +277,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
     logging.debug("Authorize: opt=%s", opts)
     
     try:
-        connect_auth_db()
+        get_auth_mgr()
     except auth_data.DbConnectionError, e:
         error_info = "Failed to connect auth DB({0})".format(e)
         return error_info, None, None
