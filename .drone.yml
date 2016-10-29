@@ -18,11 +18,15 @@ build:
 
   build_tag:
     image: cnastorage/vibauthor-and-go:0.6
+    environment:
+      - KEY=$$KEY
     commands:
       - export PKG_VERSION=$$TAG
       - echo $PKG_VERSION
       - go get github.com/golang/lint/golint
       - make -s build
+      - echo $KEY | base64 -d > /drone/src/github.com/vmware/docker-volume-vsphere/key
+      - chmod 0600 /drone/src/github.com/vmware/docker-volume-vsphere/key
     when:
       event: tag
 
