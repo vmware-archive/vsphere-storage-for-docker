@@ -23,6 +23,7 @@ import sqlite3
 import convert
 import auth_data_const
 import volume_kv as kv
+import threading
 
 # All supported vmdk commands
 CMD_CREATE = 'create'
@@ -34,17 +35,20 @@ CMD_DETACH = 'detach'
 
 SIZE = 'size'
 
-_auth_mgr = None
-def connect_auth_db():
+# thread local storage
+thread_local = threading.local()
+
+def get_auth_mgr():
     """ Get a connection to auth DB. """
-    global _auth_mgr
-    if not _auth_mgr:
-        _auth_mgr = auth_data.AuthorizationDataManager()
-        _auth_mgr.connect()
-       
+    global thread_local
+    if not hasattr(thread_local, '_auth_mgr'):
+        thread_local._auth_mgr = auth_data.AuthorizationDataManager()
+        thread_local._auth_mgr.connect()
+    return thread_local._auth_mgr
+
 def get_tenant(vm_uuid):
     """ Get tenant which owns this VM by querying the auth DB. """
-    global _auth_mgr
+    _auth_mgr = get_auth_mgr()
     try:
         cur = _auth_mgr.conn.execute(
                     "SELECT tenant_id FROM vms WHERE vm_id = ?",
@@ -82,7 +86,7 @@ def get_privileges(tenant_uuid, datastore):
         querying the auth DB.
 
     """
-    global _auth_mgr
+    _auth_mgr = get_auth_mgr()
     privileges = []
     logging.debug("get_privileges tenant_uuid=%s datastore=%s", tenant_uuid, datastore)
     try:
@@ -136,6 +140,7 @@ def get_total_storage_used(tenant_uuid, datastore):
         by querying auth DB.
 
     """
+    _auth_mgr = get_auth_mgr()
     total_storage_used = 0
     try:
         cur = _auth_mgr.conn.execute(
@@ -201,7 +206,7 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
 
 def tables_exist():
     """ Check tables needed for authorization exist or not. """
-    global _auth_mgr
+    _auth_mgr = get_auth_mgr()
 
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'tenants';")
@@ -272,7 +277,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
     logging.debug("Authorize: opt=%s", opts)
     
     try:
-        connect_auth_db()
+        get_auth_mgr()
     except auth_data.DbConnectionError, e:
         error_info = "Failed to connect auth DB({0})".format(e)
         return error_info, None, None
@@ -306,6 +311,8 @@ def authorize(vm_uuid, datastore, cmd, opts):
 
 def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB):
     """ Insert volume to volumes table. """
+    _auth_mgr = get_auth_mgr()
+
     logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore,
                   vol_name, vol_size_in_MB)
     try:              
