@@ -50,4 +50,6 @@ RUN go get -u github.com/FiloSottile/gvt && \
 
 RUN curl --silent --location https://rpm.nodesource.com/setup_4.x | bash - && \
     yum -y install nodejs && \
-    npm install -g grunt
+    yum -y install ruby-devel rubygems && \
+    npm install -g grunt && \
+    gem install compass
