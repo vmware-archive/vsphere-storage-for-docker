@@ -97,9 +97,9 @@ VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
 # build the docker-volume-plugin
 
 UI_FROM := ../ui/build/dist/*
-UI_TO_PART_ONE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
-UI_TO_PART_TWO := /hostd/docroot/ui/plugins/docker-volume-plugin/
-UI_TO := $(UI_TO_PART_ONE)$(UI_TO_PART_TWO)
+UI_TO_BASE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
+UI_TO_HOSTD := /hostd/docroot/ui/plugins/docker-volume-plugin/
+UI_TO := $(UI_TO_BASE)$(UI_TO_HOSTD)
 
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
@@ -120,11 +120,12 @@ SO_SQLITE := tools/sqlite/*.so
 # copy files to staging area and then build the VIB
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
 	@echo Staging in $(PAYLOAD)
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
 	@chmod -R u+w $(PAYLOAD)
 	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
 	cp $(TO_ESX_PY)  $(VMDKOPS_PY)
 	cp -R $(PY_SQLITE) $(VMDKOPS_PY2)
+	cp -R $(UI_FROM) $(UI_TO)
 	cp $(SO_SQLITE) $(VMDKOPS_PY2)
 	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
@@ -132,25 +133,6 @@ $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) 
 	@chmod -R u+x $(VMDKOPS_BIN)
 	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
-
-
-# copy files to staging area and then build the VIB
-$(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
-	@echo Staging in $(PAYLOAD)
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
-	@chmod -R u+w $(PAYLOAD)
-	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
-	cp $(TO_ESX_PY)  $(VMDKOPS_PY)
-	cp -R $(PY_SQLITE) $(VMDKOPS_PY2)
-	cp $(SO_SQLITE) $(VMDKOPS_PY2)
-	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
-	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
-	cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
-	@mkdir -p $(UI_TO)
-	@cp $(UI_FROM) $(UI_TO)
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
-	@chmod -R u+x $(VMDKOPS_BIN)
-	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
 
 $(VMCI_SRV_LIB): $(C_SRC)
 	$(CC) $(CFLAGS) -o $@ $(C_SRC)
