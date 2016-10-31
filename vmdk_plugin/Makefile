@@ -133,9 +133,13 @@ $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
 	$(GO) test -c -o $@ $(PLUGIN)
 
 .PHONY: clean
-clean: pkg-post
+clean:
+	$(BUILD) clean-as-root
+
+.PHONY: clean-as-root
+clean-as-root: pkg-post
 	rm -rf $(BIN) .code_verify
-	$(MAKE) --directory=$(ESX_SRC) $@
+	$(MAKE) --directory=$(ESX_SRC) clean
 
 # GO Code quality checks.
 

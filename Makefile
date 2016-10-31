@@ -21,14 +21,32 @@
 TARGETS := all \
 	deploy-all deploy-esx deploy-vm deploy-vm-test deploy\
 	test-all test-vm test-esx testremote testasroot\
-	clean-all clean clean-vm clean-esx clean-ui \
-	build-all build dockerbuild build-ui \
+	clean-all clean-vm clean-esx \
+	build-all dockerbuild \
 	deb rpm package gvt documentation
 
-# default target
-default: build-all
+BUILD := ./misc/scripts/build.sh
+
+# default target, build ui then build vib, rpm, deb
+default: dockerized-build-ui build-all
+
+# clean inside docker run to avoid sudo make clean
+# dev builds are inside docker which creates folders
+# as root.
+clean: dockerized-clean-ui
+	$(MAKE) --directory=vmdk_plugin $@
+
+# Non dockerized build, used by CI
+build:
+	$(MAKE) --directory=ui $@
+	$(MAKE) --directory=vmdk_plugin $@
+
+# Forward to UI inside docker run
+dockerized-build-ui:
+	$(BUILD) ui build
+dockerized-clean-ui:
+	$(BUILD) ui clean
 
 # redirect all
 $(TARGETS):
-	$(MAKE) --directory=ui $@
 	$(MAKE) --directory=vmdk_plugin $@
