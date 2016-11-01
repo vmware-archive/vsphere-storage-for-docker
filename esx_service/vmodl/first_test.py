@@ -200,17 +200,11 @@ if __name__ == "__main__":
 
     print("\n**** Add Datastore Access for tenant:")
     name = "tenant1"
-   
-    privileges = pv.CreateDatastoreAccessPrivileges(datastore = "datastore1",
-                                                    create_volumes = True,
-                                                    delete_volumes = False,
-                                                    mount_volumes = True,
-                                                    max_volume_size = "550MB",
-                                                    usage_quota = "3TB")
     pv.AddDatastoreAccessForTenant(name = name,
                                    datastore = "datastore1",
                                    rights ="create,mount",
                                    volume_maxsize = "550MB",
                                    volume_totalsize = "3TB")
+    print("\n**** Add Datastore Access for tenant done:")
                                  
     

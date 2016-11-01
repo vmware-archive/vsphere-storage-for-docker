@@ -211,16 +211,13 @@ class VsanDockerPersistentVolumeSystemImpl(vim.host.VsanDockerPersistentVolumeSy
     
     def AddDatastoreAccessForTenant(self, name, datastore, rights=None, volume_maxsize=None, volume_totalsize=None):
         logger.info("Running AddDatastoreAccessForTenant() method")
-        result = None
         try:
             # Currently, just fake it
             # Need to call corressponding API in auth_data.py
-            logger.info("Add datastore access for tenant=%s datastore rights=%s volume_maxsize=%s volume_totalsize=%s", 
+            logger.info("Add datastore access for tenant=%s datastore=%s rights=%s volume_maxsize=%s volume_totalsize=%s", 
                         name, datastore, rights, volume_maxsize, volume_totalsize)          
         except:
             logger.info("Failed to add datastore access for tenant", exc_info=1)
-        
-        return result
-        
+                      
 GetMoManager().RegisterObjects([VsanDockerPersistentVolumeSystemImpl("vsan-docker-persistent-volumes")])
 
