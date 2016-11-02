@@ -21,6 +21,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
+	"testing"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
@@ -29,13 +32,14 @@ import (
 	"github.com/docker/engine-api/types/strslice"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"golang.org/x/net/context"
-	"testing"
 )
 
 const (
 	defaultMountLocation = "/mnt/testvol"
 	// tests are often run under regular account and have no access to /var/log
 	defaultTestLogPath = "/tmp/test-docker-volume-vsphere.log"
+	// Number of volumes per client for parallel tests
+	parallelVolumes = 9
 )
 
 var (
@@ -228,6 +232,37 @@ func TestSanity(t *testing.T) {
 		if volumeVmdkExists(t, elem.client, volumeName) != nil {
 			t.Errorf("Volume=%s is still present on %s after removal",
 				volumeName, elem.endPoint)
+		}
+	}
+
+	fmt.Printf("Running parallel tests on %s and %s (may take a while)...\n", endPoint1, endPoint2)
+	// Create a short buffered channel to introduce random pauses
+	results := make(chan error, parallelVolumes)
+	createRequest := types.VolumeCreateRequest{
+		Name:   volumeName,
+		Driver: driverName,
+		DriverOpts: map[string]string{
+			"size": "1gb",
+		},
+	}
+	// Create/delete routine
+	for idx, elem := range clients {
+		go func(idx int, c *client.Client) {
+			for i := 0; i < parallelVolumes; i++ {
+				volName := "volTestP" + strconv.Itoa(idx) + strconv.Itoa(i)
+				createRequest.Name = volName
+				_, err := c.VolumeCreate(context.Background(), createRequest)
+				results <- err
+				err = c.VolumeRemove(context.Background(), volName)
+				results <- err
+			}
+		}(idx, elem.client)
+	}
+	// We need to read #clients * #volumes * 2 operations from the channel
+	for i := 0; i < len(clients)*parallelVolumes*2; i++ {
+		err := <-results
+		if err != nil {
+			t.Fatalf("Parallel test failed, err: %v", err)
 		}
 	}
 }

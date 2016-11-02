@@ -35,6 +35,9 @@
 #include "connection_types.h"
 
 
+// SO_QSIZE maximum number of connections (requests) in socket queue.
+int SO_QSIZE = 128;
+
 // Returns vSocket to listen on, or -1.
 // errno indicates the reason for a failure, if any.
 int
@@ -80,6 +83,15 @@ vmci_init(unsigned int port)
       return CONN_FAILURE;
    }
 
+   /*
+    * listen for client connections.
+    */
+   ret = listen(socket_fd, SO_QSIZE);
+   if (ret == -1) {
+      perror("Failed to listen on socket");
+      return CONN_FAILURE;
+   }
+
    return socket_fd;
 }
 
@@ -101,15 +113,6 @@ vmci_get_one_op(const int s,    // socket to listen on
    int af = vsock_get_family(); // socket family for vSockets communication
 
    if (af == -1) {
-      return CONN_FAILURE;
-   }
-
-   /*
-    * listen for client connections.
-    */
-   ret = listen(s, 1);
-   if (ret == -1) {
-      perror("Failed to listen on socket");
       return CONN_FAILURE;
    }
 

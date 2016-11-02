@@ -243,7 +243,7 @@ TEST_VM = root@$(VM1)
 VM1_DOCKER = tcp://$(VM1):2375
 VM2_DOCKER = tcp://$(VM2):2375
 
-SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
+SSH := $(DEBUG) ssh $(SSH_KEY_OPT) -kTax -o StrictHostKeyChecking=no
 
 # bin locations on target guest
 TMP_LOC := /tmp/$(PLUGNAME)

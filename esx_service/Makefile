@@ -152,8 +152,8 @@ test: test-esx build
 
 # test-esx is a quick unittest for ESX Python code.
 # Deploys, runs and clean unittests (i.e. all files *_test.py) on ESX
-SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
-SCP := $(DEBUG) scp -r -q -o StrictHostKeyChecking=no
+SSH := $(DEBUG) ssh $(SSH_KEY_OPT) -kTax -o StrictHostKeyChecking=no
+SCP := $(DEBUG) scp $(SSH_KEY_OPT) -r -q -o StrictHostKeyChecking=no
 
 TMP_LOC    := $(shell echo /tmp/vmdk_ops_unittest$$RANDOM)
 TEST_FILES := $(shell find . -name '*_test.py') 
