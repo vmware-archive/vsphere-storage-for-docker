@@ -616,12 +616,15 @@ def connectLocalSi(force=False):
             logging.info("Connecting to the local Service Instance")
             _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
         except Exception as e:
-            logging.exception("Failed to the local Service Instance as 'dcui': ")
+            logging.exception("Failed to the local Service Instance as 'dcui', exiting: ")
             sys.exit(1)
     elif force:
         logging.warning("Reconnecting to the local Service Instance")
         _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
 
+    # set out ID in context to be used in request - so we'll see it in logs
+    reqCtx = VmomiSupport.GetRequestContext()
+    reqCtx["realUser"] = 'dvolplug'
     atexit.register(pyVim.connect.Disconnect, _service_instance)
 
 def get_si():
@@ -634,12 +637,6 @@ def get_si():
         except:
             connectLocalSi(force=True)
     return _service_instance
-
-    # set out ID in context to be used in request - so we'll see it in logs
-    reqCtx = VmomiSupport.GetRequestContext()
-    reqCtx["realUser"] = 'dvolplug'
-    logging.debug("Connect to localhost si:%s", si)
-    return si
 
 def get_datastore_url(datastore):
     si = get_si()
@@ -1030,6 +1027,7 @@ def disk_detach(vmdk_path, vm):
     return disk_detach_int(vmdk_path, vm, device)
 
 def disk_detach_int(vmdk_path, vm, device):
+    si = get_si()
     spec = vim.vm.ConfigSpec()
     dev_changes = []
 
@@ -1040,7 +1038,6 @@ def disk_detach_int(vmdk_path, vm, device):
     spec.deviceChange = dev_changes
 
     try:
-        si = get_si()
         wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
     except vim.Fault.VimFault as ex:
         ex_type, ex_value, ex_traceback = sys.exc_info()
