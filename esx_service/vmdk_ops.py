@@ -613,10 +613,10 @@ def connectLocalSi(force=False):
     global _service_instance
     if not _service_instance:
         try:
-            logging.warning("Connecting to the local Service Instance")
+            logging.info("Connecting to the local Service Instance")
             _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
         except Exception as e:
-            logging.exception("Failed to connect to localhost as 'dcui': ")
+            logging.exception("Failed to the local Service Instance as 'dcui': ")
             sys.exit(1)
     elif force:
         logging.warning("Reconnecting to the local Service Instance")
@@ -835,6 +835,7 @@ def add_pvscsi_controller(vm, controllers, max_scsi_controllers, offset_from_bus
     spec.deviceChange = pvscsi_change
 
     try:
+        si = get_si()
         wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
     except vim.fault.VimFault as ex:
         msg=("Failed to add PVSCSI Controller: %s", ex.msg)
