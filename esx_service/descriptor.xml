@@ -40,7 +40,9 @@
 
    <!-- defines a VIB's relationships with other VIBs -->
    <relationships>
-      <depends></depends>
+      <depends>
+         <constraint name="esx-version" relation="&gt;=" version="6.0.0" />
+      </depends>
       <conflicts></conflicts>
       <replaces></replaces>
       <provides> </provides>
