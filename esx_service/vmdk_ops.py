@@ -606,17 +606,22 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     return response
 
-def connectLocalSi():
+def connectLocalSi(force=False):
     '''
 	Initialize a connection to the local SI
 	'''
     global _service_instance
     if not _service_instance:
         try:
+            logging.warning("Connecting to the local Service Instance")
             _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
         except Exception as e:
             logging.exception("Failed to connect to localhost as 'dcui': ")
             sys.exit(1)
+    elif force:
+        logging.warning("Reconnecting to the local Service Instance")
+        _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
+
     atexit.register(pyVim.connect.Disconnect, _service_instance)
 
 def get_si():
@@ -627,8 +632,7 @@ def get_si():
         try:
             _service_instance.CurrentTime()
         except:
-            logging.warning("Reconnecting to the local Service Instance")
-            connectLocalSi()
+            connectLocalSi(force=True)
     return _service_instance
 
     # set out ID in context to be used in request - so we'll see it in logs

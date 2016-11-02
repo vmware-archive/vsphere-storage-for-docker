@@ -300,7 +300,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         """ Setup run before each test """
         logging.debug("VMDKAttachDetachTest setUp path =%s", path)
         self.cleanup()
-        
+
         if (not self.datastore_name):
             datastores = vmdk_utils.get_datastores()
             datastore = datastores[0]
@@ -313,7 +313,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
                                                                  self.datastore_path)   
         
         # get service_instance, and create a VM
-        si = get_si()
+        si = vmdk_ops.get_si()
         self.create_vm(si, self.vm_name, self.datastore_name)
 
         # create max_vol_count+1 VMDK files
