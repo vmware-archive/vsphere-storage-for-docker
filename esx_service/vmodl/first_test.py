@@ -92,18 +92,18 @@ def print_datastore_access_privileges_obj(privileges):
         print ("{0}: value={1}".format(i, content[i]))
 
 def print_tenant_obj(tenant):
-    print "name: ", tenant.name
-    print "description: ", tenant.description
-    print "default_datastore: ", tenant.default_datastore
-    print "default_privileges: "
+    print("name: ", tenant.name)
+    print("description: ", tenant.description)
+    print("default_datastore: ", tenant.default_datastore)
+    print("default_privileges: ")
     print_datastore_access_privileges_obj(tenant.default_privileges)
-    print "vms: ", tenant.vms
+    print("vms: ", tenant.vms)
     if tenant.privileges:
-        print "privileges: "
+        print("privileges: ")
         for p in tenant.privileges:
             print_datastore_access_privileges_obj(p)
     else:
-        print "privileges: ", tenant.privileges    
+        print("privileges: ", tenant.privileges)    
 
 
 
@@ -169,14 +169,14 @@ if __name__ == "__main__":
 
     print("\n**** List Tenant Objects:")
     tenant_list = pv.ListTenants()
-    print "Tenant lists len = {0}\n\n".format(len(tenant_list))
+    print("Tenant lists len = {0}\n\n".format(len(tenant_list)))
     id = 0
     for tenant in tenant_list:
         id = id + 1
-        print "Tenant Info for tenant {0} Start".format(id)
+        print("Tenant Info for tenant {0} Start".format(id))
         print_tenant_obj(tenant)
-        print "Tenant Info for tenant {0} End".format(id)
-        print "\n\n"
+        print("Tenant Info for tenant {0} End".format(id))
+        print("\n\n")
                           
     print("\n**** Add VMs to tenant:")
     name = "tenant1"
@@ -196,15 +196,43 @@ if __name__ == "__main__":
     print("\n**** List VMs for tenant:")
     name = "tenant1"
     vms = pv.ListVMsForTenant(name = name)
-    print "vms={0}".format(vms)          
+    print("vms={0}".format(vms))          
 
     print("\n**** Add Datastore Access for tenant:")
     name = "tenant1"
     pv.AddDatastoreAccessForTenant(name = name,
                                    datastore = "datastore1",
-                                   rights ="create,mount",
+                                   rights =["create", "mount"],
                                    volume_maxsize = "550MB",
                                    volume_totalsize = "3TB")
     print("\n**** Add Datastore Access for tenant done:")
+
+    print("\n**** Modify Datastore Access for tenant:")
+    name = "tenant1"
+    pv.ModifyDatastoreAccessForTenant(name = name,
+                                   datastore = "datastore1",
+                                   add_rights =["create", "mount"],
+                                   remove_rights =["delete"],
+                                   volume_maxsize = "650MB",
+                                   volume_totalsize = "4TB")
+    print("\n**** Modify Datastore Access for tenant done:")
+
+    print("\n**** Remove Datastore Access for tenant:")
+    
+    pv.RemoveDatastoreAccessForTenant(name = "tenant1",
+                                      datastore = "datastore1")
+                                   
+    print("\n**** Remove Datastore Access for tenant done:")
+
+
+    print("\n**** List Datastore Access for Tenant:")
+    privileges_list = pv.ListDatastoreAccessForTenant(name = "tenant1")
+    print("Privileges lists len = {0}\n\n".format(len(tenant_list)))
+    id = 0
+    for privileges in privileges_list:
+        id = id + 1
+        print("Privileges {0}: ".format(id))
+        print_datastore_access_privileges_obj(privileges)
+        print("\n\n")
                                  
     

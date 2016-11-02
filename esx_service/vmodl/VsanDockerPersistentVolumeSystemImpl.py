@@ -218,6 +218,56 @@ class VsanDockerPersistentVolumeSystemImpl(vim.host.VsanDockerPersistentVolumeSy
                         name, datastore, rights, volume_maxsize, volume_totalsize)          
         except:
             logger.info("Failed to add datastore access for tenant", exc_info=1)
+    
+    def ModifyDatastoreAccessForTenant(self, name, datastore, add_rights=None, remove_rights=None, 
+                                      volume_maxsize=None, volume_totalsize=None):
+        logger.info("Running ModifyDatastoreAccessForTenant() method")
+        try:
+            # Currently, just fake it
+            # Need to call corressponding API in auth_data.py
+            logger.info("Modify datastore access for tenant=%s datastore=%s add_rights=%s"
+                        " remove_rights=%s volume_maxsize=%s volume_totalsize=%s", 
+                        name, datastore, add_rights, remove_rights, volume_maxsize, volume_totalsize)          
+        except:
+            logger.info("Failed to modify datastore access for tenant", exc_info=1)
+    
+    def RemoveDatastoreAccessForTenant(self, name, datastore):
+        logger.info("Running RemoveDatastoreAccessForTenant() method")
+        try:
+            # Currently, just fake it
+            # Need to call corressponding API in auth_data.py
+            logger.info("Remove datastore access for tenant=%s datastore=%s",
+                        name, datastore)          
+        except:
+            logger.info("Failed to remove datastore access for tenant", exc_info=1)
+
+    def ListDatastoreAccessForTenant(self, name):
+        logger.info("Running ListDatastoreAccessForTenant() method")
+        result = None
+        try:
+            # Currently, just fake it
+            # Need to call corressponding API in auth_data.py
+            privileges1 = vim.vsan.VsanDockerPersistentVolumeDatastoreAccessPrivileges(
+                                          datastore = "default_ds",
+                                          create_volumes = True,
+                                          delete_volumes = True,
+                                          mount_volumes = True,
+                                          max_volume_size = "No_limit",
+                                          usage_quota = "No_limit")
+            
+            privileges2 = vim.vsan.VsanDockerPersistentVolumeDatastoreAccessPrivileges(
+                                          datastore = "datastore1",
+                                          create_volumes = True,
+                                          delete_volumes = False,
+                                          mount_volumes = True,
+                                          max_volume_size = "1GB",
+                                          usage_quota = "10TB")
+                        
+            result = [privileges1, privileges2]
+        except:
+            logger.info("Failed to list datastore access for  tenant", exc_info=1)
+        
+        return result
                       
 GetMoManager().RegisterObjects([VsanDockerPersistentVolumeSystemImpl("vsan-docker-persistent-volumes")])
 

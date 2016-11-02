@@ -346,20 +346,44 @@ class VsanDockerPersistentVolumeSystem:
    @JavaDocs(parent=_name, docs=
    """
    Modify DatastoreAccessPrivileges for a tenant
-   Similar rules apply to param "delete_volumes" and "mount_volumes" too 
+   The fomat of param "add_rights" and "remove_rights" is a list of strings, and the valid choices are "create", "delete", "mount" and "all"
+   The format of param "volume-maxsize" is Num{MB,GB,TB} - e.g. 2TB
+   The format of param "volume-totalsize" is Num{MB,GB,TB} - e.g. 2TB
    """
    )
    @Method(parent=_name, wsdlName="ModifyDatastoreAccessForTenant")
    @Param(name="name", typ="string")
    @Param(name="datastore", typ="string")
-   @Param(name="add_rights", typ="string", flags=F_OPTIONAL)
-   @Param(name="delete_volumes", typ="boolean", flags=F_OPTIONAL)
-   @Param(name="mount_volumes", typ="boolean", flags=F_OPTIONAL)
-   @Param(name="max_volume_size", typ="string", flags=F_OPTIONAL)
-   @Param(name="usage_quota", typ="string", flags=F_OPTIONAL)
+   @Param(name="add_rights", typ="string[]", flags=F_OPTIONAL)
+   @Param(name="remove_rights", typ="string[]", flags=F_OPTIONAL)
+   @Param(name="volume_maxsize", typ="string", flags=F_OPTIONAL)
+   @Param(name="volume_totalsize", typ="string", flags=F_OPTIONAL)
    @Return(typ='void')
-   def ModifyDatastoreAccessForTenant(self, name, datastore, create_volumes=None, delete_volumes=None, 
-                                      mount_volumes=None, max_volume_size=None, usage_quota=None):
-       pass                
+   def ModifyDatastoreAccessForTenant(self, name, datastore, add_rights=None, remove_rights=None, 
+                                      volume_maxsize=None, volume_totalsize=None):
+       pass
 
+   @JavaDocs(parent=_name, docs=
+   """
+   Remove DatastoreAccessPrivileges for a (tenant, datastore) pair
+   """
+   )
+   @Method(parent=_name, wsdlName="RemoveDatastoreAccessForTenant")
+   @Param(name="name", typ="string")
+   @Param(name="datastore", typ="string")
+   @Return(typ='void')
+   def RemoveDatastoreAccessForTenant(self, name, datastore):
+       pass
+
+   @JavaDocs(parent=_name, docs=
+   """
+   List all DatastoreAccessPrivileges for a tenant
+   """
+   )
+   @Method(parent=_name, wsdlName="ListDatastoreAccessForTenant")
+   @Param(name="name", typ="string")
+   @Return(typ='vim.vsan.VsanDockerPersistentVolumeDatastoreAccessPrivileges[]')
+   def ListDatastoreAccessForTenant(self, name):
+       pass 
+                            
 RegisterVmodlTypes()
