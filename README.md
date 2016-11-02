@@ -144,11 +144,11 @@ Guest Operating System:
 - RedHat and CentOS
 
 # Known Issues
-1. Operations are serialized. Thus, when large volume is formatted, all service operations on the same Docker engine will be serialized behind it. [#35](/../../issues/35)
-2. VM level snapshots do not include docker data volumes. [#60](/../../issues/60)
-3. Exiting bug in Docker around cleanup if mounting of volume fails when -w command is passed. [Docker Issue #22564] (https://github.com/docker/docker/issues/22564)
-4. VIB, RPM and Deb files are not signed.[#273](/../../issues/273)
-5. Pre-GA releases of Photon can crash on attaching a Docker volume. This issue is resolved in [Photon Issue 455](https://github.com/vmware/photon/issues/455) (Photon GA). Workaround: `power off` the Photon VM, change  SCSI Adapter type from LSI Logic to PVSCSI, and `power on` the VM.
+
+1. VM level snapshots do not include docker data volumes. [#60](/../../issues/60)
+2. Exiting bug in Docker around cleanup if mounting of volume fails when -w command is passed. [Docker Issue #22564] (https://github.com/docker/docker/issues/22564)
+3. VIB, RPM and Deb files are not signed.[#273](/../../issues/273)
+4. Pre-GA releases of Photon can crash on attaching a Docker volume. This issue is resolved in [Photon Issue 455](https://github.com/vmware/photon/issues/455) (Photon GA). Workaround: `power off` the Photon VM, change  SCSI Adapter type from LSI Logic to PVSCSI, and `power on` the VM.
 
 ## Contact us
 
