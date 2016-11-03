@@ -1,18 +1,18 @@
 site_name: Docker Volume Driver for vSphere
 pages:
     - Home: index.md
+    - Installation and Deployment: user-guide/install.md
     - Features:
         - Tenancy: features/tenancy.md
         - VSAN Policy: features/vsan-policy.md
         - Integration with vCenter: features/vcenter.md
-    - Documentation:
-        - Installation and Deployment: user-guide/install.md
-        - Admin CLI: user-guide/admin-cli.md
+    - User Guide:
         - Docker Volume CLI:
             - Basic commands: user-guide/docker-volume-cli.md
             - Multiple Datastores: user-guide/datastores.md
         - Backend ESX Overview:
             - Volume Layout: user-guide/esx-overview.md
+        - Admin CLI: user-guide/admin-cli.md
     - FAQ: user-guide/faq.md
     - Blog:
         - 2016:

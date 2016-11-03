@@ -1,5 +1,4 @@
 [TOC]
-
 # Introduction
 
 In the context of the Docker volume plugin for vSphere, each ESXi host manages multiple VMs, with
@@ -20,7 +19,6 @@ of their usage.
 ## Tenant
 
 ### Help
-
 ```bash
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
 usage: vmdkops_admin.py tenant [-h] {access,rm,create,ls,vm} ...
@@ -36,35 +34,32 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ```
-### Create
 
+### Create
 Creates a new named tenant and optionally assigns VMs.
 
 Sample:
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name DevAppX
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name ProjectX
 tenant create succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls 
+Uuid                                  Name      Description  Default_datastore  VM_list                      
+------------------------------------  --------  -----------  -----------------  ---------------------------  
+4acd19ee-1ed6-4716-bcda-c8637c9658f2  tenant1                default_ds         photon.vsan.1,photon.vsan.2  
+2918b105-0837-4955-a0dc-5319ce456e28  ProjectX               default_ds        
 ```
 
 The tenant to VM association can be done at create time.
 
 Sample:
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name DevAppX --vm-list ubuntu
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name ProjectX --vm-list ubuntu
 tenant create succeeded
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
 Uuid                                  Name     Description  Default_datastore  VM_list
 ------------------------------------  -------  -----------  -----------------  ---------------------------
 dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  DevAppX               default_ds         ubuntu
-
-[root@localhost:~]
-
+5afa4767-ecd8-489e-9d97-5c46ae50d3fc  ProjectX              default_ds         ubuntu
 ```
 
 #### Help
@@ -79,12 +74,74 @@ optional arguments:
   --vm-list vm1, vm2, ...
                         A list of VM names to place in this Tenant
 ```
+### List
+List existing tenants, the datastores tenants have access to and the VMs assigned.
+```
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name     Description  Default_datastore  VM_list
+------------------------------------  -------  -----------  -----------------  ---------------------------
+dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
+5afa4767-ecd8-489e-9d97-5c46ae50d3fc  PojectX               default_ds         ubuntu
+```
+
+#### Help
+```
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls -h
+usage: vmdkops_admin.py tenant ls [-h]
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+
+### Virtual Machine
+
+#### Add
+Add a VM to a tenant. A VM can only access the datastores for the tenant it is assigned to.
+VMs can be assigned to only one tenant at a time.
+```
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name tenant1 --vm-list photon.vsan.2
+tenant vm add succeeded
+```
+
+#### List
+```
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
+Uuid                                  Name
+------------------------------------  -------------
+564d672f-0576-8906-7ba0-a42317328499  photon.vsan.1
+564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
+```
+
+#### Remove
+Remove a VM from a tenant's list of VMs. VM will no longer be able to access the volumes created for the tenant.
+```
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name tenant1 --vm-list photon.vsan.1
+tenant vm rm succeeded
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
+Uuid                                  Name
+------------------------------------  -------------
+564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
+```
+
+#### Help
+```
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm -h
+usage: vmdkops_admin.py tenant vm [-h] {rm,add,ls} ...
+
+positional arguments:
+  {rm,add,ls}
+    rm         Remove VM(s) from a tenant
+    add        Add a VM(s) to a tenant
+    ls         list VMs in a tenant
+
+optional arguments:
+  -h, --help   show this help message and exit
+```
 
 ### Access
-
 Change the access control for a tenant.
-This includes ability to control which datastores are accessible by a tenant and controlling what a
-tenant can do on a given datastore.
+This includes ability to grant privileges & set resource consumption limits for a datastore.
 
 #### Help
 ```bash
@@ -101,8 +158,8 @@ positional arguments:
 optional arguments:
   -h, --help       show this help message and exit
 ```
-#### Add
 
+#### Add
 Grants datastore access to a tenant.
 
 Sample:
@@ -133,7 +190,6 @@ datastore1  0              0              0             0B               0B
 - For capacity 0 indicates no limits
 
 ##### Help
-
 ```bash
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add -h
 usage: vmdkops_admin.py tenant access add [-h]
@@ -159,7 +215,6 @@ optional arguments:
 ```
 
 #### List
-
 List the current access control granted to a tenant.
 
 When displaying the result keep in mind:
@@ -183,6 +238,7 @@ optional arguments:
   -h, --help   show this help message and exit
   --name NAME  The name of the tenant
 ```
+
 #### Remove
 Remove access to a datastore for a tenant.
 ```bash
@@ -192,6 +248,7 @@ tenant access rm succeeded
 Datastore  Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
 ---------  -------------  -------------  ------------  ---------------  ----------
 ```
+
 ##### Help
 ```bash
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm -h
@@ -204,8 +261,8 @@ optional arguments:
   --datastore DATASTORE
                         Datstore which access is controlled
 ```
-#### Set
 
+#### Set
 Set command allows to change the existing access control in place for a tenant.
 
 Sample:
@@ -254,71 +311,8 @@ optional arguments:
   --datastore DATASTORE
                         Datastore name
 ```
-### List
 
-List existing tenants, the datastores tenants have access to and the VMs assigned.
-```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  DevAppX               default_ds         ubuntu
-```
-#### Help
-```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  DevAppX               default_ds         ubuntu
-
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls -h
-usage: vmdkops_admin.py tenant ls [-h]
-
-optional arguments:
-  -h, --help  show this help message and exit
-```
-
-### Virtual Machine
-#### Add
-Add a VM to a tenant. A VM can only access the datastores for the tenant it is assigned to.
-VMs can be assigned to only one tenant at a time.
-#### List
-```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
-Uuid                                  Name
-------------------------------------  -------------
-564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
-
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name tenant1 --vm-list photon.vsan.1
-tenant vm add succeeded
-```
-#### Remove
-Remove a VM from a tenant's list of VMs. VM will no longer be able to access the volumes created for the tenant.
-```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name tenant1 --vm-list photon.vsan.1
-tenant vm rm succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
-Uuid                                  Name
-------------------------------------  -------------
-564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
-```
-#### Help
-```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm -h
-usage: vmdkops_admin.py tenant vm [-h] {rm,add,ls} ...
-
-positional arguments:
-  {rm,add,ls}
-    rm         Remove VM(s) from a tenant
-    add        Add a VM(s) to a tenant
-    ls         list VMs in a tenant
-
-optional arguments:
-  -h, --help   show this help message and exit
-```
 ### Remove
-
 Remove a tenant, optionally all volumes for a tenant can be removed as well.
 
 Sample:
@@ -342,7 +336,9 @@ optional arguments:
 ```
 
 ## Volume
+
 ### List
+
 #### Help
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls -h
@@ -356,15 +352,19 @@ optional arguments:
 ```
 
 #### List All
-
 List all properties for all Docker volumes that exist on datastores accessible to the host.
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
-Volume     Datastore   Created By VM  Created                   Attached To VM  Policy  Capacity  Used
----------  ----------  -------------  ------------------------  --------------  ------  --------  -------
-large-vol  datastore1  Ubuntu_15.10   Sat Apr 16 13:34:12 2016  detached        N/A     1.00GB    25.00MB
-vol        datastore1  Ubuntu_15.10   Sat Apr 16 20:13:18 2016  detached        N/A     100.00MB  14.00MB
+Volume          Datastore      Created By VM  Created                   Attached To VM  Policy          Capacity  Used      Filesystem Type  Access      Attach As               
+--------------  -------------  -------------  ------------------------  --------------  --------------  --------  --------  ---------------  ----------  ----------------------  
+MyVol           vsanDatastore  photon.vsan.1  Mon Jul  4 17:44:28 2016  detached        [VSAN default]  100.00MB  40.00MB   ext4             read-write  independent_persistent  
+unt             vsanDatastore  photon.vsan.1  Mon Jul  4 19:55:26 2016  detached        [VSAN default]  100.00MB  40.00MB   ext4             read-write  independent_persistent  
+iland           vsanDatastore  photon.vsan.1  Mon Jul  4 20:11:42 2016  detached        [VSAN default]  100.00MB  40.00MB   ext4             read-write  independent_persistent  
+foo             vsanDatastore  photon.vsan.1  Mon Jul 11 03:17:09 2016  detached        [VSAN default]  20.00GB   228.00MB  ext4             read-write  independent_persistent  
+MyVolume        vsanDatastore  photon.vsan.1  Mon Jul 11 10:25:45 2016  detached        [VSAN default]  10.00GB   192.00MB  ext4             read-write  independent_persistent  
+storage-meetup  vsanDatastore  photon.vsan.1  Mon Jul 11 10:50:20 2016  detached        [VSAN default]  10.00GB   348.00MB  ext4             read-write  independent_persistent  
+storage         vsanDatastore  photon.vsan.1  Tue Jul 12 12:53:07 2016  detached        [VSAN default]  10.00GB   192.00MB  ext4             read-write  independent_persistent  
+storage2        vsanDatastore  photon.vsan.1  Tue Jul 12 13:00:11 2016  detached        [VSAN default]  10.00GB   192.00MB  ext4             read-write  independent_persistent  
 ```
 
 Note that the `Policy` column shows the named VSAN storage policy created with the same tool
