@@ -91,6 +91,7 @@ PYTHON64_VERSION = 50659824
 # External tools used by the plugin.
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
+MKDIR_CMD = "/bin/mkdir"
 VMDK_CREATE_CMD = "/sbin/vmkfstools"
 VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
@@ -358,7 +359,7 @@ def get_backing_device(vmdk_path):
 
 def cleanup_backing_device(backing, cleanup_device):
     if cleanup_device:
-    	return cleanup_vsan_devfs_path(backing)
+        return cleanup_vsan_devfs_path(backing)
     return True
 
 # Return volume ingo
@@ -376,7 +377,7 @@ def vol_info(vol_meta, vol_size_info, datastore):
        vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
     if kv.VOL_OPTS in vol_meta:
        if kv.FILESYSTEM_TYPE in vol_meta[kv.VOL_OPTS]:
-          vinfo[kv.FILESYSTEM_TYPE] = vol_meta[kv.VOL_OPTS][kv.FILESYSTEM_TYPE]   
+          vinfo[kv.FILESYSTEM_TYPE] = vol_meta[kv.VOL_OPTS][kv.FILESYSTEM_TYPE]
        if kv.VSAN_POLICY_NAME in vol_meta[kv.VOL_OPTS]:
           vinfo[kv.VSAN_POLICY_NAME] = vol_meta[kv.VOL_OPTS][kv.VSAN_POLICY_NAME]
        if kv.DISK_ALLOCATION_FORMAT in vol_meta[kv.VOL_OPTS]:
@@ -474,29 +475,37 @@ def detachVMDK(vmdk_path, vm_uuid):
 
 # Check existence (and creates if needed) the path for docker volume VMDKs
 def get_vol_path(datastore, tenant_name=None):
-    # If the command is NOT running under a tenant, the folder for Docker 
+    # If the command is NOT running under a tenant, the folder for Docker
     # volumes is created on <datastore>/DOCK_VOLS_DIR
     # If the command is running under a tenant, the foler for Dock volume
     # is created on <datastore>/DOCK_VOLS_DIR/tenant_name
+    dock_vol_path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
     if tenant_name:
-        path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR, tenant_name)
-    else:    
-        path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
-     
+        path = os.path.join(dock_vol_path, tenant_name)
+    else:
+        path = dock_vol_path
+
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
         return path
 
-    # The osfs tools are usable for all datastores
-    cmd = "{0} {1}".format(OSFS_MKDIR_CMD, path)
-    rc, out = RunCommand(cmd)
-    if rc == 0:
-        logging.info("Created %s", path)
-        return path
+    if not os.path.isdir(dock_vol_path):
+        # The osfs tools are usable for DOCK_VOLS_DIR on all datastores
+        cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
+        rc, out = RunCommand(cmd)
+        if rc != 0:
+            logging.warning("Failed to create %s", dock_vol_path)
+            return None
+    if tenant_name and not os.path.isdir(path):
+        cmd = "{0} {1}".format(MKDIR_CMD, path)
+        rc, out = RunCommand(cmd)
+        if rc != 0:
+           logging.warning("Failed to create %s", path)
+           return None
 
-    logging.warning("Failed to create %s", path)
-    return None
+    logging.info("Created %s", path)
+    return path
 
 
 def known_datastores():
@@ -607,7 +616,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
                 auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
             else:
                 logging.warning(" VM %s does not belong to any tenant", vm_name)
-                                      
+
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
     elif cmd == "attach":
@@ -661,7 +670,7 @@ def findDeviceByPath(vmdk_path, vm):
         backing_disk = d.backing.fileName.split(" ")[1]
 
         # datastore='[datastore name]'
-        datastore = d.backing.fileName.split(" ")[0] 
+        datastore = d.backing.fileName.split(" ")[0]
         datastore = datastore[1:-1]
 
         # Construct the parent dir and vmdk name, resolving
@@ -692,7 +701,7 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
     else:
        # Slot number is got from from the VM config
        key = 'scsi{0}.pciSlotNumber'.format(pvscsi.key -
-                                            key_offset)                
+                                            key_offset)
        slot = [cfg for cfg in vm.config.extraConfig \
                if cfg.key == key]
        # If the given controller exists
@@ -813,7 +822,7 @@ def handle_stale_attach(vmdk_path, kv_uuid):
              return ret
 
 def add_pvscsi_controller(vm, controllers, max_scsi_controllers, offset_from_bus_number):
-    ''' 
+    '''
     Add a new PVSCSI controller, return (controller_key, err) pair
     '''
     # find empty bus slot for the controller:
@@ -839,7 +848,7 @@ def add_pvscsi_controller(vm, controllers, max_scsi_controllers, offset_from_bus
     except vim.fault.VimFault as ex:
         msg=("Failed to add PVSCSI Controller: %s", ex.msg)
         return None, err(msg)
-    logging.debug("Added a PVSCSI controller, controller_id=%d", controller_key)    
+    logging.debug("Added a PVSCSI controller, controller_id=%d", controller_key)
     return controller_key, None
 
 def find_disk_slot_in_controller(vm, devices, pvsci, idx, offset_from_bus_number):
@@ -861,11 +870,11 @@ def find_disk_slot_in_controller(vm, devices, pvsci, idx, offset_from_bus_number
         disk_slot = avail_slots.pop()
         pci_slot_number = get_controller_pci_slot(vm, pvsci[idx],
                                                   offset_from_bus_number)
-                 
+
         logging.debug("Find an available slot: controller_key = %d slot = %d", controller_key, disk_slot)
     else:
         logging.warning("No available slot in this controller: controller_key = %d", controller_key)
-    return disk_slot        
+    return disk_slot
 
 def find_available_disk_slot(vm, devices, pvsci, offset_from_bus_number):
     '''
@@ -878,8 +887,8 @@ def find_available_disk_slot(vm, devices, pvsci, offset_from_bus_number):
             disk_slot = find_disk_slot_in_controller(vm, devices, pvsci, idx, offset_from_bus_number)
             if (disk_slot is None):
                 idx = idx + 1;
-    return idx, disk_slot            
-            
+    return idx, disk_slot
+
 def disk_attach(vmdk_path, vm):
     '''
     Attaches *existing* disk to a vm on a PVSCI controller
@@ -925,17 +934,17 @@ def disk_attach(vmdk_path, vm):
         pvsci = [d for d in controllers
                    if type(d) == vim.ParaVirtualSCSIController and
                       d.key == device.controllerKey]
-        
+
         return dev_info(device.unitNumber,
                         get_controller_pci_slot(vm, pvsci[0],
                                                 offset_from_bus_number))
-        
+
 
     # Disk isn't attached, make sure we have a PVSCI and add it if we don't
     # check if we already have a pvsci one
     pvsci = [d for d in controllers
              if type(d) == vim.ParaVirtualSCSIController]
-    disk_slot = None         
+    disk_slot = None
     if len(pvsci) > 0:
         idx, disk_slot = find_available_disk_slot(vm, devices, pvsci, offset_from_bus_number);
         if (disk_slot is not None):
@@ -944,7 +953,7 @@ def disk_attach(vmdk_path, vm):
                                                       offset_from_bus_number)
             logging.debug("Find an available disk slot, controller_key=%d, slot_id=%d",
                           controller_key, disk_slot)
-        
+
     if (disk_slot is None):
         disk_slot = 0  # starting on a fresh controller
         if len(controllers) >= max_scsi_controllers:
@@ -953,13 +962,13 @@ def disk_attach(vmdk_path, vm):
             return err(msg)
 
         logging.info("Adding a PVSCSI controller")
-        
-        controller_key, ret_err = add_pvscsi_controller(vm, controllers, max_scsi_controllers, 
+
+        controller_key, ret_err = add_pvscsi_controller(vm, controllers, max_scsi_controllers,
                                                         offset_from_bus_number)
 
         if (ret_err):
-            return ret_err    
-            
+            return ret_err
+
         # Find the controller just added
         devices = vm.config.hardware.device
         pvsci = [d for d in devices
@@ -969,7 +978,7 @@ def disk_attach(vmdk_path, vm):
                                                   offset_from_bus_number)
         logging.info("Added a PVSCSI controller, controller_key=%d pci_slot_number=%s",
                       controller_key, pci_slot_number)
-    
+
     # add disk as independent, so it won't be snapshotted with the Docker VM
     disk_spec = vim.VirtualDeviceConfigSpec(
         operation='add',
@@ -1083,7 +1092,7 @@ def set_vol_opts(name, options):
        msg = 'Volume {0} not found.'.format(vol_name)
        logging.warning(msg)
        return False
-   
+
     # For now only allow resetting the access and attach-as options.
     valid_opts = {
         kv.ACCESS : kv.ACCESS_TYPES,
@@ -1097,7 +1106,7 @@ def set_vol_opts(name, options):
                + '{0}'.format(list(valid_opts))
         raise ValidationError(msg)
 
-    has_invalid_opt_value = False   
+    has_invalid_opt_value = False
     for key in opts.keys():
         if key in valid_opts:
             if not opts[key] in valid_opts[key]:
@@ -1105,14 +1114,14 @@ def set_vol_opts(name, options):
                     'Supported values are {0}.\n'.format(valid_opts[key])
                 logging.warning(msg)
                 has_invalid_opt_value = True
-                
+
     if has_invalid_opt_value:
-        return False   
-    
+        return False
+
     vol_meta = kv.getAll(vmdk_path)
     if vol_meta:
        if not vol_meta[kv.VOL_OPTS]:
-           vol_meta[kv.VOL_OPTS] = {} 
+           vol_meta[kv.VOL_OPTS] = {}
        for key in opts.keys():
            vol_meta[kv.VOL_OPTS][key] = opts[key]
        return kv.setAll(vmdk_path, vol_meta)
