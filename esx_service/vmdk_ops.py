@@ -1319,11 +1319,10 @@ Helper module for task operations.
 """
 
 
-def wait_for_tasks(service_instance, tasks):
+def wait_for_tasks(si, tasks):
     """Given the service instance si and tasks, it returns after all the
    tasks are complete
    """
-    si = get_si()
     task_list = [str(task) for task in tasks]
     property_collector = si.content.propertyCollector
     pcfilter = getTaskList(property_collector, tasks)
