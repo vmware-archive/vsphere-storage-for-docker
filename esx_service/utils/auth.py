@@ -15,10 +15,8 @@
 """ Module to provide APIs for authorization checking for VMDK ops.
 
 """
-import random
 import logging
 import auth_data
-import os
 import sqlite3
 import convert
 import auth_data_const
@@ -61,7 +59,7 @@ def get_tenant(vm_uuid):
 
     if result:
         logging.debug("get tenant vm_uuid=%s tenant_id=%s", vm_uuid, result[0])
-   
+
     tenant_uuid = None
     tenant_name = None
     if result:
@@ -92,11 +90,11 @@ def get_privileges(tenant_uuid, datastore):
     try:
         cur = _auth_mgr.conn.execute(
                     "SELECT * FROM privileges WHERE tenant_id = ? and datastore = ?",
-                    (tenant_uuid, datastore)    
+                    (tenant_uuid, datastore)
         )
         privileges = cur.fetchone()
     except sqlite3.Error, e:
-        logging.error("Error %s when querying privileges table for tenant_id %s and datastore %s", 
+        logging.error("Error %s when querying privileges table for tenant_id %s and datastore %s",
                       e, tenant_uuid, datastore)
         return str(e), None
     return None, privileges
@@ -106,14 +104,14 @@ def has_privilege(privileges, type):
     if not privileges:
         return False
     logging.debug("%s=%d", type, privileges[type])
-    return privileges[type] 
+    return privileges[type]
 
 def get_vol_size(opts):
     """ get volume size. """
     if not opts or not opts.has_key(SIZE):
         logging.warning("Volume size not specified")
         return kv.DEFAULT_DISK_SIZE
-    return opts[SIZE]    
+    return opts[SIZE].upper()
 
 
 def check_max_volume_size(opts, privileges):
@@ -132,7 +130,7 @@ def check_max_volume_size(opts, privileges):
             return True
         return vol_size_in_MB <= max_vol_size_in_MB
     else:
-        # no privileges 
+        # no privileges
         return True
 
 def get_total_storage_used(tenant_uuid, datastore):
@@ -145,17 +143,17 @@ def get_total_storage_used(tenant_uuid, datastore):
     try:
         cur = _auth_mgr.conn.execute(
                     "SELECT SUM(volume_size) FROM volumes WHERE tenant_id = ? and datastore = ?",
-                    (tenant_uuid, datastore)    
+                    (tenant_uuid, datastore)
         )
     except sqlite3.Error, e:
-        logging.error("Error %s when querying storage table for tenant_id %s and datastore %s", 
+        logging.error("Error %s when querying storage table for tenant_id %s and datastore %s",
                       e, tenant_uuid, datastore)
         return str(e), total_storage_used
     result = cur.fetchone()
     if result:
         if result[0]:
             total_storage_used = result[0]
-            logging.debug("total storage used for (tenant %s datastore %s) is %s MB", tenant_uuid, 
+            logging.debug("total storage used for (tenant %s datastore %s) is %s MB", tenant_uuid,
                           datastore, total_storage_used)
 
     return None, total_storage_used
@@ -180,7 +178,7 @@ def check_usage_quota(opts, tenant_uuid, datastore, privileges):
 
 def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
     """
-        Check whether the (tenant_uuid, datastore) has the privileges to run 
+        Check whether the (tenant_uuid, datastore) has the privileges to run
         the given command.
 
     """
@@ -189,20 +187,20 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
     if cmd in cmd_need_mount_privilege:
         if not has_privilege(privileges, auth_data_const.COL_MOUNT_VOLUME):
             result = "No mount privilege"
-    
+
     if cmd == CMD_CREATE:
         if not has_privilege(privileges, auth_data_const.COL_CREATE_VOLUME):
             result = "No create privilege"
         if not check_max_volume_size(opts, privileges):
             result = "volume size exceeds the max volume size limit"
         if not check_usage_quota(opts, tenant_uuid, datastore, privileges):
-            result = "The total volume size exceeds the usage quota"        
-    
+            result = "The total volume size exceeds the usage quota"
+
     if cmd == CMD_REMOVE:
         if not has_privilege(privileges, auth_data_const.COL_DELETE_VOLUME):
             result = "No delete privilege"
-            
-    return result        
+
+    return result
 
 def tables_exist():
     """ Check tables needed for authorization exist or not. """
@@ -219,7 +217,7 @@ def tables_exist():
         error_info = "table tenants does not exist"
         logging.error(error_info)
         return error_info, False
-    
+
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'vms';")
         result = cur.fetchall()
@@ -243,7 +241,7 @@ def tables_exist():
         error_info = "table privileges does not exist"
         logging.error(error_info)
         return error_info, False
-    
+
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'volumes';")
         result = cur.fetchall()
@@ -255,7 +253,7 @@ def tables_exist():
         error_info = "table volumes does not exist"
         logging.error(error_info)
         return error_info, False
-    
+
     return None, True
 
 def authorize(vm_uuid, datastore, cmd, opts):
@@ -263,11 +261,11 @@ def authorize(vm_uuid, datastore, cmd, opts):
 
         Return value: result, tenant_uuid, tenant_name
 
-        - result: return None if the command can be run on this VM, otherwise, return 
+        - result: return None if the command can be run on this VM, otherwise, return
         corresponding error message
         - tenant_uuid: If the VM belongs to a tenant, return tenant_uuid, otherwise, return
         None
-        - tenant_name: If the VM belongs to a tenant, return tenant_name, otherwise, return 
+        - tenant_name: If the VM belongs to a tenant, return tenant_name, otherwise, return
         None
 
     """
@@ -275,7 +273,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
     logging.debug("Authorize: datastore=%s", datastore)
     logging.debug("Authorize: cmd=%s", cmd)
     logging.debug("Authorize: opt=%s", opts)
-    
+
     try:
         get_auth_mgr()
     except auth_data.DbConnectionError, e:
@@ -315,17 +313,17 @@ def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB
 
     logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore,
                   vol_name, vol_size_in_MB)
-    try:              
+    try:
         _auth_mgr.conn.execute(
                     "INSERT INTO volumes(tenant_id, datastore, volume_name, volume_size) VALUES (?, ?, ?, ?)",
-                    (tenant_uuid, datastore, vol_name, vol_size_in_MB)    
+                    (tenant_uuid, datastore, vol_name, vol_size_in_MB)
         )
         _auth_mgr.conn.commit()
     except sqlite3.Error, e:
-        logging.error("Error %s when insert into volumes table for tenant_id %s and datastore %s", 
+        logging.error("Error %s when insert into volumes table for tenant_id %s and datastore %s",
                       e, tenant_uuid, datastore)
         return str(e)
-    
+
     return None
 
 def get_row_from_tenants_table(conn, tenant_uuid):
@@ -337,7 +335,7 @@ def get_row_from_tenants_table(conn, tenant_uuid):
         (tenant_uuid,)
         )
     except sqlite3.Error, e:
-        logging.error("Error: %s when quering tenants table for tenant %s", 
+        logging.error("Error: %s when quering tenants table for tenant %s",
                       e, tenant_uuid)
         return str(e), None
 
@@ -373,4 +371,4 @@ def get_row_from_privileges_table(conn, tenant_uuid):
 
     result = cur.fetchall()
     return None, result
-    
+
