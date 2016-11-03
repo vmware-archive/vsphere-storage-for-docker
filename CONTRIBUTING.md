@@ -94,6 +94,13 @@ options. Note that both tcp: and unix: need to be present
 Please check  "Configuring and running Docker"
 (https://docs.docker.com/engine/admin/configuring/)  page on how to configure this - also there is a github link at the bottom, for systemd config files.
 
+If test environment has Docker running on Photon OS VMs, VMs should be configured to accept traffic on port 2375. Edit /etc/systemd/scripts/iptables, and add following rule at the end of the file. Restart iptable service after updating iptables file.
+
+```
+#Enable docker connections
+iptables -A INPUT -p tcp --dport 2375 -j ACCEPT
+```
+
 To deploy the plugin and test code onto a test environment we support a set of
 Makefile targets. There targets rely on environment variables to point to the
 correct environment.
