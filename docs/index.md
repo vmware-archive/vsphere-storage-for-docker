@@ -1,19 +1,18 @@
 # Introduction to Docker Volume Driver for vSphere
 
-Docker volume driver is designed to solve persistency needs for 
-stateful containers running on top of VMware's stack.
+vSphere Docker Volume service enables you to run stateful containerized applications on top of VMware’s stack i.e. on vSphere. 
 
-Some of the high level features for the plugin are: 
+It is designed to:
 
-1. Designed to run over shared storage in a cluster (Single node
- setup for testing is supported)
-2. Easy to deploy and manage. There is zero configuration and 
-zero credential management. 
-3. Support for VSAN policy.
-4. Integration with vCenter (under development)
-5. Backup of Docker volumes (under development)
+- **Provide proven persistent shared storage:** You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS, etc. 
+- **Enable Multitenancy, Security and Access Control:** vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location
+- **Provide Operational Simplicity:** Zero Configuration, zero credential management. It as easy to deploy and manage
+
+Enable self-serve operational model: Use docker APIs to manage volume lifecycle while maintaining admin control over consumption 
 
 This plugin is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). This plugin does not need credential management or configuration management. 
+ 
+<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
 # Feedback
 
