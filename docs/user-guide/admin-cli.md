@@ -1,9 +1,9 @@
 [TOC]
 # Introduction
 
-In the context of the Docker volume plugin for vSphere, each ESXi host manages multiple VMs, with
+With the vSphere Docker Volume Service, each ESXi host manages multiple VMs, with
 each of them acting as a Docker host. The Docker engine on these hosts communicates with the Docker
-volume plugin in order to create and delete virtual disks (VMDKs), as well as mount them as Docker
+volume service to create and delete virtual disks (VMDKs), as well as mounts them as Docker
 volumes. These virtual disks may live on any datastore accessible to the ESXi host and are managed
 by the Docker user via the Docker CLI. However, the Docker CLI is limited in what visibility it can
 provide to the user. Furthermore, it is desirable that an administrator be able to get a global view
