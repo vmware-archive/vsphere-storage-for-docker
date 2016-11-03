@@ -295,12 +295,12 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     max_vol_count = 60
     datastore_path = None
     datastore_name = None
-    
+
     def setUp(self):
         """ Setup run before each test """
         logging.debug("VMDKAttachDetachTest setUp path =%s", path)
         self.cleanup()
-        
+
         if (not self.datastore_name):
             datastores = vmdk_utils.get_datastores()
             datastore = datastores[0]
@@ -313,10 +313,8 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
                                                                  self.datastore_path)   
         
         # get service_instance, and create a VM
-        if not vmdk_ops.si:
-            vmdk_ops.connectLocal()
-
-        self.create_vm(vmdk_ops.si, self.vm_name, self.datastore_name)
+        si = vmdk_ops.get_si()
+        self.create_vm(si, self.vm_name, self.datastore_name)
 
         # create max_vol_count+1 VMDK files
         for id in range(1, self.max_vol_count+2):
@@ -390,9 +388,8 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     
     def cleanup(self):
         # remove VM
-        if not vmdk_ops.si:
-            vmdk_ops.connectLocal()
-        self.remove_vm(vmdk_ops.si, self.vm_name)
+        si = vmdk_ops.get_si()
+        self.remove_vm(si, self.vm_name)
 
         for v in self.get_testvols():
             self.assertEqual(
@@ -407,11 +404,9 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     
     def testAttachDetach(self):
         logging.debug("Start VMDKAttachDetachTest")
-
-        if not vmdk_ops.si:
-            vmdk_ops.connectLocal()
+        si = vmdk_ops.get_si()
         #find test_vm
-        vm = [d for d in vmdk_ops.si.content.rootFolder.childEntity[0].vmFolder.childEntity 
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
               if d.config.name == self.vm_name]
         self.assertNotEqual(None, vm)
 

@@ -16,8 +16,8 @@
 
 # Simple API to access VSAN policy information.
 # Uses objtool to extract and set policy in VSAN objects
-# 
-# For connecting, use vmdk_ops.connectLocal() and vmdk_ops.si global
+#
+# To obtain a connection to the local SI use vmdk_ops.get_si()
 #
 
 import logging
@@ -32,9 +32,8 @@ OBJTOOL_GET_ATTR = OBJTOOL + "getAttr -u {0} --format=json"
 
 def get_vsan_datastore():
     """Returns Datastore management object for vsanDatastore, or None"""
-    if not vmdk_ops.si:
-        vmdk_ops.connectLocal()
-    stores = vmdk_ops.si.content.rootFolder.childEntity[0].datastore
+    si = vmdk_ops.get_si()
+    stores = si.content.rootFolder.childEntity[0].datastore
     try:
         return [d for d in stores if d.summary.type == "vsan"][0]
     except:

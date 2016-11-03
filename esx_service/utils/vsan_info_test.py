@@ -47,7 +47,7 @@ class TestVsanInfo(unittest.TestCase):
 
     def setUp(self):
         """create a vmdk before each test (method) in this class"""
-        self.si = vmdk_ops.connectLocal()
+        si = vmdk_ops.get_si()
         # create VMDK
         err = vmdk_ops.createVMDK(vmdk_path=self.VMDK_PATH,
                                   vm_name=self.VM_NAME,

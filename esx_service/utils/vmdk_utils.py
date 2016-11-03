@@ -20,7 +20,6 @@ import os.path
 import glob
 import re
 import logging
-import pyVim.connect
 import fnmatch
 import vmdk_ops
 
@@ -55,13 +54,9 @@ def get_datastores():
     logging.debug("get_datastores: %s", datastores)
     if datastores != None:
         return datastores
-    
-    si = pyVim.connect.Connect()
-    if not si:
-        logging.warning("Failed to connect to localhost, and cannot find datastores")
-        return datastores
-    
-    logging.debug("Connect to localhost si %s", si)
+
+    si = vmdk_ops.get_si()
+
     #  We are connected to ESX so childEntity[0] is current DC/Host
     ds_objects = \
       si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
@@ -69,9 +64,6 @@ def get_datastores():
                    os.path.split(d.info.url)[1],
                    os.path.join(d.info.url, 'dockvols'))
                   for d in ds_objects]
-    pyVim.connect.Disconnect(si)
-    logging.debug("Disconnect from localhost si %s", si)
-
     return datastores
 
 def get_volumes(tenant_re):
@@ -197,10 +189,9 @@ def strip_vmdk_extension(filename):
 
 def get_vm_uuid_by_name(vm_name):
     """Returns vm_uuid for given vm_name, or None"""
-    if not vmdk_ops.si:
-        vmdk_ops.connectLocal()
+    si = vmdk_ops.get_si()
     try:
-        vm = [d for d in vmdk_ops.si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
         return vm[0].config.uuid
     except:
         return None

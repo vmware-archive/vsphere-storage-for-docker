@@ -118,7 +118,7 @@ VM_POWERED_OFF = "poweredOff"
 PVSCSI_MAX_TARGETS = 16
 
 # Service instance provide from connection to local hostd
-si = None
+_service_instance = None
 
 # VMCI library used to communicate with clients
 lib = None
@@ -438,21 +438,8 @@ def listVMDK(vm_datastore, tenant):
 
 # Return VM managed object, reconnect if needed. Throws if fails twice.
 def findVmByUuid(vm_uuid):
-    vm = None
-    try:
-        vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
-    except Exception as ex:
-        logging.warning("Failed to find VM by uuid=%s, retrying...\n%s",
-                        vm_uuid, str(ex))
-    if vm:
-        return vm
-    #
-    # Retry. It can throw if connect/search fails. But search can't return None
-    # since we get UUID from VMM so VM must exist
-    #
-    connectLocal()
+    si = get_si()
     vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
-    logging.info("Found VM name=%s, id=%s ", vm.config.name, vm_uuid)
     return vm
 
 
@@ -619,30 +606,40 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     return response
 
-def connectLocal():
+def connectLocalSi(force=False):
     '''
-	connect and do stuff on local machine
+	Initialize a connection to the local SI
 	'''
-    global si  #
-    # Connect to localhost as dcui
-    # User "dcui" is a local Admin that does not lose permissions
-    # when the host is in lockdown mode.
-    si = pyVim.connect.Connect(host='localhost', user='dcui')
-    if not si:
-        raise SystemExit("Failed to connect to localhost as 'dcui'.")
-
-    atexit.register(pyVim.connect.Disconnect, si)
+    global _service_instance
+    if not _service_instance:
+        try:
+            logging.info("Connecting to the local Service Instance")
+            _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
+        except Exception as e:
+            logging.exception("Failed to the local Service Instance as 'dcui', exiting: ")
+            sys.exit(1)
+    elif force:
+        logging.warning("Reconnecting to the local Service Instance")
+        _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
 
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()
     reqCtx["realUser"] = 'dvolplug'
-    logging.debug("Connect to localhost si:%s", si)
-    return si
+    atexit.register(pyVim.connect.Disconnect, _service_instance)
+
+def get_si():
+    '''
+	Return a connection to the local SI
+	'''
+    with getLock('siLock'):
+        try:
+            _service_instance.CurrentTime()
+        except:
+            connectLocalSi(force=True)
+    return _service_instance
 
 def get_datastore_url(datastore):
-    global si
-    if not si:
-        connectLocal()
+    si = get_si()
     res = [d.info.url for d in si.content.rootFolder.childEntity[0].datastore if d.info.name == datastore]
     return res[0]
 
@@ -835,6 +832,7 @@ def add_pvscsi_controller(vm, controllers, max_scsi_controllers, offset_from_bus
     spec.deviceChange = pvscsi_change
 
     try:
+        si = get_si()
         wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
     except vim.fault.VimFault as ex:
         msg=("Failed to add PVSCSI Controller: %s", ex.msg)
@@ -990,6 +988,7 @@ def disk_attach(vmdk_path, vm):
     spec.deviceChange = disk_changes
 
     try:
+        si = get_si()
         wait_for_tasks(si, [vm.ReconfigVM_Task(spec=spec)])
     except vim.fault.VimFault as ex:
         msg = ex.msg
@@ -1028,6 +1027,7 @@ def disk_detach(vmdk_path, vm):
     return disk_detach_int(vmdk_path, vm, device)
 
 def disk_detach_int(vmdk_path, vm, device):
+    si = get_si()
     spec = vim.vm.ConfigSpec()
     dev_changes = []
 
@@ -1283,7 +1283,7 @@ def main():
         load_vmci()
 
         kv.init()
-        connectLocal()
+        connectLocalSi()
         handleVmciRequests(port)
     except Exception as e:
         logging.exception(e)
@@ -1323,16 +1323,10 @@ def wait_for_tasks(service_instance, tasks):
     """Given the service instance si and tasks, it returns after all the
    tasks are complete
    """
+    si = get_si()
     task_list = [str(task) for task in tasks]
-    property_collector = service_instance.content.propertyCollector
-    try:
-        pcfilter = getTaskList(property_collector, tasks)
-    except vim.fault.NotAuthenticated:
-        # Reconnect and retry
-        logging.warning("Reconnecting and retry")
-        connectLocal()
-        property_collector = si.content.propertyCollector
-        pcfilter = getTaskList(property_collector, tasks)
+    property_collector = si.content.propertyCollector
+    pcfilter = getTaskList(property_collector, tasks)
 
     try:
         version, state = None, None
