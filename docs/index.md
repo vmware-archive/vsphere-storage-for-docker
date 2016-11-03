@@ -7,8 +7,7 @@ It is designed to:
 - **Provide proven persistent shared storage:** You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS, etc. 
 - **Enable Multitenancy, Security and Access Control:** vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location
 - **Provide Operational Simplicity:** Zero Configuration, zero credential management. It as easy to deploy and manage
-
-Enable self-serve operational model: Use docker APIs to manage volume lifecycle while maintaining admin control over consumption 
+- **Enable self-serve operational model**: Use docker APIs to manage volume lifecycle while maintaining admin control over consumption 
 
 This plugin is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). This plugin does not need credential management or configuration management. 
  
