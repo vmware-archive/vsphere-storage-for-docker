@@ -2,8 +2,9 @@ site_name: Docker Volume Driver for vSphere
 pages:
     - Home: index.md
     - Features:
-        - Integration with vCenter: features/vcenter.md
+        - Tenancy: features/tenancy.md
         - VSAN Policy: features/vsan-policy.md
+        - Integration with vCenter: features/vcenter.md
     - Documentation:
         - Installation and Deployment: user-guide/install.md
         - Admin CLI: user-guide/admin-cli.md
@@ -17,6 +18,8 @@ pages:
         - 2016:
             - September:
                 - Release announcement and updates: blog/2016-9-28.md
+            - October:
+                - 0.8.1 Release (Tenancy) and stateful containers meetup: blog/2016-10-28.md
 theme: readthedocs
 google_analytics: ['UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/']
 site_favicon: favicon.ico
@@ -28,3 +31,4 @@ markdown_extensions:
     - toc:
         permalink: True
     - sane_lists
+    - fenced_code

@@ -14,6 +14,8 @@ zero credential management.
 5. Backup of Docker volumes (under development)
 
 This plugin is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). This plugin does not need credential management or configuration management. 
+ 
+<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
 # Feedback
 
