@@ -40,7 +40,7 @@ Change Log
 Introduction
 ============
 
-Currently the Docker volume driver for vSphere allows any container on any VM with access to any datastore to create, mount, and delete volumes at will. There are no limits to the size of the volumes that can be created or quotas for datastore usage for container volumes. Also, all Docker engines can see and use any volume on any datastore. This lack of access control takes the management of storage out of the hands of the IT administrator and puts it in the hands of the developer. This is a worrying proposition to many IT admins, and since they are the ones that must allow deployment of the driver and its associated host agent, we must allow them to regain control with proper enforcement mechanisms that limit damage due to malfeasance or mistake.
+Currently the vSphere Docker Volume Service allows any container on any VM with access to any datastore to create, mount, and delete volumes at will. There are no limits to the size of the volumes that can be created or quotas for datastore usage for container volumes. Also, all Docker engines can see and use any volume on any datastore. This lack of access control takes the management of storage out of the hands of the IT administrator and puts it in the hands of the developer. This is a worrying proposition to many IT admins, and since they are the ones that must allow deployment of the service and its associated host agent, we must allow them to regain control with proper enforcement mechanisms that limit damage due to malfeasance or mistake.
 
 In order to further ease the management burden on vSphere administrators, we want to provide them with a way to manage permissions across hosts, datastores, and VMs from a single central location. We also want to maintain existing workflows and embrace existing solutions to both ease development and enhance the comfort of the user. The standard way to centrally manage resources and permissions in the vSphere universe is via vCenter. Our goal then is to provide a solution that enables configuration of access controls via vCenter, while maintaining the flexibility to allow granular enough permissions to satisfy container use cases on vSphere datastores.
 
@@ -65,7 +65,7 @@ Docker users and permissions
 
 The Docker engine is usable from any user account with privileges to run Docker commands. Docker *requires root privileges* to run Docker commands, which can be enabled by adding users to the ‘docker’ group. Therefore there are no restrictions on Docker usage between users of Docker.
 
-Furthermore, the Docker volume plugin API does not pass any user information from Docker to volume drivers. The sources of Docker volume requests from the guest are indistinguishable from one another. Additionally, the Docker client may be on a separate physical machine from the Docker server, and therefore the Docker server machine may not even know which user is running Docker commands. This means that guest user based access control for Docker volume driver permissions is infeasible without significant changes to Docker core code, specifically Plugin API and remote access control code.
+Furthermore, the Docker volume plugin API does not pass any user information from Docker to volume drivers. The sources of Docker volume requests from the guest are indistinguishable from one another. Additionally, the Docker client may be on a separate physical machine from the Docker server, and therefore the Docker server machine may not even know which user is running Docker commands. This means that guest user based access control for vSphere Docker Volume Service permissions is infeasible without significant changes to Docker core code, specifically Plugin API and remote access control code.
 
 Required permissions and caveats
 ================================
@@ -79,7 +79,7 @@ Note that since vSphere authorization is based around users, and Docker volume d
 Permissions Model
 =================
 
-As mentioned above, permissions for Docker volume driver usage are granted to VMs or groups of VMs. A group of VMs is known as a `Tenant`. Tenants provide for full isolation of volumes such that volumes created by one tenant are neither visible nor usable from other tenants, even if those volumes reside on datastores shared by tenants. An exception to this rule is if the `global` `visibility` privilege is granted to a tenant for a datastore. This allows the tenant to see all volumes in all tenants on the datastore.
+As mentioned above, permissions for Docker volume service usage are granted to VMs or groups of VMs. A group of VMs is known as a `Tenant`. Tenants provide for full isolation of volumes such that volumes created by one tenant are neither visible nor usable from other tenants, even if those volumes reside on datastores shared by tenants. An exception to this rule is if the `global` `visibility` privilege is granted to a tenant for a datastore. This allows the tenant to see all volumes in all tenants on the datastore.
 
 Privileges consist of operations against a datastore and limits on those operations. Privileges are assigned per datastore, and each tenant may have different privileges for different datastores.
 
