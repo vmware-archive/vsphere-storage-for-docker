@@ -177,7 +177,7 @@
             
                 <li class="toctree-l3"><a href="#troubleshooting">Troubleshooting</a></li>
                 
-                    <li><a class="toctree-l4" href="#docker-plugin-to-esx-backend-communication">Docker Plugin to ESX Backend Communication.</a></li>
+                    <li><a class="toctree-l4" href="#docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.</a></li>
                 
             
             </ul>
@@ -272,10 +272,10 @@
 </ul>
 </li>
 <li><a href="#troubleshooting">Troubleshooting</a><ul>
-<li><a href="#docker-plugin-to-esx-backend-communication">Docker Plugin to ESX Backend Communication.</a><ul>
+<li><a href="#docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.</a><ul>
 <li><a href="#what-is-vmci-and-vsock-and-why-is-it-needed">What is VMCI and vSock and why is it needed?</a></li>
-<li><a href="#i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the plugin logs, what is the cause?</a></li>
-<li><a href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the plugin logs, what is the cause?</a></li>
+<li><a href="#i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the service&rsquo;s logs, what is the cause?</a></li>
+<li><a href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the service&rsquo;s logs, what is the cause?</a></li>
 </ul>
 </li>
 </ul>
@@ -290,22 +290,22 @@
 <h2 id="how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?<a class="headerlink" href="#how-do-i-run-the-setup-on-my-laptop" title="Permanent link">&para;</a></h2>
 <p>Follow the <a href="https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></p>
 <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<h2 id="docker-plugin-to-esx-backend-communication">Docker Plugin to ESX Backend Communication.<a class="headerlink" href="#docker-plugin-to-esx-backend-communication" title="Permanent link">&para;</a></h2>
+<h2 id="docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.<a class="headerlink" href="#docker-service-to-esx-backend-communication" title="Permanent link">&para;</a></h2>
 <h3 id="what-is-vmci-and-vsock-and-why-is-it-needed">What is VMCI and vSock and why is it needed?<a class="headerlink" href="#what-is-vmci-and-vsock-and-why-is-it-needed" title="Permanent link">&para;</a></h3>
-<p>The docker volume plugin for vSphere uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow <a href="http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F">VMware tools installation</a> or use open vmtools 
+<p>vSphere Docker Volume Service uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow <a href="http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F">VMware tools installation</a> or use open vmtools 
 <code>apt-get install open-vm-tools</code>. 
 Additional reading for differences between VMware tools and open vm tools: </p>
 <ul>
 <li><a href="http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html">Open-VM-Tools (OVT): The Future Of VMware Tools For Linux</a> </li>
 <li><a href="http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools">VMware Tools vs Open VM Tools</a></li>
 </ul>
-<h3 id="i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">plugin logs</a>, what is the cause?<a class="headerlink" href="#i-see-connection-reset-by-peer-errno104-in-the-plugin-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
+<h3 id="i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service&rsquo;s logs</a>, what is the cause?<a class="headerlink" href="#i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
 <p>104 is a standard linux error (<code>#define ECONNRESET      104     /* Connection reset by peer */</code>)</p>
-<p>It occurs if the Docker volume plugin cannot communicate to the ESX back end. This can happen if:
+<p>It occurs if the Docker volume service cannot communicate to the ESX back end. This can happen if:
    * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read &ldquo;What is VMCI and vSock and why is it needed?&rdquo; above.
    * ESX service is not running. <code>/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/docker-volume-vsphere#logging">ESX Logs</a>
-   * ESX service and the plugin are not communicating on the same port. <code>ps -c | grep vmdk #On ESX</code> and <code>ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</p>
-<h3 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">plugin logs</a>, what is the cause?<a class="headerlink" href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-plugin-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
+   * ESX service and the docker volume service are not communicating on the same port. <code>ps -c | grep vmdk #On ESX</code> and <code>ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</p>
+<h3 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service&rsquo;s logs</a>, what is the cause?<a class="headerlink" href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
 <p>97 is a standard linux error (<code>#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>)</p>
 <p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">&ldquo;What is VMCI and vSock and why is it needed?&rdquo;</a> above.</p>
               

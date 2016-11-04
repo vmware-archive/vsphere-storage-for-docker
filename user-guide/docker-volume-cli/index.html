@@ -124,7 +124,7 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#using-the-plugin-in-docker">Using the plugin in Docker</a></li>
+                <li class="toctree-l3"><a href="#using-the-service-in-docker">Using the Service in Docker</a></li>
                 
                     <li><a class="toctree-l4" href="#docker-volume-create-options">Docker volume create options</a></li>
                 
@@ -264,7 +264,7 @@
               
                 <div class="toc">
 <ul>
-<li><a href="#using-the-plugin-in-docker">Using the plugin in Docker</a><ul>
+<li><a href="#using-the-service-in-docker">Using the Service in Docker</a><ul>
 <li><a href="#docker-volume-create-options">Docker volume create options</a><ul>
 <li><a href="#size">size</a></li>
 <li><a href="#policy">policy</a></li>
@@ -278,8 +278,8 @@
 </li>
 </ul>
 </div>
-<h1 id="using-the-plugin-in-docker">Using the plugin in Docker<a class="headerlink" href="#using-the-plugin-in-docker" title="Permanent link">&para;</a></h1>
-<p>The plugin works with existing Docker volume commands.</p>
+<h1 id="using-the-service-in-docker">Using the Service in Docker<a class="headerlink" href="#using-the-service-in-docker" title="Permanent link">&para;</a></h1>
+<p>The service works with existing Docker volume commands.</p>
 <ol>
 <li><a href="https://docs.docker.com/engine/reference/commandline/volume_create/">Docker volume create</a></li>
 <li><a href="https://docs.docker.com/engine/reference/commandline/volume_inspect/">Docker volume inspect</a></li>
@@ -335,7 +335,7 @@ docker volume create --driver=vmdk --name=MyVolume -o access=read-write -o diskf
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=ext4 (default)
 </code></pre>
 
-<p>Specifies which filesystem will be created on the new volume. The volume-plugin will search for a existing /sbin/mkfs.<strong>fstype</strong> on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. </p>
+<p>Specifies which filesystem will be created on the new volume. vSphere Docker Volume Service will search for a existing /sbin/mkfs.<strong>fstype</strong> on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. </p>
               
             </div>
           </div>
