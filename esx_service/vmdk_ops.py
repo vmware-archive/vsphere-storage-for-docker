@@ -434,9 +434,9 @@ def getVMDK(vmdk_path, vol_name, datastore):
                           kv.get_vol_info(vmdk_path),
                           datastore)
     except Exception as ex:
-        msg = "Failed to get disk details for %s (%s)" % (vmdk_path, ex)
-        logging.error(msg)
-        result = err(msg)
+        logging.error("Failed to get disk details for %s (%s)" % (vmdk_path, ex))
+        return None
+
     return result
 
 def listVMDK(vm_datastore, tenant):
