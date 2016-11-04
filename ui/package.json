@@ -17,8 +17,8 @@
     "url" : "https://github.com/vmware/docker-volume-vsphere.git"
   },
   "author": {
-    "name": "Mark Soper",
-    "email": "msoper@vmware.com",
-    "url": "http://marksoper.me"
+    "name": "SABU, VMware",
+    "email": "cna-storage@vmware.com",
+    "url": "https://github.com/vmware/docker-volume-vsphere"
   }
 }
