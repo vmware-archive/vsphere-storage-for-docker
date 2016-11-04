@@ -131,6 +131,8 @@ $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) 
 	@echo Staging in $(PAYLOAD)
 ifeq ($(INCLUDE_UI), true)
 	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
+else
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
 endif
 	@chmod -R u+w $(PAYLOAD)
 	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
