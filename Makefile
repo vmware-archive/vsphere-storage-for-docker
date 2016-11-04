@@ -16,17 +16,54 @@
 #   - convenience: redirects targets to ./vmdk_plugin so 'make'
 #                  can be run from the top
 #   - drone invariant: defines deb/rpm/build/testasroot targets so drone.yml
-#                   can be kept as-is 
+#                   can be kept as-is
 
 TARGETS := all \
 	deploy-all deploy-esx deploy-vm deploy-vm-test deploy\
 	test-all test-vm test-esx testremote testasroot\
-	clean-all clean clean-vm clean-esx \
-	build-all build dockerbuild \
+	clean-all clean-vm clean-esx \
+	build-all dockerbuild \
 	deb rpm package gvt documentation
 
-# default target
-default: build-all
+BUILD := ./misc/scripts/build.sh
+
+#
+# kill switch for UI
+# should be hooked up to a command line argument or some such when ready
+#
+INCLUDE_UI := false
+
+# default target, build ui then build vib, rpm, deb
+default: dockerized-build-ui build-all
+
+# clean inside docker run to avoid sudo make clean
+# dev builds are inside docker which creates folders
+# as root.
+
+clean: dockerized-clean-ui
+ifeq ($(INCLUDE_UI),true)
+	$(MAKE) --directory=vmdk_plugin $@
+endif
+
+# Non dockerized build, used by CI
+build:
+ifeq ($(INCLUDE_UI), true)
+	$(MAKE) --directory=ui $@
+	$(MAKE) --directory=vmdk_plugin $@
+else
+	$(MAKE) --directory=vmdk_plugin $@
+endif
+
+# Forward to UI inside docker run
+dockerized-build-ui:
+ifeq ($(INCLUDE_UI), true)
+	$(BUILD) ui build
+endif
+
+dockerized-clean-ui:
+ifeq ($(INCLUDE_UI), true)
+	$(BUILD) ui clean
+endif
 
 # redirect all
 $(TARGETS):
