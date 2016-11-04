@@ -120,12 +120,18 @@ SO_SQLITE := tools/sqlite/*.so
 # copy files to staging area and then build the VIB
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
 	@echo Staging in $(PAYLOAD)
+ifeq ($(INCLUDE_UI), true)
 	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
+else
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
+endif
 	@chmod -R u+w $(PAYLOAD)
 	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
 	cp $(TO_ESX_PY)  $(VMDKOPS_PY)
 	cp -R $(PY_SQLITE) $(VMDKOPS_PY2)
+ifeq ($(INCLUDE_UI), true)
 	cp -R $(UI_FROM) $(UI_TO)
+endif
 	cp $(SO_SQLITE) $(VMDKOPS_PY2)
 	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)

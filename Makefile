@@ -22,13 +22,24 @@ TARGETS := all \
 	deploy-all deploy-esx deploy-vm deploy-vm-test deploy\
 	test-all test-vm test-esx testremote testasroot\
 	clean-all clean-vm clean-esx \
-	build-all dockerbuild \
+	dockerbuild \
 	deb rpm package gvt documentation
 
 BUILD := ./misc/scripts/build.sh
 
+#
+# kill switch for UI
+# To override default here export env variable before make
+# export INCLUDE_UI=true
+INCLUDE_UI ?= false
+
+export INCLUDE_UI
+
 # default target, build ui then build vib, rpm, deb
-default: dockerized-build-ui build-all
+default: build-all
+
+build-all: dockerized-build-ui
+	$(MAKE) --directory=vmdk_plugin $@
 
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders
@@ -38,14 +49,21 @@ clean: dockerized-clean-ui
 
 # Non dockerized build, used by CI
 build:
+ifeq ($(INCLUDE_UI), true)
 	$(MAKE) --directory=ui $@
+endif
 	$(MAKE) --directory=vmdk_plugin $@
 
 # Forward to UI inside docker run
 dockerized-build-ui:
+ifeq ($(INCLUDE_UI), true)
 	$(BUILD) ui build
+endif
+
 dockerized-clean-ui:
+ifeq ($(INCLUDE_UI), true)
 	$(BUILD) ui clean
+endif
 
 # redirect all
 $(TARGETS):
