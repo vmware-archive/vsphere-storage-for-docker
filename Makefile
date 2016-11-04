@@ -34,38 +34,36 @@ BUILD := ./misc/scripts/build.sh
 INCLUDE_UI = false
 
 # default target, build ui then build vib, rpm, deb
-ifeq ($(INCLUDE_UI), true)
-	default: dockerized-build-ui build-all
-else
-	default: build-all
-endif
+default: dockerized-build-ui build-all
 
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders
 # as root.
 
-ifeq ($(INCLUDE_UI), true)
-	clean: dockerized-clean-ui
+clean: dockerized-clean-ui
+	ifeq ($(INCLUDE_UI), true)
 		$(MAKE) --directory=vmdk_plugin $@
-endif
+	endif
 
 # Non dockerized build, used by CI
-ifeq ($(INCLUDE_UI), true)
-	build:
+build:
+	ifeq ($(INCLUDE_UI), true)
 		$(MAKE) --directory=ui $@
 		$(MAKE) --directory=vmdk_plugin $@
-else
-	build:
+	else
 		$(MAKE) --directory=vmdk_plugin $@
-endif
+	endif
 
 # Forward to UI inside docker run
-ifeq ($(INCLUDE_UI), true)
-	dockerized-build-ui:
+dockerized-build-ui:
+	ifeq ($(INCLUDE_UI), true)
 		$(BUILD) ui build
-	dockerized-clean-ui:
+	endif
+
+dockerized-clean-ui:
+	ifeq ($(INCLUDE_UI), true)
 		$(BUILD) ui clean
-endif
+	endif
 
 # redirect all
 $(TARGETS):

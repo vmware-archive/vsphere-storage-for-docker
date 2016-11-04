@@ -102,12 +102,10 @@ VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
 #
 INCLUDE_UI = false
 
-ifeq ($(INCLUDE_UI), true)
-	UI_FROM := ../ui/build/dist/*
-	UI_TO_BASE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
-	UI_TO_HOSTD := /hostd/docroot/ui/plugins/docker-volume-plugin/
-	UI_TO := $(UI_TO_BASE)$(UI_TO_HOSTD)
-endif
+UI_FROM := ../ui/build/dist/*
+UI_TO_BASE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
+UI_TO_HOSTD := /hostd/docroot/ui/plugins/docker-volume-plugin/
+UI_TO := $(UI_TO_BASE)$(UI_TO_HOSTD)
 
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
@@ -119,7 +117,6 @@ TO_ESX_BIN := $(PY_SRC) $(PY_CLI)
 TO_ESX_PY  := $(PY_UTILS)
 TO_ESX_LIB := $(VMCI_SRV_LIBS)
 TO_ESX_INITD := $(INIT_SCRIPT)
-
 
 # SQLITE python libs. We need that on ESX before 6.0 U2
 PY_SQLITE := tools/sqlite/sqlite3
