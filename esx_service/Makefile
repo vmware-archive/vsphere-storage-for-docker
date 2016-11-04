@@ -106,6 +106,7 @@ INCLUDE_UI = false
 # leaving these UI vars in
 # will only be used if UI flag is set
 #
+
 UI_FROM := ../ui/build/dist/*
 UI_TO_BASE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
 UI_TO_HOSTD := /hostd/docroot/ui/plugins/docker-volume-plugin/
@@ -139,6 +140,7 @@ endif
 ifeq ($(INCLUDE_UI), true)
 	cp -R $(UI_FROM) $(UI_TO)
 endif
+	cp -R $(UI_FROM) $(UI_TO)
 	cp $(SO_SQLITE) $(VMDKOPS_PY2)
 	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)

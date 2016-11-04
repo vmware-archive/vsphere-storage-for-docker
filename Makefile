@@ -65,6 +65,20 @@ ifeq ($(INCLUDE_UI), true)
 	$(BUILD) ui clean
 endif
 
+clean: dockerized-clean-ui
+	$(MAKE) --directory=vmdk_plugin $@
+
+# Non dockerized build, used by CI
+build:
+	$(MAKE) --directory=ui $@
+	$(MAKE) --directory=vmdk_plugin $@
+
+# Forward to UI inside docker run
+dockerized-build-ui:
+	$(BUILD) ui build
+dockerized-clean-ui:
+	$(BUILD) ui clean
+
 # redirect all
 $(TARGETS):
 	$(MAKE) --directory=vmdk_plugin $@
