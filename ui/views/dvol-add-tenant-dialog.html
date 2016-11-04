@@ -1,0 +1,41 @@
+
+<div ng-controller="DvolAddTenantController" class="add-tenant-dialog">
+
+  <div class="vui-stack-view">
+    <div class="stack-view-table">
+
+        <div vui-stack-block="nameBlock">
+          <span vui-sb-label>
+            Tenant Name
+          </span>
+           <div vui-sb-content>
+              <input type="text"
+                 focus-me="'select'"
+                 ng-model="tenant.name"
+                 maxlength="128"
+                 ng-disabled="edit"
+                 title="Tenant Name"/>
+           </div>
+        </div>
+
+        <div vui-stack-block="descBlock">
+          <span vui-sb-label>
+            Tenant Description
+          </span>
+           <div vui-sb-content>
+              <textarea
+                 style="height: 100px;"
+                 focus-me="'select'"
+                 ng-model="tenant.description"
+                 title="Tenant Description"/>
+           </div>
+        </div>
+
+     </div>
+
+  </div>
+
+  <div ng-if="!editMode" id="datacenterVmsGrid" vui-datagrid="datacenterVmsGrid">
+  </div>
+
+</div>

@@ -1,0 +1,12 @@
+#!/bin/bash
+COMPASS=`which compass`
+if [ -e ${COMPASS} ]; then
+   exec ${COMPASS} "$@"
+fi
+
+TC_ROOT=/build/toolchain/lin32
+RUBY_ROOT=$TC_ROOT/ruby-1.9.2-p290
+export GEM_PATH=$RUBY_ROOT/lib/ruby/gems/1.9.1/gems
+export PATH=$RUBY_ROOT/bin:$PATH
+export RUBYLIB=/build/toolchain/lin32/ruby-1.9.2-p290/lib/ruby/gems/1.9.1/gems/compass-core-1.0.3/lib:/build/toolchain/lin32/ruby-1.9.2-p290/lib/ruby/gems/1.9.1/gems/sass-3.4.13/lib:/build/toolchain/lin32/ruby-1.9.2-p290/lib/ruby/gems/1.9.1/gems/chunky_png-1.3.4/lib
+exec /build/toolchain/lin32/ruby-1.9.2-p290/lib/ruby/gems/1.9.1/gems/compass-1.0.3/bin/compass "$@"

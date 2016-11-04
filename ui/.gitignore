@@ -1,0 +1,15 @@
+#Extensions
+.*.swp
+.*.swo
+.*.swn
+.*.swm
+*.patch
+*.diff
+*.pyc
+*.log
+*.DS_Store
+
+#Directories
+build/
+.sass-cache
+node_modules

@@ -4,7 +4,7 @@ clone:
 
 build:
   build_dev:
-    image: cnastorage/vibauthor-and-go:0.6
+    image: cnastorage/vibauthor-and-go:0.8
     environment:
       - KEY=$$KEY
     commands:
@@ -17,7 +17,7 @@ build:
       event: [push, pull_request]
 
   build_tag:
-    image: cnastorage/vibauthor-and-go:0.6
+    image: cnastorage/vibauthor-and-go:0.8
     environment:
       - KEY=$$KEY
     commands:
@@ -47,7 +47,7 @@ build:
       event: tag
 
   test_dev_branch: # Identical to test except for when it occurs
-    image: cnastorage/vibauthor-and-go:0.6
+    image: cnastorage/vibauthor-and-go:0.8
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
@@ -72,7 +72,7 @@ build:
       branch: [master, runci/*]
 
   test: 
-    image: cnastorage/vibauthor-and-go:0.6
+    image: cnastorage/vibauthor-and-go:0.8
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
@@ -96,7 +96,7 @@ build:
 
 
   test_tag:
-    image: cnastorage/vibauthor-and-go:0.6
+    image: cnastorage/vibauthor-and-go:0.8
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER

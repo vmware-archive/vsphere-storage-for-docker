@@ -1,0 +1,71 @@
+
+<div ng-controller="DvolEditDatastoreController" class="edit-datastore-dialog">
+
+  <div class="vui-stack-view">
+    <div class="stack-view-table">
+
+      <div vui-stack-block="nameBlock">
+        <span vui-sb-label>
+          Create volumes
+        </span>
+         <div vui-sb-content>
+            <input type="checkbox"
+               focus-me="'select'"
+               ng-model="permissions.create"
+               title="Create permission"/>
+         </div>
+       </div>
+
+       <div vui-stack-block="nameBlock" ng-if="permissions.create" >
+         <span vui-sb-label>
+           Max volume size (GB)
+         </span>
+          <div vui-sb-content>
+             <input type="number"
+                focus-me="'select'"
+                ng-model="permissions.maxVolume"
+                title="Max volume size"/>
+          </div>
+        </div>
+
+        <div vui-stack-block="nameBlock" ng-if="permissions.create" >
+          <span vui-sb-label>
+           Max total volume size (GB)
+          </span>
+          <div vui-sb-content>
+             <input type="number"
+                focus-me="'select'"
+                ng-model="permissions.totalVolume"
+                title="Max total volume size"/>
+          </div>
+        </div>
+
+        <div vui-stack-block="nameBlock">
+          <span vui-sb-label>
+            Mount volumes
+          </span>
+           <div vui-sb-content>
+              <input type="checkbox"
+                 focus-me="'select'"
+                 ng-model="permissions.mount"
+                 title="Mount permission"/>
+           </div>
+        </div>
+
+        <div vui-stack-block="nameBlock">
+          <span vui-sb-label>
+            Remove volumes
+          </span>
+           <div vui-sb-content>
+              <input type="checkbox"
+                 focus-me="'select'"
+                 ng-model="permissions.remove"
+                 title="Remove permission"/>
+           </div>
+        </div>
+
+     </div>
+
+  </div>
+
+</div>
