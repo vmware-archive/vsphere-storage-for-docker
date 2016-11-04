@@ -96,10 +96,18 @@ VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
 
 # build the docker-volume-plugin
 
-UI_FROM := ../ui/build/dist/*
-UI_TO_BASE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
-UI_TO_HOSTD := /hostd/docroot/ui/plugins/docker-volume-plugin/
-UI_TO := $(UI_TO_BASE)$(UI_TO_HOSTD)
+#
+# kill switch for UI
+# should be hooked up to a command line argument or some such when ready
+#
+INCLUDE_UI = false
+
+ifeq ($(INCLUDE_UI), true)
+	UI_FROM := ../ui/build/dist/*
+	UI_TO_BASE := $(VMDKOPS_PAYLOAD)/usr/lib/vmware
+	UI_TO_HOSTD := /hostd/docroot/ui/plugins/docker-volume-plugin/
+	UI_TO := $(UI_TO_BASE)$(UI_TO_HOSTD)
+endif
 
 # this is used from a Makefile upstairs, and could be used manually
 .PHONY: build
@@ -120,12 +128,16 @@ SO_SQLITE := tools/sqlite/*.so
 # copy files to staging area and then build the VIB
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
 	@echo Staging in $(PAYLOAD)
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
+	ifeq ($(INCLUDE_UI), true)
+		@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
+	endif
 	@chmod -R u+w $(PAYLOAD)
 	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
 	cp $(TO_ESX_PY)  $(VMDKOPS_PY)
 	cp -R $(PY_SQLITE) $(VMDKOPS_PY2)
-	cp -R $(UI_FROM) $(UI_TO)
+	ifeq ($(INCLUDE_UI), true)
+		cp -R $(UI_FROM) $(UI_TO)
+	endif
 	cp $(SO_SQLITE) $(VMDKOPS_PY2)
 	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
