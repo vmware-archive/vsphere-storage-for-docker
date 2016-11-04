@@ -490,24 +490,33 @@ def get_vol_path(datastore, tenant_name=None):
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
-        return path
+        return path, None
 
     if not os.path.isdir(dock_vol_path):
         # The osfs tools are usable for DOCK_VOLS_DIR on all datastores
         cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
         rc, out = RunCommand(cmd)
-        if rc != 0:
-            logging.warning("Failed to create %s", dock_vol_path)
-            return None
+        errMsg = None
+        if rc == 13:
+            errMsg = "{0} is not writable and hence ./dockvol creation failed".format(datastore)
+        elif rc == 30:
+            errMsg = "Permission denied to create ./dockvol on {}".format(datastore)
+        else:
+            logging.warning("Failed to create %s", path)
+            errMsg = "Failed to initialize volume path {0}".format(path)
+        #creation of dockvols directory failed.
+        if errMsg is not None:
+            return None, err(errMsg)
     if tenant_name and not os.path.isdir(path):
         cmd = "{0} {1}".format(MKDIR_CMD, path)
         rc, out = RunCommand(cmd)
         if rc != 0:
            logging.warning("Failed to create %s", path)
-           return None
+           errMsg = "Failed to initialize volume path {0}".format(path)
+           return None, err(errMsg)
 
     logging.info("Created %s", path)
-    return path
+    return path, None
 
 def parse_vol_name(full_vol_name):
     """
@@ -595,10 +604,10 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
                 % (datastore, ", ".join([i[0] for i in vmdk_utils.get_datastores()]), vm_datastore))
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
-    path = get_vol_path(datastore, tenant_name)
+    path, errMsg = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest %s %s", tenant_name, path)
     if path is None:
-        return err("Failed to initialize volume path {0}".format(path))
+        return errMsg
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
@@ -1089,7 +1098,7 @@ def set_vol_opts(name, options):
        return False
 
     # get /vmfs/volumes/<datastore>/dockvols path on ESX:
-    path = get_vol_path(datastore)
+    path, errMsg = get_vol_path(datastore)
 
     if path is None:
        msg = "Failed to get datastore path {0}".format(path)
