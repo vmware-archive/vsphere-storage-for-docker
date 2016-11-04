@@ -1,0 +1,25 @@
+{
+   "dvol": {
+      "menu": {
+         "title": "Volume Management",
+         "titleChildOne": "Tenants"
+      },
+      "title": "Docker Volume Management",
+      "dialogs": {
+        "add-tenant": {
+          "title": "Add Tenant",
+          "content": "Add tenant content"
+        }
+      },
+      "tenantDetailTabs": {
+        "datastores": {
+          "label": "Datastores",
+          "tooltip": "Datastores associated with this tenant"
+        },
+        "vms": {
+          "label": "Virtual Machines",
+          "tooltip": "Virtual machines associated with this tenant"
+        }
+      }
+    }
+}
