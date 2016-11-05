@@ -35,4 +35,5 @@ def convert_to_MB(vol_size_str):
         value = value*conversions[unit]
     else:
         logging.error("Invalid volume size")
-    return value  
+    return value
+  
