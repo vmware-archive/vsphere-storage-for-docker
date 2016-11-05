@@ -25,6 +25,7 @@ import logging
 import sys
 import errno
 import time
+import threading
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -65,6 +66,9 @@ is_64bits = False
 # Number of times and sleep time to retry on IOError EBUSY
 EBUSY_RETRY_COUNT = 8
 EBUSY_RETRY_SLEEP = 0.5
+
+# Thread local storage
+thread_local = threading.local()
 
 class disk_info(Structure):
    _fields_ = [('size', c_uint64),
@@ -178,22 +182,23 @@ def disk_is_valid(dhandle):
 # Open a VMDK given its path, the VMDK is opened locked just to
 # ensure we have exclusive access and its not already in use.
 def vol_open_path(volpath, open_flags=VMDK_OPEN_DEFAULT):
-    dhandle = get_uint(0)
-    ihandle = get_uint(0)
-    key = c_uint32(0)
+    thread_local.dhandle = get_uint(0)
+    thread_local.ihandle = get_uint(0)
+    thread_local.key = c_uint32(0)
 
     res = lib.DiskLib_OpenWithInfo(volpath.encode(), open_flags,
-                                   byref(key), byref(dhandle),
-                                   byref(ihandle))
+                                   byref(thread_local.key),
+                                   byref(thread_local.dhandle),
+                                   byref(thread_local.ihandle))
 
     if res != 0:
         logging.warning("Open %s failed - %x", volpath, res)
 
-    return dhandle
+    return thread_local.dhandle
 
 # Create the side car for the volume identified by volpath.
 def create(volpath, kv_dict):
-    obj_handle = get_uint(0)
+    thread_local.obj_handle = get_uint(0)
     dhandle = vol_open_path(volpath)
 
     if not disk_is_valid(dhandle):
@@ -201,17 +206,17 @@ def create(volpath, kv_dict):
     if use_sidecar_create:
        res = lib.DiskLib_SidecarCreate(dhandle, DVOL_KEY.encode(),
                                        KV_CREATE_SIZE, KV_SIDECAR_CREATE,
-                                       byref(obj_handle))
+                                       byref(thread_local.obj_handle))
     else:
        res = lib.DiskLib_SidecarOpen(dhandle, DVOL_KEY.encode(),
                                      KV_SIDECAR_CREATE,
-                                     byref(obj_handle))
+                                     byref(thread_local.obj_handle))
     if res != 0:
        logging.warning("Side car create for %s failed - %x", volpath, res)
        lib.DiskLib_Close(dhandle)
        return False
 
-    lib.DiskLib_SidecarClose(dhandle, DVOL_KEY.encode(), byref(obj_handle))
+    lib.DiskLib_SidecarClose(dhandle, DVOL_KEY.encode(), byref(thread_local.obj_handle))
     lib.DiskLib_Close(dhandle)
 
     return save(volpath, kv_dict)
@@ -312,13 +317,14 @@ def get_info(volpath):
        logging.warning("Failed to open disk - %x", volpath)
        return None
 
-    sinfo = disk_info()
-    res = lib.DiskLib_GetSize(dhandle, 0, 1, byref(sinfo))
+    thread_local.sinfo = disk_info()
+    res = lib.DiskLib_GetSize(dhandle, 0, 1, byref(thread_local.sinfo))
 
     lib.DiskLib_Close(dhandle)
     if res != 0:
        logging.warning("Failed to get size of disk - %x", volpath, res)
        return None
 
-    return {VOL_SIZE: convert(sinfo.size), VOL_ALLOC: convert(sinfo.allocated)}
+    return {VOL_SIZE: convert(thread_local.sinfo.size),
+            VOL_ALLOC: convert(thread_local.sinfo.allocated)}
 
