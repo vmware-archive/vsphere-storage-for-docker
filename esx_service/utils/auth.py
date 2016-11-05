@@ -21,7 +21,7 @@ import sqlite3
 import convert
 import auth_data_const
 import volume_kv as kv
-import threading
+import threadutils
 
 # All supported vmdk commands
 CMD_CREATE = 'create'
@@ -33,8 +33,8 @@ CMD_DETACH = 'detach'
 
 SIZE = 'size'
 
-# thread local storage
-thread_local = threading.local()
+# thread local storage in this module namespace
+thread_local = threadutils.get_local_storage()
 
 def get_auth_mgr():
     """ Get a connection to auth DB. """
