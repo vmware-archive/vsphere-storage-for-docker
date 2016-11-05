@@ -50,6 +50,8 @@ def get_lock_decorator(reentrant=False):
     """
     Create a locking decorator to be used in modules
     """
+    # Lock to be used in the decorator
+    lock = _get_lock(reentrant)
     def lock_decorator(func):
         """
         Locking decorator
@@ -58,21 +60,22 @@ def get_lock_decorator(reentrant=False):
             """
             Locking wrapper
             """
-            lock = _get_lock(reentrant)
-            logging.debug("lock: %s, caller: %s, args: %s %s, will try to acquire",
-                          lock, func.__name__, args, kwargs)
+            # Get lock memory address for debugging
+            lockaddr = hex(id(lock))
+            logging.debug("Trying to acquire lock: %s @ %s, caller: %s, args: %s %s",
+                          lock, lockaddr, func.__name__, args, kwargs)
             with lock:
-                logging.debug("lock: %s acquired for caller: %s, args: %s %s",
-                              lock, func.__name__, args, kwargs)
+                logging.debug("Aquired lock: %s @ %s, caller: %s, args: %s %s",
+                              lock, lockaddr, func.__name__, args, kwargs)
                 return func(*args, **kwargs)
-            logging.debug("lock: %s released by caller: %s, args: %s %s",
-                          lock, func.__name__, args, kwargs)
         return protected
     return lock_decorator
+
 
 def get_local_storage():
     """Return a thread local storage object"""
     return threading.local()
+
 
 def _get_lock(reentrant=False):
     """Return a thread Lock or Rlock"""
