@@ -653,11 +653,10 @@ class AuthorizationDataManager:
             tenant_name = result[0]
             vmdks = vmdk_utils.get_volumes(tenant_name)
             # Delete all volumes for this tenant. 
-            dir_path = None
+            dir_paths = set()
             for vmdk in vmdks:
                 vmdk_path = os.path.join(vmdk['path'], "{0}".format(vmdk['filename']))
-                if not dir_path:
-                    dir_path = vmdk['path']
+                dir_paths.add(vmdk['path'])
                 logging.debug("path=%s filename=%s", vmdk['path'], vmdk['filename'])    
                 logging.debug("Deleting volume path%s", vmdk_path)
                 err = vmdk_ops.removeVMDK(vmdk_path)
@@ -667,12 +666,12 @@ class AuthorizationDataManager:
                         return err
             
             # Delete path /vmfs/volumes/datastore_name/tenant_name
-            logging.debug("Deleting dir path%s", dir_path)
-            try:
-                os.rmdir(dir_path)
-            except os.error as e:
-                logging.error("remove dir %s failed with error %s", dir_path, e)
-                return str(e)
+            logging.debug("Deleting dir paths %s", dir_paths)
+            for path in list(dir_paths):
+                try:
+                    os.rmdir(path)
+                except os.error as e:
+                    logging.error("remove dir %s failed with error %s", dir_path, e)
                 
         error_info = self.remove_volumes_from_volume_table(tenant_id)
 
