@@ -207,8 +207,9 @@ def commands():
                     'func': tenant_rm,
                     'help': 'Delete a tenant',
                     'args': {
-                        'name': {
+                        '--name': {
                             'help': 'The name of the tenant',
+                            'required': True
                       },
                       '--remove-volumes': {
                         'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant',

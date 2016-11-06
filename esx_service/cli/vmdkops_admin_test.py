@@ -85,7 +85,7 @@ class TestParsing(unittest.TestCase):
         self.assert_parse_error('tenant create')
 
     def test_tenant_rm(self):
-        args = self.parser.parse_args('tenant rm tenant1 --remove-volumes=True'.split())
+        args = self.parser.parse_args('tenant rm tenant1 --remove-volumes'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_rm)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.remove_volumes, 'True')
