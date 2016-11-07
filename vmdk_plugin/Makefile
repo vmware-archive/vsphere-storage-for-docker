@@ -28,6 +28,8 @@ PKG_VERSION ?= $(shell \
 	       git log --pretty=format:'%h' -n 1)
 
 export PKG_VERSION
+export INCLUDE_UI
+
 EPOCH := 0
 
 # Place binaries here
