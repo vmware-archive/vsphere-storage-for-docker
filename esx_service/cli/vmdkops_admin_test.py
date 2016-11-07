@@ -88,7 +88,7 @@ class TestParsing(unittest.TestCase):
         args = self.parser.parse_args('tenant rm --name=tenant1 --remove-volumes'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_rm)
         self.assertEqual(args.name, 'tenant1')
-        self.assertEqual(args.remove_volumes, 'True')
+        self.assertEqual(args.remove_volumes, True)
 
     def test_tenant_rm_without_arg_remove_volumes(self):
         args = self.parser.parse_args('tenant rm --name=tenant1'.split())
@@ -96,7 +96,7 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.name, 'tenant1')
         # If arg "remove_volumes" is not specified in the CLI, then args.remove_volumes
         # will be None
-        self.assertEqual(args.remove_volumes, None)
+        self.assertEqual(args.remove_volumes, False)
         
 
     def test_tenant_rm_missing_name(self):
