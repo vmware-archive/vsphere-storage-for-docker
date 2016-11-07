@@ -326,6 +326,25 @@ def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB
 
     return None
 
+def remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name):
+    """ Remove volume from volumes table. """
+    _auth_mgr = get_auth_mgr()
+
+    logging.debug("remove volumes from volumes table(%s %s %s)", tenant_uuid, datastore,
+                  vol_name)
+    try:
+        _auth_mgr.conn.execute(
+                    "DELETE FROM volumes WHERE tenant_id = ? AND datastore = ? AND volume_name = ?", 
+                    [tenant_uuid, datastore, vol_name]
+            )
+        _auth_mgr.conn.commit()
+    except sqlite3.Error, e:
+        logging.error("Error %s when remove from volumes table for tenant_id %s and datastore %s",
+                      e, tenant_uuid, datastore)
+        return str(e)
+
+    return None
+
 def get_row_from_tenants_table(conn, tenant_uuid):
     """ Get a row from tenants table for a given tenant """
 

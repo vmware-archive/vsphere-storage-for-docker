@@ -532,7 +532,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
         # remove the tenant
         error_info = self.auth_mgr.remove_tenant(tenant1.id, False)
         self.assertEqual(error_info, None)
-        error_info = self.auth_mgr.remove_volumes_from_volume_table(tenant1.id)
+        error_info = self.auth_mgr.remove_volumes_from_volumes_table(tenant1.id)
         self.assertEqual(error_info, None)        
                                                   
     

@@ -1005,7 +1005,6 @@ def tenant_access_add(args):
         return operation_fail(error_info)
 
     privileges = generate_privileges(args)
-    print privileges
     error_info = tenant.set_datastore_access_privileges(_auth_mgr.conn, [privileges])
       
     if error_info:

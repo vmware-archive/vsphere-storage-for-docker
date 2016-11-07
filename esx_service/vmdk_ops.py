@@ -621,6 +621,13 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     elif cmd == "remove":
         response = removeVMDK(vmdk_path)
+        # remove succeed, remove infomation of this volume from volumes table
+        if not response:
+            if tenant_uuid:
+                auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
+            else:
+                logging.warning(" VM %s does not belong to any tenant", vm_name)
+        
     elif cmd == "attach":
         response = attachVMDK(vmdk_path, vm_uuid)
     elif cmd == "detach":
