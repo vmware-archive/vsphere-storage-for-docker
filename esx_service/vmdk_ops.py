@@ -95,6 +95,10 @@ MKDIR_CMD = "/bin/mkdir"
 VMDK_CREATE_CMD = "/sbin/vmkfstools"
 VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
+# For retries on vmkfstools
+VMDK_RETRY_COUNT = 5
+VMDK_RETRY_SLEEP = 1
+
 # Defaults
 DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
 MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
@@ -399,11 +403,23 @@ def vol_info(vol_meta, vol_size_info, datastore):
 def removeVMDK(vmdk_path):
     logging.info("*** removeVMDK: %s", vmdk_path)
     cmd = "{0} {1}".format(VMDK_DELETE_CMD, vmdk_path)
-    rc, out = RunCommand(cmd)
-    if rc != 0:
-        return err("Failed to remove %s. %s" % (vmdk_path, out))
 
-    return None
+    # Workaround timing/locking issues.
+    retry_count = 0
+    while True:
+        rc, out = RunCommand(cmd)
+        if rc != 0 and "lock" in out:
+            if retry_count == VMDK_RETRY_COUNT:
+                return err("Failed to remove %s. %s" % (vmdk_path, out))
+            logging.info("*** removeVMDK: %s, coudn't lock volume for removal. Retrying...",
+                         vmdk_path)
+            retry_count += 1
+            time.sleep(VMDK_RETRY_SLEEP)
+            continue
+        elif rc != 0:
+            return err("Failed to remove %s. %s" % (vmdk_path, out))
+        else:
+            return None
 
 
 def getVMDK(vmdk_path, vol_name, datastore):
