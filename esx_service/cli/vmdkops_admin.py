@@ -859,7 +859,7 @@ def tenant_rm(args):
     # If args "remove_volumes" is not specified in CLI
     # args.remove_volumes will be None
     if args.remove_volumes:
-        print "All Volumes will be removed"
+        print("All Volumes will be removed")
         remove_volumes = True
 
     error_info = _auth_mgr.remove_tenant(tenant.id, remove_volumes)
