@@ -107,6 +107,8 @@ MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
 ECONNABORTED = 103 # Error on non privileged client
+ERR_OSFS_MKDIR_READONLY = 30 # Error on creating a dockvols directory on a non-writable datastore
+ERR_OSFS_MKDIR_NOPERMISSION = 13 # Error on creating a dockvols directory on a datastore where permissions are denied
 
 # Volume data returned on Get request
 CAPACITY = 'capacity'
@@ -490,29 +492,33 @@ def get_vol_path(datastore, tenant_name=None):
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
-        return path
+        return path, None
 
     if not os.path.isdir(dock_vol_path):
         # The osfs tools are usable for DOCK_VOLS_DIR on all datastores
         cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
         rc, out = RunCommand(cmd)
-        if rc != 0:
-            logging.warning("Failed to create %s", dock_vol_path)
-            return None
+        errMsg = None
+        if rc == ERR_OSFS_MKDIR_READONLY:
+            errMsg = "{0} creation failed - {1} not writable".format(DOCK_VOLS_DIR, datastore)
+        elif rc == ERR_OSFS_MKDIR_NOPERMISSION:
+            errMsg = "{0} creation failed - Permission denied on {1}".format(DOCK_VOLS_DIR, datastore)
+        else:
+            logging.warning("Failed to initialize volume path %s", path)
+            errMsg = "Failed to initialize volume path {0}".format(path)
+        #creation of dockvols directory failed.
+        if errMsg is not None:
+            return None, err(errMsg)
     if tenant_name and not os.path.isdir(path):
         cmd = "{0} {1}".format(MKDIR_CMD, path)
         rc, out = RunCommand(cmd)
         if rc != 0:
-           logging.warning("Failed to create %s", path)
-           return None
+           logging.warning("Failed to initialize volume path %s", path)
+           errMsg = "Failed to initialize volume path {0}".format(path)
+           return None, err(errMsg)
 
     logging.info("Created %s", path)
-    return path
-
-
-def known_datastores():
-    """returns names of know datastores"""
-    return [i[0] for i in vmdk_utils.get_datastores()]
+    return path, None
 
 def parse_vol_name(full_vol_name):
     """
@@ -593,17 +599,17 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err(str(ex))
     if not datastore:
         datastore = vm_datastore
-    elif datastore not in known_datastores():
+    elif not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
-                   "Known datastores: %s.\n" \
-                   "Default datastore: %s" \
-                   % (datastore, ", ".join(known_datastores()), vm_datastore))
+                "Known datastores: %s.\n" \
+                "Default datastore: %s" \
+                % (datastore, ", ".join([i[0] for i in vmdk_utils.get_datastores()]), vm_datastore))
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
-    path = get_vol_path(datastore, tenant_name)
+    path, errMsg = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest %s %s", tenant_name, path)
     if path is None:
-        return err("Failed to initialize volume path {0}".format(path))
+        return errMsg
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
@@ -1094,7 +1100,7 @@ def set_vol_opts(name, options):
        return False
 
     # get /vmfs/volumes/<datastore>/dockvols path on ESX:
-    path = get_vol_path(datastore)
+    path, errMsg = get_vol_path(datastore)
 
     if path is None:
        msg = "Failed to get datastore path {0}".format(path)

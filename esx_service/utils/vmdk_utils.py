@@ -40,20 +40,12 @@ SPECIAL_FILES_REGEXP = r"\A.*-(delta|ctk|digest|flat)\.vmdk$"
 # glob expression to match end of 'delta' (aka snapshots) file names.
 SNAP_SUFFIX_GLOB = "-[0-9][0-9][0-9][0-9][0-9][0-9].vmdk"
 
-
-def get_datastores():
+def init_datastoreCache():
     """
-    Returns a list of (name, url-name, dockvol_path), with an element per datastore
-    where:
-    'name' is datastore name (e.g. 'vsanDatastore') ,
-    'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
-    'dockvol-path; is a full path to 'dockvols' folder on datastore 
+    Initializes the datastore cache with the list of datastores accessible from local ESX host.
     """
-
     global datastores
-    logging.debug("get_datastores: %s", datastores)
-    if datastores != None:
-        return datastores
+    logging.debug("init_datastoreCache: %s", datastores)
 
     si = vmdk_ops.get_si()
 
@@ -64,6 +56,33 @@ def get_datastores():
                    os.path.split(d.info.url)[1],
                    os.path.join(d.info.url, 'dockvols'))
                   for d in ds_objects]
+
+def validate_datastore(datastore):
+    """
+    Checks if the datastore is part of datastoreCache. 
+    If not it will update the datastore cache and checks if datastore is part of the updated cache.
+    """
+    global datastores
+    if datastores == None:
+        init_datastoreCache()
+    if datastore in [i[0] for i in datastores]:
+        return True
+    else:
+        init_datastoreCache()
+        if datastore in [i[0] for i in datastores]:
+            return True
+    return False
+
+def get_datastores():
+    """
+    Returns a list of (name, url-name, dockvol_path), with an element per datastore
+    where:
+    'name' is datastore name (e.g. 'vsanDatastore') ,
+    'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
+    'dockvol-path; is a full path to 'dockvols' folder on datastore 
+    """
+    if datastores == None:
+        init_datastoreCache()
     return datastores
 
 def get_volumes(tenant_re):
