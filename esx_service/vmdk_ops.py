@@ -107,6 +107,8 @@ MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
 ECONNABORTED = 103 # Error on non privileged client
+ERR_OSFS_MKDIR_READONLY = 30 # Error on creating a dockvols directory on a non-writable datastore
+ERR_OSFS_MKDIR_NOPERMISSION = 13 # Error on creating a dockvols directory on a datastore where permissions are denied
 
 # Volume data returned on Get request
 CAPACITY = 'capacity'
@@ -497,12 +499,12 @@ def get_vol_path(datastore, tenant_name=None):
         cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
         rc, out = RunCommand(cmd)
         errMsg = None
-        if rc == 13:
-            errMsg = "{0} is not writable and hence ./dockvol creation failed".format(datastore)
-        elif rc == 30:
-            errMsg = "Permission denied to create ./dockvol on {}".format(datastore)
+        if rc == ERR_OSFS_MKDIR_READONLY:
+            errMsg = "{0} creation failed - {1} not writable".format(DOCK_VOLS_DIR, datastore)
+        elif rc == ERR_OSFS_MKDIR_NOPERMISSION:
+            errMsg = "{0} creation failed - Permission denied on {1}".format(DOCK_VOLS_DIR, datastore)
         else:
-            logging.warning("Failed to create %s", path)
+            logging.warning("Failed to initialize volume path %s", path)
             errMsg = "Failed to initialize volume path {0}".format(path)
         #creation of dockvols directory failed.
         if errMsg is not None:
@@ -511,7 +513,7 @@ def get_vol_path(datastore, tenant_name=None):
         cmd = "{0} {1}".format(MKDIR_CMD, path)
         rc, out = RunCommand(cmd)
         if rc != 0:
-           logging.warning("Failed to create %s", path)
+           logging.warning("Failed to initialize volume path %s", path)
            errMsg = "Failed to initialize volume path {0}".format(path)
            return None, err(errMsg)
 
