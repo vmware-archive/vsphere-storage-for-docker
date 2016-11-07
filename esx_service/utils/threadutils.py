@@ -26,7 +26,7 @@ class LockManager(object):
     Thread safe lock manager class
     """
     def __init__(self):
-        self._lock = threading.Lock()
+        self._lock = _get_lock()
         self._lock_store = WeakValueDictionary()
 
     def get_lock(self, lockname, reentrant=False):
@@ -43,7 +43,19 @@ class LockManager(object):
                 self._lock_store[lockname] = lock
                 logging.debug("LockManager.get_lock: new lock: %s, %s",
                               lockname, lock)
-        return lock
+            logging.debug("LockManager existing locks in store: %s",
+                          self._list_locks())
+            return lock
+
+    def _list_locks(self):
+        return self._lock_store.keys()
+
+    def list_locks(self):
+        """
+        Return a list of existing lock names in lock store.
+        """
+        with self._lock:
+            return self._list_locks()
 
 
 def get_lock_decorator(reentrant=False):
