@@ -509,11 +509,6 @@ def get_vol_path(datastore, tenant_name=None):
     logging.info("Created %s", path)
     return path
 
-
-def known_datastores():
-    """returns names of know datastores"""
-    return [i[0] for i in vmdk_utils.get_datastores()]
-
 def parse_vol_name(full_vol_name):
     """
     Parses volume[@datastore] and returns (volume, datastore)
@@ -593,11 +588,11 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err(str(ex))
     if not datastore:
         datastore = vm_datastore
-    elif datastore not in known_datastores():
+    elif not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
-                   "Known datastores: %s.\n" \
-                   "Default datastore: %s" \
-                   % (datastore, ", ".join(known_datastores()), vm_datastore))
+                "Known datastores: %s.\n" \
+                "Default datastore: %s" \
+                % (datastore, ", ".join(get_datastore_names_list), vm_datastore))
 
     error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore, cmd, opts)
     if error_info:
@@ -665,6 +660,10 @@ def get_si():
         except:
             connectLocalSi(force=True)
     return _service_instance
+
+def get_datastore_names_list():
+    """returns names of known datastores"""
+    return [i[0] for i in vmdk_utils.get_datastores()]
 
 def get_datastore_url(datastore):
     si = get_si()
