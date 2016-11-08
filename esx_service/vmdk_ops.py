@@ -580,7 +580,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     Returns None (if all OK) or error string
     """
     vm_datastore = get_datastore_name(config_path)
-    error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, vm_datastore, cmd, opts)
+    error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
 
@@ -598,6 +598,10 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
                    "Known datastores: %s.\n" \
                    "Default datastore: %s" \
                    % (datastore, ", ".join(known_datastores()), vm_datastore))
+
+    error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore, cmd, opts)
+    if error_info:
+        return err(error_info)
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
     path = get_vol_path(datastore, tenant_name)

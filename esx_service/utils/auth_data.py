@@ -648,34 +648,38 @@ class AuthorizationDataManager:
             logging.error("Error %s when querying from tenants table", e)
             return str(e)
 
+        error_info = ""
         if result:    
             logging.debug("remove_volumes_for_tenant: %s %s", tenant_id, result)
             tenant_name = result[0]
             vmdks = vmdk_utils.get_volumes(tenant_name)
             # Delete all volumes for this tenant. 
-            dir_path = None
+            dir_paths = set()
             for vmdk in vmdks:
                 vmdk_path = os.path.join(vmdk['path'], "{0}".format(vmdk['filename']))
-                if not dir_path:
-                    dir_path = vmdk['path']
+                dir_paths.add(vmdk['path'])
                 logging.debug("path=%s filename=%s", vmdk['path'], vmdk['filename'])    
                 logging.debug("Deleting volume path%s", vmdk_path)
                 err = vmdk_ops.removeVMDK(vmdk_path)
                 if err:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
-                    if err:
-                        return err
+                    error_info += err
             
             # Delete path /vmfs/volumes/datastore_name/tenant_name
-            logging.debug("Deleting dir path%s", dir_path)
-            try:
-                os.rmdir(dir_path)
-            except os.error as e:
-                logging.error("remove dir %s failed with error %s", dir_path, e)
-                return str(e)
-                
-        error_info = self.remove_volumes_from_volume_table(tenant_id)
+            logging.debug("Deleting dir paths %s", dir_paths)
+            for path in list(dir_paths):
+                try:
+                    os.rmdir(path)
+                except os.error as e:
+                    msg = "remove dir %s failed with error %s".format(dir_path, e)
+                    logging.error(msg)
+                    error_info += msg
 
+        err = self.remove_volumes_from_volume_table(tenant_id)
+        if err:
+            logging.error("Failed to remove volumes from database %s", err)
+            error_info += err
+        
         if error_info:
             return error_info
         

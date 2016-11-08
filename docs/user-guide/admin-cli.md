@@ -317,22 +317,20 @@ Remove a tenant, optionally all volumes for a tenant can be removed as well.
 
 Sample:
 ```
-/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm tenant1 --remove-volumes True
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
 ```
 
 #### Help
 ```
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
-usage: vmdkops_admin.py tenant rm [-h] [--remove-volumes REMOVE_VOLUMES] name
-
-positional arguments:
-  name                  The name of the tenant
+usage: vmdkops_admin tenant rm [-h] --name NAME [--remove-volumes]
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --remove-volumes REMOVE_VOLUMES
-                        BE CAREFUL: Removes this tenant volumes when removing
-                        a tenant
+  -h, --help        show this help message and exit
+  --name NAME       The name of the tenant
+  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
+                    tenant
+                        
 ```
 
 ## Volume

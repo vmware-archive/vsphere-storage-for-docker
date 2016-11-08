@@ -207,11 +207,13 @@ def commands():
                     'func': tenant_rm,
                     'help': 'Delete a tenant',
                     'args': {
-                        'name': {
+                        '--name': {
                             'help': 'The name of the tenant',
+                            'required': True
                       },
                       '--remove-volumes': {
-                        'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant'
+                        'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant',
+                        'action': 'store_true'
                       }
                     }
                 },
@@ -857,8 +859,8 @@ def tenant_rm(args):
     # If args "remove_volumes" is not specified in CLI
     # args.remove_volumes will be None
     if args.remove_volumes:
-        if args.remove_volumes == 'True':
-            remove_volumes = True
+        print("All Volumes will be removed")
+        remove_volumes = True
 
     error_info = _auth_mgr.remove_tenant(tenant.id, remove_volumes)
     if error_info:
@@ -1094,13 +1096,13 @@ def generate_tenant_access_ls_rows(privileges):
     rows = []
     for p in privileges:
         datastore = p[auth_data_const.COL_DATASTORE]
-        create_volume = str(p[auth_data_const.COL_CREATE_VOLUME])
-        delete_volume = str(p[auth_data_const.COL_DELETE_VOLUME])
-        mount_volume = str(p[auth_data_const.COL_MOUNT_VOLUME])
+        create_volume = ("False", "True")[p[auth_data_const.COL_CREATE_VOLUME]]
+        delete_volume = ("False", "True")[p[auth_data_const.COL_DELETE_VOLUME]]
+        mount_volume = ("False", "True")[p[auth_data_const.COL_MOUNT_VOLUME]]
         # p[auth_data_const.COL_MAX_VOLUME_SIZE] is max_volume_size in MB
-        max_vol_size = human_readable(p[auth_data_const.COL_MAX_VOLUME_SIZE]*MB)
+        max_vol_size = "Unset" if p[auth_data_const.COL_MAX_VOLUME_SIZE] == 0 else human_readable(p[auth_data_const.COL_MAX_VOLUME_SIZE]*MB)
         # p[auth_data_const.COL_USAGE_QUOTA] is total_size in MB
-        total_size = human_readable(p[auth_data_const.COL_USAGE_QUOTA]*MB)
+        total_size = "Unset" if p[auth_data_const.COL_USAGE_QUOTA] == 0 else human_readable(p[auth_data_const.COL_USAGE_QUOTA]*MB)
         rows.append([datastore, create_volume, delete_volume, mount_volume, max_vol_size, total_size])
         
     return rows

@@ -26,8 +26,6 @@ import threadutils
 # All supported vmdk commands
 CMD_CREATE = 'create'
 CMD_REMOVE = 'remove'
-CMD_LIST = 'list'
-CMD_GET = 'get'
 CMD_ATTACH = 'attach'
 CMD_DETACH = 'detach'
 
@@ -183,7 +181,7 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
 
     """
     result = None
-    cmd_need_mount_privilege = [CMD_LIST, CMD_GET, CMD_ATTACH, CMD_DETACH]
+    cmd_need_mount_privilege = [CMD_ATTACH, CMD_DETACH]
     if cmd in cmd_need_mount_privilege:
         if not has_privilege(privileges, auth_data_const.COL_MOUNT_VOLUME):
             result = "No mount privilege"
