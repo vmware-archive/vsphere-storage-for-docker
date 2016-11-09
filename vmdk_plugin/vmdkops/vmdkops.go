@@ -105,7 +105,7 @@ func (v VmdkOps) Get(name string) (map[string]interface{}, error) {
 
 	err = json.Unmarshal(str, &statusMap)
 	if err != nil {
-		return nil, err
+		log.Warn("vmdkOps.Get failed decoding volume status for name=%s", name)
 	}
 	return statusMap, nil
 }
