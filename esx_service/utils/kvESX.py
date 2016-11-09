@@ -55,7 +55,8 @@ VOL_ALLOC = 'allocated'
 # Results in a buffered, locked, filter-less open,
 # all vmdks are opened with these flags
 VMDK_OPEN_DEFAULT = 524312
-VMDK_OPEN_NOIO = 524289
+VMDK_OPEN_DISKCHAIN_NOIO = 524291
+VMDK_MAX_SNAPS = 32
 
 # Default kv side car alignment
 KV_ALIGN = 4096
@@ -318,14 +319,14 @@ def get_info(volpath):
     """
     Return disk stats for the volume
     """
-    dhandle = vol_open_path(volpath, VMDK_OPEN_NOIO)
+    dhandle = vol_open_path(volpath, VMDK_OPEN_DISKCHAIN_NOIO)
 
     if not disk_is_valid(dhandle):
         logging.warning("Failed to open disk - %x", volpath)
         return None
 
     sinfo = disk_info()
-    res = lib.DiskLib_GetSize(dhandle, 0, 1, byref(sinfo))
+    res = lib.DiskLib_GetSize(dhandle, 0, VMDK_MAX_SNAPS, byref(sinfo))
 
     lib.DiskLib_Close(dhandle)
     if res != 0:
