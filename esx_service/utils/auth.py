@@ -317,7 +317,7 @@ def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB
             (tenant_uuid, datastore, vol_name, vol_size_in_MB)
             )
         _auth_mgr.conn.commit()
-    except sqlite3.Error, e:
+    except sqlite3.Error as e:
         logging.error("Error %s when insert into volumes table for tenant_id %s and datastore %s",
                       e, tenant_uuid, datastore)
         return str(e)
@@ -363,7 +363,7 @@ def get_row_from_privileges_table(conn, tenant_uuid):
             "SELECT * FROM privileges WHERE tenant_id=?",
             (tenant_uuid,)
             )
-    except sqlite3.Error, e:
+    except sqlite3.Error as e:
         logging.error("Error: %s when querying privileges table for tenant %s", e, tenant_uuid)
         return str(e), None
 
