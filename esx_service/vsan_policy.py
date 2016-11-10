@@ -133,9 +133,9 @@ def update_vsan_objects_with_policy(name, content):
         else:
             log_failed_updates(failed_updates, name)
 
-        return ('Successfully updated {0} volumes.\n'
-                'Failed to update volumes: {0}').format(update_count,
-                                                        failed_updates)
+        return ('Successfully updated: {0} volumes.\n'
+                'Failed to update:     {1} volumes'.format(update_count,
+                                                           failed_updates))
 
     # Remove old policy file on success
     os.remove(policy_path(backup_policy_filename(name)))

@@ -373,8 +373,7 @@ class TestSet(unittest.TestCase):
 class TestStatus(unittest.TestCase):
     """ Test status functionality """
     def test_status(self):
-        ok = vmdkops_admin.status(None)
-        self.assertEqual(ok, None)
+        self.assertEqual(vmdkops_admin.status(None), None)
 
 if __name__ == '__main__':
     kv.init()

@@ -358,28 +358,28 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	if err != nil {
 		_, err := d.decrRefCount(r.Name)
 		return volume.Response{Err: err.Error()}
-	} else {
-		// Check access type.
-		value, exists := status["access"].(string)
-		if !exists {
-			msg := fmt.Sprintf("Invalid access type for %s, assuming read-write access.", r.Name)
-			log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
-			isReadOnly = false
-		} else if value == "read-only" {
-			isReadOnly = true
-		}
-
-		// Check file system type.
-		value, exists = status["fstype"].(string)
-		if !exists {
-			msg := fmt.Sprintf("Invalid filesystem type for %s, assuming type as %s.",
-					   r.Name, fstype)
-			log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
-			// Fail back to a default version that we can try with.
-			value = fs.FstypeDefault
-		}
-		fstype = value
 	}
+	// Check access type.
+	value, exists := status["access"].(string)
+	if !exists {
+		msg := fmt.Sprintf("Invalid access type for %s, assuming read-write access.", r.Name)
+		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
+		isReadOnly = false
+	} else if value == "read-only" {
+		isReadOnly = true
+	}
+
+	// Check file system type.
+	value, exists = status["fstype"].(string)
+	if !exists {
+		msg := fmt.Sprintf("Invalid filesystem type for %s, assuming type as %s.",
+			r.Name, fstype)
+		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
+		// Fail back to a default version that we can try with.
+		value = fs.FstypeDefault
+	}
+	fstype = value
+
 	mountpoint, err := d.mountVolume(r.Name, fstype, isReadOnly)
 	if err != nil {
 		log.WithFields(

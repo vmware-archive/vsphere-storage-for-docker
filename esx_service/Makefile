@@ -51,7 +51,8 @@ VMCI_SRV_LIBS  := $(VMCI_SRV_LIB) $(VMCI_SRV_LIB64)
 
 # Source code - all .py stuff which is not tests
 PY_SRC   := $(filter-out %_test.py, $(wildcard *.py))
-PY_CLI   := $(filter-out %_test.py, $(wildcard cli/*.py))
+# exclude __init__.py to avoid clash with __init__.py from parent
+PY_CLI   := $(filter-out %_test.py, $(wildcard cli/[a-z]*.py))
 PY_UTILS := $(filter-out %_test.py, $(wildcard utils/*.py))
 
 C_SRC  := vmci/vmci_server.c

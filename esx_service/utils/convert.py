@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import logging
 
 def convert_to_MB(vol_size_str):
     """ For a given size string, return values in MB.

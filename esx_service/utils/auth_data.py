@@ -90,7 +90,7 @@ class DockerVolumeTenant:
                   vms
                 )
                 conn.commit()
-            except sqlite3.Error, e:
+            except sqlite3.Error as e:
                 logging.error("Error %s when inserting into vms table with vm_id %s vm_name %s"
                 " tenant_id %s", e, vm_id, vm_name, tenant_id)
                 return str(e)
@@ -108,9 +108,9 @@ class DockerVolumeTenant:
                     vms
             )
             conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when removing from vms table with vm_id %s tenant_id"
-                "tenant_id %s", e, vm_id,tenenat_id)
+                          "tenant_id %s", e, vm_id, tenant_id)
             return str(e)
 
         return None
@@ -120,34 +120,33 @@ class DockerVolumeTenant:
         tenant_id = self.id
         try:
             conn.execute(
-                    "UPDATE tenants SET name = ? WHERE id = ?", 
-                    (name, tenant_id)
+                "UPDATE tenants SET name = ? WHERE id = ?",
+                (name, tenant_id)
             )
             conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when updating tenants table with tenant_id"
-                "tenant_id %s", e, tenenat_id)
+                          "tenant_id %s", e, tenant_id)
             return str(e)
-        
         return None
 
-    
+
     def set_description(self, conn, description):
         """ Set description column in tenant table for this tenant. """
         tenant_id = self.id
         try:
             conn.execute(
-                    "UPDATE tenants SET description = ? WHERE id = ?", 
-                    (description, tenant_id)
-             )
+                "UPDATE tenants SET description = ? WHERE id = ?",
+                (description, tenant_id)
+                )
             conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when updating tenants table with tenant_id"
-                "tenant_id %s", e, tenant_id)
+                          "tenant_id %s", e, tenant_id)
             return str(e)
-        
         return None
-        
+
+
     def set_default_datastore_and_privileges(self, conn, datastore, privileges):
         "Set default_datastore and default privileges for this tenant."
         tenant_id = self.id
@@ -158,17 +157,16 @@ class DockerVolumeTenant:
 
         try:
             conn.execute(
-                    "UPDATE tenants SET default_datastore = ? WHERE id = ?", 
-                    (datastore, tenant_id)
-            )
+                "UPDATE tenants SET default_datastore = ? WHERE id = ?",
+                (datastore, tenant_id)
+                )
 
             # remove the old entry
             conn.execute(
-                    "DELETE FROM privileges WHERE tenant_id = ? AND datastore = ?", 
-                    [tenant_id, exist_default_datastore]
-            )
+                "DELETE FROM privileges WHERE tenant_id = ? AND datastore = ?",
+                [tenant_id, exist_default_datastore]
+                )
 
-            
             privileges[auth_data_const.COL_TENANT_ID] = tenant_id
             conn.execute(
                 """
@@ -179,11 +177,10 @@ class DockerVolumeTenant:
                 privileges
             )
             conn.commit()
-        except sqlite3.Error, e:
-            logging.error("Error %s when setting dafault dtastore and privileges for tenant_id %s", 
+        except sqlite3.Error as e:
+            logging.error("Error %s when setting default datastore and privileges for tenant_id %s",
                           e, tenant_id)
             return str(e)
-      
         return None
             
     def set_datastore_access_privileges(self, conn, privileges):
@@ -213,8 +210,7 @@ class DockerVolumeTenant:
         for p in privileges:
             p[auth_data_const.COL_TENANT_ID] = tenant_id
             if not all_columns_set(p):
-                err_info = "Not all columns are set in privileges"
-                return error_info
+                return "Not all columns are set in 'privileges''"
                             
         try:
             conn.executemany(
@@ -256,7 +252,7 @@ class DockerVolumeTenant:
                     update_list
                 )
             conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when setting datastore and privileges for tenant_id %s", 
                           e, tenant_id)
             return str(e)
@@ -272,7 +268,7 @@ class DockerVolumeTenant:
                     [tenant_id, datastore]
             )
             conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when removing from privileges table with tenant_id%s and "
                 "datastore %s", e, tenant_id, datastore)
             return str(e)
@@ -433,9 +429,8 @@ class AuthorizationDataManager:
             )
 
             self.conn.commit()
-        except sqlite3.Error, e:
-            logging.error("Error %s when creating auth DB tables %s", 
-                          e, tenant_id)
+        except sqlite3.Error as e:
+            logging.error("Error %s when creating auth DB tables", e)
             return str(e)
 
         return None        
@@ -506,7 +501,7 @@ class AuthorizationDataManager:
                     privileges
                 )
             self.conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when setting datastore and privileges for tenant_id %s", 
                           e, tenant.id)
             return str(e), tenant
@@ -563,7 +558,7 @@ class AuthorizationDataManager:
                 logging.debug("default_privileges=%s", default_privileges)
                 tenant = DockerVolumeTenant(name, description, default_datastore,
                                             default_privileges, vms, privileges, id)
-        except sqlite3.Error, e:    
+        except sqlite3.Error as e:
             logging.error("Error %s when get tenant %s", e, tenant_name)
             return str(e), tenant
         
@@ -610,7 +605,7 @@ class AuthorizationDataManager:
                 tenant = DockerVolumeTenant(name, description, default_datastore,
                                             default_privileges, vms, privileges, id)
                 tenant_list.append(tenant)
-        except sqlite3.Error, e:    
+        except sqlite3.Error as e:
             logging.error("Error %s when listing all tenants", e)
             return str(e), tenant_list
 
@@ -625,7 +620,7 @@ class AuthorizationDataManager:
             )
 
             self.conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when removing volumes from volumes table for tenant_id %s",
                           e, tenant_id)
             return str(e)
@@ -644,7 +639,7 @@ class AuthorizationDataManager:
             (tenant_id,)
             )
             result = cur.fetchone()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when querying from tenants table", e)
             return str(e)
 
@@ -671,7 +666,7 @@ class AuthorizationDataManager:
                 try:
                     os.rmdir(path)
                 except os.error as e:
-                    msg = "remove dir %s failed with error %s".format(dir_path, e)
+                    msg = "remove dir {0} failed with error {1}".format(path, e)
                     logging.error(msg)
                     error_info += msg
 
@@ -716,7 +711,7 @@ class AuthorizationDataManager:
             )
 
             self.conn.commit()
-        except sqlite3.Error, e:
+        except sqlite3.Error as e:
             logging.error("Error %s when removing tables", e)
             return str(e) 
 
