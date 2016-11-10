@@ -376,8 +376,10 @@ def vol_info(vol_meta, vol_size_info, datastore):
     vinfo[CAPACITY][ALLOCATED] = vol_size_info[ALLOCATED]
     vinfo[LOCATION] = datastore
 
-    if kv.ATTACHED_VM_NAME in vol_meta:
-       vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
+    if kv.ATTACHED_VM_UUID in vol_meta:
+       vm = findVmByUuid(vol_meta[kv.ATTACHED_VM_UUID])
+       if vm:
+          vinfo[ATTACHED_TO_VM] = vm.config.name
     if kv.VOL_OPTS in vol_meta:
        if kv.FILESYSTEM_TYPE in vol_meta[kv.VOL_OPTS]:
           vinfo[kv.FILESYSTEM_TYPE] = vol_meta[kv.VOL_OPTS][kv.FILESYSTEM_TYPE]
@@ -736,14 +738,12 @@ def reset_vol_meta(vmdk_path):
     if not vol_meta:
        vol_meta = {}
     logging.debug("Reseting meta-data for disk=%s", vmdk_path)
-    if set(vol_meta.keys()) & {kv.STATUS, kv.ATTACHED_VM_UUID, kv.ATTACHED_VM_NAME}:
-          logging.debug("Old meta-data for %s was (status=%s VM name=%s uuid=%s)",
+    if set(vol_meta.keys()) & {kv.STATUS, kv.ATTACHED_VM_UUID}:
+          logging.debug("Old meta-data for %s was (status=%s VM uuid=%s)",
                         vmdk_path, vol_meta[kv.STATUS],
-                        vol_meta[kv.ATTACHED_VM_NAME],
                         vol_meta[kv.ATTACHED_VM_UUID])
     vol_meta[kv.STATUS] = kv.DETACHED
     vol_meta[kv.ATTACHED_VM_UUID] = None
-    vol_meta[kv.ATTACHED_VM_NAME] = None
     if not kv.setAll(vmdk_path, vol_meta):
        msg = "Failed to save volume metadata for {0}.".format(vmdk_path)
        logging.warning("reset_vol_meta: " + msg)
@@ -758,7 +758,6 @@ def setStatusAttached(vmdk_path, vm):
         vol_meta = {}
     vol_meta[kv.STATUS] = kv.ATTACHED
     vol_meta[kv.ATTACHED_VM_UUID] = vm.config.uuid
-    vol_meta[kv.ATTACHED_VM_NAME] = vm.config.name
     if not kv.setAll(vmdk_path, vol_meta):
         logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
 
@@ -773,7 +772,6 @@ def setStatusDetached(vmdk_path):
     # If attachedVMName is present, so is attachedVMUuid
     try:
         del vol_meta[kv.ATTACHED_VM_UUID]
-        del vol_meta[kv.ATTACHED_VM_NAME]
     except:
         pass
     if not kv.setAll(vmdk_path, vol_meta):
