@@ -537,11 +537,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
                                                   
     
 if __name__ == '__main__':
-    def clean_path(path):
-        if path:
-            logging.info("Directory clean up - removing  %s", path)
-            os.removedirs(path)
-
+    # configure the log, find the dir and run the tests
     log_config.configure()
     volume_kv.init()
 
@@ -557,8 +553,19 @@ if __name__ == '__main__':
         logging.debug("Directory does not exist - creating %s", path)
         os.makedirs(path)
 
-    logging.info("Directory used in test - %s", path)
+    def clean_path(path):
+        if not path:
+            logging.info("Directory clean up - empty dir passed")
+            return
 
+        logging.info("Directory clean up - removing  %s", path)
+        try:
+            # TODO: need to use osfs-rmdir on VSAN. For now jus yell if it failed
+            os.removedirs(path)
+        except Exception as e:
+            logging.warning("Directory clean up failed  -  %s, err: %s", path, e)
+
+    logging.info("Running tests. Directory used: %s", path)
     try:
         unittest.main()
     except:
