@@ -402,8 +402,16 @@ def vol_info(vol_meta, vol_size_info, datastore):
 # Return error, or None for OK
 def removeVMDK(vmdk_path):
     logging.info("*** removeVMDK: %s", vmdk_path)
-    cmd = "{0} {1}".format(VMDK_DELETE_CMD, vmdk_path)
 
+    # Check the current volume status
+    kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
+    if kv_status_attached:
+        if handle_stale_attach(vmdk_path, kv_uuid):
+            logging.info("*** removeVMDK: %s is in use, VM uuid = %s", vmdk_path, kv_uuid)
+            return err("Failed to remove volume {0}, in use by VM uuid = {1}.".format(
+                vmdk_path, kv_uuid))
+
+    cmd = "{0} {1}".format(VMDK_DELETE_CMD, vmdk_path)
     # Workaround timing/locking issues.
     retry_count = 0
     while True:
