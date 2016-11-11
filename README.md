@@ -10,7 +10,7 @@ vSphere Docker Volume Service enables customers to address persistent storage re
 To read more about code development and testing please read
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
 as well as the
-[FAQ on the project site](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/).
+[FAQ on the project site](https://vmware.github.io/docker-volume-vsphere/documentation/user-guide/faq/).
 
 ## Download
 
@@ -27,11 +27,11 @@ Please pick the latest release and use the same version of ESX and VM release.
 
 ## Demos
 
-The demos are located on the project [site](https://vmware.github.io/docker-volume-vsphere/) and [wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Demos)
+The demos are located on the project [site](https://vmware.github.io/docker-volume-vsphere/documentation) and [wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Demos)
 
 ## Project Website
 
-Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere](https://vmware.github.io/docker-volume-vsphere)
+Project page is located @ [https://vmware.github.io/docker-volume-vsphere/](https://vmware.github.io/docker-volume-vsphere) Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere/documentation](https://vmware.github.io/docker-volume-vsphere/documentation)
 
 ## Installation Instructions
 
