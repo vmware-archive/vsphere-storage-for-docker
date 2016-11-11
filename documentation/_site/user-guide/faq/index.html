@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="cna-storage@vmware.com">
+  
+  <title>FAQ - Docker Volume Driver for vSphere</title>
+  
+
+  <link rel="shortcut icon" href="../../favicon.ico">
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "FAQ";
+    var mkdocs_page_input_path = "user-guide/faq.md";
+    var mkdocs_page_url = "/user-guide/faq/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script> 
+
+  
+  <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/');
+      ga('send', 'pageview');
+  </script>
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Docker Volume Driver for vSphere</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../install/">Installation and Deployment</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Features</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vsan-policy/">VSAN Policy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>User Guide</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Docker Volume CLI</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../docker-volume-cli/">Basic commands</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datastores/">Multiple Datastores</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Backend ESX Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../esx-overview/">Volume Layout</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../admin-cli/">Admin CLI</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">FAQ</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#general">General</a></li>
+                
+                    <li><a class="toctree-l4" href="#where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries ? What about the source ?</a></li>
+                
+                    <li><a class="toctree-l4" href="#how-to-install-and-use-the-driver">How to install and use the driver?</a></li>
+                
+                    <li><a class="toctree-l4" href="#how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#troubleshooting">Troubleshooting</a></li>
+                
+                    <li><a class="toctree-l4" href="#docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Blog</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>2016</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>September</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>October</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Docker Volume Driver for vSphere</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>FAQ</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <div class="toc">
+<ul>
+<li><a href="#general">General</a><ul>
+<li><a href="#where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries ? What about the source ?</a></li>
+<li><a href="#how-to-install-and-use-the-driver">How to install and use the driver?</a></li>
+<li><a href="#how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?</a></li>
+</ul>
+</li>
+<li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.</a><ul>
+<li><a href="#what-is-vmci-and-vsock-and-why-is-it-needed">What is VMCI and vSock and why is it needed?</a></li>
+<li><a href="#i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the service&rsquo;s logs, what is the cause?</a></li>
+<li><a href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the service&rsquo;s logs, what is the cause?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h1>
+<h2 id="where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries ? What about the source ?<a class="headerlink" href="#where-do-i-get-the-binaries-what-about-the-source" title="Permanent link">&para;</a></h2>
+<p>Please look at <a href="https://github.com/vmware/docker-volume-vsphere/releases">GitHub Releases</a> for binaries. Github releases allow downloading of source for a release in addition to git clone.</p>
+<h2 id="how-to-install-and-use-the-driver">How to install and use the driver?<a class="headerlink" href="#how-to-install-and-use-the-driver" title="Permanent link">&para;</a></h2>
+<p>Please see README.md in the for the release by clicking on the tag for the release. Example: <a href="https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2">README</a></p>
+<h2 id="how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?<a class="headerlink" href="#how-do-i-run-the-setup-on-my-laptop" title="Permanent link">&para;</a></h2>
+<p>Follow the <a href="https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></p>
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<h2 id="docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.<a class="headerlink" href="#docker-service-to-esx-backend-communication" title="Permanent link">&para;</a></h2>
+<h3 id="what-is-vmci-and-vsock-and-why-is-it-needed">What is VMCI and vSock and why is it needed?<a class="headerlink" href="#what-is-vmci-and-vsock-and-why-is-it-needed" title="Permanent link">&para;</a></h3>
+<p>vSphere Docker Volume Service uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow <a href="http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F">VMware tools installation</a> or use open vmtools 
+<code>apt-get install open-vm-tools</code>. 
+Additional reading for differences between VMware tools and open vm tools: </p>
+<ul>
+<li><a href="http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html">Open-VM-Tools (OVT): The Future Of VMware Tools For Linux</a> </li>
+<li><a href="http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools">VMware Tools vs Open VM Tools</a></li>
+</ul>
+<h3 id="i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause">I see &ldquo;connection reset by peer (errno=104)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service&rsquo;s logs</a>, what is the cause?<a class="headerlink" href="#i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
+<p>104 is a standard linux error (<code>#define ECONNRESET      104     /* Connection reset by peer */</code>)</p>
+<p>It occurs if the Docker volume service cannot communicate to the ESX back end. This can happen if:
+   * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read &ldquo;What is VMCI and vSock and why is it needed?&rdquo; above.
+   * ESX service is not running. <code>/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/docker-volume-vsphere#logging">ESX Logs</a>
+   * ESX service and the docker volume service are not communicating on the same port. <code>ps -c | grep vmdk #On ESX</code> and <code>ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</p>
+<h3 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause">I see &ldquo;address family not supported by protocol (errno=97)&rdquo; in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service&rsquo;s logs</a>, what is the cause?<a class="headerlink" href="#i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause" title="Permanent link">&para;</a></h3>
+<p>97 is a standard linux error (<code>#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>)</p>
+<p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">&ldquo;What is VMCI and vSock and why is it needed?&rdquo;</a> above.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../../blog/2016-9-28/" class="btn btn-neutral float-right" title="Release announcement and updates">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../admin-cli/" class="btn btn-neutral" title="Admin CLI"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../admin-cli/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../../blog/2016-9-28/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="cna-storage@vmware.com">
+  
+  <title>Docker Volume Driver for vSphere</title>
+  
+
+  <link rel="shortcut icon" href="favicon.ico">
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="./css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "None";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="./js/jquery-2.1.1.min.js"></script>
+  <script src="./js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="./js/highlight.pack.js"></script>
+  <script src="./js/theme.js"></script> 
+
+  
+  <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/');
+      ga('send', 'pageview');
+  </script>
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Docker Volume Driver for vSphere</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href=".">Home</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#vsphere-docker-volume-service-introduction">vSphere Docker Volume Service - Introduction</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#feedback">Feedback</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#documentation-version">Documentation Version</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/install/">Installation and Deployment</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Features</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="features/tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="features/vsan-policy/">VSAN Policy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="features/vcenter/">Integration with vCenter</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>User Guide</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Docker Volume CLI</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/docker-volume-cli/">Basic commands</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/datastores/">Multiple Datastores</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Backend ESX Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/esx-overview/">Volume Layout</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/admin-cli/">Admin CLI</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/faq/">FAQ</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Blog</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>2016</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>September</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="blog/2016-9-28/">Release announcement and updates</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>October</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Docker Volume Driver for vSphere</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="vsphere-docker-volume-service-introduction">vSphere Docker Volume Service - Introduction<a class="headerlink" href="#vsphere-docker-volume-service-introduction" title="Permanent link">&para;</a></h1>
+<p>vSphere Docker Volume Service enables you to run stateful containerized applications on top of VMware vSphere. </p>
+<p>It is designed to meet the needs of Enterprise IT and application developers and offers the following benefits:</p>
+<ul>
+<li><strong>Provide proven persistent shared storage:</strong> You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS, etc. </li>
+<li><strong>Enable Multitenancy, Security and Access Control:</strong> vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location</li>
+<li><strong>Operational Consistency and Simplicity:</strong> Zero Configuration, zero credential management. It as easy to deploy and manage</li>
+<li><strong>Self-service Operations</strong>: Use docker APIs to manage volume lifecycle while maintaining admin control over consumption </li>
+</ul>
+<p>This service is integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>. It does not need credential management or configuration management. </p>
+<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
+
+<h1 id="feedback">Feedback<a class="headerlink" href="#feedback" title="Permanent link">&para;</a></h1>
+<p>On going work and feature requests are tracked using <a href="https://github.com/vmware/docker-volume-vsphere/issues">GitHub Issues</a>. Please feel free to file <a href="https://github.com/vmware/docker-volume-vsphere/issues">issues</a> or email <a href="mailto:cna-storage@vmware.com">cna-storage@vmware.com</a></p>
+<h1 id="documentation-version">Documentation Version<a class="headerlink" href="#documentation-version" title="Permanent link">&para;</a></h1>
+<p>The documentation here is for the latest release. The current master documentation can be found in markdown format in the <a href="https://github.com/vmware/docker-volume-vsphere/tree/master/docs">documentation folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="user-guide/install/" class="btn btn-neutral float-right" title="Installation and Deployment">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+        <span style="margin-left: 15px"><a href="user-guide/install/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 0.15.3
+Build Date UTC : 2016-11-04 19:17:19.806325
+-->
