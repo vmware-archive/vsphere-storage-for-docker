@@ -498,24 +498,27 @@ def get_vol_path(datastore, tenant_name=None):
     if os.path.isdir(path):
         # If the path exists then return it as is.
         logging.debug("Found %s, returning", path)
-        return path
+        return path, None
 
     if not os.path.isdir(dock_vol_path):
         # The osfs tools are usable for DOCK_VOLS_DIR on all datastores
         cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
         rc, out = RunCommand(cmd)
         if rc != 0:
-            logging.warning("Failed to create %s", dock_vol_path)
-            return None
+            errMsg = "{0} creation failed - {1} on {2}".format(DOCK_VOLS_DIR, os.strerror(rc), datastore)
+            logging.warning(errMsg)
+            return None, err(errMsg)
     if tenant_name and not os.path.isdir(path):
+        # The mkdir command is used to create "tenant_name" folder inside DOCK_VOLS_DIR on "datastore"
         cmd = "{0} {1}".format(MKDIR_CMD, path)
         rc, out = RunCommand(cmd)
         if rc != 0:
-           logging.warning("Failed to create %s", path)
-           return None
+            errMsg = "Failed to initialize volume path {0} - {1}".format(path, out)
+            logging.warning(errMsg)
+            return None, err(errMsg)
 
     logging.info("Created %s", path)
-    return path
+    return path, None
 
 def parse_vol_name(full_vol_name):
     """
@@ -607,10 +610,10 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err(error_info)
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
-    path = get_vol_path(datastore, tenant_name)
+    path, errMsg = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest %s %s", tenant_name, path)
     if path is None:
-        return err("Failed to initialize volume path {0}".format(path))
+        return errMsg
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
@@ -1105,7 +1108,7 @@ def set_vol_opts(name, options):
        return False
 
     # get /vmfs/volumes/<datastore>/dockvols path on ESX:
-    path = get_vol_path(datastore)
+    path, errMsg = get_vol_path(datastore)
 
     if path is None:
        msg = "Failed to get datastore path {0}".format(path)
