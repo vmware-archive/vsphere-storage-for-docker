@@ -8,7 +8,7 @@
   
   <meta name="author" content="cna-storage@vmware.com">
   
-  <title>Admin CLI - Docker Volume Driver for vSphere</title>
+  <title>Admin CLI - vSphere Docker Volume Service</title>
   
 
   <link rel="shortcut icon" href="../../favicon.ico">
@@ -54,7 +54,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="../.." class="icon icon-home"> Docker Volume Driver for vSphere</a>
+        <a href="../.." class="icon icon-home"> vSphere Docker Volume Service</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -238,7 +238,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../..">Docker Volume Driver for vSphere</a>
+        <a href="../..">vSphere Docker Volume Service</a>
       </nav>
 
       
@@ -615,21 +615,19 @@ optional arguments:
 <h3 id="remove_2">Remove<a class="headerlink" href="#remove_2" title="Permanent link">&para;</a></h3>
 <p>Remove a tenant, optionally all volumes for a tenant can be removed as well.</p>
 <p>Sample:</p>
-<pre><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm tenant1 --remove-volumes True
+<pre><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
 </code></pre>
 
 <h4 id="help_9">Help<a class="headerlink" href="#help_9" title="Permanent link">&para;</a></h4>
 <pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
-usage: vmdkops_admin.py tenant rm [-h] [--remove-volumes REMOVE_VOLUMES] name
-
-positional arguments:
-  name                  The name of the tenant
+usage: vmdkops_admin tenant rm [-h] --name NAME [--remove-volumes]
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --remove-volumes REMOVE_VOLUMES
-                        BE CAREFUL: Removes this tenant volumes when removing
-                        a tenant
+  -h, --help        show this help message and exit
+  --name NAME       The name of the tenant
+  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
+                    tenant
+
 </code></pre>
 
 <h2 id="volume">Volume<a class="headerlink" href="#volume" title="Permanent link">&para;</a></h2>
