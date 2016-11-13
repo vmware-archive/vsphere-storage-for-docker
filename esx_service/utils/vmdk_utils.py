@@ -34,7 +34,7 @@ MAX_DESCR_SIZE = 5000
 SNAP_NAME_REGEXP = r"^.*-[0-9]{6}$"        # used for names without .vmdk suffix
 SNAP_VMDK_REGEXP = r"^.*-[0-9]{6}\.vmdk$"  # used for file names
 
-# regexp for finding 'special' vmdk files (they are created by ESXi) 
+# regexp for finding 'special' vmdk files (they are created by ESXi)
 SPECIAL_FILES_REGEXP = r"\A.*-(delta|ctk|digest|flat)\.vmdk$"
 
 # glob expression to match end of 'delta' (aka snapshots) file names.
@@ -59,7 +59,7 @@ def init_datastoreCache():
 
 def validate_datastore(datastore):
     """
-    Checks if the datastore is part of datastoreCache. 
+    Checks if the datastore is part of datastoreCache.
     If not it will update the datastore cache and checks if datastore is part of the updated cache.
     """
     global datastores
@@ -79,19 +79,19 @@ def get_datastores():
     where:
     'name' is datastore name (e.g. 'vsanDatastore') ,
     'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
-    'dockvol-path; is a full path to 'dockvols' folder on datastore 
+    'dockvol-path; is a full path to 'dockvols' folder on datastore
     """
     if datastores == None:
         init_datastoreCache()
     return datastores
 
 def get_volumes(tenant_re):
-    """ Return dicts of docker volumes, their datastore and their paths 
-        
-        
+    """ Return dicts of docker volumes, their datastore and their paths
+
+
     """
     # Assume we have two tenants "tenant1" and "tenant2"
-    # volumes belongs to "tenant1" are under /vmfs/volumes/datastore1/dockervol/tenant1 
+    # volumes belongs to "tenant1" are under /vmfs/volumes/datastore1/dockervol/tenant1
     # volumes belongs to "tenant2" are under /vmfs/volumes/datastore1/dockervol/tenant2
     # volumes does not belongs to any tenants are under /vmfs/volumes/dockervol
     # tenant_re = None : only return volumes which does not belong to any tenant
@@ -180,7 +180,7 @@ def list_vmdks(path, volname="", show_snapshots=False):
 def vmdk_is_a_descriptor(path, file_name):
     """
     Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk,
-    does not have -delta or -flat or he likes at the end of filename, 
+    does not have -delta or -flat or he likes at the end of filename,
     and has a size less than MAX_DESCR_SIZE is a descriptor file.
     """
 
@@ -191,7 +191,7 @@ def vmdk_is_a_descriptor(path, file_name):
     if not name.endswith('.vmdk') or re.match(SPECIAL_FILES_REGEXP, name):
         return False
 
-    # Check the size. It's a cheap(ish) way to check for descriptor, 
+    # Check the size. It's a cheap(ish) way to check for descriptor,
     # without actually checking the file content and risking lock conflicts
     try:
         if os.stat(os.path.join(path, file_name)).st_size > MAX_DESCR_SIZE:

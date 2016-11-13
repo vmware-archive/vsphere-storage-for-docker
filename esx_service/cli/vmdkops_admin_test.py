@@ -74,7 +74,7 @@ class TestParsing(unittest.TestCase):
 
     def test_policy_ls_badargs(self):
         self.assert_parse_error('policy ls --name=yo')
-        
+
     def test_tenant_create(self):
         args = self.parser.parse_args('tenant create --name=tenant1 --vm-list vm1,vm2'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_create)
@@ -97,7 +97,7 @@ class TestParsing(unittest.TestCase):
         # If arg "remove_volumes" is not specified in the CLI, then args.remove_volumes
         # will be None
         self.assertEqual(args.remove_volumes, False)
-        
+
 
     def test_tenant_rm_missing_name(self):
         self.assert_parse_error('tenant rm')
@@ -105,13 +105,13 @@ class TestParsing(unittest.TestCase):
     def test_tenant_ls(self):
         args = self.parser.parse_args('tenant ls'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_ls)
-    
+
     def test_tenant_vm_add(self):
         args = self.parser.parse_args('tenant vm add --name=tenant1 --vm-list vm1,vm2'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_add)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
-    
+
     def test_tenant_vm_add_missing_option_fails(self):
         self.assert_parse_error('tenant vm add')
         self.assert_parse_error('tenant vm add --name=tenant1')
@@ -121,19 +121,19 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_rm)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
-    
+
     def test_tenant_vm_rm_missing_option_fails(self):
         self.assert_parse_error('tenant vm add')
         self.assert_parse_error('tenant vm add --name=tenant1')
-    
+
     def test_tenant_vm_ls(self):
         args = self.parser.parse_args('tenant vm ls --name=tenant1'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_ls)
         self.assertEqual(args.name, 'tenant1')
-    
+
     def test_tenant_vm_ls_missing_option_fails(self):
         self.assert_parse_error('tenant vm ls')
-    
+
     def test_tenant_access_add(self):
         args = self.parser.parse_args('tenant access add --name=tenant1 --datastore=datastore1 --rights=create,mount --volume-maxsize=500MB --volume-totalsize=1GB'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_add)
@@ -142,14 +142,14 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.rights, ['create', 'mount'])
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
-    
+
     def test_tenant_access_add_missing_option_fails(self):
         self.assert_parse_error('tenant access add')
         self.assert_parse_error('tenant access add --name=tenant1')
-    
+
     def test_tenant_access_add_invalid_option_fails(self):
         self.assert_parse_error('tenant access add --name=tenant1 --datastore=datastore1 --rights=create mount')
-            
+
     def test_tenant_accss_set(self):
         args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --add-rights=create,mount --volume-maxsize=500MB --volume-totalsize=1GB'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
@@ -158,29 +158,29 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.add_rights, ['create', 'mount'])
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
-        
+
     def test_tenant_access_set_missing_option_fails(self):
         self.assert_parse_error('tenant access set')
         self.assert_parse_error('tenant access set --name=tenant1')
-    
+
     def test_tenant_access_set_invalid_option_fails(self):
         self.assert_parse_error('tenant access set --name=tenant1 --datastore=datastore1 --rights=crete,mount')
-    
+
     def test_tenant_access_rm(self):
         args = self.parser.parse_args('tenant access rm --name=tenant1 --datastore=datastore1'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_rm)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.datastore, 'datastore1')
 
-    def test_tenant_access_rm_missing_option_fails(self): 
+    def test_tenant_access_rm_missing_option_fails(self):
         self.assert_parse_error('tenant access rm')
         self.assert_parse_error('tenant access rm --name=tenant1')
-    
+
     def test_tenant_access_ls(self):
         args = self.parser.parse_args('tenant access ls --name=tenant1'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_ls)
         self.assertEqual(args.name, 'tenant1')
-    
+
     def test_tenant_access_ls_missing_option_fails(self):
         self.assert_parse_error('tenant access ls')
 

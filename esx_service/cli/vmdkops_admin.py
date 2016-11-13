@@ -239,7 +239,7 @@ def commands():
                                 }
                             }
                         },
-                        
+
                         'rm': {
                             'help': 'Remove VM(s) from a tenant',
                             'func': tenant_vm_rm,
@@ -293,7 +293,7 @@ def commands():
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 },
                                 '--volume-totalsize': {
-                                    'help': 
+                                    'help':
                                     'Maximum total size of all volume that can be created on the datastore for this tenant',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 }
@@ -315,7 +315,7 @@ def commands():
                                     'help': 'Datastore access Permissions granted',
                                     'choices': ['create', 'delete', 'mount', 'all'],
                                     'metavar': 'create,delete,mount,all'
-                                }, 
+                                },
                                 '--rm-rights': {
                                     'help': 'Datastore access Permissions removed',
                                     'choices': ['create', 'delete', 'mount', 'all'],
@@ -326,11 +326,11 @@ def commands():
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 },
                                 '--volume-maxcount': {
-                                    'help': 
+                                    'help':
                                     'Maximum number of volumes to create on the datastore for this tenant'
                                 },
                                 '--volume-totalsize': {
-                                    'help': 
+                                    'help':
                                     'Maximum total size of all volume that can be created on the datastore for this tenant',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 }
@@ -443,7 +443,7 @@ def make_list_of_values(allowed):
             if g not in allowed:
                 msg = (
 		   'invalid choices: {0} (choices must be a comma separated list of '
-                   'only the following words \n {1}. '  
+                   'only the following words \n {1}. '
 		   'No spaces are allowed between choices.)').format(g, repr(allowed).replace(' ', ''))
                 raise argparse.ArgumentTypeError(msg)
         return given
@@ -466,7 +466,7 @@ def ls(args):
     else:
         header = all_ls_headers()
         rows = generate_ls_rows(tenant_reg)
-   
+
     print(cli_table.create(header, rows))
 
 
@@ -679,7 +679,7 @@ def status(args):
 
 def set_vol_opts(args):
     try:
-        set_ok = vmdk_ops.set_vol_opts(args.volume, args.options) 
+        set_ok = vmdk_ops.set_vol_opts(args.volume, args.options)
         if set_ok:
            print('Successfully updated settings for : {0}'.format(args.volume))
         else:
@@ -746,7 +746,7 @@ def get_tenant_from_db(name):
     except auth_data.DbConnectionError, e:
         error_info = "Failed to connect auth DB({0})".format(e)
         return error_info, None
-    
+
     error_info, tenant = _auth_mgr.get_tenant(name)
     return error_info, tenant
 
@@ -757,16 +757,16 @@ def create_tenant_in_db(name, description, default_datastore, default_privileges
         error_info = "Failed to connect auth DB({0})".format(e)
         return error_info, None
 
-    error_info, tenant = _auth_mgr.create_tenant(name = name, 
-                                                      description = description, 
-                                                      default_datastore = default_datastore, 
-                                                      default_privileges = default_privileges, 
-                                                      vms = vms, 
+    error_info, tenant = _auth_mgr.create_tenant(name = name,
+                                                      description = description,
+                                                      default_datastore = default_datastore,
+                                                      default_privileges = default_privileges,
+                                                      vms = vms,
                                                       privileges = privileges)
     return error_info, tenant
 
 def get_tenant_list_from_db():
-    try: 
+    try:
         connect_auth_db()
         error_info, tenant_list = _auth_mgr.list_tenants()
     except auth_data.DbConnectionError, e:
@@ -792,11 +792,11 @@ def generate_vm_list(vms):
         # vm[1] is vm_name, vm has format (vm_uuid, vm_name)
         res = res + vm[1]
         res = res + ","
-        
+
     if res:
         res = res[:-1]
 
-    return res    
+    return res
 
 def generate_tenant_ls_rows(tenant_list):
     """ Generate output for tenant ls command """
@@ -808,7 +808,7 @@ def generate_tenant_ls_rows(tenant_list):
         default_datastore = tenant.default_datastore
         vm_list = generate_vm_list(tenant.vms)
         rows.append([uuid, name, description, default_datastore, vm_list])
-    
+
     return rows
 
 def generate_tuple_from_vm_list(vm_list):
@@ -822,7 +822,7 @@ def generate_tuple_from_vm_list(vm_list):
             error_info =  "Cannot find vm_uuid for vm {0}, tenant_create failed".format(vm_name)
             return error_info, None
         vms.append((vm_uuid, vm_name))
-    
+
     return None, vms
 
 def tenant_create(args):
@@ -830,25 +830,25 @@ def tenant_create(args):
     error_info, vms = generate_tuple_from_vm_list(args.vm_list)
     if error_info:
         return operation_fail(error_info)
-      
-    name = args.name 
-    description = "" 
-    default_datastore ="default_ds" 
+
+    name = args.name
+    description = ""
+    default_datastore ="default_ds"
     default_privileges =  {}
     privileges = []
-    
+
     error_info, tenant = create_tenant_in_db(
-                                             name = name, 
-                                             description = description, 
-                                             default_datastore = default_datastore, 
-                                             default_privileges = default_privileges, 
-                                             vms = vms, 
+                                             name = name,
+                                             description = description,
+                                             default_datastore = default_datastore,
+                                             default_privileges = default_privileges,
+                                             vms = vms,
                                              privileges = privileges)
     if error_info:
         return operation_fail(error_info)
     else:
-        print "tenant create succeeded"    
- 
+        print "tenant create succeeded"
+
 def tenant_rm(args):
     """ Handle tenant rm command """
     error_info, tenant = get_tenant_from_db(args.name)
@@ -876,14 +876,14 @@ def tenant_ls(args):
 
     header = tenant_ls_headers()
     rows = generate_tenant_ls_rows(tenant_list)
-    print(cli_table.create(header, rows)) 
+    print(cli_table.create(header, rows))
 
 def tenant_vm_add(args):
     """ Handle tenant vm add command """
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
-    
+
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
         return operation_fail(error_info)
@@ -891,29 +891,29 @@ def tenant_vm_add(args):
     error_info, vms = generate_tuple_from_vm_list(args.vm_list)
     if error_info:
         return operation_fail(error_info)
- 
+
     error_info = tenant.add_vms(_auth_mgr.conn, vms)
 
     if error_info:
         return operation_fail(error_info)
     else:
         print "tenant vm add succeeded"
-  
+
 def tenant_vm_rm(args):
     """ Handle tenant vm rm command """
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
-    
+
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
         return operation_fail(error_info)
 
     error_info, vms = generate_tuple_from_vm_list(args.vm_list)
-    
+
     if error_info:
         return operation_fail(error_info)
-      
+
     error_info = tenant.remove_vms(_auth_mgr.conn, vms)
 
     if error_info:
@@ -934,7 +934,7 @@ def generate_tenant_vm_ls_rows(vms):
         uuid = vm[0]
         name = vm[1]
         rows.append([uuid, name])
-    
+
     return rows
 
 
@@ -943,11 +943,11 @@ def tenant_vm_ls(args):
     error_info, tenant = get_tenant_from_db(args.name)
     if error_info:
         return operation_fail(error_info)
-    
+
     if not tenant:
         error_info = "Tenant {0} does not exist".format(args.name)
         return operation_fail(error_info)
-   
+
     header = tenant_vm_ls_headers()
     rows = generate_tenant_vm_ls_rows(tenant.vms)
     print(cli_table.create(header, rows))
@@ -982,18 +982,18 @@ def generate_privileges(args):
     """ Generate privileges based on CLI argument """
     privileges = default_privileges()[0]
     privileges[auth_data_const.COL_DATASTORE] = args.datastore
-    
+
     if args.rights:
         set_privileges(args.rights, privileges, 1)
-    
+
     if args.volume_maxsize:
         size_in_MB = convert.convert_to_MB(args.volume_maxsize)
         privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = size_in_MB
-    
+
     if args.volume_totalsize:
         size_in_MB = convert.convert_to_MB(args.volume_totalsize)
         privileges[auth_data_const.COL_USAGE_QUOTA] = size_in_MB
-    
+
     return privileges
 
 def tenant_access_add(args):
@@ -1009,7 +1009,7 @@ def tenant_access_add(args):
     privileges = generate_privileges(args)
     print privileges
     error_info = tenant.set_datastore_access_privileges(_auth_mgr.conn, [privileges])
-      
+
     if error_info:
         return operation_fail(error_info)
     else:
@@ -1019,18 +1019,18 @@ def modify_privileges(privileges, args):
     """ Modify privileges based on CLI argument """
     if args.add_rights:
         set_privileges(args.add_rights, privileges, 1)
-        
+
     if args.rm_rights:
         set_privileges(args.rm_rights, privileges, 0)
 
     if args.volume_maxsize:
         size_in_MB = convert.convert_to_MB(args.volume_maxsize)
         privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = size_in_MB
-    
+
     if args.volume_totalsize:
         size_in_MB = convert.convert_to_MB(args.volume_totalsize)
         privileges[auth_data_const.COL_USAGE_QUOTA] = size_in_MB
-    
+
     return privileges
 
 def generate_privileges_dict(privileges):
@@ -1059,21 +1059,21 @@ def tenant_access_set(args):
         return operation_fail(error_info)
 
     privileges = [d for d in tenant.privileges if d[auth_data_const.COL_DATASTORE] == args.datastore]
-    
+
     if not privileges:
         error_info = "No privileges exist for ({0}, {1})".format(args.name, args.datastore)
         return operation_fail(error_info)
-    
+
     privileges_dict = generate_privileges_dict(privileges[0])
     privileges_dict = modify_privileges(privileges_dict, args)
-    
+
     error_info = tenant.set_datastore_access_privileges(_auth_mgr.conn, [privileges_dict])
 
     if error_info:
         return operation_fail(error_info)
     else:
         print "tenant access set succeeded"
-       
+
 def tenant_access_rm(args):
     """ Handle tenant access rm command """
     error_info, tenant = get_tenant_from_db(args.name)
@@ -1085,7 +1085,7 @@ def tenant_access_rm(args):
         return operation_fail(error_info)
     else:
         print "tenant access rm succeeded"
-    
+
 def tenant_access_ls_headers():
     """ Return column names for tenant access ls command """
     headers = ['Datastore', 'Create_volume', 'Delete_volume', 'Mount_volume', 'Max_volume_size', 'Total_size']
@@ -1104,7 +1104,7 @@ def generate_tenant_access_ls_rows(privileges):
         # p[auth_data_const.COL_USAGE_QUOTA] is total_size in MB
         total_size = "Unset" if p[auth_data_const.COL_USAGE_QUOTA] == 0 else human_readable(p[auth_data_const.COL_USAGE_QUOTA]*MB)
         rows.append([datastore, create_volume, delete_volume, mount_volume, max_vol_size, total_size])
-        
+
     return rows
 
 def tenant_access_ls(args):
@@ -1113,8 +1113,8 @@ def tenant_access_ls(args):
     if error_info:
         return operation_fail(error_info)
 
-    privileges = tenant.privileges 
-    
+    privileges = tenant.privileges
+
     header = tenant_access_ls_headers()
     rows = generate_tenant_access_ls_rows(privileges)
     print(cli_table.create(header, rows))
