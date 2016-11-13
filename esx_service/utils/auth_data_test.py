@@ -28,7 +28,7 @@ class TestAuthDataModel(unittest.TestCase):
 
     """
     db_path = "/tmp/test-auth.db"
-    
+
     def setUp(self):
         """ Create the auth DB and connect to the DB for each test """
 
@@ -36,10 +36,10 @@ class TestAuthDataModel(unittest.TestCase):
             os.unlink(self.db_path)
         except:
             pass
-            
+
         self.auth_mgr = auth_data.AuthorizationDataManager(self.db_path)
         self.auth_mgr.connect()
-       
+
     def tearDown(self):
         """ Tear down the auth DB after each test """
 
@@ -54,7 +54,7 @@ class TestAuthDataModel(unittest.TestCase):
                       'max_volume_size': 0,
                       'usage_quota': 0}]
         return privileges
-    
+
     def get_default_datastore_and_privileges(self):
         default_datastore = 'default_ds'
         default_privileges = {'datastore': default_datastore,
@@ -65,19 +65,19 @@ class TestAuthDataModel(unittest.TestCase):
                               'max_volume_size': 0,
                               'usage_quota': 0}
         return default_datastore, default_privileges
-                
+
     def test_create_tenant(self):
         """ Test create_tenant() API """
 
         vm1_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1')]
-        
+
         #privileges = []
         privileges = self.get_privileges()
         default_datastore, default_privileges = self.get_default_datastore_and_privileges()
         error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
                                               default_privileges, vms, privileges)
-        self.assertEqual(error_info, None)                                            
+        self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
 
         # Check tenants table
@@ -92,10 +92,10 @@ class TestAuthDataModel(unittest.TestCase):
                          tenants_row[auth_data_const.COL_DESCRIPTION],
                          tenants_row[auth_data_const.COL_DEFAULT_DATASTORE]
                         ]
-                          
+
         self.assertEqual(actual_output, expected_output)
 
-        # check vms table 
+        # check vms table
         error_info, vms_row = auth.get_row_from_vms_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
         expected_output = [vm1_uuid,
@@ -133,10 +133,10 @@ class TestAuthDataModel(unittest.TestCase):
                                        default_privileges[auth_data_const.COL_USAGE_QUOTA]
                                       ]
 
-        expected_output = [expected_privileges, 
+        expected_output = [expected_privileges,
                            expected_default_privileges
                           ]
-         
+
         actual_privileges = [privileges_row[0][auth_data_const.COL_TENANT_ID],
                              privileges_row[0][auth_data_const.COL_DATASTORE],
                              privileges_row[0][auth_data_const.COL_GLOBAL_VISIBILITY],
@@ -156,31 +156,31 @@ class TestAuthDataModel(unittest.TestCase):
                                      privileges_row[1][auth_data_const.COL_USAGE_QUOTA]
                                     ]
         actual_output = [actual_privileges, actual_default_privileges]
-        self.assertEqual(actual_output, expected_output)        
-            
-    def test_add_vms(self): 
+        self.assertEqual(actual_output, expected_output)
+
+    def test_add_vms(self):
         """ Test add_vms() API """
 
         vms = []
         privileges = []
         default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        
+
         error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
                                               default_privileges, vms, privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
-        
+
         vm1_uuid = str(uuid.uuid4())
         vm2_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1'), (vm2_uuid, 'vm2')]
         error_info = tenant1.add_vms(self.auth_mgr.conn, vms)
         self.assertEqual(error_info, None)
 
-         # check vms table 
+         # check vms table
         error_info, vms_row = auth.get_row_from_vms_table(self.auth_mgr.conn,tenant1.id)
         self.assertEqual(error_info, None)
         expected_output = [(vm1_uuid, 'vm1', tenant1.id),
-                           (vm2_uuid, 'vm2', tenant1.id) 
+                           (vm2_uuid, 'vm2', tenant1.id)
                           ]
         self.assertEqual(len(vms_row), 2)
 
@@ -192,14 +192,14 @@ class TestAuthDataModel(unittest.TestCase):
                           vms_row[1][auth_data_const.COL_TENANT_ID]),
                         ]
         self.assertEqual(actual_output, expected_output)
-    
+
     def test_remove_vms(self):
         """
         """
-            
+
         privileges = self.get_privileges()
         default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        
+
         vm1_uuid = str(uuid.uuid4())
         vm2_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1'), (vm2_uuid, 'vm2')]
@@ -212,12 +212,12 @@ class TestAuthDataModel(unittest.TestCase):
         error_info, vms_row = auth.get_row_from_vms_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
         self.assertEqual(vms_row, [])
-        
-    
+
+
     def test_set_name(self):
         vm1_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1')]
-        
+
         privileges = self.get_privileges()
         default_datastore, default_privileges = self.get_default_datastore_and_privileges()
         error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
@@ -233,7 +233,7 @@ class TestAuthDataModel(unittest.TestCase):
         actual_output = tenants_row[auth_data_const.COL_NAME]
         self.assertEqual(actual_output, expected_output)
 
-    
+
     def test_set_description(self):
         vm1_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1')]
@@ -250,7 +250,7 @@ class TestAuthDataModel(unittest.TestCase):
         expected_output = 'new description'
         actual_output = tenants_row[auth_data_const.COL_DESCRIPTION]
         self.assertEqual(actual_output, expected_output)
-    
+
     def test_set_default_datastore_and_privileges(self):
         vm1_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1')]
@@ -291,7 +291,7 @@ class TestAuthDataModel(unittest.TestCase):
                                        default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
                                        default_privileges[auth_data_const.COL_USAGE_QUOTA]
                                       ]
-                 
+
         actual_default_privileges = [privileges_row[1][auth_data_const.COL_TENANT_ID],
                                      privileges_row[1][auth_data_const.COL_DATASTORE],
                                      privileges_row[1][auth_data_const.COL_GLOBAL_VISIBILITY],
@@ -301,20 +301,20 @@ class TestAuthDataModel(unittest.TestCase):
                                      privileges_row[1][auth_data_const.COL_MAX_VOLUME_SIZE],
                                      privileges_row[1][auth_data_const.COL_USAGE_QUOTA]
                                     ]
-        self.assertEqual(actual_default_privileges, expected_default_privileges)                
-                                                      
-    
+        self.assertEqual(actual_default_privileges, expected_default_privileges)
+
+
     def test_add_datastore_access_privileges(self):
         vm1_uuid = str(uuid.uuid4())
         vms = [(vm1_uuid, 'vm1')]
         privileges = []
-        
+
         default_datastore, default_privileges = self.get_default_datastore_and_privileges()
         error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
                                               default_privileges, vms, privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
-               
+
         privileges = [{'datastore': 'datastore1',
                         'global_visibility': 0,
                         'create_volume': 1,
@@ -322,7 +322,7 @@ class TestAuthDataModel(unittest.TestCase):
                         'mount_volume': 0,
                         'max_volume_size': 0,
                         'usage_quota': 0}]
-        
+
         error_info = tenant1.set_datastore_access_privileges(self.auth_mgr.conn, privileges)
         self.assertEqual(error_info, None)
 
@@ -339,7 +339,7 @@ class TestAuthDataModel(unittest.TestCase):
                                privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                privileges[0][auth_data_const.COL_USAGE_QUOTA]
                               ]
-                 
+
         actual_privileges = [privileges_row[0][auth_data_const.COL_TENANT_ID],
                              privileges_row[0][auth_data_const.COL_DATASTORE],
                              privileges_row[0][auth_data_const.COL_GLOBAL_VISIBILITY],
@@ -350,7 +350,7 @@ class TestAuthDataModel(unittest.TestCase):
                              privileges_row[0][auth_data_const.COL_USAGE_QUOTA]
                              ]
         self.assertEqual(actual_privileges, expected_privileges)
-    
+
 
     def test_list_tenants(self):
         vm1_uuid = str(uuid.uuid4())
@@ -361,7 +361,7 @@ class TestAuthDataModel(unittest.TestCase):
                                               default_privileges, vms, privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
-        
+
         vm2_uuid = str(uuid.uuid4())
         vm3_uuid = str(uuid.uuid4())
         vms = [(vm2_uuid, 'vm2'), (vm3_uuid, 'vm3')]
@@ -370,7 +370,7 @@ class TestAuthDataModel(unittest.TestCase):
                                               default_privileges, vms, privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant2.id))
-        
+
         privileges = [{'datastore': 'datastore1',
                        'global_visibility': 0,
                        'create_volume': 0,
@@ -383,7 +383,7 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(error_info, None)
         error_info, tenants_list = self.auth_mgr.list_tenants()
         self.assertEqual(error_info, None)
-        
+
         #Check tenants.id tenant.name, tenant.description and tenant.default_datastore
         self.assertEqual(len(tenants_list), 2)
 
@@ -431,7 +431,7 @@ class TestAuthDataModel(unittest.TestCase):
                                  tenants_list[0].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                  tenants_list[0].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                  ]
-                
+
         # check privileges
         tenant1_expected_output = [tenant1.id,
                                    privileges[0][auth_data_const.COL_DATASTORE],
@@ -451,7 +451,7 @@ class TestAuthDataModel(unittest.TestCase):
                                  tenants_list[0].privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                  tenants_list[0].privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                  ]
-                        
+
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
 
 
@@ -502,33 +502,33 @@ class TestAuthDataModel(unittest.TestCase):
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
-                                 ]   
+                                 ]
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 
         # check privileges
         tenant2_expected_output = []
         tenant2_actual_output = tenants_list[1].privileges
-        
+
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
-          
-         
+
+
     def test_remove_tenants(self):
         vms = [(str(uuid.uuid4()), 'vm1')]
-        
+
         privileges = self.get_privileges()
         default_datastore, default_privileges = self.get_default_datastore_and_privileges()
         error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
                                               default_privileges, vms, privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
-        
+
         vms = [(str(uuid.uuid4()), 'vm2'), (str(uuid.uuid4()), 'vm3')]
         privileges = []
         error_info, tenant2 = self.auth_mgr.create_tenant('tenant2', 'Some tenant', default_datastore,
                                               default_privileges, vms, privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant2.id))
-     
+
         tenant2.set_datastore_access_privileges(self.auth_mgr.conn, privileges)
         error_info = self.auth_mgr.remove_tenant(tenant2.id, False)
         self.assertEqual(error_info, None)
@@ -538,7 +538,7 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(error_info, None)
         self.assertEqual(tenants_row, None)
 
-        # check vms table 
+        # check vms table
         error_info, vms_row = auth.get_row_from_vms_table(self.auth_mgr.conn, tenant2.id)
         self.assertEqual(error_info, None)
         self.assertEqual(vms_row, [])
@@ -546,7 +546,7 @@ class TestAuthDataModel(unittest.TestCase):
         # check privileges table
         error_info, privileges_row = auth.get_row_from_privileges_table(self.auth_mgr.conn, tenant2.id)
         self.assertEqual(error_info, None)
-        self.assertEqual(privileges_row, [])        
-    
+        self.assertEqual(privileges_row, [])
+
 if __name__ == "__main__":
     unittest.main()

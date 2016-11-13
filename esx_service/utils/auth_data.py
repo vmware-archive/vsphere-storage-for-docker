@@ -29,7 +29,7 @@ AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 def all_columns_set(privileges):
         if not privileges:
             return False
-        
+
         all_columns = [
                         auth_data_const.COL_DATASTORE,
                         auth_data_const.COL_GLOBAL_VISIBILITY,
@@ -43,8 +43,8 @@ def all_columns_set(privileges):
             if not col in privileges:
                 return False
 
-        return True 
- 
+        return True
+
 class DbConnectionError(Exception):
     """ An exception thrown when connection to a sqlite database fails. """
 
@@ -78,7 +78,7 @@ class DockerVolumeTenant:
                 self.id = str(uuid.uuid4())
             else:
                 self.id = id
-        
+
     def add_vms(self, conn, vms):
         """ Add vms in the vms table for this tenant. """
         tenant_id = self.id
@@ -95,8 +95,8 @@ class DockerVolumeTenant:
                 " tenant_id %s", e, vm_id, vm_name, tenant_id)
                 return str(e)
 
-        return None        
-                 
+        return None
+
 
     def remove_vms(self, conn, vms):
         """ Remove vms from the vms table for this tenant. """
@@ -104,7 +104,7 @@ class DockerVolumeTenant:
         vms = [(vm_id, tenant_id) for (vm_id, vm_name) in vms]
         try:
             conn.executemany(
-                    "DELETE FROM vms WHERE vm_id = ? AND tenant_id = ?", 
+                    "DELETE FROM vms WHERE vm_id = ? AND tenant_id = ?",
                     vms
             )
             conn.commit()
@@ -182,7 +182,7 @@ class DockerVolumeTenant:
                           e, tenant_id)
             return str(e)
         return None
-            
+
     def set_datastore_access_privileges(self, conn, privileges):
         """ Set datastore and privileges for this tenant.
 
@@ -204,14 +204,14 @@ class DockerVolumeTenant:
                            'mount_volume': 1,
                            'max_volume_size': 0,
                            'usage_quota': 0}]
-        
+
         """
         tenant_id = self.id
         for p in privileges:
             p[auth_data_const.COL_TENANT_ID] = tenant_id
             if not all_columns_set(p):
                 return "Not all columns are set in 'privileges''"
-                            
+
         try:
             conn.executemany(
                 """
@@ -221,26 +221,26 @@ class DockerVolumeTenant:
                 """,
                 privileges
             )
-            
+
             for p in privileges:
                 # privileges ia an array of dict
                 # each dict represent a privilege that the tenant has for a given datastore
-                # for each dict, add a new element which maps 'tenant_id' to tenant_id 
+                # for each dict, add a new element which maps 'tenant_id' to tenant_id
                 p[auth_data_const.COL_TENANT_ID] = tenant_id
                 column_list = ['tenant_id', 'datastore', 'global_visibility', 'create_volume',
                                 'delete_volume', 'mount_volume', 'max_volume_size', 'usage_quota']
                 update_list = []
-                update_list = [p[col] for col in column_list]    
+                update_list = [p[col] for col in column_list]
                 update_list.append(tenant_id)
-                update_list.append(p[auth_data_const.COL_DATASTORE])    
-                
+                update_list.append(p[auth_data_const.COL_DATASTORE])
+
                 logging.debug("set_datastore_access_privileges: update_list %s", update_list)
 
                 conn.execute(
                     """
                     UPDATE OR IGNORE privileges SET
-                        tenant_id = ?, 
-                        datastore = ?, 
+                        tenant_id = ?,
+                        datastore = ?,
                         global_visibility = ?,
                         create_volume = ?,
                         delete_volume = ?,
@@ -253,10 +253,10 @@ class DockerVolumeTenant:
                 )
             conn.commit()
         except sqlite3.Error as e:
-            logging.error("Error %s when setting datastore and privileges for tenant_id %s", 
+            logging.error("Error %s when setting datastore and privileges for tenant_id %s",
                           e, tenant_id)
             return str(e)
-        
+
         return None
 
     def remove_datastore_access_privileges(self, conn, datastore):
@@ -264,7 +264,7 @@ class DockerVolumeTenant:
         tenant_id = self.id
         try:
             conn.execute(
-                    "DELETE FROM privileges WHERE tenant_id = ? AND datastore = ?", 
+                    "DELETE FROM privileges WHERE tenant_id = ? AND datastore = ?",
                     [tenant_id, datastore]
             )
             conn.commit()
@@ -275,7 +275,7 @@ class DockerVolumeTenant:
 
         return None
 
-    
+
 class AuthorizationDataManager:
     """ This class abstracts the creation, modification and retrieval of
     authorization data used by vmdk_ops as well as the VMODL interface for
@@ -300,7 +300,7 @@ class AuthorizationDataManager:
     def __del__(self):
         if self.conn:
             self.conn.close()
-    
+
     def get_auth_db_path(self):
         """ Return the path of authorization database.
 
@@ -313,8 +313,8 @@ class AuthorizationDataManager:
         return AUTH_DB_PATH
 
     def connect(self):
-        """ Connect to a sqlite database file given by `db_path`. 
-        
+        """ Connect to a sqlite database file given by `db_path`.
+
         Ensure foreign key
         constraints are enabled on the database and set the return type for
         select operations to dict-like 'Rows' instead of tuples.
@@ -327,24 +327,24 @@ class AuthorizationDataManager:
         if not os.path.isfile(self.db_path):
             logging.debug("auth DB %s does not exist, try to create table", self.db_path)
             need_create_table = True
-            
-            
+
+
         self.conn = sqlite3.connect(self.db_path)
-       
+
         if not self.conn:
             raise DbConnectionError(self.db_path)
-        
+
         # Return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
-        
+
         if need_create_table:
             self.create_tables()
 
     def create_tables(self):
-        """ Create tables used for per-datastore authorization.  
-        
-        This function should only be called once per datastore.  
-        It will raise an exception if the schema file isn't 
+        """ Create tables used for per-datastore authorization.
+
+        This function should only be called once per datastore.
+        It will raise an exception if the schema file isn't
         accessible or the tables already exist.
 
         """
@@ -352,7 +352,7 @@ class AuthorizationDataManager:
             self.conn.execute(
                 '''
                     PRAGMA foreign_key = ON;
-                '''   
+                '''
 
             )
             self.conn.execute(
@@ -433,13 +433,13 @@ class AuthorizationDataManager:
             logging.error("Error %s when creating auth DB tables", e)
             return str(e)
 
-        return None        
+        return None
 
-    def create_tenant(self, name, description, default_datastore, default_privileges, 
+    def create_tenant(self, name, description, default_datastore, default_privileges,
                       vms, privileges):
-        """ Create a tenant in the database. 
-        
-        A tenant id will be auto-generated and returned. 
+        """ Create a tenant in the database.
+
+        A tenant id will be auto-generated and returned.
         vms are (vm_id, vm_name) pairs. Privileges are dictionaries
         with keys matching the row names in the privileges table. Tenant id is
         filled in for both the vm and privileges tables.
@@ -450,18 +450,18 @@ class AuthorizationDataManager:
             if not all_columns_set(default_privileges):
                 error_info = "Not all columns are set in default_privileges"
                 return error_info, None
-        
+
         if privileges:
             for p in privileges:
                 if not all_columns_set(p):
                     error_info = "Not all columns are set in privileges"
                     return error_info, None
-                    
+
         # Create the entry in the tenants table
         tenant = DockerVolumeTenant(name, description, default_datastore,
                                     default_privileges, vms, privileges)
         id = tenant.id
-       
+
         try:
             self.conn.execute(
                 "INSERT INTO tenants(id, name, description, default_datastore) VALUES (?, ?, ?, ?)",
@@ -470,7 +470,7 @@ class AuthorizationDataManager:
 
             # Create the entries in the vms table
             vms = [(vm_id, vm_name, id) for (vm_id, vm_name) in vms]
-                
+
             if vms:
                 self.conn.executemany(
                 "INSERT INTO vms(vm_id, vm_name, tenant_id) VALUES (?, ?, ?)",
@@ -491,7 +491,7 @@ class AuthorizationDataManager:
             if privileges:
                 for p in privileges:
                     p[auth_data_const.COL_TENANT_ID] = id
-            
+
                 self.conn.executemany(
                     """
                     INSERT INTO privileges VALUES
@@ -502,12 +502,12 @@ class AuthorizationDataManager:
                 )
             self.conn.commit()
         except sqlite3.Error as e:
-            logging.error("Error %s when setting datastore and privileges for tenant_id %s", 
+            logging.error("Error %s when setting datastore and privileges for tenant_id %s",
                           e, tenant.id)
             return str(e), tenant
 
         return None, tenant
-    
+
     def get_tenant(self, tenant_name):
         """ Return a DockerVolumeTenant object which match the given tenant_name """
         logging.debug("get_tenant: tenant_name=%s", tenant_name)
@@ -518,7 +518,7 @@ class AuthorizationDataManager:
                 (tenant_name,)
             )
             result = cur.fetchall()
-         
+
             for r in result:
                 # loop through each tenant
                 id = r[auth_data_const.COL_ID]
@@ -528,7 +528,7 @@ class AuthorizationDataManager:
 
                 logging.debug("id=%s name=%s description=%s default_datastore=%s",
                               id, name, description, default_datastore)
-                
+
                 # search vms for this tenant
                 vms = []
                 cur = self.conn.execute(
@@ -538,12 +538,12 @@ class AuthorizationDataManager:
                 vms = cur.fetchall()
 
                 logging.debug("vms=%s", vms)
-                
+
                 # search privileges and default_privileges for this tenant
                 privileges = []
                 cur = self.conn.execute(
                     "SELECT * FROM privileges WHERE tenant_id = ? AND datastore != ?",
-                    (id,default_datastore)    
+                    (id,default_datastore)
                 )
                 privileges = cur.fetchall()
 
@@ -552,7 +552,7 @@ class AuthorizationDataManager:
                 default_privileges = []
                 cur = self.conn.execute(
                     "SELECT * FROM privileges WHERE tenant_id = ? AND datastore = ?",
-                    (id,default_datastore)    
+                    (id,default_datastore)
                 )
                 default_privileges = cur.fetchall()
                 logging.debug("default_privileges=%s", default_privileges)
@@ -561,9 +561,9 @@ class AuthorizationDataManager:
         except sqlite3.Error as e:
             logging.error("Error %s when get tenant %s", e, tenant_name)
             return str(e), tenant
-        
+
         return None, tenant
-    
+
     def list_tenants(self):
         """ Return a list of DockerVolumeTenants objects. """
         tenant_list = []
@@ -572,14 +572,14 @@ class AuthorizationDataManager:
             "SELECT * FROM tenants"
             )
             result = cur.fetchall()
-        
+
             for r in result:
                 # loop through each tenant
                 id = r[auth_data_const.COL_ID]
                 name = r[auth_data_const.COL_NAME]
                 description = r[auth_data_const.COL_DESCRIPTION]
                 default_datastore = r[auth_data_const.COL_DEFAULT_DATASTORE]
-                
+
                 # search vms for this tenant
                 vms = []
                 cur = self.conn.execute(
@@ -587,19 +587,19 @@ class AuthorizationDataManager:
                     (id,)
                 )
                 vms = cur.fetchall()
-                
+
                 # search privileges and default_privileges for this tenant
                 privileges = []
                 cur = self.conn.execute(
                     "SELECT * FROM privileges WHERE tenant_id = ? AND datastore != ?",
-                    (id,default_datastore)    
+                    (id,default_datastore)
                 )
                 privileges = cur.fetchall()
 
                 default_privileges = []
                 cur = self.conn.execute(
                     "SELECT * FROM privileges WHERE tenant_id = ? AND datastore = ?",
-                    (id,default_datastore)    
+                    (id,default_datastore)
                 )
                 default_privileges = cur.fetchall()
                 tenant = DockerVolumeTenant(name, description, default_datastore,
@@ -609,13 +609,13 @@ class AuthorizationDataManager:
             logging.error("Error %s when listing all tenants", e)
             return str(e), tenant_list
 
-        return None, tenant_list   
-    
+        return None, tenant_list
+
     def remove_volumes_from_volume_table(self, tenant_id):
         """ Remove all volumes from volumes table. """
         try:
             self.conn.execute(
-                    "DELETE FROM volumes WHERE tenant_id = ?",  
+                    "DELETE FROM volumes WHERE tenant_id = ?",
                     [tenant_id]
             )
 
@@ -624,9 +624,9 @@ class AuthorizationDataManager:
             logging.error("Error %s when removing volumes from volumes table for tenant_id %s",
                           e, tenant_id)
             return str(e)
-        
+
         return None
-    
+
     def _remove_volumes_for_tenant(self, tenant_id):
         """ Delete all volumes belongs to this tenant.
 
@@ -644,22 +644,22 @@ class AuthorizationDataManager:
             return str(e)
 
         error_info = ""
-        if result:    
+        if result:
             logging.debug("remove_volumes_for_tenant: %s %s", tenant_id, result)
             tenant_name = result[0]
             vmdks = vmdk_utils.get_volumes(tenant_name)
-            # Delete all volumes for this tenant. 
+            # Delete all volumes for this tenant.
             dir_paths = set()
             for vmdk in vmdks:
                 vmdk_path = os.path.join(vmdk['path'], "{0}".format(vmdk['filename']))
                 dir_paths.add(vmdk['path'])
-                logging.debug("path=%s filename=%s", vmdk['path'], vmdk['filename'])    
+                logging.debug("path=%s filename=%s", vmdk['path'], vmdk['filename'])
                 logging.debug("Deleting volume path%s", vmdk_path)
                 err = vmdk_ops.removeVMDK(vmdk_path)
                 if err:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
                     error_info += err
-            
+
             # Delete path /vmfs/volumes/datastore_name/tenant_name
             logging.debug("Deleting dir paths %s", dir_paths)
             for path in list(dir_paths):
@@ -674,19 +674,19 @@ class AuthorizationDataManager:
         if err:
             logging.error("Failed to remove volumes from database %s", err)
             error_info += err
-        
+
         if error_info:
             return error_info
-        
+
         return None
 
     def remove_tenant(self, tenant_id, remove_volumes):
         """ Remove a tenant with given id.
 
-            A row with given tenant_id will be removed from table tenants, vms, 
+            A row with given tenant_id will be removed from table tenants, vms,
             and privileges.
             All the volumes created by this tenant will be removed if remove_volumes
-            is set to True. 
+            is set to True.
 
         """
         logging.debug("remove_tenant: tenant_id%s, remove_volumes=%d", tenant_id, remove_volumes)
@@ -697,22 +697,22 @@ class AuthorizationDataManager:
 
         try:
             self.conn.execute(
-                    "DELETE FROM vms WHERE tenant_id = ?", 
+                    "DELETE FROM vms WHERE tenant_id = ?",
                     [tenant_id]
             )
 
             self.conn.execute(
-                    "DELETE FROM privileges WHERE tenant_id = ?", 
+                    "DELETE FROM privileges WHERE tenant_id = ?",
                     [tenant_id]
             )
             self.conn.execute(
-                    "DELETE FROM tenants WHERE id = ?", 
+                    "DELETE FROM tenants WHERE id = ?",
                     [tenant_id]
             )
 
             self.conn.commit()
         except sqlite3.Error as e:
             logging.error("Error %s when removing tables", e)
-            return str(e) 
+            return str(e)
 
-        return None 
+        return None
