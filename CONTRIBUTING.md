@@ -51,9 +51,17 @@ make documentation # Start the mkdocs docker image
 mkdocs serve -a 0.0.0.0:8000
 # 1. Open browser on same machine and head to 127.0.0.1:8000
 # 2. Make edits and refresh browser
-# 3. Publish changes to gh-pages branch
-# Example:
-mkdocs gh-deploy -c -m “Add documentation for feature XYZ” -b gh-pages
+# 3. Build the website
+mkdocs build
+# 4. Checkout the gh-pages
+git checkout gh-pages
+# 5. Remove the old site and copy the new one.
+rm -rvf documentation
+mv site documentation
+# 6. Push to GitHub
+git add documentation
+git commit
+git push origin gh-pages
 ```
 
 ## Bug filing guidelines
