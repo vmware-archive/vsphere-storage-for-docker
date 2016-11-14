@@ -68,3 +68,6 @@ endif
 # redirect all
 $(TARGETS):
 	$(MAKE) --directory=vmdk_plugin $@
+
+.DEFAULT:
+	$(MAKE) --directory=vmdk_plugin $@

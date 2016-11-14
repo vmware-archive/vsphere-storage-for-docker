@@ -20,9 +20,6 @@
 # We expect the actual vibauthor to be run via dedicated container upstair
 #
 
-# Python lint
-PYLINT := /usr/bin/pylint
-
 # build places binaries here:
 BIN := ../build
 
@@ -147,19 +144,33 @@ $(VMCI_SRV_LIB): $(C_SRC)
 $(VMCI_SRV_LIB64): $(C_SRC)
 	$(CC) $(CFLAGS64) -o $@ $(C_SRC)
 
-# Run lint on python source. Currently this is run manually and
+# Run pylint on python source. Currently this is run manually and
 # needs pylint and dependent packages to be installed.
 # TODO: Automate.
-.PHONY: lint
-lint:
-	@echo "Running $@"
-	@rm -f ./.pylint
-	@for file in $(PY_SRC) $(PY_UTILS) $(PY_CLI); do \
-		$(PYLINT) -f text -r y $$file >> .pylint.out 2>&1; done
+
+# we will incrementally start failing on issues issue. For now, ignore ALL but errors.
+PYLINT_IGNORE := --errors-only -d import-error,no-name-in-module
+PYLINT_COMMAND := pylint $(PYLINT_IGNORE) --rcfile pylint_cfg.ini
+
+.PHONY: pylint
+pylint: .lint_src .lint_cli .lint_util
+
+.lint_src: $(PY_SRC)
+	$(PYLINT_COMMAND) ../esx_service
+	@touch $@
+
+.lint_cli: $(PY_CLI)
+	$(PYLINT_COMMAND) cli
+	@touch $@
+
+.lint_util: $(PY_UTIL)
+	$(PYLINT_COMMAND) utils
+	@touch $@
+
 
 .PHONY:	clean
 clean:
-	rm -rf $(VIB) $(VMCI_SRV_LIBS) $(WDIR)/$(DESCRIPTOR) $(PAYLOAD)
+	rm -rf $(VIB) $(VMCI_SRV_LIBS) $(WDIR)/$(DESCRIPTOR) $(PAYLOAD) .lint_*
 
 .PHONY: test
 test: test-esx build
