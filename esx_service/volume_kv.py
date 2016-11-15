@@ -35,8 +35,6 @@ DETACHED = 'detached'
 CREATED = 'created'
 # Name of the VM that created the volume
 CREATED_BY = 'created-by'
-# The name of the VM that the volume is attached to
-ATTACHED_VM_NAME = 'attachedVMName'
 # The UUID of the VM that the volume is attached to
 ATTACHED_VM_UUID = 'attachedVMUuid'
 
