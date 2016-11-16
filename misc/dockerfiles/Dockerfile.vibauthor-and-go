@@ -34,7 +34,7 @@ RUN yum update -y && \
     curl https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -C /usr/local -xzf - && \
     rm -rf ~/*.rpm ~/*.tar.gz && \
     yum clean all && \
-    curl -L https://github.com/vmware/govmomi/releases/download/v0.4.0/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
+    curl -L https://github.com/vmware/govmomi/releases/download/v0.11.3/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
     chmod +x /usr/local/bin/govc && \
     curl -O http://download3.vmware.com/software/vmw-tools/vibauthor/vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm && \
     rpm -ivh vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm
@@ -53,3 +53,6 @@ RUN curl --silent --location https://rpm.nodesource.com/setup_4.x | bash - && \
     yum -y install ruby-devel rubygems && \
     npm install -g grunt && \
     gem install compass
+
+RUN curl http://downloads.drone.io/drone-cli/drone_linux_amd64.tar.gz | tar zx
+RUN install -t /usr/local/bin drone

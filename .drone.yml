@@ -3,8 +3,23 @@ clone:
     tags: true
 
 build:
+
+  serialize:
+    image: cnastorage/vibauthor-and-go:0.9
+    environment:
+      - DRONE_TOKEN=$$DRONE_TOKEN
+      - DRONE_SERVER=$$DRONE_SERVER
+      - TEST_URL_ARRAY=$$TEST_URL_ARRAY
+      - GOVC_USERNAME=$$CI_BASE_VMWARE_ESX_USER
+      - GOVC_PASSWORD=$$CI_BASE_VMWARE_ESX_PASS
+      - GOVC_INSECURE=1
+      - GOVC_URL=$$CI_BASE_ESX_IP
+      - TEST_ESX=$$CI_ESX_NAME
+    commands:
+      - misc/drone-scripts/validate-and-serialize.sh
+
   build_dev:
-    image: cnastorage/vibauthor-and-go:0.8
+    image: cnastorage/vibauthor-and-go:0.9
     environment:
       - KEY=$$KEY
     commands:
@@ -17,7 +32,7 @@ build:
       event: [push, pull_request]
 
   build_tag:
-    image: cnastorage/vibauthor-and-go:0.8
+    image: cnastorage/vibauthor-and-go:0.9
     environment:
       - KEY=$$KEY
     commands:
@@ -30,10 +45,10 @@ build:
     when:
       event: tag
 
-  package:
+  package_dev:
     image: cnastorage/fpm
     commands:
-       - make -s deb rpm
+      - make -s deb rpm
     when:
       event: [push, pull_request]
 
@@ -46,8 +61,35 @@ build:
     when:
       event: tag
 
+  setup_pr_tag:
+    image: cnastorage/vibauthor-and-go:0.9
+    environment:
+      - GOVC_USERNAME=$$CI_BASE_VMWARE_ESX_USER
+      - GOVC_PASSWORD=$$CI_BASE_VMWARE_ESX_PASS
+      - GOVC_INSECURE=1
+      - GOVC_URL=$$CI_BASE_ESX_IP
+      - TEST_ESX=$$CI_ESX_NAME
+    commands:
+      - misc/drone-scripts/setup.sh
+    when:
+      event: [pull_request, tag]
+
+  setup_push:
+    image: cnastorage/vibauthor-and-go:0.9
+    environment:
+      - GOVC_USERNAME=$$CI_BASE_VMWARE_ESX_USER
+      - GOVC_PASSWORD=$$CI_BASE_VMWARE_ESX_PASS
+      - GOVC_INSECURE=1
+      - GOVC_URL=$$CI_BASE_ESX_IP
+      - TEST_ESX=$$CI_ESX_NAME
+    commands:
+      - misc/drone-scripts/setup.sh
+    when:
+      event: [push]
+      branch: [master, runci/*]
+
   test_dev_branch: # Identical to test except for when it occurs
-    image: cnastorage/vibauthor-and-go:0.8
+    image: cnastorage/vibauthor-and-go:0.9
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
@@ -72,7 +114,7 @@ build:
       branch: [master, runci/*]
 
   test: 
-    image: cnastorage/vibauthor-and-go:0.8
+    image: cnastorage/vibauthor-and-go:0.9
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
@@ -94,9 +136,8 @@ build:
     when:
       event: [pull_request]
 
-
-  test_tag:
-    image: cnastorage/vibauthor-and-go:0.8
+  test_tag: 
+    image: cnastorage/vibauthor-and-go:0.9
     privileged: true
     environment:
       - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
@@ -117,7 +158,8 @@ build:
       - export VM2=`govc vm.ip Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
-      event: tag
+      event: [tag]
+
 
 matrix:
   GO_VERSION:
