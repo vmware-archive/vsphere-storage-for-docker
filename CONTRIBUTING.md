@@ -300,5 +300,5 @@ Test SSH keys, login form the drone node should not require typing in a password
 
 ```
 cd $GOPATH/src/github.com/vmware/docker-volume-vsphere/
-drone exec --yaml .drone.dev.yml -i ~/.ssh/id_rsa -e VM1=<ip VM1> -e VM2=<ip VM2> -e ESX=<ip ESX>
+drone exec --trusted --yaml .drone.dev.yml -i ~/.ssh/id_rsa -e VM1=<ip VM1> -e VM2=<ip VM2> -e ESX=<ip ESX>
 ```
