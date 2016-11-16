@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright 2016 VMware, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-stop_build() {
-  make clean-vm clean-esx TEST_VOL_NAME=vol.build$BUILD_NUMBER
-}
+echo "Resetting testbed"
+govc snapshot.revert -vm $TEST_ESX init
+
+echo "Waiting for revert to complete";
+until govc vm.ip $TEST_ESX
+do
+    echo "Waiting for revert to complete";
+    sleep 1;
+done
+
+echo "Reset complete"
+
+exit 0

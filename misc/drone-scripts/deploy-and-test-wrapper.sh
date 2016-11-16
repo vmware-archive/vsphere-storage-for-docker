@@ -40,15 +40,6 @@ USER=root
 . ./misc/drone-scripts/cleanup.sh
 . ./misc/drone-scripts/dump_log.sh
 
-$SCP ./misc/drone-scripts/lock.sh $ESX:/tmp/
-
-# Unlock performed in stop_build in cleanup.sh
-until $SSH $USER@$ESX "sh /tmp/lock.sh lock $BUILD_NUMBER"
- do
-  sleep 30
-  log "Retrying acquire lock"
-done 
-
 dump_vm_info() {
   set -x
   $SSH $USER@$1 uname -a
@@ -90,8 +81,6 @@ truncate_vm_logs() {
 truncate_esx_logs() {
   $SSH $USER@$ESX "cat /dev/null > /var/log/vmware/vmdk_ops.log"
 }
-
-log "Acquired lock for build $BUILD_NUMBER on ESX=$ESX"
 
 log "truncate vm logs"
 truncate_vm_logs $VM1
