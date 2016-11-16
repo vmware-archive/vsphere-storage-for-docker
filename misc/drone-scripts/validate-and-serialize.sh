@@ -23,12 +23,12 @@ total_builds=`drone build list vmware/docker-volume-vsphere| wc -l`
 govc datastore.mkdir docker-volume-vsphere/$DRONE_BUILD_NUMBER
 if [ "$?" != "0" ]
 then
-    echo 
-    echo 
+    echo
+    echo
     echo "Restart not supported"
     echo "Record already exists for build, push a new commit to trigger build"
-    echo 
-    echo 
+    echo
+    echo
     exit 1
 fi
 
@@ -36,10 +36,30 @@ fi
 govc datastore.rm docker-volume-vsphere/$(( $DRONE_BUILD_NUMBER-$total_builds )) 2>&1 > /dev/null
 
 while [[ ${outArray[2]} == *"running"* ]]; do
-    echo "Waiting 5 minutes for previous build to complete";
+    echo "Waiting 5 minutes for previous build $(( $DRONE_BUILD_NUMBER-$numServers )) to complete";
     sleep 300;
     prevBuildStatus=`drone build info vmware/docker-volume-vsphere $(( $DRONE_BUILD_NUMBER-$numServers ))`
     outArray=($prevBuildStatus)
 done
+
+# Check if any other build is in the ongoing folder, if present, check if entry is stale.
+# If entry is stale clean it up.
+# If entry is an on going build wait for it.
+prevBuild=`govc datastore.ls docker-volume-vsphere/ongoing|tail -n 1`
+while [[ "$prevBuild" != "" ]];
+do
+    prevBuildStatus=`drone build info vmware/docker-volume-vsphere $prevBuild`
+    outArray=($prevBuildStatus)
+    if [[ ${outArray[2]} != *"running"* ]]
+    then
+        govc datastore.rm docker-volume-vsphere/ongoing/$prevBuild
+    else
+        echo "Waiting 5 minutes for previous build $prevBuild to complete";
+        sleep 300;
+    fi
+    prevBuild=`govc datastore.ls docker-volume-vsphere/ongoing|tail -n 1`
+done
+
+govc datastore.mkdir docker-volume-vsphere/ongoing/$DRONE_BUILD_NUMBER
 
 exit 0
