@@ -68,13 +68,26 @@ then
 
 fi
 
+# Docker container images used in the build
+
+#  GO and Vibauthoring
 plugin_container_version=0.9
+
 plug_container=cnastorage/vibauthor-and-go:$plugin_container_version
+#dockerfile=Dockerfile.vibauthor-and-go
+
+#  Guest-side packaging (deb/rpm)
 plug_pkg_container_version=latest
 plug_pkg_container=cnastorage/fpm:$plug_pkg_container_version
-dockerfile=Dockerfile.vibauthor-and-go
+
+# GO container, mainly for running GVT (vendoring tool)
 go_container=golang
+
+# Container for linting Python code
+pylint_container=cnastorage/pylint
+
 docs_container=cnastorage/gh-documentation
+
 # mount point within the container.
 dir=/go/src/github.com/vmware/docker-volume-vsphere
 # We need to mount this into the container:
@@ -83,6 +96,7 @@ host_dir=$PWD/..
 # we run from top level (i.e. ./misc/scripts/build.sh) , but run make in 'vmdk_plugin'
 MAKE="$DEBUG make --directory=vmdk_plugin"
 MAKE_UI="$DEBUG make --directory=ui"
+MAKE_ESX="$DEBUG make --directory=esx_service"
 
 DOCKER="$DEBUG docker"
 
@@ -105,11 +119,17 @@ then
 elif [ "$1" == "documentation" ]
 then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir -p 8000:8000 $docs_container bash
-else
+elif [ "$1" == "pylint" ]
+then
+  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
+elif [ "$1" == "build" ] || [ "$1" == "clean-as-root" ]
+then
   docker_socket=/var/run/docker.sock
   $DOCKER run --privileged --rm -it \
     -e "PKG_VERSION=$PKG_VERSION" \
     -e "INCLUDE_UI=$INCLUDE_UI" \
     -v $docker_socket:$docker_socket  \
     -v $PWD/..:$dir -w $dir $plug_container $MAKE $1
+else
+  echo "Error: unknown build target $1"
 fi

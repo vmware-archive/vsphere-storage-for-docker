@@ -45,6 +45,14 @@ build:
     when:
       event: tag
 
+  pylint:
+    image: cnastorage/pylint
+    commands:
+       - make -s pylint
+    when:
+      event: [push, pull_request]
+
+  package:
   package_dev:
     image: cnastorage/fpm
     commands:

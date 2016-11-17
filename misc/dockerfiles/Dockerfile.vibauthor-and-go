@@ -20,7 +20,7 @@
 ## - Controlling VMs under ESX   => may need govc command line
 ##
 
-# Current tag: 0.6
+# Current tag: 0.9
 
 FROM centos:6.6
 

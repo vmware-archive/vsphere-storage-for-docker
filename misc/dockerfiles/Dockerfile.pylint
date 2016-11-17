@@ -1,14 +1,9 @@
-FROM python:2-alpine
-MAINTAINER "EEA: IDM2 A-Team" <eea-edw-a-team-alerts@googlegroups.com>
+#
+# Dockerfile for running pylint
+#
+FROM alpine
+MAINTAINER "CNA Storage Team" <cna-storage@vmware.com>
 
-#ENV PYLINT_VERSION=1.5.4
-#RUN pip install pylint==$PYLINT_VERSION
-RUN pip install --upgrade pip 
-RUN pip install --upgrade pylint pyVmomi pyVim
-
-#COPY pylint.cfg /etc/pylint.cfg
-
-#ENTRYPOINT ["pylint", "--rcfile", "/etc/pylint.cfg"]
-ENTRYPOINT ["pylint"]
-
-CMD ["/code"]
+RUN apk add --update --progress make wget python git
+RUN wget --no-check-certificate -O - https://bootstrap.pypa.io/get-pip.py | python 
+RUN pip install --upgrade pip pylint pyvmomi pyvim 
