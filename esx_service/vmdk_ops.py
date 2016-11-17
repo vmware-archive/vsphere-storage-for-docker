@@ -468,6 +468,11 @@ def findVmByUuid(vm_uuid):
     vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
     return vm
 
+def vm_uuid2name(vm_uuid):
+    vm = findVmByUuid(vm_uuid)
+    if not vm or not vm.config:
+        return None
+    return vm.config.name
 
 # Return error, or None for OK.
 def attachVMDK(vmdk_path, vm_uuid):
