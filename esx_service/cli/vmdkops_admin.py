@@ -1006,14 +1006,45 @@ def tenant_access_add(args):
         error_info = "Tenant {0} does not exist".format(args.name)
         return operation_fail(error_info)
 
+    privileges = [d for d in tenant.privileges if d[auth_data_const.COL_DATASTORE] == args.datastore]
+    
+    if privileges:
+        error_info = "Privilege already exists for ({0}, {1})".format(args.name, args.datastore)
+        return operation_fail(error_info)
+
     privileges = generate_privileges(args)
     print privileges
+
+    error_info = check_tenant_access_add_args(privileges)
+    if error_info:
+        return operation_fail(error_info)
+
     error_info = tenant.set_datastore_access_privileges(_auth_mgr.conn, [privileges])
       
     if error_info:
         return operation_fail(error_info)
     else:
         print "tenant access add succeeded"
+
+def check_tenant_access_add_args(privileges):
+    """ Check validity of CLI arguments for tenant access add command """
+    max_size = privileges[auth_data_const.COL_MAX_VOLUME_SIZE]
+    total_size = privileges[auth_data_const.COL_USAGE_QUOTA]
+
+    # If both volume max size and volume total size are set,
+    # volume max size should not exceed volume total size
+    if (max_size and total_size and (max_size > total_size)):
+        error_info = "Volume max size {0}MB exceeds the total size {1}MB".format(
+            max_size, total_size)
+        return error_info
+
+    # If volume total size is set, but volume max size is NOT set,
+    # volume max size should be set to the same as volume total size
+    if (total_size and not max_size):
+        print('Set volume max size to the same value as volume total size: {0}MB'.format(total_size))
+        privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = total_size
+
+    return None;
 
 def modify_privileges(privileges, args):
     """ Modify privileges based on CLI argument """
@@ -1063,17 +1094,63 @@ def tenant_access_set(args):
     if not privileges:
         error_info = "No privileges exist for ({0}, {1})".format(args.name, args.datastore)
         return operation_fail(error_info)
-    
+
     privileges_dict = generate_privileges_dict(privileges[0])
+
     privileges_dict = modify_privileges(privileges_dict, args)
-    
+
+    error_info = check_tenant_access_set_args(args, privileges_dict)
+    if error_info:
+        return operation_fail(error_info)
+
     error_info = tenant.set_datastore_access_privileges(_auth_mgr.conn, [privileges_dict])
 
     if error_info:
         return operation_fail(error_info)
     else:
         print "tenant access set succeeded"
-       
+
+def check_tenant_access_set_args(args, privileges):
+    """ Check validity of CLI arguments for tenant access set command """
+
+    # If both volume max size and volume total size are NOT set, return directly
+    if (not args.volume_maxsize and not args.volume_totalsize):
+        return None;
+
+    # If both volume max size and volume total size are set,
+    # volume max size should not exceed volume total size
+    if (args.volume_maxsize and args.volume_totalsize and (args.volume_maxsize > args.volume_totalsize)):
+        error_info = "Volume max size {0} exceeds the total size {1}".format(
+            args.volume_maxsize, args.volume_totalsize)
+        return error_info
+
+    # If volume max size is set, but volume total size is NOT set,
+    # volume max size should not exceed existing volume total size (i.e. usage quota), if already set.
+    existing_total_size = privileges[auth_data_const.COL_USAGE_QUOTA]
+    if (args.volume_maxsize and not args.volume_totalsize and existing_total_size):
+        new_max_size_in_MB = convert.convert_to_MB(args.volume_maxsize)
+        if (new_max_size_in_MB > existing_total_size):
+            error_info = "Volume max size {0}MB exceeds the existing total size {1}MB".format(
+                new_max_size_in_MB, existing_total_size)
+            return error_info
+
+    # If volume total size is set, but volume max size is NOT set,
+    # 1) if existing volume max size was already set, volume total size should not be smaller than that
+    # 2) if existing volume max size was not set, it should be set to the same as volume total size
+    if (args.volume_totalsize and not args.volume_maxsize):
+        new_total_size_in_MB = convert.convert_to_MB(args.volume_totalsize)
+        existing_max_size = privileges[auth_data_const.COL_MAX_VOLUME_SIZE]
+        if (existing_max_size):
+            if (new_total_size_in_MB < existing_max_size):
+                error_info = "Volume total size {0}MB is smaller than the existing max size {1}MB".format(
+                    new_total_size_in_MB, existing_max_size)
+                return error_info
+        else:
+            print('Set volume max size to the same value as volume total size: {0}MB'.format(new_total_size_in_MB))
+            privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = new_total_size_in_MB
+
+    return None;
+
 def tenant_access_rm(args):
     """ Handle tenant access rm command """
     error_info, tenant = get_tenant_from_db(args.name)
