@@ -349,5 +349,7 @@ clean-all: clean clean-vm clean-esx
 # full circle
 all: clean-all build-all deploy-all test-all
 
+
+# if we do not recognize the target, warn and keep going.
 .DEFAULT:
 	@echo "***" Warning: Skipping unsupported target \"$@\"

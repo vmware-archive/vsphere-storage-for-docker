@@ -69,5 +69,6 @@ endif
 $(TARGETS):
 	$(MAKE) --directory=vmdk_plugin $@
 
+# if we do not recognize the target, just pass it on to vmdk_plugin Makefile
 .DEFAULT:
 	$(MAKE) --directory=vmdk_plugin $@
