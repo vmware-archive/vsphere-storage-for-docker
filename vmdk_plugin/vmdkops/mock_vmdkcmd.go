@@ -181,11 +181,11 @@ func createBackingFile(backing string) error {
 	flags := syscall.O_RDWR | syscall.O_CREAT | syscall.O_EXCL
 	file, err := os.OpenFile(backing, flags, 0755)
 	if err != nil {
-		return fmt.Errorf("Failed to create backing file %s: %s.", backing, err)
+		return fmt.Errorf("Failed to create backing file %s: %s", backing, err)
 	}
 	err = syscall.Fallocate(int(file.Fd()), 0, 0, fileSizeInBytes)
 	if err != nil {
-		return fmt.Errorf("Failed to allocate %s: %s.", backing, err)
+		return fmt.Errorf("Failed to allocate %s: %s", backing, err)
 	}
 	return nil
 }

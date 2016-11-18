@@ -252,7 +252,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         # Verify if the source volume is in use.
         attached, uuid, attach_as = getStatusAttached(src_vmdk_path)
         if attached:
-            if handle_stale_attach(vmdk_path, kv_uuid):
+            if handle_stale_attach(vmdk_path, uuid):
                 return err("Source volume cannot be in use when cloning")
 
         # Reauthorize with size info of the volume being cloned
