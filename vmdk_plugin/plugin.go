@@ -209,6 +209,16 @@ func (d *vmdkDriver) unmountVolume(name string) error {
 // Name and driver specific options passed through to the ESX host
 func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 
+	// If cloning a existent volume, create and return
+	if _, result := r.Options["clone-from"]; result == true {
+		errClone := d.ops.Create(r.Name, r.Options)
+		if errClone != nil {
+			log.WithFields(log.Fields{"name": r.Name, "error": errClone}).Error("Clone volume failed ")
+			return volume.Response{Err: errClone.Error()}
+		}
+		return volume.Response{Err: ""}
+	}
+
 	// Use default fstype if not specified
 	if _, result := r.Options["fstype"]; result == false {
 		r.Options["fstype"] = fs.FstypeDefault

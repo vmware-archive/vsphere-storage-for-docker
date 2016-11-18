@@ -239,7 +239,95 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             err = vmdk_ops.removeVMDK(vmdk_path)
             self.assertEqual(err == None, unit[2], err)
 
+class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
+    vm_name = 'test-vm'
+    vm_uuid = str(uuid.uuid4())
+    volName = "vol_CloneTest"
+    volName1 = "vol_CloneTest_1"
+    volName2 = "vol_CloneTest_2"
+    volName3 = "vol_CloneTest_3"
+    vm_datastore = None
 
+    def setUp(self):
+        if not self.vm_datastore:
+            datastore = vmdk_utils.get_datastores()[0]
+            if not datastore:
+                logging.error("Cannot find a valid datastore")
+                self.assertFalse(True)
+            self.vm_datastore = datastore[0]
+
+        path, err = vmdk_ops.get_vol_path(self.vm_datastore)
+        self.assertEqual(err, None, err)
+
+        self.name = vmdk_utils.get_vmdk_path(path, self.volName)
+        self.name1 = vmdk_utils.get_vmdk_path(path, self.volName1)
+        self.name2 = vmdk_utils.get_vmdk_path(path, self.volName2)
+        self.name3 = vmdk_utils.get_vmdk_path(path, self.volName3)
+        self.badOpts = {volume_kv.CLONE_FROM: self.volName, volume_kv.FILESYSTEM_TYPE: u'ext4',
+                        volume_kv.SIZE: volume_kv.DEFAULT_DISK_SIZE}
+
+    def testBadOpts(self):
+        err = vmdk_ops.createVMDK(vmdk_path=self.name,
+                                  vm_name=self.vm_name,
+                                  vol_name=self.volName)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vmdk_path=self.name1,
+                                  vm_name=self.vm_name,
+                                  vol_name=self.volName1,
+                                  opts=self.badOpts,
+                                  vm_uuid=self.vm_uuid,
+                                  vm_datastore=self.vm_datastore)
+        self.assertNotEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name1)
+        self.assertNotEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name)
+        self.assertEqual(err, None, err)
+
+
+    def testCreateCloneDelete(self):
+        err = vmdk_ops.createVMDK(vmdk_path=self.name,
+                                  vm_name=self.vm_name,
+                                  vol_name=self.volName)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vmdk_path=self.name1,
+                                  vm_name=self.vm_name,
+                                  vol_name=self.volName1,
+                                  opts={volume_kv.CLONE_FROM: self.volName},
+                                  vm_uuid=self.vm_uuid,
+                                  vm_datastore=self.vm_datastore)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vmdk_path=self.name2,
+                                  vm_name=self.vm_name,
+                                  vol_name=self.volName2,
+                                  opts={volume_kv.CLONE_FROM: self.volName1},
+                                  vm_uuid=self.vm_uuid,
+                                  vm_datastore=self.vm_datastore)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.createVMDK(vmdk_path=self.name3,
+                                  vm_name=self.vm_name,
+                                  vol_name=self.volName3,
+                                  opts={volume_kv.CLONE_FROM: self.volName2},
+                                  vm_uuid=self.vm_uuid,
+                                  vm_datastore=self.vm_datastore)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name1)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name2)
+        self.assertEqual(err, None, err)
+
+        err = vmdk_ops.removeVMDK(self.name3)
+        self.assertEqual(err, None, err)
 
 class ValidationTestCase(unittest.TestCase):
     """ Test validation of -o options on create """

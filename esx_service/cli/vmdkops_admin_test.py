@@ -24,6 +24,8 @@ import volume_kv as kv
 import vmdkops_admin
 import random
 
+# Number of expected columns in ADMIN_CLI ls
+EXPECTED_COLUMN_COUNT = 12
 
 class TestParsing(unittest.TestCase):
     """ Test command line arg parsing for all commands """
@@ -284,8 +286,7 @@ class TestLs(unittest.TestCase):
         volumes = vmdk_utils.get_volumes(None)
         header = vmdkops_admin.all_ls_headers()
         rows = vmdkops_admin.generate_ls_rows(None)
-        expected_column_count = 11
-        self.assertEqual(expected_column_count, len(header))
+        self.assertEqual(EXPECTED_COLUMN_COUNT, len(header))
         self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
             self.assertEqual(volumes[i]['filename'], rows[i][0] + '.vmdk')

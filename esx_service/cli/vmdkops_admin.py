@@ -491,7 +491,7 @@ def all_ls_headers():
     """ Return a list of all header for ls -l """
     return ['Volume', 'Datastore', 'Created By VM', 'Created',
             'Attached To VM', 'Policy', 'Capacity', 'Used',
-            'Filesystem Type', 'Access', 'Attach As']
+            'Disk Format', 'Filesystem Type', 'Access', 'Attach As']
 
 def generate_ls_rows(tenant_reg):
     """ Gather all volume metadata into rows that can be used to format a table """
@@ -504,12 +504,13 @@ def generate_ls_rows(tenant_reg):
         policy = get_policy(metadata, path)
         size_info = get_vmdk_size_info(path)
         created, created_by = get_creation_info(metadata)
+        diskformat = get_diskformat(metadata)
         fstype = get_fstype(metadata)
         access = get_access(metadata)
         attach_as = get_attach_as(metadata)
         rows.append([name, v['datastore'], created_by, created, attached_to,
                      policy, size_info['capacity'], size_info['used'],
-                     fstype, access, attach_as])
+                     diskformat, fstype, access, attach_as])
     return rows
 
 
@@ -560,6 +561,12 @@ def get_policy(metadata, path):
     else:
         return NOT_AVAILABLE
 
+def get_diskformat(metadata):
+    """ Return the Disk Format of the volume based on its metadata """
+    try:
+        return metadata[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT]
+    except:
+        return NOT_AVAILABLE
 
 def get_fstype(metadata):
     """ Return the Filesystem Type of the volume based on its metadata """
@@ -567,7 +574,6 @@ def get_fstype(metadata):
         return metadata[kv.VOL_OPTS][kv.FILESYSTEM_TYPE]
     except:
         return NOT_AVAILABLE
-
 
 def get_metadata(volPath):
     """ Take the absolute path to volume vmdk and return its metadata as a dict """

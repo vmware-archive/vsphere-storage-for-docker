@@ -71,3 +71,11 @@ docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=ext4 (
 
 Specifies which filesystem will be created on the new volume. vSphere Docker Volume Service will search for a existing /sbin/mkfs.**fstype** on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. 
 
+### clone-from
+```
+docker volume create --driver=vmdk --name=CloneVolume -o clone-from=MyVolume -o access=read-only
+docker volume create --driver=vmdk --name=CloneVolume -o clone-from=MyVolume -o diskformat=thin (default)
+```
+
+Specifies a volume to be cloned when creating a new volume. The created clone is completely independent from the original volume and will inherit the same options, which can be changed with the exception of the size and fstype.
+ 
