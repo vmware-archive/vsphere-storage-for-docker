@@ -204,7 +204,7 @@ class Tenant:
    @Method(parent=_name, wsdlName="ModifyDatastore")
    @Param(name="datastore", typ="string")
    @Return(typ='void')
-   def ModifyPrivilege(self, privilege):
+   def ModifyDefaultDatastore(self, datastore):
        pass
 
 RegisterVmodlTypes()
