@@ -154,7 +154,6 @@ Guest Operating System:
 
 ### Public
 * [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
-* [Telegram] (https://telegram.me/cnastorage)
 * [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
 
 ### Internal
