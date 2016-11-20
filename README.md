@@ -153,7 +153,7 @@ Guest Operating System:
 ## Contact us
 
 ### Public
-* [cna-storage@vmware.com](cna-storage <cna-storage@vmware.com>)
+* [containers@vmware.com](cna-storage <containers@vmware.com>)
 * [Issues] (https://github.com/vmware/docker-volume-vsphere/issues)
 
 ### Internal
