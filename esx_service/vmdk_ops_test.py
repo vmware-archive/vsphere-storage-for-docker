@@ -37,6 +37,15 @@ import auth
 import auth_data
 
 
+# Max volumes count we can attach to a singe VM.
+MAX_VOL_COUNT_FOR_ATTACH = 60
+
+# Seed for test configurations.
+config = {
+    # If True, test 60+ attaches (no detach) until if fails.
+    "run_max_attach": True
+    }
+
 # will do creation/deletion in this folder:
 global path
 
@@ -343,7 +352,7 @@ class ValidationTestCase(unittest.TestCase):
         self.path = vsan_info.get_vsan_datastore().info.url
         for n in self.policy_names:
             result = vsan_policy.create(n, self.policy_content)
-            self.assertEquals(None, result,
+            self.assertEqual(None, result,
                               "failed creating policy %s (%s)" % (n, result))
 
     def tearDown(self):
@@ -380,7 +389,10 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
 
     volNamePre = "vol_UnitTest_Attach"
     vm_name = 'test-vm'
-    max_vol_count = 60
+    if config["run_max_attach"]:
+        max_vol_count = MAX_VOL_COUNT_FOR_ATTACH
+    else:
+        max_vol_count = 1
     datastore_path = None
     datastore_name = None
 
@@ -405,7 +417,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         self.create_vm(si, self.vm_name, self.datastore_name)
 
         # create max_vol_count+1 VMDK files
-        for id in range(1, self.max_vol_count+2):
+        for id in range(1, self.max_vol_count + 2):
             volName = 'VmdkAttachDetachTestVol' + str(id)
             fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
             self.assertEqual(None,
@@ -491,7 +503,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
 
     
     def testAttachDetach(self):
-        logging.debug("Start VMDKAttachDetachTest")
+        logging.info("Start VMDKAttachDetachTest")
         si = vmdk_ops.get_si()
         #find test_vm
         vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
@@ -504,17 +516,18 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
             fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
             ret = vmdk_ops.disk_attach(vmdk_path=fullpath,
                                        vm=vm[0])
+            logging.info("Returned '%s'", ret)
             self.assertFalse("Error" in ret)
 
-        # attach one more disk, which should fail    
-        volName = 'VmdkAttachDetachTestVol' + str(self.max_vol_count+1)
-        fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
-        ret = vmdk_ops.disk_attach(vmdk_path=fullpath,
-                                   vm=vm[0])
-        self.assertTrue("Error" in ret)
+        if config["run_max_attach"]:
+            # attach one more disk, which should fail    
+            volName = 'VmdkAttachDetachTestVol' + str(self.max_vol_count+1)
+            fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
+            ret = vmdk_ops.disk_attach(vmdk_path=fullpath, vm=vm[0])
+            self.assertTrue("Error" in ret)
 
         # detach all the attached disks
-        for id in range(1, self.max_vol_count+1):
+        for id in range(1, self.max_vol_count + 1):
             volName = 'VmdkAttachDetachTestVol' + str(id)
             fullpath = os.path.join(self.datastore_path, volName + '.vmdk')
             ret = vmdk_ops.disk_detach(vmdk_path=fullpath,

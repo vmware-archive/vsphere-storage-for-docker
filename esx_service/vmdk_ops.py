@@ -146,6 +146,7 @@ def RunCommand(cmd):
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
+                         universal_newlines=True,
                          shell=True)
     o, e = p.communicate()
     s = p.returncode

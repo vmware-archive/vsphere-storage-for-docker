@@ -67,7 +67,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         self.assertEqual(len(lines), 7)
         expected_headers = ['Version', 'Status', 'Pid', 'Port', 'LogConfigFile',
                            'LogFile', 'LogLevel']
-        headers = map(lambda s: s.split(': ')[0], lines)
+        headers = list(map(lambda s: s.split(': ')[0], lines))
         self.assertEqual(expected_headers, headers)
 
 

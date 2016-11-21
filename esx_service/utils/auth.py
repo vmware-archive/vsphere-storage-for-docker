@@ -106,7 +106,7 @@ def has_privilege(privileges, type):
 
 def get_vol_size(opts):
     """ get volume size. """
-    if not opts or not opts.has_key(SIZE):
+    if not opts or SIZE not in opts:
         logging.warning("Volume size not specified")
         return kv.DEFAULT_DISK_SIZE
     return opts[SIZE].upper()

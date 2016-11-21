@@ -48,7 +48,9 @@ class TestParsing(unittest.TestCase):
         self.assert_parse_error('ls -c personality')
 
     def test_policy_no_args_fails(self):
-        self.assert_parse_error('policy')
+        # Py2 argsparse throws in this case, Py3 peacefully shows help
+        if sys.version_info[0] == 2:
+            self.assert_parse_error('policy')
 
     def test_policy_create_no_args_fails(self):
         self.assert_parse_error('policy create')

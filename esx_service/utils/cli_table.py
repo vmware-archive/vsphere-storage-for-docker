@@ -102,7 +102,7 @@ def shrink_to_fit(column_sizes, terminal_width):
 
         if gap * num_largest_columns > to_remove:
             # We can resize in this step and we are done
-            to_remove_per_column = to_remove / num_largest_columns
+            to_remove_per_column = int(to_remove / num_largest_columns)
             remainder = to_remove % num_largest_columns
             for i in range(num_largest_columns):
                 sorted_sizes[i] = largest - to_remove_per_column

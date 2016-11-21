@@ -442,9 +442,9 @@ def make_list_of_values(allowed):
         for g in given:
             if g not in allowed:
                 msg = (
-		   'invalid choices: {0} (choices must be a comma separated list of '
-                   'only the following words \n {1}. '
-		   'No spaces are allowed between choices.)').format(g, repr(allowed).replace(' ', ''))
+                    'invalid choices: {0} (choices must be a comma separated list of '
+                    'only the following words \n {1}. '
+                    'No spaces are allowed between choices.)').format(g, repr(allowed).replace(' ', ''))
                 raise argparse.ArgumentTypeError(msg)
         return given
 
@@ -478,7 +478,7 @@ def ls_dash_c(columns, tenant_reg):
     headers = []
     choices = commands()['ls']['args']['-c']['choices']
     for i in range(len(choices)):
-        if (choices[i]) in columns:
+        if choices[i] in columns:
             indexes.append(i)
             headers.append(all_headers[i])
     rows = []
