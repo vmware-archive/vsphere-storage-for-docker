@@ -80,7 +80,7 @@ ACCESS_TYPES = [ACCESS_READWRITE, ACCESS_READONLY]
 # Filesystem type
 # This option is handled in the volume-plugin at the docker host, and tracked in volume metadata. 
 FILESYSTEM_TYPE = 'fstype'
-DEFAULT_FILESYSTEM_TYPE = ''
+DEFAULT_FILESYSTEM_TYPE = 'ext4'
 
 # Clone references
 CLONE_FROM = 'clone-from' # clone volume parent

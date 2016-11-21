@@ -329,7 +329,7 @@ def validate_opts(opts, vmdk_path):
                   kv.ATTACH_AS, kv.ACCESS, kv.FILESYSTEM_TYPE, kv.CLONE_FROM]
     defaults = [kv.DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY,\
                 kv.DEFAULT_ALLOCATION_FORMAT, kv.DEFAULT_ATTACH_AS,\
-                kv.DEFAULT_ACCESS, kv.DEFAULT_FILESYSTEM_TYPE, kv.CLONE_FROM]
+                kv.DEFAULT_ACCESS, kv.DEFAULT_FILESYSTEM_TYPE, kv.DEFAULT_CLONE_FROM]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
