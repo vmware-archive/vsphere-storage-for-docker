@@ -456,7 +456,7 @@ def get_vsan_devfs_path(uuid):
     fpath="/vmfs/devices/vsan/{0}".format(uuid)
     if rc == 0 and os.path.isfile(fpath):
         return fpath, True
-    logging.error("Failed to create devFS node for %s", uuid)
+    logging.error("Failed to create devFS node for %s, error: %s", uuid, out)
     return None, False
 
 # Clean up vsan devfs path
