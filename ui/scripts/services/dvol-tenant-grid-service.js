@@ -62,7 +62,7 @@ define([], function() {
       var tenantsGrid = GridUtils.Grid(gridProps);
 
       function refresh() {
-        return DvolTenantService.getAll().then(function(tenants) {
+        return DvolTenantService.listTenants().then(function(tenants) {
           tenantsGrid.data = mapTenantsToGrid(tenants);
         });
       }

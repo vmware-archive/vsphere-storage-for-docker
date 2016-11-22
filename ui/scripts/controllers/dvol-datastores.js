@@ -15,6 +15,7 @@ define([], function() {
         enabled: true,
         onClick: function() {  // (evt, action)
           DialogService.showDialog('dvol.add-datastores', {
+            datastoresAlreadyInTenant: DvolTenantService.getLocalState().tenants[$scope.tenantsGrid.selectedItems[0].id].datastores,
             save: function(selectedDatastoresRows) {
               var selectedTenant = $scope.tenantsGrid.selectedItems[0];
               if (!selectedTenant) return; // TODO: async error
@@ -45,13 +46,13 @@ define([], function() {
               //
               //
               //
-              DvolTenantService.addDatastore(selectedTenant.id, firstDatastore)
+              DvolTenantService.addDatastoreAccessForTenant(selectedTenant.id, firstDatastore)
                 .then(datastoresGrid.refresh)
                 .then(function() {
                   DialogService.showDialog('dvol.edit-datastore', {
                     permissions: firstDatastore.permissions,
                     save: function(editedPermissions) {
-                      DvolTenantService.updateDatastore(
+                      DvolTenantService.modifyDatastoreAccessForTenant(
                         selectedTenant.id,
                         {
                           datastore: firstDatastore.datastore,
@@ -72,8 +73,7 @@ define([], function() {
                     }
                   });
                 });
-            },
-            datastoresAlreadyInTenant: DvolTenantService.getState().tenants[$scope.tenantsGrid.selectedItems[0].id].datastores
+            }
           });
         }
       },
@@ -85,13 +85,13 @@ define([], function() {
         onClick: function() {
           if ($scope.datastoresGrid.selectedItems.length < 1) return;
           var datastoreId = $scope.datastoresGrid.selectedItems[0].name;
-          DvolTenantService.get($scope.tenantsGrid.selectedItems[0].id)
+          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].id)
           .then(function(tenant) {
             var datastore = tenant.datastores[datastoreId];
             DialogService.showDialog('dvol.edit-datastore', {
               permissions: datastore.permissions,
               save: function(editedPermissions) {
-                DvolTenantService.updateDatastore(tenant.id, { datastore: datastoreId, permissions: editedPermissions })
+                DvolTenantService.modifyDatastoreAccessForTenant(tenant.id, { datastore: datastoreId, permissions: editedPermissions })
                   .then(datastoresGrid.refresh);
               }
             });
@@ -109,7 +109,7 @@ define([], function() {
           if (!selectedTenant) return;
           var selectedDatastore = $scope.datastoresGrid.selectedItems[0];
           if (!selectedDatastore) return;
-          DvolTenantService.removeDatastore(selectedTenant.id, selectedDatastore.name)
+          DvolTenantService.removeDatastoreAccessForTenant(selectedTenant.id, selectedDatastore.name)
             .then(datastoresGrid.refresh);
         }
       },
@@ -130,7 +130,7 @@ define([], function() {
       // we don't want to refresh the grid because we'll lose tenant row selection
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
       if (!selectedTenantRow) return [];
-      var selectedTenant = DvolTenantService.getState().tenants[selectedTenantRow.id];
+      var selectedTenant = DvolTenantService.getLocalState().tenants[selectedTenantRow.id];
       var filteredDatastores = allDatastores.filter(function(d) {
         return selectedTenant.datastores ? selectedTenant.datastores[d.name] : [];
       }).map(function(d) {

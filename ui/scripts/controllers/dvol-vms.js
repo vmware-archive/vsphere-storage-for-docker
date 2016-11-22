@@ -23,10 +23,10 @@ define([], function() {
                 return vm.name;
               });
               if (selectedVmsIds.length < 1) return;
-              DvolTenantService.addVms(selectedTenant.id, selectedVmsIds)
+              DvolTenantService.addVmsToTenant(selectedTenant.id, selectedVmsIds)
                 .then(vmsGrid.refresh);
             },
-            vmsAlreadyInTenant: DvolTenantService.getState().tenants[$scope.tenantsGrid.selectedItems[0].id].vms
+            vmsAlreadyInTenant: DvolTenantService.getLocalState().tenants[$scope.tenantsGrid.selectedItems[0].id].vms
           });
         }
       },
@@ -41,7 +41,7 @@ define([], function() {
           if (!selectedTenant) return;
           var selectedVm = $scope.vmsGrid.selectedItems[0];
           if (!selectedVm) return;
-          DvolTenantService.removeVm(selectedTenant.id, selectedVm.moid || selectedVm.id)
+          DvolTenantService.removeVmFromTenant(selectedTenant.id, selectedVm.moid || selectedVm.id)
             .then(vmsGrid.refresh);
         }
       },
@@ -60,7 +60,7 @@ define([], function() {
     function filterVmsForThisTenant(allVms) {
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
       if (!selectedTenantRow) return [];
-      var selectedTenant = DvolTenantService.getState().tenants[selectedTenantRow.id];
+      var selectedTenant = DvolTenantService.getLocalState().tenants[selectedTenantRow.id];
       var filteredVms = allVms.filter(function(vm) {
         return selectedTenant.vms.indexOf(vm.name) >= 0;
       });

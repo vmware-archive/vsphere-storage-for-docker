@@ -15,7 +15,7 @@ define([], function() {
     //
     // READING from "state"
     //
-    // it's exposed for read-only use via this service's getState() method returning a copy
+    // it's exposed for read-only use via this service's getLocalState() method returning a copy
     // it's meant to be available to the rest of the UI
     // for situations where up-to-date global state isn't required
     // and/or hasn't been requested (e.g. via the refresh buttons) by the user
@@ -35,10 +35,10 @@ define([], function() {
         tenantsObj[t.id] = t;
       });
       state.tenants = tenantsObj;
-      return getState();
+      return getLocalState();
     }
 
-    function getState() {
+    function getLocalState() {
       return _.clone(state);
     }
 
@@ -50,11 +50,11 @@ define([], function() {
     // 2) call setState, passing this current Tenant List (as an array) to update local application state
     //
     //
-    // IMPORTANT: EVERY API CALL SHOULD CONCLUDE BY CALLING getAllAndSetState
+    // IMPORTANT: EVERY API CALL SHOULD CONCLUDE BY CALLING syncAllStateWithServer
     //
     //
     //
-    function getAllAndSetState(tenantId) {
+    function syncAllStateWithServer(tenantId) {
       //
       // this should be called after every API action
       // to update the local state with the current system state
@@ -66,39 +66,10 @@ define([], function() {
       // we return tenant list (array) unless a tenantId is given
       // if so, return that Tenant
       //
-      return getAll()
+      return listTenants()
       .then(function(tenants) {
         setState(tenants);
-        return tenantId ? getState(tenantId) : tenants;
-      });
-    }
-
-    //
-    // a few utils
-    //
-
-    function dedupe(a) {
-      return a.filter(function(item, pos) {
-        return a.indexOf(item) === pos;
-      });
-    }
-
-    function pickTenantById(tenantId, tenants) {
-      var matches = tenants.filter(function(t) {
-        return t.id === tenantId;
-      });
-      if (matches.length === 0) {
-        return null;
-      }
-      if (matches.length > 1) {
-        throw Error('NonUniqueError: pickTenantById returned multiple matches for id: ' + tenantId);
-      }
-      return matches[0];
-    }
-
-    function getRightsFromPermissions(perms) {
-      return ['create', 'mount', 'delete'].filter(function(r) {
-        return perms[r + '_volumes'];
+        return tenantId ? getLocalState(tenantId) : tenants;
       });
     }
 
@@ -110,16 +81,16 @@ define([], function() {
 
     //
     // eventually the VMODL api will support get Tenant by ID
-    // for now we just use getAll
+    // for now we just use listTenants
     //
-    function get(tenantId) {
-      return getAll()
+    function getTenantByName(tenantId) {
+      return listTenants()
       .then(function(tenants) {
         return setState(tenants)[tenantId];
       });
     }
 
-    function getAll() {
+    function listTenants() {
       return DvolVmodlService.listTenants()
       .then(setState);
     }
@@ -130,7 +101,7 @@ define([], function() {
     // These actions are distinct in the VMODL
     // so we make the calls in series here
     //
-    function add(tenant, vms) {
+    function createTenant(tenant, vms) {
       var tenantArgs = {
         name: tenant.name,
         description: tenant.description,
@@ -145,69 +116,78 @@ define([], function() {
         return DvolVmodlService.addVMsToTenant(vmsArgs);
       })
       .then(function() {
-        return getAllAndSetState(tenant.name);
+        return syncAllStateWithServer(tenant.name);
       });
     }
 
-    function remove(tenantId) {
+    function removeTenant(tenantId) {
       DvolVmodlService.removeTenant(tenantId)
       .then(function() {
-        return getAllAndSetState();
+        return syncAllStateWithServer();
       });
     }
 
-    function getDatastores(tenantId) {
+    function listDatastoreAccessForTenant(tenantId) {
       return DvolVmodlService.listDatastoreAccessForTenant(tenantId)
       .then(function() {
-        return getAllAndSetState(tenantId);
+        return syncAllStateWithServer(tenantId);
       });
     }
 
 
-    function removeDatastore(tenantId, datastoreId) {
+    function removeDatastoreAccessForTenant(tenantId, datastoreId) {
       return DvolVmodlService.removeDatastoreAccessForTenant(tenantId, datastoreId)
       .then(function() {
-        return getAllAndSetState(tenantId);
+        return syncAllStateWithServer(tenantId);
       });
     }
 
     //
     // NOTE: the VMODL api supports removing multiple VMs in same call
-    // Our original removeVm implementation supports only one,
+    // Our original removeVmFromTenant implementation supports only one,
     // so we just call the api with a single vm
     // and not take advantage of the multiple vm option for now
     //
-    function removeVm(tenantId, vmId) {
+    function removeVmFromTenant(tenantId, vmId) {
       return DvolVmodlService.removeVMsFromTenant(tenantId, [vmId])
       .then(function() {
-        return getAllAndSetState(tenantId);
+        return syncAllStateWithServer(tenantId);
       });
     }
 
-    function addVms(tenantId, vmIds) {
+    function addVmsToTenant(tenantId, vmIds) {
       return DvolVmodlService.addVMsToTenant({
         name: tenantId,
         vms: vmIds
       })
       .then(function() {
-        return getAllAndSetState(tenantId);
+        return syncAllStateWithServer(tenantId);
       });
     }
 
-    function addDatastore(tenantId, datastore) {
-      return DvolVmodlService.addDatastoreAccessForTenant({
+    //
+    // a utility function
+    //
+    function transformPermissionsToRights(perms) {
+      return ['create', 'mount', 'delete'].filter(function(r) {
+        return perms[r + '_volumes'];
+      });
+    }
+    //
+    function addDatastoreAccessForTenant(tenantId, datastore) {
+      return DvolVmodlService.addDatastoreAccessForTenantAccessForTenant({
         name: tenantId,
         datastore: datastore.datastore.name,
-        rights: getRightsFromPermissions(datastore.permissions),
+        rights: transformPermissionsToRights(datastore.permissions),
         volume_maxsize: datastore.permissions.volume_maxsize,
         volume_totalsize: datastore.permissions.volume_totalsize
       })
       .then(function() {
-        return getAllAndSetState(tenantId);
+        return syncAllStateWithServer(tenantId);
       });
     }
 
-    function updateDatastore(tenantId, updatedDatastore) {
+    function modifyDatastoreAccessForTenant(tenantId, updatedDatastore) {
       var add_rights = [];
       var remove_rights = [];
       ['create', 'mount', 'delete'].forEach(function(p) {
@@ -226,20 +206,20 @@ define([], function() {
         volume_totalsize: updatedDatastore.permissions.volume_totalsize
       })
       .then(function() {
-        return getAllAndSetState(tenantId);
+        return syncAllStateWithServer(tenantId);
       });
     }
 
-    this.getAll = getAll;
-    this.removeDatastore = removeDatastore;
-    this.removeVm = removeVm;
-    this.remove = remove;
-    this.get = get;
-    this.add = add;
-    this.addVms = addVms;
-    this.addDatastore = addDatastore;
-    this.updateDatastore = updateDatastore;
-    this.getState = getState;
+    this.listTenants = listTenants;
+    this.getTenantByName = getTenantByName;
+    this.createTenant = createTenant;
+    this.removeTenant = removeTenant;
+    this.addVmsToTenant = addVmsToTenant;
+    this.addDatastoreAccessForTenant = addDatastoreAccessForTenant;
+    this.modifyDatastoreAccessForTenant = modifyDatastoreAccessForTenant;
+    this.removeDatastoreAccessForTenant = removeDatastoreAccessForTenant;
+    this.removeVmFromTenant = removeVmFromTenant;
+    this.getLocalState = getLocalState;
 
   };
 

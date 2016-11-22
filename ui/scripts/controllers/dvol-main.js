@@ -4,86 +4,7 @@ define([], function() {
   'use strict';
 
   return function($rootScope, $scope, $log, $state, $filter, $timeout, GridUtils, vuiConstants, DialogService,
-    DvolTenantService, DvolTenantGridService, DvolVmodlService) {
-
-    // -----------------------------
-    //
-    // Temporary
-    //
-    // Here when the app is loaded we're temporarily making
-    // a call to DvolVmodlService to test connectivity
-    //
-    // TODO: remove this
-    //
-
-    // var mockDatastore = {
-    //   name: 'datastore1'
-    // };
-    //
-    // var mockPrivileges = {
-    //   datastore: mockDatastore.name,
-    //   create_volumes: true,
-    //   delete_volumes: false,
-    //   mount_volumes: false,
-    //   max_volume_size: '600MB',
-    //   usage_quota: '3TB'
-    // };
-    //
-    // var mockTenant = {
-    //   name: 'ui-created-tenant',
-    //   description: 'a mock tenant named ui-created-tenant',
-    //   default_datastore: mockDatastore.name,
-    //   default_privileges: mockPrivileges
-    // };
-    //
-    // DvolVmodlService.createTenant(mockTenant)
-    // .then(DvolVmodlService.listTenants())
-    // .then(function(tenantsRes) {
-    //   console.log(tenantsRes);
-    // })
-    // .then(DvolVmodlService.addDatastoreAccessForTenant({
-    //   name: mockTenant.name,
-    //   datastore: mockDatastore.name,
-    //   rights: ['create', 'mount'],
-    //   volume_maxsize: '550MB',
-    //   volume_totalsize: '3TB'
-    // }))
-    // .then(DvolVmodlService.modifyDatastoreAccessForTenant({
-    //   name: mockTenant.name,
-    //   datastore: mockDatastore.name,
-    //   add_rights: ['delete'],
-    //   remove_righs: ['mount'],
-    //   volume_maxsize: '650MB',
-    //   volume_totalsize: '4TB'
-    // }))
-    // .then(DvolVmodlService.removeTenant({
-    //   name: mockTenant.name
-    // }))
-    // .then(DvolVmodlService.addVMsToTenant({
-    //   name: mockTenant.name,
-    //   vms: ['virual-machine-1', 'virtual-machine-2', 'virtual-machine-3']
-    // }))
-    // .then(DvolVmodlService.removeVMsFromTenant({
-    //   name: mockTenant.name,
-    //   vms: ['virtual-machine-1']
-    // }))
-    // .then(DvolVmodlService.listVMsForTenant({
-    //   name: mockTenant.name
-    // }))
-    // .then(DvolVmodlService.getDatastoreAccessPrivileges())
-    // .then(DvolVmodlService.createDatastoreAccessPrivileges(mockPrivileges))
-    // .then(DvolVmodlService.removeDatastoreAccessForTenant({
-    //   name: mockTenant.name,
-    //   datastore: mockDatastore.name
-    // }))
-    // .then(DvolVmodlService.listDatastoreAccessForTenant({
-    //   name: mockTenant.name
-    // }));
-    //
-
-    //
-    // -----------------------------
-    //
+    DvolTenantService, DvolTenantGridService) {
 
     var translate = $filter('translate');
 
@@ -98,7 +19,7 @@ define([], function() {
           DialogService.showDialog('dvol.add-tenant', {
             tenant: {},
             save: function(newTenant, vms) {
-              DvolTenantService.add(newTenant, vms)
+              DvolTenantService.createTenant(newTenant, vms)
                 .then(tenantsGrid.refresh);
             }
           });
@@ -112,7 +33,7 @@ define([], function() {
         enabled: true,
         onClick: function() {
           if ($scope.tenantsGrid.selectedItems.length < 1) return;
-          DvolTenantService.get($scope.tenantsGrid.selectedItems[0].id)
+          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].id)
           .then(function(tenant) {
             DialogService.showDialog('dvol.edit-tenant', {
               tenant: tenant,
@@ -124,7 +45,7 @@ define([], function() {
                 // createTenant will just be used for that.
                 // That's currently what we're doing here.
                 //
-                DvolTenantService.add(newTenant)
+                DvolTenantService.createTenant(newTenant)
                   .then(tenantsGrid.refresh);
               }
             });
@@ -141,7 +62,7 @@ define([], function() {
         onClick: function() {
           var selectedTenant = $scope.tenantsGrid.selectedItems[0];
           if (!selectedTenant) return;
-          DvolTenantService.remove(selectedTenant.id);
+          DvolTenantService.removeTenant(selectedTenant.id);
           tenantsGrid.refresh();
         }
       },
