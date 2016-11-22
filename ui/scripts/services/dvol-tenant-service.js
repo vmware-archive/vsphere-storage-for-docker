@@ -27,6 +27,7 @@ define([], function() {
     // AND any mutation to application state must go through this service
     //
     // "state" is private to this service
+    //
 
     function setState(tenantsArr) {
       var tenantsObj = {};
@@ -49,9 +50,11 @@ define([], function() {
     // 2) call setState, passing this current Tenant List (as an array) to update local application state
     //
     //
-    // IMPORTANT: EVERY API CALL SHOULD CONCLUDE BY CALLING updateLocalState
+    // IMPORTANT: EVERY API CALL SHOULD CONCLUDE BY CALLING getAllAndSetState
     //
-    function updateLocalState(tenantId) {
+    //
+    //
+    function getAllAndSetState(tenantId) {
       //
       // this should be called after every API action
       // to update the local state with the current system state
@@ -142,21 +145,29 @@ define([], function() {
         return DvolVmodlService.addVMsToTenant(vmsArgs);
       })
       .then(function() {
-        return updateLocalState(tenant.name);
+        return getAllAndSetState(tenant.name);
       });
     }
 
     function remove(tenantId) {
       DvolVmodlService.removeTenant(tenantId)
       .then(function() {
-        return updateLocalState();
+        return getAllAndSetState();
       });
     }
+
+    function getDatastores(tenantId) {
+      return DvolVmodlService.listDatastoreAccessForTenant(tenantId)
+      .then(function() {
+        return getAllAndSetState(tenantId);
+      });
+    }
+
 
     function removeDatastore(tenantId, datastoreId) {
       return DvolVmodlService.removeDatastoreAccessForTenant(tenantId, datastoreId)
       .then(function() {
-        return updateLocalState(tenantId);
+        return getAllAndSetState(tenantId);
       });
     }
 
@@ -169,7 +180,7 @@ define([], function() {
     function removeVm(tenantId, vmId) {
       return DvolVmodlService.removeVMsFromTenant(tenantId, [vmId])
       .then(function() {
-        return updateLocalState(tenantId);
+        return getAllAndSetState(tenantId);
       });
     }
 
@@ -179,7 +190,7 @@ define([], function() {
         vms: vmIds
       })
       .then(function() {
-        return updateLocalState(tenantId);
+        return getAllAndSetState(tenantId);
       });
     }
 
@@ -192,7 +203,7 @@ define([], function() {
         volume_totalsize: datastore.permissions.volume_totalsize
       })
       .then(function() {
-        return updateLocalState(tenantId);
+        return getAllAndSetState(tenantId);
       });
     }
 
@@ -215,41 +226,20 @@ define([], function() {
         volume_totalsize: updatedDatastore.permissions.volume_totalsize
       })
       .then(function() {
-        return updateLocalState(tenantId);
+        return getAllAndSetState(tenantId);
       });
     }
 
-    function wrapActionWithSetState(action) {
-      //
-      // actionWithSetState receives arguments passed to action
-      // follows up the action by getting the current Tenant List from the VMODL api
-      // and the returns action's original return value
-      //
-      function actionWithSetState() {
-        var theActionsOriginalReturnValue;
-        action.apply(this, arguments)
-        .then(function(rv) {
-          theActionsOriginalReturnValue = rv;
-          return getAll();
-        })
-        .then(function(tenants) {
-          setState(tenants);
-          return theActionsOriginalReturnValue || tenants;
-        });
-      }
-      return actionWithSetState;
-    }
-
-    this.getAll = wrapActionWithSetState(getAll);
-    this.removeDatastore = wrapActionWithSetState(removeDatastore);
-    this.removeVm = wrapActionWithSetState(removeVm);
-    this.remove = wrapActionWithSetState(remove);
-    this.get = wrapActionWithSetState(get);
-    this.add = wrapActionWithSetState(add);
-    this.addVms = wrapActionWithSetState(addVms);
-    this.addDatastore = wrapActionWithSetState(addDatastore);
-    this.updateDatastore = wrapActionWithSetState(updateDatastore);
-    this.getState = wrapActionWithSetState(getState);
+    this.getAll = getAll;
+    this.removeDatastore = removeDatastore;
+    this.removeVm = removeVm;
+    this.remove = remove;
+    this.get = get;
+    this.add = add;
+    this.addVms = addVms;
+    this.addDatastore = addDatastore;
+    this.updateDatastore = updateDatastore;
+    this.getState = getState;
 
   };
 
