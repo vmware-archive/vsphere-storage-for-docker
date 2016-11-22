@@ -129,9 +129,18 @@ define([], function() {
       datastoresGrid.search = null;
 
       function refresh() {
-        return DvolDatastoreService.get().then(function(datastores) {
-          datastoresGrid.data = mapDatastoresToGrid(filterFn ? filterFn(datastores) : datastores);
-        });
+        if (filterFn) {
+          DvolDatastoreService.get()
+          .then(filterFn)
+          .then(function(filteredDatastores) {
+            datastoresGrid.data = mapDatastoresToGrid(filteredDatastores);
+          });
+        } else {
+          DvolDatastoreService.get()
+          .then(function(datastores) {
+            datastoresGrid.data = mapDatastoresToGrid(datastores);
+          });
+        }
       }
 
       refresh();

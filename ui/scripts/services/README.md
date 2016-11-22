@@ -1,3 +1,6 @@
 
-How the UI works
-================
+UI Data Management
+==================
+
+Bootstrapping the App
+---------------------

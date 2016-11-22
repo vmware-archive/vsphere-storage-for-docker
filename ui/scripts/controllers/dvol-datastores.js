@@ -4,7 +4,7 @@
 define([], function() {
   'use strict';
 
-  return function($scope, $rootScope, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
+  return function($scope, $rootScope, $q, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
 
     var datastoresGridActions = [
       {
@@ -129,17 +129,22 @@ define([], function() {
       // NOTE: selectedTenants from the grid doesn't have new datastores added (will not until grid refresh)
       // we don't want to refresh the grid because we'll lose tenant row selection
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
-      if (!selectedTenantRow) return [];
-      var selectedTenant = DvolTenantService.getLocalState().tenants[selectedTenantRow.id];
-      var filteredDatastores = allDatastores.filter(function(d) {
-        return selectedTenant.datastores ? selectedTenant.datastores[d.name] : [];
-      }).map(function(d) {
-        return {
-          datastore: d,
-          permissions: selectedTenant.datastores[d.name].permissions
-        };
+      if (!selectedTenantRow) return $q.reject('ERROR: attempting to filter datastores but no tenant is selected');
+      return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.id)
+      .then(function(tenantDatastoreAccesses) {
+        var filteredDatastores = [];
+        allDatastores.forEach(function(ds) {
+          tenantDatastoreAccesses.forEach(function(tds) {
+            if (ds.name === tds.id) {
+              filteredDatastores.push({
+                datastore: ds,
+                permissions: tds.permissions
+              });
+            }
+          });
+        });
+        return filteredDatastores;
       });
-      return filteredDatastores;
     }
 
     var datastoresGrid = DvolDatastoreGridService.makeDatastoresGrid('datastoresGrid', datastoresGridActions, filterDatastoresForThisTenant, true);
