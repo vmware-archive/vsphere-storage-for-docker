@@ -8,7 +8,7 @@ define([], function() {
     function filterDatastoresNotInThisTenant(allDatastores) {
       var selectedTenantRow = DialogService.currentDialog().opaque.selectedTenantRow;
       if (!selectedTenantRow) return $q.reject('ERROR: attempting to get datastores for a tenant but no tenant is selected');
-      return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.id)
+      return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.name)
       .then(function(tenantDatastoreAccesses) {
         var availableDatastores = [];
         allDatastores.forEach(function(ds) {

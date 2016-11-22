@@ -34,6 +34,14 @@ define([], function() {
       return tenant;
     }
 
+    function parseVm(vmEl) {
+      console.log(vmEl);
+    }
+
+    function parseDatastore(datastoreEl) {
+      console.log(datastoreEl);
+    }
+
     this.listTenants = function() {
       return DvolSoapService.request('ListTenants')
       .then(function(soapResponse) {
@@ -117,11 +125,18 @@ define([], function() {
       return DvolSoapService.request('RemoveVMsFromTenant', argsSOAP);
     };
 
-    this.listVMsForTenant = function(args) {
+    this.listVmsForTenant = function(args) {
       var argsSOAP = [
         '<name>' + args.name + '</name>'
       ].join('');
-      return DvolSoapService.request('ListVMsForTenant', argsSOAP);
+      return DvolSoapService.request('ListVMsForTenant', argsSOAP)
+      .then(function(soapResponse) {
+        var doc = $.parseXML(soapResponse);
+        var listVmsResponse = $(doc).find('ListVmsResponse');
+        var vmEls = $(listVmsResponse).find('returnval');
+        var vms = vmEls.toArray().map(parseVm);
+        return vms;
+      });
     };
 
     this.getDatastoreAccessPrivileges = function() {
@@ -152,7 +167,14 @@ define([], function() {
       var argsSOAP = [
         '<name>' + args.name + '</name>'
       ].join('');
-      return DvolSoapService.request('ListDatastoreAccessForTenant', argsSOAP);
+      return DvolSoapService.request('ListDatastoreAccessForTenant', argsSOAP)
+      .then(function(soapResponse) {
+        var doc = $.parseXML(soapResponse);
+        var listDatastoresResponse = $(doc).find('ListDatastoresResponse');
+        var datastoreEls = $(listDatastoresResponse).find('returnval');
+        var datastores = datastoreEls.toArray().map(parseDatastore);
+        return datastores;
+      });
     };
 
   };

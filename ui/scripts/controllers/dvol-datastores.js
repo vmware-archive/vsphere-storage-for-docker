@@ -128,7 +128,7 @@ define([], function() {
     function filterDatastoresForThisTenant(allDatastores) {
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
       if (!selectedTenantRow) return $q.reject('ERROR: attempting to get datastores for a tenant but no tenant is selected');
-      return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.id)
+      return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.name)
       .then(function(tenantDatastoreAccesses) {
         var filteredDatastores = [];
         allDatastores.forEach(function(ds) {

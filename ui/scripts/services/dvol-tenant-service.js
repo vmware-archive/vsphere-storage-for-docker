@@ -87,6 +87,12 @@ define([], function() {
       });
     }
 
+    function listVmsForTenant(tenantId) {
+      return DvolVmodlService.listVmsForTenant({
+        name: tenantId
+      });
+    }
+
     function addVmsToTenant(tenantId, vmIds) {
       return DvolVmodlService.addVMsToTenant({
         name: tenantId,
@@ -137,6 +143,7 @@ define([], function() {
     this.getTenantByName = getTenantByName;
     this.createTenant = createTenant;
     this.removeTenant = removeTenant;
+    this.listVmsForTenant = listVmsForTenant;
     this.addVmsToTenant = addVmsToTenant;
     this.addDatastoreAccessForTenant = addDatastoreAccessForTenant;
     this.listDatastoreAccessForTenant = listDatastoreAccessForTenant;

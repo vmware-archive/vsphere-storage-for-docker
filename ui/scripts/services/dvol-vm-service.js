@@ -3,13 +3,10 @@
 define([], function() {
   'use strict';
 
-  return function(VMService, DvolVmodlService) {
+  return function(VMService) {
 
     function get() {
-      var progress = function(percent) {
-        console.log('progress update: ' + percent + ' %');
-      };
-      return VMService.getVMsForList(true, progress);
+      return VMService.getVMsForList(true);
     }
 
     this.get = get;

@@ -8,7 +8,7 @@ define([], function() {
     function filterVmsNotInThisTenant(allVms) {
       var selectedTenantRow = DialogService.currentDialog().opaque.selectedTenantRow;
       if (!selectedTenantRow) return $q.reject('ERROR: attempting to get VMs for a tenant but no tenant is selected');
-      return DvolTenantService.listVmsForTenant(selectedTenantRow.id)
+      return DvolTenantService.listVmsForTenant(selectedTenantRow.name)
       .then(function(tenantVms) {
         var availableVms = [];
         allVms.forEach(function(vm) {

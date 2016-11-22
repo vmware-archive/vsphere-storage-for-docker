@@ -13,10 +13,10 @@ define([], function() {
         iconClass: 'esx-icon-vm',
         tooltipText: 'Add Virtual Machines',
         enabled: true,
-        onClick: function() {  // (evt, action)
+        onClick: function() {
           var selectedTenant = $scope.tenantsGrid.selectedItems[0];
           DialogService.showDialog('dvol.add-vms', {
-            selectedTenantRow: $scope.tenantsGrid.selectedItems[0],
+            selectedTenantRow: selectedTenant,
             save: function(selectedVmsRows) {
               if (!selectedTenant) return; // TODO: async error
               if (!selectedVmsRows) return;
@@ -60,7 +60,7 @@ define([], function() {
     function filterVmsForThisTenant(allVms) {
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
       if (!selectedTenantRow) return $q.reject('ERROR: attempting to get VMs for a tenant but no tenant is selected');
-      return DvolTenantService.listVmsForTenant(selectedTenantRow.id)
+      return DvolTenantService.listVmsForTenant(selectedTenantRow.name)
       .then(function(tenantVms) {
         var filteredVms = [];
         allVms.forEach(function(vm) {
@@ -72,6 +72,7 @@ define([], function() {
         });
         return filteredVms;
       });
+    }
 
     var vmsGrid = DvolVmGridService.makeVmsGrid('vmsGrid', vmsGridActions, filterVmsForThisTenant, 'SINGLE', true);
     $scope.vmsGrid = vmsGrid.grid;
