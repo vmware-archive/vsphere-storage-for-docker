@@ -186,8 +186,11 @@ TEST_FILES := $(shell find . -name '*_test.py')
 # By default, we run all *_test.py. Use TEST_PATTERN to narrow the test set, e.g.
 # e.g. make test-esx TEST_PATTERN='*admin*'
 TEST_PATTERN := '*'
+AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
 test-esx:
+	@echo "Removing auth DB file at $(ESX):$(AUTH_DB_PATH)"
+	$(SSH) root@$(ESX) 'rm -f $(AUTH_DB_PATH)'
 	@echo "Copying files to $(ESX):$(TMP_LOC) and running .py unittests ..."
 	$(SSH) root@$(ESX) 'mkdir -p $(TMP_LOC)'
 	$(SCP) $(TEST_FILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)

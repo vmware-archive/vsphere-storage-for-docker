@@ -202,7 +202,6 @@ Privileges are unique to a (tenant, datastore) pair.
 CREATE TABLE privileges (
   tenant_id TEXT NOT NULL,
   datastore TEXT NOT NULL,
-  global_visibility INTEGER
   create INTEGER,
   delete INTEGER,
   mount INTEGER,

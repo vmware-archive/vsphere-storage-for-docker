@@ -84,6 +84,7 @@ import vsan_info
 import auth
 import sqlite3
 import convert
+import error_code
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -160,7 +161,7 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, vm_datastore=None):
+def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
@@ -172,7 +173,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, vm_datastore
 
     if kv.CLONE_FROM in opts:
         return cloneVMDK(vm_name, vmdk_path, opts,
-                         vm_uuid, vm_datastore)
+                         vm_uuid, datastore)
 
     cmd = make_create_cmd(opts, vmdk_path)
     rc, out = RunCommand(cmd)
@@ -182,12 +183,25 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, vm_datastore
     if not create_kv_store(vm_name, vmdk_path, opts):
         msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
         logging.warning(msg)
-        removeVMDK(vmdk_path)
-        return err(msg)
-
+        error_info = err(msg)
+        remove_err = removeVMDK(vmdk_path=vmdk_path, 
+                                vol_name=vol_name, 
+                                vm_name=vm_name,
+                                tenant_uuid=tenant_uuid,
+                                datastore=datastore)
+        if remove_err:
+            error_info = error_info + remove_err
+        return error_info
+   
     backing, needs_cleanup = get_backing_device(vmdk_path)
     cleanup_backing_device(backing, needs_cleanup)
 
+    # create succeed, insert the volume information into "volumes" table
+    if tenant_uuid:
+        vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
+        auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
+    else:
+        logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
 
 def make_create_cmd(opts, vmdk_path):
     """ Return the command used to create a VMDK """
@@ -523,7 +537,7 @@ def vol_info(vol_meta, vol_size_info, datastore):
 
 
 # Return error, or None for OK
-def removeVMDK(vmdk_path):
+def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datastore=None):
     logging.info("*** removeVMDK: %s", vmdk_path)
 
     # Check the current volume status
@@ -550,8 +564,15 @@ def removeVMDK(vmdk_path):
         elif rc != 0:
             return err("Failed to remove %s. %s" % (vmdk_path, out))
         else:
-            return None
+            # remove succeed, remove infomation of this volume from volumes table
+            if tenant_uuid:
+                error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
+                return error_info
+            else:
+                if not vm_name:
+                    logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
 
+            return None
 
 def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""
@@ -713,6 +734,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     Returns None (if all OK) or error string
     """
+    logging.debug("config_path=%s", config_path)
     vm_datastore = get_datastore_name(config_path)
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
@@ -747,18 +769,19 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     if cmd == "get":
         response = getVMDK(vmdk_path, vol_name, datastore)
-    elif cmd == "create":
-        response = createVMDK(vmdk_path, vm_name, vol_name, opts, vm_uuid, vm_datastore)
-        # create succeed, insert infomation of this volume to volumes table
-        if not response:
-            if tenant_uuid:
-                vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
-                auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
-            else:
-                logging.warning(" VM %s does not belong to any tenant", vm_name)
-
+    elif cmd == "create":              
+        response = createVMDK(vmdk_path=vmdk_path, 
+                              vm_name=vm_name, 
+                              vol_name=vol_name, 
+                              opts=opts, 
+                              tenant_uuid=tenant_uuid, 
+                              datastore=datastore)
     elif cmd == "remove":
-        response = removeVMDK(vmdk_path)
+        response = removeVMDK(vmdk_path=vmdk_path, 
+                              vol_name=vol_name,
+                              vm_name=vm_name,
+                              tenant_uuid=tenant_uuid,
+                              datastore=datastore)
     elif cmd == "attach":
         response = attachVMDK(vmdk_path, vm_uuid)
     elif cmd == "detach":

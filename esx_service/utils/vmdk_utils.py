@@ -225,11 +225,39 @@ def strip_vmdk_extension(filename):
     return filename.replace(".vmdk", "")
 
 def get_vm_uuid_by_name(vm_name):
-    """Returns vm_uuid for given vm_name, or None"""
+    """ Returns vm_uuid for given vm_name, or None """
     si = vmdk_ops.get_si()
     try:
         vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
         return vm[0].config.uuid
+    except:
+        return None
+
+def get_vm_config_path(vm_name):
+    """Returns vm_uuid for given vm_name, or None """
+    si = vmdk_ops.get_si()
+    try:
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
+        config_path = vm[0].summary.config.vmPathName   
+    except:
+        return None
+    
+     # config path has the format like this "[datastore1] test_vm1/test_vm1/test_vm1.vmx"
+    datastore, path = config_path.split()
+    datastore = datastore[1:-1]
+    datastore_path = os.path.join("/vmfs/volumes/", datastore)
+    # datastore_path has the format like this /vmfs/volumes/datastore_name
+    vm_config_path = os.path.join(datastore_path, path)
+    return vm_config_path
+
+def find_vm_by_name(vm_name):
+    """ Return vm for given vm_name, or None """
+    si = vmdk_ops.get_si()
+    try:
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
+                if d.config.name == vm_name]
+        return vm[0]
+
     except:
         return None
 

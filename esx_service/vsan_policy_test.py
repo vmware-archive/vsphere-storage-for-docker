@@ -18,6 +18,7 @@ import vsan_policy
 import vmdk_utils
 import volume_kv
 import vsan_info
+import logging
 
 
 class TestVsanPolicy(unittest.TestCase):
@@ -62,6 +63,7 @@ class TestVsanPolicy(unittest.TestCase):
 
     def test_delete_nonexistent_policy_fails(self):
         self.assertNotEqual(None, vsan_policy.delete(self.name))
+        logging.info("The test itself is expected to fail, and please ignore the errors printed above.")
 
     def test_create_list(self):
         self.assertEqual(None, vsan_policy.create(self.name, self.content))
