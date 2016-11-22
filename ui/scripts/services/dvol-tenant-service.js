@@ -50,11 +50,11 @@ define([], function() {
     // 2) call setState, passing this current Tenant List (as an array) to update local application state
     //
     //
-    // IMPORTANT: EVERY API CALL SHOULD CONCLUDE BY CALLING syncAllStateWithServer
+    // IMPORTANT: MOST API CALLS SHOULD CONCLUDE BY CALLING syncTenantsWithServer
     //
     //
     //
-    function syncAllStateWithServer(tenantId) {
+    function syncTenantsWithServer(tenantId) {
       //
       // this should be called after every API action
       // to update the local state with the current system state
@@ -92,7 +92,10 @@ define([], function() {
 
     function listTenants() {
       return DvolVmodlService.listTenants()
-      .then(setState);
+      .then(function(tenants) {
+        setState(tenants);
+        return tenants;
+      });
     }
 
     //
@@ -116,29 +119,36 @@ define([], function() {
         return DvolVmodlService.addVMsToTenant(vmsArgs);
       })
       .then(function() {
-        return syncAllStateWithServer(tenant.name);
+        return syncTenantsWithServer(tenant.name);
       });
     }
 
     function removeTenant(tenantId) {
-      DvolVmodlService.removeTenant(tenantId)
+      DvolVmodlService.removeTenant({
+        name: tenantId
+      })
       .then(function() {
-        return syncAllStateWithServer();
+        return syncTenantsWithServer();
       });
     }
 
     function listDatastoreAccessForTenant(tenantId) {
-      return DvolVmodlService.listDatastoreAccessForTenant(tenantId)
+      return DvolVmodlService.listDatastoreAccessForTenant({
+        name: tenantId
+      })
       .then(function() {
-        return syncAllStateWithServer(tenantId);
+        return syncTenantsWithServer(tenantId);
       });
     }
 
 
     function removeDatastoreAccessForTenant(tenantId, datastoreId) {
-      return DvolVmodlService.removeDatastoreAccessForTenant(tenantId, datastoreId)
+      return DvolVmodlService.removeDatastoreAccessForTenant({
+        name: tenantId,
+        datastore: datastoreId
+      })
       .then(function() {
-        return syncAllStateWithServer(tenantId);
+        return syncTenantsWithServer(tenantId);
       });
     }
 
@@ -149,9 +159,12 @@ define([], function() {
     // and not take advantage of the multiple vm option for now
     //
     function removeVmFromTenant(tenantId, vmId) {
-      return DvolVmodlService.removeVMsFromTenant(tenantId, [vmId])
+      return DvolVmodlService.removeVMsFromTenant({
+        name: tenantId,
+        vms: [vmId]
+      })
       .then(function() {
-        return syncAllStateWithServer(tenantId);
+        return syncTenantsWithServer(tenantId);
       });
     }
 
@@ -161,7 +174,7 @@ define([], function() {
         vms: vmIds
       })
       .then(function() {
-        return syncAllStateWithServer(tenantId);
+        return syncTenantsWithServer(tenantId);
       });
     }
 
@@ -175,7 +188,7 @@ define([], function() {
     }
     //
     function addDatastoreAccessForTenant(tenantId, datastore) {
-      return DvolVmodlService.addDatastoreAccessForTenantAccessForTenant({
+      return DvolVmodlService.addDatastoreAccessForTenant({
         name: tenantId,
         datastore: datastore.datastore.name,
         rights: transformPermissionsToRights(datastore.permissions),
@@ -183,7 +196,7 @@ define([], function() {
         volume_totalsize: datastore.permissions.volume_totalsize
       })
       .then(function() {
-        return syncAllStateWithServer(tenantId);
+        return syncTenantsWithServer(tenantId);
       });
     }
 
@@ -206,7 +219,7 @@ define([], function() {
         volume_totalsize: updatedDatastore.permissions.volume_totalsize
       })
       .then(function() {
-        return syncAllStateWithServer(tenantId);
+        return syncTenantsWithServer(tenantId);
       });
     }
 
@@ -216,6 +229,7 @@ define([], function() {
     this.removeTenant = removeTenant;
     this.addVmsToTenant = addVmsToTenant;
     this.addDatastoreAccessForTenant = addDatastoreAccessForTenant;
+    this.listDatastoreAccessForTenant = listDatastoreAccessForTenant;
     this.modifyDatastoreAccessForTenant = modifyDatastoreAccessForTenant;
     this.removeDatastoreAccessForTenant = removeDatastoreAccessForTenant;
     this.removeVmFromTenant = removeVmFromTenant;

@@ -6,8 +6,7 @@ define([], function() {
   return function($scope, $q, DialogService, DvolTenantService, DvolDatastoreGridService, GridUtils) {
 
     function filterDatastoresNotInThisTenant(allDatastores) {
-
-      var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
+      var selectedTenantRow = DialogService.currentDialog().opaque.selectedTenantRow;
       if (!selectedTenantRow) return $q.reject('ERROR: attempting to filter datastores but no tenant is selected');
       return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.id)
       .then(function(tenantDatastoreAccesses) {
@@ -47,8 +46,7 @@ define([], function() {
     DialogService.setConfirmOptions({
       label: 'Add',
       onClick: function() {
-        DialogService.currentDialog().opaque.save($scope.availableDatastoresGrid
-          .selectedItems);
+        DialogService.currentDialog().opaque.save($scope.availableDatastoresGrid.selectedItems);
         return true;
       }
     });

@@ -15,6 +15,7 @@ define([], function() {
         enabled: true,
         onClick: function() {  // (evt, action)
           DialogService.showDialog('dvol.add-datastores', {
+            selectedTenantRow: $scope.tenantsGrid.selectedItems[0],
             save: function(selectedDatastoresRows) {
               var selectedTenant = $scope.tenantsGrid.selectedItems[0];
               if (!selectedTenant) return; // TODO: async error
