@@ -204,6 +204,24 @@ def commands():
                         }
                     }
                 },
+                'modify': {
+                    'func': tenant_modify,
+                    'help': 'Modify a existing tenant',
+                    'args': {
+                        '--name': {
+                            'help': 'The name of the tenant',
+                            'required': True
+                        },
+                        '--new-name': {
+                            'help': 'The new name of the tenant',
+                            'required': False
+                        },
+                        '--description': {
+                            'help': 'The description of the tenant',
+                            'required': False
+                        }
+                    }
+                },
                 'rm': {
                     'func': tenant_rm,
                     'help': 'Delete a tenant',
@@ -841,6 +859,12 @@ def tenant_create(args):
         return operation_fail(error_info)
     else:
         print("tenant create succeeded")
+
+def tenant_modify(args):
+    print("name=%s", args.name)
+    print("new_name=%s", args.new_name)
+    print("descrption=%s", args.description)
+    print ("Not implemented")
 
 def tenant_rm(args):
     """ Handle tenant rm command """
