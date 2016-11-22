@@ -42,7 +42,6 @@ import signal
 import subprocess
 import sys
 import traceback
-import threading
 import time
 from ctypes import *
 
@@ -741,6 +740,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err(error_info)
 
     if cmd == "list":
+        threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
         return listVMDK(vm_datastore, tenant_name)
 
     try:
@@ -767,28 +767,40 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
-    if cmd == "get":
-        response = getVMDK(vmdk_path, vol_name, datastore)
-    elif cmd == "create":              
-        response = createVMDK(vmdk_path=vmdk_path, 
-                              vm_name=vm_name, 
-                              vol_name=vol_name, 
-                              opts=opts, 
-                              tenant_uuid=tenant_uuid, 
-                              datastore=datastore)
-    elif cmd == "remove":
-        response = removeVMDK(vmdk_path=vmdk_path, 
-                              vol_name=vol_name,
-                              vm_name=vm_name,
-                              tenant_uuid=tenant_uuid,
-                              datastore=datastore)
-    elif cmd == "attach":
-        response = attachVMDK(vmdk_path, vm_uuid)
-    elif cmd == "detach":
-        response = detachVMDK(vmdk_path, vm_uuid)
-    else:
-        return err("Unknown command:" + cmd)
+    # Set up locking for volume operations.
+    # Lock name defaults to volume "datastore path"
+    lockname = vmdk_utils.get_datastore_path(vmdk_path)
+    # Set thread name to vm_name-lockname
+    threadutils.set_thread_name("{0}-{1}".format(vm_name, lockname))
 
+    # Get a resource lock
+    logging.debug("Trying to acquire lock: %s", lockname)
+    with lockManager.get_lock(lockname):
+        logging.debug("Acquired lock: %s", lockname)
+
+        if cmd == "get":
+            response = getVMDK(vmdk_path, vol_name, datastore)
+        elif cmd == "create":
+            response = createVMDK(vmdk_path=vmdk_path,
+                                  vm_name=vm_name,
+                                  vol_name=vol_name,
+                                  opts=opts,
+                                  tenant_uuid=tenant_uuid,
+                                  datastore=datastore)
+        elif cmd == "remove":
+            response = removeVMDK(vmdk_path=vmdk_path,
+                                  vol_name=vol_name,
+                                  vm_name=vm_name,
+                                  tenant_uuid=tenant_uuid,
+                                  datastore=datastore)
+        elif cmd == "attach":
+            response = attachVMDK(vmdk_path, vm_uuid)
+        elif cmd == "detach":
+            response = detachVMDK(vmdk_path, vm_uuid)
+        else:
+            return err("Unknown command:" + cmd)
+
+    logging.debug("Released lock: %s", lockname)
     return response
 
 def connectLocalSi(force=False):
@@ -1352,31 +1364,16 @@ def execRequestThread(client_socket, cartel, request):
             reply_string = {u'Error': "Failed to parse json '%s'." % request}
             send_vmci_reply(client_socket, reply_string)
         else:
-            details = req["details"]
-            opts = details["Opts"] if "Opts" in details else {}
+            opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
+            reply_string = executeRequest(vm_uuid=vm_uuid,
+                                vm_name=vm_name,
+                                config_path=cfg_path,
+                                cmd=req["cmd"],
+                                full_vol_name=req["details"]["Name"],
+                                opts=opts)
 
-            # Lock name defaults to volume name, or socket# if request has no volume defined
-            lockname = details["Name"] if len(details["Name"]) > 0 else "socket{0}".format(client_socket)
-            # Set thread name to vm_name-lockname
-            threading.currentThread().setName("{0}-{1}".format(vm_name, lockname))
-
-            # Get a resource lock
-            rsrcLock = lockManager.get_lock(lockname)
-
-            logging.debug("Trying to aquire lock: %s", lockname)
-            with rsrcLock:
-                logging.debug("Aquired lock: %s", lockname)
-
-                reply_string = executeRequest(vm_uuid=vm_uuid,
-                                    vm_name=vm_name,
-                                    config_path=cfg_path,
-                                    cmd=req["cmd"],
-                                    full_vol_name=details["Name"],
-                                    opts=opts)
-
-                logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], reply_string)
-                send_vmci_reply(client_socket, reply_string)
-            logging.debug("Released lock: %s", lockname)
+            logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], reply_string)
+            send_vmci_reply(client_socket, reply_string)
 
     except Exception as ex_thr:
         logging.exception("Unhandled Exception:")
@@ -1419,9 +1416,9 @@ def handleVmciRequests(port):
 
         client_socket = c # Bind to avoid race conditions.
         # Fire a thread to execute the request
-        threading.Thread(
+        threadutils.start_new_thread(
             target=execRequestThread,
-            args=(client_socket, cartel.value, txt.value)).start()
+            args=(client_socket, cartel.value, txt.value))
 
     lib.close(sock)  # close listening socket when the loop is over
 

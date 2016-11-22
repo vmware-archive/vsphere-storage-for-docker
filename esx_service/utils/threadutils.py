@@ -26,7 +26,7 @@ class LockManager(object):
     Thread safe lock manager class
     """
     def __init__(self):
-        self._lock = _get_lock()
+        self._lock = get_lock()
         self._lock_store = WeakValueDictionary()
 
     def get_lock(self, lockname, reentrant=False):
@@ -39,7 +39,7 @@ class LockManager(object):
                 logging.debug("LockManager.get_lock: existing lock: %s, %s",
                               lockname, lock)
             except KeyError:
-                lock = _get_lock(reentrant)
+                lock = get_lock(reentrant)
                 self._lock_store[lockname] = lock
                 logging.debug("LockManager.get_lock: new lock: %s, %s",
                               lockname, lock)
@@ -63,7 +63,7 @@ def get_lock_decorator(reentrant=False):
     Create a locking decorator to be used in modules
     """
     # Lock to be used in the decorator
-    lock = _get_lock(reentrant)
+    lock = get_lock(reentrant)
     def lock_decorator(func):
         """
         Locking decorator
@@ -77,11 +77,23 @@ def get_lock_decorator(reentrant=False):
             logging.debug("Trying to acquire lock: %s @ %s, caller: %s, args: %s %s",
                           lock, lockaddr, func.__name__, args, kwargs)
             with lock:
-                logging.debug("Aquired lock: %s @ %s, caller: %s, args: %s %s",
+                logging.debug("Acquired lock: %s @ %s, caller: %s, args: %s %s",
                               lock, lockaddr, func.__name__, args, kwargs)
                 return func(*args, **kwargs)
         return protected
     return lock_decorator
+
+
+def start_new_thread(target, args):
+    """Start a new thread"""
+    threading.Thread(target=target, args=args).start()
+    logging.debug("Currently active threads: %s",
+                  get_active_threads())
+
+
+def get_active_threads():
+    """Return the list of active thread objects"""
+    return threading.enumerate()
 
 
 def get_local_storage():
@@ -89,8 +101,18 @@ def get_local_storage():
     return threading.local()
 
 
-def _get_lock(reentrant=False):
-    """Return a thread Lock or Rlock"""
+def set_thread_name(name):
+    """Set the current thread name"""
+    threading.current_thread().name = name
+
+
+def get_thread_name():
+    """Get the current thread name"""
+    return threading.current_thread().name
+
+
+def get_lock(reentrant=False):
+    """Return a unmanaged thread Lock or Rlock"""
     if reentrant:
         return threading.RLock()
     else:
