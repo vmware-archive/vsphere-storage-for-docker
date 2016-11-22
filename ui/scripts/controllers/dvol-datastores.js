@@ -126,10 +126,8 @@ define([], function() {
     ];
 
     function filterDatastoresForThisTenant(allDatastores) {
-      // NOTE: selectedTenants from the grid doesn't have new datastores added (will not until grid refresh)
-      // we don't want to refresh the grid because we'll lose tenant row selection
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
-      if (!selectedTenantRow) return $q.reject('ERROR: attempting to filter datastores but no tenant is selected');
+      if (!selectedTenantRow) return $q.reject('ERROR: attempting to get datastores for a tenant but no tenant is selected');
       return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.id)
       .then(function(tenantDatastoreAccesses) {
         var filteredDatastores = [];

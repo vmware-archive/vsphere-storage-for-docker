@@ -3,15 +3,30 @@
 define([], function() {
   'use strict';
 
-  return function($scope, DialogService, DvolVmGridService, GridUtils) {
+  return function($scope, $q, DialogService, DvolTenantService, DvolVmGridService, GridUtils) {
 
-    var vmsAlreadyInTenant = DialogService.currentDialog().opaque.vmsAlreadyInTenant;
-    function filterFn(vms) {
-      return vms.filter(function(v) {
-        return vmsAlreadyInTenant.indexOf(v.name) < 0;
+    function filterVmsNotInThisTenant(allVms) {
+      var selectedTenantRow = DialogService.currentDialog().opaque.selectedTenantRow;
+      if (!selectedTenantRow) return $q.reject('ERROR: attempting to get VMs for a tenant but no tenant is selected');
+      return DvolTenantService.listVmsForTenant(selectedTenantRow.id)
+      .then(function(tenantVms) {
+        var availableVms = [];
+        allVms.forEach(function(vm) {
+          var alreadyInTenant;
+          tenantVms.forEach(function(tvm) {
+            if (vm.name === tvm.id) {
+              alreadyInTenant = true;
+            }
+          });
+          if (!alreadyInTenant) {
+            availableVms.push(vm);
+          }
+        });
+        return availableVms;
       });
     }
-    var grid = DvolVmGridService.makeVmsGrid('availableVmsGrid', [], filterFn, 'MULTI', false);
+
+    var grid = DvolVmGridService.makeVmsGrid('availableVmsGrid', [], filterVmsNotInThisTenant, 'MULTI', false);
 
     $scope.availableVmsGrid = grid.grid;
 

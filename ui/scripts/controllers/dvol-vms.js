@@ -4,7 +4,7 @@
 define([], function() {
   'use strict';
 
-  return function($scope, $rootScope, DialogService, DvolVmGridService, DvolTenantService, GridUtils) {
+  return function($scope, $q, $rootScope, DialogService, DvolVmGridService, DvolTenantService, GridUtils) {
 
     var vmsGridActions = [
       {
@@ -16,6 +16,7 @@ define([], function() {
         onClick: function() {  // (evt, action)
           var selectedTenant = $scope.tenantsGrid.selectedItems[0];
           DialogService.showDialog('dvol.add-vms', {
+            selectedTenantRow: $scope.tenantsGrid.selectedItems[0],
             save: function(selectedVmsRows) {
               if (!selectedTenant) return; // TODO: async error
               if (!selectedVmsRows) return;
@@ -25,8 +26,7 @@ define([], function() {
               if (selectedVmsIds.length < 1) return;
               DvolTenantService.addVmsToTenant(selectedTenant.id, selectedVmsIds)
                 .then(vmsGrid.refresh);
-            },
-            vmsAlreadyInTenant: DvolTenantService.getLocalState().tenants[$scope.tenantsGrid.selectedItems[0].id].vms
+            }
           });
         }
       },
@@ -59,13 +59,19 @@ define([], function() {
 
     function filterVmsForThisTenant(allVms) {
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
-      if (!selectedTenantRow) return [];
-      var selectedTenant = DvolTenantService.getLocalState().tenants[selectedTenantRow.id];
-      var filteredVms = allVms.filter(function(vm) {
-        return selectedTenant.vms.indexOf(vm.name) >= 0;
+      if (!selectedTenantRow) return $q.reject('ERROR: attempting to get VMs for a tenant but no tenant is selected');
+      return DvolTenantService.listVmsForTenant(selectedTenantRow.id)
+      .then(function(tenantVms) {
+        var filteredVms = [];
+        allVms.forEach(function(vm) {
+          tenantVms.forEach(function(tvm) {
+            if (vm.name === tvm) {
+              filteredVms.push(vm);
+            }
+          });
+        });
+        return filteredVms;
       });
-      return filteredVms;
-    }
 
     var vmsGrid = DvolVmGridService.makeVmsGrid('vmsGrid', vmsGridActions, filterVmsForThisTenant, 'SINGLE', true);
     $scope.vmsGrid = vmsGrid.grid;

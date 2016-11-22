@@ -13,7 +13,6 @@ define([], function() {
     }
 
     this.get = get;
-    this.listVMsForTenant = DvolVmodlService.listVMsForTenant;
 
   };
 

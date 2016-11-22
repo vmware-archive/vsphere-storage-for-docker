@@ -20,7 +20,7 @@ define([], function() {
       });
     }
 
-    function makeStatusColDef(linkEnabled) {
+    function makeStatusColDef() {
       return {
         displayName: translate('vm.list.columns.status'),
         field: 'status',
@@ -128,9 +128,20 @@ define([], function() {
       vmsGrid = GridUtils.Grid(gridProps);
 
       function refresh() {
-        return DvolVmService.get().then(function(vms) {
-          vmsGrid.data = mapVmsToGrid(filterFn ? filterFn(vms) : vms);
-        });
+        var p;
+        if (filterFn) {
+          p = DvolVmService.get()
+          .then(filterFn)
+          .then(function(filteredVms) {
+            vmsGrid.data = mapVmsToGrid(filteredVms);
+          });
+        } else {
+          p = DvolVmService.get()
+          .then(function(vms) {
+            vmsGrid.data = mapVmsToGrid(vms);
+          });
+        }
+        return p;
       }
 
       refresh();
