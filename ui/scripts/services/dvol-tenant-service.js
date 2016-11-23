@@ -131,11 +131,11 @@ define([], function() {
       });
       return DvolVmodlService.modifyDatastoreAccessForTenant({
         name: tenantId,
-        datastore: updatedDatastore.datastore.name,
+        datastore: updatedDatastore.datastore,
         add_rights: add_rights,
         remove_rights: remove_rights,
-        volume_maxsize: updatedDatastore.permissions.volume_maxsize,
-        volume_totalsize: updatedDatastore.permissions.volume_totalsize
+        max_volume_size: updatedDatastore.permissions.max_volume_size,
+        usage_quota: updatedDatastore.permissions.usage_quota
       });
     }
 

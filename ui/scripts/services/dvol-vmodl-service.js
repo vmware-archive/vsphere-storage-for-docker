@@ -116,8 +116,8 @@ define([], function() {
         '<datastore>' + args.datastore + '</datastore>',
         '<add_rights>' + JSON.stringify(args.add_rights) + '</add_rights>',
         '<remove_rights>' + JSON.stringify(args.remove_rights) + '</remove_rights>',
-        '<volume_maxsize>' + args.volume_maxsize + '</volume_maxsize>',
-        '<volume_totalsize>' + args.volume_totalsize + '</volume_totalsize>'
+        '<max_volume_size>' + args.max_volume_size + '</max_volume_size>',
+        '<usage_quota>' + args.usage_quota + '</usage_quota>'
       ].join('');
       return DvolSoapService.request('ModifyDatastoreAccessForTenant', argsSOAP);
     };

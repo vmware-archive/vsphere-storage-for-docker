@@ -1,10 +1,10 @@
 
-/* global define $ */
+/* global define $ _ */
 
 define([], function() {
   'use strict';
 
-  return function($scope, $rootScope, $q, _, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
+  return function($scope, $rootScope, $q, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
 
     var datastoresGridActions = [
       {
@@ -49,7 +49,7 @@ define([], function() {
               DvolTenantService.addDatastoreAccessForTenant(selectedTenant.name, originalDatastore)
                 .then(datastoresGrid.refresh)
                 .then(function() {
-                  var originalPermissions = _.copy(originalDatastore.permissions);
+                  var originalPermissions = _.clone(originalDatastore.permissions);
                   DialogService.showDialog('dvol.edit-datastore', {
                     permissions: originalDatastore.permissions,
                     save: function(editedPermissions) {
