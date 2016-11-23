@@ -124,6 +124,14 @@ def get_log_level(config_file=LOG_CONFIG_FILE):
         # The log config file doesn't currently exist. Use the default.
         return LOG_LEVEL_DEFAULT
 
+def get_logger(name, level=LOG_LEVEL_DEFAULT):
+    """ Returns the logger with required log level set
+    level defines verbosity and could be DEBUG, INFO, WARNING, ERROR, CRITICAL """
+    
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.getLevelName(level))
+    return logger
+
 
 # manual test: "sudo python log_config.py"
 if __name__ == "__main__":
