@@ -109,7 +109,7 @@ define([], function() {
           if (!selectedTenant) return;
           var selectedDatastore = $scope.datastoresGrid.selectedItems[0];
           if (!selectedDatastore) return;
-          DvolTenantService.removeDatastoreAccessForTenant(selectedTenant.id, selectedDatastore.name)
+          DvolTenantService.removeDatastoreAccessForTenant(selectedTenant.name, selectedDatastore.name)
             .then(datastoresGrid.refresh);
         }
       },
@@ -133,7 +133,7 @@ define([], function() {
         var filteredDatastores = [];
         allDatastores.forEach(function(ds) {
           tenantDatastoreAccesses.forEach(function(tds) {
-            if (ds.name === tds.id) {
+            if (ds.name === tds.datastore) {
               filteredDatastores.push({
                 datastore: ds,
                 permissions: tds.permissions

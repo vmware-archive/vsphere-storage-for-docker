@@ -41,7 +41,7 @@ define([], function() {
           if (!selectedTenant) return;
           var selectedVm = $scope.vmsGrid.selectedItems[0];
           if (!selectedVm) return;
-          DvolTenantService.removeVmFromTenant(selectedTenant.id, selectedVm.moid || selectedVm.id)
+          DvolTenantService.removeVmFromTenant(selectedTenant.name, selectedVm.name)
             .then(vmsGrid.refresh);
         }
       },
