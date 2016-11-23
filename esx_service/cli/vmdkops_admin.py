@@ -39,6 +39,7 @@ import auth_api
 NOT_AVAILABLE = 'N/A'
 
 def main():
+    log_config.configure()
     kv.init()
     args = parse_args()
     if args:
@@ -861,10 +862,14 @@ def tenant_create(args):
         print("tenant create succeeded")
 
 def tenant_modify(args):
-    print("name=%s", args.name)
-    print("new_name=%s", args.new_name)
-    print("descrption=%s", args.description)
-    print ("Not implemented")
+    error_info = auth_api._tenant_modify(name=args.name,
+                                         new_name=args.new_name,
+                                         description=args.description)
+
+    if error_info:
+        return operation_fail(error_info)
+    else:
+        print("tenant modify succeeded")
 
 def tenant_rm(args):
     """ Handle tenant rm command """

@@ -18,6 +18,7 @@
 VM_NOT_BELONG_TO_TENANT = "VM {0} does not belong to any tenant"
 TENANT_NOT_EXIST = "Tenant {0} does not exist"
 TENANT_ALREADY_EXIST = "Tenant {0} already exists"
+TENANT_NAME_NOT_FOUND = "Cannot find tenant name for tenant with {0}"
 
 # VM related error message 
 VM_NOT_FOUND = "Cannot find vm {0}"

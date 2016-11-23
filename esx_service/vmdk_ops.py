@@ -52,7 +52,6 @@ from pyVim.connect import Connect, Disconnect
 from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
-import vmdkops_admin
 
 sys.dont_write_bytecode = True
 
@@ -85,6 +84,7 @@ import auth
 import sqlite3
 import convert
 import error_code
+import auth_api
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -597,7 +597,7 @@ def get_vol_path(datastore, tenant_name=None):
     # path <datastore>/DOCK_VOLS_DIR/tenant_uuid
     dock_vol_path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
     if tenant_name:
-        error_info, tenant = vmdkops_admin.get_tenant_from_db(tenant_name)
+        error_info, tenant = auth_api.get_tenant_from_db(tenant_name)
         if error_info:
             logging.error("get_vol_path: cannont find tenant info for tenant %s", tenant_name)
             path = dock_vol_path

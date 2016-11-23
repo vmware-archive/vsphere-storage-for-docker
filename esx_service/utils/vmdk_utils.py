@@ -22,6 +22,8 @@ import re
 import logging
 import fnmatch
 import vmdk_ops
+import auth_api
+import log_config
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -132,13 +134,21 @@ def get_volumes(tenant_re):
                 #  sub_dir get the string "/tenant1"
                 #  sub_dir_name is "tenant1" which will be used to match
                 #  pattern specified by tenant_re
+                logging.debug("get_volumes: path=%s root=%s", path, root)
                 sub_dir = root.replace(path, "")
                 sub_dir_name = sub_dir[1:]
-                if fnmatch.fnmatch(sub_dir_name, tenant_re):
-                    for file_name in list_vmdks(root):
-                        volumes.append({'path': root,
-                                        'filename': file_name,
-                                        'datastore': datastore})
+                # sub_dir_name is the tenant uuid
+                error_info, tenant_name = auth_api.get_tenant_name(sub_dir_name)
+                if not error_info:
+                    logging.debug("get_volumes: path=%s root=%s sub_dir_name=%s tenant_name=%s", 
+                                path, root, sub_dir_name, tenant_name)
+                    if fnmatch.fnmatch(tenant_name, tenant_re):
+                        for file_name in list_vmdks(root):
+                            volumes.append({'path': root,
+                                            'filename': file_name,
+                                            'datastore': datastore})
+                else:
+                    logging.debug("get_volumes: cannot find tenant_name for tenant_uuid=%s", sub_dir_name)
     logging.debug("volumes %s", volumes)
     return volumes
 
@@ -294,3 +304,9 @@ def log_volume_lsof(vol_name):
             msg = "cartel={0}, name={1}, type={2}, fd={3}, desc={4}".format(
                 cartel, name, ftype, fd, desc)
             logging.info("Volume open descriptor: %s", msg)
+
+def main():
+    log_config.configure()
+
+if __name__ == "__main__":
+    main() 
