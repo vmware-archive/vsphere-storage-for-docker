@@ -4,7 +4,7 @@
 define([], function() {
   'use strict';
 
-  return function($scope, $rootScope, $q, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
+  return function($scope, $rootScope, $q, _, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
 
     var datastoresGridActions = [
       {
@@ -42,20 +42,21 @@ define([], function() {
               // this is where we transition from that model to a single datastore at a time model
               // by taking only the first in the array
               //
-              var firstDatastore = datastores[0]; // will be only one in SINGLE mode
+              var originalDatastore = datastores[0]; // will be only one in SINGLE mode
               //
               //
               //
-              DvolTenantService.addDatastoreAccessForTenant(selectedTenant.id, firstDatastore)
+              DvolTenantService.addDatastoreAccessForTenant(selectedTenant.name, originalDatastore)
                 .then(datastoresGrid.refresh)
                 .then(function() {
+                  var originalPermissions = _.copy(originalDatastore.permissions);
                   DialogService.showDialog('dvol.edit-datastore', {
-                    permissions: firstDatastore.permissions,
+                    permissions: originalDatastore.permissions,
                     save: function(editedPermissions) {
                       DvolTenantService.modifyDatastoreAccessForTenant(
-                        selectedTenant.id,
+                        selectedTenant.name,
                         {
-                          datastore: firstDatastore.datastore,
+                          datastore: originalDatastore.datastore,
                           permissions: editedPermissions
                         },
                         //
@@ -68,8 +69,9 @@ define([], function() {
                         //
                         // so we pass down the original permissions so the "deltas" can be figured out
                         //
-                        firstDatastore.permissions)
-                        .then(datastoresGrid.refresh);
+                        originalPermissions
+                      )
+                      .then(datastoresGrid.refresh);
                     }
                   });
                 });

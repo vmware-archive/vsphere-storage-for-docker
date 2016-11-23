@@ -14,7 +14,7 @@ define([], function() {
         allDatastores.forEach(function(ds) {
           var alreadyInTenant;
           tenantDatastoreAccesses.forEach(function(tds) {
-            if (ds.name === tds.id) {
+            if (ds.name === tds.datastore) {
               alreadyInTenant = true;
             }
           });
