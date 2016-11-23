@@ -192,9 +192,6 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
             error_info = error_info + remove_err
         return error_info
    
-    backing, needs_cleanup = get_backing_device(vmdk_path)
-    cleanup_backing_device(backing, needs_cleanup)
-
     # create succeed, insert the volume information into "volumes" table
     if tenant_uuid:
         vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
@@ -319,10 +316,6 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         removeVMDK(vmdk_path)
         return err(msg)
 
-    backing, needs_cleanup = get_backing_device(vmdk_path)
-    cleanup_backing_device(backing, needs_cleanup)
-
-
 def create_kv_store(vm_name, vmdk_path, opts):
     """ Create the metadata kv store for a volume """
     vol_meta = {kv.STATUS: kv.DETACHED,
@@ -440,60 +433,6 @@ def get_vsan_uuid(vmdk_path):
         return exp.search(data).group(1)
     except:
         return None
-
-# Create and return the devFS path for a VSAN object UUID.
-# Also returns true if clean up is needed.
-# cleanup_vsan_devfs should be called to clean up before
-# removing the VSAN object.
-def get_vsan_devfs_path(uuid):
-
-    logging.debug("Got volume UUID %s", uuid)
-
-    # Objtool creates a link thats usable to
-    # read write to vsan object.
-    cmd = "{0} {1}".format(OBJ_TOOL_CMD, uuid)
-    rc, out = RunCommand(cmd)
-    fpath="/vmfs/devices/vsan/{0}".format(uuid)
-    if rc == 0 and os.path.isfile(fpath):
-        return fpath, True
-    logging.error("Failed to create devFS node for %s, error: %s", uuid, out)
-    return None, False
-
-# Clean up vsan devfs path
-def cleanup_vsan_devfs_path(devfs_path):
-    try:
-        os.remove(devfs_path)
-        logging.debug("Unlinked %s", devfs_path)
-        return True
-    except OSError as ex:
-        logging.error("Failed to remove backing device %s, err %s",
-                      devfs_path, str(ex))
-    return False
-
-# Returns the flat file for a VMDK.
-def get_backing_flat_file(vmdk_path):
-    return vmdk_path.replace(".vmdk", "-flat.vmdk")
-
-# Return a backing file path for given vmdk path or none
-# if a backing can't be found. Returns True if clean up
-# is needed. Do not forget to call cleanup_backing_device when done.
-def get_backing_device(vmdk_path):
-    flatBacking = get_backing_flat_file(vmdk_path)
-    if os.path.isfile(flatBacking):
-        return flatBacking, False
-
-    uuid = get_vsan_uuid(vmdk_path)
-
-    if uuid:
-
-        return get_vsan_devfs_path(uuid)
-
-    return None, False
-
-def cleanup_backing_device(backing, cleanup_device):
-    if cleanup_device:
-        return cleanup_vsan_devfs_path(backing)
-    return True
 
 # Return volume ingo
 def vol_info(vol_meta, vol_size_info, datastore):
