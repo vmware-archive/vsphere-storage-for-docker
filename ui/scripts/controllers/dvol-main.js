@@ -19,7 +19,10 @@ define([], function() {
           DialogService.showDialog('dvol.add-tenant', {
             tenant: {},
             save: function(newTenant, vms) {
-              DvolTenantService.createTenant(newTenant, vms)
+              var vmIds = vms.map(function(vm) {
+                return vm.name;
+              });
+              DvolTenantService.createTenant(newTenant, vmIds)
                 .then(tenantsGrid.refresh);
             }
           });
@@ -30,23 +33,24 @@ define([], function() {
         label: 'Edit',
         iconClass: 'vui-icon-action-edit',
         tooltipText: 'Edit Tenant',
-        enabled: true,
+        enabled: true,  // enable this once the API supports it
         onClick: function() {
           if ($scope.tenantsGrid.selectedItems.length < 1) return;
-          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].id)
+          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].name)
           .then(function(tenant) {
             DialogService.showDialog('dvol.edit-tenant', {
               tenant: tenant,
               editMode: true,
-              save: function(newTenant) {
+              save: function(newTenantValues) {
                 //
                 // The vmodl api doesn't currently
-                // support modifyTenant. Perhaps
-                // createTenant will just be used for that.
-                // That's currently what we're doing here.
+                // support modifyTenant.
                 //
-                DvolTenantService.createTenant(newTenant)
-                  .then(tenantsGrid.refresh);
+                // Once it does we might do something like this
+                //
+                //DvolTenantService.modifyTenant(newTenantValues)
+                //  .then(tenantsGrid.refresh);
+                //
               }
             });
 

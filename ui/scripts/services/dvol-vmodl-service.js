@@ -35,11 +35,24 @@ define([], function() {
     }
 
     function parseVm(vmEl) {
-      console.log(vmEl);
+      return $(vmEl).text();
     }
 
     function parseDatastore(datastoreEl) {
-      console.log(datastoreEl);
+      var ds = {};
+      ds.datastore = $($(datastoreEl).find('datastore')[0]).text();
+      ds.permissions = {};
+      [
+        'create_volumes',
+        'delete_volumes',
+        'mount_volumes',
+        'max_volume_size',
+        'usage_quota'
+      ]
+      .forEach(function(prop) {
+        ds.permissions[prop] = $($(datastoreEl).find(prop)[0]).text();
+      });
+      return ds;
     }
 
     this.listTenants = function() {
@@ -132,7 +145,7 @@ define([], function() {
       return DvolSoapService.request('ListVMsForTenant', argsSOAP)
       .then(function(soapResponse) {
         var doc = $.parseXML(soapResponse);
-        var listVmsResponse = $(doc).find('ListVmsResponse');
+        var listVmsResponse = $(doc).find('ListVMsForTenantResponse');
         var vmEls = $(listVmsResponse).find('returnval');
         var vms = vmEls.toArray().map(parseVm);
         return vms;
@@ -170,7 +183,7 @@ define([], function() {
       return DvolSoapService.request('ListDatastoreAccessForTenant', argsSOAP)
       .then(function(soapResponse) {
         var doc = $.parseXML(soapResponse);
-        var listDatastoresResponse = $(doc).find('ListDatastoresResponse');
+        var listDatastoresResponse = $(doc).find('ListDatastoreAccessForTenantResponse');
         var datastoreEls = $(listDatastoresResponse).find('returnval');
         var datastores = datastoreEls.toArray().map(parseDatastore);
         return datastores;

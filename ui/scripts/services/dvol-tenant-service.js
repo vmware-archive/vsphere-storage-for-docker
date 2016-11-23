@@ -19,7 +19,7 @@ define([], function() {
       return listTenants()
       .then(function(tenants) {
         var matches = tenants.filter(function(t) {
-          t.name === tenantName;
+          return t.name === tenantName;
         });
         return matches.length > 0 && matches[0];
       });
