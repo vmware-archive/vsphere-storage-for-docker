@@ -218,6 +218,14 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/vmware/photon-controller-go-sdk",
+			"repository": "https://github.com/vmware/photon-controller-go-sdk",
+			"vcs": "git",
+			"revision": "a7351722743d53dff0331c163b83e51d66ad90aa",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/exp/inotify",
 			"repository": "https://go.googlesource.com/exp",
 			"vcs": "git",
