@@ -32,6 +32,7 @@ import (
 	"github.com/docker/engine-api/types/strslice"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/net/context"
 )
 
@@ -45,6 +46,11 @@ const (
 
 var (
 	// flag vars - see init() for help
+	endPoint1        string
+	endPoint2        string
+	volumeName       string
+	driverName       string
+	defaultHeaders   map[string]string
 	removeContainers bool
 )
 
@@ -57,6 +63,9 @@ func init() {
 	logFile := flag.String("log_file", config.DefaultLogPath, "Log file path")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 
+	flag.StringVar(&endPoint1, "H1", refcount.DockerUSocket, "Endpoint (Host1) to connect to")
+	flag.StringVar(&endPoint2, "H2", refcount.DockerUSocket, "Endpoint (Host2) to connect to")
+	flag.StringVar(&volumeName, "v", "TestVol", "Volume name to use in sanity tests")
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
 	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
 	flag.Parse()
@@ -182,7 +191,7 @@ func TestSanity(t *testing.T) {
 	}
 
 	for idx, elem := range clients {
-		c, err := client.NewClient(elem.endPoint, apiVersion, nil, defaultHeaders)
+		c, err := client.NewClient(elem.endPoint, refcount.ApiVersion, nil, defaultHeaders)
 		if err != nil {
 			t.Fatalf("Failed to connect to %s, err: %v", elem.endPoint, err)
 		}
