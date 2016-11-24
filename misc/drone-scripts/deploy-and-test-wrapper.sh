@@ -74,27 +74,20 @@ dump_logs() {
   dump_log_vm $VM2
 }
 
-truncate_vm_logs() {
-  $SSH $USER@$1 "cat /dev/null > /var/log/docker-volume-vsphere.log"
-}
-
-truncate_esx_logs() {
-  $SSH $USER@$ESX "cat /dev/null > /var/log/vmware/vmdk_ops.log"
-}
 
 log "truncate vm logs"
 truncate_vm_logs $VM1
 truncate_vm_logs $VM2
 
 log "truncate esx logs"
-truncate_esx_logs
+truncate_esx_logs $ESX
 
 log "starting deploy and test"
 
 if make -s deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol.build$BUILD_NUMBER;
 then
- dump_logs
- stop_build $VM1 $BUILD_NUMBER
+  dump_logs
+  stop_build $VM1 $BUILD_NUMBER
 else
   log "Build + Test not successful"
   dump_logs
