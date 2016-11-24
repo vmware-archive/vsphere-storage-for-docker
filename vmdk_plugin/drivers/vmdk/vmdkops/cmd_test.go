@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 )
 
 func TestCommands(t *testing.T) {
