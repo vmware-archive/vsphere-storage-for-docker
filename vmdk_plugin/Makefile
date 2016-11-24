@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-# Makefile for Docker data volume VMDK plugin
+# Makefile for Docker data volume plugin
 
 # Guest Package Version
 
@@ -71,7 +71,7 @@ VMCI_SRC    := $(ESX_SRC)/vmci/*.h $(ESX_SRC)/vmci/vmci_client.c
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 
 # all binaries for VMs - plugin and tests
-VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_MODULE).test $(BIN)/$(PLUGNAME).test
+VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test
 
 VIBFILE := vmware-esx-vmdkops-$(PKG_VERSION).vib
 VIB_BIN := $(BIN)/$(VIBFILE)
@@ -83,12 +83,14 @@ GO := GO15VENDOREXPERIMENT=1 go
 FPM := fpm
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
-VMDKOPS_MODULE := vmdkops
+VMDKOPS_MODULE := drivers/vmdk/vmdkops
+VMDKOPS_TEST_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
-SRC = plugin.go main.go log_formatter.go refcnt.go \
-	utils/fs/fs.go utils/config/config.go utils/TestInputParamsUtil.go
+SRC = main.go log_formatter.go utils/refcount/refcnt.go \
+	utils/fs/fs.go utils/config/config.go utils/TestInputParamsUtil.go \
+	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 
 # Canned recipe
 define log_target
@@ -130,7 +132,7 @@ $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
 
-$(BIN)/$(VMDKOPS_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go
+$(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go
 	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
 $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
@@ -147,7 +149,7 @@ clean-as-root: pkg-post
 
 # GO Code quality checks.
 
-DIRS_TO_VERIFY := . utils/fs utils/config vmdkops
+DIRS_TO_VERIFY := . utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops
 FILES_TO_VERIFY := $(foreach dir, $(DIRS_TO_VERIFY), $(dir)/*.go)
 .code_verify: $(FILES_TO_VERIFY)
 	@for i in $(DIRS_TO_VERIFY) ; do ${GOPATH}/bin/golint $$i ; done
@@ -297,7 +299,7 @@ test:
 .PHONY: testasroot
 testasroot:
 	$(log_target)
-	$(GO) test $(PLUGIN)/vmdkops -cover
+	$(GO) test $(PLUGIN)/drivers/vmdk/vmdkops -cover
 	$(GO) test $(PLUGIN)/utils/config -cover
 
 # does sanity check of create/remove docker volume on the guest
@@ -317,7 +319,7 @@ checkremote:
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
 test-vm: checkremote deploy-vm-test
 	$(log_target)
-	$(SSH) $(TEST_VM) $(TMP_LOC)/$(VMDKOPS_MODULE).test $(TEST_VERBOSE)
+	$(SSH) $(TEST_VM) $(TMP_LOC)/$(VMDKOPS_TEST_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
 		-H1 $(VM1_DOCKER) -H2 $(VM2_DOCKER)
