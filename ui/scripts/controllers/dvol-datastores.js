@@ -20,32 +20,24 @@ define([], function() {
               var selectedTenant = $scope.tenantsGrid.selectedItems[0];
               if (!selectedTenant) return; // TODO: async error
               if (!selectedDatastoresRows) return;
+              var defaultPrivileges = {
+                create_volumes: selectedTenant.default_privileges.create_volumes === 'true' ? true : false,
+                mount_volumes: selectedTenant.default_privileges.mount_volumes === 'true' ? true : false,
+                delete_volumes: selectedTenant.default_privileges.delete_volumes === 'true' ? true : false,
+                max_volume_size: selectedTenant.default_privileges.max_volume_size,
+                usage_quota: selectedTenant.default_privileges.usage_quota
+              };
               var datastores = selectedDatastoresRows.map(function(dr) {
                 return {
                   datastore: dr.name,
-
-                  //
-                  // TODO: replace these hard-coded default perms with those that come back with (newly created) tenant
-                  //
-
-                  permissions: {
-                    create_volumes: false,
-                    mount_volumes: false,
-                    delete_volumes: false,
-                    max_volume_size: '',
-                    usage_quota: ''
-                  }
+                  permissions: defaultPrivileges
                 };
               });
               //
-              // originally there was support for multi-select of datastores
-              // this is where we transition from that model to a single datastore at a time model
-              // by taking only the first in the array
+              // The add datastores grid is set currently to support only single select
+              // so we just take the first (and theoretically the only) item in the array
               //
               var originalDatastore = datastores[0]; // will be only one in SINGLE mode
-              //
-              //
-              //
               DvolTenantService.addDatastoreAccessForTenant(selectedTenant.name, originalDatastore)
                 .then(datastoresGrid.refresh)
                 .then(function() {

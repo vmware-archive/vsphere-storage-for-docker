@@ -77,9 +77,7 @@ define([], function() {
     };
 
     //
-    // Not yet supported
-    // TODO: check to see if this will be supported
-    // and either uncomment this or remove this
+    // modifyTenant not yet supported by the VMODL API
     //
 
     // this.modifyTenant = function(args) {

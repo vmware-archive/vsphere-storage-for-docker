@@ -8,6 +8,11 @@ define(['angular'], function(angular) {
       $q, $log, $location, AuthService, StorageManager
   ) {
 
+    //
+    // We use a raw SOAP request to communicate with the API
+    // We tried several higher-level alternatives without success
+    //
+
     var performRawSOAPRequest = function(
      type, moid, methodName, vers, args) {
 

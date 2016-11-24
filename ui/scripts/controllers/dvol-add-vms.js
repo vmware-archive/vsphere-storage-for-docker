@@ -14,7 +14,7 @@ define([], function() {
         allVms.forEach(function(vm) {
           var alreadyInTenant;
           tenantVms.forEach(function(tvm) {
-            if (vm.name === tvm.id) {
+            if (vm.name === tvm) {
               alreadyInTenant = true;
             }
           });

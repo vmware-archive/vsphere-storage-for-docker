@@ -40,18 +40,18 @@ define([], function() {
           .then(function(tenant) {
             DialogService.showDialog('dvol.edit-tenant', {
               tenant: tenant,
-              editMode: true,
-              save: function(newTenantValues) {
-                //
-                // The vmodl api doesn't currently
-                // support modifyTenant.
-                //
-                // Once it does we might do something like this
-                //
-                //DvolTenantService.modifyTenant(newTenantValues)
-                //  .then(tenantsGrid.refresh);
-                //
-              }
+              editMode: true
+              //
+              // The vmodl api doesn't currently support the modifyTenant action
+              // ,
+              // save: function(newTenantValues) {
+              //
+              // Once it does we might do something like this
+              //
+              // DvolTenantService.modifyTenant(newTenantValues)
+              // .then(tenantsGrid.refresh);
+              //
+              // }
             });
 
           });

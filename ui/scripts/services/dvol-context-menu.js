@@ -47,36 +47,7 @@ define([], function() {
       };
 
       switch (context) {
-      case 'storage':
-        /* falls through */
-      case 'storage.adapter':
-        /* falls through */
-      case 'storage.datastore':
-        /* falls through */
-      case 'storage.device.disk':
-        /* falls through */
-      case 'storage.device.cdrom':
-        /* falls through */
-      case 'networking':
-        /* falls through */
-      case 'network.portgroup':
-        /* falls through */
-      case 'network.vswitch':
-        /* falls through */
-      case 'network.vmknic':
-        /* falls through */
-      case 'network.pnic':
-        /* falls through */
-      case 'client.help':
-        /* falls through */
-      case 'client.user':
-        /* falls through */
-      case 'host':
-        /* falls through */
-      case 'vm':
-        /* falls through */
-      case 'vm.none':
-        /* falls through */
+      // put other context menu options here
       case 'dvol':
         deferred.resolve({
           menu: traverse(dvolContextMenu, objects),

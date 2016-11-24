@@ -12,7 +12,7 @@ define([], function() {
     //
 
     //
-    // eventually the VMODL api will support get Tenant by ID
+    // eventually the VMODL api will support get Tenant by Name
     // for now we just use listTenants
     //
     function getTenantByName(tenantName) {
@@ -75,10 +75,10 @@ define([], function() {
     }
 
     //
-    // NOTE: the VMODL api supports removing multiple VMs in same call
+    // The VMODL api supports removing multiple VMs in the same call
     // Our original removeVmFromTenant implementation supports only one,
-    // so we just call the api with a single vm
-    // and not take advantage of the multiple vm option for now
+    // So we just call the api with a singleton vm
+    // not taking advantage of the multiple vm option for now
     //
     function removeVmFromTenant(tenantId, vmId) {
       return DvolVmodlService.removeVMsFromTenant({
@@ -120,20 +120,20 @@ define([], function() {
     }
 
     function modifyDatastoreAccessForTenant(tenantId, updatedDatastore) {
-      var add_rights = [];
-      var remove_rights = [];
+      var addRights = [];
+      var removeRights = [];
       ['create', 'mount', 'delete'].forEach(function(p) {
         if (updatedDatastore.permissions[p + '_volumes']) {
-          add_rights.push(p);
+          addRights.push(p);
         } else {
-          remove_rights.push(p);
+          removeRights.push(p);
         }
       });
       return DvolVmodlService.modifyDatastoreAccessForTenant({
         name: tenantId,
         datastore: updatedDatastore.datastore,
-        add_rights: add_rights,
-        remove_rights: remove_rights,
+        add_rights: addRights,
+        remove_rights: removeRights,
         max_volume_size: updatedDatastore.permissions.max_volume_size,
         usage_quota: updatedDatastore.permissions.usage_quota
       });
