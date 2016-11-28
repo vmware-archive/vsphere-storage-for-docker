@@ -259,7 +259,11 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
     if not os.path.isfile(src_vmdk_path):
         return err("Could not find volume for cloning %s" % opts[kv.CLONE_FROM])
 
-    with lockManager.get_lock(src_volume):
+    # Form datastore path from vmdk_path
+    dest_vol = vmdk_utils.get_datastore_path(vmdk_path)
+    source_vol = vmdk_utils.get_datastore_path(src_vmdk_path)
+
+    with lockManager.get_lock(source_vol):
         # Verify if the source volume is in use.
         attached, uuid, attach_as = getStatusAttached(src_vmdk_path)
         if attached:
@@ -286,10 +290,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         vdisk_spec.adapterType = 'busLogic'
         vdisk_spec.diskType = disk_format
 
-        # Form datastore path from vmdk_path
-        dest_vol = vmdk_utils.get_datastore_path(vmdk_path)
-        source_vol = vmdk_utils.get_datastore_path(src_vmdk_path)
-
+        # Clone volume
         si = get_si()
         task = si.content.virtualDiskManager.CopyVirtualDisk(
             sourceName=source_vol, destName=dest_vol, destSpec=vdisk_spec)
