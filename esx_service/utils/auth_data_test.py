@@ -21,6 +21,7 @@ import auth_data
 import uuid
 import auth_data_const
 import auth
+import log_config
 
 class TestAuthDataModel(unittest.TestCase):
     """

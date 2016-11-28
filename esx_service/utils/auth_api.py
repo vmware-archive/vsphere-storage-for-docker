@@ -20,6 +20,8 @@ import convert
 import auth_data
 import vmdk_utils
 import error_code
+import log_config
+import logging
 
 def get_auth_mgr():
     """ Get a connection to auth DB. """
@@ -209,7 +211,7 @@ def _tenant_create(name, description, default_datastore, default_privileges, vm_
     
     return None, tenant
 
-def _tenant_modify(name, new_name, description):
+def _tenant_modify(name, new_name=None, description=None):
     """ API to modify a tenant """
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
@@ -330,7 +332,7 @@ def _tenant_access_add(name, datastore, rights, volume_maxsize, volume_totalsize
     error_info = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges])
     return error_info
 
-def _tenant_access_set(name, datastore, add_rights, rm_rights, volume_maxsize, volume_totalsize):
+def _tenant_access_set(name, datastore, add_rights=None, rm_rights=None, volume_maxsize=None, volume_totalsize=None):
     """ API to modify datastore access for a tenant """
     error_info, tenant = get_tenant_from_db(name)
     if error_info:

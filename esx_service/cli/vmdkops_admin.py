@@ -862,6 +862,7 @@ def tenant_create(args):
         print("tenant create succeeded")
 
 def tenant_modify(args):
+    """ Handle tenant modify command """
     error_info = auth_api._tenant_modify(name=args.name,
                                          new_name=args.new_name,
                                          description=args.description)

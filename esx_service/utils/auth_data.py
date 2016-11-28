@@ -692,7 +692,23 @@ class AuthorizationDataManager:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
                     error_info += str(err)
             
-            # Delete path /vmfs/volumes/datastore_name/tenant_name
+            # delete the symlink /vmfs/volume/datastore_name/tenant_name
+            # which point to /vmfs/volumes/datastore_name/tenant_uuid
+            lock = threadutils.get_lock()
+            for (datastore, url_name, path) in vmdk_utils.get_datastores():
+                dock_vol_path = os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR)
+                tenant_path = os.path.join(dock_vol_path, tenant_id)
+                logging.debug("remove volumes for tenant: try to remove the symlink to path %s", tenant_path)
+            
+                if os.path.isdir(tenant_path):
+                    lock.acquire() 
+                    exist_symlink_path = os.path.join(dock_vol_path, tenant_name)
+                    if os.path.isdir(exist_symlink_path):
+                        os.remove(exist_symlink_path)
+                        logging.debug("remove volumes for tenant: Remove the symbol link %s", exist_symlink_path)
+                    lock.release()
+            
+            # Delete path /vmfs/volumes/datastore_name/tenant_uuid
             logging.debug("Deleting dir paths %s", dir_paths)
             for path in list(dir_paths):
                 try:

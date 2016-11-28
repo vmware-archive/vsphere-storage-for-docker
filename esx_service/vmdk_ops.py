@@ -628,9 +628,9 @@ def get_vol_path(datastore, tenant_name=None):
             logging.warning(errMsg)
             return None, err(errMsg)
         
-        # create the symbol link
+        # create the symbol link /vmfs/volumes/datastore_name/dockvol/tenant_name
         symlink_path = os.path.join(dock_vol_path, tenant_name)
-        if not os.path.isfile(symlink_path):
+        if not os.path.isdir(symlink_path):
             os.symlink(path, symlink_path)
             logging.info("Symlink %s is created to point to path %s", symlink_path, path)
 
