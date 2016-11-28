@@ -84,12 +84,15 @@ truncate_esx_logs $ESX
 
 log "starting deploy and test"
 
+INCLUDE_HOSTD="false"
+
 if make -s deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol.build$BUILD_NUMBER;
 then
   dump_logs
   stop_build $VM1 $BUILD_NUMBER
 else
   log "Build + Test not successful"
+  INCLUDE_HOSTD="true"
   dump_logs
   stop_build $VM1 $BUILD_NUMBER
   exit 1
