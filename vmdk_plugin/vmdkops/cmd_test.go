@@ -26,7 +26,8 @@ import (
 
 func TestCommands(t *testing.T) {
 	ops := vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}}
-	name := "myVolume"
+	volumeName := TestInputParamsUtil.GetVolumeName()
+	t.Logf("\nCreating Test Volume with name = [%s]...\n", volumeName)
 	opts := map[string]string{"size": "2gb"}
 	if assert.Nil(t, ops.Create(name, opts)) {
 
