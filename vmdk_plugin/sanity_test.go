@@ -30,6 +30,7 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"golang.org/x/net/context"
 )
@@ -190,8 +191,8 @@ func TestSanity(t *testing.T) {
 	}
 
 	c := clients[0].client // this is the endpoint we use as master
-	volName := TestInputParamsUtil.GetVolumeName()
-	t.Logf("Creating vol=%s on client %s.", volName, clients[0].endPoint)
+	volumeName := TestInputParamsUtil.GetVolumeName()
+	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
 	_, err := c.VolumeCreate(context.Background(),
 		types.VolumeCreateRequest{
 			Name:   volumeName,

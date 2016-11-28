@@ -18,16 +18,16 @@ package vmdkops_test
 // Does not communicate over VMCI
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
+	"testing"
 )
 
 func TestCommands(t *testing.T) {
 	ops := vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}}
-	volumeName := TestInputParamsUtil.GetVolumeName()
-	t.Logf("\nCreating Test Volume with name = [%s]...\n", volumeName)
+	name := TestInputParamsUtil.GetVolumeName()
+	t.Logf("\nCreating Test Volume with name = [%s]...\n", name)
 	opts := map[string]string{"size": "2gb"}
 	if assert.Nil(t, ops.Create(name, opts)) {
 
