@@ -3,7 +3,7 @@
 define([], function() {
   'use strict';
 
-  return function(DvolDatacenterVmService, GridUtils, vuiConstants, $filter, VMUtil) {
+  return function(DvolVmService, GridUtils, vuiConstants, $filter, VMUtil) {
 
     var translate = $filter('translate');
 
@@ -20,7 +20,7 @@ define([], function() {
       });
     }
 
-    function makeStatusColDef(linkEnabled) {
+    function makeStatusColDef() {
       return {
         displayName: translate('vm.list.columns.status'),
         field: 'status',
@@ -97,11 +97,7 @@ define([], function() {
       makeStatusColDef(), {
         displayName: 'Used space',
         field: 'storageUsageFormatted',
-        width: '15%'
-      }, {
-        field: 'id',
-        displayName: 'ID',
-        width: '15%'
+        width: '30%'
       }];
     }
 
@@ -120,7 +116,7 @@ define([], function() {
 
     function makeVmsGrid(id, actions, filterFn, selectionMode, linkEnabled) {
 
-      var datacenterVmsGrid;
+      var vmsGrid;
 
       var gridProps = getGridProps(id, selectionMode, linkEnabled);
 
@@ -129,18 +125,29 @@ define([], function() {
         gridProps.actionBarOptions.actions = actions;
       }
 
-      datacenterVmsGrid = GridUtils.Grid(gridProps);
+      vmsGrid = GridUtils.Grid(gridProps);
 
       function refresh() {
-        return DvolDatacenterVmService.get().then(function(vms) {
-          datacenterVmsGrid.data = mapVmsToGrid(filterFn ? filterFn(vms) : vms);
-        });
+        var p;
+        if (filterFn) {
+          p = DvolVmService.get()
+          .then(filterFn)
+          .then(function(filteredVms) {
+            vmsGrid.data = mapVmsToGrid(filteredVms);
+          });
+        } else {
+          p = DvolVmService.get()
+          .then(function(vms) {
+            vmsGrid.data = mapVmsToGrid(vms);
+          });
+        }
+        return p;
       }
 
       refresh();
 
       return {
-        grid: datacenterVmsGrid,
+        grid: vmsGrid,
         refresh: refresh
       };
 

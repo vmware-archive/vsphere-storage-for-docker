@@ -1,10 +1,10 @@
 
-/* global define $ */
+/* global define $ _ */
 
 define([], function() {
   'use strict';
 
-  return function($scope, $rootScope, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
+  return function($scope, $rootScope, $q, DialogService, DvolDatastoreGridService, DvolTenantService, GridUtils) {
 
     var datastoresGridActions = [
       {
@@ -15,36 +15,59 @@ define([], function() {
         enabled: true,
         onClick: function() {  // (evt, action)
           DialogService.showDialog('dvol.add-datastores', {
+            selectedTenantRow: $scope.tenantsGrid.selectedItems[0],
             save: function(selectedDatastoresRows) {
               var selectedTenant = $scope.tenantsGrid.selectedItems[0];
               if (!selectedTenant) return; // TODO: async error
               if (!selectedDatastoresRows) return;
+              var defaultPrivileges = {
+                create_volumes: selectedTenant.default_privileges.create_volumes === 'true' ? true : false,
+                mount_volumes: selectedTenant.default_privileges.mount_volumes === 'true' ? true : false,
+                delete_volumes: selectedTenant.default_privileges.delete_volumes === 'true' ? true : false,
+                max_volume_size: selectedTenant.default_privileges.max_volume_size,
+                usage_quota: selectedTenant.default_privileges.usage_quota
+              };
               var datastores = selectedDatastoresRows.map(function(dr) {
                 return {
-                  datastore: dr.id,
-                  permissions: {
-                    create: false,
-                    mount: false,
-                    remove: false,
-                    maxVolume: 0,
-                    totalVolume: 0
-                  }
+                  datastore: dr.name,
+                  permissions: defaultPrivileges
                 };
               });
-              var firstDatastore = datastores[0]; // will be only one in SINGLE mode
-              DvolTenantService.addDatastores(selectedTenant.id, datastores)
+              //
+              // The add datastores grid is set currently to support only single select
+              // so we just take the first (and theoretically the only) item in the array
+              //
+              var originalDatastore = datastores[0]; // will be only one in SINGLE mode
+              DvolTenantService.addDatastoreAccessForTenant(selectedTenant.name, originalDatastore)
                 .then(datastoresGrid.refresh)
                 .then(function() {
+                  var originalPermissions = _.clone(originalDatastore.permissions);
                   DialogService.showDialog('dvol.edit-datastore', {
-                    permissions: firstDatastore.permissions,
+                    permissions: originalDatastore.permissions,
                     save: function(editedPermissions) {
-                      DvolTenantService.updateDatastore(selectedTenant.id, { datastore: firstDatastore.datastore, permissions: editedPermissions })
-                        .then(datastoresGrid.refresh);
+                      DvolTenantService.modifyDatastoreAccessForTenant(
+                        selectedTenant.name,
+                        {
+                          datastore: originalDatastore.datastore,
+                          permissions: editedPermissions
+                        },
+                        //
+                        // a bit of a hack here
+                        // originally the UI expected an API that received a new permission set
+                        // as the way to update a datastore
+                        //
+                        // the actual API uses an add_rights & remove_right approach to modifying
+                        // the create, delete, mount permissions
+                        //
+                        // so we pass down the original permissions so the "deltas" can be figured out
+                        //
+                        originalPermissions
+                      )
+                      .then(datastoresGrid.refresh);
                     }
                   });
                 });
-            },
-            datastoresAlreadyInTenant: DvolTenantService.state.tenants[$scope.tenantsGrid.selectedItems[0].id].datastores
+            }
           });
         }
       },
@@ -55,14 +78,14 @@ define([], function() {
         enabled: true,
         onClick: function() {
           if ($scope.datastoresGrid.selectedItems.length < 1) return;
-          var datastoreId = $scope.datastoresGrid.selectedItems[0].id || $scope.datastoresGrid.selectedItems[0].moid;
-          DvolTenantService.get($scope.tenantsGrid.selectedItems[0].id)
+          var datastoreId = $scope.datastoresGrid.selectedItems[0].name;
+          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].id)
           .then(function(tenant) {
             var datastore = tenant.datastores[datastoreId];
             DialogService.showDialog('dvol.edit-datastore', {
               permissions: datastore.permissions,
               save: function(editedPermissions) {
-                DvolTenantService.updateDatastore(tenant.id, { datastore: datastoreId, permissions: editedPermissions })
+                DvolTenantService.modifyDatastoreAccessForTenant(tenant.id, { datastore: datastoreId, permissions: editedPermissions })
                   .then(datastoresGrid.refresh);
               }
             });
@@ -80,7 +103,7 @@ define([], function() {
           if (!selectedTenant) return;
           var selectedDatastore = $scope.datastoresGrid.selectedItems[0];
           if (!selectedDatastore) return;
-          DvolTenantService.removeDatastore(selectedTenant.id, selectedDatastore.moid || selectedDatastore.id)
+          DvolTenantService.removeDatastoreAccessForTenant(selectedTenant.name, selectedDatastore.name)
             .then(datastoresGrid.refresh);
         }
       },
@@ -97,20 +120,23 @@ define([], function() {
     ];
 
     function filterDatastoresForThisTenant(allDatastores) {
-      // NOTE: selectedTenants from the grid doesn't have new datastores added (will not until grid refresh)
-      // we don't want to refresh the grid because we'll lose tenant row selection
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
-      if (!selectedTenantRow) return [];
-      var selectedTenant = DvolTenantService.state.tenants[selectedTenantRow.id];
-      var filteredDatastores = allDatastores.filter(function(d) {
-        return selectedTenant.datastores[d.id || d.moid];
-      }).map(function(d) {
-        return {
-          datastore: d,
-          permissions: selectedTenant.datastores[d.id || d.moid].permissions
-        };
+      if (!selectedTenantRow) return $q.reject('ERROR: attempting to get datastores for a tenant but no tenant is selected');
+      return DvolTenantService.listDatastoreAccessForTenant(selectedTenantRow.name)
+      .then(function(tenantDatastoreAccesses) {
+        var filteredDatastores = [];
+        allDatastores.forEach(function(ds) {
+          tenantDatastoreAccesses.forEach(function(tds) {
+            if (ds.name === tds.datastore) {
+              filteredDatastores.push({
+                datastore: ds,
+                permissions: tds.permissions
+              });
+            }
+          });
+        });
+        return filteredDatastores;
       });
-      return filteredDatastores;
     }
 
     var datastoresGrid = DvolDatastoreGridService.makeDatastoresGrid('datastoresGrid', datastoresGridActions, filterDatastoresForThisTenant, true);

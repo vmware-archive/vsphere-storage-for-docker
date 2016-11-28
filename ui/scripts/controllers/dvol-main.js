@@ -4,28 +4,7 @@ define([], function() {
   'use strict';
 
   return function($rootScope, $scope, $log, $state, $filter, $timeout, GridUtils, vuiConstants, DialogService,
-    DvolTenantService, DvolTenantGridService, DvolVsanService) {
-
-    // -----------------------------
-    //
-    // Temporary
-    //
-    // Here when the app is loaded we're temporarily making
-    // a call to DvolVsanService to test connectivity
-    //
-    // TODO: remove this
-    //
-
-    DvolVsanService.getTenants()
-    .then(function(res) {
-      console.log('getTenants: ' + res);
-    }, function(err) {
-      console.log('ERROR getTenants: ' + err);
-    });
-
-    //
-    // -----------------------------
-    //
+    DvolTenantService, DvolTenantGridService) {
 
     var translate = $filter('translate');
 
@@ -40,7 +19,10 @@ define([], function() {
           DialogService.showDialog('dvol.add-tenant', {
             tenant: {},
             save: function(newTenant, vms) {
-              DvolTenantService.add(newTenant, vms)
+              var vmIds = vms.map(function(vm) {
+                return vm.name;
+              });
+              DvolTenantService.createTenant(newTenant, vmIds)
                 .then(tenantsGrid.refresh);
             }
           });
@@ -51,18 +33,25 @@ define([], function() {
         label: 'Edit',
         iconClass: 'vui-icon-action-edit',
         tooltipText: 'Edit Tenant',
-        enabled: true,
+        enabled: true,  // enable this once the API supports it
         onClick: function() {
           if ($scope.tenantsGrid.selectedItems.length < 1) return;
-          DvolTenantService.get($scope.tenantsGrid.selectedItems[0].id)
+          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].name)
           .then(function(tenant) {
             DialogService.showDialog('dvol.edit-tenant', {
               tenant: tenant,
-              editMode: true,
-              save: function(newTenant) {
-                DvolTenantService.update(newTenant)
-                  .then(tenantsGrid.refresh);
-              }
+              editMode: true
+              //
+              // The vmodl api doesn't currently support the modifyTenant action
+              // ,
+              // save: function(newTenantValues) {
+              //
+              // Once it does we might do something like this
+              //
+              // DvolTenantService.modifyTenant(newTenantValues)
+              // .then(tenantsGrid.refresh);
+              //
+              // }
             });
 
           });
@@ -77,7 +66,7 @@ define([], function() {
         onClick: function() {
           var selectedTenant = $scope.tenantsGrid.selectedItems[0];
           if (!selectedTenant) return;
-          DvolTenantService.remove(selectedTenant.id);
+          DvolTenantService.removeTenant(selectedTenant.id);
           tenantsGrid.refresh();
         }
       },
@@ -118,7 +107,7 @@ define([], function() {
       })[0];
     }
 
-    $scope.$watch('tenantsGrid.selectedItems', function() {
+    $scope.$watch('tenantsGrid.selectedItems', function(newVal, oldVal) {
       var editAction = findAction($scope.tenantsGrid.actionBarOptions.actions, 'edit-tenant-button');
       var removeAction = findAction($scope.tenantsGrid.actionBarOptions.actions, 'remove-tenant-button');
       if ($scope.tenantsGrid.selectedItems.length < 1) {
@@ -128,8 +117,10 @@ define([], function() {
         editAction.enabled = true;
         removeAction.enabled = true;
       }
-      $rootScope.vmsGrid && $rootScope.vmsGrid.refresh();
-      $rootScope.datastoresGrid && $rootScope.datastoresGrid.refresh();
+      if (newVal !== oldVal && $scope.tenantsGrid.selectedItems.length > 0) {
+        $rootScope.vmsGrid && $rootScope.vmsGrid.refresh();
+        $rootScope.datastoresGrid && $rootScope.datastoresGrid.refresh();
+      }
     });
 
     //

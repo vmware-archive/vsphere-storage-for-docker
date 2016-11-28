@@ -45,7 +45,7 @@ define([], function() {
         return {
           title: 'Add Datastores',
           width: '585px',
-          height: '360px',
+          height: '480px',
           icon: 'esx-icon-datastore-add',
           content: 'plugins/docker-volume-plugin/views/dvol-add-datastores-dialog.html',
           rejectOptions: rejectOptions

@@ -11,32 +11,32 @@
          <div vui-sb-content>
             <input type="checkbox"
                focus-me="'select'"
-               ng-model="permissions.create"
+               ng-model="permissions.create_volumes"
                title="Create permission"/>
          </div>
        </div>
 
-       <div vui-stack-block="nameBlock" ng-if="permissions.create" >
+       <div vui-stack-block="nameBlock" ng-if="permissions.create_volumes" >
          <span vui-sb-label>
-           Max volume size (GB)
+           Max volume size
          </span>
           <div vui-sb-content>
-             <input type="number"
+             <input type="string"
                 focus-me="'select'"
-                ng-model="permissions.maxVolume"
+                ng-model="permissions.max_volume_size"
                 title="Max volume size"/>
           </div>
         </div>
 
-        <div vui-stack-block="nameBlock" ng-if="permissions.create" >
+        <div vui-stack-block="nameBlock" ng-if="permissions.create_volumes" >
           <span vui-sb-label>
-           Max total volume size (GB)
+           Usage Quota
           </span>
           <div vui-sb-content>
-             <input type="number"
+             <input type="string"
                 focus-me="'select'"
-                ng-model="permissions.totalVolume"
-                title="Max total volume size"/>
+                ng-model="permissions.usage_quota"
+                title="Usage quota"/>
           </div>
         </div>
 
@@ -47,20 +47,20 @@
            <div vui-sb-content>
               <input type="checkbox"
                  focus-me="'select'"
-                 ng-model="permissions.mount"
+                 ng-model="permissions.mount_volumes"
                  title="Mount permission"/>
            </div>
         </div>
 
         <div vui-stack-block="nameBlock">
           <span vui-sb-label>
-            Remove volumes
+            Delete volumes
           </span>
            <div vui-sb-content>
               <input type="checkbox"
                  focus-me="'select'"
-                 ng-model="permissions.remove"
-                 title="Remove permission"/>
+                 ng-model="permissions.delete_volumes"
+                 title="Delete permission"/>
            </div>
         </div>
 
