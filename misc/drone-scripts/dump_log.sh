@@ -22,8 +22,11 @@ HOSTD_LOGFILE="/var/log/hostd.log"
 dump_log_esx() {
   log $ESX_LOGFILE
   $SSH $USER@$1 cat $ESX_LOGFILE
-  log $HOSTD_LOGFILE
-  $SSH $USER@$1 cat $HOSTD_LOGFILE
+  if [ $INCLUDE_HOSTD == "true" ]
+  then
+    log $HOSTD_LOGFILE
+    $SSH $USER@$1 cat $HOSTD_LOGFILE
+  fi
 }
 
 dump_log_vm(){
@@ -36,5 +39,8 @@ truncate_vm_logs() {
 
 truncate_esx_logs() {
   $SSH $USER@$1 "echo > $ESX_LOGFILE"
-  $SSH $USER@$1 "echo > $HOSTD_LOGFILE"
+  if [ $INCLUDE_HOSTD == "true" ]
+  then
+    $SSH $USER@$1 "echo > $HOSTD_LOGFILE"
+  fi
 }
