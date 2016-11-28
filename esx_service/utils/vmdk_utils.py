@@ -129,10 +129,12 @@ def get_volumes(tenant_re):
             for root, dirs, files in os.walk(path):
                 # walkthough all files under docker_vol path
                 # root is the current directory which is traversing
-                #  root = /vmfs/volumes/datastore1/dockervol/tenant1
+                #  root = /vmfs/volumes/datastore1/dockervol/tenant1_uuid
                 #  path = /vmfs/volumes/datastore1/dockervol
-                #  sub_dir get the string "/tenant1"
-                #  sub_dir_name is "tenant1" which will be used to match
+                #  sub_dir get the string "/tenant1_uuid"
+                #  sub_dir_name is "tenant1_uuid" 
+                #  call get_tenant_name with "tenant1_uuid" to find corresponding
+                #  tenant_name which will be used to match
                 #  pattern specified by tenant_re
                 logging.debug("get_volumes: path=%s root=%s", path, root)
                 sub_dir = root.replace(path, "")

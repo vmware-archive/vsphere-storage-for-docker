@@ -207,7 +207,7 @@ def commands():
                 },
                 'modify': {
                     'func': tenant_modify,
-                    'help': 'Modify a existing tenant',
+                    'help': 'Modify an existing tenant',
                     'args': {
                         '--name': {
                             'help': 'The name of the tenant',
