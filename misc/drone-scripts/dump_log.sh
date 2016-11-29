@@ -39,8 +39,5 @@ truncate_vm_logs() {
 
 truncate_esx_logs() {
   $SSH $USER@$1 "echo > $ESX_LOGFILE"
-  if [ $INCLUDE_HOSTD == "true" ]
-  then
-    $SSH $USER@$1 "echo > $HOSTD_LOGFILE"
-  fi
+  $SSH $USER@$1 "echo > $HOSTD_LOGFILE"
 }
