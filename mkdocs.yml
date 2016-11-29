@@ -1,4 +1,4 @@
-site_name: Docker Volume Driver for vSphere
+site_name: vSphere Docker Volume Service
 pages:
     - Home: index.md
     - Installation and Deployment: user-guide/install.md
