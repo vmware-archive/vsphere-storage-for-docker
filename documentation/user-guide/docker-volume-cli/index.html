@@ -272,6 +272,7 @@
 <li><a href="#attach_as">attach_as</a></li>
 <li><a href="#access">access</a></li>
 <li><a href="#fstype">fstype</a></li>
+<li><a href="#clone-from">clone-from</a></li>
 </ul>
 </li>
 </ul>
@@ -336,6 +337,12 @@ docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=ext4 (
 </code></pre>
 
 <p>Specifies which filesystem will be created on the new volume. vSphere Docker Volume Service will search for a existing /sbin/mkfs.<strong>fstype</strong> on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. </p>
+<h3 id="clone-from">clone-from<a class="headerlink" href="#clone-from" title="Permanent link">&para;</a></h3>
+<pre><code>docker volume create --driver=vmdk --name=CloneVolume -o clone-from=MyVolume -o access=read-only
+docker volume create --driver=vmdk --name=CloneVolume -o clone-from=MyVolume -o diskformat=thin (default)
+</code></pre>
+
+<p>Specifies a volume to be cloned when creating a new volume. The created clone is completely independent from the original volume and will inherit the same options, which can be changed with the exception of the size and fstype.</p>
               
             </div>
           </div>
