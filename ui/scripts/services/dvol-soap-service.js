@@ -5,7 +5,7 @@ define(['angular'], function(angular) {
   'use strict';
 
   return function(
-      $q, $log, $location, AuthService, StorageManager
+      $q, $log, $location, AuthService, StorageManager, DialogService
   ) {
 
     //
@@ -74,6 +74,11 @@ define(['angular'], function(angular) {
           if (xhr.status === 200) {
             deferred.resolve(xhr.response);
           } else {
+            //
+            // Right now any server error is handled the same way: assume it's a "vsan service not running" error
+            // TODO: handle the full range of errors that can occur here
+            //
+            DialogService.showDialog('dvol.server-error');
             deferred.reject();
           }
         }
