@@ -18,35 +18,16 @@ Licensed under the Apache License, Version 2.0
 http://www.apache.org/licenses/LICENSE-2.0
 """
 
-from VmodlDecorators import ManagedType, EnumType, Method, \
-   Return, RegisterVmodlTypes, F_OPTIONAL, Param, DataType, Attribute
-from pyVmomi import Vmodl
-from pyVmomi.VmomiSupport import newestVersions
-
-try:
-   from asyncVmodlEmitterLib import JavaDocs, Internal
-except ImportError:
-   pass
-   def JavaDocs(parent, docs):
-      def Decorate(f):
-         return f
-      return Decorate
-   def Internal(parent):
-      def Decorate(f):
-         return f
-      return Decorate
-
-
-# _VERSION = newestVersions.Get("vim")
-_VERSION = 'vim.version.version10'
-
-# Vmodl Names
+from VmodlModules import *
 
 class TenantManager:
-   ''' This class manages the lifecycle of tenants for vSphere Container Service '''
-
    _name = "vim.vcs.TenantManager"
 
+   @JavaDocs(parent=_name, docs =
+   """
+   This class manages the lifecycle of tenants for vSphere Container Service.
+   """
+   )
    @Internal(parent=_name)
    @ManagedType(name=_name, version=_VERSION)
    def __init__(self):
@@ -54,7 +35,7 @@ class TenantManager:
 
    @JavaDocs(parent=_name, docs=
    """
-   Create a Tenant instance
+   Create a Tenant instance.
    """
    )
    @Method(parent=_name, wsdlName="CreateTenant")
@@ -66,38 +47,39 @@ class TenantManager:
 
    @JavaDocs(parent=_name, docs=
    """
-   Remove a Tenant instance
+   Remove a Tenant instance. Remove all volumes created by this tenant
+   if remove_volumes flag is set to True.
    """
    )
    @Method(parent=_name, wsdlName="RemoveTenant")
    @Param(name="name", typ="string")
    @Param(name="remove_volumes", typ="boolean")
    @Return(typ="void")
-   def RemoveTenant(self, name):
+   def RemoveTenant(self, name, remove_volumes=False):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Query Tenants for the given name. Return all Tenants if name is null.
+   Query Tenant for the given name. Return all Tenants if name is not set.
    """
    )
    @Method(parent=_name, wsdlName="GetTenants")
    @Param(name="name", typ="string", flags=F_OPTIONAL)
    @Return(typ="vim.vcs.Tenant[]")
-   def GetTenants(self): 
+   def GetTenants(self, name=None): 
        pass 
 
    @JavaDocs(parent=_name, docs=
    """
-   Modify the attributes of a Tenant instance
+   Modify the attributes of a Tenant instance.
    """
    )
-   @Method(parent=_name, wsdlName="RemoveTenant")
+   @Method(parent=_name, wsdlName="ModifyTenant")
    @Param(name="name", typ="string")
    @Param(name="new_name", typ="string", flags=F_OPTIONAL)
    @Param(name="new_description", typ="string", flags=F_OPTIONAL)
    @Return(typ="void")
-   def RemoveTenant(self, name):
+   def ModifyTenant(self, name, new_name=None, new_description=None):
        pass
 
 RegisterVmodlTypes()

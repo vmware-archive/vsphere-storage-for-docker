@@ -13,54 +13,32 @@
 # limitations under the License.
 
 """
-Copyright 2016 VMware, Inc.  All rights reserved. 
-Licensed under the Apache License, Version 2.0 
+Copyright 2016 VMware, Inc.  All rights reserved.
+Licensed under the Apache License, Version 2.0
 http://www.apache.org/licenses/LICENSE-2.0
 """
 
-from VmodlDecorators import ManagedType, EnumType, Method, \
-   Return, RegisterVmodlTypes, F_OPTIONAL, Param, DataType, Attribute
-from pyVmomi import Vmodl
-from pyVmomi.VmomiSupport import newestVersions
-
-try:
-   from asyncVmodlEmitterLib import JavaDocs, Internal
-except ImportError:
-   pass
-   def JavaDocs(parent, docs):
-      def Decorate(f):
-         return f
-      return Decorate
-   def Internal(parent):
-      def Decorate(f):
-         return f
-      return Decorate
-
-
-# _VERSION = newestVersions.Get("vim")
-_VERSION = 'vim.version.version10'
-
-# Vmodl Names
+from VmodlModules import *
 
 class DatastoreAccessPrivilege:
    _name = "vim.vcs.storage.DatastoreAccessPrivilege"
+
    @JavaDocs(parent=_name, docs =
    """
    This class encapsulates the datastore access privilege for a tenant.
    """
    )
-   
    @DataType(name=_name, version=_VERSION)
    def __init__(self):
        pass
 
    @JavaDocs(parent=_name, docs =
    """
-   Datastore name
+   Datastore URL
    """
    )
    @Attribute(parent=_name, typ="string")
-   def datastore(self):
+   def datastore_url(self):
        pass
 
    @JavaDocs(parent=_name, docs =
@@ -78,7 +56,7 @@ class DatastoreAccessPrivilege:
    """
    )
    @Attribute(parent=_name, typ="string")
-   def max_volume_size(self):
+   def volume_max_size_in_MiB(self):
        pass
 
    @JavaDocs(parent=_name, docs =
@@ -87,7 +65,7 @@ class DatastoreAccessPrivilege:
    """
    )
    @Attribute(parent=_name, typ="string")
-   def usage_quota(self):
+   def volume_total_size_in_MiB(self):
        pass
 
 RegisterVmodlTypes()

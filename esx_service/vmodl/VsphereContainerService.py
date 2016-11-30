@@ -18,35 +18,20 @@ Licensed under the Apache License, Version 2.0
 http://www.apache.org/licenses/LICENSE-2.0
 """
 
-from VmodlDecorators import ManagedType, EnumType, Method, \
-   Return, RegisterVmodlTypes, F_OPTIONAL, Param, DataType, Attribute
-from pyVmomi import Vmodl
-from pyVmomi.VmomiSupport import newestVersions
-
-try:
-   from asyncVmodlEmitterLib import JavaDocs, Internal
-except ImportError:
-   pass
-   def JavaDocs(parent, docs):
-      def Decorate(f):
-         return f
-      return Decorate
-   def Internal(parent):
-      def Decorate(f):
-         return f
-      return Decorate
-
-
-# _VERSION = newestVersions.Get("vim")
-_VERSION = 'vim.version.version10'
-
-# Vmodl Names
+from VmodlModules import *
 
 class VsphereContainerService:
-   ''' This is the bootstrapping class for vSphere Container Service '''
+   _name = "vim.vcs.VsphereContainerService"
 
-   _name = "vim.host.VsphereContainerService"
-
+   @JavaDocs(parent=_name, docs =
+   """
+   This is the bootstrapping class for vSphere Container Service (VCS).
+   VCS enables customers to run stateful containerized applications on top
+   of VMware vSphere platform. This service addresses persistent storage
+   requirements for Docker containers in vSphere environments, and enables
+   multitenancy, security and access control from a single location.
+   """
+   )
    @Internal(parent=_name)
    @ManagedType(name=_name, version=_VERSION)
    def __init__(self):
