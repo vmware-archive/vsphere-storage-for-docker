@@ -265,6 +265,15 @@ def get_vm_uuid_by_name(vm_name):
     except:
         return None
 
+def get_vm_name_by_uuid(vm_uuid):
+    """ Returns vm_name for given vm_uuid, or None """
+    si = vmdk_ops.get_si()
+    try:
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.uuid == vm_uuid]
+        return vm[0].config.name
+    except:
+        return None
+
 def get_vm_config_path(vm_name):
     """Returns vm_uuid for given vm_name, or None """
     si = vmdk_ops.get_si()
@@ -312,3 +321,4 @@ def main():
 
 if __name__ == "__main__":
     main() 
+    

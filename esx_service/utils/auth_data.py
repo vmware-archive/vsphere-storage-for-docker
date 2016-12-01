@@ -26,6 +26,7 @@ import auth_data_const
 import error_code
 import threadutils
 import log_config
+import auth
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
@@ -333,6 +334,35 @@ class AuthorizationDataManager:
 
         """
         return AUTH_DB_PATH
+    
+    def create_fallback_tenant_and_privileges(self):
+        # create a __FALLBACK tenant
+        error_info, tenant = self.create_tenant(
+                                           name=auth.FALLBACK_TENANT, 
+                                           description="This is a fallback tenant", 
+                                           default_datastore="default_ds", 
+                                           default_privileges={}, 
+                                           vms=[], 
+                                           privileges=[])
+        if error_info:
+            err = error_code.TENANT_CREATE_FAILED.format(auth.FALLBACK_TENANT, error_info)
+            logging.warning(err)
+        
+        # create __FALLBACK privilege 
+        # This privilege will match any tenant(__FALLBACK and normal)
+        # which does not have an entry in privileges table explicitly
+        # this privilege will have full permission (create, delete, and mount)
+        # and no max_volume_size and usage_quota limitation 
+        privileges = [{'datastore': '__FALLBACK',
+                       'create_volume': 1,
+                       'delete_volume': 1,
+                       'mount_volume': 1,
+                       'max_volume_size': 0,
+                       'usage_quota': 0}]
+        error_info = tenant.set_datastore_access_privileges(self.conn, privileges)
+        if error_info:
+            err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.FALLBACK_TENANT, auth.FALLBACK_DS, error_info)
+            logging.warning(err)
 
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`. 
@@ -361,6 +391,7 @@ class AuthorizationDataManager:
         
         if need_create_table:
             self.create_tables()
+            self.create_fallback_tenant_and_privileges()
 
     def create_tables(self):
         """ Create tables used for per-datastore authorization.  

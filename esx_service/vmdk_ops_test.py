@@ -269,7 +269,7 @@ class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
                 self.assertFalse(True)
             self.vm_datastore = datastore[0]
 
-        path, err = vmdk_ops.get_vol_path(self.vm_datastore)
+        path, err = vmdk_ops.get_vol_path(self.vm_datastore, auth.FALLBACK_TENANT)
         self.assertEqual(err, None, err)
 
         self.name = vmdk_utils.get_vmdk_path(path, self.volName)
@@ -564,6 +564,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
         self.cleanup()     
     
     def cleanup(self):
+        logging.info("VMDKAuthorizeTest cleanup")
         error_info, exist_tenant = self.auth_mgr.get_tenant('vmdk_auth_test')
         if exist_tenant:
              error_info = self.auth_mgr.remove_tenant(exist_tenant.id, False)
@@ -665,8 +666,9 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
 
 class VmdkTenantTestCase(unittest.TestCase):
     """ Unit test for VMDK ops for multi-tenancy """
-    non_tenant_vol_name = "non_tenant_vol1"
-
+    fallback_tenant_vol1_name = "fallback_tenant_vol1"
+    fallback_tenant_vol2_name = "fallback_tenant_vol2"
+    fallback_tenant_vols = [fallback_tenant_vol1_name, fallback_tenant_vol2_name]
     # tenant1 info
     tenant1_name = "test_tenant1"
     vm1_name = 'test_vm1'
@@ -687,7 +689,38 @@ class VmdkTenantTestCase(unittest.TestCase):
     datastore_name = None
     datastore_path = None
     
+    def create_fallback_tenant_and_privileges(self):
+        """ Create fallback tenant and privilege if not exist"""
 
+        # create __FALLBACK tenant if needed
+        error_info, tenant_uuid, tenant_name = auth.get_fallback_tenant()
+        if not tenant_uuid:
+            logging.debug("create_fallback_tenant_and_privileges: create __FALLBACK tenant")
+            error_info, tenant = auth_api._tenant_create(
+                                           name="__FALLBACK", 
+                                           description="This is a fallback tenant", 
+                                           default_datastore="default_ds", 
+                                           default_privileges={}, 
+                                           vm_list=[], 
+                                           privileges=[])
+        if error_info:
+            err = error_code.TENANT_CREATE_FAILED.format("__FALLBACK", error_info)
+            logging.warning(err)
+        
+        # create __FALLBACK privilege if needed
+        error_info, privileges = auth.get_fallback_privileges()
+        if not privileges:
+            logging.debug("create_fallback_tenant_and_privileges: create __FALLBACK privileges")
+            error_info = auth_api._tenant_access_add(name=auth.FALLBACK_TENANT, 
+                                                    datastore=auth.FALLBACK_DS, 
+                                                    rights=["all"], 
+                                                    volume_maxsize=0, 
+                                                    volume_totalsize=0)
+            if error_info:
+                err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.FALLBACK_TENANT, auth.FALLBACK_DS, error_info)
+                logging.warning(err)
+            
+    
     def setUp(self):
         """ Setup run before each test """
         logging.info("VMDKTenantTest setUp path =%s", path)
@@ -721,6 +754,9 @@ class VmdkTenantTestCase(unittest.TestCase):
         if error:
             self.assertFalse(True)
         self.vm2_config_path = vmdk_utils.get_vm_config_path(self.vm2_name)
+
+        # create __FALLBACK tenant __FALLBACK privilege if missing
+        self.create_fallback_tenant_and_privileges()
         
         # create tenant1 without adding any vms and privileges
         name = self.tenant1_name
@@ -762,12 +798,16 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.cleanup()      
             
     def cleanup(self):
-        # cleanup existing non-tenant volume
-        if not self.datastore_path:
-            vmdk_path = vmdk_utils.get_vmdk_path(self.datastore_path, self.non_tenant_vol_name)
-            if vmdk_ops.getVMDK(vmdk_path, self.non_tenant_vol_name, self.datastore_name):
-                vmdk_ops.removeVMDK(vmdk_path)
-
+        # cleanup existing volume under __FALLBACK tenant
+        logging.info("VMDKTenantTest cleanup")
+        if self.datastore_path:
+            fallback_tenant_path = os.path.join(self.datastore_path, auth.FALLBACK_TENANT)
+            for vol in self.fallback_tenant_vols:
+                vmdk_path = vmdk_utils.get_vmdk_path(fallback_tenant_path, vol)
+                if vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name):
+                    logging.debug("cleanup: remove volume %s", vmdk_path)
+                    vmdk_ops.removeVMDK(vmdk_path)
+        
         # cleanup existing tenant
         error_info = auth_api._tenant_rm(
                                          name=self.tenant1_name, 
@@ -786,21 +826,51 @@ class VmdkTenantTestCase(unittest.TestCase):
         remove_vm(si, self.vm1_name)
         remove_vm(si, self.vm2_name)
        
-    def test_create_and_remove_volume_on_non_tenant_vm(self):
-        """ Test volume create remove on a VM which does not belong to any tenant """
+    def test_vmdkops_on_fallback_tenant_vm(self):
+        """ Test vmdk life cycle on a VM which belongs to fallback tenant """
+        logging.info("test_vmdkops_on_fallback_tenant_vm")
         vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
 
         # run create command
         opts={u'size': u'100MB', u'fstype': u'ext4'}
-        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.non_tenant_vol_name, opts)
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.fallback_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
 
-        opts = {}
-        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_REMOVE, self.non_tenant_vol_name, opts)
+        # test attach a volume
+        opts={}
+        result = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_ATTACH, self.fallback_tenant_vol1_name, opts)
+        self.assertFalse("Error" in result)
+     
+        # test detach a volume
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_DETACH, self.fallback_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
+        
+        # run remove command
+        opts = {}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_REMOVE, self.fallback_tenant_vol1_name, opts)
+        self.assertEqual(None, error_info)
+
+        # remove __FALLBACK privileges
+        error_info = auth_api._tenant_access_rm(auth.FALLBACK_TENANT, auth.FALLBACK_DS)
+        self.assertEqual(None, error_info)
+
+        # run create command, which should fail
+        opts={u'size': u'100MB', u'fstype': u'ext4'}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.fallback_tenant_vol2_name, opts)
+        self.assertNotEqual(None, error_info)
+
+        # remove __FALLBACK tenant
+        error_info = auth_api._tenant_rm(auth.FALLBACK_TENANT, False)
+        self.assertEqual(None, error_info)
+
+        # run create command, which should fail
+        opts={u'size': u'100MB', u'fstype': u'ext4'}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.fallback_tenant_vol2_name, opts)
+        self.assertNotEqual(None, error_info)
     
     def test_vmdkops_on_tenant_vm(self):
         """ Test vmdk life cycle on a VM which belongs to a tenant """
+        logging.info("test_vmdkops_on_tenant_vm")
         vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
         # add vm to tenant
         error_info = auth_api._tenant_vm_add(
@@ -808,24 +878,21 @@ class VmdkTenantTestCase(unittest.TestCase):
                                          vm_list=[self.vm1_name]) 
         self.assertEqual(None, error_info)
 
-        # run create command
-        opts={u'size': u'100MB', u'fstype': u'ext4'}
+        # run create command, which should succeed since we have __FALLBACK privilege set
+        opts={u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
-        self.assertEqual({u'Error': 'No create privilege'}, error_info)
+        self.assertEqual(None, error_info)
 
         # set access privileges, create a volume with 100MB
         rights = ["create", "mount"]
         volume_maxsize = "500MB"
         volume_totalsize = "1GB"
+
         error_info = auth_api._tenant_access_add(name=self.tenant1_name, 
                                                  datastore=self.datastore_name, 
                                                  rights=rights, 
                                                  volume_maxsize=volume_maxsize, 
                                                  volume_totalsize=volume_totalsize)
-        # create a volume with default size
-        opts={u'fstype': u'ext4'}
-        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
-        self.assertEqual(None, error_info)
 
         # test attach a volume
         opts={}
@@ -838,7 +905,7 @@ class VmdkTenantTestCase(unittest.TestCase):
 
         # create a volume with 600MB which exceed the volume_maxsize
         opts={u'size': u'600MB', u'fstype': u'ext4'}
-        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol2_name, opts)
         self.assertEqual({u'Error': 'volume size exceeds the max volume size limit'}, error_info)
 
         opts={u'size': u'500MB', u'fstype': u'ext4'}
@@ -928,6 +995,7 @@ class VmdkTenantTestCase(unittest.TestCase):
     
     def test_vmdkops_on_different_tenants(self):
         """ Test vmdkops on VMs which belong to different tenant """
+        logging.info("test_vmdkops_on_different_tenants")
         # add vm1 to tenant1
         vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
         error_info = auth_api._tenant_vm_add(

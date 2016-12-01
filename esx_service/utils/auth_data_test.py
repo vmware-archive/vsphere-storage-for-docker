@@ -340,6 +340,13 @@ class TestAuthDataModel(unittest.TestCase):
                              ]
         self.assertEqual(actual_privileges, expected_privileges)
     
+    def get_tenant_idx(self, tenants_list, tenant_uuid):
+        idx = -1
+        for i in range(0, len(tenants_list)):
+            if tenants_list[i].id == tenant_uuid:
+                return i
+        
+        return idx
 
     def test_list_tenants(self):
         vm1_uuid = str(uuid.uuid4())
@@ -373,8 +380,10 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(error_info, None)
         
         #Check tenants.id tenant.name, tenant.description and tenant.default_datastore
-        self.assertEqual(len(tenants_list), 2)
-
+        tenant1_idx = self.get_tenant_idx(tenants_list, tenant1.id)
+        tenant2_idx = self.get_tenant_idx(tenants_list, tenant2.id)
+        self.assertNotEqual(tenant1_idx, -1)
+        self.assertNotEqual(tenant2_idx, -1)
         # check for tenant1
         tenant1_expected_output = [
                                    tenant1.id,
@@ -383,19 +392,19 @@ class TestAuthDataModel(unittest.TestCase):
                                    'default_ds',
                                   ]
         tenant1_actual_output = [
-                                 tenants_list[0].id,
-                                 tenants_list[0].name,
-                                 tenants_list[0].description,
-                                 tenants_list[0].default_datastore,
+                                 tenants_list[tenant1_idx].id,
+                                 tenants_list[tenant1_idx].name,
+                                 tenants_list[tenant1_idx].description,
+                                 tenants_list[tenant1_idx].default_datastore,
                                 ]
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
 
         # check vms
         tenant1_expected_output = [(vm1_uuid, 'vm1', tenant1.id),
                                   ]
-        tenant1_actual_output = [(tenants_list[0].vms[0][auth_data_const.COL_VM_ID],
-                                 tenants_list[0].vms[0][auth_data_const.COL_VM_NAME],
-                                 tenants_list[0].vms[0][auth_data_const.COL_TENANT_ID])
+        tenant1_actual_output = [(tenants_list[tenant1_idx].vms[0][auth_data_const.COL_VM_ID],
+                                 tenants_list[tenant1_idx].vms[0][auth_data_const.COL_VM_NAME],
+                                 tenants_list[tenant1_idx].vms[0][auth_data_const.COL_TENANT_ID])
                                 ]
 
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
@@ -409,13 +418,13 @@ class TestAuthDataModel(unittest.TestCase):
                                    default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
                                    default_privileges[auth_data_const.COL_USAGE_QUOTA]
                                    ]
-        tenant1_actual_output = [tenants_list[0].default_privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
+        tenant1_actual_output = [tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_TENANT_ID],
+                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_DATASTORE],
+                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
+                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
+                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
+                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                  ]
                 
         # check privileges
@@ -427,13 +436,13 @@ class TestAuthDataModel(unittest.TestCase):
                                    privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                    privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                    ]
-        tenant1_actual_output = [tenants_list[0].privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_MOUNT_VOLUME],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_USAGE_QUOTA]
+        tenant1_actual_output = [tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_TENANT_ID],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_DATASTORE],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_CREATE_VOLUME],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_DELETE_VOLUME],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                  ]
                         
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
@@ -447,24 +456,24 @@ class TestAuthDataModel(unittest.TestCase):
                                    'default_ds',
                                   ]
         tenant2_actual_output = [
-                                 tenants_list[1].id,
-                                 tenants_list[1].name,
-                                 tenants_list[1].description,
-                                 tenants_list[1].default_datastore,
+                                 tenants_list[tenant2_idx].id,
+                                 tenants_list[tenant2_idx].name,
+                                 tenants_list[tenant2_idx].description,
+                                 tenants_list[tenant2_idx].default_datastore,
                                 ]
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 
         # check vms
-        self.assertEqual(len(tenants_list[1].vms), 2)
+        self.assertEqual(len(tenants_list[tenant2_idx].vms), 2)
         tenant2_expected_output = [(vm2_uuid, 'vm2', tenant2.id),
                                    (vm3_uuid, 'vm3', tenant2.id)
                                   ]
-        tenant2_actual_output = [(tenants_list[1].vms[0][auth_data_const.COL_VM_ID],
-                                 tenants_list[1].vms[0][auth_data_const.COL_VM_NAME],
-                                 tenants_list[1].vms[0][auth_data_const.COL_TENANT_ID]),
-                                 (tenants_list[1].vms[1][auth_data_const.COL_VM_ID],
-                                 tenants_list[1].vms[1][auth_data_const.COL_VM_NAME],
-                                 tenants_list[1].vms[1][auth_data_const.COL_TENANT_ID]),
+        tenant2_actual_output = [(tenants_list[tenant2_idx].vms[0][auth_data_const.COL_VM_ID],
+                                 tenants_list[tenant2_idx].vms[0][auth_data_const.COL_VM_NAME],
+                                 tenants_list[tenant2_idx].vms[0][auth_data_const.COL_TENANT_ID]),
+                                 (tenants_list[tenant2_idx].vms[1][auth_data_const.COL_VM_ID],
+                                 tenants_list[tenant2_idx].vms[1][auth_data_const.COL_VM_NAME],
+                                 tenants_list[tenant2_idx].vms[1][auth_data_const.COL_TENANT_ID]),
                                 ]
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 
@@ -477,19 +486,19 @@ class TestAuthDataModel(unittest.TestCase):
                                    default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
                                    default_privileges[auth_data_const.COL_USAGE_QUOTA]
                                    ]
-        tenant2_actual_output = [tenants_list[1].default_privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
+        tenant2_actual_output = [tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_TENANT_ID],
+                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_DATASTORE],
+                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
+                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
+                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
+                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                  ]   
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 
         # check privileges
         tenant2_expected_output = []
-        tenant2_actual_output = tenants_list[1].privileges
+        tenant2_actual_output = tenants_list[tenant2_idx].privileges
         
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
           
