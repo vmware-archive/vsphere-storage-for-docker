@@ -19,18 +19,15 @@
 COL_ID = 'id'
 COL_NAME = 'name'
 COL_DESCRIPTION = 'description'
-COL_DEFAULT_DATASTORE = 'default_datastore'
+COL_DEFAULT_DATASTORE_URL = 'default_datastore_url'
 
 # column name in vms table
 COL_VM_ID = 'vm_id'
-COL_VM_NAME = 'vm_name'
 COL_TENANT_ID = 'tenant_id'
 
 # column name in privileges table
-COL_DATASTORE = 'datastore'
-COL_MOUNT_VOLUME = 'mount_volume'
-COL_CREATE_VOLUME = 'create_volume'
-COL_DELETE_VOLUME = 'delete_volume'
+COL_DATASTORE_URL = 'datastore_url'
+COL_ALLOW_CREATE = 'allow_create'
 COL_MAX_VOLUME_SIZE = 'max_volume_size'
 COL_USAGE_QUOTA = 'usage_quota'
 

@@ -305,6 +305,16 @@ def log_volume_lsof(vol_name):
                 cartel, name, ftype, fd, desc)
             logging.info("Volume open descriptor: %s", msg)
 
+def get_datastore_url(datastore):
+    si = vmdk_ops.get_si()
+    res = [d.info.url for d in si.content.rootFolder.childEntity[0].datastore if d.info.name == datastore]
+    return res[0]
+
+def get_datastore_name(datastore_url):
+    si = vmdk_ops.get_si()
+    res = [d.info.name for d in si.content.rootFolder.childEntity[0].datastore if d.info.url == datastore_url]
+    return res[0]
+
 def main():
     log_config.configure()
 

@@ -711,18 +711,36 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
+    if tenant_name == auth.DEFAULT_TENANT:
+        # for DEFAULT tenant, set default_datastore to vm_datastore
+        default_datastore = vm_datastore
+    else:
+        # if default_datastore is not set for tenant, error_info will be set to 
+        # DEFAULT_DS_NOT_SET, default_datastore will be set to None
+        error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
+    
+    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
+                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)    
 
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
-        return listVMDK(vm_datastore, tenant_name)
+        # if default_datastore is not set, should return error
+        return listVMDK(default_datastore, tenant_name)
 
     try:
         vol_name, datastore = parse_vol_name(full_vol_name)
     except ValidationError as ex:
         return err(str(ex))
     if not datastore:
-        datastore = vm_datastore
-    elif not vmdk_utils.validate_datastore(datastore):
+        datastore = default_datastore
+        # user passed "full_vol_name"" with short notion, and default_datastore 
+        # must be set in this case
+        if not default_datastore:
+            error_info = error_code.DEFAULT_DS_NOT_SET
+            logging.error(error_info)
+            return err(error_info)
+
+    if not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
                 "Known datastores: %s.\n" \
                 "Default datastore: %s" \
@@ -816,11 +834,6 @@ def get_datastore_names_list():
     """returns names of known datastores"""
     return [i[0] for i in vmdk_utils.get_datastores()]
 
-def get_datastore_url(datastore):
-    si = get_si()
-    res = [d.info.url for d in si.content.rootFolder.childEntity[0].datastore if d.info.name == datastore]
-    return res[0]
-
 def findDeviceByPath(vmdk_path, vm):
     logging.debug("findDeviceByPath: Looking for device {0}".format(vmdk_path))
     for d in vm.config.hardware.device:
@@ -842,7 +855,7 @@ def findDeviceByPath(vmdk_path, vm):
         # Construct the parent dir and vmdk name, resolving
         # links if any.
         dvol_dir = os.path.dirname(vmdk_path)
-        datastore_url = get_datastore_url(datastore)
+        datastore_url = vmdk_utils.get_datastore_url(datastore)
         datastore_prefix = os.path.realpath(datastore_url) + '/'
         real_vol_dir = os.path.realpath(dvol_dir).replace(datastore_prefix, "")
         virtual_disk = os.path.join(real_vol_dir, os.path.basename(vmdk_path))
