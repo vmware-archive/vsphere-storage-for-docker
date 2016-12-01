@@ -5,6 +5,22 @@
 
 ![ESX UI Plugin Screenshot](images/navigator.png "ESX UI Plugin Screenshot")
 
+
+## System Requirements
+
+### ESX 6.5
+
+The ESX UI Plugin requires that a set of ESXUI features be in place. Support for UI plugins is of course a critical one, and "autoloading" of those plugins into the ESX UI is a related feature that's also important (refer to an ESXUI expert on what this means).
+
+Support for plugins began in ESX 6.5. There have been discussion on how to get previous versions to support plugins (w/ autoloading), but no progress as of early Dec 2016.
+
+### VMODL and VSAN extensions must be installed and enabled on the ESX host
+
+The ESX UI Plugin talks via SOAP over HTTP to a /vsan endpoint on the host server. The necessary vsan features (e.g. the _vsanmgmtd_ service) and the VMODL extensions specific to vSphere Docker Volume Service must be in place on the ESX host.
+
+As of early Dec 2016 these pieces were not yet part of the GA version of vSphere Docker Volume Service, but were expected to be added soon. Once added a VIB built using _make_ would automatically include these features.
+
+
 ## Installation
 
 The ESX UI Plugin is meant to be installed as part of the [vSphere Docker Volume Service ESX installation](https://github.com/vmware/docker-volume-vsphere#on-esx).

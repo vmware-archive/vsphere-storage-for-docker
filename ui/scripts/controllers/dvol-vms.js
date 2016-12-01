@@ -24,7 +24,7 @@ define([], function() {
                 return vm.name;
               });
               if (selectedVmsIds.length < 1) return;
-              DvolTenantService.addVmsToTenant(selectedTenant.id, selectedVmsIds)
+              DvolTenantService.addVmsToTenant(selectedTenant.name, selectedVmsIds)
                 .then(vmsGrid.refresh);
             }
           });

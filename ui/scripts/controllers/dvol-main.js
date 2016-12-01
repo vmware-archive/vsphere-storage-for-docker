@@ -66,7 +66,7 @@ define([], function() {
         onClick: function() {
           var selectedTenant = $scope.tenantsGrid.selectedItems[0];
           if (!selectedTenant) return;
-          DvolTenantService.removeTenant(selectedTenant.id);
+          DvolTenantService.removeTenant(selectedTenant.name);
           tenantsGrid.refresh();
         }
       },

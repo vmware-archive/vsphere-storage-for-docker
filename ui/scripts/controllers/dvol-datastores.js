@@ -51,16 +51,6 @@ define([], function() {
                           datastore: originalDatastore.datastore,
                           permissions: editedPermissions
                         },
-                        //
-                        // a bit of a hack here
-                        // originally the UI expected an API that received a new permission set
-                        // as the way to update a datastore
-                        //
-                        // the actual API uses an add_rights & remove_right approach to modifying
-                        // the create, delete, mount permissions
-                        //
-                        // so we pass down the original permissions so the "deltas" can be figured out
-                        //
                         originalPermissions
                       )
                       .then(datastoresGrid.refresh);
@@ -77,16 +67,29 @@ define([], function() {
         iconClass: 'vui-icon-action-edit',
         enabled: true,
         onClick: function() {
+          var tenantName;
+          var datastoreName;
+          var originalPermissions;
           if ($scope.datastoresGrid.selectedItems.length < 1) return;
-          var datastoreId = $scope.datastoresGrid.selectedItems[0].name;
-          DvolTenantService.getTenantByName($scope.tenantsGrid.selectedItems[0].id)
-          .then(function(tenant) {
-            var datastore = tenant.datastores[datastoreId];
+          tenantName = $scope.tenantsGrid.selectedItems[0].name;
+          datastoreName = $scope.datastoresGrid.selectedItems[0].name;
+          DvolTenantService.listDatastoreAccessForTenant(tenantName)
+          .then(function(datastoreAccesses) {
+            originalPermissions = datastoreAccesses.filter(function(d) {
+              return d.datastore === datastoreName;
+            })[0].permissions;
             DialogService.showDialog('dvol.edit-datastore', {
-              permissions: datastore.permissions,
+              permissions: originalPermissions,
               save: function(editedPermissions) {
-                DvolTenantService.modifyDatastoreAccessForTenant(tenant.id, { datastore: datastoreId, permissions: editedPermissions })
-                  .then(datastoresGrid.refresh);
+                DvolTenantService.modifyDatastoreAccessForTenant(
+                  tenantName,
+                  {
+                    datastore: datastoreName,
+                    permissions: editedPermissions
+                  },
+                  originalPermissions
+                )
+                .then(datastoresGrid.refresh);
               }
             });
           });
