@@ -64,25 +64,27 @@ class Tenant:
 
    @JavaDocs(parent=_name, docs =
    """
-   Default datastore name
+   Default datastore. A tenant may have different privileges on different datastores.
+   Default datastore will be used when a VM addresses the volume using short notation
+   (i.e. volume_name without @datastore suffix). 
    """
    )
-   @Attribute(parent=_name, typ="string", flags=F_OPTIONAL)
+   @Attribute(parent=_name, typ="vim.Datastore", flags=F_OPTIONAL)
    def default_datastore(self):
        pass
 
    @JavaDocs(parent=_name, docs =
    """
-   VMs belonging to this tenant
+   VMs belonging to this tenant.
    """
    )
-   @Attribute(parent=_name, typ="string[]", flags=F_OPTIONAL)
+   @Attribute(parent=_name, typ="vim.VirtualMachine[]", flags=F_OPTIONAL)
    def vms(self):
        pass
 
    @JavaDocs(parent=_name, docs =
    """
-   Privileges allowed on this datastore
+   Privileges assigned to this tenant.
    """
    )
    @Attribute(parent=_name, typ="vim.vcs.storage.DatastoreAccessPrivilege[]", flags=F_OPTIONAL)
@@ -91,50 +93,57 @@ class Tenant:
 
    @JavaDocs(parent=_name, docs=
    """
-   Add VMs to a tenant
+   Add VMs to this tenant. Adding a VM already belonging to this Tenant has no effect.
+   @param vms VMs to be added to this tenant.
    """
    )
    @Method(parent=_name, wsdlName="AddVMs")
-   @Param(name="vms", typ="string[]")
+   @Param(name="vms", typ="vim.VirtualMachine[]")
    @Return(typ='void')
    def AddVMs(self, vms):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Remove VMs from a tenant
+   Remove VMs from this tenant.
+   @param vms List of VMs to be removed from this tenant.
+   @throws vim.fault.NotFound If any VM does not exist or does not belong to this tenant.
    """
    )
-   @Method(parent=_name, wsdlName="RemoveVMs")
-   @Param(name="vms", typ="string[]")
+   @Method(parent=_name, wsdlName="RemoveVMs", faults=["vim.fault.NotFound"])
+   @Param(name="vms", typ="vim.VirtualMachine[]")
    @Return(typ='void')
    def RemoveVMs(self, vms):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Get VMs for a tenant
+   Get all VMs belonging to this tenant.
+   @return VMs belonging to this tenant.
    """
    )
    @Method(parent=_name, wsdlName="GetVMs")
-   @Return(typ='string[]')
-   def GetVMs(self, name):
+   @Return(typ='vim.VirtualMachine[]')
+   def GetVMs(self):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Replace VMs for a tenant
+   Replace VMs for this tenant. All existing VMs will be removed and replaced with
+   new ones.
+   @param vms VMs to be added to this tenant replacing existing VMs.
    """
    )
    @Method(parent=_name, wsdlName="ReplaceVMs")
-   @Param(name="vms", typ="string[]")
+   @Param(name="vms", typ="vim.VirtualMachine[]")
    @Return(typ='void')
    def ReplaceVMs(self, vms):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Add a datastore access privilege for a tenant
+   Add a datastore access privilege for this tenant.
+   @param privilege privilege to be assigned to this tenant.
    """
    )
    @Method(parent=_name, wsdlName="AddPrivilege")
@@ -145,44 +154,60 @@ class Tenant:
 
    @JavaDocs(parent=_name, docs=
    """
-   Modify datastore access privilege for a tenant
+   Modify datastore access privilege for this tenant. Datastore itself cannot be changed.
+   @param datastore Privilege settings on this datastore will be changed.
+   @param allow_create If set to true, this tenant is allowed to create and delete volumes on
+          the datastore. If false, the tenant is allowed to mount and unmount volumes only.
+   @param volume_max_size Maximum size (in MiB) of one single volume. Zero means unlimited size.
+   @param volume_total_size Total storage usage quota (in MiB) allowed on this datastore.
+          Zero means unlimited quota.
+   @throws vim.fault.NotFound If the given datastore does not exist for this tenant.
+   @throws vmodl.fault.InvalidArgument If the specified parameters are invalid,
+           e.g. volume total size exceeds the datastore capacity.
    """
    )
-   @Method(parent=_name, wsdlName="ModifyPrivilege")
-   @Param(name="privilege", typ="vim.vcs.storage.DatastoreAccessPrivilege")
+   @Method(parent=_name, wsdlName="ModifyPrivilege",
+           faults=["vim.fault.NotFound", "vmodl.fault.InvalidArgument"])
+   @Param(name="datastore", typ="vim.Datastore")
+   @Param(name="allow_create", typ="boolean", flags=F_OPTIONAL)
+   @Param(name="volume_max_size", typ="int", flags=F_OPTIONAL)
+   @Param(name="volume_total_size", typ="int", flags=F_OPTIONAL)
    @Return(typ='void')
-   def ModifyPrivilege(self, privilege):
+   def ModifyPrivilege(self, datastore, allow_create, volume_max_size, volume_total_size):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Remove datastore access privilege for a tenant
+   Remove access privilege on the given datastore from this tenant.
+   @param datastore Privilege on this datastore will be removed from this tenant.
    """
    )
    @Method(parent=_name, wsdlName="RemovePrivilege")
-   @Param(name="datastore", typ="string")
+   @Param(name="datastore", typ="vim.Datastore")
    @Return(typ='void')
    def RemovePrivilege(self, datastore):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Get all datastore access privileges for a tenant
+   Get all datastore access privileges for a tenant.
+   @datastore If set, return privilege for this datastore only; otherwise return all privileges.
    """
    )
    @Method(parent=_name, wsdlName="GetPrivileges")
-   @Param(name="datastore", typ="string", flags=F_OPTIONAL)
+   @Param(name="datastore", typ="vim.Datastore", flags=F_OPTIONAL)
    @Return(typ='vim.vcs.storage.DatastoreAccessPrivilege[]')
-   def GetPrivilege(self, datastore):
+   def GetPrivileges(self, datastore):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Modify default datastore for a tenant
+   Modify default datastore for a tenant.
+   @param datastore New default datastore for this tenant.
    """
    )
    @Method(parent=_name, wsdlName="ModifyDatastore")
-   @Param(name="datastore", typ="string")
+   @Param(name="datastore", typ="vim.Datastore")
    @Return(typ='void')
    def ModifyDefaultDatastore(self, datastore):
        pass

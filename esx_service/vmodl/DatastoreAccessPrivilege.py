@@ -34,16 +34,19 @@ class DatastoreAccessPrivilege:
 
    @JavaDocs(parent=_name, docs =
    """
-   Datastore URL
+   Datastore of this privilege. A tenant who has this privilege will have access
+   on this datastore.
    """
    )
-   @Attribute(parent=_name, typ="string")
-   def datastore_url(self):
+   @Attribute(parent=_name, typ="vim.Datastore")
+   def datastore(self):
        pass
 
    @JavaDocs(parent=_name, docs =
    """
-   Indicates whether the tenant is allowed to create (or delete) a volume on this datastore
+   Indicates whether the tenant is allowed to create and delete volumes on
+   this datastore. If it's false, the tenant is allowed to mount and unmount
+   volumes only.
    """
    )
    @Attribute(parent=_name, typ="boolean")
@@ -52,20 +55,20 @@ class DatastoreAccessPrivilege:
 
    @JavaDocs(parent=_name, docs =
    """
-   Max volume size allowed on this datastore
+   Maximum size (in MiB) of one single volume. Zero means unlimited size.
    """
    )
-   @Attribute(parent=_name, typ="string")
-   def volume_max_size_in_MiB(self):
+   @Attribute(parent=_name, typ="int")
+   def volume_max_size(self):
        pass
 
    @JavaDocs(parent=_name, docs =
    """
-   Total storage usage allowed on this datastore
+   Total storage usage quota (in MiB) allowed on this datastore. Zero means unlimited quota.
    """
    )
-   @Attribute(parent=_name, typ="string")
-   def volume_total_size_in_MiB(self):
+   @Attribute(parent=_name, typ="int")
+   def volume_total_size(self):
        pass
 
 RegisterVmodlTypes()

@@ -60,7 +60,8 @@ class TenantManager:
 
    @JavaDocs(parent=_name, docs=
    """
-   Query Tenant for the given name. Return all Tenants if name is not set.
+   Query Tenant for the given name.
+   @param name Tenant name. If not set, return all tenants.
    """
    )
    @Method(parent=_name, wsdlName="GetTenants")
