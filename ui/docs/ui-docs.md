@@ -13,8 +13,15 @@ Eventually, a VIB built using make in the project root will include the UI Plugi
 
 ```
 export INCLUDE_UI=true
+make
 ```
 
+This results in a VIB file being created in ./build/
+This VIB file can be transferred to the target host if necessary and then can be installed using:
+
+esxcli software vib install --no-sig-check -v <absolute path of vib file>
+
+Details on how the UI build process is linked into the overall vSphere Docker Volume Service build process can be found in ./Makefile and ./ui/Makefile
 
 
 ## Usage
