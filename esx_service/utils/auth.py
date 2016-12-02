@@ -54,9 +54,9 @@ def get_fallback_tenant():
         be assigned to __FALLBACK tenant if __FALLBACK tenant exists
         Return value:
         -- error_info: return None on success or error info on failure
-        -- tenant_uuid: return __FALLBACK tenant uuid,  
+        -- tenant_uuid: return __FALLBACK tenant uuid on success,  
            return None on failure or __FALLBACK tenant does not exist
-        -- tenant_name: return __FALLBACK tenant name,
+        -- tenant_name: return __FALLBACK tenant name on success,
            return None on failure or __FALLBACK tenant does not exist
     """
     tenant_uuid = None

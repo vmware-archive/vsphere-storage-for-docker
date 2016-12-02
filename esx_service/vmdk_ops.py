@@ -533,6 +533,9 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
 def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""
     # Note: will return more Volume info here, when Docker API actually accepts it
+    logging.debug("getVMDK: vmdk_path=%s vol_name=%s, datastore=%s", vmdk_path, vol_name, datastore)
+    file_exist = os.path.isfile(vmdk_path)
+    logging.debug("getVMDK: file_exist=%d", file_exist)
     if not os.path.isfile(vmdk_path):
         return err("Volume {0} not found (file: {1})".format(vol_name, vmdk_path))
     # Return volume info - volume policy, size, allocated capacity, allocation
