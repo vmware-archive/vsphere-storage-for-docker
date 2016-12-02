@@ -69,7 +69,7 @@ class VsphereContainerService:
        pass
 
 class TenantManager:
-       _name = "vim.vcs.TenantManager"
+   _name = "vim.vcs.TenantManager"
 
    @JavaDocs(parent=_name, docs =
    """
@@ -84,9 +84,12 @@ class TenantManager:
    @JavaDocs(parent=_name, docs=
    """
    Create a Tenant instance.
+   @param name Name of the tenant.
+   @param description Detailed description of the tenant. Optional.
+   @throws vmodl.fault.InvalidArgument If the given name or description exceeds maximum length.
    """
    )
-   @Method(parent=_name, wsdlName="CreateTenant")
+   @Method(parent=_name, wsdlName="CreateTenant", faults=["vmodl.fault.InvalidArgument"])
    @Param(name="name", typ="string")
    @Param(name="description", typ="string", flags=F_OPTIONAL)
    @Return(typ="vim.vcs.Tenant")
@@ -97,9 +100,13 @@ class TenantManager:
    """
    Remove a Tenant instance. Remove all volumes created by this tenant
    if remove_volumes flag is set to True.
+   @param name Tenant name
+   @param remove_volumes Default value is False. If set to True,
+          remove all volumes created by this Tenant.
+   @throws vim.fault.NotFound If the Tenant name does not exist.
    """
    )
-   @Method(parent=_name, wsdlName="RemoveTenant")
+   @Method(parent=_name, wsdlName="RemoveTenant", faults=["vim.fault.NotFound"])
    @Param(name="name", typ="string")
    @Param(name="remove_volumes", typ="boolean")
    @Return(typ="void")
@@ -109,13 +116,15 @@ class TenantManager:
    @JavaDocs(parent=_name, docs=
    """
    Query Tenant for the given name.
-   @param name Tenant name. If not set, return all tenants.
+   @param name Tenant name.
+   @return Tenant for the given name, or all tenants if name is not set.
+   @throws vim.fault.NotFound If the Tenant name does not exist.
    """
    )
-   @Method(parent=_name, wsdlName="GetTenants")
+   @Method(parent=_name, wsdlName="GetTenants", faults=["vim.fault.NotFound"])
    @Param(name="name", typ="string", flags=F_OPTIONAL)
    @Return(typ="vim.vcs.Tenant[]")
-   def GetTenants(self, name=None): 
+   def GetTenants(self, name=None):
        pass 
 
    @JavaDocs(parent=_name, docs=
@@ -123,7 +132,7 @@ class TenantManager:
    Modify the attributes of a Tenant instance.
    """
    )
-   @Method(parent=_name, wsdlName="ModifyTenant")
+   @Method(parent=_name, wsdlName="ModifyTenant", faults=["vim.fault.NotFound"])
    @Param(name="name", typ="string")
    @Param(name="new_name", typ="string", flags=F_OPTIONAL)
    @Param(name="new_description", typ="string", flags=F_OPTIONAL)
@@ -132,7 +141,7 @@ class TenantManager:
        pass
 
 class Tenant:
-       _name = "vim.vcs.Tenant"
+   _name = "vim.vcs.Tenant"
 
    @JavaDocs(parent=_name, docs =
    """
@@ -301,11 +310,14 @@ class Tenant:
 
    @JavaDocs(parent=_name, docs=
    """
-   Get all datastore access privileges for a tenant.
+   Get privilege of this tenant on the given datastore.
    @datastore If set, return privilege for this datastore only; otherwise return all privileges.
+   @return Privilege of this tenant on the given datastore.
+   @throw NotFound If this tenant has no privilege on the given datastore.
    """
    )
-   @Method(parent=_name, wsdlName="GetPrivileges")
+   @Method(parent=_name, wsdlName="GetPrivileges",
+        faults=["vim.fault.NotFound"])
    @Param(name="datastore", typ="vim.Datastore", flags=F_OPTIONAL)
    @Return(typ='vim.vcs.storage.DatastoreAccessPrivilege[]')
    def GetPrivileges(self, datastore):
@@ -324,7 +336,7 @@ class Tenant:
        pass
 
 class DatastoreAccessPrivilege:
-       _name = "vim.vcs.storage.DatastoreAccessPrivilege"
+   _name = "vim.vcs.storage.DatastoreAccessPrivilege"
 
    @JavaDocs(parent=_name, docs =
    """
