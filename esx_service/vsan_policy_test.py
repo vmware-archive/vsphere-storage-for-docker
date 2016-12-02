@@ -63,8 +63,8 @@ class TestVsanPolicy(unittest.TestCase):
 
     def test_delete_nonexistent_policy_fails(self):
         log = log_config.get_logger('Delete_nonexistent_policy')
-	log.info("\nThis is a negative test to delete a non-existent vsan policy.\n"
-	        "Test is expected to raise exception log - Failed to remove the policy file error. \n")
+        log.info("\nThis is a negative test to delete a non-existent vsan policy.\n"
+                "Test is expected to raise exception log - Failed to remove the policy file error. \n")
         self.assertNotEqual(None, vsan_policy.delete(self.name))       
 
     def test_create_list(self):
