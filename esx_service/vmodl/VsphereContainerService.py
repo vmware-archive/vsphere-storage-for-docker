@@ -87,9 +87,11 @@ class TenantManager:
    @param name Name of the tenant.
    @param description Detailed description of the tenant. Optional.
    @throws vmodl.fault.InvalidArgument If the given name or description exceeds maximum length.
+   @throws vim.fault.AlreadyExists If the given tenant name already exists.
    """
    )
-   @Method(parent=_name, wsdlName="CreateTenant", faults=["vmodl.fault.InvalidArgument"])
+   @Method(parent=_name, wsdlName="CreateTenant",
+           faults=["vmodl.fault.InvalidArgument", "vim.fault.AlreadyExists"])
    @Param(name="name", typ="string")
    @Param(name="description", typ="string", flags=F_OPTIONAL)
    @Return(typ="vim.vcs.Tenant")
@@ -108,7 +110,7 @@ class TenantManager:
    )
    @Method(parent=_name, wsdlName="RemoveTenant", faults=["vim.fault.NotFound"])
    @Param(name="name", typ="string")
-   @Param(name="remove_volumes", typ="boolean")
+   @Param(name="remove_volumes", typ="boolean", flags=F_OPTIONAL)
    @Return(typ="void")
    def RemoveTenant(self, name, remove_volumes=False):
        pass
@@ -130,9 +132,15 @@ class TenantManager:
    @JavaDocs(parent=_name, docs=
    """
    Modify the attributes of a Tenant instance.
+   @param name Current name of the tenant
+   @param new_name New name of the tenant
+   @param new_description New description of the tenant
+   @throws vim.fault.NotFound If the name does not exist.
+   @throws vim.fault.AlreadyExists If the new_name already exists.
    """
    )
-   @Method(parent=_name, wsdlName="ModifyTenant", faults=["vim.fault.NotFound"])
+   @Method(parent=_name, wsdlName="ModifyTenant",
+           faults=["vim.fault.NotFound", "vim.fault.AlreadyExists"])
    @Param(name="name", typ="string")
    @Param(name="new_name", typ="string", flags=F_OPTIONAL)
    @Param(name="new_description", typ="string", flags=F_OPTIONAL)
@@ -145,9 +153,9 @@ class Tenant:
 
    @JavaDocs(parent=_name, docs =
    """
-   Tenant is an abstraction of a group of VMs and the associated access
-   privileges on specific datastores. This class provides operations to
-   manage VMs, privileges and default datastore associated with a tenant.
+   Tenant is an abstraction of a group of VMs. Each tenant may have different
+   privileges on different datastores. This class provides operations to manage
+   VMs belonging to a tenant, and the privileges assigned to this tenant.
    """
    )
    @Internal(parent=_name)
@@ -264,12 +272,15 @@ class Tenant:
    """
    Add a datastore access privilege for this tenant.
    @param privilege privilege to be assigned to this tenant.
+   @param switch_default_datastore If set to true, switch the default datastore
+          for this tenant. False by default.
    """
    )
    @Method(parent=_name, wsdlName="AddPrivilege")
    @Param(name="privilege", typ="vim.vcs.storage.DatastoreAccessPrivilege")
+   @Param(name="switch_default_datastore", typ="boolean", flags=F_OPTIONAL)
    @Return(typ='void')
-   def AddPrivilege(self, privilege):
+   def AddPrivilege(self, privilege, switch_default_datastore=False):
        pass
 
    @JavaDocs(parent=_name, docs=
@@ -340,7 +351,7 @@ class DatastoreAccessPrivilege:
 
    @JavaDocs(parent=_name, docs =
    """
-   This class encapsulates the datastore access privilege for a tenant.
+   A privilege defines operations against a datastore and limits on those operations.
    """
    )
    @DataType(name=_name, version=_VERSION)
