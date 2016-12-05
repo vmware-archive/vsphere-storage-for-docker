@@ -66,12 +66,12 @@ dump_logs() {
   dump_vm_info $VM1
   log "Info VM2 $VM2"
   dump_vm_info $VM2
-  log "log ESX $ESX"
-  dump_log_esx $ESX
   log "Log VM1 $VM1"
   dump_log_vm $VM1
   log "Log VM2 $VM2"
   dump_log_vm $VM2
+  log "log ESX $ESX"
+  dump_log_esx $ESX
 }
 
 
@@ -96,9 +96,4 @@ else
   dump_logs
   stop_build $VM1 $BUILD_NUMBER
   exit 1
-fi
-
-if [ $1 == "dump_logs" ]
-then
-  dump_logs
 fi
