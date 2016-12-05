@@ -20,13 +20,13 @@ The volume units can be ```kb, mb, gb and tb```
 
 The default volume size is 100mb
 
-### policy
+### policy (vsan-policy-name)
 
 ```
-docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o policy=allflash
+docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o vsan-policy-name=allflash
 ```
 
-Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the ```-o policy``` flag.
+Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the ```-o vsan-policy-name``` flag.
 
 ### diskformat
 ```
