@@ -77,6 +77,7 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 	}
 	// Use default timeout of thirty seconds and retry of three
 	d.client = photon.NewClient(targetURL, nil, nil)
+	d.mountRoot = mountDir
 
 	d.refCounts.Init(d, mountDir, driverName)
 
@@ -88,7 +89,6 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 		"hostID":  hostID,
 	}).Info("Docker Photon plugin started ")
 
-	d.mountRoot = mountDir
 	return d
 }
 func (d *Driver) getRefCount(vol string) uint           { return d.refCounts.GetCount(vol) }

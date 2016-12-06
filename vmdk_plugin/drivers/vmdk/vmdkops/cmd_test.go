@@ -20,8 +20,8 @@ package vmdkops_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
-	"testing"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
+	"testing"
 )
 
 func TestCommands(t *testing.T) {
