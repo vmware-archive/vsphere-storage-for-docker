@@ -267,7 +267,7 @@
 <li><a href="#using-the-service-in-docker">Using the Service in Docker</a><ul>
 <li><a href="#docker-volume-create-options">Docker volume create options</a><ul>
 <li><a href="#size">size</a></li>
-<li><a href="#policy">policy</a></li>
+<li><a href="#vsan-policy-name">vsan-policy-name</a></li>
 <li><a href="#diskformat">diskformat</a></li>
 <li><a href="#attach_as">attach_as</a></li>
 <li><a href="#access">access</a></li>
@@ -296,11 +296,11 @@
 
 <p>The volume units can be <code>kb, mb, gb and tb</code></p>
 <p>The default volume size is 100mb</p>
-<h3 id="policy">policy<a class="headerlink" href="#policy" title="Permanent link">&para;</a></h3>
-<pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o policy=allflash
+<h3 id="vsan-policy-name">vsan-policy-name<a class="headerlink" href="#vsan-policy-name" title="Permanent link">&para;</a></h3>
+<pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o vsan-policy-name=allflash
 </code></pre>
 
-<p>Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the <code>-o policy</code> flag.</p>
+<p>Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the <code>-o vsan-policy-name</code> flag.</p>
 <h3 id="diskformat">diskformat<a class="headerlink" href="#diskformat" title="Permanent link">&para;</a></h3>
 <pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=zeroedthick
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=thin
