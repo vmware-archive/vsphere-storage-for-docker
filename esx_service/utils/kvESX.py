@@ -26,6 +26,7 @@ import sys
 import errno
 import time
 import threadutils
+import vmdk_utils
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -63,10 +64,6 @@ KV_ALIGN = 4096
 
 # Flag to track the version of Python on the platform
 is_64bits = False
-
-# Number of times and sleep time to retry on IOError EBUSY
-EBUSY_RETRY_COUNT = 8
-EBUSY_RETRY_SLEEP = 0.5
 
 # Get a Reentrant locking decorator
 diskLibLock = threadutils.get_lock_decorator(reentrant=True)
@@ -262,6 +259,7 @@ def load(volpath):
     meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
                                                 DVOL_KEY.encode())
     retry_count = 0
+    vol_name = vmdk_utils.get_volname_from_vmdk_path(volpath)
     while True:
         try:
             with open(meta_file, "r") as fh:
@@ -269,11 +267,11 @@ def load(volpath):
             break
         except IOError as open_error:
             # This is a workaround to the timing/locking with metadata files issue #626
-            if (hasattr(open_error, "errno") and
-                    (open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT)):
+            if open_error.errno == errno.EBUSY and retry_count <= vmdk_utils.VMDK_RETRY_COUNT:
                 logging.warning("Meta file %s busy for load(), retrying...", meta_file)
+                vmdk_utils.log_volume_lsof(vol_name)
                 retry_count += 1
-                time.sleep(EBUSY_RETRY_SLEEP)
+                time.sleep(vmdk_utils.VMDK_RETRY_SLEEP)
             else:
                 logging.exception("Failed to access %s", meta_file)
                 return None
@@ -295,6 +293,7 @@ def save(volpath, kv_dict):
     kv_str = json.dumps(kv_dict)
 
     retry_count = 0
+    vol_name = vmdk_utils.get_volname_from_vmdk_path(volpath)
     while True:
         try:
             with open(meta_file, "w") as fh:
@@ -302,11 +301,11 @@ def save(volpath, kv_dict):
             break
         except IOError as open_error:
             # This is a workaround to the timing/locking with metadata files issue #626
-            if (hasattr(open_error, "errno") and
-                    (open_error.errno == errno.EBUSY and retry_count <= EBUSY_RETRY_COUNT)):
+            if open_error.errno == errno.EBUSY and retry_count <= vmdk_utils.VMDK_RETRY_COUNT:
                 logging.warning("Meta file %s busy for save(), retrying...", meta_file)
+                vmdk_utils.log_volume_lsof(vol_name)
                 retry_count += 1
-                time.sleep(EBUSY_RETRY_SLEEP)
+                time.sleep(vmdk_utils.VMDK_RETRY_SLEEP)
             else:
                 logging.exception("Failed to save meta-data for %s", volpath)
                 return False

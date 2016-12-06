@@ -43,6 +43,13 @@ SNAP_SUFFIX_GLOB = "-[0-9][0-9][0-9][0-9][0-9][0-9].vmdk"
 # regexp for finding datastore path "[datastore] path/to/file.vmdk" from full vmdk path
 DATASTORE_PATH_REGEXP = r"^/vmfs/volumes/([^/]+)/(.*\.vmdk)$"
 
+# lsof command
+LSOF_CMD = "/bin/vmkvsitools lsof"
+
+# Number of times and sleep time to retry on IOError EBUSY
+VMDK_RETRY_COUNT = 5
+VMDK_RETRY_SLEEP = 1
+
 def init_datastoreCache():
     """
     Initializes the datastore cache with the list of datastores accessible from local ESX host.
@@ -169,6 +176,14 @@ def get_datastore_from_vmdk_path(vmdk_path):
     datastore, path = match.groups()
     return datastore
 
+def get_volname_from_vmdk_path(vmdk_path):
+    """Returns the volume name from a full vmdk path.
+    """
+    match = re.search(DATASTORE_PATH_REGEXP, vmdk_path)
+    _, path = match.groups()
+    vmdk = path.split("/")[-1]
+    return strip_vmdk_extension(vmdk)
+
 def list_vmdks(path, volname="", show_snapshots=False):
     """ Return a list of VMDKs in a given path. Filters out non-descriptor
     files and delta disks.
@@ -261,3 +276,16 @@ def find_vm_by_name(vm_name):
     except:
         return None
 
+def log_volume_lsof(vol_name):
+    """Log volume open file descriptors"""
+    rc, out = vmdk_ops.RunCommand(LSOF_CMD)
+    if rc != 0:
+        logging.error("Error running lsof for %s: %s", vol_name, out)
+        return
+    for line in out.splitlines():
+        # Make sure we only match the lines pertaining to that volume files.
+        if re.search(r".*/vmfs/volumes/.*{0}.*".format(vol_name), line):
+            cartel, name, ftype, fd, desc = line.split()
+            msg = "cartel={0}, name={1}, type={2}, fd={3}, desc={4}".format(
+                cartel, name, ftype, fd, desc)
+            logging.info("Volume open descriptor: %s", msg)

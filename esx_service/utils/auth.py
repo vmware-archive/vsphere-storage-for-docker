@@ -360,7 +360,7 @@ def remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name):
                     [tenant_uuid, datastore, vol_name]
             )
         _auth_mgr.conn.commit()
-    except sqlite3.Error, e:
+    except sqlite3.Error as e:
         logging.error("Error %s when remove from volumes table for tenant_id %s and datastore %s",
                       e, tenant_uuid, datastore)
         return str(e)
