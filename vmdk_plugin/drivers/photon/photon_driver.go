@@ -56,13 +56,15 @@ const (
 
 // Driver - Photon volume driver struct
 type Driver struct {
-	m         *sync.Mutex // create() serialization - for future use
-	refCounts refcount.RefCountsMap
-	client    *photon.Client
-	target    string
-	project   string
-	hostID    string
-	mountRoot string
+	m               *sync.Mutex // create() serialization - for future use
+	refCounts       refcount.RefCountsMap
+	client          *photon.Client
+	target          string
+	project         string
+	hostID          string
+	mountRoot       string
+	deferUnmounts   bool
+	deferedUnmounts []string
 }
 
 // NewVolumeDriver - creates Driver, creates client for given target
@@ -77,6 +79,8 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 	}
 	// Use default timeout of thirty seconds and retry of three
 	d.client = photon.NewClient(targetURL, nil, nil)
+	d.deferUnmounts = false
+	d.mountRoot = mountDir
 
 	d.refCounts.Init(d, mountDir, driverName)
 
@@ -88,28 +92,16 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 		"hostID":  hostID,
 	}).Info("Docker Photon plugin started ")
 
-	d.mountRoot = mountDir
 	return d
 }
+
 func (d *Driver) getRefCount(vol string) uint           { return d.refCounts.GetCount(vol) }
 func (d *Driver) incrRefCount(vol string) uint          { return d.refCounts.Incr(vol) }
 func (d *Driver) decrRefCount(vol string) (uint, error) { return d.refCounts.Decr(vol) }
-
-func (d *Driver) getDiskID(vol string) string {
-	return d.refCounts.GetID(vol)
-}
-
-func (d *Driver) addDiskID(vol string, id string) {
-	d.refCounts.AddID(vol, id)
-}
-
-func (d *Driver) resetDiskID(vol string) {
-	d.refCounts.ResetID(vol)
-}
-
-func (d *Driver) getMountPoint(volName string) string {
-	return filepath.Join(d.mountRoot, volName)
-}
+func (d *Driver) getDiskID(vol string) string           { return d.refCounts.GetID(vol) }
+func (d *Driver) addDiskID(vol string, id string)       { d.refCounts.AddID(vol, id) }
+func (d *Driver) resetDiskID(vol string)                { d.refCounts.ResetID(vol) }
+func (d *Driver) getMountPoint(volName string) string   { return filepath.Join(d.mountRoot, volName) }
 
 func validateCreateOptions(r volume.Request, fsMap map[string]string) error {
 	// Clone isn't supported
@@ -597,13 +589,18 @@ func (d *Driver) Unmount(r volume.UnmountRequest) volume.Response {
 		return volume.Response{Err: ""}
 	}
 
-	// and if nobody needs it, unmount and detach
-	err = d.unmountVolume(r.Name, diskID)
-	if err != nil {
-		log.WithFields(
-			log.Fields{"name": r.Name, "error": err.Error()},
-		).Error("Failed to unmount ")
-		return volume.Response{Err: err.Error()}
+	if d.deferUnmounts {
+		// Add the volume to the defered volume unmount list
+		d.deferedUnmounts = append(d.deferedUnmounts, r.Name)
+	} else {
+		// and if nobody needs it, unmount and detach
+		err = d.unmountVolume(r.Name, diskID)
+		if err != nil {
+			log.WithFields(
+				log.Fields{"name": r.Name, "error": err.Error()},
+			).Error("Failed to unmount ")
+			return volume.Response{Err: err.Error()}
+		}
 	}
 	return volume.Response{Err: ""}
 }

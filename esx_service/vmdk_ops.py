@@ -42,7 +42,6 @@ import signal
 import subprocess
 import sys
 import traceback
-import threading
 import time
 from ctypes import *
 
@@ -84,6 +83,7 @@ import vsan_info
 import auth
 import sqlite3
 import convert
+import error_code
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -146,6 +146,7 @@ def RunCommand(cmd):
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
+                         universal_newlines=True,
                          shell=True)
     o, e = p.communicate()
     s = p.returncode
@@ -159,7 +160,7 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, vm_datastore=None):
+def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
@@ -171,7 +172,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, vm_datastore
 
     if kv.CLONE_FROM in opts:
         return cloneVMDK(vm_name, vmdk_path, opts,
-                         vm_uuid, vm_datastore)
+                         vm_uuid, datastore)
 
     cmd = make_create_cmd(opts, vmdk_path)
     rc, out = RunCommand(cmd)
@@ -181,12 +182,22 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, vm_datastore
     if not create_kv_store(vm_name, vmdk_path, opts):
         msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
         logging.warning(msg)
-        removeVMDK(vmdk_path)
-        return err(msg)
-
-    backing, needs_cleanup = get_backing_device(vmdk_path)
-    cleanup_backing_device(backing, needs_cleanup)
-
+        error_info = err(msg)
+        remove_err = removeVMDK(vmdk_path=vmdk_path, 
+                                vol_name=vol_name, 
+                                vm_name=vm_name,
+                                tenant_uuid=tenant_uuid,
+                                datastore=datastore)
+        if remove_err:
+            error_info = error_info + remove_err
+        return error_info
+   
+    # create succeed, insert the volume information into "volumes" table
+    if tenant_uuid:
+        vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
+        auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
+    else:
+        logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
 
 def make_create_cmd(opts, vmdk_path):
     """ Return the command used to create a VMDK """
@@ -248,7 +259,11 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
     if not os.path.isfile(src_vmdk_path):
         return err("Could not find volume for cloning %s" % opts[kv.CLONE_FROM])
 
-    with lockManager.get_lock(src_volume):
+    # Form datastore path from vmdk_path
+    dest_vol = vmdk_utils.get_datastore_path(vmdk_path)
+    source_vol = vmdk_utils.get_datastore_path(src_vmdk_path)
+
+    with lockManager.get_lock(source_vol):
         # Verify if the source volume is in use.
         attached, uuid, attach_as = getStatusAttached(src_vmdk_path)
         if attached:
@@ -275,10 +290,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         vdisk_spec.adapterType = 'busLogic'
         vdisk_spec.diskType = disk_format
 
-        # Form datastore path from vmdk_path
-        dest_vol = vmdk_utils.get_datastore_path(vmdk_path)
-        source_vol = vmdk_utils.get_datastore_path(src_vmdk_path)
-
+        # Clone volume
         si = get_si()
         task = si.content.virtualDiskManager.CopyVirtualDisk(
             sourceName=source_vol, destName=dest_vol, destSpec=vdisk_spec)
@@ -305,10 +317,6 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         removeVMDK(vmdk_path)
         return err(msg)
 
-    backing, needs_cleanup = get_backing_device(vmdk_path)
-    cleanup_backing_device(backing, needs_cleanup)
-
-
 def create_kv_store(vm_name, vmdk_path, opts):
     """ Create the metadata kv store for a volume """
     vol_meta = {kv.STATUS: kv.DETACHED,
@@ -329,7 +337,7 @@ def validate_opts(opts, vmdk_path):
                   kv.ATTACH_AS, kv.ACCESS, kv.FILESYSTEM_TYPE, kv.CLONE_FROM]
     defaults = [kv.DEFAULT_DISK_SIZE, kv.DEFAULT_VSAN_POLICY,\
                 kv.DEFAULT_ALLOCATION_FORMAT, kv.DEFAULT_ATTACH_AS,\
-                kv.DEFAULT_ACCESS, kv.DEFAULT_FILESYSTEM_TYPE, kv.CLONE_FROM]
+                kv.DEFAULT_ACCESS, kv.DEFAULT_FILESYSTEM_TYPE, kv.DEFAULT_CLONE_FROM]
     invalid = frozenset(opts.keys()).difference(valid_opts)
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
@@ -427,60 +435,6 @@ def get_vsan_uuid(vmdk_path):
     except:
         return None
 
-# Create and return the devFS path for a VSAN object UUID.
-# Also returns true if clean up is needed.
-# cleanup_vsan_devfs should be called to clean up before
-# removing the VSAN object.
-def get_vsan_devfs_path(uuid):
-
-    logging.debug("Got volume UUID %s", uuid)
-
-    # Objtool creates a link thats usable to
-    # read write to vsan object.
-    cmd = "{0} {1}".format(OBJ_TOOL_CMD, uuid)
-    rc, out = RunCommand(cmd)
-    fpath="/vmfs/devices/vsan/{0}".format(uuid)
-    if rc == 0 and os.path.isfile(fpath):
-        return fpath, True
-    logging.error("Failed to create devFS node for %s", uuid)
-    return None, False
-
-# Clean up vsan devfs path
-def cleanup_vsan_devfs_path(devfs_path):
-    try:
-        os.remove(devfs_path)
-        logging.debug("Unlinked %s", devfs_path)
-        return True
-    except OSError as ex:
-        logging.error("Failed to remove backing device %s, err %s",
-                      devfs_path, str(ex))
-    return False
-
-# Returns the flat file for a VMDK.
-def get_backing_flat_file(vmdk_path):
-    return vmdk_path.replace(".vmdk", "-flat.vmdk")
-
-# Return a backing file path for given vmdk path or none
-# if a backing can't be found. Returns True if clean up
-# is needed. Do not forget to call cleanup_backing_device when done.
-def get_backing_device(vmdk_path):
-    flatBacking = get_backing_flat_file(vmdk_path)
-    if os.path.isfile(flatBacking):
-        return flatBacking, False
-
-    uuid = get_vsan_uuid(vmdk_path)
-
-    if uuid:
-
-        return get_vsan_devfs_path(uuid)
-
-    return None, False
-
-def cleanup_backing_device(backing, cleanup_device):
-    if cleanup_device:
-        return cleanup_vsan_devfs_path(backing)
-    return True
-
 # Return volume ingo
 def vol_info(vol_meta, vol_size_info, datastore):
     vinfo = {CREATED_BY_VM : vol_meta[kv.CREATED_BY],
@@ -522,7 +476,7 @@ def vol_info(vol_meta, vol_size_info, datastore):
 
 
 # Return error, or None for OK
-def removeVMDK(vmdk_path):
+def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datastore=None):
     logging.info("*** removeVMDK: %s", vmdk_path)
 
     # Check the current volume status
@@ -549,8 +503,15 @@ def removeVMDK(vmdk_path):
         elif rc != 0:
             return err("Failed to remove %s. %s" % (vmdk_path, out))
         else:
-            return None
+            # remove succeed, remove infomation of this volume from volumes table
+            if tenant_uuid:
+                error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
+                return error_info
+            else:
+                if not vm_name:
+                    logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
 
+            return None
 
 def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""
@@ -712,12 +673,14 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     Returns None (if all OK) or error string
     """
+    logging.debug("config_path=%s", config_path)
     vm_datastore = get_datastore_name(config_path)
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
 
     if cmd == "list":
+        threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
         return listVMDK(vm_datastore, tenant_name)
 
     try:
@@ -744,27 +707,40 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
-    if cmd == "get":
-        response = getVMDK(vmdk_path, vol_name, datastore)
-    elif cmd == "create":
-        response = createVMDK(vmdk_path, vm_name, vol_name, opts, vm_uuid, vm_datastore)
-        # create succeed, insert infomation of this volume to volumes table
-        if not response:
-            if tenant_uuid:
-                vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
-                auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
-            else:
-                logging.warning(" VM %s does not belong to any tenant", vm_name)
+    # Set up locking for volume operations.
+    # Lock name defaults to volume "datastore path"
+    lockname = vmdk_utils.get_datastore_path(vmdk_path)
+    # Set thread name to vm_name-lockname
+    threadutils.set_thread_name("{0}-{1}".format(vm_name, lockname))
 
-    elif cmd == "remove":
-        response = removeVMDK(vmdk_path)
-    elif cmd == "attach":
-        response = attachVMDK(vmdk_path, vm_uuid)
-    elif cmd == "detach":
-        response = detachVMDK(vmdk_path, vm_uuid)
-    else:
-        return err("Unknown command:" + cmd)
+    # Get a resource lock
+    logging.debug("Trying to acquire lock: %s", lockname)
+    with lockManager.get_lock(lockname):
+        logging.debug("Acquired lock: %s", lockname)
 
+        if cmd == "get":
+            response = getVMDK(vmdk_path, vol_name, datastore)
+        elif cmd == "create":
+            response = createVMDK(vmdk_path=vmdk_path,
+                                  vm_name=vm_name,
+                                  vol_name=vol_name,
+                                  opts=opts,
+                                  tenant_uuid=tenant_uuid,
+                                  datastore=datastore)
+        elif cmd == "remove":
+            response = removeVMDK(vmdk_path=vmdk_path,
+                                  vol_name=vol_name,
+                                  vm_name=vm_name,
+                                  tenant_uuid=tenant_uuid,
+                                  datastore=datastore)
+        elif cmd == "attach":
+            response = attachVMDK(vmdk_path, vm_uuid)
+        elif cmd == "detach":
+            response = detachVMDK(vmdk_path, vm_uuid)
+        else:
+            return err("Unknown command:" + cmd)
+
+    logging.debug("Released lock: %s", lockname)
     return response
 
 def connectLocalSi(force=False):
@@ -1328,31 +1304,16 @@ def execRequestThread(client_socket, cartel, request):
             reply_string = {u'Error': "Failed to parse json '%s'." % request}
             send_vmci_reply(client_socket, reply_string)
         else:
-            details = req["details"]
-            opts = details["Opts"] if "Opts" in details else {}
+            opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
+            reply_string = executeRequest(vm_uuid=vm_uuid,
+                                vm_name=vm_name,
+                                config_path=cfg_path,
+                                cmd=req["cmd"],
+                                full_vol_name=req["details"]["Name"],
+                                opts=opts)
 
-            # Lock name defaults to volume name, or socket# if request has no volume defined
-            lockname = details["Name"] if len(details["Name"]) > 0 else "socket{0}".format(client_socket)
-            # Set thread name to vm_name-lockname
-            threading.currentThread().setName("{0}-{1}".format(vm_name, lockname))
-
-            # Get a resource lock
-            rsrcLock = lockManager.get_lock(lockname)
-
-            logging.debug("Trying to aquire lock: %s", lockname)
-            with rsrcLock:
-                logging.debug("Aquired lock: %s", lockname)
-
-                reply_string = executeRequest(vm_uuid=vm_uuid,
-                                    vm_name=vm_name,
-                                    config_path=cfg_path,
-                                    cmd=req["cmd"],
-                                    full_vol_name=details["Name"],
-                                    opts=opts)
-
-                logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], reply_string)
-                send_vmci_reply(client_socket, reply_string)
-            logging.debug("Released lock: %s", lockname)
+            logging.info("executeRequest '%s' completed with ret=%s", req["cmd"], reply_string)
+            send_vmci_reply(client_socket, reply_string)
 
     except Exception as ex_thr:
         logging.exception("Unhandled Exception:")
@@ -1395,9 +1356,9 @@ def handleVmciRequests(port):
 
         client_socket = c # Bind to avoid race conditions.
         # Fire a thread to execute the request
-        threading.Thread(
+        threadutils.start_new_thread(
             target=execRequestThread,
-            args=(client_socket, cartel.value, txt.value)).start()
+            args=(client_socket, cartel.value, txt.value))
 
     lib.close(sock)  # close listening socket when the loop is over
 

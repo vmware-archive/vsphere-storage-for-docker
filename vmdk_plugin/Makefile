@@ -304,7 +304,7 @@ testasroot:
 	$(GO) test $(PLUGIN)/utils/config
 
 # does sanity check of create/remove docker volume on the guest
-TEST_VOL_NAME ?= TestVolume
+TEST_VOL_NAME ?= DefaultTestVol
 TEST_VERBOSE   = -test.v
 
 CONN_MSG := "Please make sure Docker is running and is configured to accept TCP connections"

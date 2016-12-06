@@ -28,7 +28,6 @@ COL_TENANT_ID = 'tenant_id'
 
 # column name in privileges table
 COL_DATASTORE = 'datastore'
-COL_GLOBAL_VISIBILITY = 'global_visibility'
 COL_MOUNT_VOLUME = 'mount_volume'
 COL_CREATE_VOLUME = 'create_volume'
 COL_DELETE_VOLUME = 'delete_volume'

@@ -18,7 +18,8 @@ import vsan_policy
 import vmdk_utils
 import volume_kv
 import vsan_info
-
+import logging
+import log_config
 
 class TestVsanPolicy(unittest.TestCase):
     """ Test VSAN Policy code """
@@ -61,7 +62,10 @@ class TestVsanPolicy(unittest.TestCase):
         self.assertFalse(os.path.isfile(self.policy_path))
 
     def test_delete_nonexistent_policy_fails(self):
-        self.assertNotEqual(None, vsan_policy.delete(self.name))
+        log = log_config.get_logger('Delete_nonexistent_policy')
+	log.info("\nThis is a negative test to delete a non-existent vsan policy.\n"
+	        "Test is expected to raise exception log - Failed to remove the policy file error. \n")
+        self.assertNotEqual(None, vsan_policy.delete(self.name))       
 
     def test_create_list(self):
         self.assertEqual(None, vsan_policy.create(self.name, self.content))

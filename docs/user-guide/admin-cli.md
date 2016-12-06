@@ -166,7 +166,6 @@ Sample:
 
 ```bash
 /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1 --rights create,delete,mount
-{'mount_volume': 1, 'global_visibility': 0, 'max_volume_size': 0, 'create_volume': 1, 'delete_volume': 1, 'datastore': 'datastore1', 'usage_quota': 0}
 tenant access add succeeded
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
 Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
@@ -178,7 +177,6 @@ By default no rights are given
 
 ```bash
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1
-{'mount_volume': 0, 'global_visibility': 0, 'max_volume_size': 0, 'create_volume': 0, 'delete_volume': 0, 'datastore': 'datastore1', 'usage_quota': 0}
 tenant access add succeeded
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
 Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size

@@ -47,18 +47,16 @@ class TestAuthDataModel(unittest.TestCase):
 
     def get_privileges(self):
         privileges = [{'datastore': 'datastore1',
-                     'global_visibility': 0,
-                      'create_volume': 0,
-                      'delete_volume': 0,
-                     'mount_volume': 0,
-                      'max_volume_size': 0,
-                      'usage_quota': 0}]
+                       'create_volume': 0,
+                       'delete_volume': 0,
+                       'mount_volume': 0,
+                       'max_volume_size': 0,
+                       'usage_quota': 0}]
         return privileges
     
     def get_default_datastore_and_privileges(self):
         default_datastore = 'default_ds'
         default_privileges = {'datastore': default_datastore,
-                              'global_visibility': 0,
                               'create_volume': 0,
                               'delete_volume': 0,
                               'mount_volume': 0,
@@ -116,7 +114,6 @@ class TestAuthDataModel(unittest.TestCase):
 
         expected_privileges = [tenant1.id,
                                privileges[0][auth_data_const.COL_DATASTORE],
-                               privileges[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                                privileges[0][auth_data_const.COL_CREATE_VOLUME],
                                privileges[0][auth_data_const.COL_DELETE_VOLUME],
                                privileges[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -125,7 +122,6 @@ class TestAuthDataModel(unittest.TestCase):
                               ]
         expected_default_privileges = [tenant1.id,
                                        default_privileges[auth_data_const.COL_DATASTORE],
-                                       default_privileges[auth_data_const.COL_GLOBAL_VISIBILITY],
                                        default_privileges[auth_data_const.COL_CREATE_VOLUME],
                                        default_privileges[auth_data_const.COL_DELETE_VOLUME],
                                        default_privileges[auth_data_const.COL_MOUNT_VOLUME],
@@ -139,7 +135,6 @@ class TestAuthDataModel(unittest.TestCase):
          
         actual_privileges = [privileges_row[0][auth_data_const.COL_TENANT_ID],
                              privileges_row[0][auth_data_const.COL_DATASTORE],
-                             privileges_row[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                              privileges_row[0][auth_data_const.COL_CREATE_VOLUME],
                              privileges_row[0][auth_data_const.COL_DELETE_VOLUME],
                              privileges_row[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -148,7 +143,6 @@ class TestAuthDataModel(unittest.TestCase):
                              ]
         actual_default_privileges = [privileges_row[1][auth_data_const.COL_TENANT_ID],
                                      privileges_row[1][auth_data_const.COL_DATASTORE],
-                                     privileges_row[1][auth_data_const.COL_GLOBAL_VISIBILITY],
                                      privileges_row[1][auth_data_const.COL_CREATE_VOLUME],
                                      privileges_row[1][auth_data_const.COL_DELETE_VOLUME],
                                      privileges_row[1][auth_data_const.COL_MOUNT_VOLUME],
@@ -263,7 +257,6 @@ class TestAuthDataModel(unittest.TestCase):
 
         default_datastore = 'new_default_ds'
         default_privileges = {'datastore': default_datastore,
-                              'global_visibility': 0,
                               'create_volume': 1,
                               'delete_volume': 1,
                               'mount_volume': 1,
@@ -284,7 +277,6 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(len(privileges_row), 2)
         expected_default_privileges = [tenant1.id,
                                        default_privileges[auth_data_const.COL_DATASTORE],
-                                       default_privileges[auth_data_const.COL_GLOBAL_VISIBILITY],
                                        default_privileges[auth_data_const.COL_CREATE_VOLUME],
                                        default_privileges[auth_data_const.COL_DELETE_VOLUME],
                                        default_privileges[auth_data_const.COL_MOUNT_VOLUME],
@@ -294,7 +286,6 @@ class TestAuthDataModel(unittest.TestCase):
                  
         actual_default_privileges = [privileges_row[1][auth_data_const.COL_TENANT_ID],
                                      privileges_row[1][auth_data_const.COL_DATASTORE],
-                                     privileges_row[1][auth_data_const.COL_GLOBAL_VISIBILITY],
                                      privileges_row[1][auth_data_const.COL_CREATE_VOLUME],
                                      privileges_row[1][auth_data_const.COL_DELETE_VOLUME],
                                      privileges_row[1][auth_data_const.COL_MOUNT_VOLUME],
@@ -316,12 +307,11 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertTrue(uuid.UUID(tenant1.id))
                
         privileges = [{'datastore': 'datastore1',
-                        'global_visibility': 0,
-                        'create_volume': 1,
-                        'delete_volume': 1,
-                        'mount_volume': 0,
-                        'max_volume_size': 0,
-                        'usage_quota': 0}]
+                       'create_volume': 1,
+                       'delete_volume': 1,
+                       'mount_volume': 0,
+                       'max_volume_size': 0,
+                       'usage_quota': 0}]
         
         error_info = tenant1.set_datastore_access_privileges(self.auth_mgr.conn, privileges)
         self.assertEqual(error_info, None)
@@ -332,7 +322,6 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(len(privileges_row), 2)
         expected_privileges = [tenant1.id,
                                privileges[0][auth_data_const.COL_DATASTORE],
-                               privileges[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                                privileges[0][auth_data_const.COL_CREATE_VOLUME],
                                privileges[0][auth_data_const.COL_DELETE_VOLUME],
                                privileges[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -342,7 +331,6 @@ class TestAuthDataModel(unittest.TestCase):
                  
         actual_privileges = [privileges_row[0][auth_data_const.COL_TENANT_ID],
                              privileges_row[0][auth_data_const.COL_DATASTORE],
-                             privileges_row[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                              privileges_row[0][auth_data_const.COL_CREATE_VOLUME],
                              privileges_row[0][auth_data_const.COL_DELETE_VOLUME],
                              privileges_row[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -372,7 +360,6 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertTrue(uuid.UUID(tenant2.id))
         
         privileges = [{'datastore': 'datastore1',
-                       'global_visibility': 0,
                        'create_volume': 0,
                        'delete_volume': 0,
                        'mount_volume': 0,
@@ -415,7 +402,6 @@ class TestAuthDataModel(unittest.TestCase):
         # check default_privileges
         tenant1_expected_output = [tenant1.id,
                                    default_privileges[auth_data_const.COL_DATASTORE],
-                                   default_privileges[auth_data_const.COL_GLOBAL_VISIBILITY],
                                    default_privileges[auth_data_const.COL_CREATE_VOLUME],
                                    default_privileges[auth_data_const.COL_DELETE_VOLUME],
                                    default_privileges[auth_data_const.COL_MOUNT_VOLUME],
@@ -424,7 +410,6 @@ class TestAuthDataModel(unittest.TestCase):
                                    ]
         tenant1_actual_output = [tenants_list[0].default_privileges[0][auth_data_const.COL_TENANT_ID],
                                  tenants_list[0].default_privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[0].default_privileges[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                                  tenants_list[0].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
                                  tenants_list[0].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
                                  tenants_list[0].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -435,7 +420,6 @@ class TestAuthDataModel(unittest.TestCase):
         # check privileges
         tenant1_expected_output = [tenant1.id,
                                    privileges[0][auth_data_const.COL_DATASTORE],
-                                   privileges[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                                    privileges[0][auth_data_const.COL_CREATE_VOLUME],
                                    privileges[0][auth_data_const.COL_DELETE_VOLUME],
                                    privileges[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -444,7 +428,6 @@ class TestAuthDataModel(unittest.TestCase):
                                    ]
         tenant1_actual_output = [tenants_list[0].privileges[0][auth_data_const.COL_TENANT_ID],
                                  tenants_list[0].privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[0].privileges[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                                  tenants_list[0].privileges[0][auth_data_const.COL_CREATE_VOLUME],
                                  tenants_list[0].privileges[0][auth_data_const.COL_DELETE_VOLUME],
                                  tenants_list[0].privileges[0][auth_data_const.COL_MOUNT_VOLUME],
@@ -487,7 +470,6 @@ class TestAuthDataModel(unittest.TestCase):
         # check default_privileges
         tenant2_expected_output = [tenant2.id,
                                    default_privileges[auth_data_const.COL_DATASTORE],
-                                   default_privileges[auth_data_const.COL_GLOBAL_VISIBILITY],
                                    default_privileges[auth_data_const.COL_CREATE_VOLUME],
                                    default_privileges[auth_data_const.COL_DELETE_VOLUME],
                                    default_privileges[auth_data_const.COL_MOUNT_VOLUME],
@@ -496,7 +478,6 @@ class TestAuthDataModel(unittest.TestCase):
                                    ]
         tenant2_actual_output = [tenants_list[1].default_privileges[0][auth_data_const.COL_TENANT_ID],
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[1].default_privileges[0][auth_data_const.COL_GLOBAL_VISIBILITY],
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
                                  tenants_list[1].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],

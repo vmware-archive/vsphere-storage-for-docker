@@ -34,7 +34,7 @@ log=/var/log/docker-volume-vsphere.log
 count=5
 vname=refCountTestVol
 mount=/mnt/vmdk/$vname
-timeout=60
+timeout=180
 
 function cleanup_containers {
    to_kill=`docker ps -q`
@@ -67,7 +67,7 @@ function check_files {
 }
 
 function check_recovery_record {
-    line=`tail -10 /var/log/docker-volume-vsphere.log | $GREP 'Volume name='`
+    line=`tail -10 /var/log/docker-volume-vsphere.log | $GREP 'Volume name=' | $GREP 'mounted=true'`
     expected="name=$vname count=$count mounted=true"
 
     echo $line | $GREP -q "$expected" ; if [ $? -ne 0 ] ; then

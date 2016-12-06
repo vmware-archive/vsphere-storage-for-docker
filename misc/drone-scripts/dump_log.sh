@@ -16,14 +16,28 @@
 # A few helper functions for dumping logs
 
 VM_LOGFILE="/var/log/docker-volume-vsphere.log"
-VM_STDLOG="/tmp/plugin.log"
 ESX_LOGFILE="/var/log/vmware/vmdk_ops.log"
+HOSTD_LOGFILE="/var/log/hostd.log"
 
 dump_log_esx() {
+  log $ESX_LOGFILE
   $SSH $USER@$1 cat $ESX_LOGFILE
+  if [ $INCLUDE_HOSTD == "true" ]
+  then
+    log $HOSTD_LOGFILE
+    $SSH $USER@$1 cat $HOSTD_LOGFILE
+  fi
 }
 
 dump_log_vm(){
-  $SSH $USER@$1 cat $VM_STDLOG
   $SSH $USER@$1 cat $VM_LOGFILE
+}
+
+truncate_vm_logs() {
+  $SSH $USER@$1 "echo > $VM_LOGFILE"
+}
+
+truncate_esx_logs() {
+  $SSH $USER@$1 "echo > $ESX_LOGFILE"
+  $SSH $USER@$1 "echo > $HOSTD_LOGFILE"
 }

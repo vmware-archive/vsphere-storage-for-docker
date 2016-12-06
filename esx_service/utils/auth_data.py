@@ -23,6 +23,7 @@ import vmdk_utils
 import vmdk_ops
 import logging
 import auth_data_const
+import error_code
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
@@ -32,7 +33,6 @@ def all_columns_set(privileges):
         
         all_columns = [
                         auth_data_const.COL_DATASTORE,
-                        auth_data_const.COL_GLOBAL_VISIBILITY,
                         auth_data_const.COL_CREATE_VOLUME,
                         auth_data_const.COL_DELETE_VOLUME,
                         auth_data_const.COL_MOUNT_VOLUME,
@@ -171,7 +171,7 @@ class DockerVolumeTenant:
             conn.execute(
                 """
                 INSERT OR IGNORE INTO privileges VALUES
-                (:tenant_id, :datastore, :global_visibility, :create_volume,
+                (:tenant_id, :datastore, :create_volume,
                 :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
                 """,
                 privileges
@@ -191,14 +191,12 @@ class DockerVolumeTenant:
 
             Example:
             privileges = [{'datastore': 'datastore1',
-                           'global_visibility': 0,
                            'create_volume': 0,
                            'delete_volume': 0,
                            'mount_volume': 1,
                            'max_volume_size': 0,
                            'usage_quota': 0},
                           {'datastore': 'datastore2',
-                           'global_visibility': 0,
                            'create_volume': 1,
                            'delete_volume': 1,
                            'mount_volume': 1,
@@ -216,7 +214,7 @@ class DockerVolumeTenant:
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO privileges VALUES
-                (:tenant_id, :datastore, :global_visibility, :create_volume,
+                (:tenant_id, :datastore, :create_volume,
                 :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
                 """,
                 privileges
@@ -227,7 +225,7 @@ class DockerVolumeTenant:
                 # each dict represent a privilege that the tenant has for a given datastore
                 # for each dict, add a new element which maps 'tenant_id' to tenant_id 
                 p[auth_data_const.COL_TENANT_ID] = tenant_id
-                column_list = ['tenant_id', 'datastore', 'global_visibility', 'create_volume',
+                column_list = ['tenant_id', 'datastore', 'create_volume',
                                 'delete_volume', 'mount_volume', 'max_volume_size', 'usage_quota']
                 update_list = []
                 update_list = [p[col] for col in column_list]    
@@ -241,7 +239,6 @@ class DockerVolumeTenant:
                     UPDATE OR IGNORE privileges SET
                         tenant_id = ?, 
                         datastore = ?, 
-                        global_visibility = ?,
                         create_volume = ?,
                         delete_volume = ?,
                         mount_volume = ?,
@@ -362,7 +359,7 @@ class AuthorizationDataManager:
                     id TEXT PRIMARY KEY NOT NULL,
                     -- name of the tenant, which is specified by user when creating the tenant
                     -- this field can be changed later by using set_name() API
-                    name TEXT,
+                    name TEXT UNIQUE NOT NULL,
                     -- brief description of the tenant, which is specified by user when creating the tenant
                     -- this field can be changed laster by using set_description API
                     description TEXT,
@@ -397,8 +394,6 @@ class AuthorizationDataManager:
                 tenant_id TEXT NOT NULL,
                 -- datastore name
                 datastore TEXT NOT NULL,
-                -- not use currently, will drop this field later
-                global_visibility INTEGER,
                 create_volume INTEGER,
                 delete_volume INTEGER,
                 mount_volume INTEGER,
@@ -446,6 +441,12 @@ class AuthorizationDataManager:
 
         """
         logging.debug ("create_tenant name=%s", name)
+        error_info, exist_tenant = self.get_tenant(name)
+        if exist_tenant:
+            error_info = error_code.TENANT_ALREADY_EXIST.format(name)
+            logging.warning(error_info)
+            return error_info, exist_tenant
+            
         if default_privileges:
             if not all_columns_set(default_privileges):
                 error_info = "Not all columns are set in default_privileges"
@@ -483,7 +484,7 @@ class AuthorizationDataManager:
                 self.conn.execute(
                     """
                     INSERT INTO privileges VALUES
-                    (:tenant_id, :datastore, :global_visibility, :create_volume,
+                    (:tenant_id, :datastore, :create_volume,
                     :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
                     """,
                     default_privileges
@@ -495,7 +496,7 @@ class AuthorizationDataManager:
                 self.conn.executemany(
                     """
                     INSERT INTO privileges VALUES
-                    (:tenant_id, :datastore, :global_visibility, :create_volume,
+                    (:tenant_id, :datastore, :create_volume,
                     :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
                     """,
                     privileges
@@ -611,7 +612,7 @@ class AuthorizationDataManager:
 
         return None, tenant_list   
     
-    def remove_volumes_from_volume_table(self, tenant_id):
+    def remove_volumes_from_volumes_table(self, tenant_id):
         """ Remove all volumes from volumes table. """
         try:
             self.conn.execute(
@@ -655,7 +656,11 @@ class AuthorizationDataManager:
                 dir_paths.add(vmdk['path'])
                 logging.debug("path=%s filename=%s", vmdk['path'], vmdk['filename'])    
                 logging.debug("Deleting volume path%s", vmdk_path)
-                err = vmdk_ops.removeVMDK(vmdk_path)
+                err = vmdk_ops.removeVMDK(vmdk_path=vmdk_path,
+                                          vol_name=vmdk_utils.strip_vmdk_extension(vmdk['filename']),
+                                          vm_name=None,
+                                          tenant_uuid=tenant_id,
+                                          datastore=vmdk['datastore'])
                 if err:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
                     error_info += err
@@ -670,11 +675,11 @@ class AuthorizationDataManager:
                     logging.error(msg)
                     error_info += msg
 
-        err = self.remove_volumes_from_volume_table(tenant_id)
+        err = self.remove_volumes_from_volumes_table(tenant_id)
         if err:
             logging.error("Failed to remove volumes from database %s", err)
             error_info += err
-        
+       
         if error_info:
             return error_info
         

@@ -39,7 +39,7 @@ const (
 	pciAddrLen      = 10                       // Length of PCI dev addr
 	diskPathByDevID = "/dev/disk/by-id/wwn-0x" // Path for devices named by ID
 	scsiHostPath    = "/sys/class/scsi_host/"  // Path for scsi hosts
-	devWaitTimeout  = 20 * time.Second
+	devWaitTimeout  = 1 * time.Second
 	bdevPath        = "/sys/block/"
 	deleteFile      = "/device/delete"
 )

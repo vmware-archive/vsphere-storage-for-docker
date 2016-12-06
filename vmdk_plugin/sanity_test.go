@@ -30,6 +30,7 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/net/context"
@@ -68,7 +69,6 @@ func init() {
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
 	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
 	flag.Parse()
-
 	usingConfigFileDefaults := logInit(logLevel, logFile, configFile)
 
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
@@ -181,13 +181,13 @@ func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume 
 // - check we see it properly from another docker VM (-H2 flag)
 func TestSanity(t *testing.T) {
 
-	fmt.Printf("Running tests on  %s (may take a while)...\n", endPoint1)
+	fmt.Printf("Running tests on  %s (may take a while)...\n", TestInputParamsUtil.GetEndPoint1())
 	clients := []struct {
 		endPoint string
 		client   *client.Client
 	}{
-		{endPoint1, new(client.Client)},
-		{endPoint2, new(client.Client)},
+		{TestInputParamsUtil.GetEndPoint1(), new(client.Client)},
+		{TestInputParamsUtil.GetEndPoint2(), new(client.Client)},
 	}
 
 	for idx, elem := range clients {
@@ -200,6 +200,7 @@ func TestSanity(t *testing.T) {
 	}
 
 	c := clients[0].client // this is the endpoint we use as master
+	volumeName := TestInputParamsUtil.GetVolumeName()
 	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
 	_, err := c.VolumeCreate(context.Background(),
 		types.VolumeCreateRequest{
@@ -238,7 +239,7 @@ func TestSanity(t *testing.T) {
 		}
 	}
 
-	fmt.Printf("Running parallel tests on %s and %s (may take a while)...\n", endPoint1, endPoint2)
+	fmt.Printf("Running parallel tests on %s and %s (may take a while)...\n", TestInputParamsUtil.GetEndPoint1(), TestInputParamsUtil.GetEndPoint2())
 	// Create a short buffered channel to introduce random pauses
 	results := make(chan error, parallelVolumes)
 	createRequest := types.VolumeCreateRequest{
