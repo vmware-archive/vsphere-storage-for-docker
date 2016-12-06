@@ -93,8 +93,7 @@ SRC = plugin.go main.go log_formatter.go refcnt.go \
 # Canned recipe
 define log_target
 @echo
-@echo "=> Running target $@"
-@echo "=>" `date`
+@echo "=> Running target $@" `date`
 @echo
 endef
 
