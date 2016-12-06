@@ -32,7 +32,6 @@ build:
     image: cnastorage/vibauthor-and-go:0.9
     environment: *setup_env
     commands: &build_cmd
-      - echo $TAG
       - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - go get github.com/golang/lint/golint
       - make -s build
