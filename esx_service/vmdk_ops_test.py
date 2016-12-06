@@ -612,7 +612,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
         self.assertEqual(error_info, "No create privilege" )
 
         # set "create_volume" privilege to true 
-        privileges = [{'datastore_url': datastore_url,
+        privileges = [{'datastore_url': datastore_url
                        'allow_create': 1,
                        'max_volume_size': 500,
                        'usage_quota': 1000}]
@@ -896,6 +896,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         # test attach a volume
         opts={}
         result = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_ATTACH, self.tenant1_vol1_name, opts)
+        print result
         self.assertFalse("Error" in result)
      
         # test detach a volume
@@ -914,6 +915,20 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                  default_datastore=False, 
                                                  volume_maxsize=volume_maxsize, 
                                                  volume_totalsize=volume_totalsize)
+        
+        # run create command again, which should succeed since "default_datastore" is set for tenant1 now
+        opts={u'fstype': u'ext4'}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
+        self.assertEqual(None, error_info)
+    
+        # test attach a volume
+        opts={}
+        result = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_ATTACH, self.tenant1_vol1_name, opts)
+        self.assertFalse("Error" in result)
+     
+        # test detach a volume
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_DETACH, self.tenant1_vol1_name, opts)
+        self.assertEqual(None, error_info)
 
         # create a volume with 600MB which exceed the volume_maxsize
         opts={u'size': u'600MB', u'fstype': u'ext4'}

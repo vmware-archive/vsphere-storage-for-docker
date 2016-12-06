@@ -307,6 +307,7 @@ def commands():
                                     'help': "Datastore which access is controlled",
                                     'required': True
                                 },
+
                                 '--default-datastore': {
                                     'help': "Mark datastore as a default datastore for this tenant",
                                     'action': 'store_true'

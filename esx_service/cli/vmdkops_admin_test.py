@@ -23,9 +23,34 @@ import vmdk_utils
 import volume_kv as kv
 import vmdkops_admin
 import random
+import vmdk_ops_test
+import auth_api
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 12
+
+# Number of expected columns in "tenant ls"
+TENANT_LS_EXPECTED_COLUMN_COUNT = 5
+
+def str_to_unicode(str):
+    """ convert str to unicode """
+    return str.decode('utf-8')
+
+def generate_vm_name_str(vms):
+    """ Generate a str with concatenation of given list of vm name """
+    # vms is a list of vm_name
+    # example: vms=["vm1", "vm2"]
+    # the return value is a string like this "vm1,vm2""
+    res = ""
+    for vm in vms:
+        # vm[0] is vm_uuid, vm has format (vm_uuid)
+        res = res + vm
+        res = res + ","
+
+    if res:
+        res = res[:-1]
+
+    return res
 
 class TestParsing(unittest.TestCase):
     """ Test command line arg parsing for all commands """
@@ -378,6 +403,176 @@ class TestStatus(unittest.TestCase):
     """ Test status functionality """
     def test_status(self):
         self.assertEqual(vmdkops_admin.status(None), None)
+
+class TestTenant(unittest.TestCase):
+    """ Test tenant functionality """
+    # tenant1 info
+    tenant1_name = "test_tenant1"
+    vm1_name = 'test_vm1'
+    vm1 = None
+    vm2_name = 'test_vm2'
+    vm2 = None
+    tenant1_new_name = "new_test_tenant1"
+    datastore_name = None
+    datastore1_name = None
+
+    def setUp(self):
+        """ Setup run before each test """
+        
+        if (not self.datastore_name):
+            datastores = vmdk_utils.get_datastores()
+            if datastores:
+                datastore = datastores[0]
+                self.datastore_name = datastore[0]
+                self.datastore_path = datastore[2]
+            
+                if len(datastores) >= 1:
+                    datastore1 = datastores[1]
+                    self.datastore1_name = datastore1[0]
+                    self.datastoer1_path = datastore[2]
+      
+            else:
+            
+                self.assertFalse(True)
+
+        self.cleanup()
+        # get service_instance, and create VMs
+        si = vmdk_ops.get_si()
+        error, self.vm1 = vmdk_ops_test.create_vm(si=si, 
+                                    vm_name=self.vm1_name, 
+                                    datastore=self.datastore_name)
+        if error:
+            self.assertFalse(True)
+
+        self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
+
+        error, self.vm2 = vmdk_ops_test.create_vm(si=si, 
+                                    vm_name=self.vm2_name, 
+                                    datastore=self.datastore_name)
+        if error:
+            self.assertFalse(True)
+        self.vm2_config_path = vmdk_utils.get_vm_config_path(self.vm2_name)
+          
+    def tearDown(self):
+        """ Cleanup after each test """
+        self.cleanup()      
+            
+    def cleanup(self):
+        # cleanup existing tenant
+        error_info = auth_api._tenant_rm(
+                                         name=self.tenant1_name, 
+                                         remove_volumes=True)
+                                         
+        error_info = auth_api._tenant_rm(
+                                         name=self.tenant1_new_name, 
+                                         remove_volumes=True)                                          
+        
+        # remove VM
+        si = vmdk_ops.get_si()
+        vmdk_ops_test.remove_vm(si, self.vm1)
+        vmdk_ops_test.remove_vm(si, self.vm2)
+    
+    def test_tenant(self):
+        # create tenant1 without adding any vms and privileges
+        name = self.tenant1_name
+        vm_list = [self.vm1_name]
+        description = "Test tenant1" 
+        privileges = []
+  
+        error_info, tenant = auth_api._tenant_create(
+                                                    name=name, 
+                                                    description=description,  
+                                                    vm_list=vm_list, 
+                                                    privileges=privileges)
+        self.assertEqual(None, error_info)
+
+        error_info, tenant_list = auth_api._tenant_ls()
+        self.assertEqual(None, error_info)
+
+        header = vmdkops_admin.tenant_ls_headers()
+        rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
+        self.assertEqual(len(header), TENANT_LS_EXPECTED_COLUMN_COUNT)
+        
+        # Two tenants in the list, "_DEFAULT" and "test_tenant1"
+        # row[0] is for "_DEFAULT" tenant, and row[1] is for "test_tenant1"
+        self.assertEqual(len(rows), 2)
+
+        # There are 5 columns for each row, the name of the columns are 
+        # "Uuid", "Name", "Description", "Default_datastore", "VM_list"
+        # Sample output of row[1]:
+        # [u'9e1be0ce-3d58-40f6-a335-d6e267e34baa', u'test_tenant1', u'Test tenant1', '', 'test_vm1']
+        expected_output = [str_to_unicode(self.tenant1_name),
+                           str_to_unicode("Test tenant1"),
+                           "",
+                           generate_vm_name_str(vm_list)]
+        actual_output = [rows[1][1],
+                         rows[1][2],
+                         rows[1][3],
+                         rows[1][4]]
+        
+        self.assertEqual(expected_output, actual_output)
+
+        # tenant update to update description default_datastore
+        error_info = auth_api._tenant_update(
+                                             name=name, 
+                                             description="This is test tenant1",  
+                                             default_datastore=self.datastore_name)
+        self.assertEqual(None, error_info)
+
+        error_info, tenant_list = auth_api._tenant_ls()
+        self.assertEqual(None, error_info)
+
+        header = vmdkops_admin.tenant_ls_headers()
+        rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
+
+        expected_output = [str_to_unicode(self.tenant1_name),
+                           str_to_unicode("This is test tenant1"),
+                           self.datastore_name,
+                           generate_vm_name_str(vm_list)]
+        actual_output = [rows[1][1],
+                         rows[1][2],
+                         rows[1][3],
+                         rows[1][4]]
+
+        self.assertEqual(expected_output, actual_output)
+
+        # tenant update to rename the tenant
+        error_info  = auth_api._tenant_update(
+                                              name=name, 
+                                              new_name=self.tenant1_new_name)
+        self.assertEqual(None, error_info)
+
+        error_info, tenant_list = auth_api._tenant_ls()
+        self.assertEqual(None, error_info)
+
+        header = vmdkops_admin.tenant_ls_headers()
+        rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
+
+        expected_output = [str_to_unicode(self.tenant1_new_name),
+                           str_to_unicode("This is test tenant1"),
+                           self.datastore_name,
+                           generate_vm_name_str(vm_list)]
+        actual_output = [rows[1][1],
+                         rows[1][2],
+                         rows[1][3],
+                         rows[1][4]]
+        
+
+        # tenant rm to remove the tenant
+        error_info = auth_api._tenant_rm(
+                                         name=self.tenant1_new_name, 
+                                         remove_volumes=True)
+        self.assertEqual(None, error_info)
+
+        error_info, tenant_list = auth_api._tenant_ls()
+        self.assertEqual(None, error_info)
+
+        header = vmdkops_admin.tenant_ls_headers()
+        rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
+       
+        # right now, should only have 1 tenant, which is "_DEFAULT" tenant
+        self.assertEqual(len(rows), 1)
+
 
 if __name__ == '__main__':
     kv.init()

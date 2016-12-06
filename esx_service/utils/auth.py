@@ -210,6 +210,7 @@ def has_privilege(privileges, type=None):
     # privileges is None, return False
     if not privileges:
         return False
+
     if type:    
         logging.debug("has_privilege: %s=%d", type, privileges[type])
         return privileges[type]
