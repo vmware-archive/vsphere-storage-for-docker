@@ -6,24 +6,34 @@ build:
 
   serialize:
     image: cnastorage/vibauthor-and-go:0.9
-    environment:
+    environment: &setup_env
       - DRONE_TOKEN=$$DRONE_TOKEN
       - DRONE_SERVER=$$DRONE_SERVER
-      - TEST_URL_ARRAY=$$TEST_URL_ARRAY
       - GOVC_USERNAME=$$CI_BASE_VMWARE_ESX_USER
       - GOVC_PASSWORD=$$CI_BASE_VMWARE_ESX_PASS
+      - GOVC_USERNAME_ESX=$$CI_VMWARE_ESX_USER
+      - GOVC_PASSWORD_ESX=$$CI_VMWARE_ESX_PASS
       - GOVC_INSECURE=1
       - GOVC_URL=$$CI_BASE_ESX_IP
-      - TEST_ESX=$$CI_ESX_NAME
+      - TEST_URL_ARRAY=$$CI_ESX_IP_6_0
+      - ESX_6_0=$$CI_ESX_NAME_6_0
+      - ESX_6_5=$$CI_ESX_NAME_6_5
+      - GOVC_URL_6_0=$$CI_ESX_IP_6_0
+      - GOVC_URL_6_5=$$CI_ESX_IP_6_5
+      - SSH_KEY_OPT=-i /drone/src/github.com/vmware/docker-volume-vsphere/key
+      - GOVC_GET_IP=govc vm.ip -a -v4
+      - KEY=$$KEY
+      - ESX_6_0=$$CI_ESX_NAME_6_0
+      - ESX_6_5=$$CI_ESX_NAME_6_5
     commands:
       - misc/drone-scripts/validate-and-serialize.sh
 
   build_dev:
     image: cnastorage/vibauthor-and-go:0.9
-    environment:
-      - KEY=$$KEY
-    commands:
-      - pwd
+    environment: *setup_env
+    commands: &build_cmd
+      - echo $TAG
+      - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - go get github.com/golang/lint/golint
       - make -s build
       - echo $KEY | base64 -d > /drone/src/github.com/vmware/docker-volume-vsphere/key
@@ -33,15 +43,8 @@ build:
 
   build_tag:
     image: cnastorage/vibauthor-and-go:0.9
-    environment:
-      - KEY=$$KEY
-    commands:
-      - export PKG_VERSION=$$TAG
-      - echo $PKG_VERSION
-      - go get github.com/golang/lint/golint
-      - make -s build
-      - echo $KEY | base64 -d > /drone/src/github.com/vmware/docker-volume-vsphere/key
-      - chmod 0600 /drone/src/github.com/vmware/docker-volume-vsphere/key
+    environment: *setup_env
+    commands: *build_cmd
     when:
       event: tag
 
@@ -52,46 +55,32 @@ build:
     when:
       event: [push, pull_request]
 
-  package:
   package_dev:
     image: cnastorage/fpm
-    commands:
+    commands: &package_cmd
+      - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - make -s deb rpm
     when:
       event: [push, pull_request]
 
   package_tag:
     image: cnastorage/fpm
-    commands:
-      - export PKG_VERSION=$$TAG
-      - echo $PKG_VERSION
-      - make -s deb rpm
+    commands: *package_cmd
     when:
       event: tag
 
   setup_pr_tag:
     image: cnastorage/vibauthor-and-go:0.9
-    environment:
-      - GOVC_USERNAME=$$CI_BASE_VMWARE_ESX_USER
-      - GOVC_PASSWORD=$$CI_BASE_VMWARE_ESX_PASS
-      - GOVC_INSECURE=1
-      - GOVC_URL=$$CI_BASE_ESX_IP
-      - TEST_ESX=$$CI_ESX_NAME
-    commands:
+    environment: *setup_env
+    commands: &setup_cmd
       - misc/drone-scripts/setup.sh
     when:
       event: [pull_request, tag]
 
   setup_push:
     image: cnastorage/vibauthor-and-go:0.9
-    environment:
-      - GOVC_USERNAME=$$CI_BASE_VMWARE_ESX_USER
-      - GOVC_PASSWORD=$$CI_BASE_VMWARE_ESX_PASS
-      - GOVC_INSECURE=1
-      - GOVC_URL=$$CI_BASE_ESX_IP
-      - TEST_ESX=$$CI_ESX_NAME
-    commands:
-      - misc/drone-scripts/setup.sh
+    environment: *setup_env
+    commands: *setup_cmd
     when:
       event: [push]
       branch: [master, runci/*]
@@ -99,23 +88,36 @@ build:
   test_dev_branch: # Identical to test except for when it occurs
     image: cnastorage/vibauthor-and-go:0.9
     privileged: true
-    environment:
-      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
-      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
-      - GOVC_INSECURE=1
-      - GOVC_URL=$$CI_ESX_IP
-      - SSH_KEY_OPT=-i /drone/src/github.com/vmware/docker-volume-vsphere/key
-    commands:
-      - pwd
-      - export VM1=`govc vm.ip photon.ga.vmfs`
-      - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
+    environment: *setup_env
+    commands: &test_cmd
+      - GOVC_USERNAME=$GOVC_USERNAME_ESX
+      - GOVC_PASSWORD=$GOVC_PASSWORD_ESX
+      - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
+      - echo
+      - echo "=> Running tests on ESX_6.5" `date`
+      - echo
+      - export GOVC_URL=$GOVC_URL_6_5
+      - export VM1=`$GOVC_GET_IP photon.vmfs`
+      - export VM2=`$GOVC_GET_IP Ubuntu.16.10`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - echo
+      - echo "=> Running tests on VSAN ESX_6.5" `date`
+      - echo
+      - export VM1=`$GOVC_GET_IP photon.vsan`
+      - export VM2=`$GOVC_GET_IP Ubuntu.14.04`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+      - echo
+      - echo "=> Running tests on ESX_6.0" `date`
+      - echo
+      - export GOVC_URL=$GOVC_URL_6_0
+      - export VM1=`$GOVC_GET_IP photon.ga.vmfs`
+      - export VM2=`$GOVC_GET_IP Ubuntu.1404.vmfs`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - echo
-      - echo "=> Running tests on VSAN"
-      - echo "=>" `date`
+      - echo "=> Running tests on VSAN ESX_6.0" `date`
       - echo
-      - export VM1=`govc vm.ip photon.ga.vsan`
-      - export VM2=`govc vm.ip Ubuntu.1404.vsan`
+      - export VM1=`$GOVC_GET_IP photon.ga.vsan`
+      - export VM2=`$GOVC_GET_IP Ubuntu.1404.vsan`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when:
       event: [push]
@@ -124,47 +126,16 @@ build:
   test: 
     image: cnastorage/vibauthor-and-go:0.9
     privileged: true
-    environment:
-      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
-      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
-      - GOVC_INSECURE=1
-      - GOVC_URL=$$CI_ESX_IP
-      - SSH_KEY_OPT=-i /drone/src/github.com/vmware/docker-volume-vsphere/key
-    commands:
-      - export VM1=`govc vm.ip photon.ga.vmfs`
-      - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
-      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - echo
-      - echo "=> Running tests on VSAN"
-      - echo "=>" `date`
-      - echo
-      - export VM1=`govc vm.ip photon.ga.vsan`
-      - export VM2=`govc vm.ip Ubuntu.1404.vsan`
-      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+    environment: *setup_env
+    commands: *test_cmd
     when:
       event: [pull_request]
 
   test_tag: 
     image: cnastorage/vibauthor-and-go:0.9
     privileged: true
-    environment:
-      - GOVC_USERNAME=$$CI_VMWARE_ESX_USER
-      - GOVC_PASSWORD=$$CI_VMWARE_ESX_PASS
-      - GOVC_INSECURE=1
-      - GOVC_URL=$$CI_ESX_IP
-      - SSH_KEY_OPT=-i /drone/src/github.com/vmware/docker-volume-vsphere/key
-    commands:
-      - export PKG_VERSION=$$TAG
-      - export VM1=`govc vm.ip photon.ga.vmfs`
-      - export VM2=`govc vm.ip Ubuntu.1404.vmfs`
-      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-      - echo
-      - echo "=> Running tests on VSAN"
-      - echo "=>" `date`
-      - echo
-      - export VM1=`govc vm.ip photon.ga.vsan`
-      - export VM2=`govc vm.ip Ubuntu.1404.vsan`
-      - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
+    environment: *setup_env
+    commands: *test_cmd
     when:
       event: [tag]
 

@@ -44,8 +44,9 @@ VIB_LIST="localcli software vib list"
 VMDK_OPSD="/etc/init.d/vmdk-opsd"
 
 function log {
-    echo 
-    echo "=> $1"
-    echo "=>" `date`
+    echo
+    echo
+    echo "=> $1" `date`
+    echo
     echo
 }
