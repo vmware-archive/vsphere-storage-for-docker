@@ -115,7 +115,7 @@ then
      -v $PWD:$dir -w $dir $plug_container $MAKE_UI $2
 elif [ "$1" == "gvt" ]
 then
-  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $go_container bash -c "go get -u github.com/FiloSottile/gvt; bash"
+  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir --net=host $go_container bash -c "go get -u github.com/FiloSottile/gvt; bash"
 elif [ "$1" == "documentation" ]
 then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir -p 8000:8000 $docs_container bash
