@@ -92,13 +92,12 @@ PYTHON64_VERSION = 50659824
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
 MKDIR_CMD = "/bin/mkdir"
-VMDK_CREATE_CMD = "/sbin/vmkfstools"
-VMDK_DELETE_CMD = "/sbin/vmkfstools -U "
 
 # Defaults
 DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
 MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are limited in size
 MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
+VMDK_ADAPTER_TYPE = 'busLogic'  # default adapter type
 
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
@@ -170,54 +169,60 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         return cloneVMDK(vm_name, vmdk_path, opts,
                          vm_uuid, datastore)
 
-    cmd = make_create_cmd(opts, vmdk_path)
-    rc, out = RunCommand(cmd)
-    if rc != 0:
-        return err("Failed to create %s. %s" % (vmdk_path, out))
+    if not kv.DISK_ALLOCATION_FORMAT in opts:
+        disk_format = kv.DEFAULT_ALLOCATION_FORMAT
+        # Update opts with DISK_ALLOCATION_FORMAT for volume metadata
+        opts[kv.DISK_ALLOCATION_FORMAT] = kv.DEFAULT_ALLOCATION_FORMAT
+    else:
+        disk_format = kv.VALID_ALLOCATION_FORMATS[opts[kv.DISK_ALLOCATION_FORMAT]]
+
+    # VirtualDiskSpec
+    vdisk_spec = vim.VirtualDiskManager.FileBackedVirtualDiskSpec()
+    vdisk_spec.adapterType = VMDK_ADAPTER_TYPE
+    vdisk_spec.diskType = disk_format
+
+    if  kv.SIZE in opts:
+        vdisk_spec.capacityKb = convert.convert_to_KB(opts[kv.SIZE])
+    else:
+        vdisk_spec.capacityKb = convert.convert_to_KB(kv.DEFAULT_DISK_SIZE)
+
+    # Form datastore path from vmdk_path
+    volume_datastore_path = vmdk_utils.get_datastore_path(vmdk_path)
+
+    si = get_si()
+    task = si.content.virtualDiskManager.CreateVirtualDisk(
+        name=volume_datastore_path, spec=vdisk_spec)
+    try:
+        wait_for_tasks(si, [task])
+    except vim.fault.VimFault as ex:
+        return err("Failed to create volume: {0}".format(ex.msg))
+
+    # Handle vsan policy
+    if kv.VSAN_POLICY_NAME in opts:
+        if not vsan_policy.set_policy_by_name(vmdk_path, opts[kv.VSAN_POLICY_NAME]):
+            # Drop the failed option
+            # A warning is being logged in the called functions
+            del opts[kv.VSAN_POLICY_NAME]
 
     if not create_kv_store(vm_name, vmdk_path, opts):
         msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
         logging.warning(msg)
         error_info = err(msg)
-        remove_err = removeVMDK(vmdk_path=vmdk_path, 
-                                vol_name=vol_name, 
+        remove_err = removeVMDK(vmdk_path=vmdk_path,
+                                vol_name=vol_name,
                                 vm_name=vm_name,
                                 tenant_uuid=tenant_uuid,
                                 datastore=datastore)
         if remove_err:
             error_info = error_info + remove_err
         return error_info
-   
+
     # create succeed, insert the volume information into "volumes" table
     if tenant_uuid:
         vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
         auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
     else:
         logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
-
-def make_create_cmd(opts, vmdk_path):
-    """ Return the command used to create a VMDK """
-    if not "size" in opts:
-        size = kv.DEFAULT_DISK_SIZE
-    else:
-        size = str(opts["size"])
-    logging.debug("Setting vmdk size to %s for %s", size, vmdk_path)
-
-    if not kv.DISK_ALLOCATION_FORMAT in opts:
-        disk_format = kv.DEFAULT_ALLOCATION_FORMAT
-    else:
-        disk_format = str(opts[kv.DISK_ALLOCATION_FORMAT])
-    logging.debug("Setting vmdk disk allocation format to %s for %s",
-                  disk_format, vmdk_path)
-
-    if kv.VSAN_POLICY_NAME in opts:
-        # Note that the --policyFile option gets ignored if the
-        # datastore is not VSAN
-        policy_file = vsan_policy.policy_path(opts[kv.VSAN_POLICY_NAME])
-        return "{0} -d {1} -c {2} --policyFile {3} {4}".format(VMDK_CREATE_CMD, disk_format, size,
-                                                               policy_file, vmdk_path)
-    else:
-        return "{0} -d {1} -c {2} {3}".format(VMDK_CREATE_CMD, disk_format, size, vmdk_path)
 
 
 def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
@@ -278,12 +283,14 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         # Handle the allocation format
         if not kv.DISK_ALLOCATION_FORMAT in opts:
             disk_format = kv.DEFAULT_ALLOCATION_FORMAT
+            # Update opts with DISK_ALLOCATION_FORMAT for volume metadata
+            opts[kv.DISK_ALLOCATION_FORMAT] = kv.DEFAULT_ALLOCATION_FORMAT
         else:
-            disk_format = str(opts[kv.DISK_ALLOCATION_FORMAT])
+            disk_format = kv.VALID_ALLOCATION_FORMATS[opts[kv.DISK_ALLOCATION_FORMAT]]
 
         # VirtualDiskSpec
         vdisk_spec = vim.VirtualDiskManager.VirtualDiskSpec()
-        vdisk_spec.adapterType = 'busLogic'
+        vdisk_spec.adapterType = VMDK_ADAPTER_TYPE
         vdisk_spec.diskType = disk_format
 
         # Clone volume
@@ -295,13 +302,21 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         except vim.fault.VimFault as ex:
             return err("Failed to clone volume: {0}".format(ex.msg))
 
+
+    # Handle vsan policy
+    if kv.VSAN_POLICY_NAME in opts:
+        if not vsan_policy.set_policy_by_name(vmdk_path, opts[kv.VSAN_POLICY_NAME]):
+            # Drop the failed option
+            # A warning is being logged in the called functions
+            del opts[kv.VSAN_POLICY_NAME]
+
     # Update volume meta
     vol_name = vmdk_utils.strip_vmdk_extension(src_vmdk_path.split("/")[-1])
     vol_meta = kv.getAll(vmdk_path)
     vol_meta[kv.CREATED_BY] = vm_name
     vol_meta[kv.CREATED] = time.asctime(time.gmtime())
     vol_meta[kv.VOL_OPTS][kv.CLONE_FROM] = src_volume
-    vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT] = disk_format
+    vol_meta[kv.VOL_OPTS][kv.DISK_ALLOCATION_FORMAT] = opts[kv.DISK_ALLOCATION_FORMAT]
     if kv.ACCESS in opts:
         vol_meta[kv.VOL_OPTS][kv.ACCESS] = opts[kv.ACCESS]
     if kv.ATTACH_AS in opts:
@@ -391,7 +406,7 @@ def validate_disk_allocation_format(alloc_format):
     if not alloc_format in kv.VALID_ALLOCATION_FORMATS :
         raise ValidationError("Disk Allocation Format \'{0}\' is not supported."
                             " Valid options are: {1}.".format(
-                            alloc_format, kv.VALID_ALLOCATION_FORMATS))
+                            alloc_format, list(kv.VALID_ALLOCATION_FORMATS)))
 
 def validate_attach_as(attach_type):
     """
@@ -483,32 +498,35 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
             return err("Failed to remove volume {0}, in use by VM uuid = {1}.".format(
                 vmdk_path, kv_uuid))
 
-    cmd = "{0} {1}".format(VMDK_DELETE_CMD, vmdk_path)
-    # Workaround timing/locking issues.
+    # Form datastore path from vmdk_path
+    volume_datastore_path = vmdk_utils.get_datastore_path(vmdk_path)
+
     retry_count = 0
     while True:
-        rc, out = RunCommand(cmd)
-        if rc != 0 and "lock" in out:
-            if retry_count == vmdk_utils.VMDK_RETRY_COUNT:
-                return err("Failed to remove %s. %s" % (vmdk_path, out))
-            logging.warning("*** removeVMDK: %s, coudn't lock volume for removal. Retrying...",
-                            vmdk_path)
-            vmdk_utils.log_volume_lsof(vol_name)
-            retry_count += 1
-            time.sleep(vmdk_utils.VMDK_RETRY_SLEEP)
-            continue
-        elif rc != 0:
-            return err("Failed to remove %s. %s" % (vmdk_path, out))
-        else:
-            # remove succeed, remove infomation of this volume from volumes table
-            if tenant_uuid:
-                error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
-                return error_info
+        si = get_si()
+        task = si.content.virtualDiskManager.DeleteVirtualDisk(name=volume_datastore_path)
+        try:
+            # Wait for delete, exit loop on success
+            wait_for_tasks(si, [task])
+            break
+        except vim.fault.VimFault as ex:
+            if retry_count == vmdk_utils.VMDK_RETRY_COUNT or "Error caused by file" not in ex.msg:
+                return err("Failed to remove volume: {0}".format(ex.msg))
             else:
-                if not vm_name:
-                    logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
+                logging.warning("*** removeVMDK: Retrying removal on error: %s", ex.msg)
+                vmdk_utils.log_volume_lsof(vol_name)
+                retry_count += 1
+                time.sleep(vmdk_utils.VMDK_RETRY_SLEEP)
 
-            return None
+    # remove succeed, remove infomation of this volume from volumes table
+    if tenant_uuid:
+        error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
+        return error_info
+    elif not vm_name:
+        logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
+
+    return None
+
 
 def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""

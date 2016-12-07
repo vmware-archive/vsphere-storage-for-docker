@@ -663,7 +663,7 @@ class AuthorizationDataManager:
                                           datastore=vmdk['datastore'])
                 if err:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
-                    error_info += err
+                    error_info += str(err)
             
             # Delete path /vmfs/volumes/datastore_name/tenant_name
             logging.debug("Deleting dir paths %s", dir_paths)
@@ -673,12 +673,12 @@ class AuthorizationDataManager:
                 except os.error as e:
                     msg = "remove dir {0} failed with error {1}".format(path, e)
                     logging.error(msg)
-                    error_info += msg
+                    error_info += str(err)
 
         err = self.remove_volumes_from_volumes_table(tenant_id)
         if err:
             logging.error("Failed to remove volumes from database %s", err)
-            error_info += err
+            error_info += str(err)
        
         if error_info:
             return error_info

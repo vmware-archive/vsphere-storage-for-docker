@@ -47,7 +47,9 @@ def get_vsan_dockvols_path():
     """
     datastore = get_vsan_datastore()
     if datastore:
-        return os.path.join(datastore.info.url, 'dockvols')
+        path, err = vmdk_ops.get_vol_path(datastore.info.name)
+        if not err:
+            return path
     else:
         return None
 

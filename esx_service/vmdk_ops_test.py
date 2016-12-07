@@ -219,6 +219,8 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         self.assertNotEqual(None, vsan_policy.update('good', 'blah'))
         self.assertFalse(os.path.isfile(backup_policy_file))
 
+        err = vmdk_ops.removeVMDK(vmdk_path)
+        self.assertEqual(err, None, err)
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
@@ -968,17 +970,9 @@ if __name__ == '__main__':
     log_config.configure()
     volume_kv.init()
 
-    # Calculate the path
-    paths = glob.glob("/vmfs/volumes/[a-zA-Z]*/dockvols")
-    logging.info("Found datastores: %s", paths)
-    if paths:
-        # WARNING: for many datastores with dockvols, this picks up the first
-        path = paths[0]
-    else:
-        # create dir in a datastore (just pick first datastore if needed)
-        path = glob.glob("/vmfs/volumes/[a-zA-Z]*")[0] + "/dockvols"
-        logging.debug("Directory does not exist - creating %s", path)
-        os.makedirs(path)
+    # Calculate the path, use the first datastore in datastores
+    datastores = vmdk_utils.get_datastores()
+    path = datastores[0][2]
 
     def clean_path(path):
         if not path:

@@ -62,10 +62,15 @@ def init_datastoreCache():
     #  We are connected to ESX so childEntity[0] is current DC/Host
     ds_objects = \
       si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
-    datastores = [(d.info.name,
-                   os.path.split(d.info.url)[1],
-                   os.path.join(d.info.url, 'dockvols'))
-                  for d in ds_objects]
+    datastores = []
+
+    for datastore in ds_objects:
+        dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
+        if err:
+            continue
+        datastores.append((datastore.info.name,
+                           os.path.split(datastore.info.url)[1],
+                           dockvols_path))
 
 def validate_datastore(datastore):
     """

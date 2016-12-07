@@ -228,6 +228,20 @@ def get_policies():
         policies[name] = content
     return policies
 
+def get_policy_content(policy_name):
+    """ Return the content for a given policy. """
+    if not policy_exists(policy_name):
+        logging.warning("Policy %s does not exist", policy_name)
+        return None
+    with open(policy_path(policy_name)) as f:
+        return f.read()
+
+def set_policy_by_name(vmdk_path, policy_name):
+    """ Set policy for a given volume. """
+    content = get_policy_content(policy_name)
+    if not content:
+        return False
+    return vsan_info.set_policy(vmdk_path, content)
 
 def list_volumes_and_policies():
     """ Return a list of vmdks and the policies in use"""

@@ -20,7 +20,7 @@ def convert_to_MB(vol_size_str):
         Example:
         '100MB': return 100
         '100GB': return 100*1024
-        
+
     """
 
     unit = vol_size_str[-2:].upper()
@@ -30,10 +30,17 @@ def convert_to_MB(vol_size_str):
                    'TB' : 1024*1024,
                    'PB' : 1024*1024*1024,
     }
-    
+
     if unit in conversions.keys():
         value = value*conversions[unit]
     else:
         logging.error("Invalid volume size")
     return value
-  
+
+
+def convert_to_KB(vol_size_str):
+    """ For a given size string, return values in KB.
+    """
+    size_mb = convert_to_MB(vol_size_str)
+    if size_mb:
+        return size_mb * 1024
