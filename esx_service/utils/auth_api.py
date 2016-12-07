@@ -198,7 +198,11 @@ def _tenant_create(name, description, default_datastore, default_privileges, vm_
         not_found_vm_list = ",".join(not_found_vms)
         logging.warning(error_code.VM_NOT_FOUND.format(not_found_vm_list))
         return error_info, None
-    
+        
+    # if param "description" is not set by caller, the default value is empty string
+    if not description:
+        description = ""
+
     error_info, tenant = create_tenant_in_db(
                                              name=name, 
                                              description=description, 
@@ -211,8 +215,8 @@ def _tenant_create(name, description, default_datastore, default_privileges, vm_
     
     return None, tenant
 
-def _tenant_modify(name, new_name=None, description=None):
-    """ API to modify a tenant """
+def _tenant_update(name, new_name=None, description=None):
+    """ API to update a tenant """
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info

@@ -771,7 +771,11 @@ class VmdkTenantTestCase(unittest.TestCase):
         # cleanup existing tenant
         error_info = auth_api._tenant_rm(
                                          name=self.tenant1_name, 
-                                         remove_volumes=True) 
+                                         remove_volumes=True)
+                                         
+        error_info = auth_api._tenant_rm(
+                                         name=self.tenant1_new_name, 
+                                         remove_volumes=True)  
                                                 
         error_info = auth_api._tenant_rm(
                                          name=self.tenant2_name, 
@@ -881,7 +885,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual("tenant1_vol3", result[1]['Name'])
 
         # rename the tenant
-        error_info = auth_api._tenant_modify(name=self.tenant1_name,
+        error_info = auth_api._tenant_update(name=self.tenant1_name,
                                              new_name=self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
