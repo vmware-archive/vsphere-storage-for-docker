@@ -86,7 +86,9 @@ const (
 	defaultSleepIntervalSec = 1
 
 	// consts for finding and parsing linux mount information
-	linuxMountsFile = "/proc/mounts"
+	linuxMountsFile         = "/proc/mounts"
+	photonDriver            = "photon"
+	vmdkDriver              = "vmdk"
 )
 
 // info about individual volume ref counts and mount
@@ -305,7 +307,7 @@ func (r RefCountsMap) syncMountsWithRefCounters(d volume.Driver) {
 				if resp.Err != "" {
 					log.Warning("Failed to unmount - manual recovery may be needed")
 				}
-			} else if driverName == "photon" {
+			} else if driverName == photonDriver {
 				// For photon disks, the disk ID is added to the refcount map.
 				d.Get(volume.Request{Name: vol})
 			}

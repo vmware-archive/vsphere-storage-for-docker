@@ -36,6 +36,8 @@ import (
 const (
 	pluginSockDir = "/run/docker/plugins"
 	mountRoot     = "/mnt/vmdk" // VMDK and photon volumes are mounted here
+	photonDriver  = "photon"
+	vmdkDriver    = "vmdk"
 )
 
 // An equivalent function is not exported from the SDK.
@@ -123,10 +125,10 @@ func main() {
 		"host":    *vmID,
 		"port":    *port}).Info("Plugin options - ")
 
-	if *driverName == "photon" {
+	if *driverName == photonDriver {
 		driver = photon.NewVolumeDriver(*targetURL, *projectID,
 			*vmID, mountRoot)
-	} else if *driverName == "vmdk" {
+	} else if *driverName == vmdkDriver {
 		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot)
 	} else {
 		log.Warning("Unknown driver, exiting - ", *driverName)
