@@ -291,17 +291,6 @@ def get_vm_config_path(vm_name):
     vm_config_path = os.path.join(datastore_path, path)
     return vm_config_path
 
-def find_vm_by_name(vm_name):
-    """ Return vm for given vm_name, or None """
-    si = vmdk_ops.get_si()
-    try:
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
-                if d.config.name == vm_name]
-        return vm[0]
-
-    except:
-        return None
-
 def log_volume_lsof(vol_name):
     """Log volume open file descriptors"""
     rc, out = vmdk_ops.RunCommand(LSOF_CMD)

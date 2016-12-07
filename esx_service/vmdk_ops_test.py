@@ -419,7 +419,7 @@ def create_vm(si, vm_name, datastore):
         task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)
         vmdk_ops.wait_for_tasks(si, [task])
 
-        vm = vmdk_utils.find_vm_by_name(vm_name)
+        vm = task.info.result
         if vm:
             logging.debug("Found: VM %s", vm_name)
             if vm.runtime.powerState == vim.VirtualMachinePowerState.poweredOff:
@@ -428,23 +428,21 @@ def create_vm(si, vm_name, datastore):
                 vmdk_ops.wait_for_tasks(si, [task])
         else:
             error_info = error_code.VM_NOT_FOUND.format(vm_name)
-            logging.error("Cannot find the test-vm")
-            return error_info
+            logging.error("Cannot find vm %s", vm_name)
+            return error_info, None
         
-        return None
+        return None, vm
                
-def remove_vm(si, vm_name):
+def remove_vm(si, vm):
     """ Remove a VM """
-    vm = vmdk_utils.find_vm_by_name(vm_name)
     if vm:
-        logging.debug("Found: VM %s", vm_name)
-        #logging.debug("The current powerState is  : %s", format(vm[0].runtime.powerState)))
+        logging.debug("Found: VM %s", vm.config.name)
         if vm.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
-            logging.debug("Attempting to power off %s", vm_name)
+            logging.debug("Attempting to power off %s", vm.config.name)
             task = vm.PowerOffVM_Task()
             vmdk_ops.wait_for_tasks(si, [task])
         
-        logging.debug("Trying to destroy VM %s", vm_name)    
+        logging.debug("Trying to destroy VM %s", vm.config.name)    
         task = vm.Destroy_Task()
         vmdk_ops.wait_for_tasks(si, [task])
 
@@ -453,6 +451,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
 
     volNamePre = "vol_UnitTest_Attach"
     vm_name = 'test-vm'
+    vm = None
     if config["run_max_attach"]:
         max_vol_count = MAX_VOL_COUNT_FOR_ATTACH
     else:
@@ -478,9 +477,9 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         
         # get service_instance, and create a VM
         si = vmdk_ops.get_si()
-        error = create_vm(si=si, 
-                          vm_name=self.vm_name, 
-                          datastore=self.datastore_name)
+        error, self.vm = create_vm(si=si, 
+                                   vm_name=self.vm_name, 
+                                   datastore=self.datastore_name)
         if error:
             self.assertFalse(True)
 
@@ -503,7 +502,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     def cleanup(self):
         # remove VM
         si = vmdk_ops.get_si()
-        remove_vm(si, self.vm_name)
+        remove_vm(si, self.vm)
 
         for v in self.get_testvols():
             self.assertEqual(
@@ -672,6 +671,7 @@ class VmdkTenantTestCase(unittest.TestCase):
     # tenant1 info
     tenant1_name = "test_tenant1"
     vm1_name = 'test_vm1'
+    vm1 = None
     tenant1_vol1_name = 'tenant1_vol1'
     tenant1_vol2_name = 'tenant1_vol2'
     tenant1_vol3_name = 'tenant1_vol3'
@@ -681,6 +681,7 @@ class VmdkTenantTestCase(unittest.TestCase):
     # tenant2 info
     tenant2_name = "test_tenant2"
     vm2_name = 'test_vm2'
+    vm2 = None
     tenant2_vol1_name = 'tenant2_vol1'
     tenant2_vol2_name = 'tenant2_vol2'
     tenant2_vol3_name = 'tenant2_vol3'
@@ -740,17 +741,17 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.cleanup()
         # get service_instance, and create VMs
         si = vmdk_ops.get_si()
-        error = create_vm(si=si, 
-                          vm_name=self.vm1_name, 
-                          datastore=self.datastore_name)
+        error, self.vm1 = create_vm(si=si, 
+                                    vm_name=self.vm1_name, 
+                                    datastore=self.datastore_name)
         if error:
             self.assertFalse(True)
 
         self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
 
-        error = create_vm(si=si, 
-                          vm_name=self.vm2_name, 
-                          datastore=self.datastore_name)
+        error, self.vm2 = create_vm(si=si, 
+                                    vm_name=self.vm2_name, 
+                                    datastore=self.datastore_name)
         if error:
             self.assertFalse(True)
         self.vm2_config_path = vmdk_utils.get_vm_config_path(self.vm2_name)
@@ -824,8 +825,8 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                 
         # remove VM
         si = vmdk_ops.get_si()
-        remove_vm(si, self.vm1_name)
-        remove_vm(si, self.vm2_name)
+        remove_vm(si, self.vm1)
+        remove_vm(si, self.vm2)
        
     def test_vmdkops_on_fallback_tenant_vm(self):
         """ Test vmdk life cycle on a VM which belongs to fallback tenant """
