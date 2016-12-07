@@ -145,7 +145,7 @@ class DockerVolumeTenant:
                 exist_symlink_path = os.path.join(dock_vol_path, name)
                 new_symlink_path = os.path.join(dock_vol_path, new_name)
                 if os.path.isdir(exist_symlink_path):
-                    logging.info("Rename the symlink %s to %s", exist_symlink_path, new_symlink_path)
+                    logging.info("Renaming the symlink %s to %s", exist_symlink_path, new_symlink_path)
                     os.rename(exist_symlink_path, new_symlink_path)
                 else:
                     logging.warning("symlink %s does not point to a directory", exist_symlink_path)
@@ -690,18 +690,19 @@ class AuthorizationDataManager:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
                     error_info += str(err)
             
+            VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
             # delete the symlink /vmfs/volume/datastore_name/tenant_name
             # which point to /vmfs/volumes/datastore_name/tenant_uuid
             for (datastore, url_name, path) in vmdk_utils.get_datastores():
                 dock_vol_path = os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR)
                 tenant_path = os.path.join(dock_vol_path, tenant_id)
-                logging.debug("remove volumes for tenant: try to remove the symlink to path %s", tenant_path)
+                logging.debug(VOL_RM_LOG_PREFIX + "try to remove symlink to %s", tenant_name, tenant_path)
             
                 if os.path.isdir(tenant_path): 
                     exist_symlink_path = os.path.join(dock_vol_path, tenant_name)
                     if os.path.isdir(exist_symlink_path):
                         os.remove(exist_symlink_path)
-                        logging.debug("remove volumes for tenant: Remove the symbol link %s", exist_symlink_path)
+                        logging.debug(VOL_RM_LOG_PREFIX + "removing symlink %s", tenant_name, exist_symlink_path)
             
             # Delete path /vmfs/volumes/datastore_name/tenant_uuid
             logging.debug("Deleting dir paths %s", dir_paths)

@@ -387,7 +387,7 @@ def _tenant_access_ls(name):
     
     if not tenant:
         error_info = error_code.TENANT_NOT_EXIST.format(name)
-        return error_info
+        return error_info, None
 
     return None, tenant.privileges 
     
