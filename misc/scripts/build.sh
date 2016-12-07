@@ -122,14 +122,11 @@ then
 elif [ "$1" == "pylint" ]
 then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
-elif [ "$1" == "build" ] || [ "$1" == "clean-as-root" ]
-then
+else 
   docker_socket=/var/run/docker.sock
   $DOCKER run --privileged --rm -it \
     -e "PKG_VERSION=$PKG_VERSION" \
     -e "INCLUDE_UI=$INCLUDE_UI" \
     -v $docker_socket:$docker_socket  \
     -v $PWD/..:$dir -w $dir $plug_container $MAKE $1
-else
-  echo "Error: unknown build target $1"
 fi
