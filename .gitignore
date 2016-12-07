@@ -11,3 +11,4 @@ src/dvolplug/dvolplug
 *.test
 *~
 .*~
+esx_service/.lint_*
