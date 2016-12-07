@@ -122,7 +122,8 @@ then
 elif [ "$1" == "pylint" ]
 then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
-elif [ "$1" == "build" ] || [ "$1" == "clean-as-root" ]
+elif [ "$1" == "build" ] || [ "$1" == "clean-as-root" ] || [ "$1" == "testasroot" ]
+# we might have to modify this elif in the future if we decide to add more targets
 then
   docker_socket=/var/run/docker.sock
   $DOCKER run --privileged --rm -it \
