@@ -49,15 +49,15 @@ def get_auth_mgr():
 
 def get_fallback_tenant():
     """ 
-        Get __FALLBACK tenant by querying the auth DB.
-        VMs which does not belong to any tenant explicitly will 
-        be assigned to __FALLBACK tenant if __FALLBACK tenant exists
+        Get FALLBACK tenant by querying the auth DB.
+        VM which does not belong to any tenant explicitly will 
+        be assigned to FALLBACK tenant if FALLBACK tenant exists
         Return value:
         -- error_info: return None on success or error info on failure
-        -- tenant_uuid: return __FALLBACK tenant uuid on success,  
-           return None on failure or __FALLBACK tenant does not exist
-        -- tenant_name: return __FALLBACK tenant name on success,
-           return None on failure or __FALLBACK tenant does not exist
+        -- tenant_uuid: return FALLBACK tenant uuid on success,  
+           return None on failure or FALLBACK tenant does not exist
+        -- tenant_name: return FALLBACK tenant name on success,
+           return None on failure or FALLBACK tenant does not exist
     """
     tenant_uuid = None
     _auth_mgr = get_auth_mgr()
@@ -74,7 +74,7 @@ def get_fallback_tenant():
     if result:
         # found __FALLBACK tenant
         tenant_uuid = result[0]
-        logging.debug("Found __FALLBACK tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, FALLBACK_TENANT)
+        logging.debug("Found FALLBACK tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, FALLBACK_TENANT)
         return None, tenant_uuid, FALLBACK_TENANT
     else:
         # cannot find __FALLBACK tenant
@@ -83,14 +83,14 @@ def get_fallback_tenant():
 
 
 def get_fallback_privileges():
-    """ Get __FALLBACK privileges by querying the auth DB.
-        __FALLBACK privilege will match any (tenant_uuid, datastore) pair which
+    """ Get FALLBACK privileges by querying the auth DB.
+        FALLBACK privilege will match any (tenant_uuid, datastore) pair which
         does not have an entry in privileges table explicitly
         Return value:
         -- error_info: return None on success or error info on failure
-        -- privilegs: return a list of privileges for __FALLBACK privilege if 
-           __FALLBACK tenant exists,
-           return None on failure or __FALLBACK does not exist 
+        -- privilegs: return a list of privileges for FALLBACK privilege if 
+           FALLBACK tenant exists,
+           return None on failure or FALLBACK does not exist 
     """
     _auth_mgr = get_auth_mgr()
     privileges = []
@@ -102,7 +102,7 @@ def get_fallback_privileges():
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
-        error_info = "Error {0} when querying privileges table for __FALLBACK privilege".format(e)
+        error_info = "Error {0} when querying privileges table for FALLBACK privilege".format(e)
         logging.error(error_info)
         return str(e), None
 

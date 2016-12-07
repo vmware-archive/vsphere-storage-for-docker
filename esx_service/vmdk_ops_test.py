@@ -252,7 +252,6 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             err = vmdk_ops.removeVMDK(vmdk_path)
             self.assertEqual(err == None, unit[2], err)
 
-@unittest.skip("Liping remove")
 class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
     vm_name = 'test-vm'
     vm_uuid = str(uuid.uuid4())
@@ -449,7 +448,6 @@ def remove_vm(si, vm_name):
         task = vm.Destroy_Task()
         vmdk_ops.wait_for_tasks(si, [task])
 
-@unittest.skip("Liping remove")
 class VmdkAttachDetachTestCase(unittest.TestCase):
     """ Unit test for VMDK Attach and Detach ops """
 
@@ -831,6 +829,7 @@ class VmdkTenantTestCase(unittest.TestCase):
        
     def test_vmdkops_on_fallback_tenant_vm(self):
         """ Test vmdk life cycle on a VM which belongs to fallback tenant """
+        # run create, attach, detach, remove command when FALLBACK tenant and FALLBACK privileges are present
         logging.info("test_vmdkops_on_fallback_tenant_vm")
         vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
 
@@ -853,20 +852,18 @@ class VmdkTenantTestCase(unittest.TestCase):
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_REMOVE, self.fallback_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
 
-        # remove __FALLBACK privileges
+        # remove __FALLBACK privileges, and run create command, which should fail
         error_info = auth_api._tenant_access_rm(auth.FALLBACK_TENANT, auth.FALLBACK_DS)
         self.assertEqual(None, error_info)
 
-        # run create command, which should fail
         opts={u'size': u'100MB', u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.fallback_tenant_vol2_name, opts)
         self.assertNotEqual(None, error_info)
 
-        # remove __FALLBACK tenant
+        # remove __FALLBACK tenant, and run create command, which should fail
         error_info = auth_api._tenant_rm(auth.FALLBACK_TENANT, False)
         self.assertEqual(None, error_info)
 
-        # run create command, which should fail
         opts={u'size': u'100MB', u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.fallback_tenant_vol2_name, opts)
         self.assertNotEqual(None, error_info)
