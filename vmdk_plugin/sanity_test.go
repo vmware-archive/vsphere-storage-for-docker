@@ -63,9 +63,6 @@ func init() {
 	logFile := flag.String("log_file", config.DefaultLogPath, "Log file path")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 
-	flag.StringVar(&endPoint1, "H1", refcount.DockerUSocket, "Endpoint (Host1) to connect to")
-	flag.StringVar(&endPoint2, "H2", refcount.DockerUSocket, "Endpoint (Host2) to connect to")
-	flag.StringVar(&volumeName, "v", "TestVol", "Volume name to use in sanity tests")
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
 	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
 	flag.Parse()
