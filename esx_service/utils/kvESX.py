@@ -360,8 +360,8 @@ def convert(size):
     if size < KB:
         return size
     elif size < MB:
-        return '{0}{1}'.format(size / KB, 'KB')
+        return '{0}{1}'.format(int(size / KB), 'KB')
     elif size < GB:
-        return '{0}{1}'.format(size / MB, 'MB')
+        return '{0}{1}'.format(int(size / MB), 'MB')
     else:
-        return '{0}{1}'.format(size / GB, 'GB')
+        return '{0}{1}'.format(int(size / GB), 'GB')
