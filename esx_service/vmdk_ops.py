@@ -277,6 +277,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         src_vol_info = kv.get_vol_info(src_vmdk_path)
         datastore = vmdk_utils.get_datastore_from_vmdk_path(vmdk_path)
         opts["size"] = src_vol_info["size"]
+        logging.debug("cloneVMDK: src_vol_info[size]=%s", src_vol_info["size"])
         error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid,
                                                               datastore, auth.CMD_CREATE, opts)
         if error_info:
