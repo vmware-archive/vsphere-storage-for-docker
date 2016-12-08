@@ -22,6 +22,7 @@ import convert
 import auth_data_const
 import volume_kv as kv
 import threadutils
+import log_config
 
 # All supported vmdk commands that need authorization checking
 CMD_CREATE = 'create'
@@ -433,4 +434,11 @@ def get_row_from_privileges_table(conn, tenant_uuid):
 
     result = cur.fetchall()
     return None, result
+
+def main():
+    log_config.configure()
+
+if __name__ == "__main__":
+    main()
+
 

@@ -20,6 +20,7 @@ import convert
 import auth_data
 import vmdk_utils
 import error_code
+import log_config
 import logging
 
 def get_auth_mgr():
@@ -44,6 +45,20 @@ def get_tenant_from_db(name):
 
     error_info, tenant = auth_mgr.get_tenant(name)
     return error_info, tenant
+
+def get_tenant_name(tenant_uuid):
+    """
+        Get tenant name with given tenant_uuid
+        Return value:
+        -- error_info: return None on success or error info on failure
+        -- tenant_name: return tenant name on success or None on failure 
+    """
+    error_info, auth_mgr = get_auth_mgr()
+    if error_info:
+        return error_info, None
+
+    error_info, tenant_name = auth_mgr.get_tenant_name(tenant_uuid)
+    return error_info, tenant_name
 
 def create_tenant_in_db(name, description, default_datastore, default_privileges, vms, privileges):
     """
@@ -183,7 +198,11 @@ def _tenant_create(name, description, default_datastore, default_privileges, vm_
         not_found_vm_list = ",".join(not_found_vms)
         logging.warning(error_code.VM_NOT_FOUND.format(not_found_vm_list))
         return error_info, None
-    
+        
+    # if param "description" is not set by caller, the default value is empty string
+    if not description:
+        description = ""
+
     error_info, tenant = create_tenant_in_db(
                                              name=name, 
                                              description=description, 
@@ -196,6 +215,29 @@ def _tenant_create(name, description, default_datastore, default_privileges, vm_
     
     return None, tenant
 
+def _tenant_update(name, new_name=None, description=None):
+    """ API to update a tenant """
+    error_info, tenant = get_tenant_from_db(name)
+    if error_info:
+        return error_info
+    
+    if not tenant:
+        error_info = error_code.TENANT_NOT_EXIST.format(name)
+        return error_info
+    
+    error_info, auth_mgr = get_auth_mgr()
+    if error_info:
+        return error_info
+    if new_name:    
+        error_info = tenant.set_name(auth_mgr.conn, name, new_name)
+        if error_info:
+            return error_info
+    if description:
+        error_info = tenant.set_description(auth_mgr.conn, description)
+        if error_info:
+            return error_info
+    
+    return None
 
 def _tenant_rm(name, remove_volumes):
     """ API to remove a tenant """
@@ -294,7 +336,7 @@ def _tenant_access_add(name, datastore, rights, volume_maxsize, volume_totalsize
     error_info = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges])
     return error_info
 
-def _tenant_access_set(name, datastore, add_rights, rm_rights, volume_maxsize, volume_totalsize):
+def _tenant_access_set(name, datastore, add_rights=None, rm_rights=None, volume_maxsize=None, volume_totalsize=None):
     """ API to modify datastore access for a tenant """
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
@@ -345,7 +387,7 @@ def _tenant_access_ls(name):
     
     if not tenant:
         error_info = error_code.TENANT_NOT_EXIST.format(name)
-        return error_info
+        return error_info, None
 
     return None, tenant.privileges 
     

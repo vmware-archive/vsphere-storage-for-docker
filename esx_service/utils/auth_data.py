@@ -24,6 +24,8 @@ import vmdk_ops
 import logging
 import auth_data_const
 import error_code
+import threadutils
+import log_config
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
@@ -115,19 +117,42 @@ class DockerVolumeTenant:
 
         return None
 
-    def set_name(self, conn, name):
+    def set_name(self, conn, name, new_name):
         """ Set name column in tenant table for this tenant. """
+        logging.debug("set_name: name=%s, new_name=%s", name, new_name)
         tenant_id = self.id
         try:
             conn.execute(
                 "UPDATE tenants SET name = ? WHERE id = ?",
-                (name, tenant_id)
+                (new_name, tenant_id)
             )
             conn.commit()
         except sqlite3.Error as e:
             logging.error("Error %s when updating tenants table with tenant_id"
                           "tenant_id %s", e, tenant_id)
             return str(e)
+        
+        # rename in the DB succeeds
+        # rename the old symbol link /vmfs/volumes/datastore_name/tenant_name
+        # to a new name /vmfs/volumes/datastore_name/new_tenant_name 
+        # which still point to path /vmfs/volumes/datastore_name/tenant_uuid
+        for (datastore, url_name, path) in vmdk_utils.get_datastores():
+            dock_vol_path = os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR)
+            tenant_path = os.path.join(dock_vol_path, tenant_id)
+            logging.debug("set_name: try to update the symlink to path %s", tenant_path)
+            
+            if os.path.isdir(tenant_path): 
+                exist_symlink_path = os.path.join(dock_vol_path, name)
+                new_symlink_path = os.path.join(dock_vol_path, new_name)
+                if os.path.isdir(exist_symlink_path):
+                    logging.info("Renaming the symlink %s to %s", exist_symlink_path, new_symlink_path)
+                    os.rename(exist_symlink_path, new_symlink_path)
+                else:
+                    logging.warning("symlink %s does not point to a directory", exist_symlink_path)
+                    if not os.path.isdir(new_symlink_path):
+                        os.symlink(tenant_path, new_symlink_path)
+                        logging.info("Symlink %s is created to point to path %s", new_symlink_path, path)
+
         return None
 
 
@@ -665,7 +690,21 @@ class AuthorizationDataManager:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
                     error_info += str(err)
             
-            # Delete path /vmfs/volumes/datastore_name/tenant_name
+            VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
+            # delete the symlink /vmfs/volume/datastore_name/tenant_name
+            # which point to /vmfs/volumes/datastore_name/tenant_uuid
+            for (datastore, url_name, path) in vmdk_utils.get_datastores():
+                dock_vol_path = os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR)
+                tenant_path = os.path.join(dock_vol_path, tenant_id)
+                logging.debug(VOL_RM_LOG_PREFIX + "try to remove symlink to %s", tenant_name, tenant_path)
+            
+                if os.path.isdir(tenant_path): 
+                    exist_symlink_path = os.path.join(dock_vol_path, tenant_name)
+                    if os.path.isdir(exist_symlink_path):
+                        os.remove(exist_symlink_path)
+                        logging.debug(VOL_RM_LOG_PREFIX + "removing symlink %s", tenant_name, exist_symlink_path)
+            
+            # Delete path /vmfs/volumes/datastore_name/tenant_uuid
             logging.debug("Deleting dir paths %s", dir_paths)
             for path in list(dir_paths):
                 try:
@@ -721,3 +760,32 @@ class AuthorizationDataManager:
             return str(e) 
 
         return None 
+    
+    def get_tenant_name(self, tenant_uuid):
+        """ Return tenant_name which match the given tenant_uuid """ 
+        logging.debug("get_tenant_name: tenant_uuid=%s", tenant_uuid)
+        try:
+            cur = self.conn.execute(
+                "SELECT * FROM tenants WHERE id=?",
+                (tenant_uuid,)
+                )
+        except sqlite3.Error as e:
+            logging.error("Error: %s when querying tenants table for tenant %s",
+                        e, tenant_uuid)
+            return str(e), None
+
+        result = cur.fetchone()
+        if result:
+            tenant_name = result[1]
+            logging.debug("get_tenant_name: tenant_uuid=%s tenant_name=%s", tenant_uuid, tenant_name)
+            return None, tenant_name
+        else:
+            error_info =  error_code.TENANT_NAME_NOT_FOUND.format(tenant_uuid)
+            logging.debug("get_tenant_name:"+error_info)
+            return error_info, None
+
+def main():
+    log_config.configure()
+
+if __name__ == "__main__":
+    main() 

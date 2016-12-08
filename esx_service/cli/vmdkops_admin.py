@@ -39,6 +39,7 @@ import auth_api
 NOT_AVAILABLE = 'N/A'
 
 def main():
+    log_config.configure()
     kv.init()
     args = parse_args()
     if args:
@@ -181,7 +182,7 @@ def commands():
             }
         },
         #
-        # tenant {create, rm , ls} - manipulates tenants
+        # tenant {create, update, rm , ls} - manipulates tenants
         # tenant vm {add, rm, ls}  - manipulates VMs for a tenant
         # tenant access {add, set, rm, ls} - manipulates datastore access right for a tenant
         #
@@ -196,11 +197,30 @@ def commands():
                             'help': 'The name of the tenant',
                             'required': True
                         },
+                        '--description': {
+                            'help': 'The description of the tenant',
+                        },
                         # a shortcut allowing to add VMs on Tenant Create
                         '--vm-list': {
                             'help': 'A list of VM names to place in this Tenant',
                             'metavar': 'vm1, vm2, ...',
                             'type': comma_seperated_string
+                        }
+                    }
+                },
+                'update': {
+                    'func': tenant_update,
+                    'help': 'Update an existing tenant',
+                    'args': {
+                        '--name': {
+                            'help': 'The name of the tenant',
+                            'required': True
+                        },
+                        '--new-name': {
+                            'help': 'The new name of the tenant',
+                        },
+                        '--description': {
+                            'help': 'The new description of the tenant',
                         }
                     }
                 },
@@ -832,7 +852,7 @@ def tenant_create(args):
     """ Handle tenant create command """
     error_info, tenant = auth_api._tenant_create(
                                                  name=args.name , 
-                                                 description="", 
+                                                 description=args.description, 
                                                  default_datastore="default_ds", 
                                                  default_privileges={}, 
                                                  vm_list=args.vm_list, 
@@ -841,6 +861,17 @@ def tenant_create(args):
         return operation_fail(error_info)
     else:
         print("tenant create succeeded")
+
+def tenant_update(args):
+    """ Handle tenant update command """
+    error_info = auth_api._tenant_update(name=args.name,
+                                         new_name=args.new_name,
+                                         description=args.description)
+
+    if error_info:
+        return operation_fail(error_info)
+    else:
+        print("tenant modify succeeded")
 
 def tenant_rm(args):
     """ Handle tenant rm command """

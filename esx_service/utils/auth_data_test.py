@@ -21,6 +21,7 @@ import auth_data
 import uuid
 import auth_data_const
 import auth
+import log_config
 
 class TestAuthDataModel(unittest.TestCase):
     """
@@ -219,7 +220,7 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
 
-        error_info = tenant1.set_name(self.auth_mgr.conn, 'new_tenant1')
+        error_info = tenant1.set_name(self.auth_mgr.conn, 'tenant1', 'new_tenant1')
         self.assertEqual(error_info, None)
         error_info, tenants_row = auth.get_row_from_tenants_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
@@ -530,4 +531,5 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(privileges_row, [])        
     
 if __name__ == "__main__":
+    log_config.configure()
     unittest.main()

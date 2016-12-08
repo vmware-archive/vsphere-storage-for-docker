@@ -84,6 +84,7 @@ import auth
 import sqlite3
 import convert
 import error_code
+import auth_api
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -591,10 +592,16 @@ def get_vol_path(datastore, tenant_name=None):
     # If the command is NOT running under a tenant, the folder for Docker
     # volumes is created on <datastore>/DOCK_VOLS_DIR
     # If the command is running under a tenant, the folder for Dock volume
-    # is created on <datastore>/DOCK_VOLS_DIR/tenant_name
+    # is created on <datastore>/DOCK_VOLS_DIR/tenant_uuid
+    # a symlink <datastore>/DOCK_VOLS_DIR/tenant_name will be created to point to
+    # path <datastore>/DOCK_VOLS_DIR/tenant_uuid
     dock_vol_path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
     if tenant_name:
-        path = os.path.join(dock_vol_path, tenant_name)
+        error_info, tenant = auth_api.get_tenant_from_db(tenant_name)
+        if error_info:
+            logging.error("get_vol_path: cannont find tenant info for tenant %s", tenant_name)
+            path = dock_vol_path
+        path = os.path.join(dock_vol_path, tenant.id)
     else:
         path = dock_vol_path
 
@@ -611,6 +618,7 @@ def get_vol_path(datastore, tenant_name=None):
             errMsg = "{0} creation failed - {1} on {2}".format(DOCK_VOLS_DIR, os.strerror(rc), datastore)
             logging.warning(errMsg)
             return None, err(errMsg)
+
     if tenant_name and not os.path.isdir(path):
         # The mkdir command is used to create "tenant_name" folder inside DOCK_VOLS_DIR on "datastore"
         cmd = "{0} {1}".format(MKDIR_CMD, path)
@@ -619,6 +627,12 @@ def get_vol_path(datastore, tenant_name=None):
             errMsg = "Failed to initialize volume path {0} - {1}".format(path, out)
             logging.warning(errMsg)
             return None, err(errMsg)
+        
+        # create the symbol link /vmfs/volumes/datastore_name/dockvol/tenant_name
+        symlink_path = os.path.join(dock_vol_path, tenant_name)
+        if not os.path.isdir(symlink_path):
+            os.symlink(path, symlink_path)
+            logging.info("Symlink %s is created to point to path %s", symlink_path, path)
 
     logging.info("Created %s", path)
     return path, None
