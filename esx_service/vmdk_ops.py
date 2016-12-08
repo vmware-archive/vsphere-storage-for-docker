@@ -742,7 +742,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     # Set thread name to vm_name-lockname
     threadutils.set_thread_name("{0}-{1}".format(vm_name, lockname))
 
-    # Get a resource lock
+    # Get a lock for the volume
     logging.debug("Trying to acquire lock: %s", lockname)
     with lockManager.get_lock(lockname):
         logging.debug("Acquired lock: %s", lockname)
@@ -762,10 +762,14 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
                                   vm_name=vm_name,
                                   tenant_uuid=tenant_uuid,
                                   datastore=datastore)
+
+        # For attach/detach reconfigure tasks, hold a per vm lock.
         elif cmd == "attach":
-            response = attachVMDK(vmdk_path, vm_uuid)
+            with lockManager.get_lock(vm_uuid):
+                response = attachVMDK(vmdk_path, vm_uuid)
         elif cmd == "detach":
-            response = detachVMDK(vmdk_path, vm_uuid)
+            with lockManager.get_lock(vm_uuid):
+                response = detachVMDK(vmdk_path, vm_uuid)
         else:
             return err("Unknown command:" + cmd)
 
