@@ -33,8 +33,8 @@ CMD_ATTACH = 'attach'
 CMD_DETACH = 'detach'
 
 SIZE = 'size'
-FALLBACK_TENANT = '__FALLBACK'
-FALLBACK_DS  = '__FALLBACK'
+DEFAULT_TENANT = '_DEFAULT'
+DEFAULT_DS  = '_DEFAULT'
 
 # thread local storage in this module namespace
 thread_local = threadutils.get_local_storage()
@@ -47,62 +47,62 @@ def get_auth_mgr():
         thread_local._auth_mgr.connect()
     return thread_local._auth_mgr
 
-def get_fallback_tenant():
+def get_default_tenant():
     """ 
-        Get FALLBACK tenant by querying the auth DB.
+        Get DEFAULT tenant by querying the auth DB.
         VM which does not belong to any tenant explicitly will 
-        be assigned to FALLBACK tenant if FALLBACK tenant exists
+        be assigned to DEFAULT tenant if DEFAULT tenant exists
         Return value:
         -- error_info: return None on success or error info on failure
-        -- tenant_uuid: return FALLBACK tenant uuid on success,  
-           return None on failure or FALLBACK tenant does not exist
-        -- tenant_name: return FALLBACK tenant name on success,
-           return None on failure or FALLBACK tenant does not exist
+        -- tenant_uuid: return DEFAULT tenant uuid on success,  
+           return None on failure or DEFAULT tenant does not exist
+        -- tenant_name: return DEFAULT tenant name on success,
+           return None on failure or DEFAULT tenant does not exist
     """
     tenant_uuid = None
     _auth_mgr = get_auth_mgr()
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT id FROM tenants WHERE name = ?",
-            (FALLBACK_TENANT, )
+            (DEFAULT_TENANT, )
             )
         result = cur.fetchone()
     except sqlite3.Error as e:
-        error_info = "Error {0} when querying from tenants table for tenant {1}".format(e, FALLBACK_TENANT)
+        error_info = "Error {0} when querying from tenants table for tenant {1}".format(e, DEFAULT_TENANT)
         logging.error(error_info)
         return str(e), None, None
     if result:
-        # found __FALLBACK tenant
+        # found DEFAULT tenant
         tenant_uuid = result[0]
-        logging.debug("Found FALLBACK tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, FALLBACK_TENANT)
-        return None, tenant_uuid, FALLBACK_TENANT
+        logging.debug("Found DEFAULT tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, DEFAULT_TENANT)
+        return None, tenant_uuid, DEFAULT_TENANT
     else:
-        # cannot find __FALLBACK tenant
-        logging.debug(error_code.TENANT_NOT_EXIST.format(FALLBACK_TENANT))
+        # cannot find DEFAULT tenant
+        logging.debug(error_code.TENANT_NOT_EXIST.format(DEFAULT_TENANT))
         return None, None, None
 
 
-def get_fallback_privileges():
-    """ Get FALLBACK privileges by querying the auth DB.
-        FALLBACK privilege will match any (tenant_uuid, datastore) pair which
+def get_default_privileges():
+    """ Get DEFAULT privileges by querying the auth DB.
+        DEFAULT privilege will match any (tenant_uuid, datastore) pair which
         does not have an entry in privileges table explicitly
         Return value:
         -- error_info: return None on success or error info on failure
-        -- privilegs: return a list of privileges for FALLBACK privilege if 
-           FALLBACK tenant exists,
-           return None on failure or FALLBACK does not exist 
+        -- privilegs: return a list of privileges for DEFAULT privilege if 
+           DEFAULT tenant exists,
+           return None on failure or DEFAULT does not exist 
     """
     _auth_mgr = get_auth_mgr()
     privileges = []
-    logging.debug("get_fallback_privileges")
+    logging.debug("get_default_privileges")
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT * FROM privileges WHERE datastore = ?",
-            (FALLBACK_DS,)
+            (DEFAULT_DS,)
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
-        error_info = "Error {0} when querying privileges table for FALLBACK privilege".format(e)
+        error_info = "Error {0} when querying privileges table for DEFAULT privilege".format(e)
         logging.error(error_info)
         return str(e), None
 
@@ -152,7 +152,7 @@ def get_tenant(vm_uuid):
 
         return None, tenant_uuid, tenant_name
     else:
-        error_info, tenant_uuid, tenant_name = get_fallback_tenant()
+        error_info, tenant_uuid, tenant_name = get_default_tenant()
         if error_info:
             return error_info, None, None
         if not tenant_uuid:
@@ -187,8 +187,8 @@ def get_privileges(tenant_uuid, datastore):
     if privileges:    
         return None, privileges
     else:
-        # check fallback privileges
-        error_info, privileges = get_fallback_privileges()
+        # check default privileges
+        error_info, privileges = get_default_privileges()
         return error_info, privileges
 
 def has_privilege(privileges, type):
@@ -390,7 +390,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
         return error_info, None, None
 
     if not tenant_uuid:
-        # This VM does not associate any tenant(including __FALLBACK tenant), 
+        # This VM does not associate any tenant(including DEFAULT tenant), 
         # need reject the request
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
         error_info = error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name)

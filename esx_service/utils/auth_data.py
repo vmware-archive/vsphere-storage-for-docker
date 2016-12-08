@@ -335,43 +335,43 @@ class AuthorizationDataManager:
         """
         return AUTH_DB_PATH
     
-    def create_fallback_tenant(self):
-        """ Create FALLBACK tenant """
+    def create_default_tenant(self):
+        """ Create DEFAULT tenant """
         error_info, tenant = self.create_tenant(
-                                           name=auth.FALLBACK_TENANT, 
-                                           description="This is a fallback tenant", 
+                                           name=auth.DEFAULT_TENANT, 
+                                           description="This is a default tenant", 
                                            default_datastore="default_ds", 
                                            default_privileges={}, 
                                            vms=[], 
                                            privileges=[])
         if error_info:
-            err = error_code.TENANT_CREATE_FAILED.format(auth.FALLBACK_TENANT, error_info)
+            err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info)
             logging.warning(err)
     
-    def create_fallback_privileges(self):
+    def create_default_privileges(self):
         """ 
-        create FALLBACK privilege 
-        This privilege will match any tenant(FALLBACK and normal)
+        create DEFAULT privilege 
+        This privilege will match any <tenant(DEFAULT and normal), datastore> pair
         which does not have an entry in privileges table explicitly
         this privilege will have full permission (create, delete, and mount)
         and no max_volume_size and usage_quota limitation
         """ 
 
-        privileges = [{'datastore': '__FALLBACK',
+        privileges = [{'datastore': auth.DEFAULT_DS,
                        'create_volume': 1,
                        'delete_volume': 1,
                        'mount_volume': 1,
                        'max_volume_size': 0,
                        'usage_quota': 0}]
-        error_info, tenant = self.get_tenant("__FALLBACK")
+        error_info, tenant = self.get_tenant(auth.DEFAULT_TENANT)
         if error_info:
-            err = error_code.TENANT_NOT_EXIST.format("__FALLBACK")
+            err = error_code.TENANT_NOT_EXIST.format(auth.DEFAULT_TENANT)
             logging.warning(err)
             return
 
         error_info = tenant.set_datastore_access_privileges(self.conn, privileges)
         if error_info:
-            err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.FALLBACK_TENANT, auth.FALLBACK_DS, error_info)
+            err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
             logging.warning(err)
 
     def connect(self):
@@ -401,8 +401,8 @@ class AuthorizationDataManager:
         
         if need_create_table:
             self.create_tables()
-            self.create_fallback_tenant()
-            self.create_fallback_privileges()
+            self.create_default_tenant()
+            self.create_default_privileges()
             
 
     def create_tables(self):
