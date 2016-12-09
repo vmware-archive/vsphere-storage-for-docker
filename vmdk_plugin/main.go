@@ -38,6 +38,7 @@ const (
 	mountRoot     = "/mnt/vmdk" // VMDK and photon volumes are mounted here
 	photonDriver  = "photon"
 	vmdkDriver    = "vmdk"
+	vsphereDriver = "vsphere"
 )
 
 // An equivalent function is not exported from the SDK.
@@ -128,7 +129,7 @@ func main() {
 	if *driverName == photonDriver {
 		driver = photon.NewVolumeDriver(*targetURL, *projectID,
 			*vmID, mountRoot)
-	} else if *driverName == vmdkDriver {
+	} else if *driverName == vmdkDriver || *driverName == vsphereDriver {
 		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot)
 	} else {
 		log.Warning("Unknown driver, exiting - ", *driverName)

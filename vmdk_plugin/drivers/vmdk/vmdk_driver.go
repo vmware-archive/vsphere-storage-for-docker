@@ -43,7 +43,7 @@ const (
 	sleepBeforeMount = 1 * time.Second
 	watchPath        = "/dev/disk/by-path"
 	version          = "VMDK Volume Driver v0.3"
-	driverName       = "vmdk"
+	driverName       = "vsphere"
 )
 
 // Driver - VMDK driver struct

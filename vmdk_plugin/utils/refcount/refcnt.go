@@ -86,9 +86,8 @@ const (
 	defaultSleepIntervalSec = 1
 
 	// consts for finding and parsing linux mount information
-	linuxMountsFile         = "/proc/mounts"
-	photonDriver            = "photon"
-	vmdkDriver              = "vmdk"
+	linuxMountsFile = "/proc/mounts"
+	photonDriver    = "photon"
 )
 
 // info about individual volume ref counts and mount

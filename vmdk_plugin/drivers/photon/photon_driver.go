@@ -51,6 +51,7 @@ const (
 	driverName           = "photon"
 	photonPersistentDisk = "persistent-disk"
 	capacityKB           = 1024
+	capacityMB           = 1048576
 	capacityGB           = 1
 )
 
@@ -167,14 +168,26 @@ func getDiskSize(r volume.Request) (int, error) {
 	}
 	capacity = strings.ToLower(capacity)
 
-	if strings.HasSuffix(capacity, "mb") {
+	if strings.HasSuffix(capacity, "kb") {
+		val := strings.Split(capacity, "kb")
+		bytes, err := strconv.Atoi(val[0])
+		if err != nil {
+			return 0, err
+		}
+		if bytes < capacityKB || (bytes/capacityMB) < capacityGB {
+			return 0, fmt.Errorf("Invalid size %s specified for volume %s",
+				r.Options["size"], r.Name)
+		}
+		return bytes / capacityMB, nil
+	} else if strings.HasSuffix(capacity, "mb") {
 		val := strings.Split(capacity, "mb")
 		bytes, err := strconv.Atoi(val[0])
 		if err != nil {
 			return 0, err
 		}
-		if bytes < capacityKB {
-			return capacityGB, nil
+		if bytes < capacityKB || (bytes/capacityKB) < capacityGB {
+			return 0, fmt.Errorf("Invalid size %s specified for volume %s",
+				r.Options["size"], r.Name)
 		}
 		return bytes / capacityKB, nil
 	} else if strings.HasSuffix(capacity, "gb") {
