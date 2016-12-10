@@ -258,6 +258,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         return err("Failed to initialize source volume path {0}: {1}".format(src_path, errMsg))
 
     src_vmdk_path = vmdk_utils.get_vmdk_path(src_path, src_volume)
+    logging.debug("cloneVMDK: src_path=%s, src_volume=%s, src_vmdk_path=%s", src_path, src_volume, src_vmdk_path)
     if not os.path.isfile(src_vmdk_path):
         return err("Could not find volume for cloning %s" % opts[kv.CLONE_FROM])
 
@@ -532,6 +533,9 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
 def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""
     # Note: will return more Volume info here, when Docker API actually accepts it
+    logging.debug("getVMDK: vmdk_path=%s vol_name=%s, datastore=%s", vmdk_path, vol_name, datastore)
+    file_exist = os.path.isfile(vmdk_path)
+    logging.debug("getVMDK: file_exist=%d", file_exist)
     if not os.path.isfile(vmdk_path):
         return err("Volume {0} not found (file: {1})".format(vol_name, vmdk_path))
     # Return volume info - volume policy, size, allocated capacity, allocation
@@ -730,7 +734,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
     path, errMsg = get_vol_path(datastore, tenant_name)
-    logging.debug("executeRequest %s %s", tenant_name, path)
+    logging.debug("executeRequest for tenant %s with path %s", tenant_name, path)
     if path is None:
         return errMsg
 

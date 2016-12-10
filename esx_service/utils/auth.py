@@ -23,6 +23,8 @@ import auth_data_const
 import volume_kv as kv
 import threadutils
 import log_config
+import error_code
+import vmdk_utils
 
 # All supported vmdk commands that need authorization checking
 CMD_CREATE = 'create'
@@ -31,6 +33,8 @@ CMD_ATTACH = 'attach'
 CMD_DETACH = 'detach'
 
 SIZE = 'size'
+DEFAULT_TENANT = '_DEFAULT'
+DEFAULT_DS  = '_DEFAULT'
 
 # thread local storage in this module namespace
 thread_local = threadutils.get_local_storage()
@@ -42,6 +46,67 @@ def get_auth_mgr():
         thread_local._auth_mgr = auth_data.AuthorizationDataManager()
         thread_local._auth_mgr.connect()
     return thread_local._auth_mgr
+
+def get_default_tenant():
+    """ 
+        Get DEFAULT tenant by querying the auth DB.
+        VM which does not belong to any tenant explicitly will 
+        be assigned to DEFAULT tenant if DEFAULT tenant exists
+        Return value:
+        -- error_info: return None on success or error info on failure
+        -- tenant_uuid: return DEFAULT tenant uuid on success,  
+           return None on failure or DEFAULT tenant does not exist
+        -- tenant_name: return DEFAULT tenant name on success,
+           return None on failure or DEFAULT tenant does not exist
+    """
+    tenant_uuid = None
+    _auth_mgr = get_auth_mgr()
+    try:
+        cur = _auth_mgr.conn.execute(
+            "SELECT id FROM tenants WHERE name = ?",
+            (DEFAULT_TENANT, )
+            )
+        result = cur.fetchone()
+    except sqlite3.Error as e:
+        error_info = "Error {0} when querying from tenants table for tenant {1}".format(e, DEFAULT_TENANT)
+        logging.error(error_info)
+        return str(e), None, None
+    if result:
+        # found DEFAULT tenant
+        tenant_uuid = result[0]
+        logging.debug("Found DEFAULT tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, DEFAULT_TENANT)
+        return None, tenant_uuid, DEFAULT_TENANT
+    else:
+        # cannot find DEFAULT tenant
+        logging.debug(error_code.TENANT_NOT_EXIST.format(DEFAULT_TENANT))
+        return None, None, None
+
+
+def get_default_privileges():
+    """ Get DEFAULT privileges by querying the auth DB.
+        DEFAULT privilege will match any (tenant_uuid, datastore) pair which
+        does not have an entry in privileges table explicitly
+        Return value:
+        -- error_info: return None on success or error info on failure
+        -- privilegs: return a list of privileges for DEFAULT privilege if 
+           DEFAULT tenant exists,
+           return None on failure or DEFAULT does not exist 
+    """
+    _auth_mgr = get_auth_mgr()
+    privileges = []
+    logging.debug("get_default_privileges")
+    try:
+        cur = _auth_mgr.conn.execute(
+            "SELECT * FROM privileges WHERE datastore = ?",
+            (DEFAULT_DS,)
+            )
+        privileges = cur.fetchone()
+    except sqlite3.Error as e:
+        error_info = "Error {0} when querying privileges table for DEFAULT privilege".format(e)
+        logging.error(error_info)
+        return str(e), None
+
+    return None, privileges
 
 def get_tenant(vm_uuid):
     """ 
@@ -85,7 +150,18 @@ def get_tenant(vm_uuid):
             tenant_name = result[0]
             logging.debug("Found tenant_uuid %s, tenant_name %s", tenant_uuid, tenant_name)
 
-    return None, tenant_uuid, tenant_name
+        return None, tenant_uuid, tenant_name
+    else:
+        error_info, tenant_uuid, tenant_name = get_default_tenant()
+        if error_info:
+            return error_info, None, None
+        if not tenant_uuid:
+             vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
+             error_info = error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name)
+             logging.debug(error_info)
+             return error_info, None, None
+        return None, tenant_uuid, tenant_name
+
 
 def get_privileges(tenant_uuid, datastore):
     """ Return privileges for given (tenant_uuid, datastore) pair by
@@ -108,7 +184,12 @@ def get_privileges(tenant_uuid, datastore):
         logging.error("Error %s when querying privileges table for tenant_id %s and datastore %s",
                       e, tenant_uuid, datastore)
         return str(e), None
-    return None, privileges
+    if privileges:    
+        return None, privileges
+    else:
+        # check default privileges
+        error_info, privileges = get_default_privileges()
+        return error_info, privileges
 
 def has_privilege(privileges, type):
     """ Check the privileges has the specific type of privilege set. """
@@ -306,12 +387,15 @@ def authorize(vm_uuid, datastore, cmd, opts):
 
     error_info, tenant_uuid, tenant_name = get_tenant(vm_uuid)
     if error_info:
-       return error_info, None, None
+        return error_info, None, None
 
     if not tenant_uuid:
-        # This VM does not associate any tenant, don't need auth check
-        logging.debug("VM %s does not belong to any tenant", vm_uuid)
-        return None, None, None
+        # This VM does not associate any tenant(including DEFAULT tenant), 
+        # need reject the request
+        vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
+        error_info = error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name)
+        logging.debug(error_info)
+        return error_info, None, None
     else:
         error_info, privileges = get_privileges(tenant_uuid, datastore)
         if error_info:

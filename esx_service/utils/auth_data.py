@@ -26,6 +26,7 @@ import auth_data_const
 import error_code
 import threadutils
 import log_config
+import auth
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
@@ -333,6 +334,45 @@ class AuthorizationDataManager:
 
         """
         return AUTH_DB_PATH
+    
+    def create_default_tenant(self):
+        """ Create DEFAULT tenant """
+        error_info, tenant = self.create_tenant(
+                                           name=auth.DEFAULT_TENANT, 
+                                           description="This is a default tenant", 
+                                           default_datastore="default_ds", 
+                                           default_privileges={}, 
+                                           vms=[], 
+                                           privileges=[])
+        if error_info:
+            err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info)
+            logging.warning(err)
+    
+    def create_default_privileges(self):
+        """ 
+        create DEFAULT privilege 
+        This privilege will match any <tenant(DEFAULT and normal), datastore> pair
+        which does not have an entry in privileges table explicitly
+        this privilege will have full permission (create, delete, and mount)
+        and no max_volume_size and usage_quota limitation
+        """ 
+
+        privileges = [{'datastore': auth.DEFAULT_DS,
+                       'create_volume': 1,
+                       'delete_volume': 1,
+                       'mount_volume': 1,
+                       'max_volume_size': 0,
+                       'usage_quota': 0}]
+        error_info, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+        if error_info:
+            err = error_code.TENANT_NOT_EXIST.format(auth.DEFAULT_TENANT)
+            logging.warning(err)
+            return
+
+        error_info = tenant.set_datastore_access_privileges(self.conn, privileges)
+        if error_info:
+            err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
+            logging.warning(err)
 
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`. 
@@ -361,6 +401,9 @@ class AuthorizationDataManager:
         
         if need_create_table:
             self.create_tables()
+            self.create_default_tenant()
+            self.create_default_privileges()
+            
 
     def create_tables(self):
         """ Create tables used for per-datastore authorization.  

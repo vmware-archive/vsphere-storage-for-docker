@@ -265,6 +265,15 @@ def get_vm_uuid_by_name(vm_name):
     except:
         return None
 
+def get_vm_name_by_uuid(vm_uuid):
+    """ Returns vm_name for given vm_uuid, or None """
+    si = vmdk_ops.get_si()
+    try:
+        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.uuid == vm_uuid]
+        return vm[0].config.name
+    except:
+        return None
+
 def get_vm_config_path(vm_name):
     """Returns vm_uuid for given vm_name, or None """
     si = vmdk_ops.get_si()
@@ -281,17 +290,6 @@ def get_vm_config_path(vm_name):
     # datastore_path has the format like this /vmfs/volumes/datastore_name
     vm_config_path = os.path.join(datastore_path, path)
     return vm_config_path
-
-def find_vm_by_name(vm_name):
-    """ Return vm for given vm_name, or None """
-    si = vmdk_ops.get_si()
-    try:
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity 
-                if d.config.name == vm_name]
-        return vm[0]
-
-    except:
-        return None
 
 def log_volume_lsof(vol_name):
     """Log volume open file descriptors"""
@@ -312,3 +310,4 @@ def main():
 
 if __name__ == "__main__":
     main() 
+    
