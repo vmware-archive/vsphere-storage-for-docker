@@ -131,6 +131,7 @@ VMware ESXi:
 - 6.0
 - 6.0 u1
 - 6.0 u2
+- 6.5
 
 Docker: 1.9 and higher
 
