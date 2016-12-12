@@ -236,6 +236,7 @@ class Tenant:
    Remove VMs from this tenant.
    @param vms List of VMs to be removed from this tenant.
    @throws vim.fault.NotFound If any VM does not exist or does not belong to this tenant.
+
    """
    )
    @Method(parent=_name, wsdlName="RemoveVMs", faults=["vim.fault.NotFound"])
@@ -354,6 +355,7 @@ class DatastoreAccessPrivilege:
    A privilege defines operations against a datastore and limits on those operations.
    """
    )
+   @Internal(parent=_name)
    @DataType(name=_name, version=_VERSION)
    def __init__(self):
        pass
