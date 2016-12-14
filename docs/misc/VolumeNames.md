@@ -2,7 +2,7 @@
 Short Volume Name can contain up to a 100 characters.
 All characters are allowed, but the last '@' will be interpreted as a separator
 between volume and datastore name (see below).
-As an exception, we do not allow volume names ending with '-NNNNNNN', where
+As an exception, we do not allow volume names ending with '-NNNNNN', where
 N is a digit (this limitation is to prevent conflicts with ESXi deltadisks used
 during VM snapshots). Examples: `MyVolume_fast.12`,  `_12SuperStorage`,
 `super-volume-200` are all valid names, while `myVolume-000012` is not valid.
