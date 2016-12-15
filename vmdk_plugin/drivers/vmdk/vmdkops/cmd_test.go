@@ -19,8 +19,8 @@ package vmdkops_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
 	"testing"
 )
 
