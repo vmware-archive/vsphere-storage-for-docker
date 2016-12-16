@@ -362,10 +362,9 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
 
         # check vms
-        tenant1_expected_output = [(vm1_uuid, tenant1.id),
+        tenant1_expected_output = [(vm1_uuid),
                                   ]
-        tenant1_actual_output = [(tenants_list[tenant1_idx].vms[0][auth_data_const.COL_VM_ID],
-                                 tenants_list[tenant1_idx].vms[0][auth_data_const.COL_TENANT_ID])
+        tenant1_actual_output = [(tenants_list[tenant1_idx].vms[0])
                                 ]
 
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
@@ -380,11 +379,11 @@ class TestAuthDataModel(unittest.TestCase):
                                    privileges[0][auth_data_const.COL_USAGE_QUOTA]
                                   ]
                  
-        tenant1_actual_output = [tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_DATASTORE_URL],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_ALLOW_CREATE],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_USAGE_QUOTA]
+        tenant1_actual_output = [tenants_list[tenant1_idx].privileges[0].tenant_id,
+                                 tenants_list[tenant1_idx].privileges[0].datastore_url,
+                                 tenants_list[tenant1_idx].privileges[0].allow_create,
+                                 tenants_list[tenant1_idx].privileges[0].max_volume_size,
+                                 tenants_list[tenant1_idx].privileges[0].usage_quota
                                 ]
                         
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
@@ -406,13 +405,11 @@ class TestAuthDataModel(unittest.TestCase):
 
         # check vms
         self.assertEqual(len(tenants_list[tenant2_idx].vms), 2)
-        tenant2_expected_output = [(vm2_uuid, tenant2.id),
-                                   (vm3_uuid, tenant2.id)
+        tenant2_expected_output = [(vm2_uuid),
+                                   (vm3_uuid)
                                   ]
-        tenant2_actual_output = [(tenants_list[tenant2_idx].vms[0][auth_data_const.COL_VM_ID],
-                                 tenants_list[tenant2_idx].vms[0][auth_data_const.COL_TENANT_ID]),
-                                 (tenants_list[tenant2_idx].vms[1][auth_data_const.COL_VM_ID],
-                                 tenants_list[tenant2_idx].vms[1][auth_data_const.COL_TENANT_ID]),
+        tenant2_actual_output = [(tenants_list[tenant2_idx].vms[0]),
+                                 (tenants_list[tenant2_idx].vms[1])
                                 ]
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 

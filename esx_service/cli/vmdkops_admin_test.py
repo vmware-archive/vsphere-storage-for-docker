@@ -193,11 +193,20 @@ class TestParsing(unittest.TestCase):
         self.assert_parse_error('tenant access add --name=tenant1 --datastore=datastore1 --rights=create mount')
             
     def test_tenant_accss_set(self):
-        args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=500MB --volume-totalsize=1GB'.split())
+        args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --allow-create=True --volume-maxsize=500MB --volume-totalsize=1GB'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.datastore, 'datastore1')
-        self.assertEqual(args.allow_create, True)
+        self.assertEqual(args.allow_create, "True")
+        self.assertEqual(args.volume_maxsize, '500MB')
+        self.assertEqual(args.volume_totalsize, '1GB')
+    
+    def test_tenant_accss_set_not_set_allow_create(self):
+        args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --volume-maxsize=500MB --volume-totalsize=1GB'.split())
+        self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
+        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.datastore, 'datastore1')
+        self.assertEqual(args.allow_create, None)
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
         

@@ -39,6 +39,7 @@ import auth_api
 import error_code
 import vmdk_utils
 import random
+import convert
 
 # Max volumes count we can attach to a singe VM.
 MAX_VOL_COUNT_FOR_ATTACH = 60
@@ -259,6 +260,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             err = vmdk_ops.removeVMDK(vmdk_path)
             self.assertEqual(err == None, unit[2], err)
 
+#@unittest.skip("Liping remove")
 class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
     vm_name = generate_test_vm_name()
     vm_uuid = str(uuid.uuid4())
@@ -540,6 +542,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
                 if x['filename'].startswith('VmdkAttachDetachTestVol')]
 
     
+    #@unittest.skip("Liping Remove")
     def testAttachDetach(self):
         logging.info("Start VMDKAttachDetachTest")
         si = vmdk_ops.get_si()
@@ -732,8 +735,8 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                     datastore=auth.DEFAULT_DS, 
                                                     allow_create=True,
                                                     default_datastore=False, 
-                                                    volume_maxsize=0, 
-                                                    volume_totalsize=0)
+                                                    volume_maxsize_in_MB=0, 
+                                                    volume_totalsize_in_MB=0)
             if error_info:
                 err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
                 logging.warning(err)
@@ -929,17 +932,17 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         # set access privileges, create a volume with 100MB
-        volume_maxsize = "500MB"
-        volume_totalsize = "1GB"
+        volume_maxsize_in_MB = convert.convert_to_MB("500MB")
+        volume_totalsize_in_MB = convert.convert_to_MB("1GB")
         
         # add access privilege for tenant1, after this, default_datastore will be set to
         # self.datastore_name
         error_info = auth_api._tenant_access_add(name=self.tenant1_name, 
                                                  datastore=self.datastore_name, 
                                                  allow_create=True,
-                                                 default_datastore=False, 
-                                                 volume_maxsize=volume_maxsize, 
-                                                 volume_totalsize=volume_totalsize)
+                                                 default_datastore=False,
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB)
         self.assertEqual(None, error_info)
 
         # create a volume with 600MB which exceed the volume_maxsize
@@ -970,7 +973,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         # set allow_create to True
         error_info = auth_api._tenant_access_set(name=self.tenant1_name, 
                                                  datastore=self.datastore_name, 
-                                                 allow_create=True)
+                                                 allow_create="True")
         self.assertEqual(None, error_info)
         
         # try to delete the volume again, which should succeed
@@ -999,9 +1002,10 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         # set the usage quota to 2GB
+        volume_totalsize_in_MB = convert.convert_to_MB('2GB')
         error_info = auth_api._tenant_access_set(name=self.tenant1_new_name, 
                                                  datastore=self.datastore_name, 
-                                                 volume_totalsize='2GB') 
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB) 
                                                  
         self.assertEqual(None, error_info)
 
@@ -1046,14 +1050,14 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         # set access privileges, create a volume with 100MB
-        volume_maxsize = "500MB"
-        volume_totalsize = "2GB"
+        volume_maxsize_in_MB = convert.convert_to_MB("500MB")
+        volume_totalsize_in_MB = convert.convert_to_MB("2GB")
         error_info = auth_api._tenant_access_add(name=self.tenant1_name, 
                                                  datastore=self.datastore_name, 
                                                  allow_create=True,
                                                  default_datastore=False, 
-                                                 volume_maxsize=volume_maxsize, 
-                                                 volume_totalsize=volume_totalsize)
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB, 
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB)
         # create a volume with default size
         opts={u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
@@ -1077,14 +1081,14 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         # set access privileges, create a volume with 100MB
-        volume_maxsize = "500MB"
-        volume_totalsize = "2GB"
+        volume_maxsize_in_MB = convert.convert_to_MB("500MB")
+        volume_totalsize_in_MB = convert.convert_to_MB("2GB")
         error_info = auth_api._tenant_access_add(name=self.tenant2_name, 
                                                  datastore=self.datastore_name, 
                                                  allow_create=True, 
                                                  default_datastore=False,
-                                                 volume_maxsize=volume_maxsize, 
-                                                 volume_totalsize=volume_totalsize)
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB, 
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB)
         # create a volume with default size
         opts={u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm2_uuid, self.vm2_name, self.vm2_config_path, auth.CMD_CREATE, self.tenant2_vol1_name, opts)
@@ -1131,14 +1135,14 @@ class VmdkTenantTestCase(unittest.TestCase):
         # set access privileges on self.datastore1, and default_datastore will be set to
         # self.datastore1 for tenant1 since this is the first privilege added for tenant1
         # access privilege on self.datastore is mount_only
-        volume_maxsize = "500MB"
-        volume_totalsize = "2GB"
+        volume_maxsize_in_MB = convert.convert_to_MB("500MB")
+        volume_totalsize_in_MB = convert.convert_to_MB("2GB")
         error_info = auth_api._tenant_access_add(name=self.tenant1_name, 
                                                  datastore=self.datastore1_name, 
                                                  allow_create=False,
                                                  default_datastore=False, 
-                                                 volume_maxsize=volume_maxsize, 
-                                                 volume_totalsize=volume_totalsize)
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB, 
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB)
 
         # set access privileges on self.datastore, with allow_create=True
         # keep the default_datastore to self.datastore1 for tenant1
@@ -1146,8 +1150,8 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                  datastore=self.datastore_name, 
                                                  allow_create=True,
                                                  default_datastore=False, 
-                                                 volume_maxsize=volume_maxsize, 
-                                                 volume_totalsize=volume_totalsize)
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB, 
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB)
                     
         # create a volume with default size
         # a volume will be tried to create on the default_datastore, which is self.datastore1_name
