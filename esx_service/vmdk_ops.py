@@ -183,7 +183,10 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
     vdisk_spec.diskType = disk_format
 
     if  kv.SIZE in opts:
-        vdisk_spec.capacityKb = convert.convert_to_KB(opts[kv.SIZE])
+	if (opts[kv.SIZE].lower().endswith('kb')):
+		vdisk_spec.capacityKb = int(opts[kv.SIZE][:-2])
+	else:
+        	vdisk_spec.capacityKb = convert.convert_to_KB(opts[kv.SIZE])
     else:
         vdisk_spec.capacityKb = convert.convert_to_KB(kv.DEFAULT_DISK_SIZE)
 
