@@ -16,7 +16,7 @@ The service works with existing Docker volume commands.
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 ```
 
-The volume units can be ```kb, mb, gb and tb```
+The volume units can be ```mb, gb and tb```
 
 The default volume size is 100mb
 

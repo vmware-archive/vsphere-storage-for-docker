@@ -227,7 +227,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         # info for testPolicy
         testInfo = [
             #    size     policy   expected success?
-            ["2000kb", "good", True, "zeroedthick"],
+            ["2000mb", "good", True, "zeroedthick"],
             ["14000pb", "good", False, "zeroedthick"],
             ["bad size", "good", False, "eagerzeroedthick"],
             ["100mb", "impossible", True, "eagerzeroedthick"],
@@ -367,7 +367,7 @@ class ValidationTestCase(unittest.TestCase):
                 pass
 
     def test_success(self):
-        sizes = ['2gb', '200tb', '200mb', '5kb']
+        sizes = ['2gb', '200tb', '200mb']
         sizes.extend([s.upper() for s in sizes])
 
         for s in sizes:
