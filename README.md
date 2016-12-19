@@ -84,7 +84,7 @@ service docker-volume-vsphere restart
 service docker start
 ```
 
-using systemctl
+Using systemctl
 
 ```
 systemctl stop docker
