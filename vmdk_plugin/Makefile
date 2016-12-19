@@ -131,10 +131,10 @@ $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
 
 $(BIN)/$(VMDKOPS_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go
-	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE)
+	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
 $(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
-	$(GO) test -c -o $@ $(PLUGIN)
+	$(GO) test -c -o $@ $(PLUGIN) -cover
 
 .PHONY: clean
 clean:
@@ -297,8 +297,8 @@ test:
 .PHONY: testasroot
 testasroot:
 	$(log_target)
-	$(GO) test $(PLUGIN)/vmdkops
-	$(GO) test $(PLUGIN)/utils/config
+	$(GO) test $(PLUGIN)/vmdkops -cover
+	$(GO) test $(PLUGIN)/utils/config -cover
 
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME ?= DefaultTestVol
