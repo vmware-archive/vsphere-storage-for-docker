@@ -383,10 +383,10 @@ def validate_size(size, clone=False):
     if clone:
         raise ValidationError("Cannot define the size for a clone")
 
-    if not size.lower().endswith(('kb', 'mb', 'gb', 'tb'
+    if not size.lower().endswith(('mb', 'gb', 'tb'
                                   )) or not size[:-2].isdigit():
         msg = ('Invalid format for size. \n'
-               'Valid sizes must be of form X[kKmMgGtT]b where X is an'
+               'Valid sizes must be of form X[mMgGtT]b where X is an'
                'integer. Default = 100mb')
         raise ValidationError(msg)
 
