@@ -395,6 +395,8 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
 		).Error("Failed to mount ")
+
+		_, err := d.decrRefCount(r.Name)
 		return volume.Response{Err: err.Error()}
 	}
 
