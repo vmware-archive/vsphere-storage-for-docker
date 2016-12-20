@@ -318,6 +318,7 @@ def get_datastore_url(datastore_name):
 def get_datastore_name(datastore_url):
     """ return datastore name for given datastore url """
     res = [d.info.name for d in get_datastore_objects() if d.info.url == datastore_url]
+    return res[0]
 
 def main():
     log_config.configure()
