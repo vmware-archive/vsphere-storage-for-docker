@@ -82,7 +82,7 @@ def get_tenant_list_from_db(name=None):
         List all tenants or tenant with the name specified
         Params:
         -- name: if "name" is specified, return a list of one tenant with name specified
-        if "name" is not specified, return a list of all tenant
+        if "name" is not specified, return a list of all tenants
         Return value:
         -- error_info: return None on success or error info on failure
         -- tenant_list: return a list of tenant objects on success or None on failure
@@ -124,6 +124,7 @@ def generate_tuple_from_vm_list(vm_list):
     return None, vms, not_found_vms
 
 def default_privileges():
+     """ return a privilege object with default value """
      privileges = [{'datastore': '',
                     'allow_create': 0,
                     'max_volume_size': 0,

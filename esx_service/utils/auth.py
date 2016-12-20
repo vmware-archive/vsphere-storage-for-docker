@@ -35,7 +35,7 @@ CMD_DETACH = 'detach'
 SIZE = 'size'
 DEFAULT_TENANT = '_DEFAULT'
 DEFAULT_DS  = '_DEFAULT'
-DEFAULT_DS_URL = DEFAULT_DS + "_url"
+DEFAULT_DS_URL = DEFAULT_DS + "_URL"
 
 # thread local storage in this module namespace
 thread_local = threadutils.get_local_storage()
@@ -195,21 +195,24 @@ def get_privileges(tenant_uuid, datastore):
         return error_info, privileges
 
 def has_privilege(privileges, type=None):
-    """ Check the privileges has the specific type of privilege set.
-        if param "allow_create" is None or False, which means check
-        the input "privileges" has "mount_only" privileges or not
-        if param "allow_create" is True, which means check the input
-        "privileges" has "allow_create" privilege or not
-        A tenant has "allow_create" privilege on a datastore means it 
-        has full privileges to access datastore, including create, 
-        remove, mount, unmount
+    """ Check whether the param "privileges" has the specific type of privilege set.
+        There are two types of privilege: 
+        - "mount_only" which means only mount and unmount are allowed
+        - "fully_access" which means create, remove, mount, unmount are
+        allowed
+        a privilege with "allow_create=False" has "mount_only" privilege
+        a privilege with "allow_create=True" has "fully_access" privilege
+        if param "type" is not specified, which means only need to check
+        whether the param "privileges" has the "mount_only" privilege or not;
+        if param "allow_create" is specified, which means need to check
+        whether the input "privileges" has "fully_access" privilege or not
     """
     # privileges is None, return False
     if not privileges:
         return False
     if type:    
-        logging.debug("has_privilege: %s=%d", type, privileges[auth_data_const.COL_ALLOW_CREATE])
-        return privileges[auth_data_const.COL_ALLOW_CREATE]
+        logging.debug("has_privilege: %s=%d", type, privileges[type])
+        return privileges[type]
     
     return True
 

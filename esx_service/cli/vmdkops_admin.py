@@ -223,7 +223,7 @@ def commands():
                             'help': 'The new description of the tenant',
                         },
                         '--default-datastore': {
-                            'help': 'The name of new default_datastore',
+                            'help': 'The name of the datastore to be used by default for volumes placement',
                         }
                     }
                 },
@@ -804,7 +804,7 @@ def generate_tenant_ls_rows(tenant_list):
 def tenant_create(args):
     """ Handle tenant create command """
     error_info, tenant = auth_api._tenant_create(
-                                                 name=args.name , 
+                                                 name=args.name, 
                                                  description="",  
                                                  vm_list=args.vm_list, 
                                                  privileges=[])

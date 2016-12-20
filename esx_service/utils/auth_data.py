@@ -378,7 +378,8 @@ class AuthorizationDataManager:
 
     def get_db_version(self):
         """
-            Get DB schema version from auth-db
+        Get DB schema version from auth-db
+
         """
         major_ver = 0
         minor_ver = 0
@@ -410,7 +411,7 @@ class AuthorizationDataManager:
 
     def need_upgrade_db(self):
         """
-            Check auth-db schema need to be upgraded or not
+            Check whether auth-db schema need to be upgraded or not
         """
         major_ver = 0
         minor_ver = 0
