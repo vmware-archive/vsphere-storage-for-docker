@@ -24,6 +24,8 @@ import fnmatch
 import vmdk_ops
 import auth_api
 import log_config
+import subprocess
+import sys
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -304,6 +306,18 @@ def log_volume_lsof(vol_name):
             msg = "cartel={0}, name={1}, type={2}, fd={3}, desc={4}".format(
                 cartel, name, ftype, fd, desc)
             logging.info("Volume open descriptor: %s", msg)
+
+def get_vmdk_capacity(path):
+    try:
+        cmd = "vmkfstools --extendedstatinfo {0}".format(path).split()
+        output = subprocess.check_output(cmd)
+        result = output.decode('utf-8')
+        lines = result.split('\n')
+        capacity_in_bytes = lines[0].split()[2]
+        return str(capacity_in_bytes)
+    except subprocess.CalledProcessError:
+        sys.exit("Failed to stat {0}.".format(path) \
+           + " VMDK corrupted. Please remove and then retry")
 
 def main():
     log_config.configure()

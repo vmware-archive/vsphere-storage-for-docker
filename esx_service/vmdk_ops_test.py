@@ -38,6 +38,7 @@ import auth_data
 import auth_api
 import error_code
 import vmdk_utils
+import vmdkops_admin
 
 # Max volumes count we can attach to a singe VM.
 MAX_VOL_COUNT_FOR_ATTACH = 60
@@ -193,6 +194,29 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         err = vmdk_ops.removeVMDK(self.name)
         self.assertEqual(err, None, err)
 
+    def test_VerifyVolumeSize(self):
+        """ test to verify the size of vmdk is same
+        as the capacity reported by vmkfstools.
+        4gb = 4294967296 bytes
+        2tb = 2199023255552 bytes
+        """
+        sizes = ['4gb', '2tb', '200mb']
+        expectedSize = ['4294967296', '2199023255552', '209715200']
+        opts = {}
+
+        for s, expctdSz in zip(sizes, expectedSize):
+            err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+                                      vmdk_path=self.name,
+                                      vol_name=self.volName,
+                                      opts={volume_kv.SIZE:s})
+            self.assertEqual(err, None, err)
+            self.assertEqual(os.path.isfile(self.name), True,
+                             "VMDK {0} is missing after create.".format(self.name))
+            actualSz = vmdk_utils.get_vmdk_capacity(path=self.name)
+            self.assertEqual(actualSz,expctdSz,"Incorrect size for VMDK {0} \
+                             Expected size of volume = {1} whereas  actual size = {2}" \
+                             .format(self.name,expctdSz,actualSz))
+            vmdk_ops.removeVMDK(self.name)
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
