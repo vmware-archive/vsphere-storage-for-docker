@@ -63,7 +63,7 @@
 // mountspoint of view the volume is not used, but the VMDK is still attached
 // to the VM) - we leave it to manual recovery.
 //
-// The refCountsMap is safe to be used by multiple goroutines and has a single
+// The RefCountsMap is safe to be used by multiple goroutines and has a single
 // RWMutex to serialize operations on the map and refCounts.
 // The serialization of operations per volume is assured by the volume/store
 // of the docker daemon.
@@ -82,7 +82,7 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
-	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers"
 	"golang.org/x/net/context"
 )
 
@@ -97,7 +97,7 @@ const (
 )
 
 // info about individual volume ref counts and mount
-type refCountedVolume struct {
+type refCount struct {
 	// refcount for the given volume.
 	count uint
 
@@ -108,15 +108,12 @@ type refCountedVolume struct {
 	// Volume is mounted from this device. Used on recovery only , for info
 	// purposes. Value is empty during normal operation
 	dev string
-
-	// disk ID for the device, for Photon disks
-	id string
 }
 
-// refCountsMap struct
-type refCountsMap struct {
+// RefCountsMap struct
+type RefCountsMap struct {
 	refMap map[string]*refCount // Map of refCounts
-	mtx    *sync.RWMutex        // Synchronizes refCountsMap ops
+	mtx    *sync.RWMutex        // Synchronizes RefCountsMap ops
 }
 
 var (
@@ -136,9 +133,9 @@ func init() {
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 }
 
-// NewRefCountsMap - creates a new refCountsMap
-func NewRefCountsMap() *refCountsMap {
-	return &refCountsMap{
+// NewRefCountsMap - creates a new RefCountsMap
+func NewRefCountsMap() *RefCountsMap {
+	return &RefCountsMap{
 		refMap: make(map[string]*refCount),
 		mtx:    &sync.RWMutex{},
 	}
@@ -154,7 +151,7 @@ func newRefCount() *refCount {
 // Init Refcounts. Discover volume usage refcounts from Docker.
 // This functions does not sync with mount/unmount handlers and should be called
 // and completed BEFORE we start accepting Mount/unmount requests.
-func (r RefCountsMap) Init(d volume.Driver, mountDir string, name string) {
+func (r RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string) {
 	c, err := client.NewClient(DockerUSocket, ApiVersion, nil, defaultHeaders)
 	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
@@ -182,7 +179,7 @@ func (r RefCountsMap) Init(d volume.Driver, mountDir string, name string) {
 		return
 	}
 
-	// RLocks the refCountsMap
+	// RLocks the RefCountsMap
 	r.mtx.RLock()
 	defer r.mtx.RUnlock()
 	log.Infof("Discovered %d volumes in use.", len(r.refMap))
@@ -194,8 +191,8 @@ func (r RefCountsMap) Init(d volume.Driver, mountDir string, name string) {
 
 // Returns ref count for the volume.
 // If volume is not referred (not in the map), return 0
-func (r refCountsMap) GetCount(vol string) uint {
-	// RLocks the refCountsMap
+func (r RefCountsMap) GetCount(vol string) uint {
+	// RLocks the RefCountsMap
 	r.mtx.RLock()
 	defer r.mtx.RUnlock()
 
@@ -207,8 +204,8 @@ func (r refCountsMap) GetCount(vol string) uint {
 }
 
 // Incr refCount for the volume vol. Creates new entry if needed.
-func (r refCountsMap) Incr(vol string) uint {
-	// Locks the refCountsMap
+func (r RefCountsMap) Incr(vol string) uint {
+	// Locks the RefCountsMap
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -221,47 +218,11 @@ func (r refCountsMap) Incr(vol string) uint {
 	return rc.count
 }
 
-// Add - add a disk to the refcount map, used for Photon disks
-// and stores the disk ID. Volume lock is held by caller.
-func (r RefCountsMap) AddID(vol string, id string) {
-	rc := r[vol]
-	if rc == nil {
-		rc = &refCountedVolume{}
-		r[vol] = rc
-	}
-	rc.id = id
-}
-
-//
-// GetID - returns the ID saved for the disk, volume lock is held by caller.
-func (r RefCountsMap) GetID(vol string) string {
-	rc := r[vol]
-	if rc == nil {
-		return ""
-	}
-	return rc.id
-}
-
-// DeleteRefCnt - clears the ID for a disk
-func (r RefCountsMap) DeleteRefCnt(vol string) error {
-	rc := r[vol]
-	if rc != nil {
-		if rc.count != 0 {
-			log.Warning("DeleteRefCnt: Refcount is not zero count=%d", rc.count)
-			return fmt.Errorf("DeleteRefCnt: Refcount is not zero count=%d", rc.count)
-		} else {
-			defer delete(r, vol)
-			return nil
-		}
-	}
-	return nil
-}
-
 // Decr recfcount for the volume vol and returns the new count
 // returns -1  for error (and resets count to 0)
 // also deletes the node from the map if refcount drops to 0
-func (r refCountsMap) Decr(vol string) (uint, error) {
-	// Locks the refCountsMap
+func (r RefCountsMap) Decr(vol string) (uint, error) {
+	// Locks the RefCountsMap
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -288,10 +249,10 @@ func (r refCountsMap) Decr(vol string) (uint, error) {
 }
 
 // enumberates volumes and  builds RefCountsMap, then sync with mount info
-func (r RefCountsMap) discoverAndSync(c *client.Client, d volume.Driver) error {
+func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) error {
 	// we assume to  have empty refcounts. Let's enforce
 
-	r.mtx.Lock() // Lock the refCountsMap to purge the refcounts
+	r.mtx.Lock() // Lock the RefCountsMap to purge the refcounts
 	for name := range r.refMap {
 		delete(r.refMap, name)
 	}
@@ -338,8 +299,8 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d volume.Driver) error {
 }
 
 // syncronize mount info with refcounts - and unmounts if needed
-func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
-	// Lock the refCountsMap
+func (r RefCountsMap) syncMountsWithRefCounters(d drivers.VolumeDriver) {
+	// Lock the RefCountsMap
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -356,13 +317,10 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 			if cnt.count == 0 {
 				// Volume mounted but not used - UNMOUNT and DETACH !
 				log.WithFields(f).Info("Initiating recovery unmount. ")
-				resp := d.Unmount(volume.UnmountRequest{Name: vol})
-				if resp.Err != "" {
+				err := d.UnmountVolume(vol)
+				if err != nil {
 					log.Warning("Failed to unmount - manual recovery may be needed")
 				}
-			} else if driverName == photonDriver {
-				// For photon disks, the disk ID is added to the refcount map.
-				d.Get(volume.Request{Name: vol})
 			}
 		} else {
 			if cnt.count == 0 {
@@ -376,22 +334,37 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 				// but not using files on the volumes, and the volume is (manually?)
 				// unmounted. Unlikely but possible. Mount !
 				log.WithFields(f).Warning("Initiating recovery mount. ")
-				savedCount := r[vol].count
-				// Reset count to allow the mount to go ahead.
-				r[vol].count = 0
-				resp := d.Mount(volume.MountRequest{Name: vol})
-				if resp.Err != "" {
+				status, err := d.GetVolume(vol)
+				if err != nil {
 					log.Warning("Failed to mount - manual recovery may be needed")
+				} else {
+					//Ensure the refcount map has this disk ID
+					id := ""
+					exists := false
+					if driverName == photonDriver {
+						if id, exists = status["ID"].(string); !exists {
+							log.Warning("Failed to disk ID for photon disk cannot mount in use disk")
+						}
+					}
+
+					isReadOnly := false
+					if access, exists := status["access"]; exists {
+						if access == "read-only" {
+							isReadOnly = true
+						}
+					}
+					_, err = d.MountVolume(vol, status["fstype"].(string), id, isReadOnly, false)
+					if err != nil {
+						log.Warning("Failed to mount - manual recovery may be needed")
+					}
 				}
-				// Restore ref count
-				r[vol].count = savedCount
 			}
 		}
 	}
 }
 
 // scans /proc/mounts and updates refcount map witn mounted volumes
-func (r refCountsMap) getMountInfo() error {
+func (r RefCountsMap) getMountInfo() error {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
