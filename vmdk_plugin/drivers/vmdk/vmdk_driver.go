@@ -50,7 +50,7 @@ const (
 type vmdkDriver struct {
 	useMockEsx bool
 	ops        vmdkops.VmdkOps
-	refCounts  *refCountsMap
+	refCounts  *refcount.RefCountsMap
 }
 
 var mountRoot string
@@ -77,6 +77,10 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string) *vmdkDriver {
 				},
 			},
 			refCounts: refcount.NewRefCountsMap(),
+		}
+	}
+
+	d.refCounts.Init(d, mountDir, driverName)
 	log.WithFields(log.Fields{
 		"version":  version,
 		"port":     vmdkops.EsxPort,
@@ -102,7 +106,7 @@ func getMountPoint(volName string) string {
 
 // Get info about a single volume
 func (d *vmdkDriver) Get(r volume.Request) volume.Response {
-	status, err := d.ops.Get(r.Name)
+	status, err := d.GetVolume(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -127,10 +131,15 @@ func (d *vmdkDriver) List(r volume.Request) volume.Response {
 	return volume.Response{Volumes: responseVolumes}
 }
 
-// Request attach and them mounts the volume.
+// GetVolume - return volume meta-data.
+func (d *vmdkDriver) GetVolume(name string) (map[string]interface{}, error) {
+	return d.ops.Get(name)
+}
+
+// MountVolume - Request attach and them mounts the volume.
 // Actual mount - send attach to ESX and do the in-guest magic
 // Returns mount point and  error (or nil)
-func (d *vmdkDriver) mountVolume(name string, fstype string, isReadOnly bool) (string, error) {
+func (d *vmdkDriver) MountVolume(name string, fstype string, isReadOnly bool, skipAttach bool) (string, error) {
 	mountpoint := getMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
@@ -208,8 +217,8 @@ loop:
 	return mountpoint, fs.Mount(mountpoint, fstype, device, isReadOnly)
 }
 
-// Unmounts the volume and then requests detach
-func (d *vmdkDriver) unmountVolume(name string) error {
+// UnmountVolume - Unmounts the volume and then requests detach
+func (d *vmdkDriver) UnmountVolume(name string) error {
 	mountpoint := getMountPoint(name)
 	err := fs.Unmount(mountpoint)
 	if err != nil {
@@ -412,7 +421,7 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	}
 	fstype = value
 
-	mountpoint, err := d.mountVolume(r.Name, fstype, isReadOnly)
+	mountpoint, err := d.MountVolume(r.Name, fstype, isReadOnly, false)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
@@ -445,7 +454,7 @@ func (d *vmdkDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	}
 
 	// and if nobody needs it, unmount and detach
-	err = d.unmountVolume(r.Name)
+	err = d.UnmountVolume(r.Name)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},

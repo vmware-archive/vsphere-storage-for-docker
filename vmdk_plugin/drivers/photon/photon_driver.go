@@ -33,7 +33,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -47,42 +46,37 @@ const (
 	devWaitTimeout       = 1 * time.Second
 	sleepBeforeMount     = 1 * time.Second
 	watchPath            = "/dev/disk/by-path"
-	version              = "Photon volume driver x.x"
+	version              = "Photon volume driver 0.1"
 	driverName           = "photon"
 	photonPersistentDisk = "persistent-disk"
 	capacityKB           = 1024
-	capacityMB           = 1048576
 	capacityGB           = 1
 )
 
 // Driver - Photon volume driver struct
 type Driver struct {
-	m         *sync.Mutex // create() serialization - for future use
-	refCounts refcount.RefCountsMap
 	client    *photon.Client
-	target    string
-	project   string
 	hostID    string
 	mountRoot string
+	project   string
+	refCounts *refcount.RefCountsMap
+	target    string
 }
 
 // NewVolumeDriver - creates Driver, creates client for given target
 func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir string) *Driver {
 
 	d := &Driver{
-		m:         &sync.Mutex{},
-		target:    targetURL,
-		project:   projectID,
-		hostID:    hostID,
-		refCounts: make(refcount.RefCountsMap),
+		target:  targetURL,
+		project: projectID,
+		hostID:  hostID,
 	}
 	// Use default timeout of thirty seconds and retry of three
 	d.client = photon.NewClient(targetURL, nil, nil)
 	d.mountRoot = mountDir
-
+	d.refCounts = refcount.NewRefCountsMap()
 	d.refCounts.Init(d, mountDir, driverName)
 
-	// Set target
 	log.WithFields(log.Fields{
 		"version": version,
 		"target":  targetURL,
@@ -209,37 +203,13 @@ func convertDiskTags2Map(tags []string) map[string]interface{} {
 
 // Get info about a single volume
 func (d *Driver) Get(r volume.Request) volume.Response {
-	opt := photon.DiskGetOptions{Name: r.Name}
-	dlist, err := d.client.Projects.GetDisks(d.project, &opt)
+	mountpoint := d.getMountPoint(r.Name)
+	status, err := d.GetVolume(r.Name)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
 		).Error("Failed to get data for volume ")
 		return volume.Response{Err: err.Error()}
-	} else if len(dlist.Items) == 0 {
-		// No disk of that name was found, its not an error
-		// for Photon but return one to the caller.
-		return volume.Response{Err: "Unknown volume " + r.Name}
-	}
-
-	mountpoint := d.getMountPoint(r.Name)
-
-	// Create status map
-	status := make(map[string]interface{})
-	if len(dlist.Items) > 0 {
-		pDisk := dlist.Items[0]
-		status["Flavor"] = pDisk.Flavor
-		status["Kind"] = pDisk.Kind
-		status["Datastore"] = pDisk.Datastore
-		status["CapacityGB"] = pDisk.CapacityGB
-		status["State"] = pDisk.State
-		status["ID"] = pDisk.ID
-		if len(pDisk.VMs) > 0 {
-			status["Attached-to-VM"] = pDisk.VMs[0]
-		}
-		status["Tags"] = convertDiskTags2Map(pDisk.Tags)
-		//Ensure the refcount map has this disk ID
-		d.addDiskID(r.Name, pDisk.ID)
 	}
 	log.WithFields(log.Fields{"name": r.Name, "status": status}).Info("Volume meta-data ")
 	return volume.Response{Volume: &volume.Volume{
@@ -305,9 +275,46 @@ func (d *Driver) detachVolume(name string, id string) error {
 	return nil
 }
 
-// Request attach and them mounts the volume.
+// GetVolume - returns Photon specific data for a volume
+func (d *Driver) GetVolume(name string) (map[string]interface{}, error) {
+	// Create status map
+	status := make(map[string]interface{})
+
+	opt := photon.DiskGetOptions{Name: name}
+	dlist, err := d.client.Projects.GetDisks(d.project, &opt)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name, "error": err.Error()},
+		).Error("Failed to get data for volume ")
+		return status, err
+	} else if len(dlist.Items) == 0 {
+		// No disk of that name was found, its not an error
+		// for Photon but return one to the caller.
+		log.WithFields(log.Fields{"name": name}).Error("Unknown volume - ")
+		return status, fmt.Errorf("Unknown volume - " + name)
+	}
+
+	if len(dlist.Items) > 0 {
+		pDisk := dlist.Items[0]
+		status["Flavor"] = pDisk.Flavor
+		status["Kind"] = pDisk.Kind
+		status["Datastore"] = pDisk.Datastore
+		status["CapacityGB"] = pDisk.CapacityGB
+		status["State"] = pDisk.State
+		status["ID"] = pDisk.ID
+		if len(pDisk.VMs) > 0 {
+			status["Attached-to-VM"] = pDisk.VMs[0]
+		}
+		tags := convertDiskTags2Map(pDisk.Tags)
+		status["fstype"] = tags["fstype"]
+		status["access"] = tags["access"]
+	}
+	return status, nil
+}
+
+// MountVolume - Request attach and them mounts the volume.
 // Returns mount point and  error (or nil)
-func (d *Driver) mountVolume(name string, fstype string, skipAttach int) (string, error) {
+func (d *Driver) MountVolume(name string, fstype string, isReadOnly bool, skipAttach bool) (string, error) {
 	mountpoint := d.getMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
@@ -316,19 +323,21 @@ func (d *Driver) mountVolume(name string, fstype string, skipAttach int) (string
 		log.WithFields(log.Fields{"name": name, "dir": mountpoint}).Error("Failed to make directory for volume mount ")
 		return "", err
 	}
-	if skipAttach == 0 {
+	if skipAttach {
 		log.WithFields(log.Fields{"name": name, "fstype": fstype}).Info("Attaching volume ")
 		err = d.attachVolume(name)
 		if err != nil {
 			return "", err
 		}
 	}
-	return mountpoint, fs.MountWithID(mountpoint, fstype, d.getDiskID(name))
+	return mountpoint, fs.MountWithID(mountpoint, fstype, d.getDiskID(name), isReadOnly)
 }
 
-// Unmounts the volume and then requests detach
-func (d *Driver) unmountVolume(name string, id string) error {
+// UnmountVolume - Unmounts the volume and then requests detach
+func (d *Driver) UnmountVolume(name string) error {
 	mountpoint := d.getMountPoint(name)
+	id := d.getDiskID(name)
+
 	err := fs.Unmount(mountpoint)
 	if err != nil {
 		log.WithFields(
@@ -459,13 +468,13 @@ func (d *Driver) Remove(r volume.Request) volume.Response {
 
 	// Always get the disk meta-data from Photon, when ref count is zero
 	// there is no refcount map entry either and hence no ID.
-	resp := d.Get(volume.Request{Name: r.Name})
-
-	if resp.Err != "" {
-		return resp
+	status, err := d.GetVolume(r.Name)
+	if err != nil {
+		return volume.Response{Err: err.Error()}
 	}
+
 	log.WithFields(log.Fields{"using volume ID": d.getDiskID(r.Name)}).Info("Removing volume ")
-	rmTask, err := d.client.Disks.Delete(d.getDiskID(r.Name))
+	rmTask, err := d.client.Disks.Delete(status["ID"].(string))
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err},
@@ -483,9 +492,6 @@ func (d *Driver) Remove(r volume.Request) volume.Response {
 		d.deleteRefCnt(r.Name)
 		return volume.Response{Err: err.Error()}
 	}
-
-	// Clear the ID saved via Get() for this disk.
-	d.deleteRefCnt(r.Name)
 
 	return volume.Response{Err: ""}
 }
@@ -506,9 +512,6 @@ func (d *Driver) Path(r volume.Request) volume.Response {
 // Mount - mount a volume
 func (d *Driver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
-
-	d.m.Lock()
-	defer d.m.Unlock()
 
 	// If the volume is already mounted , just increase the refcount.
 	//
@@ -532,28 +535,33 @@ func (d *Driver) Mount(r volume.MountRequest) volume.Response {
 	// been created on a different host and getting mounted on another host.
 	// So on the first mount fetch the disk from Photon and add it's ID to
 	// the ref count map.
-	resp := d.Get(volume.Request{Name: r.Name})
-
-	if resp.Err != "" {
+	status, err := d.GetVolume(r.Name)
+	if err != nil {
 		d.decrRefCount(r.Name)
-		return resp
+		return volume.Response{Err: err.Error()}
 	}
 
-	tmap := resp.Volume.Status["Tags"].(map[string]interface{})
-	fstype, exists := tmap["fstype"].(string)
+	//Ensure the refcount map has this disk ID
+	d.addDiskID(r.Name, status["ID"].(string))
+
+	fstype, exists := status["fstype"]
 	if !exists {
 		fstype = fs.FstypeDefault
 	}
 
-	skipAttach := 0
-	if state, stateExists := resp.Volume.Status["State"]; stateExists {
-		skipAttach = strings.Compare(state.(string), "DETACHED")
+	skipAttach := false
+	// If the volume is already attached to the VM, skip the attach.
+	if state, stateExists := status["State"]; stateExists {
+		if strings.Compare(state.(string), "DETACHED") != 0 {
+			skipAttach = true
+		}
 		log.WithFields(
 			log.Fields{"name": r.Name, "skipAttach": skipAttach},
 		).Info("Attached state ")
 	}
 
-	mountpoint, err := d.mountVolume(r.Name, fstype, skipAttach)
+	// Mount the volume and for now its always read-write.
+	mountpoint, err := d.MountVolume(r.Name, fstype.(string), false, skipAttach)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
@@ -569,10 +577,7 @@ func (d *Driver) Mount(r volume.MountRequest) volume.Response {
 // Unmount and detach from VM
 func (d *Driver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
-	d.m.Lock()
-	defer d.m.Unlock()
 
-	diskID := d.getDiskID(r.Name)
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)
 	if err != nil {
@@ -591,7 +596,7 @@ func (d *Driver) Unmount(r volume.UnmountRequest) volume.Response {
 	}
 
 	// and if nobody needs it, unmount and detach
-	err = d.unmountVolume(r.Name, diskID)
+	err = d.UnmountVolume(r.Name)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},

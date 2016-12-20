@@ -126,7 +126,7 @@ func Mount(mountpoint string, fstype string, device string, isReadOnly bool) err
 }
 
 // MountWithID - mount device with ID
-func MountWithID(mountpoint string, fstype string, id string) error {
+func MountWithID(mountpoint string, fstype string, id string, isReadOnly bool) error {
 	log.WithFields(log.Fields{
 		"device ID":  id,
 		"fstype":     fstype,
@@ -142,6 +142,9 @@ func MountWithID(mountpoint string, fstype string, id string) error {
 	}
 
 	flags := 0
+	if isReadOnly {
+		flags = syscall.MS_RDONLY
+	}
 	err = syscall.Mount(device, mountpoint, fstype, uintptr(flags), "")
 	if err != nil {
 		return fmt.Errorf("Failed to mount device %s at %s fstype %s: %s",
