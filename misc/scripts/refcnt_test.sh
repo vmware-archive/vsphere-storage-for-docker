@@ -86,7 +86,7 @@ GREP="$DEBUG grep"
 echo "Testing refcounts..."
 
 echo "Creating volume $vname and $count containers using it"
-$DOCKER volume create --driver=vmdk --name=$vname
+$DOCKER volume create --driver=vmdk --name=$vname -o size=1gb
 if [ "$?" -ne 0 ] ; then
    echo FAILED TO CREATE $vname
    exit 1
@@ -99,13 +99,6 @@ do
       sleep $timeout"
 done
 
-echo "Checking volume content"
-wait_for check_files $timeout
-if [ "$?" -ne 0 ] ; then
-   echo FAILED CONTENT TEST - not enough files in /$vname/file\*
-   exit 1
-fi
-
 echo "Checking the last refcount and mount record"
 last_line=`tail -1 /var/log/docker-volume-vsphere.log`
 echo $last_line | $GREP -q refcount=$count ; if [ $? -ne 0 ] ; then
@@ -114,6 +107,14 @@ echo $last_line | $GREP -q refcount=$count ; if [ $? -ne 0 ] ; then
    echo Expected pattern \"refcount=$count\"
    exit 1
 fi
+
+echo "Checking volume content"
+wait_for check_files $timeout
+if [ "$?" -ne 0 ] ; then
+   echo FAILED CONTENT TEST - not enough files in /$vname/file\*
+   exit 1
+fi
+
 
 $GREP -q $mount /proc/mounts ; if [ $? -ne 0 ] ; then
    echo "FAILED MOUNT TEST 1"
@@ -164,3 +165,4 @@ fi
 
 echo "TEST PASSED."
 exit 0
+
