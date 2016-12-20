@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -37,7 +38,9 @@ import (
 import "C"
 
 // EsxVmdkCmd struct - empty , we use it only to implement VmdkCmdRunner interface
-type EsxVmdkCmd struct{}
+type EsxVmdkCmd struct {
+	Mtx *sync.Mutex // For serialization of Run comand/response
+}
 
 const (
 	commBackendName string = "vsocket"
@@ -70,6 +73,9 @@ var EsxPort int
 // *   - Sends json string up to ESX
 // *   - waits for reply and returns resulting JSON or an error
 func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
+	vmdkCmd.Mtx.Lock()
+	defer vmdkCmd.Mtx.Unlock()
+
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
 		Details: VolumeInfo{Name: name, Options: opts}})

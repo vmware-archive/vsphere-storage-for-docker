@@ -45,10 +45,9 @@ const (
 )
 
 type vmdkDriver struct {
-	m          *sync.Mutex // create() serialization - for future use
 	useMockEsx bool
 	ops        vmdkops.VmdkOps
-	refCounts  refCountsMap
+	refCounts  *refCountsMap
 }
 
 // creates vmdkDriver which to real ESX (useMockEsx=False) or a mock
@@ -56,30 +55,37 @@ func newVmdkDriver(useMockEsx bool) *vmdkDriver {
 	var d *vmdkDriver
 	if useMockEsx {
 		d = &vmdkDriver{
-			m:          &sync.Mutex{},
 			useMockEsx: true,
 			ops:        vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}},
-			refCounts:  make(refCountsMap),
+			refCounts:  newRefCountsMap(),
 		}
 	} else {
 		d = &vmdkDriver{
-			m:          &sync.Mutex{},
 			useMockEsx: false,
-			ops:        vmdkops.VmdkOps{Cmd: vmdkops.EsxVmdkCmd{}},
-			refCounts:  make(refCountsMap),
+			ops: vmdkops.VmdkOps{
+				Cmd: vmdkops.EsxVmdkCmd{
+					Mtx: &sync.Mutex{},
+				},
+			},
+			refCounts: newRefCountsMap(),
 		}
 		d.refCounts.Init(d)
 	}
-
 	return d
 }
-func (d *vmdkDriver) getRefCount(vol string) uint           { return d.refCounts.getCount(vol) }
-func (d *vmdkDriver) incrRefCount(vol string) uint          { return d.refCounts.incr(vol) }
+
+// Return the number of references for the given volume
+func (d *vmdkDriver) getRefCount(vol string) uint { return d.refCounts.getCount(vol) }
+
+// Increment the reference count for the given volume
+func (d *vmdkDriver) incrRefCount(vol string) uint { return d.refCounts.incr(vol) }
+
+// Decrement the reference count for the given volume
 func (d *vmdkDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.decr(vol) }
 
+// Returns the given volume mountpoint
 func getMountPoint(volName string) string {
 	return filepath.Join(mountRoot, volName)
-
 }
 
 // Get info about a single volume
@@ -337,11 +343,14 @@ func (d *vmdkDriver) Path(r volume.Request) volume.Response {
 
 // Provide a volume to docker container - called once per container start.
 // We need to keep refcount and unmount on refcount drop to 0
+//
+// The serialization of operations per volume is assured by the volume/store
+// of the docker daemon.
+// As long as the refCountsMap is protected is unnecessary to do any locking
+// at this level during create/mount/umount/remove.
+//
 func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
-
-	d.m.Lock()
-	defer d.m.Unlock()
 
 	// If the volume is already mounted , just increase the refcount.
 	//
@@ -405,8 +414,6 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 // unmount and detach from VM
 func (d *vmdkDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
-	d.m.Lock()
-	defer d.m.Unlock()
 
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)

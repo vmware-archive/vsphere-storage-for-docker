@@ -63,6 +63,11 @@
 // mountspoint of view the volume is not used, but the VMDK is still attached
 // to the VM) - we leave it to manual recovery.
 //
+// The refCountsMap is safe to be used by multiple goroutines and has a single
+// RWMutex to serialize operations on the map and refCounts.
+// The serialization of operations per volume is assured by the volume/store
+// of the docker daemon.
+//
 
 package main
 
@@ -71,6 +76,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
@@ -102,8 +108,11 @@ type refCount struct {
 	dev string
 }
 
-// volume name -> {count, mounted, device}
-type refCountsMap map[string]*refCount
+// refCountsMap struct
+type refCountsMap struct {
+	refMap map[string]*refCount // Map of refCounts
+	mtx    *sync.RWMutex        // Synchronizes refCountsMap ops
+}
 
 var (
 	// vmdk or local. We use "vmdk" only in production, but need "local" to
@@ -120,6 +129,21 @@ func init() {
 
 	// defaults: in test they can be overwritten (see sanity_test.go)
 	driverName = "vmdk"
+}
+
+// creates a new refCountsMap
+func newRefCountsMap() *refCountsMap {
+	return &refCountsMap{
+		refMap: make(map[string]*refCount),
+		mtx:    &sync.RWMutex{},
+	}
+}
+
+// Creates a new refCount
+func newRefCount() *refCount {
+	return &refCount{
+		count: 0,
+	}
 }
 
 // Init Refcounts. Discover volume usage refcounts from Docker.
@@ -150,8 +174,11 @@ func (r refCountsMap) Init(d *vmdkDriver) {
 		return
 	}
 
-	log.Infof("Discovered %d volumes in use.", len(r))
-	for name, cnt := range r {
+	// RLocks the refCountsMap
+	r.mtx.RLock()
+	defer r.mtx.RUnlock()
+	log.Infof("Discovered %d volumes in use.", len(r.refMap))
+	for name, cnt := range r.refMap {
 		log.Infof("Volume name=%s count=%d mounted=%t device='%s'",
 			name, cnt.count, cnt.mounted, cnt.dev)
 	}
@@ -159,9 +186,12 @@ func (r refCountsMap) Init(d *vmdkDriver) {
 
 // Returns ref count for the volume.
 // If volume is not referred (not in the map), return 0
-// NOTE: this assumes the caller holds the lock if we run concurrently
 func (r refCountsMap) getCount(vol string) uint {
-	rc := r[vol]
+	// RLocks the refCountsMap
+	r.mtx.RLock()
+	defer r.mtx.RUnlock()
+
+	rc := r.refMap[vol]
 	if rc == nil {
 		return 0
 	}
@@ -170,10 +200,14 @@ func (r refCountsMap) getCount(vol string) uint {
 
 // incr refCount for the volume vol. Creates new entry if needed.
 func (r refCountsMap) incr(vol string) uint {
-	rc := r[vol]
+	// Locks the refCountsMap
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	rc := r.refMap[vol]
 	if rc == nil {
-		rc = &refCount{}
-		r[vol] = rc
+		rc = newRefCount()
+		r.refMap[vol] = rc
 	}
 	rc.count++
 	return rc.count
@@ -183,7 +217,11 @@ func (r refCountsMap) incr(vol string) uint {
 // returns -1  for error (and resets count to 0)
 // also deletes the node from the map if refcount drops to 0
 func (r refCountsMap) decr(vol string) (uint, error) {
-	rc := r[vol]
+	// Locks the refCountsMap
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	rc := r.refMap[vol]
 	if rc == nil {
 		return 0, fmt.Errorf("decr: refcount is already 0. name=%s", vol)
 	}
@@ -192,13 +230,14 @@ func (r refCountsMap) decr(vol string) (uint, error) {
 		// we should NEVER get here. Even if Docker sends Unmount before Mount,
 		// it should be caught in previous check. So delete the entry (in case
 		// someone upstairs does 'recover', and panic.
-		delete(r, vol)
+		delete(r.refMap, vol)
 		log.Panicf("decr: refcnt corruption (rc.count=0), name=%s", vol)
 	}
 
 	rc.count--
+	// Deletes the refcount only if there are no references
 	if rc.count == 0 {
-		defer delete(r, vol)
+		delete(r.refMap, vol)
 	}
 	return rc.count, nil
 }
@@ -206,9 +245,12 @@ func (r refCountsMap) decr(vol string) (uint, error) {
 // enumberates volumes and  builds refCountsMap, then sync with mount info
 func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 	// we assume to  have empty refcounts. Let's enforce
-	for name := range r {
-		delete(r, name)
+
+	r.mtx.Lock() // Lock the refCountsMap to purge the refcounts
+	for name := range r.refMap {
+		delete(r.refMap, name)
 	}
+	r.mtx.Unlock() // Unlock.
 
 	filters := filters.NewArgs()
 	filters.Add("status", "running")
@@ -252,7 +294,11 @@ func (r refCountsMap) discoverAndSync(c *client.Client, d *vmdkDriver) error {
 
 // syncronize mount info with refcounts - and unmounts if needed
 func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
-	for vol, cnt := range r {
+	// Lock the refCountsMap
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	for vol, cnt := range r.refMap {
 		f := log.Fields{
 			"name":    vol,
 			"refcnt":  cnt.count,
@@ -305,6 +351,9 @@ func (r refCountsMap) syncMountsWithRefCounters(d *vmdkDriver) {
 
 // scans /proc/mounts and updates refcount map witn mounted volumes
 func (r refCountsMap) getMountInfo() error {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	data, err := ioutil.ReadFile(linuxMountsFile)
 	if err != nil {
 		log.Errorf("Can't get info from %s (%v)", linuxMountsFile, err)
@@ -321,13 +370,13 @@ func (r refCountsMap) getMountInfo() error {
 			continue
 		}
 		volName := filepath.Base(field[1])
-		refInfo := r[volName]
+		refInfo := r.refMap[volName]
 		if refInfo == nil {
-			refInfo = &refCount{count: 0}
+			refInfo = newRefCount()
 		}
 		refInfo.mounted = true
 		refInfo.dev = field[0]
-		r[volName] = refInfo
+		r.refMap[volName] = refInfo
 		log.Debugf("Found '%s' in /proc/mount, ref=(%#v)", volName, refInfo)
 	}
 
