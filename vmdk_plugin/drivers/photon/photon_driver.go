@@ -168,19 +168,7 @@ func getDiskSize(r volume.Request) (int, error) {
 	}
 	capacity = strings.ToLower(capacity)
 
-	if strings.HasSuffix(capacity, "kb") {
-		val := strings.Split(capacity, "kb")
-		bytes, err := strconv.Atoi(val[0])
-		if err != nil {
-			return 0, err
-		}
-		log.Debugf("Got bytes=%d", bytes)
-		if bytes < capacityKB || (bytes/capacityMB) < capacityGB {
-			return 0, fmt.Errorf("Invalid size %s specified for volume %s",
-				r.Options["size"], r.Name)
-		}
-		return bytes / capacityMB, nil
-	} else if strings.HasSuffix(capacity, "mb") {
+	if strings.HasSuffix(capacity, "mb") {
 		val := strings.Split(capacity, "mb")
 		bytes, err := strconv.Atoi(val[0])
 		if err != nil {
@@ -200,16 +188,8 @@ func getDiskSize(r volume.Request) (int, error) {
 		}
 		log.Debugf("Got bytes=%d", bytes)
 		return bytes, nil
-	} else if strings.HasSuffix(capacity, "tb") {
-		val := strings.Split(capacity, "tb")
-		bytes, err := strconv.Atoi(val[0])
-		if err != nil {
-			return 0, err
-		}
-		log.Debugf("Got bytes=%d", bytes)
-		return bytes * capacityKB, nil
 	}
-	return 0, fmt.Errorf("Invalid size %s specified for volume %s",
+	return 0, fmt.Errorf("Invalid size %s specified for volume %s, size is specified as <size>mb/gb",
 		r.Options["size"], r.Name)
 }
 
