@@ -209,6 +209,23 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 	                 "Expected size of volume = 100 MB. Actual size = {0}.
 			 Incorrect size for VMDK {1}".format(response["capacity"], self.name))
 
+    def test_VerifyVolumeSize(self):
+	""" test to verify the size of vmdk is same 
+            as the capacity reported by vmkfstools """
+        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
+				  vmdk_path=self.name,
+				  vol_name=self.volName)
+	self.assertEqual(err, None, err)
+	self.assertEqual(
+	     os.path.isfile(self.name), True,
+	     "VMDK {0} is missing after create.".format(self.name))
+	response = vmdkops_admin.get_vmdk_size_info(path=self.name)
+	self.assertEqual(response["capacity"], "100.00MB",\
+			"Incorrect size for VMDK {0}\
+			 Expected size of volume = 100 MB whereas  actual size = {1}" \
+			 .format(self.name,response["capacity"]))
+			
+
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
     def testPolicyUpdate(self):
