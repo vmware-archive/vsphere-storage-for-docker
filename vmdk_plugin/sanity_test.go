@@ -21,6 +21,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 
 	log "github.com/Sirupsen/logrus"
@@ -166,7 +168,10 @@ func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume 
 
 	for _, v := range reply.Volumes {
 		//	t.Log(v.Name, v.Driver, v.Mountpoint)
-		if v.Name == vol {
+		// "docker volume ls" return volume with format vol_name@datastore
+		// variable "vol" is specified with short notation (just the volume name,
+		// not including the @datastore part)
+		if strings.Contains(v.Name, vol) {
 			return v
 		}
 	}
