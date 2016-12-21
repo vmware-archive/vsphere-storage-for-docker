@@ -21,7 +21,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strconv"
 	"testing"
 
 	log "github.com/Sirupsen/logrus"
@@ -40,13 +39,19 @@ const (
 	// tests are often run under regular account and have no access to /var/log
 	defaultTestLogPath = "/tmp/test-docker-volume-vsphere.log"
 	// Number of volumes per client for parallel tests
-	parallelVolumes = 9
 )
 
 var (
 	// flag vars - see init() for help
 	removeContainers bool
+	parallelVolumes  int
+	parallelClones   int
 )
+
+type testClient struct {
+	endPoint string
+	client   *client.Client
+}
 
 // prepares the environment. Kind of "main"-ish code for tests.
 // Parses flags and inits logs and mount ref counters (the latter waits on Docker
@@ -59,6 +64,8 @@ func init() {
 
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
 	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
+	flag.IntVar(&parallelVolumes, "parallel_volumes", 5, "Volumes per docker daemon for create/delete concurrent tests")
+	flag.IntVar(&parallelClones, "parallel_clones", 3, "Volumes per docker daemon for clone concurrent tests")
 	flag.Parse()
 	usingConfigFileDefaults := logInit(logLevel, logFile, configFile)
 
@@ -166,17 +173,10 @@ func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume 
 	return nil
 }
 
-// Sanity test for VMDK volumes
-// - check we can attach/detach correct volume (we use 'touch' and 'stat' to validate
-// - check volumes are correctly created and deleted.
-// - check we see it properly from another docker VM (-H2 flag)
-func TestSanity(t *testing.T) {
+// Initialize the clients and connect with the docker daemons
+func getClients(t *testing.T) []testClient {
 
-	fmt.Printf("Running tests on  %s (may take a while)...\n", TestInputParamsUtil.GetEndPoint1())
-	clients := []struct {
-		endPoint string
-		client   *client.Client
-	}{
+	clients := []testClient{
 		{TestInputParamsUtil.GetEndPoint1(), new(client.Client)},
 		{TestInputParamsUtil.GetEndPoint2(), new(client.Client)},
 	}
@@ -189,7 +189,18 @@ func TestSanity(t *testing.T) {
 		t.Logf("Successfully connected to %s", elem.endPoint)
 		clients[idx].client = c
 	}
+	return clients
+}
 
+// Sanity test for VMDK volumes
+// - check we can attach/detach correct volume (we use 'touch' and 'stat' to validate
+// - check volumes are correctly created and deleted.
+// - check we see it properly from another docker VM (-H2 flag)
+func TestSanity(t *testing.T) {
+
+	fmt.Printf("Running tests on  %s (may take a while)...\n", TestInputParamsUtil.GetEndPoint1())
+
+	clients := getClients(t)
 	c := clients[0].client // this is the endpoint we use as master
 	volumeName := TestInputParamsUtil.GetVolumeName()
 	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
@@ -229,10 +240,23 @@ func TestSanity(t *testing.T) {
 				volumeName, elem.endPoint)
 		}
 	}
+}
 
-	fmt.Printf("Running parallel tests on %s and %s (may take a while)...\n", TestInputParamsUtil.GetEndPoint1(), TestInputParamsUtil.GetEndPoint2())
-	// Create a short buffered channel to introduce random pauses
+// Test concurrent volume operations
+// - concurrent create/delete between different docker hosts
+// - concurrent create/delete on the same docker host
+// - concurrent clone/delete between different docker hosts
+func TestConcurrency(t *testing.T) {
+
+	clients := getClients(t)
+	volumeName := "volTestP"
+
+	fmt.Printf("Running concurrent tests on %s and %s (may take a while)...\n",
+		clients[0].endPoint, clients[1].endPoint)
+
+	// Buffered channel to read results from
 	results := make(chan error, parallelVolumes)
+
 	createRequest := types.VolumeCreateRequest{
 		Name:   volumeName,
 		Driver: driverName,
@@ -240,12 +264,86 @@ func TestSanity(t *testing.T) {
 			"size": "1gb",
 		},
 	}
-	// Create/delete routine
+
+	// Only run this if testing against different clients
+	if clients[0].endPoint != clients[1].endPoint {
+		fmt.Printf("Running create/delete concurrent test...\n")
+		// Create/delete goroutine
+		for idx, elem := range clients {
+			go func(idx int, c *client.Client) {
+				for i := 0; i < parallelVolumes; i++ {
+					volName := fmt.Sprintf("%s%d%d", volumeName, idx, i)
+					createRequest.Name = volName
+					_, err := c.VolumeCreate(context.Background(), createRequest)
+					results <- err
+					err = c.VolumeRemove(context.Background(), volName)
+					results <- err
+				}
+			}(idx, elem.client)
+		}
+		// Read the results from the channel
+		for i := 0; i < len(clients)*parallelVolumes*2; i++ {
+			err := <-results
+			if err != nil {
+				t.Fatalf("Create/delete concurrent test failed, err: %v", err)
+			}
+		}
+	} else {
+		fmt.Printf("Skipping create/delete concurrent test, same docker host. Will be tested next.\n")
+	}
+
+	fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
+	parallelVolumes1 := parallelVolumes / 2
+	for idx := 0; idx < 3; idx++ {
+		go func(idx int, c *client.Client) {
+			for i := 0; i < parallelVolumes1; i++ {
+				volName := fmt.Sprintf("%s-same%d%d", volumeName, idx, i)
+				createRequest.Name = volName
+				_, err := c.VolumeCreate(context.Background(), createRequest)
+				results <- err
+				err = c.VolumeRemove(context.Background(), volName)
+				results <- err
+			}
+		}(idx, clients[0].client)
+	}
+	// Read the results from the channel
+	for i := 0; i < 3*parallelVolumes1*2; i++ {
+		err := <-results
+		if err != nil {
+			t.Fatalf("Same docker host concurrent create/delete test failed, err: %v", err)
+		}
+	}
+
+	fmt.Printf("Running clone concurrent test...\n")
+	masterVolName := volumeName + "Clone"
+
+	// Create master volume for cloning
+	createRequest.Name = masterVolName
+	createRequest.DriverOpts["size"] = "100mb"
+
+	_, err := clients[0].client.VolumeCreate(context.Background(), createRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Remove size option for clone
+	delete(createRequest.DriverOpts, "size")
+
+	// Change diskformat for the 1st clones to produce waits
+	createRequest.DriverOpts["diskformat"] = "eagerzeroedthick"
+
+	// Clone goroutine
 	for idx, elem := range clients {
 		go func(idx int, c *client.Client) {
-			for i := 0; i < parallelVolumes; i++ {
-				volName := "volTestP" + strconv.Itoa(idx) + strconv.Itoa(i)
+			for i := 0; i < parallelClones; i++ {
+				volName := fmt.Sprintf("%s-clone%d%d", masterVolName, idx, i)
 				createRequest.Name = volName
+				createRequest.DriverOpts["clone-from"] = masterVolName
+
+				// After 1st clone use thin diskformat
+				if i > 0 {
+					createRequest.DriverOpts["diskformat"] = "thin"
+				}
 				_, err := c.VolumeCreate(context.Background(), createRequest)
 				results <- err
 				err = c.VolumeRemove(context.Background(), volName)
@@ -253,11 +351,18 @@ func TestSanity(t *testing.T) {
 			}
 		}(idx, elem.client)
 	}
-	// We need to read #clients * #volumes * 2 operations from the channel
-	for i := 0; i < len(clients)*parallelVolumes*2; i++ {
+
+	// Read the results from the channel
+	for i := 0; i < len(clients)*parallelClones*2; i++ {
 		err := <-results
 		if err != nil {
-			t.Fatalf("Parallel test failed, err: %v", err)
+			t.Fatalf("Running clone concurrent test failed, err: %v", err)
 		}
+	}
+
+	// Remove the master volume
+	clients[0].client.VolumeRemove(context.Background(), masterVolName)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
