@@ -20,68 +20,76 @@ of their usage.
 
 ### Help
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
-usage: vmdkops_admin.py tenant [-h] {access,rm,create,ls,vm} ...
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
+usage: vmdkops_admin.py tenant [-h] {create,vm,update,access,ls,rm} ...
 
 positional arguments:
-  {access,rm,create,ls,vm}
-    access              Add or remove Datastore access and quotas for a tenant
-    rm                  Delete a tenant
+  {create,vm,update,access,ls,rm}
     create              Create a new tenant
-    ls                  List tenants and the VMs they are applied to
     vm                  Add, removes and lists VMs in a tenant
+    update              Update an existing tenant
+    access              Add or remove Datastore access and quotas for a tenant
+    ls                  List tenants and the VMs they are applied to
+    rm                  Delete a tenant
 
 optional arguments:
   -h, --help            show this help message and exit
 ```
 
 ### Create
+A tenant named "_DEFAULT" should have been created by system automatically before users try to create any tenant.
+
 Creates a new named tenant and optionally assigns VMs.
 
 Sample:
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name ProjectX
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1 
 tenant create succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls 
-Uuid                                  Name      Description  Default_datastore  VM_list                      
-------------------------------------  --------  -----------  -----------------  ---------------------------  
-4acd19ee-1ed6-4716-bcda-c8637c9658f2  tenant1                default_ds         photon.vsan.1,photon.vsan.2  
-2918b105-0837-4955-a0dc-5319ce456e28  ProjectX               default_ds        
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+3277ad45-e916-4e06-8fd5-381e6090d15b  tenant1                                
 ```
 
 The tenant to VM association can be done at create time.
 
 Sample:
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name ProjectX --vm-list ubuntu
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1 --vm-list=photon4
 tenant create succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  ProjectX              default_ds         ubuntu
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                                photon4  
 ```
 
 #### Help
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create -h
-usage: vmdkops_admin.py tenant create [-h] --name NAME
-                                      [--vm-list vm1, vm2, ...]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
+usage: vmdkops_admin.py tenant [-h] {create,vm,update,access,ls,rm} ...
+
+positional arguments:
+  {create,vm,update,access,ls,rm}
+    create              Create a new tenant
+    vm                  Add, removes and lists VMs in a tenant
+    update              Update an existing tenant
+    access              Add or remove Datastore access and quotas for a tenant
+    ls                  List tenants and the VMs they are applied to
+    rm                  Delete a tenant
 
 optional arguments:
   -h, --help            show this help message and exit
-  --name NAME           The name of the tenant
-  --vm-list vm1, vm2, ...
-                        A list of VM names to place in this Tenant
 ```
 ### List
 List existing tenants, the datastores tenants have access to and the VMs assigned.
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  PojectX               default_ds         ubuntu
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                                photon4  
 ```
 
 #### Help
@@ -100,28 +108,28 @@ optional arguments:
 Add a VM to a tenant. A VM can only access the datastores for the tenant it is assigned to.
 VMs can be assigned to only one tenant at a time.
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name tenant1 --vm-list photon.vsan.2
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name=tenant1 --vm-list=photon5
 tenant vm add succeeded
 ```
 
 #### List
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
-Uuid                                  Name
-------------------------------------  -------------
-564d672f-0576-8906-7ba0-a42317328499  photon.vsan.1
-564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name=tenant1
+Uuid                                  Name     
+------------------------------------  -------  
+564df562-3d58-c99a-e76e-e8792b77ca2d  photon4  
+564d4728-f1c7-2029-d01e-51f5e6536cd9  photon5  
 ```
 
 #### Remove
 Remove a VM from a tenant's list of VMs. VM will no longer be able to access the volumes created for the tenant.
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name tenant1 --vm-list photon.vsan.1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name=tenant1 --vm-list=photon5
 tenant vm rm succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
-Uuid                                  Name
-------------------------------------  -------------
-564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name=tenant1
+Uuid                                  Name     
+------------------------------------  -------  
+564df562-3d58-c99a-e76e-e8792b77ca2d  photon4  
 ```
 
 #### Help
@@ -160,56 +168,89 @@ optional arguments:
 ```
 
 #### Add
-Grants datastore access to a tenant.
+Grants datastore access to a tenant. 
+
+The datastore will be automatically set to "default_datastore" for the tenant 
+when you grant first datastore access for a tenant.
 
 Sample:
 
 ```bash
-/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1 --rights create,delete,mount
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB
 tenant access add succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  1              1              1             0B               0B
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                             datastore1         photon4  
 ```
 
-By default no rights are given
+The datastore will be set to "default_datastore" for the tenant when you grant datastore access for a tenant with "--default-datastore" flag.
+
+Sample:
+
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore2  --allow-create --default-datastore --volume-maxsize=500MB --volume-totalsize=1GB
+tenant access add succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          500.00MB         1.00GB      
+datastore2  True          500.00MB         1.00GB      
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+371a68e3-8c86-467a-a4dc-753f3066ca8a  tenant1                             datastore2         photon4  
+```
+
+By default no "allow_create" right is given
 
 ```bash
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1
 tenant access add succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  0              0              0             0B               0B
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1 
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  False         500.00MB         1.00GB      
 ```
 
-- For capability 0 indicates false
-- For capacity 0 indicates no limits
+"allow_create" right is given when you run the command with "--allow-create" flag.
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=500MB --volume-totalsize=1GB
+tenant access add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          500.00MB         1.00GB      
+```
 
 ##### Help
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add -h
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add -h
 usage: vmdkops_admin.py tenant access add [-h]
                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
-                                          --name NAME
                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          --datastore DATASTORE
-                                          [--rights create,delete,mount]
+                                          [--allow-create] --name NAME
+                                          [--default-datastore] --datastore
+                                          DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
   --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
                         on the datastore for this tenant
-  --name NAME           The name of the tenant
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
+  --allow-create        Allow create and delete on datastore if set to True
+  --name NAME           The name of the tenant
+  --default-datastore   Mark datastore as a default datastore for this tenant
   --datastore DATASTORE
                         Datastore which access is controlled
-  --rights create,delete,mount
-                        Datastore access Permissions granted: Choices =
-                        ['create', 'delete', 'mount', 'all']
+
 ```
 
 #### List
@@ -217,19 +258,17 @@ List the current access control granted to a tenant.
 
 When displaying the result keep in mind:
 
-- For capability 0 indicates false
-- For capacity 0 indicates no limits
+- For capacity Unset indicates no limits
 
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  1              1              1             0B               0B
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          Unset            Unset    
 ```
 
 ##### Help
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls -h
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls -h
 usage: vmdkops_admin.py tenant access ls [-h] --name NAME
 
 optional arguments:
@@ -240,16 +279,16 @@ optional arguments:
 #### Remove
 Remove access to a datastore for a tenant.
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm --name tenant1 --datastore datastore1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm --name=tenant1 --datastore=datastore1
 tenant access rm succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore  Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
----------  -------------  -------------  ------------  ---------------  ----------
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore  Allow_create  Max_volume_size  Total_size  
+---------  ------------  ---------------  ----------  
 ```
 
 ##### Help
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm -h
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm -h
 usage: vmdkops_admin.py tenant access rm [-h] --name NAME --datastore
                                          DATASTORE
 
@@ -258,6 +297,7 @@ optional arguments:
   --name NAME           The name of the tenant
   --datastore DATASTORE
                         Datstore which access is controlled
+
 ```
 
 #### Set
@@ -266,48 +306,41 @@ Set command allows to change the existing access control in place for a tenant.
 Sample:
 
 ```shell
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  0              0              0             0B               0B
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set --volume-totalsize 2TB --volume-maxsize 500GB --volume-maxcount 100 --add-rights all --name tenant1 --datastore datastore1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  False         500.00MB         1.00GB      
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=1000MB --volume-totalsize=2GB
 tenant access set succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  1              1              1             500.00GB         2.00TB
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          1000.00MB        2.00GB      
 ```
 
 ##### Help
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set -h
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set -h
 usage: vmdkops_admin.py tenant access set [-h]
                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
+                                          --name NAME
                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          [--volume-maxcount VOLUME_MAXCOUNT]
-                                          [--rm-rights create,delete,mount,all]
-                                          [--add-rights create,delete,mount,all]
-                                          --name NAME --datastore DATASTORE
+                                          [--allow-create] --datastore
+                                          DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
   --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
                         on the datastore for this tenant
+  --name NAME           Tenant name
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
-  --volume-maxcount VOLUME_MAXCOUNT
-                        Maximum number of volumes to create on the datastore
-                        for this tenant
-  --rm-rights create,delete,mount,all
-                        Datastore access Permissions removed: Choices =
-                        ['create', 'delete', 'mount', 'all']
-  --add-rights create,delete,mount,all
-                        Datastore access Permissions granted: Choices =
-                        ['create', 'delete', 'mount', 'all']
-  --name NAME           Tenant name
+  --allow-create        Allow create and delete on datastore if set to True
   --datastore DATASTORE
                         Datastore name
+
 ```
 
 ### Remove
@@ -315,20 +348,26 @@ Remove a tenant, optionally all volumes for a tenant can be removed as well.
 
 Sample:
 ```
-/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
+All Volumes will be removed
+tenant rm succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
 ```
 
 #### Help
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
-usage: vmdkops_admin tenant rm [-h] --name NAME [--remove-volumes]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
+usage: vmdkops_admin.py tenant rm [-h] --name NAME [--remove-volumes]
 
 optional arguments:
   -h, --help        show this help message and exit
   --name NAME       The name of the tenant
   --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
-                    tenant
-                        
+                    tenant  
+
 ```
 
 ## Volume
