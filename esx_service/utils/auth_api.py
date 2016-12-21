@@ -356,7 +356,7 @@ def _tenant_vm_ls(name):
     # tenant.vms is a list of vm_uuid of vms which belong to this tenant
     return None, tenant.vms
     
-def _tenant_access_add(name, datastore, allow_create=None, switch_default_datastore=False, volume_maxsize=None, volume_totalsize=None):
+def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False, volume_maxsize=None, volume_totalsize=None):
     """ API to add datastore access for a tenant """
     logging.debug("_tenant_access_add: name=%s datastore=%s, allow_create=%s "
                   "volume_maxsize=%s volume_totalsize=%s")
@@ -389,7 +389,7 @@ def _tenant_access_add(name, datastore, allow_create=None, switch_default_datast
         return error_info
     logging.debug("_tenant_access_add: get_row_from_privileges_table for tenant id=%s return %s",
                    tenant.id, result)
-    if len(result) == 1 or switch_default_datastore:
+    if len(result) == 1 or default_datastore:
         if datastore == auth.DEFAULT_DS:
             datastore_url = auth.DEFAULT_DS_URL
         else:    

@@ -550,7 +550,7 @@ def getVMDK(vmdk_path, vol_name, datastore):
 
     return result
 
-def listVMDK(vm_datastore, tenant):
+def listVMDK(tenant):
     """
     Returns a list of volume names (note: may be an empty list).
     Each volume name is returned as either `volume@datastore`, or just `volume`
@@ -558,7 +558,7 @@ def listVMDK(vm_datastore, tenant):
     """
     vmdks = vmdk_utils.get_volumes(tenant)
     # build  fully qualified vol name for each volume found
-    return [{u'Name': get_full_vol_name(x['filename'], x['datastore'], vm_datastore),
+    return [{u'Name': get_full_vol_name(x['filename'], x['datastore']),
              u'Attributes': {}} \
             for x in vmdks]
 
@@ -671,15 +671,12 @@ def parse_vol_name(full_vol_name):
     return vol_name, ds_name
 
 
-def get_full_vol_name(vmdk_name, datastore, vm_datastore):
+def get_full_vol_name(vmdk_name, datastore):
     """
     Forms full volume name from vmdk file name an datastore as volume@datastore
-    For volumes on vm_datastore, just returns volume name
     """
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
-    logging.debug("get_full_vol_name: %s %s %s", vmdk_name, datastore, vm_datastore)
-    if datastore == vm_datastore:
-        return vol_name
+    logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
 
 
@@ -700,7 +697,9 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     """
     Executes a <cmd> request issused from a VM.
     The request is about volume <full_volume_name> in format volume@datastore.
-    If @datastore is omitted, the one where the VM resides is used.
+    If @datastore is omitted, "default_datastore" will be used if "default_datastore"
+    is specified for the tenant which VM belongs to;
+    the one where the VM resides is used is "default_datastore" is not specified.
     For VM, the function gets vm_uuid, vm_name and config_path
     <opts> is a json options string blindly passed to a specific operation
 
@@ -718,6 +717,9 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         # if default_datastore is not set for tenant, error_info will be set to 
         # DEFAULT_DS_NOT_SET, default_datastore will be set to None
         error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
+        # default_datastore is not specified, use vm_datastore
+        if not default_datastore:
+            default_datastore = vm_datastore
     
     logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
                   vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)    
@@ -725,7 +727,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
         # if default_datastore is not set, should return error
-        return listVMDK(default_datastore, tenant_name)
+        return listVMDK(tenant_name)
 
     try:
         vol_name, datastore = parse_vol_name(full_vol_name)
@@ -733,12 +735,6 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err(str(ex))
     if not datastore:
         datastore = default_datastore
-        # user passed "full_vol_name"" with short notion, and default_datastore 
-        # must be set in this case
-        if not default_datastore:
-            error_info = error_code.DEFAULT_DS_NOT_SET
-            logging.error(error_info)
-            return err(error_info)
 
     if not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \

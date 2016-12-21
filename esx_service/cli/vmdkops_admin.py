@@ -307,8 +307,8 @@ def commands():
                                     'help': "Datastore which access is controlled",
                                     'required': True
                                 },
-                                '--switch-default-datastore': {
-                                    'help': "Switch default datastore for this tenant",
+                                '--default-datastore': {
+                                    'help': "Mark datastore as a default datastore for this tenant",
                                     'action': 'store_true'
                                 },                            
                                 '--allow-create': {
@@ -901,7 +901,7 @@ def tenant_access_add(args):
     """ Handle tenant access command """
     error_info = auth_api._tenant_access_add(name=args.name,
                                              datastore=args.datastore,
-                                             switch_default_datastore=args.switch_default_datastore,
+                                             default_datastore=args.default_datastore,
                                              allow_create=args.allow_create,
                                              volume_maxsize=args.volume_maxsize,
                                              volume_totalsize=args.volume_totalsize

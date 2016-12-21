@@ -425,6 +425,8 @@ class AuthorizationDataManager:
             curr_db_ver = get_version_str(DB_MAJOR_VER, DB_MINOR_VER)
             logging.error("version %s in auth-db does not match latest DB version %s",
                           auth_db_ver, curr_db_ver)
+            logging.error("DB upgrade is not supported. Please remove the DB file at %s. All existing configuration "
+                          "will be removed and need to be recreated after removing the DB file.", AUTH_DB_PATH)
             return True
         
         return False
