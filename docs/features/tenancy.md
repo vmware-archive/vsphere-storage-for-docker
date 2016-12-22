@@ -23,7 +23,7 @@ associated with this tenant.
 
 \_DEFAULT tenant will be automatically created by system post install, so by default vmdk_ops will support request from any VM , thus maintaining backward compatibility and simplicity of installation.
 
-An admin can remove this tenant or modify privileges, thus locking down vmdk_ops to serve only explicitly configured VMs
+An admin can remove this tenant or modify privileges, thus locking down vmdk_ops to serve only explicitly configured VMs.
 
 ## Default privileges
 When a VM tries to manipulate volumes on a datastore which is not configured,  the system will use _DEFAULT privilege, which is created automatically by system post install.
