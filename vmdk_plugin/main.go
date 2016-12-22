@@ -28,14 +28,16 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/photon"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
 )
 
 const (
 	pluginSockDir = "/run/docker/plugins"
-	vmdkPluginID  = "vmdk"
-	version       = "VMDK Volume Driver v0.3"
+	mountRoot     = "/mnt/vmdk" // VMDK and photon volumes are mounted here
+	photonDriver  = "photon"
+	vmdkDriver    = "vmdk"
 )
 
 // An equivalent function is not exported from the SDK.
@@ -91,40 +93,62 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 // main for docker-volume-vsphere
 // Parses flags, initializes and mounts refcounters and finally services Docker requests
 func main() {
-	// connect to this socket
-	port := flag.Int("port", 1019, "Default port for vmci")
-	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX server")
-	logLevel := flag.String("log_level", "info", "Logging Level")
-	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
-	flag.Parse()
+	var driver volume.Driver
 
-	vmdkops.EsxPort = *port
+	// Define command line options
+	driverName := flag.String("driver", "vmdk", "Volume driver")
+	logLevel := flag.String("log_level", "debug", "Logging Level")
+	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
+
+	// photon driver options
+	targetURL := flag.String("target", "", "Photon controller URL")
+	projectID := flag.String("project", "", "Project ID of the docker host")
+	vmID := flag.String("host", "", "ID of docker host")
+
+	// vmdk driver options
+	port := flag.Int("port", 1019, "Default port to connect to ESX service")
+	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX service")
+
+	flag.Parse()
 
 	logInit(logLevel, nil, configFile)
 
 	log.WithFields(log.Fields{
-		"version":   version,
-		"port":      vmdkops.EsxPort,
-		"mock_esx":  *useMockEsx,
+		"driver":    *driverName,
 		"log_level": *logLevel,
 		"config":    *configFile,
-	}).Info("Docker VMDK plugin started ")
+	}).Info("Starting plugin ")
+
+	log.WithFields(log.Fields{
+		"target":  *targetURL,
+		"project": *projectID,
+		"host":    *vmID,
+		"port":    *port}).Info("Plugin options - ")
+
+	if *driverName == photonDriver {
+		driver = photon.NewVolumeDriver(*targetURL, *projectID,
+			*vmID, mountRoot)
+	} else if *driverName == vmdkDriver {
+		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot)
+	} else {
+		log.Warning("Unknown driver, exiting - ", *driverName)
+		os.Exit(1)
+	}
 
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
-		os.Remove(fullSocketAddress(vmdkPluginID))
+		os.Remove(fullSocketAddress(*driverName))
 		os.Exit(0)
 	}()
 
-	driver := newVmdkDriver(*useMockEsx)
 	handler := volume.NewHandler(driver)
 
 	log.WithFields(log.Fields{
-		"address": fullSocketAddress(vmdkPluginID),
+		"address": fullSocketAddress(*driverName),
 	}).Info("Going into ServeUnix - Listening on Unix socket ")
 
-	log.Info(handler.ServeUnix("root", fullSocketAddress(vmdkPluginID)))
+	log.Info(handler.ServeUnix("root", fullSocketAddress(*driverName)))
 }

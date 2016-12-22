@@ -22,17 +22,27 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"golang.org/x/exp/inotify"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
 
-const sysPciDevs = "/sys/bus/pci/devices" // All PCI devices on the host
-const sysPciSlots = "/sys/bus/pci/slots"  // PCI slots on the host
-const pciAddrLen = 10                     // Length of PCI dev addr
+const (
+	sysPciDevs      = "/sys/bus/pci/devices"   // All PCI devices on the host
+	sysPciSlots     = "/sys/bus/pci/slots"     // PCI slots on the host
+	pciAddrLen      = 10                       // Length of PCI dev addr
+	diskPathByDevID = "/dev/disk/by-id/wwn-0x" // Path for devices named by ID
+	scsiHostPath    = "/sys/class/scsi_host/"  // Path for scsi hosts
+	devWaitTimeout  = 1 * time.Second
+	bdevPath        = "/sys/block/"
+	deleteFile      = "/device/delete"
+)
 
 // FstypeDefault contains the default FS when not specified by the user
 const FstypeDefault = "ext4"
@@ -115,9 +125,136 @@ func Mount(mountpoint string, fstype string, device string, isReadOnly bool) err
 	return nil
 }
 
+// MountWithID - mount device with ID
+func MountWithID(mountpoint string, fstype string, id string, isReadOnly bool) error {
+	log.WithFields(log.Fields{
+		"device ID":  id,
+		"fstype":     fstype,
+		"mountpoint": mountpoint,
+	}).Debug("Calling syscall.Mount() ")
+
+	// Scan so we may have the device before attempting a mount
+	// Loop over all hosts and scan each one
+	device, err := GetDevicePathByID(id)
+	if err != nil {
+		return fmt.Errorf("Invalid device path %s for %s: %s",
+			device, mountpoint, err)
+	}
+
+	flags := 0
+	if isReadOnly {
+		flags = syscall.MS_RDONLY
+	}
+	err = syscall.Mount(device, mountpoint, fstype, uintptr(flags), "")
+	if err != nil {
+		return fmt.Errorf("Failed to mount device %s at %s fstype %s: %s",
+			device, mountpoint, fstype, err)
+	}
+	return nil
+}
+
 // Unmount a device from the given mount point.
-func Unmount(mountpoint string) error {
-	return syscall.Unmount(mountpoint, 0)
+func Unmount(mountPoint string) error {
+	err := syscall.Unmount(mountPoint, 0)
+	if err != nil {
+		return fmt.Errorf("Unmount device at %s failed: %s",
+			mountPoint, err)
+	}
+	return nil
+}
+
+func makeDevicePathWithID(id string) string {
+	return diskPathByDevID + strings.Join(strings.Split(id, "-"), "")
+}
+
+// GetDevicePathByID - return full path for device with given ID
+func GetDevicePathByID(id string) (string, error) {
+	hosts, err := ioutil.ReadDir(scsiHostPath)
+	if err != nil {
+		return "", err
+	}
+	time.Sleep(10)
+	for _, host := range hosts {
+		//Scan so we may have the device before attempting a mount
+		scanHost := scsiHostPath + host.Name() + "/scan"
+		bytes := []byte("- - -")
+		log.WithFields(log.Fields{"disk id": id, "scan cmd": scanHost}).Info("Rescanning ... ")
+		err = ioutil.WriteFile(scanHost, bytes, 0644)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	skipInotify := false
+
+	watcher, errWatcher := inotify.NewWatcher()
+
+	if errWatcher != nil {
+		log.WithFields(log.Fields{"id": id}).Error("Failed to create watcher, skip inotify ")
+		skipInotify = true
+	} else {
+		err = watcher.Watch("/dev/disk/by-id")
+		if err != nil {
+			log.WithFields(log.Fields{"id": id}).Error("Failed to watch /dev, skip inotify ")
+			skipInotify = true
+		}
+	}
+	device := makeDevicePathWithID(id)
+
+loop:
+	for {
+		select {
+		case ev := <-watcher.Event:
+			log.Debug("event: ", ev)
+			if ev.Name == device {
+				// Log when the device is discovered
+				log.WithFields(
+					log.Fields{"device": device, "event": ev},
+				).Info("Scan complete ")
+				break loop
+			}
+		case err := <-watcher.Error:
+			log.WithFields(
+				log.Fields{"device": device, "error": err},
+			).Error("Hit error during watch ")
+			break loop
+		case <-time.After(devWaitTimeout):
+			log.WithFields(
+				log.Fields{"timeout": devWaitTimeout, "device": device},
+			).Warning("Reached timeout while waiting for device ")
+			break loop
+		}
+	}
+
+	if skipInotify {
+		time.Sleep(10)
+	}
+	_, err = os.Stat(device)
+	if err != nil {
+		return "", err
+	}
+	return device, nil
+}
+
+// DeleteDevicePathWithID - delete device with given ID
+func DeleteDevicePathWithID(id string) error {
+	// Delete the device node
+	device := makeDevicePathWithID(id)
+	dev, err := os.Readlink(device)
+	if err != nil {
+		return fmt.Errorf("Failed to read sym link for %s: %s",
+			device, err)
+	}
+	links := strings.Split(dev, "/")
+	node := bdevPath + links[len(links)-1] + deleteFile
+	bytes := []byte("1")
+
+	log.Debugf("Deleteing device node - id: %s, node: %s", id, node)
+	err = ioutil.WriteFile(node, bytes, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetDevicePath - return device path or error
