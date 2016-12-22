@@ -21,9 +21,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strconv"
-	"strings"
 	"testing"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
