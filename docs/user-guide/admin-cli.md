@@ -67,20 +67,18 @@ c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                   
 
 #### Help
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
-usage: vmdkops_admin.py tenant [-h] {create,vm,update,access,ls,rm} ...
-
-positional arguments:
-  {create,vm,update,access,ls,rm}
-    create              Create a new tenant
-    vm                  Add, removes and lists VMs in a tenant
-    update              Update an existing tenant
-    access              Add or remove Datastore access and quotas for a tenant
-    ls                  List tenants and the VMs they are applied to
-    rm                  Delete a tenant
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create -h
+usage: vmdkops_admin.py tenant create [-h] --name NAME
+                                      [--description DESCRIPTION]
+                                      [--vm-list vm1, vm2, ...]
 
 optional arguments:
   -h, --help            show this help message and exit
+  --name NAME           The name of the tenant
+  --description DESCRIPTION
+                        The description of the tenant
+  --vm-list vm1, vm2, ...
+                        A list of VM names to place in this Tenant
 ```
 ### List
 List existing tenants, the datastores tenants have access to and the VMs assigned.
@@ -101,6 +99,44 @@ optional arguments:
   -h, --help  show this help message and exit
 ```
 
+### Update
+Update existing tenants.
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list 
+------------------------------------  --------  ------------------------  -----------------  ------- 
+a11dda75-0632-4fe0-9caa-d2308bf73df7  _DEFAULT  This is a default tenant                             
+946570fe-9842-491f-a172-426284b36eeb  tenant1                             datastore2         photon4 
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant update --name=tenant1 --description="New description of tenant1" --new-name=new-tenant1 --default-datastore=datastore1
+tenant modify succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name         Description                 Default_datastore  VM_list 
+------------------------------------  -----------  --------------------------  -----------------  ------- 
+a11dda75-0632-4fe0-9caa-d2308bf73df7  _DEFAULT     This is a default tenant                               
+946570fe-9842-491f-a172-426284b36eeb  new-tenant1  New description of tenant1  datastore1         photon4 
+``` 
+
+#### Help
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant update -h
+usage: vmdkops_admin.py tenant update [-h] --name NAME
+                                      [--default-datastore DEFAULT_DATASTORE]
+                                      [--description DESCRIPTION]
+                                      [--new-name NEW_NAME]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --name NAME           The name of the tenant
+  --default-datastore DEFAULT_DATASTORE
+                        The name of the datastore to be used by default for
+                        volumes placement
+  --description DESCRIPTION
+                        The new description of the tenant
+  --new-name NEW_NAME   The new name of the tenant
+
+```
 
 ### Virtual Machine
 
