@@ -221,6 +221,9 @@ def commands():
                         },
                         '--description': {
                             'help': 'The new description of the tenant',
+                        },
+                        '--default-datastore': {
+                            'help': 'The name of the datastore to be used by default for volumes placement',
                         }
                     }
                 },
@@ -304,10 +307,13 @@ def commands():
                                     'help': "Datastore which access is controlled",
                                     'required': True
                                 },
-                                '--rights': {
-                                    'help': 'Datastore access Permissions granted',
-                                    'choices': ['create', 'delete', 'mount', 'all'],
-                                    'metavar': 'create,delete,mount'
+                                '--default-datastore': {
+                                    'help': "Mark datastore as a default datastore for this tenant",
+                                    'action': 'store_true'
+                                },                            
+                                '--allow-create': {
+                                    'help': 'Allow create and delete on datastore if set to True',
+                                    'action': 'store_true'
                                 },
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
@@ -332,15 +338,9 @@ def commands():
                                     'help': "Datastore name",
                                     'required': True
                                 },
-                                '--add-rights': {
-                                    'help': 'Datastore access Permissions granted',
-                                    'choices': ['create', 'delete', 'mount', 'all'],
-                                    'metavar': 'create,delete,mount,all'
-                                },
-                                '--rm-rights': {
-                                    'help': 'Datastore access Permissions removed',
-                                    'choices': ['create', 'delete', 'mount', 'all'],
-                                    'metavar': 'create,delete,mount,all'
+                                '--allow-create': {
+                                    'help': 'Allow create and delete on datastore if set to True',
+                                    'action': 'store_true'
                                 },
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
@@ -758,47 +758,6 @@ def get_version():
     except:
         return NOT_AVAILABLE
 
-def get_auth_mgr():
-    try:
-        auth_mgr = auth.get_auth_mgr()
-    except auth_data.DbConnectionError as e:
-        error_info = "Failed to connect auth DB({0})".format(e)
-        return error_info, None
-    return None, auth_mgr
-
-def get_tenant_from_db(name):
-    error_info, auth_mgr = get_auth_mgr()
-    if error_info:
-        return error_info, None
-
-    error_info, tenant = auth_mgr.get_tenant(name)
-    return error_info, tenant
-
-def create_tenant_in_db(name, description, default_datastore, default_privileges, vms, privileges):
-    try:
-        auth_mgr = auth.get_auth_mgr()
-    except auth_data.DbConnectionError as e:
-        error_info = "Failed to connect auth DB({0})".format(e)
-
-    if error_info:
-        return error_info, None
-
-    error_info, tenant = auth_mgr.create_tenant(name=name, 
-                                                description=description, 
-                                                default_datastore=default_datastore, 
-                                                default_privileges=default_privileges, 
-                                                vms=vms, 
-                                                privileges=privileges)
-    return error_info, tenant
-
-def get_tenant_list_from_db():
-    error_info, auth_mgr = get_auth_mgr()
-    if error_info:
-        return error_info, None
-    
-    error_info, tenant_list = auth_mgr.list_tenants()
-    return error_info, tenant_list
-
 def operation_fail(error_info):
     print(error_info)
     return error_info
@@ -809,11 +768,15 @@ def tenant_ls_headers():
     return headers
 
 def generate_vm_list(vms):
-    """ Generate a comma separated string with given list """
+    """ Generate vm names with given list of vm uuid"""
+    # vms is a list of (vm_uuid)
+    # example: vms=[("vm1_uuid"), ("vm2_uuid")]
+    # the return value is a string like this vm1,vm2
     res = ""
     for vm in vms:
-        # vm[1] is vm_name, vm has format (vm_uuid, vm_name)
-        res = res + vm[1]
+        # vm[0] is vm_uuid, vm has format (vm_uuid)
+        vm_name = vmdk_utils.get_vm_name_by_uuid(vm[0])
+        res = res + vm_name
         res = res + ","
 
     if res:
@@ -828,33 +791,21 @@ def generate_tenant_ls_rows(tenant_list):
         uuid = tenant.id
         name = tenant.name
         description = tenant.description
-        default_datastore = tenant.default_datastore
+        if not tenant.default_datastore_url or tenant.default_datastore_url == auth.DEFAULT_DS_URL:
+            default_datastore = ""
+        else:
+            default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
+        
         vm_list = generate_vm_list(tenant.vms)
         rows.append([uuid, name, description, default_datastore, vm_list])
 
     return rows
 
-def generate_tuple_from_vm_list(vm_list):
-    """ Generate a list of (vm_uuid, vm_name) pair """
-    if not vm_list:
-        return None, []
-    vms = []
-    for vm_name in vm_list:
-        vm_uuid = vmdk_utils.get_vm_uuid_by_name(vm_name)
-        if not vm_uuid:
-            error_info =  "Cannot find vm_uuid for vm {0}, tenant_create failed".format(vm_name)
-            return error_info, None
-        vms.append((vm_uuid, vm_name))
-
-    return None, vms
-
 def tenant_create(args):
     """ Handle tenant create command """
     error_info, tenant = auth_api._tenant_create(
-                                                 name=args.name , 
-                                                 description=args.description, 
-                                                 default_datastore="default_ds", 
-                                                 default_privileges={}, 
+                                                 name=args.name, 
+                                                 description="",  
                                                  vm_list=args.vm_list, 
                                                  privileges=[])
     if error_info:
@@ -866,7 +817,8 @@ def tenant_update(args):
     """ Handle tenant update command """
     error_info = auth_api._tenant_update(name=args.name,
                                          new_name=args.new_name,
-                                         description=args.description)
+                                         description=args.description,
+                                         default_datastore=args.default_datastore)
 
     if error_info:
         return operation_fail(error_info)
@@ -926,9 +878,9 @@ def generate_tenant_vm_ls_rows(vms):
     """ Generate output for tenant vm ls command """
     rows = []
     for vm in vms:
-        # vm has the format like this (vm_uuid, vm_name)
+        # vm has the format like this (vm_uuid)
         uuid = vm[0]
-        name = vm[1]
+        name = vmdk_utils.get_vm_name_by_uuid(uuid)
         rows.append([uuid, name])
 
     return rows
@@ -943,55 +895,14 @@ def tenant_vm_ls(args):
     rows = generate_tenant_vm_ls_rows(vms)
     print(cli_table.create(header, rows))
 
-def default_privileges():
-     privileges = [{'datastore': 'datastore1',
-                     'global_visibility': 0,
-                      'create_volume': 0,
-                      'delete_volume': 0,
-                     'mount_volume': 0,
-                      'max_volume_size': 0,
-                      'usage_quota': 0}]
-     return privileges
 
-def set_privileges(rights, privileges, value):
-    """ set or unset privileges based rights passed by command line """
-    if 'create' in rights:
-        privileges[auth_data_const.COL_CREATE_VOLUME] = value
-
-    if 'delete' in rights:
-        privileges[auth_data_const.COL_DELETE_VOLUME] = value
-
-    if 'mount' in rights:
-        privileges[auth_data_const.COL_MOUNT_VOLUME] = value
-
-    if 'all' in rights:
-        privileges[auth_data_const.COL_CREATE_VOLUME] = value
-        privileges[auth_data_const.COL_DELETE_VOLUME] = value
-        privileges[auth_data_const.COL_MOUNT_VOLUME] = value
-
-def generate_privileges(args):
-    """ Generate privileges based on CLI argument """
-    privileges = default_privileges()[0]
-    privileges[auth_data_const.COL_DATASTORE] = args.datastore
-
-    if args.rights:
-        set_privileges(args.rights, privileges, 1)
-
-    if args.volume_maxsize:
-        size_in_MB = convert.convert_to_MB(args.volume_maxsize)
-        privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = size_in_MB
-
-    if args.volume_totalsize:
-        size_in_MB = convert.convert_to_MB(args.volume_totalsize)
-        privileges[auth_data_const.COL_USAGE_QUOTA] = size_in_MB
-
-    return privileges
 
 def tenant_access_add(args):
     """ Handle tenant access command """
     error_info = auth_api._tenant_access_add(name=args.name,
                                              datastore=args.datastore,
-                                             rights=args.rights,
+                                             default_datastore=args.default_datastore,
+                                             allow_create=args.allow_create,
                                              volume_maxsize=args.volume_maxsize,
                                              volume_totalsize=args.volume_totalsize
                                              )
@@ -1001,45 +912,11 @@ def tenant_access_add(args):
     else:
         print("tenant access add succeeded")
 
-def modify_privileges(privileges, args):
-    """ Modify privileges based on CLI argument """
-    if args.add_rights:
-        set_privileges(args.add_rights, privileges, 1)
-
-    if args.rm_rights:
-        set_privileges(args.rm_rights, privileges, 0)
-
-    if args.volume_maxsize:
-        size_in_MB = convert.convert_to_MB(args.volume_maxsize)
-        privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = size_in_MB
-
-    if args.volume_totalsize:
-        size_in_MB = convert.convert_to_MB(args.volume_totalsize)
-        privileges[auth_data_const.COL_USAGE_QUOTA] = size_in_MB
-
-    return privileges
-
-def generate_privileges_dict(privileges):
-    # privileges is a list which is read from auth DB
-    # it has the following format
-    # (tenant_uuid, datastore, global_visibility, create_volume, delete_volume,
-    # mount_volume, max_volume_size, usage_quota)
-    privileges_dict = {}
-    privileges_dict[auth_data_const.COL_DATASTORE] = privileges[1]
-    privileges_dict[auth_data_const.COL_GLOBAL_VISIBILITY] = privileges[2]
-    privileges_dict[auth_data_const.COL_CREATE_VOLUME] = privileges[3]
-    privileges_dict[auth_data_const.COL_DELETE_VOLUME] = privileges[4]
-    privileges_dict[auth_data_const.COL_MOUNT_VOLUME] = privileges[5]
-    privileges_dict[auth_data_const.COL_MAX_VOLUME_SIZE] = privileges[6]
-    privileges_dict[auth_data_const.COL_USAGE_QUOTA] = privileges[7]
-    return privileges_dict
-
 def tenant_access_set(args):
     """ Handle tenant access set command """
     error_info = auth_api._tenant_access_set(name=args.name, 
-                                             datastore=args.datastore, 
-                                             add_rights=args.add_rights, 
-                                             rm_rights=args.rm_rights, 
+                                             datastore=args.datastore,
+                                             allow_create=args.allow_create, 
                                              volume_maxsize=args.volume_maxsize, 
                                              volume_totalsize=args.volume_totalsize)
 
@@ -1058,22 +935,21 @@ def tenant_access_rm(args):
 
 def tenant_access_ls_headers():
     """ Return column names for tenant access ls command """
-    headers = ['Datastore', 'Create_volume', 'Delete_volume', 'Mount_volume', 'Max_volume_size', 'Total_size']
+    headers = ['Datastore', 'Allow_create', 'Max_volume_size', 'Total_size']
     return headers
 
 def generate_tenant_access_ls_rows(privileges):
     """ Generate output for tenant access ls command """
     rows = []
     for p in privileges:
-        datastore = p[auth_data_const.COL_DATASTORE]
-        create_volume = ("False", "True")[p[auth_data_const.COL_CREATE_VOLUME]]
-        delete_volume = ("False", "True")[p[auth_data_const.COL_DELETE_VOLUME]]
-        mount_volume = ("False", "True")[p[auth_data_const.COL_MOUNT_VOLUME]]
+        datastore_url = p[auth_data_const.COL_DATASTORE_URL]
+        datastore = vmdk_utils.get_datastore_name(datastore_url)
+        allow_create = ("False", "True")[p[auth_data_const.COL_ALLOW_CREATE]]
         # p[auth_data_const.COL_MAX_VOLUME_SIZE] is max_volume_size in MB
         max_vol_size = "Unset" if p[auth_data_const.COL_MAX_VOLUME_SIZE] == 0 else human_readable(p[auth_data_const.COL_MAX_VOLUME_SIZE]*MB)
         # p[auth_data_const.COL_USAGE_QUOTA] is total_size in MB
         total_size = "Unset" if p[auth_data_const.COL_USAGE_QUOTA] == 0 else human_readable(p[auth_data_const.COL_USAGE_QUOTA]*MB)
-        rows.append([datastore, create_volume, delete_volume, mount_volume, max_vol_size, total_size])
+        rows.append([datastore, allow_create, max_vol_size, total_size])
 
     return rows
 

@@ -35,6 +35,7 @@ CMD_DETACH = 'detach'
 SIZE = 'size'
 DEFAULT_TENANT = '_DEFAULT'
 DEFAULT_DS  = '_DEFAULT'
+DEFAULT_DS_URL = DEFAULT_DS + "_URL"
 
 # thread local storage in this module namespace
 thread_local = threadutils.get_local_storage()
@@ -95,10 +96,11 @@ def get_default_privileges():
     _auth_mgr = get_auth_mgr()
     privileges = []
     logging.debug("get_default_privileges")
+    
     try:
         cur = _auth_mgr.conn.execute(
-            "SELECT * FROM privileges WHERE datastore = ?",
-            (DEFAULT_DS,)
+            "SELECT * FROM privileges WHERE datastore_url = ?",
+            (DEFAULT_DS_URL,)
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
@@ -174,10 +176,11 @@ def get_privileges(tenant_uuid, datastore):
     _auth_mgr = get_auth_mgr()
     privileges = []
     logging.debug("get_privileges tenant_uuid=%s datastore=%s", tenant_uuid, datastore)
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
     try:
         cur = _auth_mgr.conn.execute(
-            "SELECT * FROM privileges WHERE tenant_id = ? and datastore = ?",
-            (tenant_uuid, datastore)
+            "SELECT * FROM privileges WHERE tenant_id = ? and datastore_url = ?",
+            (tenant_uuid, datastore_url)
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
@@ -191,12 +194,27 @@ def get_privileges(tenant_uuid, datastore):
         error_info, privileges = get_default_privileges()
         return error_info, privileges
 
-def has_privilege(privileges, type):
-    """ Check the privileges has the specific type of privilege set. """
+def has_privilege(privileges, type=None):
+    """ Check whether the param "privileges" has the specific type of privilege set.
+        There are two types of privilege: 
+        - "mount_only" which means only mount and unmount are allowed
+        - "full_access" which means create, remove, mount, unmount are
+        allowed
+        a privilege with "allow_create=False" has "mount_only" privilege
+        a privilege with "allow_create=True" has "full_access" privilege
+        if param "type" is not specified, which means only need to check
+        whether the param "privileges" has the "mount_only" privilege or not;
+        if param "allow_create" is specified, which means need to check
+        whether the input "privileges" has "full_access" privilege or not
+    """
+    # privileges is None, return False
     if not privileges:
         return False
-    logging.debug("%s=%d", type, privileges[type])
-    return privileges[type]
+    if type:    
+        logging.debug("has_privilege: %s=%d", type, privileges[type])
+        return privileges[type]
+    
+    return True
 
 def get_vol_size(opts):
     """ get volume size. """
@@ -237,10 +255,11 @@ def get_total_storage_used(tenant_uuid, datastore):
     """
     _auth_mgr = get_auth_mgr()
     total_storage_used = 0
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
     try:
         cur = _auth_mgr.conn.execute(
-            "SELECT SUM(volume_size) FROM volumes WHERE tenant_id = ? and datastore = ?",
-            (tenant_uuid, datastore)
+            "SELECT SUM(volume_size) FROM volumes WHERE tenant_id = ? and datastore_url = ?",
+            (tenant_uuid, datastore_url)
             )
     except sqlite3.Error as e:
         logging.error("Error %s when querying storage table for tenant_id %s and datastore %s",
@@ -283,11 +302,11 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
     result = None
     cmd_need_mount_privilege = [CMD_ATTACH, CMD_DETACH]
     if cmd in cmd_need_mount_privilege:
-        if not has_privilege(privileges, auth_data_const.COL_MOUNT_VOLUME):
+        if not has_privilege(privileges):
             result = "No mount privilege"
 
     if cmd == CMD_CREATE:
-        if not has_privilege(privileges, auth_data_const.COL_CREATE_VOLUME):
+        if not has_privilege(privileges, auth_data_const.COL_ALLOW_CREATE):
             result = "No create privilege"
         if not check_max_volume_size(opts, privileges):
             result = "volume size exceeds the max volume size limit"
@@ -295,7 +314,7 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
             result = "The total volume size exceeds the usage quota"
 
     if cmd == CMD_REMOVE:
-        if not has_privilege(privileges, auth_data_const.COL_DELETE_VOLUME):
+        if not has_privilege(privileges, auth_data_const.COL_ALLOW_CREATE):
             result = "No delete privilege"
 
     return result
@@ -390,7 +409,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
         return error_info, None, None
 
     if not tenant_uuid:
-        # This VM does not associate any tenant(including DEFAULT tenant), 
+        # This VM does not associate any tenant(including DEFAULT tenant),  
         # need reject the request
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
         error_info = error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name)
@@ -400,6 +419,8 @@ def authorize(vm_uuid, datastore, cmd, opts):
         error_info, privileges = get_privileges(tenant_uuid, datastore)
         if error_info:
             return error_info, None, None
+        logging.debug("authorize: tenant_uuid=%s, datastore=%s, privileges=%s",
+                       tenant_uuid, datastore, privileges)
         result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges)
 
         if not result:
@@ -417,10 +438,11 @@ def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB
 
     logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore,
                   vol_name, vol_size_in_MB)
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
     try:
         _auth_mgr.conn.execute(
-            "INSERT INTO volumes(tenant_id, datastore, volume_name, volume_size) VALUES (?, ?, ?, ?)",
-            (tenant_uuid, datastore, vol_name, vol_size_in_MB)
+            "INSERT INTO volumes(tenant_id, datastore_url, volume_name, volume_size) VALUES (?, ?, ?, ?)",
+            (tenant_uuid, datastore_url, vol_name, vol_size_in_MB)
             )
         _auth_mgr.conn.commit()
     except sqlite3.Error as e:
@@ -439,10 +461,11 @@ def remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name):
 
     logging.debug("remove volumes from volumes table(%s %s %s)", tenant_uuid, datastore,
                   vol_name)
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
     try:
         _auth_mgr.conn.execute(
-                    "DELETE FROM volumes WHERE tenant_id = ? AND datastore = ? AND volume_name = ?", 
-                    [tenant_uuid, datastore, vol_name]
+                    "DELETE FROM volumes WHERE tenant_id = ? AND datastore_url = ? AND volume_name = ?", 
+                    [tenant_uuid, datastore_url, vol_name]
             )
         _auth_mgr.conn.commit()
     except sqlite3.Error as e:

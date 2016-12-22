@@ -30,15 +30,19 @@ import auth
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
+# DB schema and VMODL version
+DB_MAJOR_VER = 1
+DB_MINOR_VER = 0
+VMODL_MAJOR_VER = 1
+VMODL_MINOR_VER = 0
+
 def all_columns_set(privileges):
         if not privileges:
             return False
         
         all_columns = [
-                        auth_data_const.COL_DATASTORE,
-                        auth_data_const.COL_CREATE_VOLUME,
-                        auth_data_const.COL_DELETE_VOLUME,
-                        auth_data_const.COL_MOUNT_VOLUME,
+                        auth_data_const.COL_DATASTORE_URL,
+                        auth_data_const.COL_ALLOW_CREATE,
                         auth_data_const.COL_MAX_VOLUME_SIZE,
                         auth_data_const.COL_USAGE_QUOTA
                       ]
@@ -46,7 +50,11 @@ def all_columns_set(privileges):
             if not col in privileges:
                 return False
 
-        return True 
+        return True
+
+def get_version_str(major_ver, minor_ver):
+    res = str(major_ver) + "." + str(minor_ver)
+    return res 
  
 class DbConnectionError(Exception):
     """ An exception thrown when connection to a sqlite database fails. """
@@ -68,15 +76,13 @@ class DockerVolumeTenant:
 
     """
 
-    def __init__(self, name, description, default_datastore, default_privileges,
-                    vms, privileges, id=None):
+    def __init__(self, name, description, vms, privileges, id=None, default_datastore_url=None):
             """ Constuct a DockerVOlumeTenant object. """
             self.name = name
             self.description = description
-            self.default_datastore = default_datastore
-            self.default_privileges = default_privileges
             self.vms = vms
             self.privileges = privileges
+            self.default_datastore_url=default_datastore_url
             if not id:
                 self.id = str(uuid.uuid4())
             else:
@@ -85,17 +91,18 @@ class DockerVolumeTenant:
     def add_vms(self, conn, vms):
         """ Add vms in the vms table for this tenant. """
         tenant_id = self.id
-        vms = [(vm_id, vm_name, tenant_id) for (vm_id, vm_name) in vms]
+        vms = [(vm_id, tenant_id) for (vm_id) in vms]
         if vms:
             try:
                 conn.executemany(
-                  "INSERT INTO vms(vm_id, vm_name, tenant_id) VALUES (?, ?, ?)",
+                  "INSERT INTO vms(vm_id, tenant_id) VALUES (?, ?)",
                   vms
                 )
                 conn.commit()
             except sqlite3.Error as e:
-                logging.error("Error %s when inserting into vms table with vm_id %s vm_name %s"
-                " tenant_id %s", e, vm_id, vm_name, tenant_id)
+                
+                logging.error("Error %s when inserting into vms table with vms %s", 
+                              e, vms)
                 return str(e)
 
         return None        
@@ -104,7 +111,7 @@ class DockerVolumeTenant:
     def remove_vms(self, conn, vms):
         """ Remove vms from the vms table for this tenant. """
         tenant_id = self.id
-        vms = [(vm_id, tenant_id) for (vm_id, vm_name) in vms]
+        vms = [(vm_id, tenant_id) for (vm_id) in vms]
         try:
             conn.executemany(
                     "DELETE FROM vms WHERE vm_id = ? AND tenant_id = ?", 
@@ -112,8 +119,8 @@ class DockerVolumeTenant:
             )
             conn.commit()
         except sqlite3.Error as e:
-            logging.error("Error %s when removing from vms table with vm_id %s tenant_id"
-                          "tenant_id %s", e, vm_id, tenant_id)
+            logging.error("Error %s when removing from vms table with vms %s",
+                          e, vms)
             return str(e)
 
         return None
@@ -173,41 +180,45 @@ class DockerVolumeTenant:
         return None
 
 
-    def set_default_datastore_and_privileges(self, conn, datastore, privileges):
-        "Set default_datastore and default privileges for this tenant."
-        tenant_id = self.id
-        exist_default_datastore = self.default_datastore
-        if not all_columns_set(privileges):
-            error_info = "Not all columns are set in privileges"
-            return error_info
-
+    def set_default_datastore(self, conn, datastore_url):
+        """ Set default_datastore for this tenant."""
+        tenant_id = self.id        
         try:
             conn.execute(
-                "UPDATE tenants SET default_datastore = ? WHERE id = ?",
-                (datastore, tenant_id)
+                "UPDATE tenants SET default_datastore_url = ? WHERE id = ?",
+                (datastore_url, tenant_id)
                 )
-
-            # remove the old entry
-            conn.execute(
-                "DELETE FROM privileges WHERE tenant_id = ? AND datastore = ?",
-                [tenant_id, exist_default_datastore]
-                )
-
-            privileges[auth_data_const.COL_TENANT_ID] = tenant_id
-            conn.execute(
-                """
-                INSERT OR IGNORE INTO privileges VALUES
-                (:tenant_id, :datastore, :create_volume,
-                :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
-                """,
-                privileges
-            )
             conn.commit()
         except sqlite3.Error as e:
-            logging.error("Error %s when setting default datastore and privileges for tenant_id %s",
+            logging.error("Error %s when setting default datastore for tenant_id %s",
                           e, tenant_id)
             return str(e)
         return None
+    
+    def get_default_datastore(self, conn):
+        """ 
+        Get default_datastore for this tenant
+
+        Return value:
+            error_info: return None on success or error info on failure
+            datastore: return default_datastore name on success or None on failure 
+        """
+               
+        error_info, result = auth.get_row_from_tenants_table(conn, self.id)
+        if error_info:
+            logging.error("Error %s when getting default datastore for tenant_id %s",
+                          error_info, self.id)
+            return str(error_info), None
+        else:
+            datastore_url = result[auth_data_const.COL_DEFAULT_DATASTORE_URL]
+            if not datastore_url:
+                # datastore_url read from DB is empty
+                error_info = error_code.DEFAULT_DS_NOT_SET
+                return None, None
+            else:
+                datastore = vmdk_utils.get_datastore_name(datastore_url)
+                return None, datastore
+
             
     def set_datastore_access_privileges(self, conn, privileges):
         """ Set datastore and privileges for this tenant.
@@ -216,16 +227,12 @@ class DockerVolumeTenant:
             each dict represent a privilege that the tenant has for a given datastore
 
             Example:
-            privileges = [{'datastore': 'datastore1',
-                           'create_volume': 0,
-                           'delete_volume': 0,
-                           'mount_volume': 1,
+            privileges = [{'datastore_url': 'datastore1_url',
+                           'allow_create': 1,
                            'max_volume_size': 0,
                            'usage_quota': 0},
-                          {'datastore': 'datastore2',
-                           'create_volume': 1,
-                           'delete_volume': 1,
-                           'mount_volume': 1,
+                          {'datastore_url': 'datastore2_url',
+                           'allow_create": 0,
                            'max_volume_size': 0,
                            'usage_quota': 0}]
         
@@ -240,8 +247,8 @@ class DockerVolumeTenant:
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO privileges VALUES
-                (:tenant_id, :datastore, :create_volume,
-                :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
+                (:tenant_id, :datastore_url, :allow_create,
+                 :max_volume_size, :usage_quota)
                 """,
                 privileges
             )
@@ -251,12 +258,12 @@ class DockerVolumeTenant:
                 # each dict represent a privilege that the tenant has for a given datastore
                 # for each dict, add a new element which maps 'tenant_id' to tenant_id 
                 p[auth_data_const.COL_TENANT_ID] = tenant_id
-                column_list = ['tenant_id', 'datastore', 'create_volume',
-                                'delete_volume', 'mount_volume', 'max_volume_size', 'usage_quota']
+                column_list = ['tenant_id', 'datastore_url', 'allow_create',
+                               'max_volume_size', 'usage_quota']
                 update_list = []
                 update_list = [p[col] for col in column_list]    
                 update_list.append(tenant_id)
-                update_list.append(p[auth_data_const.COL_DATASTORE])    
+                update_list.append(p[auth_data_const.COL_DATASTORE_URL])    
                 
                 logging.debug("set_datastore_access_privileges: update_list %s", update_list)
 
@@ -264,13 +271,11 @@ class DockerVolumeTenant:
                     """
                     UPDATE OR IGNORE privileges SET
                         tenant_id = ?, 
-                        datastore = ?, 
-                        create_volume = ?,
-                        delete_volume = ?,
-                        mount_volume = ?,
+                        datastore_url = ?, 
+                        allow_create = ?,
                         max_volume_size = ?,
                         usage_quota = ?
-                    WHERE tenant_id = ? AND datastore = ?
+                    WHERE tenant_id = ? AND datastore_url = ?
                     """,
                     update_list
                 )
@@ -282,18 +287,18 @@ class DockerVolumeTenant:
         
         return None
 
-    def remove_datastore_access_privileges(self, conn, datastore):
+    def remove_datastore_access_privileges(self, conn, datastore_url):
         """ Remove privileges from privileges table for this tenant. """
         tenant_id = self.id
         try:
             conn.execute(
-                    "DELETE FROM privileges WHERE tenant_id = ? AND datastore = ?", 
-                    [tenant_id, datastore]
+                    "DELETE FROM privileges WHERE tenant_id = ? AND datastore_url = ?", 
+                    [tenant_id, datastore_url]
             )
             conn.commit()
         except sqlite3.Error as e:
             logging.error("Error %s when removing from privileges table with tenant_id%s and "
-                "datastore %s", e, tenant_id, datastore)
+                "datastore %s", e, tenant_id, datastore_url)
             return str(e)
 
         return None
@@ -340,8 +345,6 @@ class AuthorizationDataManager:
         error_info, tenant = self.create_tenant(
                                            name=auth.DEFAULT_TENANT, 
                                            description="This is a default tenant", 
-                                           default_datastore="default_ds", 
-                                           default_privileges={}, 
                                            vms=[], 
                                            privileges=[])
         if error_info:
@@ -356,13 +359,12 @@ class AuthorizationDataManager:
         this privilege will have full permission (create, delete, and mount)
         and no max_volume_size and usage_quota limitation
         """ 
-
-        privileges = [{'datastore': auth.DEFAULT_DS,
-                       'create_volume': 1,
-                       'delete_volume': 1,
-                       'mount_volume': 1,
+        
+        privileges = [{'datastore_url': auth.DEFAULT_DS_URL,
+                       'allow_create': 1,
                        'max_volume_size': 0,
                        'usage_quota': 0}]
+
         error_info, tenant = self.get_tenant(auth.DEFAULT_TENANT)
         if error_info:
             err = error_code.TENANT_NOT_EXIST.format(auth.DEFAULT_TENANT)
@@ -374,6 +376,61 @@ class AuthorizationDataManager:
             err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
             logging.warning(err)
 
+    def get_db_version(self):
+        """
+        Get DB schema version from auth-db
+
+        """
+        major_ver = 0
+        minor_ver = 0
+
+        # check table "versions" exist or not
+        # if table "versions" does not exist, return major_ver=0 and minor_ver=0
+        try:
+            cur = self.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'versions';")
+            result = cur.fetchall()
+        except sqlite3.Error as e:
+            logging.error("Error %s when checking whether table versions exists or not", e)
+            return str(e), major_ver, minor_ver
+
+        if not result:
+        # table "versions" does not exist
+            return None, major_ver, minor_ver
+        
+        try:
+            cur = self.conn.execute("SELECT * FROM versions WHERE id = 0 ")
+            result = cur.fetchall()
+        except sqlite3.Error as e:
+            logging.error("Error %s when querying from table tenants versions", e)
+            return str(e), major_ver, minor_ver    
+        
+        major_ver = result[0][1]
+        minor_ver = result[0][2]
+        logging.debug("get_db_version: major_ver=%d minor_ver=%d", major_ver, minor_ver)
+        return None, major_ver, minor_ver
+
+    def need_upgrade_db(self):
+        """
+            Check whether auth-db schema need to be upgraded or not
+        """
+        major_ver = 0
+        minor_ver = 0
+        error_info, major_ver, minor_ver = self.get_db_version()
+        if error_info:
+            logging.error("need_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
+            return False
+        
+        if major_ver != DB_MAJOR_VER or minor_ver != DB_MINOR_VER:
+            auth_db_ver = get_version_str(major_ver, minor_ver)
+            curr_db_ver = get_version_str(DB_MAJOR_VER, DB_MINOR_VER)
+            logging.error("version %s in auth-db does not match latest DB version %s",
+                          auth_db_ver, curr_db_ver)
+            logging.error("DB upgrade is not supported. Please remove the DB file at %s. All existing configuration "
+                          "will be removed and need to be recreated after removing the DB file.", AUTH_DB_PATH)
+            return True
+        
+        return False
+        
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`. 
         
@@ -389,12 +446,18 @@ class AuthorizationDataManager:
         if not os.path.isfile(self.db_path):
             logging.debug("auth DB %s does not exist, try to create table", self.db_path)
             need_create_table = True
-            
-            
+
         self.conn = sqlite3.connect(self.db_path)
        
         if not self.conn:
             raise DbConnectionError(self.db_path)
+        
+        if not need_create_table:
+            if os.path.isfile(self.db_path) and self.need_upgrade_db():
+                # Currently, when need upgrade, raise exception
+                # TODO: add code to handle DB schema upgrade 
+                # when schema changes
+                raise DbConnectionError(self.db_path)        
         
         # Return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
@@ -403,7 +466,6 @@ class AuthorizationDataManager:
             self.create_tables()
             self.create_default_tenant()
             self.create_default_privileges()
-            
 
     def create_tables(self):
         """ Create tables used for per-datastore authorization.  
@@ -431,8 +493,8 @@ class AuthorizationDataManager:
                     -- brief description of the tenant, which is specified by user when creating the tenant
                     -- this field can be changed laster by using set_description API
                     description TEXT,
-                    -- not use currently
-                    default_datastore TEXT
+                    -- default_datastore url
+                    default_datastore_url TEXT
                     )
                 '''
             )
@@ -444,9 +506,6 @@ class AuthorizationDataManager:
                 -- this uuid will be passed in to executeRequest()
                 -- this field need to be specified when adding a VM to a tenant
                 vm_id TEXT PRIMARY KEY NOT NULL,
-                -- name of the VM, which is generated when VM is created
-                -- this field need to be specified when adding a VM to a tenant
-                vm_name TEXT,
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
@@ -460,16 +519,17 @@ class AuthorizationDataManager:
                 CREATE TABLE privileges(
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
-                -- datastore name
-                datastore TEXT NOT NULL,
-                create_volume INTEGER,
-                delete_volume INTEGER,
-                mount_volume INTEGER,
+                -- datastore url
+                datastore_url TEXT NOT NULL,
+                -- a boolean value, if it is set to True, tenant has full
+                -- privilege on this datastore; it it is set to False
+                -- tenant only has mount/unmount privilege on this datastore
+                allow_create INTEGER,
                 -- The unit of "max_volume_size" is "MB"
                 max_volume_size INTEGER,
                 -- The unit of usage_quota is "MB"
                 usage_quota INTEGER,
-                PRIMARY KEY (tenant_id, datastore),
+                PRIMARY KEY (tenant_id, datastore_url),
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
                 );
                 '''
@@ -480,15 +540,37 @@ class AuthorizationDataManager:
                 CREATE TABLE volumes (
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
-                -- datastore name
-                datastore TEXT NOT NULL,
+                -- datastore url
+                datastore_url TEXT NOT NULL,
                 volume_name TEXT,
                 -- The unit of "volume_size" is "MB"
                 volume_size INTEGER,
-                PRIMARY KEY(tenant_id, datastore, volume_name),
+                PRIMARY KEY(tenant_id, datastore_url, volume_name),
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
                 );
                 '''
+            )
+
+            self.conn.execute(
+                '''
+                CREATE TABLE versions (
+                id INTEGER PRIMARY KEY NOT NULL,
+                -- DB major version
+                major_ver INTEGER NOT NULL,
+                -- DB minor version
+                minor_ver INTEGER NOT NULL,
+                -- VMODL major version
+                vmodl_major_ver INTEGER NOT NULL,
+                -- VMODL minor version
+                vmodl_minor_ver INTEGER NOT NULL
+                );
+                '''
+            )
+
+            # insert latest DB version and VMODL version to table "versions"
+            self.conn.execute(
+                " INSERT INTO versions(id, major_ver, minor_ver, vmodl_major_ver, vmodl_minor_ver) VALUES (?, ?, ?, ?, ?)",
+                (0, DB_MAJOR_VER, DB_MINOR_VER, VMODL_MAJOR_VER, VMODL_MINOR_VER) 
             )
 
             self.conn.commit()
@@ -498,12 +580,11 @@ class AuthorizationDataManager:
 
         return None        
 
-    def create_tenant(self, name, description, default_datastore, default_privileges, 
-                      vms, privileges):
+    def create_tenant(self, name, description, vms, privileges):
         """ Create a tenant in the database. 
         
         A tenant id will be auto-generated and returned. 
-        vms are (vm_id, vm_name) pairs. Privileges are dictionaries
+        vms are list of vm_id. Privileges are dictionaries
         with keys matching the row names in the privileges table. Tenant id is
         filled in for both the vm and privileges tables.
 
@@ -514,12 +595,7 @@ class AuthorizationDataManager:
             error_info = error_code.TENANT_ALREADY_EXIST.format(name)
             logging.warning(error_info)
             return error_info, exist_tenant
-            
-        if default_privileges:
-            if not all_columns_set(default_privileges):
-                error_info = "Not all columns are set in default_privileges"
-                return error_info, None
-        
+
         if privileges:
             for p in privileges:
                 if not all_columns_set(p):
@@ -527,36 +603,28 @@ class AuthorizationDataManager:
                     return error_info, None
                     
         # Create the entry in the tenants table
-        tenant = DockerVolumeTenant(name, description, default_datastore,
-                                    default_privileges, vms, privileges)
+        default_datastore_url=""
+        tenant = DockerVolumeTenant(name=name, 
+                                    description=description, 
+                                    vms=vms,
+                                    privileges=privileges,
+                                    default_datastore_url=default_datastore_url)
         id = tenant.id
-       
         try:
             self.conn.execute(
-                "INSERT INTO tenants(id, name, description, default_datastore) VALUES (?, ?, ?, ?)",
-                (id, name, description, default_datastore)
+                "INSERT INTO tenants(id, name, description, default_datastore_url) VALUES (?, ?, ?, ?)",
+                (id, name, description, default_datastore_url)
             )
 
             # Create the entries in the vms table
-            vms = [(vm_id, vm_name, id) for (vm_id, vm_name) in vms]
+            vms = [(vm_id, id) for (vm_id) in vms]
                 
             if vms:
                 self.conn.executemany(
-                "INSERT INTO vms(vm_id, vm_name, tenant_id) VALUES (?, ?, ?)",
+                "INSERT INTO vms(vm_id, tenant_id) VALUES (?, ?)",
                 vms
                 )
 
-            # Create the entries in the privileges table
-            if default_privileges:
-                default_privileges[auth_data_const.COL_TENANT_ID] = id
-                self.conn.execute(
-                    """
-                    INSERT INTO privileges VALUES
-                    (:tenant_id, :datastore, :create_volume,
-                    :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
-                    """,
-                    default_privileges
-                )
             if privileges:
                 for p in privileges:
                     p[auth_data_const.COL_TENANT_ID] = id
@@ -564,15 +632,15 @@ class AuthorizationDataManager:
                 self.conn.executemany(
                     """
                     INSERT INTO privileges VALUES
-                    (:tenant_id, :datastore, :create_volume,
-                    :delete_volume, :mount_volume, :max_volume_size, :usage_quota)
+                    (:tenant_id, :datastore_url, :allow_create,
+                    :max_volume_size, :usage_quota)
                     """,
                     privileges
                 )
             self.conn.commit()
         except sqlite3.Error as e:
-            logging.error("Error %s when setting datastore and privileges for tenant_id %s", 
-                          e, tenant.id)
+            logging.error("Error %s when creating tenant for tenant_name %s tenant_id %s", 
+                          e, tenant.name, tenant.id)
             return str(e), tenant
 
         return None, tenant
@@ -593,10 +661,10 @@ class AuthorizationDataManager:
                 id = r[auth_data_const.COL_ID]
                 name = r[auth_data_const.COL_NAME]
                 description = r[auth_data_const.COL_DESCRIPTION]
-                default_datastore = r[auth_data_const.COL_DEFAULT_DATASTORE]
+                default_datastore_url = r[auth_data_const.COL_DEFAULT_DATASTORE_URL]
 
-                logging.debug("id=%s name=%s description=%s default_datastore=%s",
-                              id, name, description, default_datastore)
+                logging.debug("id=%s name=%s description=%s default_datastore_url=%s",
+                              id, name, description, default_datastore_url)
                 
                 # search vms for this tenant
                 vms = []
@@ -611,22 +679,18 @@ class AuthorizationDataManager:
                 # search privileges and default_privileges for this tenant
                 privileges = []
                 cur = self.conn.execute(
-                    "SELECT * FROM privileges WHERE tenant_id = ? AND datastore != ?",
-                    (id,default_datastore)    
+                    "SELECT * FROM privileges WHERE tenant_id = ?",
+                    (id,)    
                 )
                 privileges = cur.fetchall()
 
                 logging.debug("privileges=%s", privileges)
-
-                default_privileges = []
-                cur = self.conn.execute(
-                    "SELECT * FROM privileges WHERE tenant_id = ? AND datastore = ?",
-                    (id,default_datastore)    
-                )
-                default_privileges = cur.fetchall()
-                logging.debug("default_privileges=%s", default_privileges)
-                tenant = DockerVolumeTenant(name, description, default_datastore,
-                                            default_privileges, vms, privileges, id)
+                tenant = DockerVolumeTenant(name=name,
+                                            description=description,
+                                            vms=vms,
+                                            privileges=privileges,
+                                            id=id,
+                                            default_datastore_url=default_datastore_url)
         except sqlite3.Error as e:
             logging.error("Error %s when get tenant %s", e, tenant_name)
             return str(e), tenant
@@ -647,7 +711,7 @@ class AuthorizationDataManager:
                 id = r[auth_data_const.COL_ID]
                 name = r[auth_data_const.COL_NAME]
                 description = r[auth_data_const.COL_DESCRIPTION]
-                default_datastore = r[auth_data_const.COL_DEFAULT_DATASTORE]
+                default_datastore_url = r[auth_data_const.COL_DEFAULT_DATASTORE_URL]
                 
                 # search vms for this tenant
                 vms = []
@@ -660,19 +724,16 @@ class AuthorizationDataManager:
                 # search privileges and default_privileges for this tenant
                 privileges = []
                 cur = self.conn.execute(
-                    "SELECT * FROM privileges WHERE tenant_id = ? AND datastore != ?",
-                    (id,default_datastore)    
+                    "SELECT * FROM privileges WHERE tenant_id = ?",
+                    (id,)    
                 )
                 privileges = cur.fetchall()
-
-                default_privileges = []
-                cur = self.conn.execute(
-                    "SELECT * FROM privileges WHERE tenant_id = ? AND datastore = ?",
-                    (id,default_datastore)    
-                )
-                default_privileges = cur.fetchall()
-                tenant = DockerVolumeTenant(name, description, default_datastore,
-                                            default_privileges, vms, privileges, id)
+                tenant = DockerVolumeTenant(name=name,
+                                            description=description,
+                                            vms=vms,
+                                            privileges=privileges,
+                                            id=id,
+                                            default_datastore_url=default_datastore_url)
                 tenant_list.append(tenant)
         except sqlite3.Error as e:
             logging.error("Error %s when listing all tenants", e)

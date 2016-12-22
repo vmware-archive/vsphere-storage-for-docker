@@ -550,7 +550,7 @@ def getVMDK(vmdk_path, vol_name, datastore):
 
     return result
 
-def listVMDK(vm_datastore, tenant):
+def listVMDK(tenant):
     """
     Returns a list of volume names (note: may be an empty list).
     Each volume name is returned as either `volume@datastore`, or just `volume`
@@ -558,7 +558,7 @@ def listVMDK(vm_datastore, tenant):
     """
     vmdks = vmdk_utils.get_volumes(tenant)
     # build  fully qualified vol name for each volume found
-    return [{u'Name': get_full_vol_name(x['filename'], x['datastore'], vm_datastore),
+    return [{u'Name': get_full_vol_name(x['filename'], x['datastore']),
              u'Attributes': {}} \
             for x in vmdks]
 
@@ -671,15 +671,12 @@ def parse_vol_name(full_vol_name):
     return vol_name, ds_name
 
 
-def get_full_vol_name(vmdk_name, datastore, vm_datastore):
+def get_full_vol_name(vmdk_name, datastore):
     """
     Forms full volume name from vmdk file name an datastore as volume@datastore
-    For volumes on vm_datastore, just returns volume name
     """
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
-    logging.debug("get_full_vol_name: %s %s %s", vmdk_name, datastore, vm_datastore)
-    if datastore == vm_datastore:
-        return vol_name
+    logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
 
 
@@ -700,7 +697,9 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     """
     Executes a <cmd> request issused from a VM.
     The request is about volume <full_volume_name> in format volume@datastore.
-    If @datastore is omitted, the one where the VM resides is used.
+    If @datastore is omitted, "default_datastore" will be used if "default_datastore"
+    is specified for the tenant which VM belongs to;
+    the one where the VM resides is used is "default_datastore" is not specified.
     For VM, the function gets vm_uuid, vm_name and config_path
     <opts> is a json options string blindly passed to a specific operation
 
@@ -711,18 +710,33 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
+    if tenant_name == auth.DEFAULT_TENANT:
+        # for DEFAULT tenant, set default_datastore to vm_datastore
+        default_datastore = vm_datastore
+    else:
+        # if default_datastore is not set for tenant, error_info will be set to 
+        # DEFAULT_DS_NOT_SET, default_datastore will be set to None
+        error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
+        # default_datastore is not specified, use vm_datastore
+        if not default_datastore:
+            default_datastore = vm_datastore
+    
+    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
+                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)    
 
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
-        return listVMDK(vm_datastore, tenant_name)
+        # if default_datastore is not set, should return error
+        return listVMDK(tenant_name)
 
     try:
         vol_name, datastore = parse_vol_name(full_vol_name)
     except ValidationError as ex:
         return err(str(ex))
     if not datastore:
-        datastore = vm_datastore
-    elif not vmdk_utils.validate_datastore(datastore):
+        datastore = default_datastore
+
+    if not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
                 "Known datastores: %s.\n" \
                 "Default datastore: %s" \
@@ -816,11 +830,6 @@ def get_datastore_names_list():
     """returns names of known datastores"""
     return [i[0] for i in vmdk_utils.get_datastores()]
 
-def get_datastore_url(datastore):
-    si = get_si()
-    res = [d.info.url for d in si.content.rootFolder.childEntity[0].datastore if d.info.name == datastore]
-    return res[0]
-
 def findDeviceByPath(vmdk_path, vm):
     logging.debug("findDeviceByPath: Looking for device {0}".format(vmdk_path))
     for d in vm.config.hardware.device:
@@ -842,7 +851,7 @@ def findDeviceByPath(vmdk_path, vm):
         # Construct the parent dir and vmdk name, resolving
         # links if any.
         dvol_dir = os.path.dirname(vmdk_path)
-        datastore_url = get_datastore_url(datastore)
+        datastore_url = vmdk_utils.get_datastore_url(datastore)
         datastore_prefix = os.path.realpath(datastore_url) + '/'
         real_vol_dir = os.path.realpath(dvol_dir).replace(datastore_prefix, "")
         virtual_disk = os.path.join(real_vol_dir, os.path.basename(vmdk_path))

@@ -47,35 +47,32 @@ class TestAuthDataModel(unittest.TestCase):
         os.unlink(self.db_path)
 
     def get_privileges(self):
-        privileges = [{'datastore': 'datastore1',
-                       'create_volume': 0,
-                       'delete_volume': 0,
-                       'mount_volume': 0,
+        privileges = [{'datastore_url': 'datastore1_url',
+                       'allow_create': 0,
                        'max_volume_size': 0,
                        'usage_quota': 0}]
         return privileges
     
-    def get_default_datastore_and_privileges(self):
+    def get_default_datastore(self):
         default_datastore = 'default_ds'
-        default_privileges = {'datastore': default_datastore,
-                              'create_volume': 0,
-                              'delete_volume': 0,
-                              'mount_volume': 0,
-                              'max_volume_size': 0,
-                              'usage_quota': 0}
-        return default_datastore, default_privileges
+        return default_datastore
+
+    def get_datastore_url(self, datastore):
+        datastore_url = datastore+"_url"
+        return datastore_url
                 
     def test_create_tenant(self):
         """ Test create_tenant() API """
 
         vm1_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1')]
-        
-        #privileges = []
+        vms = [(vm1_uuid)]
         privileges = self.get_privileges()
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1', 
+                                                          description='Some tenant', 
+                                                          vms=vms, 
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)                                            
         self.assertTrue(uuid.UUID(tenant1.id))
 
@@ -84,12 +81,11 @@ class TestAuthDataModel(unittest.TestCase):
         self.assertEqual(error_info, None)
         expected_output = [tenant1.id,
                            'tenant1',
-                           'Some tenant',
-                           'default_ds']
+                           'Some tenant']
+
         actual_output = [tenants_row[auth_data_const.COL_ID],
                          tenants_row[auth_data_const.COL_NAME],
-                         tenants_row[auth_data_const.COL_DESCRIPTION],
-                         tenants_row[auth_data_const.COL_DEFAULT_DATASTORE]
+                         tenants_row[auth_data_const.COL_DESCRIPTION]
                         ]
                           
         self.assertEqual(actual_output, expected_output)
@@ -98,12 +94,10 @@ class TestAuthDataModel(unittest.TestCase):
         error_info, vms_row = auth.get_row_from_vms_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
         expected_output = [vm1_uuid,
-                           'vm1',
                            tenant1.id]
         self.assertEqual(len(vms_row), 1)
 
         actual_output = [vms_row[0][auth_data_const.COL_VM_ID],
-                         vms_row[0][auth_data_const.COL_VM_NAME],
                          vms_row[0][auth_data_const.COL_TENANT_ID]
                         ]
         self.assertEqual(actual_output, expected_output)
@@ -111,46 +105,26 @@ class TestAuthDataModel(unittest.TestCase):
         # check privileges table
         error_info, privileges_row = auth.get_row_from_privileges_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
-        self.assertEqual(len(privileges_row), 2)
+        self.assertEqual(len(privileges_row), 1)
 
         expected_privileges = [tenant1.id,
-                               privileges[0][auth_data_const.COL_DATASTORE],
-                               privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                               privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                               privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                               privileges[0][auth_data_const.COL_DATASTORE_URL],
+                               privileges[0][auth_data_const.COL_ALLOW_CREATE],
                                privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                privileges[0][auth_data_const.COL_USAGE_QUOTA]
                               ]
-        expected_default_privileges = [tenant1.id,
-                                       default_privileges[auth_data_const.COL_DATASTORE],
-                                       default_privileges[auth_data_const.COL_CREATE_VOLUME],
-                                       default_privileges[auth_data_const.COL_DELETE_VOLUME],
-                                       default_privileges[auth_data_const.COL_MOUNT_VOLUME],
-                                       default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
-                                       default_privileges[auth_data_const.COL_USAGE_QUOTA]
-                                      ]
-
-        expected_output = [expected_privileges, 
-                           expected_default_privileges
+        
+        expected_output = [expected_privileges 
                           ]
          
         actual_privileges = [privileges_row[0][auth_data_const.COL_TENANT_ID],
-                             privileges_row[0][auth_data_const.COL_DATASTORE],
-                             privileges_row[0][auth_data_const.COL_CREATE_VOLUME],
-                             privileges_row[0][auth_data_const.COL_DELETE_VOLUME],
-                             privileges_row[0][auth_data_const.COL_MOUNT_VOLUME],
+                             privileges_row[0][auth_data_const.COL_DATASTORE_URL],
+                             privileges_row[0][auth_data_const.COL_ALLOW_CREATE],
                              privileges_row[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                              privileges_row[0][auth_data_const.COL_USAGE_QUOTA]
                              ]
-        actual_default_privileges = [privileges_row[1][auth_data_const.COL_TENANT_ID],
-                                     privileges_row[1][auth_data_const.COL_DATASTORE],
-                                     privileges_row[1][auth_data_const.COL_CREATE_VOLUME],
-                                     privileges_row[1][auth_data_const.COL_DELETE_VOLUME],
-                                     privileges_row[1][auth_data_const.COL_MOUNT_VOLUME],
-                                     privileges_row[1][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                     privileges_row[1][auth_data_const.COL_USAGE_QUOTA]
-                                    ]
-        actual_output = [actual_privileges, actual_default_privileges]
+
+        actual_output = [actual_privileges]
         self.assertEqual(actual_output, expected_output)        
             
     def test_add_vms(self): 
@@ -158,32 +132,32 @@ class TestAuthDataModel(unittest.TestCase):
 
         vms = []
         privileges = []
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1', 
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         
         vm1_uuid = str(uuid.uuid4())
         vm2_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1'), (vm2_uuid, 'vm2')]
+        vms = [(vm1_uuid), (vm2_uuid)]
         error_info = tenant1.add_vms(self.auth_mgr.conn, vms)
         self.assertEqual(error_info, None)
 
          # check vms table 
         error_info, vms_row = auth.get_row_from_vms_table(self.auth_mgr.conn,tenant1.id)
         self.assertEqual(error_info, None)
-        expected_output = [(vm1_uuid, 'vm1', tenant1.id),
-                           (vm2_uuid, 'vm2', tenant1.id) 
+        expected_output = [(vm1_uuid, tenant1.id),
+                           (vm2_uuid, tenant1.id) 
                           ]
         self.assertEqual(len(vms_row), 2)
 
         actual_output = [(vms_row[0][auth_data_const.COL_VM_ID],
-                          vms_row[0][auth_data_const.COL_VM_NAME],
                           vms_row[0][auth_data_const.COL_TENANT_ID]),
                          (vms_row[1][auth_data_const.COL_VM_ID],
-                          vms_row[1][auth_data_const.COL_VM_NAME],
                           vms_row[1][auth_data_const.COL_TENANT_ID]),
                         ]
         self.assertEqual(actual_output, expected_output)
@@ -193,13 +167,16 @@ class TestAuthDataModel(unittest.TestCase):
         """
             
         privileges = self.get_privileges()
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+
         vm1_uuid = str(uuid.uuid4())
         vm2_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1'), (vm2_uuid, 'vm2')]
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        vms = [(vm1_uuid), (vm2_uuid)]
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         error_info = tenant1.remove_vms(self.auth_mgr.conn, vms)
@@ -211,12 +188,15 @@ class TestAuthDataModel(unittest.TestCase):
     
     def test_set_name(self):
         vm1_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1')]
+        vms = [(vm1_uuid)]
         
         privileges = self.get_privileges()
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
 
@@ -231,11 +211,12 @@ class TestAuthDataModel(unittest.TestCase):
     
     def test_set_description(self):
         vm1_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1')]
+        vms = [(vm1_uuid)]
         privileges = self.get_privileges()
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         error_info = tenant1.set_description(self.auth_mgr.conn, 'new description')
@@ -246,71 +227,45 @@ class TestAuthDataModel(unittest.TestCase):
         actual_output = tenants_row[auth_data_const.COL_DESCRIPTION]
         self.assertEqual(actual_output, expected_output)
     
-    def test_set_default_datastore_and_privileges(self):
+    def test_set_default_datastore(self):
         vm1_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1')]
+        vms = [(vm1_uuid)]
         privileges = self.get_privileges()
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant', 
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
 
         default_datastore = 'new_default_ds'
-        default_privileges = {'datastore': default_datastore,
-                              'create_volume': 1,
-                              'delete_volume': 1,
-                              'mount_volume': 1,
-                              'max_volume_size': 0,
-                              'usage_quota': 0}
-        error_info = tenant1.set_default_datastore_and_privileges(self.auth_mgr.conn, default_datastore, default_privileges)
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info = tenant1.set_default_datastore(self.auth_mgr.conn, default_datastore_url)
         self.assertEqual(error_info, None)
         # Check tenants table
         error_info, tenants_row = auth.get_row_from_tenants_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
-        expected_output = 'new_default_ds'
-        actual_output = tenants_row[auth_data_const.COL_DEFAULT_DATASTORE]
-        self.assertEqual(actual_output, expected_output)
-
-        #check privileges table
-        error_info, privileges_row = auth.get_row_from_privileges_table(self.auth_mgr.conn, tenant1.id)
-        self.assertEqual(error_info, None)
-        self.assertEqual(len(privileges_row), 2)
-        expected_default_privileges = [tenant1.id,
-                                       default_privileges[auth_data_const.COL_DATASTORE],
-                                       default_privileges[auth_data_const.COL_CREATE_VOLUME],
-                                       default_privileges[auth_data_const.COL_DELETE_VOLUME],
-                                       default_privileges[auth_data_const.COL_MOUNT_VOLUME],
-                                       default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
-                                       default_privileges[auth_data_const.COL_USAGE_QUOTA]
-                                      ]
-                 
-        actual_default_privileges = [privileges_row[1][auth_data_const.COL_TENANT_ID],
-                                     privileges_row[1][auth_data_const.COL_DATASTORE],
-                                     privileges_row[1][auth_data_const.COL_CREATE_VOLUME],
-                                     privileges_row[1][auth_data_const.COL_DELETE_VOLUME],
-                                     privileges_row[1][auth_data_const.COL_MOUNT_VOLUME],
-                                     privileges_row[1][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                     privileges_row[1][auth_data_const.COL_USAGE_QUOTA]
-                                    ]
-        self.assertEqual(actual_default_privileges, expected_default_privileges)                
-                                                      
+        expected_output = 'new_default_ds_url'
+        actual_output = tenants_row[auth_data_const.COL_DEFAULT_DATASTORE_URL]
+        self.assertEqual(actual_output, expected_output)                                              
     
     def test_add_datastore_access_privileges(self):
         vm1_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1')]
+        vms = [(vm1_uuid)]
         privileges = []
         
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
                
-        privileges = [{'datastore': 'datastore1',
-                       'create_volume': 1,
-                       'delete_volume': 1,
-                       'mount_volume': 0,
+        datastore_url = self.get_datastore_url('datastore1')
+        privileges = [{'datastore_url': datastore_url,
+                       'allow_create': 0,
                        'max_volume_size': 0,
                        'usage_quota': 0}]
         
@@ -320,21 +275,17 @@ class TestAuthDataModel(unittest.TestCase):
         #check privileges table
         error_info, privileges_row = auth.get_row_from_privileges_table(self.auth_mgr.conn, tenant1.id)
         self.assertEqual(error_info, None)
-        self.assertEqual(len(privileges_row), 2)
+        self.assertEqual(len(privileges_row), 1)
         expected_privileges = [tenant1.id,
-                               privileges[0][auth_data_const.COL_DATASTORE],
-                               privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                               privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                               privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                               privileges[0][auth_data_const.COL_DATASTORE_URL],
+                               privileges[0][auth_data_const.COL_ALLOW_CREATE],
                                privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                privileges[0][auth_data_const.COL_USAGE_QUOTA]
                               ]
                  
         actual_privileges = [privileges_row[0][auth_data_const.COL_TENANT_ID],
-                             privileges_row[0][auth_data_const.COL_DATASTORE],
-                             privileges_row[0][auth_data_const.COL_CREATE_VOLUME],
-                             privileges_row[0][auth_data_const.COL_DELETE_VOLUME],
-                             privileges_row[0][auth_data_const.COL_MOUNT_VOLUME],
+                             privileges_row[0][auth_data_const.COL_DATASTORE_URL],
+                             privileges_row[0][auth_data_const.COL_ALLOW_CREATE],
                              privileges_row[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                              privileges_row[0][auth_data_const.COL_USAGE_QUOTA]
                              ]
@@ -350,27 +301,31 @@ class TestAuthDataModel(unittest.TestCase):
 
     def test_list_tenants(self):
         vm1_uuid = str(uuid.uuid4())
-        vms = [(vm1_uuid, 'vm1')]
+        vms = [(vm1_uuid)]
         privileges = []
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         
         vm2_uuid = str(uuid.uuid4())
         vm3_uuid = str(uuid.uuid4())
-        vms = [(vm2_uuid, 'vm2'), (vm3_uuid, 'vm3')]
+        vms = [(vm2_uuid), (vm3_uuid)]
         privileges = []
-        error_info, tenant2 = self.auth_mgr.create_tenant('tenant2', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        error_info, tenant2 = self.auth_mgr.create_tenant(name='tenant2',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant2.id))
         
-        privileges = [{'datastore': 'datastore1',
-                       'create_volume': 0,
-                       'delete_volume': 0,
-                       'mount_volume': 0,
+        datastore_url = self.get_datastore_url('datastore1')
+        privileges = [{'datastore_url': datastore_url,
+                       'allow_create': 0,
                        'max_volume_size': 0,
                        'usage_quota': 0}]
 
@@ -389,111 +344,69 @@ class TestAuthDataModel(unittest.TestCase):
                                    tenant1.id,
                                    'tenant1',
                                    'Some tenant',
-                                   'default_ds',
+                                   '',
                                   ]
         tenant1_actual_output = [
                                  tenants_list[tenant1_idx].id,
                                  tenants_list[tenant1_idx].name,
                                  tenants_list[tenant1_idx].description,
-                                 tenants_list[tenant1_idx].default_datastore,
+                                 tenants_list[tenant1_idx].default_datastore_url,
                                 ]
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
 
         # check vms
-        tenant1_expected_output = [(vm1_uuid, 'vm1', tenant1.id),
+        tenant1_expected_output = [(vm1_uuid, tenant1.id),
                                   ]
         tenant1_actual_output = [(tenants_list[tenant1_idx].vms[0][auth_data_const.COL_VM_ID],
-                                 tenants_list[tenant1_idx].vms[0][auth_data_const.COL_VM_NAME],
                                  tenants_list[tenant1_idx].vms[0][auth_data_const.COL_TENANT_ID])
                                 ]
 
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
-
-        # check default_privileges
-        tenant1_expected_output = [tenant1.id,
-                                   default_privileges[auth_data_const.COL_DATASTORE],
-                                   default_privileges[auth_data_const.COL_CREATE_VOLUME],
-                                   default_privileges[auth_data_const.COL_DELETE_VOLUME],
-                                   default_privileges[auth_data_const.COL_MOUNT_VOLUME],
-                                   default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
-                                   default_privileges[auth_data_const.COL_USAGE_QUOTA]
-                                   ]
-        tenant1_actual_output = [tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
-                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                 tenants_list[tenant1_idx].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
-                                 ]
                 
         # check privileges
+        tenant1_expected_output = []
+        tenant1_actual_output = tenants_list[tenant1_idx] 
         tenant1_expected_output = [tenant1.id,
-                                   privileges[0][auth_data_const.COL_DATASTORE],
-                                   privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                   privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                   privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                                   privileges[0][auth_data_const.COL_DATASTORE_URL],
+                                   privileges[0][auth_data_const.COL_ALLOW_CREATE],
                                    privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                    privileges[0][auth_data_const.COL_USAGE_QUOTA]
-                                   ]
+                                  ]
+                 
         tenant1_actual_output = [tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_MOUNT_VOLUME],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_DATASTORE_URL],
+                                 tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_ALLOW_CREATE],
                                  tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
                                  tenants_list[tenant1_idx].privileges[0][auth_data_const.COL_USAGE_QUOTA]
-                                 ]
+                                ]
                         
         self.assertEqual(tenant1_actual_output, tenant1_expected_output)
-
 
         # check for tenant2
         tenant2_expected_output = [
                                    tenant2.id,
                                    'tenant2',
                                    'Some tenant',
-                                   'default_ds',
+                                   '',
                                   ]
         tenant2_actual_output = [
                                  tenants_list[tenant2_idx].id,
                                  tenants_list[tenant2_idx].name,
                                  tenants_list[tenant2_idx].description,
-                                 tenants_list[tenant2_idx].default_datastore,
+                                 tenants_list[tenant2_idx].default_datastore_url,
                                 ]
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 
         # check vms
         self.assertEqual(len(tenants_list[tenant2_idx].vms), 2)
-        tenant2_expected_output = [(vm2_uuid, 'vm2', tenant2.id),
-                                   (vm3_uuid, 'vm3', tenant2.id)
+        tenant2_expected_output = [(vm2_uuid, tenant2.id),
+                                   (vm3_uuid, tenant2.id)
                                   ]
         tenant2_actual_output = [(tenants_list[tenant2_idx].vms[0][auth_data_const.COL_VM_ID],
-                                 tenants_list[tenant2_idx].vms[0][auth_data_const.COL_VM_NAME],
                                  tenants_list[tenant2_idx].vms[0][auth_data_const.COL_TENANT_ID]),
                                  (tenants_list[tenant2_idx].vms[1][auth_data_const.COL_VM_ID],
-                                 tenants_list[tenant2_idx].vms[1][auth_data_const.COL_VM_NAME],
                                  tenants_list[tenant2_idx].vms[1][auth_data_const.COL_TENANT_ID]),
                                 ]
-        self.assertEqual(tenant2_actual_output, tenant2_expected_output)
-
-        # check default_privileges
-        tenant2_expected_output = [tenant2.id,
-                                   default_privileges[auth_data_const.COL_DATASTORE],
-                                   default_privileges[auth_data_const.COL_CREATE_VOLUME],
-                                   default_privileges[auth_data_const.COL_DELETE_VOLUME],
-                                   default_privileges[auth_data_const.COL_MOUNT_VOLUME],
-                                   default_privileges[auth_data_const.COL_MAX_VOLUME_SIZE],
-                                   default_privileges[auth_data_const.COL_USAGE_QUOTA]
-                                   ]
-        tenant2_actual_output = [tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_TENANT_ID],
-                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_DATASTORE],
-                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_CREATE_VOLUME],
-                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_DELETE_VOLUME],
-                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_MOUNT_VOLUME],
-                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_MAX_VOLUME_SIZE],
-                                 tenants_list[tenant2_idx].default_privileges[0][auth_data_const.COL_USAGE_QUOTA]
-                                 ]   
         self.assertEqual(tenant2_actual_output, tenant2_expected_output)
 
         # check privileges
@@ -504,19 +417,24 @@ class TestAuthDataModel(unittest.TestCase):
           
          
     def test_remove_tenants(self):
-        vms = [(str(uuid.uuid4()), 'vm1')]
+        vms = [(str(uuid.uuid4()))]
         
         privileges = self.get_privileges()
-        default_datastore, default_privileges = self.get_default_datastore_and_privileges()
-        error_info, tenant1 = self.auth_mgr.create_tenant('tenant1', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        default_datastore = self.get_default_datastore()
+        default_datastore_url = self.get_datastore_url(default_datastore)
+        error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         
-        vms = [(str(uuid.uuid4()), 'vm2'), (str(uuid.uuid4()), 'vm3')]
+        vms = [(str(uuid.uuid4())), (str(uuid.uuid4()))]
         privileges = []
-        error_info, tenant2 = self.auth_mgr.create_tenant('tenant2', 'Some tenant', default_datastore,
-                                              default_privileges, vms, privileges)
+        error_info, tenant2 = self.auth_mgr.create_tenant(name='tenant2',
+                                                          description='Some tenant',
+                                                          vms=vms,
+                                                          privileges=privileges)
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant2.id))
      
