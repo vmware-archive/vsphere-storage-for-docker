@@ -37,7 +37,7 @@ optional arguments:
 ```
 
 ### Create
-A tenant named "_DEFAULT" should have been created by system automatically before users try to create any tenant.
+A tenant named "_DEFAULT" will be created automatically post install.
 
 Creates a new named tenant and optionally assigns VMs.
 
@@ -100,7 +100,7 @@ optional arguments:
 ```
 
 ### Update
-Update existing tenant. This command allows to update "Description", "Default_datastore" or rename an existing tenant.
+Update existing tenant. This command allows to update "Description" and "Default_datastore" fields, or rename an existing tenant.
 Sample:
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
@@ -308,7 +308,7 @@ optional arguments:
                         on the datastore for this tenant
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
-  --allow-create        Allow create and delete on datastore if set to True
+  --allow-create        Allow create and delete on the datastore if set to True
   --name NAME           The name of the tenant
   --default-datastore   Mark datastore as a default datastore for this tenant
   --datastore DATASTORE
