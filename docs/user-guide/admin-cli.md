@@ -100,8 +100,8 @@ optional arguments:
 ```
 
 ### Update
-Update existing tenants.
-
+Update existing tenant. This command allows to update "Description", "Default_datastore" or rename an existing tenant.
+Sample:
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
 Uuid                                  Name      Description               Default_datastore  VM_list 
@@ -135,6 +135,33 @@ optional arguments:
   --description DESCRIPTION
                         The new description of the tenant
   --new-name NEW_NAME   The new name of the tenant
+
+```
+
+### Remove
+Remove a tenant, optionally all volumes for a tenant can be removed as well.
+
+Sample:
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
+All Volumes will be removed
+tenant rm succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+```
+
+#### Help
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
+usage: vmdkops_admin.py tenant rm [-h] --name NAME [--remove-volumes]
+
+optional arguments:
+  -h, --help        show this help message and exit
+  --name NAME       The name of the tenant
+  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
+                    tenant  
 
 ```
 
@@ -206,7 +233,7 @@ optional arguments:
 #### Add
 Grants datastore access to a tenant. 
 
-The datastore will be automatically set to "default_datastore" for the tenant 
+The datastore will be automatically set as "default_datastore" for the tenant 
 when you grant first datastore access for a tenant.
 
 Sample:
@@ -222,7 +249,7 @@ Uuid                                  Name      Description               Defaul
 c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                             datastore1         photon4  
 ```
 
-The datastore will be set to "default_datastore" for the tenant when you grant datastore access for a tenant with "--default-datastore" flag.
+The datastore will be set as "default_datastore" for the tenant when you grant datastore access for a tenant with "--default-datastore" flag.
 
 Sample:
 
@@ -297,6 +324,7 @@ When displaying the result keep in mind:
 - For capacity Unset indicates no limits
 
 ```bash
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
 Datastore   Allow_create  Max_volume_size  Total_size  
 ----------  ------------  ---------------  ----------  
 datastore1  True          Unset            Unset    
@@ -376,33 +404,6 @@ optional arguments:
   --allow-create        Allow create and delete on datastore if set to True
   --datastore DATASTORE
                         Datastore name
-
-```
-
-### Remove
-Remove a tenant, optionally all volumes for a tenant can be removed as well.
-
-Sample:
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
-All Volumes will be removed
-tenant rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list  
-------------------------------------  --------  ------------------------  -----------------  -------  
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
-```
-
-#### Help
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
-usage: vmdkops_admin.py tenant rm [-h] --name NAME [--remove-volumes]
-
-optional arguments:
-  -h, --help        show this help message and exit
-  --name NAME       The name of the tenant
-  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
-                    tenant  
 
 ```
 
