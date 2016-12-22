@@ -198,14 +198,14 @@ def has_privilege(privileges, type=None):
     """ Check whether the param "privileges" has the specific type of privilege set.
         There are two types of privilege: 
         - "mount_only" which means only mount and unmount are allowed
-        - "fully_access" which means create, remove, mount, unmount are
+        - "full_access" which means create, remove, mount, unmount are
         allowed
         a privilege with "allow_create=False" has "mount_only" privilege
-        a privilege with "allow_create=True" has "fully_access" privilege
+        a privilege with "allow_create=True" has "full_access" privilege
         if param "type" is not specified, which means only need to check
         whether the param "privileges" has the "mount_only" privilege or not;
         if param "allow_create" is specified, which means need to check
-        whether the input "privileges" has "fully_access" privilege or not
+        whether the input "privileges" has "full_access" privilege or not
     """
     # privileges is None, return False
     if not privileges:
