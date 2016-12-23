@@ -32,7 +32,7 @@ import (
 )
 
 /*
-#cgo CFLAGS: -I ../../esx_service/vmci
+#cgo CFLAGS: -I ../../../../esx_service/vmci
 #include "vmci_client.c"
 */
 import "C"

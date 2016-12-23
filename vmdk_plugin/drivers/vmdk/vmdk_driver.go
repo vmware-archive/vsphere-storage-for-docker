@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package vmdk
 
 //
 // VMWare VMDK Docker Data Volume plugin.
@@ -32,56 +32,72 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/vmdkops"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/exp/inotify"
 )
 
 const (
 	devWaitTimeout   = 1 * time.Second
-	mountRoot        = "/mnt/vmdk" // VMDK block devices are mounted here
 	sleepBeforeMount = 1 * time.Second
 	watchPath        = "/dev/disk/by-path"
+	version          = "VMDK Volume Driver v0.3"
+	driverName       = "vmdk"
 )
 
-type vmdkDriver struct {
+// VolumeDriver - VMDK driver struct
+type VolumeDriver struct {
 	useMockEsx bool
 	ops        vmdkops.VmdkOps
-	refCounts  *refCountsMap
+	refCounts  *refcount.RefCountsMap
 }
 
-// creates vmdkDriver which to real ESX (useMockEsx=False) or a mock
-func newVmdkDriver(useMockEsx bool) *vmdkDriver {
-	var d *vmdkDriver
+var mountRoot string
+
+// NewVolumeDriver creates Driver which to real ESX (useMockEsx=False) or a mock
+func NewVolumeDriver(port int, useMockEsx bool, mountDir string) *VolumeDriver {
+	var d *VolumeDriver
+
+	vmdkops.EsxPort = port
+	mountRoot = mountDir
+
 	if useMockEsx {
-		d = &vmdkDriver{
+		d = &VolumeDriver{
 			useMockEsx: true,
 			ops:        vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}},
-			refCounts:  newRefCountsMap(),
+			refCounts:  refcount.NewRefCountsMap(),
 		}
 	} else {
-		d = &vmdkDriver{
+		d = &VolumeDriver{
 			useMockEsx: false,
 			ops: vmdkops.VmdkOps{
 				Cmd: vmdkops.EsxVmdkCmd{
 					Mtx: &sync.Mutex{},
 				},
 			},
-			refCounts: newRefCountsMap(),
+			refCounts: refcount.NewRefCountsMap(),
 		}
-		d.refCounts.Init(d)
 	}
+
+	d.refCounts.Init(d, mountDir, driverName)
+	log.WithFields(log.Fields{
+		"version":  version,
+		"port":     vmdkops.EsxPort,
+		"mock_esx": useMockEsx,
+	}).Info("Docker VMDK plugin started ")
+
 	return d
 }
 
 // Return the number of references for the given volume
-func (d *vmdkDriver) getRefCount(vol string) uint { return d.refCounts.getCount(vol) }
+func (d *VolumeDriver) getRefCount(vol string) uint { return d.refCounts.GetCount(vol) }
 
 // Increment the reference count for the given volume
-func (d *vmdkDriver) incrRefCount(vol string) uint { return d.refCounts.incr(vol) }
+func (d *VolumeDriver) incrRefCount(vol string) uint { return d.refCounts.Incr(vol) }
 
 // Decrement the reference count for the given volume
-func (d *vmdkDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.decr(vol) }
+func (d *VolumeDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.Decr(vol) }
 
 // Returns the given volume mountpoint
 func getMountPoint(volName string) string {
@@ -89,8 +105,8 @@ func getMountPoint(volName string) string {
 }
 
 // Get info about a single volume
-func (d *vmdkDriver) Get(r volume.Request) volume.Response {
-	status, err := d.ops.Get(r.Name)
+func (d *VolumeDriver) Get(r volume.Request) volume.Response {
+	status, err := d.GetVolume(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -101,7 +117,7 @@ func (d *vmdkDriver) Get(r volume.Request) volume.Response {
 }
 
 // List volumes known to the driver
-func (d *vmdkDriver) List(r volume.Request) volume.Response {
+func (d *VolumeDriver) List(r volume.Request) volume.Response {
 	volumes, err := d.ops.List()
 	if err != nil {
 		return volume.Response{Err: err.Error()}
@@ -115,10 +131,15 @@ func (d *vmdkDriver) List(r volume.Request) volume.Response {
 	return volume.Response{Volumes: responseVolumes}
 }
 
-// Request attach and them mounts the volume.
+// GetVolume - return volume meta-data.
+func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
+	return d.ops.Get(name)
+}
+
+// MountVolume - Request attach and them mounts the volume.
 // Actual mount - send attach to ESX and do the in-guest magic
 // Returns mount point and  error (or nil)
-func (d *vmdkDriver) mountVolume(name string, fstype string, isReadOnly bool) (string, error) {
+func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
 	mountpoint := getMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
@@ -196,8 +217,8 @@ loop:
 	return mountpoint, fs.Mount(mountpoint, fstype, device, isReadOnly)
 }
 
-// Unmounts the volume and then requests detach
-func (d *vmdkDriver) unmountVolume(name string) error {
+// UnmountVolume - Unmounts the volume and then requests detach
+func (d *VolumeDriver) UnmountVolume(name string) error {
 	mountpoint := getMountPoint(name)
 	err := fs.Unmount(mountpoint)
 	if err != nil {
@@ -209,11 +230,12 @@ func (d *vmdkDriver) unmountVolume(name string) error {
 	return d.ops.Detach(name, nil)
 }
 
-// The user wants to create a volume.
 // No need to actually manifest the volume on the filesystem yet
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
-func (d *vmdkDriver) Create(r volume.Request) volume.Response {
+
+// Create - create a volume.
+func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 
 	// If cloning a existent volume, create and return
 	if _, result := r.Options["clone-from"]; result == true {
@@ -313,8 +335,8 @@ func (d *vmdkDriver) Create(r volume.Request) volume.Response {
 	return volume.Response{Err: ""}
 }
 
-// removes individual volume. Docker would call it only if is not using it anymore
-func (d *vmdkDriver) Remove(r volume.Request) volume.Response {
+// Remove - removes individual volume. Docker would call it only if is not using it anymore
+func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
@@ -336,12 +358,12 @@ func (d *vmdkDriver) Remove(r volume.Request) volume.Response {
 	return volume.Response{Err: ""}
 }
 
-// give docker a reminder of the volume mount path
-func (d *vmdkDriver) Path(r volume.Request) volume.Response {
+// Path - give docker a reminder of the volume mount path
+func (d *VolumeDriver) Path(r volume.Request) volume.Response {
 	return volume.Response{Mountpoint: getMountPoint(r.Name)}
 }
 
-// Provide a volume to docker container - called once per container start.
+// Mount - Provide a volume to docker container - called once per container start.
 // We need to keep refcount and unmount on refcount drop to 0
 //
 // The serialization of operations per volume is assured by the volume/store
@@ -349,7 +371,7 @@ func (d *vmdkDriver) Path(r volume.Request) volume.Response {
 // As long as the refCountsMap is protected is unnecessary to do any locking
 // at this level during create/mount/umount/remove.
 //
-func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
+func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
 	// If the volume is already mounted , just increase the refcount.
@@ -399,7 +421,7 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	}
 	fstype = value
 
-	mountpoint, err := d.mountVolume(r.Name, fstype, isReadOnly)
+	mountpoint, err := d.MountVolume(r.Name, fstype, "", isReadOnly, false)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
@@ -410,9 +432,9 @@ func (d *vmdkDriver) Mount(r volume.MountRequest) volume.Response {
 	return volume.Response{Mountpoint: mountpoint}
 }
 
-// Unmount request from Docker. If mount refcount is drop to 0,
-// unmount and detach from VM
-func (d *vmdkDriver) Unmount(r volume.UnmountRequest) volume.Response {
+// Unmount request from Docker. If mount refcount is drop to 0.
+// Unmount and detach from VM
+func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
 	// if the volume is still used by other containers, just return OK
@@ -432,7 +454,7 @@ func (d *vmdkDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	}
 
 	// and if nobody needs it, unmount and detach
-	err = d.unmountVolume(r.Name)
+	err = d.UnmountVolume(r.Name)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
@@ -442,7 +464,7 @@ func (d *vmdkDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	return volume.Response{Err: ""}
 }
 
-// Report plugin scope to Docker
-func (d *vmdkDriver) Capabilities(r volume.Request) volume.Response {
+// Capabilities - Report plugin scope to Docker
+func (d *VolumeDriver) Capabilities(r volume.Request) volume.Response {
 	return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
 }

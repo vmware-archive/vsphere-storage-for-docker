@@ -21,8 +21,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"testing"
 	"strings"
+	"testing"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
@@ -32,6 +32,7 @@ import (
 	"github.com/docker/engine-api/types/strslice"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/net/context"
 )
 
@@ -44,6 +45,11 @@ const (
 
 var (
 	// flag vars - see init() for help
+	endPoint1        string
+	endPoint2        string
+	volumeName       string
+	driverName       string
+	defaultHeaders   map[string]string
 	removeContainers bool
 	parallelVolumes  int
 	parallelClones   int
@@ -186,7 +192,7 @@ func getClients(t *testing.T) []testClient {
 	}
 
 	for idx, elem := range clients {
-		c, err := client.NewClient(elem.endPoint, apiVersion, nil, defaultHeaders)
+		c, err := client.NewClient(elem.endPoint, refcount.ApiVersion, nil, defaultHeaders)
 		if err != nil {
 			t.Fatalf("Failed to connect to %s, err: %v", elem.endPoint, err)
 		}
