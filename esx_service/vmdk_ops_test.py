@@ -388,7 +388,7 @@ class ValidationTestCase(unittest.TestCase):
             with self.assertRaises(vmdk_ops.ValidationError):
                 vmdk_ops.validate_opts(opts, self.path)
 
-def create_vm(si, vm_name, datastore):
+def create_vm(si, vm_name, datastore_name):
         """ Create a VM """
         content = si.RetrieveContent()
         datacenter = content.rootFolder.childEntity[0]
@@ -397,14 +397,11 @@ def create_vm(si, vm_name, datastore):
         resource_pool = hosts[0].resourcePool
         logging.info("datacenter={0} vm_folder={1} hosts={2} resource_pool={3}".format(datacenter, vm_folder,
                                                                                        hosts, resource_pool))
-
-        datastore_path = '[' + datastore + '] ' + vm_name
-
         # bare minimum VM shell, no disks. Feel free to edit
         vmx_file = vim.vm.FileInfo(logDirectory=None,
                                    snapshotDirectory=None,
                                    suspendDirectory=None,
-                                   vmPathName=datastore_path)
+                                   vmPathName='[' + datastore_name + '] ')
 
 
         config = vim.vm.ConfigSpec( 
@@ -479,7 +476,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
         si = vmdk_ops.get_si()
         error, self.vm = create_vm(si=si, 
                                    vm_name=self.vm_name, 
-                                   datastore=self.datastore_name)
+                                   datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
 
@@ -744,7 +741,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         si = vmdk_ops.get_si()
         error, self.vm1 = create_vm(si=si, 
                                     vm_name=self.vm1_name, 
-                                    datastore=self.datastore_name)
+                                    datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
 
@@ -752,7 +749,7 @@ class VmdkTenantTestCase(unittest.TestCase):
 
         error, self.vm2 = create_vm(si=si, 
                                     vm_name=self.vm2_name, 
-                                    datastore=self.datastore_name)
+                                    datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
         self.vm2_config_path = vmdk_utils.get_vm_config_path(self.vm2_name)
