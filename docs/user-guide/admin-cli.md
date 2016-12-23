@@ -371,15 +371,15 @@ Sample:
 
 ```shell
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
-Datastore   Allow_create  Max_volume_size  Total_size  
-----------  ------------  ---------------  ----------  
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
 datastore1  False         500.00MB         1.00GB      
 
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=1000MB --volume-totalsize=2GB
 tenant access set succeeded
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
-Datastore   Allow_create  Max_volume_size  Total_size  
-----------  ------------  ---------------  ----------  
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
 datastore1  True          1000.00MB        2.00GB      
 ```
 
