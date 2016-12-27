@@ -237,6 +237,9 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 // Create - create a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 
+	if r.Options == nil {
+		r.Options = make(map[string]string)
+	}
 	// If cloning a existent volume, create and return
 	if _, result := r.Options["clone-from"]; result == true {
 		errClone := d.ops.Create(r.Name, r.Options)
