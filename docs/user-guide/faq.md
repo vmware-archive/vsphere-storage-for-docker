@@ -36,3 +36,116 @@ It occurs if the Docker volume service cannot communicate to the ESX back end. T
 97 is a standard linux error (```#define EAFNOSUPPORT    97      /* Address family not supported by protocol */```)
 
 It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read ["What is VMCI and vSock and why is it needed?"](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed) above.
+
+## Upgrade to version 0.10 (Dec 2016) release
+
+Tenancy changes in release 0.10 need a manual upgrade process enumerated below.
+***Save the desired tenancy configuration before upgrade***
+
+### How to know if auth-db upgrade is needed post install?
+
+After installing the new build, type command “tenant ls”
+Check for failure to connect to auth DB.
+
+```
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Failed to connect auth DB(DB connection error /etc/vmware/vmdkops/auth-db)
+```
+
+The corresponding errors in the vmdk_ops.log file.
+
+```
+[root@localhost:~] cat /var/log/vmware/vmdk_ops.log
+ 
+08/29/16 08:20:23 297059 [MainThread] [ERROR  ] version 0.0 in auth-db does not match latest DB version 1.0
+08/29/16 08:20:23 297059 [MainThread] [ERROR  ] DB upgrade is not supported. Please remove the DB file at /etc/vmware/vmdkops/auth-db. All existing configuration will be removed and need to be recreated after removing the DB file.
+```
+ 
+### How to handle the upgrade manually?
+
+#### Case 1: No tenant configured before
+ 
+If no tenants have been configured, then it just delete the auth-db file
+
+Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
+
+``` 
+[root@localhost:/etc/vmware/vmdkops]rm /etc/vmware/vmdkops/auth-db
+```
+
+Step 2: Verify “tenant ls” command
+``` 
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list 
+------------------------------------  --------  ------------------------  -----------------  ------- 
+775888a6-6e98-4f41-9ff2-2ab12afd98de  _DEFAULT  This is a default tenant
+```
+ 
+After this point, the manually upgrade is done, and tenancy operations will succeed.
+ 
+#### Case2:  Has tenant configured before
+Step 1: Store the current tenancy information.
+
+Example below has a tenant ```tenant1``` with VM ```photon4``` assigned to this tenant and one volumes: vol1@datastore1 created.
+
+```
+root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
+DRIVER              VOLUME NAME
+vmdk                vol1@datastore1
+```
+
+Step 1: Move the auth-db file at /etc/vmware/vmdkops/auth-db
+```
+[root@localhost:/etc/vmware/vmdkops]mv /etc/vmware/vmdkops/auth-db /etc/vmware/vmdkops/auth-db.backup.v10.upgrade
+```
+
+Step 2: Verify “tenant ls” command, now only  ```_DEFAULT``` should be listed.
+
+``` 
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list 
+------------------------------------  --------  ------------------------  -----------------  ------- 
+775888a6-6e98-4f41-9ff2-2ab12afd98de  _DEFAULT  This is a default tenant                             
+```
+
+Step 3: Recreate the tenant configuration with new name “new-tenant1” (associate the same VM photon4 to this new-tenant1), see the following example:
+
+***Note: Please DO NOT create the tenant with the old name “tenant1”!!!***
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=new-tenant1  --vm-list=photon4
+tenant create succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=new-tenant1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
+tenant access add succeeded
+ 
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name         Description               Default_datastore  VM_list 
+------------------------------------  -----------  ------------------------  -----------------  ------- 
+775888a6-6e98-4f41-9ff2-2ab12afd98de  _DEFAULT     This is a default tenant                             
+d5964623-f4bd-4fa6-af4f-b7fa7f51ba5e  new-tenant1                            datastore1         photon4 
+```
+
+Step 4: Run “docker volume ls” from VM “photon4”,  volume which belongs to “tenant1” which was created before will not be visible
+``` 
+root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
+DRIVER              VOLUME NAME
+```
+
+Step 5: Run “docker volume create”  to create a new volume “new-tenant1-vol1” and run “docker volume ls”,   should only able to see this volume which was just created
+``` 
+root@photon-JQQBWNwG6 [ ~ ]# docker volume create --driver=vmdk --name=new-tenant1-vol1 -o size=100MB
+new-tenant1-vol1
+root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
+DRIVER              VOLUME NAME
+vmdk                new-tenant1-vol1@datastore1
+```
+ 
+Volume “vol1” which was created before still exists, and can be seen from the following AdminCLI command
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+Volume            Datastore   Created By VM  Created                   Attached To VM  Policy  Capacity  Used      Disk Format  Filesystem Type  Access      Attach As              
+----------------  ----------  -------------  ------------------------  --------------  ------  --------  --------  -----------  ---------------  ----------  ---------------------- 
+new-tenant1-vol1  datastore1  photon4        Mon Aug 29 09:17:01 2016  detached        N/A     100.00MB  13.00MB   thin         ext4             read-write  independent_persistent 
+vol1              datastore1  photon4        Mon Aug 29 09:09:18 2016  detached        N/A     100.00MB  100.00MB  thin         ext4             read-write  independent_persistent 
+```
