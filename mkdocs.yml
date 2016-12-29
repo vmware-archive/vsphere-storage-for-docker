@@ -11,7 +11,7 @@ pages:
             - Basic commands: user-guide/docker-volume-cli.md
             - Multiple Datastores: user-guide/datastores.md
         - Backend ESX Overview:
-            - Volume Layout: user-guide/esx-overview.md
+            - Volume Layout: user-guide/vsphere-overview.md
         - Admin CLI: user-guide/admin-cli.md
     - FAQ: user-guide/faq.md
     - Blog:
