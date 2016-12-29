@@ -151,7 +151,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../esx-overview/">Volume Layout</a>
+        <a class="" href="../vsphere-overview/">Volume Layout</a>
         
     </li>
 
@@ -267,12 +267,13 @@
 <li><a href="#using-the-service-in-docker">Using the Service in Docker</a><ul>
 <li><a href="#docker-volume-create-options">Docker volume create options</a><ul>
 <li><a href="#size">size</a></li>
-<li><a href="#vsan-policy-name">vsan-policy-name</a></li>
-<li><a href="#diskformat">diskformat</a></li>
-<li><a href="#attach_as">attach_as</a></li>
-<li><a href="#access">access</a></li>
+<li><a href="#vsan-policy-name-vmdk-only">vsan-policy-name (Vmdk only)</a></li>
+<li><a href="#diskformat-vmdk-only">diskformat (Vmdk only)</a></li>
+<li><a href="#attach_as-vmdk-only">attach_as (Vmdk only)</a></li>
+<li><a href="#access-vmdk-only">access (Vmdk only)</a></li>
 <li><a href="#fstype">fstype</a></li>
-<li><a href="#clone-from">clone-from</a></li>
+<li><a href="#clone-from-vmdk-only">clone-from (Vmdk only)</a></li>
+<li><a href="#flavor-photon-only">flavor (Photon only)</a></li>
 </ul>
 </li>
 </ul>
@@ -287,21 +288,21 @@
 <li><a href="https://docs.docker.com/engine/reference/commandline/volume_ls/">Docker volume ls</a></li>
 <li><a href="https://docs.docker.com/engine/reference/commandline/volume_rm/">Docker volume rm</a></li>
 </ol>
-<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
-
+<p>The Docker volume commands are supported for both the Vmdk and Photon platforms with minor differences in capabilities. Features that are specific to either of the platforms are mentioned explicitly below. The &ldquo;vmdk&rdquo; volume driver is used to provision and manage volumes on the VSphere platform and can be named interchangeably as either &ldquo;vmdk&rdquo; (used in the examples below).
+<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script></p>
 <h2 id="docker-volume-create-options">Docker volume create options<a class="headerlink" href="#docker-volume-create-options" title="Permanent link">&para;</a></h2>
 <h3 id="size">size<a class="headerlink" href="#size" title="Permanent link">&para;</a></h3>
-<pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+<pre><code>docker volume create --driver=&lt;vmdk/photon&gt; --name=MyVolume -o size=10gb
 </code></pre>
 
-<p>The volume units can be <code>kb, mb, gb and tb</code></p>
+<p>The volume units can be <code>mb, gb and tb</code></p>
 <p>The default volume size is 100mb</p>
-<h3 id="vsan-policy-name">vsan-policy-name<a class="headerlink" href="#vsan-policy-name" title="Permanent link">&para;</a></h3>
+<h3 id="vsan-policy-name-vmdk-only">vsan-policy-name (Vmdk only)<a class="headerlink" href="#vsan-policy-name-vmdk-only" title="Permanent link">&para;</a></h3>
 <pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o vsan-policy-name=allflash
 </code></pre>
 
 <p>Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the <code>-o vsan-policy-name</code> flag.</p>
-<h3 id="diskformat">diskformat<a class="headerlink" href="#diskformat" title="Permanent link">&para;</a></h3>
+<h3 id="diskformat-vmdk-only">diskformat (Vmdk only)<a class="headerlink" href="#diskformat-vmdk-only" title="Permanent link">&para;</a></h3>
 <pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=zeroedthick
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=thin
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=eagerzeroedthick
@@ -314,7 +315,7 @@ docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o diskformat=ea
 <li>Thin Provision (<a href="../(https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&amp;cmd=displayKC&amp;externalId=1022242)">thin</a>)</li>
 <li>Thick Provision Eager Zeroed (<a href="../(https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&amp;cmd=displayKC&amp;externalId=1022242)">eagerzeroedthick</a>)</li>
 </ol>
-<h3 id="attach_as">attach_as<a class="headerlink" href="#attach_as" title="Permanent link">&para;</a></h3>
+<h3 id="attach_as-vmdk-only">attach_as (Vmdk only)<a class="headerlink" href="#attach_as-vmdk-only" title="Permanent link">&para;</a></h3>
 <pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=independent_persistent
 docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=persistent
 </code></pre>
@@ -325,24 +326,29 @@ docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o attach_as=per
 <li><a href="http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/">persistent</a>: If the VMDK is attached as persistent it will be part of a VM snapshot. If a VM snapshot has been taken while the Docker volume is attached to a VM, the Docker volume then continues to be attached to the VM that was snapshotted.</li>
 <li><a href="http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/">independent_persistent</a>: If the VMDK is attached as independent_persistent it will not be part of a VM snapshot. The Docker volume can be attached to any VM that can access the datastore independent of snapshots.</li>
 </ol>
-<h3 id="access">access<a class="headerlink" href="#access" title="Permanent link">&para;</a></h3>
+<h3 id="access-vmdk-only">access (Vmdk only)<a class="headerlink" href="#access-vmdk-only" title="Permanent link">&para;</a></h3>
 <pre><code>docker volume create --driver=vmdk --name=MyVolume -o access=read-only -o diskformat=thin
 docker volume create --driver=vmdk --name=MyVolume -o access=read-write -o diskformat=thin (default)
 </code></pre>
 
 <p>The access mode determines if the volume is modifiable by containers in a VM. The access mode allows to first create a volume with write access and initialize it with binary images, libraries (for exmple), and subsequently change the access to &ldquo;read-only&rdquo; (via the admin CLI). Thereby, creating content sharable by all containers in a VM.</p>
 <h3 id="fstype">fstype<a class="headerlink" href="#fstype" title="Permanent link">&para;</a></h3>
-<pre><code>docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=xfs
-docker volume create --driver=vmdk --name=MyVolume -o size=10gb -o fstype=ext4 (default)
+<pre><code>docker volume create --driver=&lt;vmdk/photon&gt; --name=MyVolume -o size=10gb -o fstype=xfs
+docker volume create --driver=&lt;vmdk/photon&gt; --name=MyVolume -o size=10gb -o fstype=ext4 (default)
 </code></pre>
 
 <p>Specifies which filesystem will be created on the new volume. vSphere Docker Volume Service will search for a existing /sbin/mkfs.<strong>fstype</strong> on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. </p>
-<h3 id="clone-from">clone-from<a class="headerlink" href="#clone-from" title="Permanent link">&para;</a></h3>
+<h3 id="clone-from-vmdk-only">clone-from (Vmdk only)<a class="headerlink" href="#clone-from-vmdk-only" title="Permanent link">&para;</a></h3>
 <pre><code>docker volume create --driver=vmdk --name=CloneVolume -o clone-from=MyVolume -o access=read-only
 docker volume create --driver=vmdk --name=CloneVolume -o clone-from=MyVolume -o diskformat=thin (default)
 </code></pre>
 
 <p>Specifies a volume to be cloned when creating a new volume. The created clone is completely independent from the original volume and will inherit the same options, which can be changed with the exception of the size and fstype.</p>
+<h3 id="flavor-photon-only">flavor (Photon only)<a class="headerlink" href="#flavor-photon-only" title="Permanent link">&para;</a></h3>
+<p>&hellip;
+docker volume create &ndash;driver=vmdk &ndash;name=CloneVolume -o flavor=<Photon persistent disk flavor name>
+&hellip;</p>
+<p>The flavor specifies the name of the persistent disk flavor that must have already been created in the Photon Controller. The flavor indicats the resource limits that are applied to the volume being created.</p>
               
             </div>
           </div>

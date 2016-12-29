@@ -142,7 +142,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../esx-overview/">Volume Layout</a>
+        <a class="" href="../vsphere-overview/">Volume Layout</a>
         
     </li>
 
@@ -277,42 +277,46 @@
 <li><a href="#help_2">Help</a></li>
 </ul>
 </li>
-<li><a href="#virtual-machine">Virtual Machine</a><ul>
-<li><a href="#add">Add</a></li>
-<li><a href="#list_1">List</a></li>
-<li><a href="#remove">Remove</a></li>
+<li><a href="#update">Update</a><ul>
 <li><a href="#help_3">Help</a></li>
 </ul>
 </li>
-<li><a href="#access">Access</a><ul>
+<li><a href="#remove">Remove</a><ul>
 <li><a href="#help_4">Help</a></li>
-<li><a href="#add_1">Add</a><ul>
+</ul>
+</li>
+<li><a href="#virtual-machine">Virtual Machine</a><ul>
+<li><a href="#add">Add</a></li>
+<li><a href="#list_1">List</a></li>
+<li><a href="#remove_1">Remove</a></li>
 <li><a href="#help_5">Help</a></li>
 </ul>
 </li>
-<li><a href="#list_2">List</a><ul>
+<li><a href="#access">Access</a><ul>
 <li><a href="#help_6">Help</a></li>
-</ul>
-</li>
-<li><a href="#remove_1">Remove</a><ul>
+<li><a href="#add_1">Add</a><ul>
 <li><a href="#help_7">Help</a></li>
 </ul>
 </li>
-<li><a href="#set">Set</a><ul>
+<li><a href="#list_2">List</a><ul>
 <li><a href="#help_8">Help</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li><a href="#remove_2">Remove</a><ul>
 <li><a href="#help_9">Help</a></li>
 </ul>
 </li>
+<li><a href="#set">Set</a><ul>
+<li><a href="#help_10">Help</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#volume">Volume</a><ul>
 <li><a href="#list_3">List</a><ul>
-<li><a href="#help_10">Help</a></li>
+<li><a href="#help_11">Help</a></li>
 <li><a href="#list-all">List All</a></li>
 <li><a href="#list-selected-columns">List selected columns</a></li>
 </ul>
@@ -321,10 +325,10 @@
 </ul>
 </li>
 <li><a href="#policy">Policy</a><ul>
-<li><a href="#help_11">Help</a></li>
+<li><a href="#help_12">Help</a></li>
 <li><a href="#create_1">Create</a></li>
 <li><a href="#list_4">List</a></li>
-<li><a href="#update">Update</a></li>
+<li><a href="#update_1">Update</a></li>
 <li><a href="#remove_3">Remove</a></li>
 </ul>
 </li>
@@ -348,63 +352,68 @@ Docker CLI.</p>
 of their usage.</p>
 <h2 id="tenant">Tenant<a class="headerlink" href="#tenant" title="Permanent link">&para;</a></h2>
 <h3 id="help">Help<a class="headerlink" href="#help" title="Permanent link">&para;</a></h3>
-<pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
-usage: vmdkops_admin.py tenant [-h] {access,rm,create,ls,vm} ...
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
+usage: vmdkops_admin.py tenant [-h] {create,vm,update,access,ls,rm} ...
 
 positional arguments:
-  {access,rm,create,ls,vm}
-    access              Add or remove Datastore access and quotas for a tenant
-    rm                  Delete a tenant
+  {create,vm,update,access,ls,rm}
     create              Create a new tenant
-    ls                  List tenants and the VMs they are applied to
     vm                  Add, removes and lists VMs in a tenant
+    update              Update an existing tenant
+    access              Add or remove Datastore access and quotas for a tenant
+    ls                  List tenants and the VMs they are applied to
+    rm                  Delete a tenant
 
 optional arguments:
   -h, --help            show this help message and exit
 </code></pre>
 
 <h3 id="create">Create<a class="headerlink" href="#create" title="Permanent link">&para;</a></h3>
+<p>A tenant named &ldquo;_DEFAULT&rdquo; will be created automatically post install.</p>
 <p>Creates a new named tenant and optionally assigns VMs.</p>
 <p>Sample:</p>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name ProjectX
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1 
 tenant create succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls 
-Uuid                                  Name      Description  Default_datastore  VM_list                      
-------------------------------------  --------  -----------  -----------------  ---------------------------  
-4acd19ee-1ed6-4716-bcda-c8637c9658f2  tenant1                default_ds         photon.vsan.1,photon.vsan.2  
-2918b105-0837-4955-a0dc-5319ce456e28  ProjectX               default_ds        
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+3277ad45-e916-4e06-8fd5-381e6090d15b  tenant1                                
 </code></pre>
 
 <p>The tenant to VM association can be done at create time.</p>
 <p>Sample:</p>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name ProjectX --vm-list ubuntu
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1 --vm-list=photon4
 tenant create succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  ProjectX              default_ds         ubuntu
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                                photon4  
 </code></pre>
 
 <h4 id="help_1">Help<a class="headerlink" href="#help_1" title="Permanent link">&para;</a></h4>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create -h
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create -h
 usage: vmdkops_admin.py tenant create [-h] --name NAME
+                                      [--description DESCRIPTION]
                                       [--vm-list vm1, vm2, ...]
 
 optional arguments:
   -h, --help            show this help message and exit
   --name NAME           The name of the tenant
+  --description DESCRIPTION
+                        The description of the tenant
   --vm-list vm1, vm2, ...
                         A list of VM names to place in this Tenant
 </code></pre>
 
 <h3 id="list">List<a class="headerlink" href="#list" title="Permanent link">&para;</a></h3>
 <p>List existing tenants, the datastores tenants have access to and the VMs assigned.</p>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name     Description  Default_datastore  VM_list
-------------------------------------  -------  -----------  -----------------  ---------------------------
-dc17b3b1-1f4d-4f8b-a6f4-3dba064ba88f  tenant1               default_ds         photon.vsan.1,photon.vsan.2
-5afa4767-ecd8-489e-9d97-5c46ae50d3fc  PojectX               default_ds         ubuntu
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                                photon4  
 </code></pre>
 
 <h4 id="help_2">Help<a class="headerlink" href="#help_2" title="Permanent link">&para;</a></h4>
@@ -415,33 +424,94 @@ optional arguments:
   -h, --help  show this help message and exit
 </code></pre>
 
+<h3 id="update">Update<a class="headerlink" href="#update" title="Permanent link">&para;</a></h3>
+<p>Update existing tenant. This command allows to update &ldquo;Description&rdquo; and &ldquo;Default_datastore&rdquo; fields, or rename an existing tenant.
+Sample:</p>
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list 
+------------------------------------  --------  ------------------------  -----------------  ------- 
+a11dda75-0632-4fe0-9caa-d2308bf73df7  _DEFAULT  This is a default tenant                             
+946570fe-9842-491f-a172-426284b36eeb  tenant1                             datastore2         photon4 
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant update --name=tenant1 --description=&quot;New description of tenant1&quot; --new-name=new-tenant1 --default-datastore=datastore1
+tenant modify succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name         Description                 Default_datastore  VM_list 
+------------------------------------  -----------  --------------------------  -----------------  ------- 
+a11dda75-0632-4fe0-9caa-d2308bf73df7  _DEFAULT     This is a default tenant                               
+946570fe-9842-491f-a172-426284b36eeb  new-tenant1  New description of tenant1  datastore1         photon4 
+</code></pre>
+
+<h4 id="help_3">Help<a class="headerlink" href="#help_3" title="Permanent link">&para;</a></h4>
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant update -h
+usage: vmdkops_admin.py tenant update [-h] --name NAME
+                                      [--default-datastore DEFAULT_DATASTORE]
+                                      [--description DESCRIPTION]
+                                      [--new-name NEW_NAME]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --name NAME           The name of the tenant
+  --default-datastore DEFAULT_DATASTORE
+                        The name of the datastore to be used by default for
+                        volumes placement
+  --description DESCRIPTION
+                        The new description of the tenant
+  --new-name NEW_NAME   The new name of the tenant
+
+</code></pre>
+
+<h3 id="remove">Remove<a class="headerlink" href="#remove" title="Permanent link">&para;</a></h3>
+<p>Remove a tenant, optionally all volumes for a tenant can be removed as well.</p>
+<p>Sample:</p>
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
+All Volumes will be removed
+tenant rm succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+</code></pre>
+
+<h4 id="help_4">Help<a class="headerlink" href="#help_4" title="Permanent link">&para;</a></h4>
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
+usage: vmdkops_admin.py tenant rm [-h] --name NAME [--remove-volumes]
+
+optional arguments:
+  -h, --help        show this help message and exit
+  --name NAME       The name of the tenant
+  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
+                    tenant  
+
+</code></pre>
+
 <h3 id="virtual-machine">Virtual Machine<a class="headerlink" href="#virtual-machine" title="Permanent link">&para;</a></h3>
 <h4 id="add">Add<a class="headerlink" href="#add" title="Permanent link">&para;</a></h4>
 <p>Add a VM to a tenant. A VM can only access the datastores for the tenant it is assigned to.
 VMs can be assigned to only one tenant at a time.</p>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name tenant1 --vm-list photon.vsan.2
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name=tenant1 --vm-list=photon5
 tenant vm add succeeded
 </code></pre>
 
 <h4 id="list_1">List<a class="headerlink" href="#list_1" title="Permanent link">&para;</a></h4>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
-Uuid                                  Name
-------------------------------------  -------------
-564d672f-0576-8906-7ba0-a42317328499  photon.vsan.1
-564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name=tenant1
+Uuid                                  Name     
+------------------------------------  -------  
+564df562-3d58-c99a-e76e-e8792b77ca2d  photon4  
+564d4728-f1c7-2029-d01e-51f5e6536cd9  photon5  
 </code></pre>
 
-<h4 id="remove">Remove<a class="headerlink" href="#remove" title="Permanent link">&para;</a></h4>
+<h4 id="remove_1">Remove<a class="headerlink" href="#remove_1" title="Permanent link">&para;</a></h4>
 <p>Remove a VM from a tenant&rsquo;s list of VMs. VM will no longer be able to access the volumes created for the tenant.</p>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name tenant1 --vm-list photon.vsan.1
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name=tenant1 --vm-list=photon5
 tenant vm rm succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name tenant1
-Uuid                                  Name
-------------------------------------  -------------
-564d6f23-eabb-1b63-c79d-2086cca704d5  photon.vsan.2
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name=tenant1
+Uuid                                  Name     
+------------------------------------  -------  
+564df562-3d58-c99a-e76e-e8792b77ca2d  photon4  
 </code></pre>
 
-<h4 id="help_3">Help<a class="headerlink" href="#help_3" title="Permanent link">&para;</a></h4>
+<h4 id="help_5">Help<a class="headerlink" href="#help_5" title="Permanent link">&para;</a></h4>
 <pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm -h
 usage: vmdkops_admin.py tenant vm [-h] {rm,add,ls} ...
 
@@ -458,7 +528,7 @@ optional arguments:
 <h3 id="access">Access<a class="headerlink" href="#access" title="Permanent link">&para;</a></h3>
 <p>Change the access control for a tenant.
 This includes ability to grant privileges &amp; set resource consumption limits for a datastore.</p>
-<h4 id="help_4">Help<a class="headerlink" href="#help_4" title="Permanent link">&para;</a></h4>
+<h4 id="help_6">Help<a class="headerlink" href="#help_6" title="Permanent link">&para;</a></h4>
 <pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access -h
 usage: vmdkops_admin.py tenant access [-h] {rm,add,set,ls} ...
 
@@ -474,68 +544,94 @@ optional arguments:
 </code></pre>
 
 <h4 id="add_1">Add<a class="headerlink" href="#add_1" title="Permanent link">&para;</a></h4>
-<p>Grants datastore access to a tenant.</p>
+<p>Grants datastore access to a tenant. </p>
+<p>The datastore will be automatically set as &ldquo;default_datastore&rdquo; for the tenant 
+when you grant first datastore access for a tenant.</p>
 <p>Sample:</p>
-<pre><code class="bash">/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1 --rights create,delete,mount
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB
 tenant access add succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  1              1              1             0B               0B
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                             datastore1         photon4  
 </code></pre>
 
-<p>By default no rights are given</p>
+<p>The datastore will be set as &ldquo;default_datastore&rdquo; for the tenant when you grant datastore access for a tenant with &ldquo;&ndash;default-datastore&rdquo; flag.</p>
+<p>Sample:</p>
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore2  --allow-create --default-datastore --volume-maxsize=500MB --volume-totalsize=1GB
+tenant access add succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          500.00MB         1.00GB      
+datastore2  True          500.00MB         1.00GB      
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
+Uuid                                  Name      Description               Default_datastore  VM_list  
+------------------------------------  --------  ------------------------  -----------------  -------  
+527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant                              
+371a68e3-8c86-467a-a4dc-753f3066ca8a  tenant1                             datastore2         photon4  
+</code></pre>
+
+<p>By default no &ldquo;allow_create&rdquo; right is given</p>
 <pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1
 tenant access add succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  0              0              0             0B               0B
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1 
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  False         500.00MB         1.00GB      
 </code></pre>
 
-<ul>
-<li>For capability 0 indicates false</li>
-<li>For capacity 0 indicates no limits</li>
-</ul>
-<h5 id="help_5">Help<a class="headerlink" href="#help_5" title="Permanent link">&para;</a></h5>
-<pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add -h
+<p>&ldquo;allow_create&rdquo; right is given when you run the command with &ldquo;&ndash;allow-create&rdquo; flag.</p>
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=500MB --volume-totalsize=1GB
+tenant access add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          500.00MB         1.00GB      
+</code></pre>
+
+<h5 id="help_7">Help<a class="headerlink" href="#help_7" title="Permanent link">&para;</a></h5>
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add -h
 usage: vmdkops_admin.py tenant access add [-h]
                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
-                                          --name NAME
                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          --datastore DATASTORE
-                                          [--rights create,delete,mount]
+                                          [--allow-create] --name NAME
+                                          [--default-datastore] --datastore
+                                          DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
   --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
                         on the datastore for this tenant
-  --name NAME           The name of the tenant
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
+  --allow-create        Allow create and delete on the datastore if set to True
+  --name NAME           The name of the tenant
+  --default-datastore   Mark datastore as a default datastore for this tenant
   --datastore DATASTORE
                         Datastore which access is controlled
-  --rights create,delete,mount
-                        Datastore access Permissions granted: Choices =
-                        ['create', 'delete', 'mount', 'all']
+
 </code></pre>
 
 <h4 id="list_2">List<a class="headerlink" href="#list_2" title="Permanent link">&para;</a></h4>
 <p>List the current access control granted to a tenant.</p>
 <p>When displaying the result keep in mind:</p>
 <ul>
-<li>For capability 0 indicates false</li>
-<li>For capacity 0 indicates no limits</li>
+<li>For capacity Unset indicates no limits</li>
 </ul>
 <pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  1              1              1             0B               0B
+Datastore   Allow_create  Max_volume_size  Total_size  
+----------  ------------  ---------------  ----------  
+datastore1  True          Unset            Unset    
 </code></pre>
 
-<h5 id="help_6">Help<a class="headerlink" href="#help_6" title="Permanent link">&para;</a></h5>
-<pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls -h
+<h5 id="help_8">Help<a class="headerlink" href="#help_8" title="Permanent link">&para;</a></h5>
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls -h
 usage: vmdkops_admin.py tenant access ls [-h] --name NAME
 
 optional arguments:
@@ -543,17 +639,17 @@ optional arguments:
   --name NAME  The name of the tenant
 </code></pre>
 
-<h4 id="remove_1">Remove<a class="headerlink" href="#remove_1" title="Permanent link">&para;</a></h4>
+<h4 id="remove_2">Remove<a class="headerlink" href="#remove_2" title="Permanent link">&para;</a></h4>
 <p>Remove access to a datastore for a tenant.</p>
-<pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm --name tenant1 --datastore datastore1
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm --name=tenant1 --datastore=datastore1
 tenant access rm succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore  Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
----------  -------------  -------------  ------------  ---------------  ----------
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore  Allow_create  Max_volume_size  Total_size  
+---------  ------------  ---------------  ----------  
 </code></pre>
 
-<h5 id="help_7">Help<a class="headerlink" href="#help_7" title="Permanent link">&para;</a></h5>
-<pre><code class="bash">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm -h
+<h5 id="help_9">Help<a class="headerlink" href="#help_9" title="Permanent link">&para;</a></h5>
+<pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm -h
 usage: vmdkops_admin.py tenant access rm [-h] --name NAME --datastore
                                          DATASTORE
 
@@ -562,75 +658,51 @@ optional arguments:
   --name NAME           The name of the tenant
   --datastore DATASTORE
                         Datstore which access is controlled
+
 </code></pre>
 
 <h4 id="set">Set<a class="headerlink" href="#set" title="Permanent link">&para;</a></h4>
 <p>Set command allows to change the existing access control in place for a tenant.</p>
 <p>Sample:</p>
-<pre><code class="shell">[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  0              0              0             0B               0B
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set --volume-totalsize 2TB --volume-maxsize 500GB --volume-maxcount 100 --add-rights all --name tenant1 --datastore datastore1
+<pre><code class="shell">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore1  False         500.00MB         1.00GB      
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=1000MB --volume-totalsize=2GB
 tenant access set succeeded
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
-Datastore   Create_volume  Delete_volume  Mount_volume  Max_volume_size  Total_size
-----------  -------------  -------------  ------------  ---------------  ----------
-datastore1  1              1              1             500.00GB         2.00TB
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore1  True          1000.00MB        2.00GB      
 </code></pre>
 
-<h5 id="help_8">Help<a class="headerlink" href="#help_8" title="Permanent link">&para;</a></h5>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set -h
+<h5 id="help_10">Help<a class="headerlink" href="#help_10" title="Permanent link">&para;</a></h5>
+<pre><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set -h
 usage: vmdkops_admin.py tenant access set [-h]
                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
+                                          --name NAME
                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          [--volume-maxcount VOLUME_MAXCOUNT]
-                                          [--rm-rights create,delete,mount,all]
-                                          [--add-rights create,delete,mount,all]
-                                          --name NAME --datastore DATASTORE
+                                          [--allow-create] --datastore
+                                          DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
   --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
                         on the datastore for this tenant
+  --name NAME           Tenant name
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
-  --volume-maxcount VOLUME_MAXCOUNT
-                        Maximum number of volumes to create on the datastore
-                        for this tenant
-  --rm-rights create,delete,mount,all
-                        Datastore access Permissions removed: Choices =
-                        ['create', 'delete', 'mount', 'all']
-  --add-rights create,delete,mount,all
-                        Datastore access Permissions granted: Choices =
-                        ['create', 'delete', 'mount', 'all']
-  --name NAME           Tenant name
+  --allow-create        Allow create and delete on datastore if set to True
   --datastore DATASTORE
                         Datastore name
-</code></pre>
-
-<h3 id="remove_2">Remove<a class="headerlink" href="#remove_2" title="Permanent link">&para;</a></h3>
-<p>Remove a tenant, optionally all volumes for a tenant can be removed as well.</p>
-<p>Sample:</p>
-<pre><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
-</code></pre>
-
-<h4 id="help_9">Help<a class="headerlink" href="#help_9" title="Permanent link">&para;</a></h4>
-<pre><code>[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
-usage: vmdkops_admin tenant rm [-h] --name NAME [--remove-volumes]
-
-optional arguments:
-  -h, --help        show this help message and exit
-  --name NAME       The name of the tenant
-  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
-                    tenant
 
 </code></pre>
 
 <h2 id="volume">Volume<a class="headerlink" href="#volume" title="Permanent link">&para;</a></h2>
 <h3 id="list_3">List<a class="headerlink" href="#list_3" title="Permanent link">&para;</a></h3>
-<h4 id="help_10">Help<a class="headerlink" href="#help_10" title="Permanent link">&para;</a></h4>
+<h4 id="help_11">Help<a class="headerlink" href="#help_11" title="Permanent link">&para;</a></h4>
 <pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls -h
 usage: vmdkops_admin.py ls [-h] [-c Col1,Col2,...]
 
@@ -692,7 +764,7 @@ This removes the need to depend on <a href="https://docs.docker.com/engine/tutor
 <p>The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.</p>
 <h2 id="policy">Policy<a class="headerlink" href="#policy" title="Permanent link">&para;</a></h2>
 <p>Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.</p>
-<h4 id="help_11">Help<a class="headerlink" href="#help_11" title="Permanent link">&para;</a></h4>
+<h4 id="help_12">Help<a class="headerlink" href="#help_12" title="Permanent link">&para;</a></h4>
 <pre><code class="bash">[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy -h
 usage: vmdkops_admin.py policy [-h] {rm,create,ls,update} ...
 
@@ -728,7 +800,7 @@ some-policy  ((&quot;proportionalCapacity&quot; i0)(&quot;hostFailuresToTolerate
 <p>When creating a virtual disk using <code>docker volume create</code>, the policy name should be given with the <code>-o</code>
 option such as <code>docker volume create --driver=vmdk --name=some-vol -o vsan-policy-name=some-policy</code>.
 The number of virtual disks using the policy will then show up in the <code>Active</code> column.</p>
-<h4 id="update">Update<a class="headerlink" href="#update" title="Permanent link">&para;</a></h4>
+<h4 id="update_1">Update<a class="headerlink" href="#update_1" title="Permanent link">&para;</a></h4>
 <p>Update a VSAN storage policy.</p>
 <p>This command will update a VSAN storage policy for all virtual disks currently using this policy. If
 the command fails, the number of virtual disks that were successfully updated and the number that
@@ -770,7 +842,7 @@ Successfully removed policy: some-policy
         <a href="../faq/" class="btn btn-neutral float-right" title="FAQ">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../esx-overview/" class="btn btn-neutral" title="Volume Layout"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../vsphere-overview/" class="btn btn-neutral" title="Volume Layout"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -796,7 +868,7 @@ Successfully removed policy: some-policy
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../esx-overview/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../vsphere-overview/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../faq/" style="color: #fcfcfc">Next &raquo;</a></span>

@@ -155,7 +155,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/esx-overview/">Volume Layout</a>
+        <a class="" href="../../user-guide/vsphere-overview/">Volume Layout</a>
         
     </li>
 
@@ -269,7 +269,7 @@
 <h1 id="mapping-docker-volumes-to-vsan-objects-with-policy">Mapping Docker volumes to VSAN objects with policy<a class="headerlink" href="#mapping-docker-volumes-to-vsan-objects-with-policy" title="Permanent link">&para;</a></h1>
 <p>Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.</p>
 <pre><code>vmdkops-admin policy create --name=myPolicy --content=&quot;string&quot;
-docker volume create -o policy=myPolicy
+docker volume create --driver=vmdk --name=MyVol -o vsan-policy-name=myPolicy
 </code></pre>
               
             </div>

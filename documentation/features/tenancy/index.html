@@ -94,6 +94,12 @@
                 
                     <li><a class="toctree-l4" href="#admin-cli">Admin CLI</a></li>
                 
+                    <li><a class="toctree-l4" href="#default-tenant">Default tenant</a></li>
+                
+                    <li><a class="toctree-l4" href="#default-privileges">Default privileges</a></li>
+                
+                    <li><a class="toctree-l4" href="#default-datastore">Default datastore</a></li>
+                
                     <li><a class="toctree-l4" href="#references">References</a></li>
                 
             
@@ -153,7 +159,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/esx-overview/">Volume Layout</a>
+        <a class="" href="../../user-guide/vsphere-overview/">Volume Layout</a>
         
     </li>
 
@@ -274,6 +280,18 @@ limits at granularity of datastore.</li>
 </ul>
 <h2 id="admin-cli">Admin CLI<a class="headerlink" href="#admin-cli" title="Permanent link">&para;</a></h2>
 <p>Tenants can be created and managed via the <a href="../../user-guide/admin-cli/#tenant">Admin CLI</a></p>
+<h2 id="default-tenant">Default tenant<a class="headerlink" href="#default-tenant" title="Permanent link">&para;</a></h2>
+<p>When a VM which does not belong to any tenant issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT tenant, and will get privileges 
+associated with this tenant. _DEFAULT tenant will be automatically created by system post install, so by default vmdk_ops will support request from 
+any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this tenant or modify privileges, thus locking 
+down vmdk_ops to serve only explicitly configured VMs.</p>
+<h2 id="default-privileges">Default privileges<a class="headerlink" href="#default-privileges" title="Permanent link">&para;</a></h2>
+<p>When a VM tries to manipulate volumes on a datastore which is not configured,  the system will use _DEFAULT privilege, which is created automatically 
+by system post install. This _DEFAULT privilege allows access to ANY datastore by default. An admin can edit or remove this record, thus locking down 
+the functionality to allow access only to explicitly configured datastores. </p>
+<h2 id="default-datastore">Default datastore<a class="headerlink" href="#default-datastore" title="Permanent link">&para;</a></h2>
+<p>When a VM addresses the volume using short notation (volume_name, without @datastore), all VMs in this tenant will use default datastore to resolve short volume reference (volume_name will actually mean volume_name@default_datastore).
+If &ldquo;default_datastore&rdquo; is not set for a tenant, then datastore where the VM resides will be used as &ldquo;default_datastore&rdquo;.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md">Design Spec for tenancy</a></li>
