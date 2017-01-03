@@ -94,7 +94,7 @@ DRIVER              VOLUME NAME
 vmdk                vol1@datastore1
 ```
 
-User need to manually backup data stored in vol1@datastore1, and assume the data is backedup in vol1-backup@datastore1.
+User need to manually backup data stored in vol1@datastore1.
 
 Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
 ```
@@ -152,5 +152,5 @@ new-tenant1-vol1  datastore1  photon4        Mon Aug 29 09:17:01 2016  detached 
 vol1              datastore1  photon4        Mon Aug 29 09:09:18 2016  detached        N/A     100.00MB  100.00MB  thin         ext4             read-write  independent_persistent 
 ```
 
-Step6: Manully copy the data from backup place "vol1-backup@datastore1" to the new volume "new-tenant1-vol1@datastore1". 
-The path which store this new volume is "/vmfs/volumes/datastore1/dockvols/new-tenant1".
+Step6: Manully copy the data from backup place to the new volume "new-tenant1-vol1@datastore1". 
+The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-tenant1".
