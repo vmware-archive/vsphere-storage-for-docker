@@ -97,6 +97,7 @@ vmdk                vol1@datastore1
 User need to manually backup data stored in vol1@datastore1.
 
 Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
+
 ```
 [root@localhost:/etc/vmware/vmdkops]mv /etc/vmware/vmdkops/auth-db /etc/vmware/vmdkops/auth-db.backup.v10.upgrade
 ```
