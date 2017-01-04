@@ -65,7 +65,7 @@ The corresponding errors in the vmdk_ops.log file.
 
 #### Case 1: No tenant configured before
  
-If no tenant has been configured, user just need to delete the auth-db file
+If no tenant has been configured, user just needs to delete the auth-db file
 
 Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
 
@@ -94,7 +94,7 @@ DRIVER              VOLUME NAME
 vmdk                vol1@datastore1
 ```
 
-User need to manually backup data stored in vol1@datastore1.
+User needs to manually backup data stored in vol1@datastore1.
 
 Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
 
@@ -153,5 +153,5 @@ new-tenant1-vol1  datastore1  photon4        Mon Aug 29 09:17:01 2016  detached 
 vol1              datastore1  photon4        Mon Aug 29 09:09:18 2016  detached        N/A     100.00MB  100.00MB  thin         ext4             read-write  independent_persistent 
 ```
 
-Step6: Manully copy the data from backup place to the new volume "new-tenant1-vol1@datastore1". 
+Step6: Manually copy the data from backup to the new volume "new-tenant1-vol1@datastore1". 
 The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-tenant1".
