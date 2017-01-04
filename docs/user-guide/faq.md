@@ -65,7 +65,7 @@ The corresponding errors in the vmdk_ops.log file.
 
 #### Case 1: No tenant configured before
  
-If no tenants have been configured, then it just delete the auth-db file
+If no tenant has been configured, user just needs to delete the auth-db file
 
 Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
 
@@ -84,7 +84,7 @@ Uuid                                  Name      Description               Defaul
 After this point, the manually upgrade is done, and tenancy operations will succeed.
  
 #### Case2:  Has tenant configured before
-Step 1: Store the current tenancy information.
+Step 1: Backup data manually.
 
 Example below has a tenant ```tenant1``` with VM ```photon4``` assigned to this tenant and one volumes: vol1@datastore1 created.
 
@@ -94,12 +94,15 @@ DRIVER              VOLUME NAME
 vmdk                vol1@datastore1
 ```
 
-Step 1: Move the auth-db file at /etc/vmware/vmdkops/auth-db
+User needs to manually backup data stored in vol1@datastore1.
+
+Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
+
 ```
 [root@localhost:/etc/vmware/vmdkops]mv /etc/vmware/vmdkops/auth-db /etc/vmware/vmdkops/auth-db.backup.v10.upgrade
 ```
 
-Step 2: Verify “tenant ls” command, now only  ```_DEFAULT``` should be listed.
+Step 3: Verify “tenant ls” command, now only  ```_DEFAULT``` should be listed.
 
 ``` 
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
@@ -108,7 +111,7 @@ Uuid                                  Name      Description               Defaul
 775888a6-6e98-4f41-9ff2-2ab12afd98de  _DEFAULT  This is a default tenant                             
 ```
 
-Step 3: Recreate the tenant configuration with new name “new-tenant1” (associate the same VM photon4 to this new-tenant1), see the following example:
+Step 4: Recreate the tenant configuration with new name “new-tenant1” (associate the same VM photon4 to this new-tenant1), see the following example:
 
 ***Note: Please DO NOT create the tenant with the old name “tenant1”!!!***
 
@@ -149,3 +152,6 @@ Volume            Datastore   Created By VM  Created                   Attached 
 new-tenant1-vol1  datastore1  photon4        Mon Aug 29 09:17:01 2016  detached        N/A     100.00MB  13.00MB   thin         ext4             read-write  independent_persistent 
 vol1              datastore1  photon4        Mon Aug 29 09:09:18 2016  detached        N/A     100.00MB  100.00MB  thin         ext4             read-write  independent_persistent 
 ```
+
+Step6: Manually copy the data from backup to the new volume "new-tenant1-vol1@datastore1". 
+The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-tenant1".
