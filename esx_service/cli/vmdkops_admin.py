@@ -124,7 +124,7 @@ def commands():
                 '-c': {
                     'help': 'Display selected columns',
                     'choices': ['volume', 'datastore', 'created-by', 'created',
-                                'attached-to', 'policy', 'capacity', 'used',
+                                'attached-to', 'policy', 'capacity', 'used','disk-format',
                                 'fstype', 'access', 'attach-as'],
                     'metavar': 'Col1,Col2,...'
                 },
