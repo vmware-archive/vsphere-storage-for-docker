@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-# This script sets up the testbed.
+# This script sets up the testbed and invokes tests.
 
 usage() {
   echo "$0 <ESX IP> <VM1 IP> <VM2 IP> <Build id>"
