@@ -417,7 +417,23 @@ class TestStatus(unittest.TestCase):
         self.assertEqual(vmdkops_admin.status(None), None)
 
 class TestTenant(unittest.TestCase):
-    """ Test tenant functionality """
+    """ 
+        Test tenant functionality 
+    """
+
+    # The following tests are covered:
+    # 1. tenant command
+    # Test tenant create, tenant ls and tenant rm 
+    # tenant update to update tenant description and default_datastore
+    # tenant update to rename a tenant
+    # 2. tenant vm command
+    # tenant vm add , tenant vm rm and tenant vm ls
+    # 3. tenant access command
+    # tenant access create, tenant access ls and tenant access rm
+    # tenant access set command to update allow_create, volume_maxsize and volume_totalsize
+    # tenant access set command to update default_datastore
+    # Test convered are mainly positive test, no negative tests are done here
+
     # tenant1 info
     tenant1_name = "test_tenant1"
     random_id = random.randint(0, 65536)

@@ -1105,7 +1105,6 @@ class VmdkTenantTestCase(unittest.TestCase):
     
     @unittest.skipIf(len(vmdk_utils.get_datastores()) < 2,
                      "second datastore is not found - skipping this test")
-    @unittest.skip("Liping remove")   
     def test_vmdkops_for_default_datastore(self):
         """ Test vmdkops for default_datastore """
         logging.info("test_vmdkops_for_default_datastore")
