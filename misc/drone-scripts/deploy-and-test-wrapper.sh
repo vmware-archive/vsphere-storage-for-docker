@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-# This script sets up the testbed.
+# This script sets up the testbed and invokes tests.
 
 usage() {
   echo "$0 <ESX IP> <VM1 IP> <VM2 IP> <Build id>"
@@ -86,7 +86,7 @@ log "starting deploy and test"
 
 INCLUDE_HOSTD="false"
 
-if make -s deploy-esx deploy-vm testasroot testremote TEST_VOL_NAME=vol.build$BUILD_NUMBER;
+if make -s deploy-esx deploy-vm testasroot e2e-dkrVolDriver-test testremote TEST_VOL_NAME=vol.build$BUILD_NUMBER;
 then
   echo "=> Build Complete" `date`
   #stop_build $VM1 $BUILD_NUMBER

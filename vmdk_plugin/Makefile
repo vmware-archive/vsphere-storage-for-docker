@@ -299,8 +299,8 @@ test:
 .PHONY: testasroot
 testasroot:
 	$(log_target)
-	$(GO) test $(PLUGIN)/drivers/vmdk/vmdkops -cover
-	$(GO) test $(PLUGIN)/utils/config -cover
+	$(GO) test $(PLUGIN)/drivers/vmdk/vmdkops -cover -v
+	$(GO) test $(PLUGIN)/utils/config -cover -v
 
 # does sanity check of create/remove docker volume on the guest
 TEST_VOL_NAME ?= DefaultTestVol
@@ -314,7 +314,7 @@ checkremote:
 	@$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2): $(CONN_MSG); exit 1)
 
-.PHONY: test-vm test-esx test-all testremote
+.PHONY: test-vm test-esx test-all testremote e2e-test
 # test-vm runs GO unit tests and plugin test suite on a guest VM
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
 test-vm: checkremote deploy-vm-test
@@ -330,7 +330,17 @@ test-esx:
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
 testremote: test-esx test-vm
-test-all:  test testremote
+test-all:  test e2e-test testremote
+
+# An end-to-end test target for vSphere Docker Volume Driver
+e2e-test:
+	$(log_target)
+	$(SCRIPTS)/build.sh e2e-dkrVolDriver-test "$(ESX)" "$(VM1)" "$(VM2)"
+
+.PHONY: e2e-dkrVolDriver-test
+e2e-dkrVolDriver-test:
+	$(log_target)
+	$(GO) test $(PLUGIN)/E2E_Tests -cover -v
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
