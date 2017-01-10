@@ -456,7 +456,7 @@ class TestTenant(unittest.TestCase):
                 self.datastore_name = datastore[0]
                 self.datastore_path = datastore[2]
             
-                if len(datastores) >= 1:
+                if len(datastores) > 1:
                     datastore1 = datastores[1]
                     self.datastore1_name = datastore1[0]
                     self.datastoer1_path = datastore[2]
