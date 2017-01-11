@@ -38,6 +38,7 @@ import auth_data
 import auth_api
 import error_code
 import vmdk_utils
+import random
 
 # Max volumes count we can attach to a singe VM.
 MAX_VOL_COUNT_FOR_ATTACH = 60
@@ -415,7 +416,8 @@ def create_vm(si, vm_name, datastore_name):
 
         task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)
         vmdk_ops.wait_for_tasks(si, [task])
-
+        
+        logging.info("create_vm: vm_name=%s, datastore_name=%s", vm_name, datastore_name)
         vm = task.info.result
         if vm:
             logging.debug("Found: VM %s", vm_name)
@@ -447,7 +449,8 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     """ Unit test for VMDK Attach and Detach ops """
 
     volNamePre = "vol_UnitTest_Attach"
-    vm_name = 'test-vm'
+    random_id = random.randint(0, 65536)
+    vm_name = 'test-vm_'+str(random_id)
     vm = None
     if config["run_max_attach"]:
         max_vol_count = MAX_VOL_COUNT_FOR_ATTACH
@@ -661,7 +664,8 @@ class VmdkTenantTestCase(unittest.TestCase):
 
     # tenant1 info
     tenant1_name = "test_tenant1"
-    vm1_name = 'test_vm1'
+    random_id = random.randint(0, 65536)
+    vm1_name = 'test_vm1_'+str(random_id)
     vm1 = None
     tenant1_vol1_name = 'tenant1_vol1'
     tenant1_vol2_name = 'tenant1_vol2'
@@ -671,7 +675,8 @@ class VmdkTenantTestCase(unittest.TestCase):
     
     # tenant2 info
     tenant2_name = "test_tenant2"
-    vm2_name = 'test_vm2'
+    random_id = random.randint(0, 65536)
+    vm2_name = 'test_vm2_'+str(random_id)
     vm2 = None
     tenant2_vol1_name = 'tenant2_vol1'
     tenant2_vol2_name = 'tenant2_vol2'
@@ -746,6 +751,7 @@ class VmdkTenantTestCase(unittest.TestCase):
             self.assertFalse(True)
 
         self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
+        logging.info("VmdkTenantTestCase: create vm1 name=%s Done", self.vm1_name)
 
         error, self.vm2 = create_vm(si=si, 
                                     vm_name=self.vm2_name, 
@@ -753,6 +759,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         if error:
             self.assertFalse(True)
         self.vm2_config_path = vmdk_utils.get_vm_config_path(self.vm2_name)
+        logging.info("VmdkTenantTestCase: create vm2 name=%s Done", self.vm2_name)
 
         # create DEFAULT tenant DEFAULT privilege if missing
         self.create_default_tenant_and_privileges()
@@ -817,7 +824,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         si = vmdk_ops.get_si()
         remove_vm(si, self.vm1)
         remove_vm(si, self.vm2)
-       
+
     def test_vmdkops_on_default_tenant_vm(self):
         """ Test vmdk life cycle on a VM which belongs to DEFAULT tenant """
         # This test test the following cases:
@@ -914,6 +921,7 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                  default_datastore=False, 
                                                  volume_maxsize=volume_maxsize, 
                                                  volume_totalsize=volume_totalsize)
+        self.assertEqual(None, error_info)
 
         # create a volume with 600MB which exceed the volume_maxsize
         opts={u'size': u'600MB', u'fstype': u'ext4'}

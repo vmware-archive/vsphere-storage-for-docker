@@ -214,7 +214,6 @@ def get_default_datastore(name):
     error_info, default_datastore = tenant.get_default_datastore(auth_mgr.conn)
     return error_info, default_datastore 
 
-
 def _tenant_create(name, description="", vm_list=None, privileges=None):
     """ API to create a tenant """
     logging.debug("_tenant_create: name=%s description=%s vm_list=%s privileges=%s", name, description, vm_list, privileges)
@@ -377,7 +376,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
     error_info, auth_mgr = get_auth_mgr()
     if error_info:
         return error_info
-    
+
     error_info = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges])
     if error_info:
         return error_info
@@ -389,6 +388,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         return error_info
     logging.debug("_tenant_access_add: get_row_from_privileges_table for tenant id=%s return %s",
                    tenant.id, result)
+
     if len(result) == 1 or default_datastore:
         if datastore == auth.DEFAULT_DS:
             datastore_url = auth.DEFAULT_DS_URL
@@ -447,6 +447,7 @@ def _tenant_access_rm(name, datastore):
     error_info, auth_mgr = get_auth_mgr()
     if error_info:
         return error_info
+
     if datastore == auth.DEFAULT_DS:
         datastore_url = auth.DEFAULT_DS_URL
     else:
@@ -464,7 +465,7 @@ def _tenant_access_rm(name, datastore):
     
     if default_datastore == datastore:
         error_info  = tenant.set_default_datastore(auth_mgr.conn, "")
-
+        
     return error_info
 
 def _tenant_access_ls(name):

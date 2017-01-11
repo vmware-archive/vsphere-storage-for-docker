@@ -203,7 +203,6 @@ class DockerVolumeTenant:
             error_info: return None on success or error info on failure
             datastore: return default_datastore name on success or None on failure 
         """
-               
         error_info, result = auth.get_row_from_tenants_table(conn, self.id)
         if error_info:
             logging.error("Error %s when getting default datastore for tenant_id %s",
@@ -218,7 +217,6 @@ class DockerVolumeTenant:
             else:
                 datastore = vmdk_utils.get_datastore_name(datastore_url)
                 return None, datastore
-
             
     def set_datastore_access_privileges(self, conn, privileges):
         """ Set datastore and privileges for this tenant.
@@ -359,7 +357,6 @@ class AuthorizationDataManager:
         this privilege will have full permission (create, delete, and mount)
         and no max_volume_size and usage_quota limitation
         """ 
-        
         privileges = [{'datastore_url': auth.DEFAULT_DS_URL,
                        'allow_create': 1,
                        'max_volume_size': 0,
@@ -379,7 +376,6 @@ class AuthorizationDataManager:
     def get_db_version(self):
         """
         Get DB schema version from auth-db
-
         """
         major_ver = 0
         minor_ver = 0
@@ -609,6 +605,7 @@ class AuthorizationDataManager:
                                     vms=vms,
                                     privileges=privileges,
                                     default_datastore_url=default_datastore_url)
+
         id = tenant.id
         try:
             self.conn.execute(

@@ -177,6 +177,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         error_info = tenant1.remove_vms(self.auth_mgr.conn, vms)
@@ -197,6 +198,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
 
@@ -217,6 +219,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         error_info = tenant1.set_description(self.auth_mgr.conn, 'new description')
@@ -237,6 +240,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant', 
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
 
@@ -260,6 +264,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
                
@@ -309,6 +314,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         
@@ -320,6 +326,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant2.id))
         
@@ -422,10 +429,12 @@ class TestAuthDataModel(unittest.TestCase):
         privileges = self.get_privileges()
         default_datastore = self.get_default_datastore()
         default_datastore_url = self.get_datastore_url(default_datastore)
+
         error_info, tenant1 = self.auth_mgr.create_tenant(name='tenant1',
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant1.id))
         
@@ -435,6 +444,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           description='Some tenant',
                                                           vms=vms,
                                                           privileges=privileges)
+
         self.assertEqual(error_info, None)
         self.assertTrue(uuid.UUID(tenant2.id))
      
