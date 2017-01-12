@@ -5,7 +5,7 @@ import "os/exec"
 import "os"
 import "strings"
 
-//TODO: This is a sample testcase and will be removed after finishing the review.
+// TODO: This is a sample testcase and will be removed after finishing the review.
 
 func TestSomething(t *testing.T) {
 
