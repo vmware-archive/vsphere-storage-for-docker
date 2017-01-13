@@ -65,7 +65,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         error_info, tenant = auth_api._tenant_create(name, description);
         if error_info:
             logging.error("Failed to create tenant: name=%s, description=%s", name, description)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
 
         result = vim.vcs.Tenant()
         result.id = tenant.id
@@ -84,7 +84,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         if error_info:
             logging.error("Failed to remove tenant: name=%s", name)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
         
         logging.info("Successfully removed tenant: name=%s", name)
 
@@ -94,7 +94,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         error_info, tenant_list = auth_api._tenant_ls(name)
         if error_info:
             logging.error("Failed to retrieve tenant(s): name=%s", name)
-            raise vim.fault.VcsFault(msg = error_info.msg);
+            raise vim.fault.VcsFault(msg=error_info.msg);
 
         result = []
         for t in tenant_list:
@@ -142,7 +142,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         if error_info:
             logging.error("Failed to update tenant: name=%s, new_name=%s, description=%s, default_datastore=%s",
             name, new_name, description, default_datastore)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
         
         logging.info("Successfully updated tenant: name=%s, new_name=%s, description=%s, default_datastore=%s",
             name, new_name, description, default_datastore)
@@ -157,7 +157,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         error_info = auth_api._tenant_vm_add(tenant.name, vms)
         if error_info:
             logging.error("Failed to add VMs: %s to tenant: ", vms, tenant.name)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully added VMs: %s to tenant: %s", vms, tenant.name)
     
@@ -171,7 +171,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         error_info = auth_api._tenant_vm_rm(tenant.name, vms)
         if error_info:
             logging.error("Failed to remove VMs: %s from tenant: ", vms, tenant.name)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed VMs: %s from tenant: %s", vms, tenant.name)
     
@@ -187,7 +187,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         error_info = auth_api._tenant_vm_replace(tenant.name, vms)
         if error_info:
             logging.error("Failed to replace VMs for tenant: ", tenant.name)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully replaced VMs for tenant: %s", tenant.name)
 
@@ -195,32 +195,33 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         logging.info("Adding privilege: %s to tenant: %s, default_datastore=%s",
             privilege, tenant.name, default_datastore)
 
-        error_info = auth_api._tenant_access_add(name = tenant.name,
-                                                 datastore = privilege.datastore,
-                                                 allow_create = privilege.allow_create,
-                                                 volume_maxsize_in_MB = privilege.volume_max_size,
-                                                 volume_totalsize_in_MB = privilege.volume_total_size)
+        error_info = auth_api._tenant_access_add(name=tenant.name,
+                                                 datastore=privilege.datastore,
+                                                 allow_create=privilege.allow_create,
+                                                 volume_maxsize_in_MB=privilege.volume_max_size,
+                                                 volume_totalsize_in_MB=privilege.volume_total_size,
+                                                 default_datastore=default_datastore)
         if error_info:
             logging.error("Failed to add privilege to tenant: %s", tenant.name)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully added privilege to tenant: %s", tenant.name)
 
     def UpdatePrivilege(self, tenant, datastore, allow_create, volume_max_size, volume_total_size):
         logging.info("Updating privilege (datastore=%s) for tenant: %s", datastore, tenant.name)
 
-        error_info = auth_api._tenant_access_set(name = tenant.name,
-                                                 datastore = datastore,
-                                                 allow_create = allow_create,
-                                                 volume_maxsize_in_MB = volume_max_size,
-                                                 volume_totalsize_in_MB = volume_total_size)
+        error_info = auth_api._tenant_access_set(name=tenant.name,
+                                                 datastore=datastore,
+                                                 allow_create=allow_create,
+                                                 volume_maxsize_in_MB=volume_max_size,
+                                                 volume_totalsize_in_MB=volume_total_size)
         if error_info:
             if error_info.code == ErrorCode.PRIVILEGE_NOT_FOUND:
                 logging.error(error_info.msg)
-                raise vim.fault.VcsFault(msg = error_info.msg)
+                raise vim.fault.VcsFault(msg=error_info.msg)
             else:
                 logging.error("Failed to update privilege for tenant: %s", tenant.name)
-                raise vim.fault.VcsFault(msg = error_info.msg)
+                raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully updated privilege for tenant: %s", tenant.name)
 
@@ -230,7 +231,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         error_info = auth_api._tenant_access_rm(tenant.name, datastore)
         if error_info:
             logging.error("Failed to remove privilege (datastore=%s) from tenant: %s", datastore, tenant.name)
-            raise vim.fault.VcsFault(msg = error_info.msg)
+            raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed privilege (datastore=%s) from tenant: %s", datastore, tenant.name)
 

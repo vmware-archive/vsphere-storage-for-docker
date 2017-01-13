@@ -31,6 +31,7 @@
 # stub = vmodl_test.connect_to_vcs()
 # vmodl_test.get_tenants(stub)       # print tenant list
 
+import socket
 import sys
 sys.path.append('/lib64/python3.5/site-packages/pyMo/vim/vsan')
 sys.path.append('/lib/python2.7/site-packages/pyMo/vim/vsan')
@@ -109,7 +110,8 @@ class TestVsphereContainerService(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        stub = connect_to_vcs()
+        ip = socket.gethostbyname(socket.gethostname())
+        stub = connect_to_vcs(host = ip, port = 443)
         cls.vcs = vim.vcs.VsphereContainerService("vsphere-container-service", stub)
         cls.tenantMgr = cls.vcs.GetTenantManager()
         cls.setup_datastore()
