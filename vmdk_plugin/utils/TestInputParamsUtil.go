@@ -41,7 +41,7 @@ func GetVolumeName() string {
 }
 
 func GetVolumeNameWithTimeStamp(volName string) string {
-	return volumeName + "_" + strconv.FormatInt(time.Now().Unix(), 10)
+	return volName + "_" + strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 func GetEndPoint1() string {
