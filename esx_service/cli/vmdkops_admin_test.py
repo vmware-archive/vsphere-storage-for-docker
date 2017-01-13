@@ -27,6 +27,7 @@ import vmdk_ops_test
 import auth_api
 import log_config
 import logging
+import convert
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 12
@@ -688,17 +689,19 @@ class TestTenant(unittest.TestCase):
                                                     vm_list=[self.vm1_name], 
                                                     privileges=[])
         self.assertEqual(None, error_info)
-
+       
         # add first access privilege for tenant
         # allow_create = False
         # max_volume size = 600MB
         # total_volume size = 1GB
+        volume_maxsize_in_MB = convert.convert_to_MB("600MB")
+        volume_totalsize_in_MB = convert.convert_to_MB("1GB")
         error_info = auth_api._tenant_access_add(name=self.tenant1_name,
                                                  datastore=self.datastore_name,
                                                  default_datastore=False,
                                                  allow_create=False,
-                                                 volume_maxsize="600MB",
-                                                 volume_totalsize="1GB"
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB
                                              )
         self.assertEqual(None, error_info)
 
@@ -730,11 +733,13 @@ class TestTenant(unittest.TestCase):
         # change allow_create to True
         # change max_volume size to 1000MB
         # change total_volume size to 2GB
+        volume_maxsize_in_MB = convert.convert_to_MB("1000MB")
+        volume_totalsize_in_MB = convert.convert_to_MB("3GB")
         error_info = auth_api._tenant_access_set(name=self.tenant1_name,
                                                  datastore=self.datastore_name,
-                                                 allow_create=True,
-                                                 volume_maxsize="1000MB",
-                                                 volume_totalsize="3GB"
+                                                 allow_create="True",
+                                                 volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                 volume_totalsize_in_MB=volume_totalsize_in_MB
                                              )
         self.assertEqual(None, error_info)
 
@@ -778,12 +783,14 @@ class TestTenant(unittest.TestCase):
             # allow_create = False
             # max_volume size = 600MB
             # total_volume size = 1GB
+            volume_maxsize_in_MB = convert.convert_to_MB("600MB")
+            volume_totalsize_in_MB = convert.convert_to_MB("1GB")
             error_info = auth_api._tenant_access_add(name=self.tenant1_name,
                                                     datastore=self.datastore1_name,
                                                     default_datastore=True,
                                                     allow_create=False,
-                                                    volume_maxsize="600MB",
-                                                    volume_totalsize="1GB"
+                                                    volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                    volume_totalsize_in_MB=volume_totalsize_in_MB
                                                 )
             self.assertEqual(None, error_info)
 
