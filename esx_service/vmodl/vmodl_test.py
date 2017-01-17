@@ -59,12 +59,13 @@ NEW_TENANT_NAME = "TEST_TENANT_NAME_2"
 NEW_TENANT_DESC = "TEST_TENANT_DESCRIPTION_2"
 TENANT_PREFIX = "TEST_TENANT_"
 
-def connect_to_vcs(host = "localhost", port = 443):
+def connect_to_vcs(host="localhost", port=443):
     """
     Connect to VCS - currently utilizing VSAN mgmt service on ESX (/vsan) - and return SOAP stub
     """
 
     si = vmdk_ops.get_si()
+    #pylint: disable=no-member
     hostSystem = pyVim.host.GetHostSystem(si)
 
     token = hostSystem.configManager.vsanSystem.FetchVsanSharedSecret()
@@ -79,7 +80,7 @@ def connect_to_vcs(host = "localhost", port = 443):
     logged_in = vpm.Login(token)
 
     if not logged_in:
-        print("Failed to get sims stub for host %s" % host.name)
+        print("Failed to get sims stub for host %s" % host)
         raise OSError("Failed to login to VSAN mgmt server")
 
     return stub
@@ -111,7 +112,7 @@ class TestVsphereContainerService(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         ip = socket.gethostbyname(socket.gethostname())
-        stub = connect_to_vcs(host = ip, port = 443)
+        stub = connect_to_vcs(host=ip, port=443)
         cls.vcs = vim.vcs.VsphereContainerService("vsphere-container-service", stub)
         cls.tenantMgr = cls.vcs.GetTenantManager()
         cls.setup_datastore()
@@ -130,15 +131,15 @@ class TestVsphereContainerService(unittest.TestCase):
     @classmethod
     def create_vms(cls):
         si = vmdk_ops.get_si()
-        error, cls.vm1 = vmdk_ops_test.create_vm(si = si, 
-                                             vm_name = cls.vm1_name, 
-                                             datastore_name = cls.datastore)
+        error, cls.vm1 = vmdk_ops_test.create_vm(si=si, 
+                                                 vm_name=cls.vm1_name, 
+                                                 datastore_name=cls.datastore)
         if error:
             cls.fail("Failed to create VM1!")
 
-        error, cls.vm2 = vmdk_ops_test.create_vm(si = si, 
-                                             vm_name = cls.vm2_name, 
-                                             datastore_name = cls.datastore)
+        error, cls.vm2 = vmdk_ops_test.create_vm(si=si, 
+                                                 vm_name=cls.vm2_name, 
+                                                 datastore_name=cls.datastore)
         if error:
             cls.fail("Failed to create VM2!")
 
@@ -165,7 +166,7 @@ class TestVsphereContainerService(unittest.TestCase):
 
     def test_add_tenant(self):
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Verify the result
         self.assertTrue(tenant)
@@ -174,10 +175,10 @@ class TestVsphereContainerService(unittest.TestCase):
         
     def test_get_tenant_by_name(self):
         # Create a tenant
-        self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Get the tenant
-        tenants = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        tenants = self.tenantMgr.GetTenants(name=TENANT_NAME)
 
         # Verify the result
         self.assertTrue(tenants)
@@ -186,8 +187,8 @@ class TestVsphereContainerService(unittest.TestCase):
 
     def test_get_all_tenants(self):
         # Create 2 tenants
-        self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
-        self.tenantMgr.CreateTenant(name = NEW_TENANT_NAME, description = NEW_TENANT_NAME)
+        self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+        self.tenantMgr.CreateTenant(name=NEW_TENANT_NAME, description=NEW_TENANT_NAME)
 
         # Get all tenants
         tenants = self.tenantMgr.GetTenants()
@@ -198,44 +199,44 @@ class TestVsphereContainerService(unittest.TestCase):
 
     def test_remove_tenant(self):
         # Create a tenant
-        self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Remove the tenant
-        self.tenantMgr.RemoveTenant(name = TENANT_NAME)
+        self.tenantMgr.RemoveTenant(name=TENANT_NAME)
 
         # Verify the result
-        tenants = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        tenants = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertFalse(tenants)
 
     def test_update_tenant(self):
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Update the tenant
-        self.tenantMgr.UpdateTenant(name = TENANT_NAME, new_name=NEW_TENANT_NAME, description = NEW_TENANT_DESC)
+        self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=NEW_TENANT_NAME, description=NEW_TENANT_DESC)
 
         # Verify the result
-        tenants = self.tenantMgr.GetTenants(name = NEW_TENANT_NAME)
+        tenants = self.tenantMgr.GetTenants(name=NEW_TENANT_NAME)
         self.assertTrue(tenants)
         self.assertEqual(tenants[0].name, NEW_TENANT_NAME)
         self.assertEqual(tenants[0].description, NEW_TENANT_DESC)
 
     def test_add_vms(self):
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add a VM to the tenant
         vms = [self.vm1_name]
         self.tenantMgr.AddVMs(tenant, vms)
 
         # Verify the result
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result=self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         self.assertEqual(result[0].vms, vms)
 
     def test_remove_vms(self):
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add 2 VMs to the tenant
         vms = [self.vm1_name, self.vm2_name]
@@ -245,26 +246,26 @@ class TestVsphereContainerService(unittest.TestCase):
         self.tenantMgr.RemoveVMs(tenant, vms)
 
         # Verify the result
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         self.assertEqual(result[0].vms, [])
 
     def test_get_vms(self):
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add 2 VMs to the tenant
         vms = [self.vm1_name, self.vm2_name]
         self.tenantMgr.AddVMs(tenant, vms)
 
         # Verify the result
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         self.assertEqual(result[0].vms, vms)
 
     def test_replace_vms(self):
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add VM1 to the tenant
         vm1 = [self.vm1_name]
@@ -275,7 +276,7 @@ class TestVsphereContainerService(unittest.TestCase):
         self.tenantMgr.ReplaceVMs(tenant, vm2)
 
         # Verify the result
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         vms = result[0].vms
         self.assertEqual(vms, vm2)
@@ -289,13 +290,13 @@ class TestVsphereContainerService(unittest.TestCase):
         privilege.volume_total_size = 1024
 
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add privilege to the tenant
         self.tenantMgr.AddPrivilege(tenant, privilege)
 
         # Verify the privilege
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         p = result[0].privileges
         self.assertTrue(p)
@@ -316,7 +317,7 @@ class TestVsphereContainerService(unittest.TestCase):
         privilege.volume_total_size = 1024
 
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add privilege to the tenant
         self.tenantMgr.AddPrivilege(tenant, privilege)
@@ -325,7 +326,7 @@ class TestVsphereContainerService(unittest.TestCase):
         self.tenantMgr.RemovePrivilege(tenant, self.datastore)
 
         # Verify the privilege
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         self.assertFalse(result[0].privileges)
 
@@ -341,7 +342,7 @@ class TestVsphereContainerService(unittest.TestCase):
         privilege.volume_total_size = 1024
 
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add privilege to the tenant
         self.tenantMgr.AddPrivilege(tenant, privilege)
@@ -350,7 +351,7 @@ class TestVsphereContainerService(unittest.TestCase):
         self.tenantMgr.UpdatePrivilege(tenant, self.datastore, allow_create=False, volume_max_size=1024, volume_total_size=2048)
 
         # Verify the privilege
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
         p = result[0].privileges
         self.assertTrue(p)
@@ -377,14 +378,14 @@ class TestVsphereContainerService(unittest.TestCase):
         p2.volume_total_size = 2048
 
         # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name = TENANT_NAME, description = TENANT_DESC)
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
         # Add privileges to the tenant
         self.tenantMgr.AddPrivilege(tenant, p1)
-        self.tenantMgr.AddPrivilege(tenant, p2, default_datastore = True)
+        self.tenantMgr.AddPrivilege(tenant, p2, default_datastore=True)
 
         # Get the tenant
-        result = self.tenantMgr.GetTenants(name = TENANT_NAME)
+        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertTrue(result)
 
         # Verify the privileges

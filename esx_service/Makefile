@@ -48,6 +48,7 @@ VMCI_SRV_LIBS  := $(VMCI_SRV_LIB) $(VMCI_SRV_LIB64)
 
 # Source code - all .py stuff which is not tests
 PY_SRC   := $(filter-out %_test.py, $(wildcard *.py))
+PY_VMODL := $(filter-out %_test.py, $(wildcard vmodl/*.py))
 # exclude __init__.py to avoid clash with __init__.py from parent
 PY_CLI   := $(filter-out %_test.py, $(wildcard cli/[a-z]*.py))
 PY_UTILS := $(filter-out %_test.py, $(wildcard utils/*.py))
@@ -156,10 +157,14 @@ PYLINT_IGNORE := --errors-only -d import-error,no-name-in-module
 PYLINT_COMMAND := pylint $(PYLINT_IGNORE) --rcfile pylint_cfg.ini
 
 .PHONY: pylint
-pylint: .lint_src .lint_cli .lint_util
+pylint: .lint_src .lint_vmodl .lint_cli .lint_util
 
 .lint_src: $(PY_SRC)
 	$(PYLINT_COMMAND) ../esx_service
+	@touch $@
+
+.lint_vmodl: $(PY_VMODL)
+	$(PYLINT_COMMAND) ../esx_service/vmodl
 	@touch $@
 
 .lint_cli: $(PY_CLI)

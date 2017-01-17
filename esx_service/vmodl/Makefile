@@ -55,10 +55,6 @@ deploy:
 	@echo Copying test file to root@$(ESX):$(TMP_LOC) ...
 	@$(SCP) $(TESTFILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)
 
-
-lint: 
-	pylint $(PYFILES)
-
 # Testing. Note that vsanmgmtd neeeds a second or two between 'restart' returns
 # and the daemon start to really listen 
 test: deploy 
@@ -74,7 +70,7 @@ test: deploy
         set +x ; exit $$status'
 
 copy_to_payload:
-	echo GENERATING VMODK PAYLOAD...
+	echo GENERATING VMODL PAYLOAD...
 	mkdir -p ../$(VMDKOPS_PAYLOAD)$(TARGET2) ../$(VMDKOPS_PAYLOAD)$(TARGET3)
 	cp $(PYFILES) $(TESTFILES) ../$(VMDKOPS_PAYLOAD)$(TARGET2)
 	cp $(PYFILES) $(TESTFILES) ../$(VMDKOPS_PAYLOAD)$(TARGET3)

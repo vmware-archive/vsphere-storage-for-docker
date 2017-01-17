@@ -156,7 +156,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_vm_add(tenant.name, vms)
         if error_info:
-            logging.error("Failed to add VMs: %s to tenant: ", vms, tenant.name)
+            logging.error("Failed to add VMs: %s to tenant: %s", vms, tenant.name)
             raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully added VMs: %s to tenant: %s", vms, tenant.name)
@@ -170,7 +170,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_vm_rm(tenant.name, vms)
         if error_info:
-            logging.error("Failed to remove VMs: %s from tenant: ", vms, tenant.name)
+            logging.error("Failed to remove VMs: %s from tenant: %s", vms, tenant.name)
             raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed VMs: %s from tenant: %s", vms, tenant.name)
@@ -186,7 +186,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_vm_replace(tenant.name, vms)
         if error_info:
-            logging.error("Failed to replace VMs for tenant: ", tenant.name)
+            logging.error("Failed to replace VMs for tenant: %s", tenant.name)
             raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully replaced VMs for tenant: %s", tenant.name)
