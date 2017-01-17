@@ -27,20 +27,20 @@ from error_code import ErrorInfo
 
 def generate_error_info_for_internal_error(secondary_err_msg):
     err_code = ErrorCode.INTERNAL_ERROR
-    err_msg = error_code.error_codes_to_messages[err_code].format(secondary_err_msg)
+    err_msg = error_code.error_code_to_message[err_code].format(secondary_err_msg)
     error_info = ErrorInfo(err_code, err_msg)
     return error_info
 
 def generate_error_info_for_tenant_not_exist(name):
      err_code = ErrorCode.TENANT_NOT_EXIST
-     err_msg = error_code.error_codes_to_messages[err_code].format(name)
+     err_msg = error_code.error_code_to_message[err_code].format(name)
      error_info = ErrorInfo(err_code, err_msg)
      return error_info  
 
 def generate_error_info_for_vm_not_found(not_found_vms):
     not_found_vm_list = ",".join(not_found_vms)
     err_code = ErrorCode.VM_NOT_FOUND
-    err_msg = error_code.error_codes_to_messages[err_code].format(not_found_vm_list)
+    err_msg = error_code.error_code_to_message[err_code].format(not_found_vm_list)
     error_info = ErrorInfo(err_code, err_msg)
     return error_info
 
@@ -104,7 +104,7 @@ def create_tenant_in_db(name, description, vms, privileges):
     
     if exist_tenant:
         err_code = ErrorCode.TENANT_ALREADY_EXIST
-        err_msg = error_code.error_codes_to_messages[err_code].format(name)
+        err_msg = error_code.error_code_to_message[err_code].format(name)
         error_info = ErrorInfo(err_code, err_msg)            
         return error_info, None
 
@@ -417,7 +417,7 @@ def _tenant_vm_replace(name, vm_list):
     logging.debug("_tenant_vm_replace: name=%s vm_list=%s", name, vm_list)
     if not vm_list:
         err_code = ErrorCode.REPLACE_VM_EMPTY
-        err_msg = error_code.error_codes_to_messages[err_code]
+        err_msg = error_code.error_code_to_message[err_code]
         error_info = ErrorInfo(err_code, err_msg)
         return error_info
 
@@ -514,7 +514,7 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
     
     if not privileges:
         err_code = ErrorCode.PRIVILEGE_NOT_FOUND
-        err_msg = error_code.error_codes_to_messages[err_code].format(name, datastore)
+        err_msg = error_code.error_code_to_message[err_code].format(name, datastore)
         error_info = ErrorInfo(err_code, err_msg)
         return error_info  
     

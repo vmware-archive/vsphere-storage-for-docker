@@ -80,7 +80,7 @@ def get_default_tenant():
     else:
         # cannot find DEFAULT tenant
         err_code = error_code.ErrorCode.TENANT_NOT_EXIST
-        err_msg = error_code.error_codes_to_messages[err_code].format(DEFAULT_TENANT)
+        err_msg = error_code.error_code_to_message[err_code].format(DEFAULT_TENANT)
         logging.debug(err_msg)
         return None, None, None
 
@@ -162,7 +162,7 @@ def get_tenant(vm_uuid):
         if not tenant_uuid:
              vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
              err_code = error_code.ErrorCode.VM_NOT_BELONG_TO_TENANT
-             err_msg = error_code.error_codes_to_messages[err_code].format(vm_name)
+             err_msg = error_code.error_code_to_message[err_code].format(vm_name)
              logging.debug(err_msg)
              return err_msg, None, None
         return None, tenant_uuid, tenant_name
@@ -416,7 +416,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
         # need reject the request
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
         err_code = error_code.ErrorCode.VM_NOT_BELONG_TO_TENANT
-        err_msg = error_code.error_codes_to_messages[err_code].format(vm_name)
+        err_msg = error_code.error_code_to_message[err_code].format(vm_name)
         logging.debug(err_msg)
         return err_msg, None, None
     else:

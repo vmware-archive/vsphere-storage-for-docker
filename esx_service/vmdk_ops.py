@@ -225,7 +225,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
         auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
     else:
-        logging.debug(error_code.error_codes_to_messages[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
+        logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
 
 def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
@@ -527,7 +527,7 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
         error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
         return error_info
     elif not vm_name:
-        logging.debug(error_code.error_codes_to_messages[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
+        logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
     return None
 

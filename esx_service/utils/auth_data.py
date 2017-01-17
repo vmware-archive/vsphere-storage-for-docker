@@ -412,7 +412,7 @@ class AuthorizationDataManager:
                                            vms=[], 
                                            privileges=[])
         if error_msg:
-            err = error_code.error_codes_to_messages[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
+            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
             logging.warning(err)
     
     def create_default_privileges(self):
@@ -430,13 +430,13 @@ class AuthorizationDataManager:
 
         error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
         if error_msg:
-            err = error_code.error_codes_to_messages[ErrorCode.TENANT_NOT_EXIST].format(auth.DEFAULT_TENANT)
+            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth.DEFAULT_TENANT)
             logging.warning(err)
             return
 
         error_msg = tenant.set_datastore_access_privileges(self.conn, privileges)
         if error_msg:
-            err = error_code.error_codes_to_messages[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_msg)
+            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_msg)
             logging.warning(err)
 
     def get_db_version(self):
@@ -950,7 +950,7 @@ class AuthorizationDataManager:
             logging.debug("get_tenant_name: tenant_uuid=%s tenant_name=%s", tenant_uuid, tenant_name)
             return None, tenant_name
         else:
-            error_msg =  error_code.error_codes_to_messages[ErrorCode.TENANT_NAME_NOT_FOUND].format(tenant_uuid)
+            error_msg =  error_code.error_code_to_message[ErrorCode.TENANT_NAME_NOT_FOUND].format(tenant_uuid)
             logging.debug("get_tenant_name:"+error_msg)
             return error_msg, None
 

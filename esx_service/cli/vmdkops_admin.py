@@ -980,17 +980,6 @@ def tenant_access_ls_headers():
 def generate_tenant_access_ls_rows(privileges):
     """ Generate output for tenant access ls command """
     rows = []
-    # for p in privileges:
-    #     datastore_url = p[auth_data_const.COL_DATASTORE_URL]
-    #     datastore = vmdk_utils.get_datastore_name(datastore_url)
-    #     allow_create = ("False", "True")[p[auth_data_const.COL_ALLOW_CREATE]]
-    #     # p[auth_data_const.COL_MAX_VOLUME_SIZE] is max_volume_size in MB
-    #     max_vol_size = "Unset" if p[auth_data_const.COL_MAX_VOLUME_SIZE] == 0 else human_readable(p[auth_data_const.COL_MAX_VOLUME_SIZE]*MB)
-    #     # p[auth_data_const.COL_USAGE_QUOTA] is total_size in MB
-    #     total_size = "Unset" if p[auth_data_const.COL_USAGE_QUOTA] == 0 else human_readable(p[auth_data_const.COL_USAGE_QUOTA]*MB)
-    #     rows.append([datastore, allow_create, max_vol_size, total_size])
-
-    
     for p in privileges:
         datastore_url = p.datastore_url
         if not p.datastore_url or p.datastore_url == auth.DEFAULT_DS_URL:

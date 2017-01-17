@@ -46,7 +46,7 @@ class ErrorCode:
     INTERNAL_ERROR = 501
 
 
-error_codes_to_messages = {
+error_code_to_message = {
     ErrorCode.VM_NOT_BELONG_TO_TENANT : "VM {0} does not belong to any tenant",
     ErrorCode.TENANT_NOT_EXIST : "Tenant {0} does not exist",
     ErrorCode.TENANT_ALREADY_EXIST : "Tenant {0} already exists",
