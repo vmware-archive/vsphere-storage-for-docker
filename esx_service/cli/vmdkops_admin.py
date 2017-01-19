@@ -783,15 +783,14 @@ def tenant_ls_headers():
     headers = ['Uuid', 'Name', 'Description', 'Default_datastore', 'VM_list']
     return headers
 
-def generate_vm_list(vms):
+def generate_vm_list(vms_uuid):
     """ Generate vm names with given list of vm uuid"""
-    # vms is a list of vm_uuid
-    # example: vms=["vm1_uuid", "vm2_uuid"]
+    # vms_uuid is a list of vm_uuid
+    # example: vms_uuid=["vm1_uuid", "vm2_uuid"]
     # the return value is a string like this vm1,vm2
     res = ""
-    for vm in vms:
-        # vms ia a list of vm_uuid
-        vm_name = vmdk_utils.get_vm_name_by_uuid(vm)
+    for vm_uuid in vms_uuid:
+        vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
         res = res + vm_name
         res = res + ","
 
@@ -981,7 +980,6 @@ def generate_tenant_access_ls_rows(privileges):
     """ Generate output for tenant access ls command """
     rows = []
     for p in privileges:
-        datastore_url = p.datastore_url
         if not p.datastore_url or p.datastore_url == auth.DEFAULT_DS_URL:
             datastore = ""
         else:
