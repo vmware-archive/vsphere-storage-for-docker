@@ -50,7 +50,7 @@ def get_auth_mgr():
     try:
         auth_mgr = auth.get_auth_mgr()
     except auth_data.DbConnectionError as e:
-        error_info = generate_error_info_for_internal_error("Failed to connect auth DB")
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, "Failed to connect auth DB")
         return error_info, None
     return None, auth_mgr
 
@@ -67,7 +67,7 @@ def get_tenant_from_db(name):
 
     error_msg, tenant = auth_mgr.get_tenant(name)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_info.generate_error_info(error_msg)
     return error_info, tenant
 
 def get_tenant_name(tenant_uuid):
@@ -83,7 +83,7 @@ def get_tenant_name(tenant_uuid):
 
     error_msg, tenant_name = auth_mgr.get_tenant_name(tenant_uuid)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info, tenant_name
 
 def create_tenant_in_db(name, description, vms, privileges):
@@ -99,7 +99,7 @@ def create_tenant_in_db(name, description, vms, privileges):
     
     error_msg, exist_tenant = auth_mgr.get_tenant(name)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         return error_info, None
     
     if exist_tenant:
@@ -113,7 +113,7 @@ def create_tenant_in_db(name, description, vms, privileges):
                                                 vms=vms, 
                                                 privileges=privileges)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
 
     return error_info, tenant
 
@@ -134,11 +134,11 @@ def get_tenant_list_from_db(name=None):
     if not name:
         error_msg, tenant_list = auth_mgr.list_tenants()
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     else:
         error_msg, tenant = auth_mgr.get_tenant(name)
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         if error_msg or not tenant:
             tenant_list = []
         else:
@@ -248,7 +248,7 @@ def get_default_datastore(name):
         return error_info, None
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)           
         return error_info, None
     
     error_info, auth_mgr = get_auth_mgr()
@@ -258,7 +258,7 @@ def get_default_datastore(name):
     # if default_datastore is not set for this tenant, default_datastore will be None
     error_msg, default_datastore = tenant.get_default_datastore(auth_mgr.conn)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info, default_datastore 
 
 def _tenant_create(name, description="", vm_list=None, privileges=None):
@@ -266,7 +266,8 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
     logging.debug("_tenant_create: name=%s description=%s vm_list=%s privileges=%s", name, description, vm_list, privileges)
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
-        error_info = generate_error_info_for_vm_not_found(not_found_vms)
+        not_found_vm_list = ",".join(not_found_vms)
+        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info, None   
         
     # if param "description" is not set by caller, the default value is empty string
@@ -292,7 +293,7 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         return error_info
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info, None
     
     error_info, auth_mgr = get_auth_mgr()
@@ -302,18 +303,18 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
     if new_name:    
         error_msg = tenant.set_name(auth_mgr.conn, name, new_name)
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
             return error_info
     if description:
         error_msg = tenant.set_description(auth_mgr.conn, description)
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
             return error_info
     if default_datastore:
         datastore_url = vmdk_utils.get_datastore_url(default_datastore)
         error_msg= tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
             return error_info
     
     return None
@@ -326,7 +327,7 @@ def _tenant_rm(name, remove_volumes=False):
         return error_info
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info, None
     
     error_info, auth_mgr = get_auth_mgr()
@@ -335,7 +336,7 @@ def _tenant_rm(name, remove_volumes=False):
 
     error_msg = auth_mgr.remove_tenant(tenant.id, remove_volumes)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
 def _tenant_ls(name=None):
@@ -352,12 +353,13 @@ def _tenant_vm_add(name, vm_list):
         return error_info
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info
 
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
-        error_info = generate_error_info_for_vm_not_found(not_found_vms)
+        not_found_vm_list = ",".join(not_found_vms)
+        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info   
     
     error_info, auth_mgr = get_auth_mgr()
@@ -368,7 +370,7 @@ def _tenant_vm_add(name, vm_list):
     vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
     error_msg = tenant.add_vms(auth_mgr.conn, vms_uuid_list)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
 def _tenant_vm_rm(name, vm_list):
@@ -379,12 +381,13 @@ def _tenant_vm_rm(name, vm_list):
         return error_info
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info
 
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
-        error_info = generate_error_info_for_vm_not_found(not_found_vms)
+        not_found_vm_list = ",".join(not_found_vms)
+        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info   
 
     logging.debug("_tenant_vm_rm: vms=%s", vms)
@@ -395,7 +398,7 @@ def _tenant_vm_rm(name, vm_list):
     vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
     error_msg = tenant.remove_vms(auth_mgr.conn, vms_uuid_list)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
 
@@ -407,7 +410,7 @@ def _tenant_vm_ls(name):
         return error_info, None
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info, None
     # tenant.vms is a list of vm_uuid of vms which belong to this tenant
     return None, tenant.vms
@@ -426,13 +429,14 @@ def _tenant_vm_replace(name, vm_list):
         return error_info
     
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info
 
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     
     if error_msg:
-        error_info = generate_error_info_for_vm_not_found(not_found_vms)
+        not_found_vm_list = ",".join(not_found_vms)
+        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info   
 
     logging.debug("_tenant_vm_replace: vms=%s", vms)
@@ -443,7 +447,7 @@ def _tenant_vm_replace(name, vm_list):
     vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
     error_msg = tenant.replace_vms(auth_mgr.conn, vms_uuid_list)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
     
 def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False, volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
@@ -457,7 +461,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         return error_info
 
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info
 
     privileges = generate_privileges(datastore=datastore, 
@@ -472,14 +476,14 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
 
     error_msg = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges])
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         return error_info
     
     error_msg, result = auth.get_row_from_privileges_table(auth_mgr.conn, tenant.id)
     # if len(result) == 1, which means "datastore"" is the first datastore for this tenant,
     # and should set this datastore to the "default_datastore" for this tenant
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         return error_info
     logging.debug("_tenant_access_add: get_row_from_privileges_table for tenant id=%s return %s",
                    tenant.id, result)
@@ -491,7 +495,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
             datastore_url = vmdk_utils.get_datastore_url(datastore)
         error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     
     return error_info
 
@@ -505,7 +509,7 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
         return error_info
 
     if not tenant:
-        error_info = generate_error_info_for_tenant_not_exist(name)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info
     
     datastore_url = vmdk_utils.get_datastore_url(datastore)
@@ -532,7 +536,7 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
 
     error_msg = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges_dict])
     if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
 def _tenant_access_rm(name, datastore):
@@ -543,7 +547,7 @@ def _tenant_access_rm(name, datastore):
         return error_info
     
     if not tenant:
-       error_info = generate_error_info_for_tenant_not_exist(name)            
+       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
        return error_info
     
     error_info, auth_mgr = get_auth_mgr()
@@ -557,7 +561,7 @@ def _tenant_access_rm(name, datastore):
     logging.debug("_tenant_access_rm: datastore_url=%s", datastore_url)
     error_msg = tenant.remove_datastore_access_privileges(auth_mgr.conn, datastore_url)
     if error_msg:
-        error_info = generate_error_info_for_internal_error(error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         return error_info    
 
     # get dafault_datastore, if default_datastore is the same as param "datastore"
@@ -569,7 +573,7 @@ def _tenant_access_rm(name, datastore):
     if default_datastore == datastore:
         error_msg  = tenant.set_default_datastore(auth_mgr.conn, "")
         if error_msg:
-            error_info = generate_error_info_for_internal_error(error_msg)
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
 
     return error_info
 
@@ -581,7 +585,7 @@ def _tenant_access_ls(name):
         return error_info, None
     
     if not tenant:
-       error_info = generate_error_info_for_tenant_not_exist(name)            
+       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
        return error_info, None
 
     return None, tenant.privileges 

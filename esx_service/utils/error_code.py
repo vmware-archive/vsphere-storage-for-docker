@@ -78,3 +78,16 @@ class ErrorInfo:
     def __init__(self, code, msg):
         self.code = code
         self.msg = msg
+    
+def join_args(fmstr, *args):
+    #print fmstr
+    #print args
+    return fmstr.format(*args)
+
+def generate_error_info(err_code, *params):
+    fmstr = error_code_to_message[err_code]
+    err_msg = join_args(fmstr, *params)
+    error_info = ErrorInfo(err_code, err_msg)
+    return error_info  
+
+
