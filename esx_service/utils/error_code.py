@@ -80,11 +80,15 @@ class ErrorInfo:
         self.msg = msg
     
 def join_args(fmstr, *args):
-    #print fmstr
-    #print args
     return fmstr.format(*args)
 
 def generate_error_info(err_code, *params):
+    """
+        Return error_info object with given err_code and params
+        @Param err_code: error_code
+        @Param *params: varialbe number of params which are 
+         needed to construct error message
+    """
     fmstr = error_code_to_message[err_code]
     err_msg = join_args(fmstr, *params)
     error_info = ErrorInfo(err_code, err_msg)
