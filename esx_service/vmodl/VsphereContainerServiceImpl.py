@@ -40,6 +40,9 @@ from error_code import ErrorCode
 import auth_api
 import vmdk_utils
 
+TENANT_NAME_MAX_LEN = 64
+TENANT_DESC_MAX_LEN = 256
+
 class TenantManagerImpl(vim.vcs.TenantManager):
     '''Implementation of VCS TenantManager'''
 
@@ -53,11 +56,11 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             error_info = ErrorCode.VMODL_TENANT_NAME_EMPTY.format(name);
             return error_info
 
-        if len(name) > 64:
+        if len(name) > TENANT_NAME_MAX_LEN:
             error_info = ErrorCode.VMODL_TENANT_NAME_TOO_LONG.format(name);
             return error_info
 
-        if description and len(description) > 256:
+        if description and len(description) > TENANT_DESC_MAX_LEN:
             error_info = ErrorCode.VMODL_TENANT_NAME_TOO_LONG.format(name);
             return error_info
 
@@ -67,13 +70,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             logging.error("Failed to create tenant: name=%s, description=%s", name, description)
             raise vim.fault.VcsFault(msg=error_info.msg)
 
-        result = vim.vcs.Tenant()
-        result.id = tenant.id
-        result.name = name
-        result.description = description
-
-        logging.info("Successfully created a tenant: name=%s, description=%s", name, description)
-        return result
+        logging.info("Successfully created a tenant: name=%s, description=%s", tenant.name, tenant.description)
+        return self.map_tenant(tenant)
 
     def RemoveTenant(self, name, remove_volumes=False):
         logging.info("Removing a tenant: name=%s, remove_volumes=%s", name, remove_volumes)
@@ -97,33 +95,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             raise vim.fault.VcsFault(msg=error_info.msg);
 
         result = []
-        for t in tenant_list:
-            tenant = vim.vcs.Tenant()
-            tenant.id = t.id
-            tenant.name = t.name
-            tenant.description = t.description
-
-            # Populate default datastore 
-            if t.default_datastore_url:
-                tenant.default_datastore = vmdk_utils.get_datastore_name(t.default_datastore_url)
-
-            # Populate associated VMs
-            if t.vms:
-                for vm_id in t.vms:
-                    vm_name = vmdk_utils.get_vm_name_by_uuid(vm_id)
-                    tenant.vms.append(vm_name)
-
-            # Populate associated privileges
-            if t.privileges:
-                for p in t.privileges:
-                    dap = vim.vcs.storage.DatastoreAccessPrivilege()
-                    dap.datastore =  vmdk_utils.get_datastore_name(p.datastore_url)
-                    dap.allow_create = p.allow_create
-                    dap.volume_max_size = p.max_volume_size
-                    dap.volume_total_size = p.usage_quota
-                    tenant.privileges.append(dap)
-
-            result.append(tenant)
+        for tenant in tenant_list:
+            result.append(self.map_tenant(tenant))
 
         logging.info("Successfully retrieved tenant(s): name=%s", name)
         return result
@@ -149,8 +122,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
     def AddVMs(self, tenant, vms):
         if len(vms) == 0:
-            logging.warn("Adding VMs: the VM list is empty")
-            return
+            logging.error("Adding VMs: the VM list is empty")
+            raise vmodl.fault.InvalidArgument("VM list is empty")
 
         logging.info("Adding VMs: %s to tenant: %s", vms, tenant.name)
 
@@ -163,8 +136,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
     
     def RemoveVMs(self, tenant, vms):
         if len(vms) == 0:
-            logging.warn("Remove VMs: the VM list is empty")
-            return
+            logging.error("Remove VMs: the VM list is empty")
+            raise vmodl.fault.InvalidArgument("VM list is empty")
 
         logging.info("Removing VMs: %s from tenant: %s", vms, tenant.name)
 
@@ -177,8 +150,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
     
     def ReplaceVMs(self, tenant, vms):
         if len(vms) == 0:
-            logging.warn("Replace VMs: the VM list is empty")
-            return
+            logging.error("Replace VMs: the VM list is empty")
+            raise vmodl.fault.InvalidArgument("VM list is empty")
 
         logging.info("Replacing VMs for tenant: %s", tenant.name)
         logging.info("Existing VMs: %s", tenant.vms)
@@ -234,6 +207,54 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed privilege (datastore=%s) from tenant: %s", datastore, tenant.name)
+
+    def map_tenant(self, tenant):
+        """
+        Map a DockerVolumeTenant instance returned by auth_api to VMODL vim.vcs.Tenant instance
+        """
+
+        if tenant == None:
+            return None
+
+        result = vim.vcs.Tenant()
+
+        # Populate basic tenant info
+        result.id = tenant.id
+        result.name = tenant.name
+        result.description = tenant.description
+
+        # Populate default datastore 
+        if tenant.default_datastore_url:
+            result.default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
+
+        # Populate associated VMs
+        if tenant.vms:
+            for vm_id in tenant.vms:
+                vm_name = vmdk_utils.get_vm_name_by_uuid(vm_id)
+                result.vms.append(vm_name)
+
+        # Populate associated privileges
+        if tenant.privileges:
+            for privilege in tenant.privileges:
+                result.privileges.append(self.map_privilege(privilege))
+
+        return result
+
+    def map_privilege(self, privilege):
+        """
+        Map a DatastoreAccessPrivilege instance returned by auth_api to VMODL vim.vcs.storage.DatastoreAccessPrivilege instance
+        """
+
+        if privilege == None:
+            return None
+
+        result = vim.vcs.storage.DatastoreAccessPrivilege()
+        result.datastore =  vmdk_utils.get_datastore_name(privilege.datastore_url)
+        result.allow_create = privilege.allow_create
+        result.volume_max_size = privilege.max_volume_size
+        result.volume_total_size = privilege.usage_quota
+
+        return result
 
 class VsphereContainerServiceImpl(vim.vcs.VsphereContainerService):
     '''Implementation of Vsphere Container Serivce'''

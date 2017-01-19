@@ -65,7 +65,7 @@ def connect_to_vcs(host="localhost", port=443):
     """
 
     si = vmdk_ops.get_si()
-    #pylint: disable=no-member
+    # pylint: disable=no-member
     hostSystem = pyVim.host.GetHostSystem(si)
 
     token = hostSystem.configManager.vsanSystem.FetchVsanSharedSecret()

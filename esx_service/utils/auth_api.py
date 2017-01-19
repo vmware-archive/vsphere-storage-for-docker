@@ -67,7 +67,7 @@ def get_tenant_from_db(name):
 
     error_msg, tenant = auth_mgr.get_tenant(name)
     if error_msg:
-        error_info = error_info.generate_error_info(error_msg)
+        error_info = error_code.generate_error_info(error_msg)
     return error_info, tenant
 
 def get_tenant_name(tenant_uuid):
