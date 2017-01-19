@@ -273,12 +273,15 @@ class TenantManager:
    @param tenant A tenant instance to be added VMs
    @param vms VMs to be added to this tenant.
    @throws vim.fault.NotFound If the tenant does not exist.
-   @throws vmodl.fault.InvalidArgument If the given VMs are empty or not exist.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invlid,
+           e.g. empty or not exist, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="AddVMs",
-           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
    @Param(name="vms", typ="string[]")
    @Return(typ="void")
@@ -291,12 +294,15 @@ class TenantManager:
    @param tenant A tenant instance to be removed VMs
    @param vms List of VMs to be removed from this tenant.
    @throws vim.fault.NotFound If the tenant does not exist.
-   @throws vmodl.fault.InvalidArgument If the given VMs are empty or not exist.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid,
+           e.g. empty, not exist, or not associated with this tenant, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="RemoveVMs",
-           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
    @Param(name="vms", typ="string[]")
    @Return(typ="void")
@@ -310,12 +316,15 @@ class TenantManager:
    @param tenant A tenant instance.
    @param vms VMs to be added to this tenant replacing existing VMs.
    @throws vim.fault.NotFound If the tenant does not exist.
-   @throws vmodl.fault.InvalidArgument If the given VMs are empty or not exist.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid,
+           e.g. empty or not exist, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="ReplaceVMs",
-           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
    @Param(name="vms", typ="string[]")
    @Return(typ="void")
@@ -330,11 +339,15 @@ class TenantManager:
    @param default_datastore If set to true, switch the default datastore
           for this tenant. False by default.
    @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vmodl.fault.InvalidArgument If the specified privilege is invalid,
+           e.g. missing parameters or containing invalid parameters, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="AddPrivilege",
-           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
    @Param(name="privilege", typ="vim.vcs.storage.DatastoreAccessPrivilege")
    @Param(name="default_datastore", typ="boolean", flags=F_OPTIONAL)
@@ -354,7 +367,7 @@ class TenantManager:
           Zero means unlimited quota.
    @throws vim.fault.NotFound If the tenant does not exist.
    @throws vmodl.fault.InvalidArgument If the specified parameters are invalid,
-           e.g. volume total size exceeds the datastore capacity.
+           e.g. volume total size exceeds the datastore capacity, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
@@ -377,11 +390,15 @@ class TenantManager:
    @param tenant A tenant instance.
    @param datastore Privilege on this datastore will be removed from this tenant.
    @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vmodl.fault.InvalidArgument If the specified datastore is invalid,
+           e.g. not exist or not associated with this tenant, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="RemovePrivilege",
-           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
    @Param(name="datastore", typ="string")
    @Return(typ="void")
