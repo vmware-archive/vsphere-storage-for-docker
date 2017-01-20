@@ -689,7 +689,7 @@ class TestTenant(unittest.TestCase):
                                                     vm_list=[self.vm1_name], 
                                                     privileges=[])
         self.assertEqual(None, error_info)
-       
+        
         # add first access privilege for tenant
         # allow_create = False
         # max_volume size = 600MB

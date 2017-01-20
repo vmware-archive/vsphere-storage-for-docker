@@ -804,9 +804,9 @@ def connectLocalSi(force=False):
     global _service_instance
     if not _service_instance:
         try:
-            logging.info("Connecting to the local Service Instance")
+            logging.info("Connecting to the local Service Instance as 'dcui' ")
 
-            # Connec to local server as user "dcui" since this is the Admin that does not lose its
+            # Connect to local server as user "dcui" since this is the Admin that does not lose its
             # Admin permissions even when the host is in lockdown mode. User "dcui" does not have a
             # password - it is used by the ESXi local application DCUI (Direct Console User Interface)
             # Version must be set to access newer features, such as VSAN.

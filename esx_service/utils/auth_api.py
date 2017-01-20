@@ -54,7 +54,7 @@ def get_tenant_name(tenant_uuid):
     """
         Get tenant name with given tenant_uuid
         Return value:
-        -- error_code: return None on success or error code on failure
+        -- error_info: return None on success or error info on failure
         -- tenant_name: return tenant name on success or None on failure 
     """
     error_info, auth_mgr = get_auth_mgr()
@@ -83,9 +83,7 @@ def create_tenant_in_db(name, description, vms, privileges):
         return error_info, None
     
     if exist_tenant:
-        err_code = ErrorCode.TENANT_ALREADY_EXIST
-        err_msg = error_code.error_code_to_message[err_code].format(name)
-        error_info = ErrorInfo(err_code, err_msg)            
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)            
         return error_info, None
 
     error_msg, tenant = auth_mgr.create_tenant(name=name, 
@@ -183,7 +181,7 @@ def generate_privileges(datastore, allow_create, volume_maxsize_in_MB, volume_to
     if volume_totalsize_in_MB:
         privileges[auth_data_const.COL_USAGE_QUOTA] = volume_totalsize_in_MB
     
-    logging.debug("generate_privileges: privileges=%s", privileges) 
+    logging.debug("generate_privileges: privileges=%s", privileges)
     return privileges
 
 def modify_privileges(privileges, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB):
@@ -228,7 +226,7 @@ def get_default_datastore(name):
         return error_info, None
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)           
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)  
         return error_info, None
     
     error_info, auth_mgr = get_auth_mgr()
@@ -248,7 +246,7 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
-        return error_info, None   
+        return error_info, None
         
     # if param "description" is not set by caller, the default value is empty string
     if not description:
@@ -273,8 +271,8 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         return error_info
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
-        return error_info, None
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
+        return error_info
     
     error_info, auth_mgr = get_auth_mgr()
     if error_info:
@@ -307,8 +305,8 @@ def _tenant_rm(name, remove_volumes=False):
         return error_info
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
-        return error_info, None
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
+        return error_info
     
     error_info, auth_mgr = get_auth_mgr()
     if error_info:
@@ -333,14 +331,14 @@ def _tenant_vm_add(name, vm_list):
         return error_info
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
-        return error_info   
+        return error_info
     
     error_info, auth_mgr = get_auth_mgr()
     if error_info:
@@ -361,14 +359,14 @@ def _tenant_vm_rm(name, vm_list):
         return error_info
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
-        return error_info   
+        return error_info
 
     logging.debug("_tenant_vm_rm: vms=%s", vms)
     error_info, auth_mgr = get_auth_mgr()
@@ -390,7 +388,7 @@ def _tenant_vm_ls(name):
         return error_info, None
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info, None
     # tenant.vms is a list of vm_uuid of vms which belong to this tenant
     return None, tenant.vms
@@ -399,9 +397,7 @@ def _tenant_vm_replace(name, vm_list):
     """ API to replace vms for a tenant """
     logging.debug("_tenant_vm_replace: name=%s vm_list=%s", name, vm_list)
     if not vm_list:
-        err_code = ErrorCode.REPLACE_VM_EMPTY
-        err_msg = error_code.error_code_to_message[err_code]
-        error_info = ErrorInfo(err_code, err_msg)
+        error_info = error_code.generate_error_info(ErrorCode.REPLACE_VM_EMPTY)
         return error_info
 
     error_info, tenant = get_tenant_from_db(name)
@@ -417,7 +413,7 @@ def _tenant_vm_replace(name, vm_list):
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
-        return error_info   
+        return error_info
 
     logging.debug("_tenant_vm_replace: vms=%s", vms)
     error_info, auth_mgr = get_auth_mgr()
@@ -441,7 +437,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         return error_info
 
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
     privileges = generate_privileges(datastore=datastore, 
@@ -489,7 +485,7 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
         return error_info
 
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
     
     datastore_url = vmdk_utils.get_datastore_url(datastore)
@@ -527,7 +523,7 @@ def _tenant_access_rm(name, datastore):
         return error_info
     
     if not tenant:
-       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
        return error_info
     
     error_info, auth_mgr = get_auth_mgr()
@@ -565,7 +561,7 @@ def _tenant_access_ls(name):
         return error_info, None
     
     if not tenant:
-       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
+       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
        return error_info, None
 
     return None, tenant.privileges 
