@@ -16,7 +16,7 @@ as well as the
 
 The download consists of 2 parts:
 
-1. ESX: The ESX code is packaged as a [vib or an offline depot] (http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
+1. ESX: The ESX code is packaged as [a vib or an offline depot] (http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
 2. VM Running Docker: The docker service is packaged as a deb or rpm file.
    * Photon/RedHat => Download RPM
    * Ubuntu => Download Deb.
