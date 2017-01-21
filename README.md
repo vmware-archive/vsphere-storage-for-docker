@@ -12,7 +12,7 @@ as well as the
 
 ## Download
 
-**[Click here to download (Github releases)] (https://github.com/vmware/docker-volume-vsphere/releases).**
+**[Click here to download (Github releases)] (https://github.com/vmware/docker-volume-vsphere/releases)**
 
 The download consists of 2 parts
 
