@@ -278,7 +278,17 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
     if error_info:
         return error_info
 
-    if new_name:    
+    if new_name:
+        # check whether tenant with new_name already exist or not
+        error_msg, exist_tenant = auth_mgr.get_tenant(new_name)
+        if error_msg:
+            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
+            return error_info, None
+        
+        if exist_tenant:
+            error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)            
+            return error_info, None
+
         error_msg = tenant.set_name(auth_mgr.conn, name, new_name)
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
