@@ -20,7 +20,7 @@ The download consists of 2 parts:
    * Photon/RedHat => Download RPM
    * Ubuntu => Download Deb.
 
-Please pick the latest release and use the same version of ESX and VM release.
+Pick the latest release and use the same version of ESX and VM release.
 
 ## Demos
 
