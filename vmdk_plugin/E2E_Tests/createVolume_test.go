@@ -23,10 +23,10 @@
 package e2e_test
 
 import (
-	"testing"
-	"os"
-	TestUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/test_util"
 	volumeNameUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
+	TestUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/test_util"
+	"os"
+	"testing"
 )
 
 // Test objective: create volume on fresh setup very first time and verifies the volume
@@ -34,7 +34,7 @@ import (
 
 /*
 
-The issue was observed on photon so steps are mentioned for photon OS only in fact 
+The issue was observed on photon so steps are mentioned for photon OS only in fact
 test should be OS agnostic.
 
 1. create docker volume using following command
@@ -46,16 +46,16 @@ expectation: volume should be created correctly
 
 */
 
-func TestVolumeCreationFristTime(t *testing.T) {
+func TestVolumeCreationFirstTime(t *testing.T) {
 	var err error
 	var out []byte
 	volumeName := volumeNameUtil.GetVolumeNameWithTimeStamp("abc")
-	
+
 	// create volume
 	out, err = TestUtil.CreateDefaultVolume(os.Getenv("VM1"), volumeName)
-	
-	if (err != nil) {
-		t.Fatalf("\nError has occurred [%s] \n\twhile creating volume [%s] very first time: err -> %v", out, volumeName, err)		
+
+	if err != nil {
+		t.Fatalf("\nError has occurred [%s] \n\twhile creating volume [%s] very first time: err -> %v", out, volumeName, err)
 	} else {
 		t.Logf("\nTestcase passed: successfully able to create volume [%s]\n", out)
 		// delete volume

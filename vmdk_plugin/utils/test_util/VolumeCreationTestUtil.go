@@ -24,19 +24,28 @@ import (
 	"strings"
 )
 
+var SSH_OPTS []string = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
+
 // This util method is going to create vsphere docker volume with
 // defaults.
 func CreateDefaultVolume(ip string, name string) ([]byte, error) {
-
 	fmt.Printf("\ncreating volume [%s] on VM[%s]", name, ip)
-
-	return exec.Command("/usr/bin/ssh", strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no", "root@"+ip, "docker volume create --driver=vmdk --name="+name).CombinedOutput()
-
+	return InvokeCommand(ip, "docker volume create --driver=vmdk --name="+name)
 }
 
 // This helper deletes the created volume as per passed volume name.
 func DeleteVolume(name string, ip string) ([]byte, error) {
 	fmt.Printf("\ndestroying volume [%s]", name)
+	return InvokeCommand(ip, "docker volume rm "+name)
+}
 
-	return exec.Command("/usr/bin/ssh", strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no", "root@"+ip, "docker volume rm "+name).CombinedOutput()
+// This helper method can be consumed by test directly to invoke
+// any command on the remote host.
+// remoteHostIP:
+// 	remote machine address to execute on the machine
+// cmd:
+//	A command string to be executed on the remote host as per
+//	remoteHostIP value
+func InvokeCommand(remoteHostIP string, cmd string) ([]byte, error) {
+	return exec.Command("/usr/bin/ssh", append(SSH_OPTS, "root@"+remoteHostIP, cmd)...).CombinedOutput()
 }
