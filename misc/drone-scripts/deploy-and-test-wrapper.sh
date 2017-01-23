@@ -86,7 +86,16 @@ log "starting deploy and test"
 
 INCLUDE_HOSTD="false"
 
-if make -s deploy-esx deploy-vm testasroot testremote e2e-dkrVolDriver-test TEST_VOL_NAME=vol.build$BUILD_NUMBER;
+TESTS=""
+if [ -e /tmp/$ESX ]
+then
+   TESTS="test-vm e2e-dkrVolDriver-test"
+else
+   touch /tmp/$ESX
+   TESTS="testasroot test-esx test-vm e2e-dkrVolDriver-test"
+fi
+
+if make -s deploy-esx deploy-vm $TESTS TEST_VOL_NAME=vol.build$BUILD_NUMBER;
 then
   echo "=> Build Complete" `date`
   #stop_build $VM1 $BUILD_NUMBER
