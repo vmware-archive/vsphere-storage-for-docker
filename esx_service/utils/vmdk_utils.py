@@ -318,7 +318,7 @@ def get_datastore_url(datastore_name):
     if datastore_name == auth.DEFAULT_DS:
         return auth.DEFAULT_DS_URL
 
-    # Query datastore URL from VIM API
+    #  Query datastore URL from VIM API
     res = [d.info.url for d in get_datastore_objects() if d.info.name == datastore_name]
     return res[0]
 
