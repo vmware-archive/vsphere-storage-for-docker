@@ -88,7 +88,7 @@ class VolumeNamingTestCase(unittest.TestCase):
                                  .format(full_name))
     
 def generate_test_vm_name(): 
-    """ gets unique name for vm e.g. vm_name = test-vm_19826"""
+    """ This method gets unique name for vm e.g. vm_name = test-vm_19826"""
     random_id = random.randint(0, 65536)
     vm_name = 'test-vm_' + str(random_id)
     return vm_name
