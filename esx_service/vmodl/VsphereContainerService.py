@@ -232,12 +232,10 @@ class TenantManager:
    Query Tenant for the given name.
    @param name Tenant name.
    @return Tenant for the given name, or all tenants if name is not set.
-   @throws vim.fault.NotFound If the tenant name does not exist.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
-   @Method(parent=_name, wsdlName="GetTenants",
-           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+   @Method(parent=_name, wsdlName="GetTenants", faults=["vim.fault.VcsFault"])
    @Param(name="name", typ="string", flags=F_OPTIONAL)
    @Return(typ="vim.vcs.Tenant[]", flags=F_OPTIONAL)
    def GetTenants(self, name=None):
@@ -250,13 +248,15 @@ class TenantManager:
    @param new_name New name of the tenant
    @param description New description of the tenant
    @param default_datastore New default datastore of the tenant
+   @throws vmodl.fault.InvalidArgument If the given name or description exceeds maximum length.
    @throws vim.fault.NotFound If the name does not exist.
    @throws vim.fault.AlreadyExists If the new_name already exists.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="UpdateTenant",
-           faults=["vim.fault.NotFound",
+           faults=["vmodl.fault.InvalidArgument",
+                   "vim.fault.NotFound",
                    "vim.fault.AlreadyExists",
                    "vim.fault.VcsFault"])
    @Param(name="name", typ="string")

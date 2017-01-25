@@ -41,7 +41,7 @@ import pyVim.connect
 import pyVim.host
 import pyVmomi
 import pyVmomi.VmomiSupport
-from pyVmomi import vim
+from pyVmomi import vim, vmodl
 from vsanPerfPyMo import VsanPerformanceManager
 import random
 import unittest
@@ -71,6 +71,12 @@ def connect_to_vcs(host="localhost", port=443):
     token = hostSystem.configManager.vsanSystem.FetchVsanSharedSecret()
 
     version = pyVmomi.VmomiSupport.newestVersions.Get("vim")
+
+    # If it's single-node VSAN, the server will be using a self-signed certificate,
+    # and the SAN in the certificate will be "localhost.localdomain"
+    if not hostSystem.summary.managementServerIp:
+        host = "localhost.localdomain"
+
     stub = pyVmomi.SoapStubAdapter(host=host,
                                    port=443,
                                    version=version,
@@ -164,7 +170,7 @@ class TestVsphereContainerService(unittest.TestCase):
             if tenant.name.startswith(TENANT_PREFIX):
                 self.tenantMgr.RemoveTenant(tenant.name)
 
-    def test_add_tenant(self):
+    def test_create_tenant(self):
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
@@ -172,8 +178,34 @@ class TestVsphereContainerService(unittest.TestCase):
         self.assertTrue(tenant)
         self.assertEqual(tenant.name, TENANT_NAME)
         self.assertEqual(tenant.description, TENANT_DESC)
-        
-    def test_get_tenant_by_name(self):
+
+    def test_create_tenant_invalid_arg(self):
+        # Create a tenant with empty name
+        empty_name = ""
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.CreateTenant(name=empty_name)
+
+        # Create a tenant with name longer than 64 characters
+        long_name = "01234567890123456789012345678901234567890123456789012345678901234"
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.CreateTenant(name=long_name)
+
+        # Create a tenant with description longer than 256 characters
+        long_desc = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+                0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+                012345678901234567890123456789012345678901234567890123456"
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.CreateTenant(name=TENANT_NAME, description=long_desc)
+
+    def test_create_tenant_already_exists(self):
+        # Create a tenant
+        self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+
+        # Create a tenant with same name
+        with self.assertRaises(vim.fault.AlreadyExists):
+            self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+
+    def test_get_tenant(self):
         # Create a tenant
         self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
@@ -184,6 +216,13 @@ class TestVsphereContainerService(unittest.TestCase):
         self.assertTrue(tenants)
         self.assertEqual(tenants[0].name, TENANT_NAME)
         self.assertEqual(tenants[0].description, TENANT_DESC)
+
+    def test_get_tenant_not_exists(self):
+        # Get the tenant
+        tenants = self.tenantMgr.GetTenants(name=TENANT_NAME)
+
+        # Verify the result
+        self.assertFalse(tenants)
 
     def test_get_all_tenants(self):
         # Create 2 tenants
@@ -208,6 +247,11 @@ class TestVsphereContainerService(unittest.TestCase):
         tenants = self.tenantMgr.GetTenants(name=TENANT_NAME)
         self.assertFalse(tenants)
 
+    def test_remove_tenant_not_found(self):
+        # Remove a tenant not exists
+        with self.assertRaises(vim.fault.NotFound):
+            self.tenantMgr.RemoveTenant(name=TENANT_NAME)
+
     def test_update_tenant(self):
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
@@ -220,6 +264,45 @@ class TestVsphereContainerService(unittest.TestCase):
         self.assertTrue(tenants)
         self.assertEqual(tenants[0].name, NEW_TENANT_NAME)
         self.assertEqual(tenants[0].description, NEW_TENANT_DESC)
+
+    def test_update_tenant_invalid_arg(self):
+        # Create a tenant
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+
+        # Update the tenant with same name
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=TENANT_NAME)
+
+        # Update a tenant with empty name
+        empty_name = ""
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=empty_name)
+
+        # Update the tenant with new name longer than 64 characters
+        long_name = "01234567890123456789012345678901234567890123456789012345678901234"
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=long_name)
+
+        # Create a tenant with new description longer than 256 characters
+        long_desc = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+                0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+                012345678901234567890123456789012345678901234567890123456"
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=NEW_TENANT_NAME, description=long_desc)
+
+    def test_update_tenant_not_found(self):
+        # Update a tenant not exists
+        with self.assertRaises(vim.fault.NotFound):
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=NEW_TENANT_NAME)
+
+    def test_update_tenant_already_exists(self):
+        # Create 2 tenants
+        self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+        self.tenantMgr.CreateTenant(name=NEW_TENANT_NAME, description=NEW_TENANT_DESC)
+
+        # Update one tenant with same name as the other tenant
+        with self.assertRaises(vim.fault.AlreadyExists):
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=NEW_TENANT_NAME)
 
     def test_add_vms(self):
         # Create a tenant

@@ -40,7 +40,7 @@ class ErrorCode:
     # VMODL related error code start
     VMODL_TENANT_NAME_EMPTY = 401
     VMODL_TENANT_NAME_TOO_LONG =402
-    VMODL_TENANT_DESCRIPTION_TOO_LONG = 403
+    VMODL_TENANT_DESC_TOO_LONG = 403
     # VMODL related error code end
 
     INTERNAL_ERROR = 501
@@ -62,9 +62,9 @@ error_code_to_message = {
 
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
 
-    ErrorCode.VMODL_TENANT_NAME_EMPTY : "Tenant name {0} is empty",
-    ErrorCode.VMODL_TENANT_NAME_TOO_LONG : "Tenant name {0} exceeds 64 characters",
-    ErrorCode.VMODL_TENANT_DESCRIPTION_TOO_LONG : "Tenant description {0} exceeds 256 characters",
+    ErrorCode.VMODL_TENANT_NAME_EMPTY : "Tenant name is empty",
+    ErrorCode.VMODL_TENANT_NAME_TOO_LONG : "Tenant name exceeds 64 characters: {0}",
+    ErrorCode.VMODL_TENANT_DESC_TOO_LONG : "Tenant description exceeds 256 characters: {0}",
 
     ErrorCode.INTERNAL_ERROR : "Internal Error({0})"
 }

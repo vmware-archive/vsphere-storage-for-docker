@@ -52,37 +52,31 @@ class TenantManagerImpl(vim.vcs.TenantManager):
     def CreateTenant(self, name, description=None):
         logging.info("Creating a tenant: name=%s, description=%s", name, description)
 
-        if len(name) == 0:
-            error_info = ErrorCode.VMODL_TENANT_NAME_EMPTY.format(name);
-            return error_info
-
-        if len(name) > TENANT_NAME_MAX_LEN:
-            error_info = ErrorCode.VMODL_TENANT_NAME_TOO_LONG.format(name);
-            return error_info
-
-        if description and len(description) > TENANT_DESC_MAX_LEN:
-            error_info = ErrorCode.VMODL_TENANT_NAME_TOO_LONG.format(name);
-            return error_info
+        self.check_create_tenant_parameters(name, description)
 
         # Create the tenant in the database
         error_info, tenant = auth_api._tenant_create(name, description);
         if error_info:
-            logging.error("Failed to create tenant: name=%s, description=%s", name, description)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to create tenant: %s", error_info.msg)
 
-        logging.info("Successfully created a tenant: name=%s, description=%s", tenant.name, tenant.description)
+            if error_info.code == ErrorCode.TENANT_ALREADY_EXIST:
+                raise vim.fault.AlreadyExists(name=name)
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
+
+        logging.info("Successfully created a tenant: name=%s, description=%s", name, description)
         return self.map_tenant(tenant)
 
     def RemoveTenant(self, name, remove_volumes=False):
         logging.info("Removing a tenant: name=%s, remove_volumes=%s", name, remove_volumes)
 
         error_info = auth_api._tenant_rm(name, remove_volumes)
-        if error_info == ErrorCode.TENANT_NOT_EXIST:
-            raise vim.fault.NotFound(error_info.format(name))
-
         if error_info:
-            logging.error("Failed to remove tenant: name=%s", name)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to remove tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
         
         logging.info("Successfully removed tenant: name=%s", name)
 
@@ -91,7 +85,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info, tenant_list = auth_api._tenant_ls(name)
         if error_info:
-            logging.error("Failed to retrieve tenant(s): name=%s", name)
+            logging.error("Failed to retrieve tenant(s): %s", error_info.msg)
             raise vim.fault.VcsFault(msg=error_info.msg);
 
         result = []
@@ -100,23 +94,23 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         logging.info("Successfully retrieved tenant(s): name=%s", name)
         return result
-            
+
     def UpdateTenant(self, name, new_name=None, description=None, default_datastore=None):
         logging.info("Updating tenant: name=%s, new_name=%s, description=%s, default_datastore=%s",
             name, new_name, description, default_datastore)
 
+        self.check_update_tenant_parameters(name, new_name, description)
+
         error_info = auth_api._tenant_update(name, new_name, description, default_datastore)
-        if error_info == ErrorCode.TENANT_NOT_EXIST:
-            raise vim.fault.NotFound(error_info.format(name))
-
-        if error_info == ErrorCode.TENANT_ALREADY_EXIST:
-            raise vim.fault.AlreadyExists(error_info.format(new_name))
-
         if error_info:
-            logging.error("Failed to update tenant: name=%s, new_name=%s, description=%s, default_datastore=%s",
-            name, new_name, description, default_datastore)
-            raise vim.fault.VcsFault(msg=error_info.msg)
-        
+            logging.error("Failed to update tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.TENANT_ALREADY_EXIST:
+                raise vim.fault.AlreadyExists(name=new_name)
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
+
         logging.info("Successfully updated tenant: name=%s, new_name=%s, description=%s, default_datastore=%s",
             name, new_name, description, default_datastore)
 
@@ -255,6 +249,42 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         result.volume_total_size = privilege.usage_quota
 
         return result
+
+    def check_create_tenant_parameters(self, name, description):
+        if len(name) == 0:
+            error_msg = error_code.error_code_to_message[ErrorCode.VMODL_TENANT_NAME_EMPTY]
+            logging.error("Failed to create tenant: %s", error_msg)
+            raise vmodl.fault.InvalidArgument(invalidProperty="name")
+
+        if len(name) > TENANT_NAME_MAX_LEN:
+            error_msg = error_code.error_code_to_message[ErrorCode.VMODL_TENANT_NAME_TOO_LONG].format(name);
+            logging.error("Failed to create tenant: %s", error_msg)
+            raise vmodl.fault.InvalidArgument(invalidProperty="name")
+
+        if description and len(description) > TENANT_DESC_MAX_LEN:
+            error_msg = error_code.error_code_to_message[ErrorCode.VMODL_TENANT_DESC_TOO_LONG].format(name);
+            logging.error("Failed to create tenant: %s", error_msg)
+            raise vmodl.fault.InvalidArgument(invalidProperty="description")
+
+    def check_update_tenant_parameters(self, name, new_name, description):
+        if new_name == name:
+            logging.error("Failed to update tenant: new_name is the same as name")
+            raise vmodl.fault.InvalidArgument(invalidProperty="new_name")
+
+        if len(new_name) == 0:
+            error_msg = error_code.error_code_to_message[ErrorCode.VMODL_TENANT_NAME_EMPTY]
+            logging.error("Failed to update tenant: %s", error_msg)
+            raise vmodl.fault.InvalidArgument(invalidProperty="new_name")
+
+        if len(new_name) > TENANT_NAME_MAX_LEN:
+            error_msg = error_code.error_code_to_message[ErrorCode.VMODL_TENANT_NAME_TOO_LONG].format(name);
+            logging.error("Failed to update tenant: %s", error_msg)
+            raise vmodl.fault.InvalidArgument(invalidProperty="new_name")
+
+        if description and len(description) > TENANT_DESC_MAX_LEN:
+            error_msg = error_code.error_code_to_message[ErrorCode.VMODL_TENANT_DESC_TOO_LONG].format(name);
+            logging.error("Failed to update tenant: %s", error_msg)
+            raise vmodl.fault.InvalidArgument(invalidProperty="description")
 
 class VsphereContainerServiceImpl(vim.vcs.VsphereContainerService):
     '''Implementation of Vsphere Container Serivce'''

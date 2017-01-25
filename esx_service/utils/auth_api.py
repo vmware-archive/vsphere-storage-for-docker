@@ -271,7 +271,7 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         return error_info
     
     if not tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)              
         return error_info
     
     error_info, auth_mgr = get_auth_mgr()
@@ -283,11 +283,11 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         error_msg, exist_tenant = auth_mgr.get_tenant(new_name)
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
-            return error_info, None
+            return error_info
         
         if exist_tenant:
             error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)            
-            return error_info, None
+            return error_info
 
         error_msg = tenant.set_name(auth_mgr.conn, name, new_name)
         if error_msg:
