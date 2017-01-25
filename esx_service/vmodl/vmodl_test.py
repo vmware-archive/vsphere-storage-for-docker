@@ -31,8 +31,7 @@
 # stub = vmodl_test.connect_to_vcs()
 # vmodl_test.get_tenants(stub)       # print tenant list
 
-import socket
-import sys
+import sys, ssl
 sys.path.append('/lib64/python3.5/site-packages/pyMo/vim/vsan')
 sys.path.append('/lib/python2.7/site-packages/pyMo/vim/vsan')
 
@@ -58,6 +57,14 @@ TENANT_DESC = "TEST_TENANT_DESCRIPTION"
 NEW_TENANT_NAME = "TEST_TENANT_NAME_2"
 NEW_TENANT_DESC = "TEST_TENANT_DESCRIPTION_2"
 TENANT_PREFIX = "TEST_TENANT_"
+LONG_TENANT_NAME = "01234567890123456789012345678901234567890123456789\
+                    012345678901234"
+LONG_TENANT_DESC = "01234567890123456789012345678901234567890123456789\
+                    01234567890123456789012345678901234567890123456789\
+                    01234567890123456789012345678901234567890123456789\
+                    01234567890123456789012345678901234567890123456789\
+                    01234567890123456789012345678901234567890123456789\
+                    0123456"
 
 def connect_to_vcs(host="localhost", port=443):
     """
@@ -67,29 +74,27 @@ def connect_to_vcs(host="localhost", port=443):
     si = vmdk_ops.get_si()
     # pylint: disable=no-member
     hostSystem = pyVim.host.GetHostSystem(si)
-
     token = hostSystem.configManager.vsanSystem.FetchVsanSharedSecret()
-
     version = pyVmomi.VmomiSupport.newestVersions.Get("vim")
-
-    # If it's single-node VSAN, the server will be using a self-signed certificate,
-    # and the SAN in the certificate will be "localhost.localdomain"
-    if not hostSystem.summary.managementServerIp:
-        host = "localhost.localdomain"
-
     stub = pyVmomi.SoapStubAdapter(host=host,
-                                   port=443,
+                                   port=port,
                                    version=version,
                                    path="/vsan",
                                    poolSize=0)
     vpm = vim.cluster.VsanPerformanceManager("vsan-performance-manager", stub)
-    logged_in = vpm.Login(token)
 
+    # Disable certificate check during SSL communication
+    disable_certificate_check()
+
+    logged_in = vpm.Login(token)
     if not logged_in:
         print("Failed to get sims stub for host %s" % host)
         raise OSError("Failed to login to VSAN mgmt server")
 
     return stub
+
+def disable_certificate_check():
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_tenants(stub):
     vcs = vim.vcs.VsphereContainerService("vsphere-container-service", stub)
@@ -117,8 +122,7 @@ class TestVsphereContainerService(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        ip = socket.gethostbyname(socket.gethostname())
-        stub = connect_to_vcs(host=ip, port=443)
+        stub = connect_to_vcs()
         cls.vcs = vim.vcs.VsphereContainerService("vsphere-container-service", stub)
         cls.tenantMgr = cls.vcs.GetTenantManager()
         cls.setup_datastore()
@@ -186,16 +190,12 @@ class TestVsphereContainerService(unittest.TestCase):
             self.tenantMgr.CreateTenant(name=empty_name)
 
         # Create a tenant with name longer than 64 characters
-        long_name = "01234567890123456789012345678901234567890123456789012345678901234"
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.CreateTenant(name=long_name)
+            self.tenantMgr.CreateTenant(name=LONG_TENANT_NAME)
 
         # Create a tenant with description longer than 256 characters
-        long_desc = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-                0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-                012345678901234567890123456789012345678901234567890123456"
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.CreateTenant(name=TENANT_NAME, description=long_desc)
+            self.tenantMgr.CreateTenant(name=TENANT_NAME, description=LONG_TENANT_DESC)
 
     def test_create_tenant_already_exists(self):
         # Create a tenant
@@ -279,16 +279,12 @@ class TestVsphereContainerService(unittest.TestCase):
             self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=empty_name)
 
         # Update the tenant with new name longer than 64 characters
-        long_name = "01234567890123456789012345678901234567890123456789012345678901234"
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=long_name)
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=LONG_TENANT_NAME)
 
         # Create a tenant with new description longer than 256 characters
-        long_desc = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-                0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-                012345678901234567890123456789012345678901234567890123456"
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=NEW_TENANT_NAME, description=long_desc)
+            self.tenantMgr.UpdateTenant(name=TENANT_NAME, new_name=NEW_TENANT_NAME, description=LONG_TENANT_DESC)
 
     def test_update_tenant_not_found(self):
         # Update a tenant not exists

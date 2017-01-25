@@ -193,7 +193,7 @@ class TenantManager:
    @param name Name of the tenant.
    @param description Detailed description of the tenant. Optional.
    @return New tenant for the given name and description
-   @throws vmodl.fault.InvalidArgument If the given name or description exceeds maximum length.
+   @throws vmodl.fault.InvalidArgument If the given parameters are invalid.
    @throws vim.fault.AlreadyExists If the given tenant name already exists.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
@@ -248,7 +248,7 @@ class TenantManager:
    @param new_name New name of the tenant
    @param description New description of the tenant
    @param default_datastore New default datastore of the tenant
-   @throws vmodl.fault.InvalidArgument If the given name or description exceeds maximum length.
+   @throws vmodl.fault.InvalidArgument If the given parameters are invalid.
    @throws vim.fault.NotFound If the name does not exist.
    @throws vim.fault.AlreadyExists If the new_name already exists.
    @throws vim.fault.VcsFault If an internal server error occurs.
