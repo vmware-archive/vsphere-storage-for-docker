@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+DS='-ds=datastore1'
 unit_test_array=($TEST_URL_ARRAY)
 numServers=${#unit_test_array[@]}
 DRONE_BUILD_NUMBER=${DRONE_BUILD_NUMBER:=0}
@@ -20,7 +20,7 @@ prevBuildStatus=`drone build info vmware/docker-volume-vsphere $(( $DRONE_BUILD_
 outArray=($prevBuildStatus)
 total_builds=`drone build list vmware/docker-volume-vsphere| wc -l`
 
-govc datastore.mkdir docker-volume-vsphere/$DRONE_BUILD_NUMBER
+govc datastore.mkdir $DS docker-volume-vsphere/$DRONE_BUILD_NUMBER
 if [ "$?" != "0" ]
 then
     echo
@@ -33,7 +33,7 @@ then
 fi
 
 # Delete older build records
-govc datastore.rm docker-volume-vsphere/$(( $DRONE_BUILD_NUMBER-$total_builds )) 2>&1 > /dev/null
+govc datastore.rm $DS docker-volume-vsphere/$(( $DRONE_BUILD_NUMBER-$total_builds )) 2>&1 > /dev/null
 
 while [[ ${outArray[2]} == *"running"* ]]; do
     echo "Waiting 5 minutes for previous build $(( $DRONE_BUILD_NUMBER-$numServers )) to complete";
@@ -45,21 +45,21 @@ done
 # Check if any other build is in the ongoing folder, if present, check if entry is stale.
 # If entry is stale clean it up.
 # If entry is an on going build wait for it.
-prevBuild=`govc datastore.ls docker-volume-vsphere/ongoing|tail -n 1`
+prevBuild=`govc datastore.ls $DS docker-volume-vsphere/ongoing|tail -n 1`
 while [[ "$prevBuild" != "" ]];
 do
     prevBuildStatus=`drone build info vmware/docker-volume-vsphere $prevBuild`
     outArray=($prevBuildStatus)
     if [[ ${outArray[2]} != *"running"* ]]
     then
-        govc datastore.rm docker-volume-vsphere/ongoing/$prevBuild
+        govc datastore.rm $DS docker-volume-vsphere/ongoing/$prevBuild
     else
         echo "Waiting 5 minutes for previous build $prevBuild to complete";
         sleep 300;
     fi
-    prevBuild=`govc datastore.ls docker-volume-vsphere/ongoing|tail -n 1`
+    prevBuild=`govc datastore.ls $DS docker-volume-vsphere/ongoing|tail -n 1`
 done
 
-govc datastore.mkdir docker-volume-vsphere/ongoing/$DRONE_BUILD_NUMBER
+govc datastore.mkdir $DS docker-volume-vsphere/ongoing/$DRONE_BUILD_NUMBER
 
 exit 0
