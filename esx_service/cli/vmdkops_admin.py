@@ -935,8 +935,8 @@ def tenant_access_add(args):
                                              datastore=args.datastore,
                                              default_datastore=args.default_datastore,
                                              allow_create=args.allow_create,
-                                             volume_maxsize=volume_maxsize_in_MB,
-                                             volume_totalsize=volume_totalsize_in_MB
+                                             volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                             volume_totalsize_in_MB=volume_totalsize_in_MB
                                              )
       
     if error_info:
@@ -956,8 +956,8 @@ def tenant_access_set(args):
     error_info = auth_api._tenant_access_set(name=args.name, 
                                              datastore=args.datastore,
                                              allow_create=args.allow_create, 
-                                             volume_maxsize=volume_maxsize_in_MB, 
-                                             volume_totalsize=volume_totalsize_in_MB)
+                                             volume_maxsize_in_MB=volume_maxsize_in_MB, 
+                                             volume_totalsize_in_MB=volume_totalsize_in_MB)
 
     if error_info:
         return operation_fail(error_info.msg)

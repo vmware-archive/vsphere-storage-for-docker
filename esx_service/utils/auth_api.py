@@ -435,6 +435,60 @@ def _tenant_vm_replace(name, vm_list):
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
+
+def check_argument_for_tenant_access(name, datastore):
+    """ Check whether input arguments for API '_tenant_access_*' are valid 
+        @param name @param cannot be None
+    """
+    if not name:
+        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, "tenant name cannot be empty")
+        return error_info
+    
+    if not datastore:
+        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, "datastore cannot be empty")
+        return error_info
+    
+    return None
+
+def privilege_exist(privileges, datastore_name):
+    for p in privileges:
+        ds_name = vmdk_utils.get_datastore_name(p.datastore_url)
+        if ds_name == datastore_name:
+            return True
+    
+    return False
+
+
+def check_argument_for_tenant_access_add(name, datastore, allow_create, default_datastore, volume_maxsize_in_MB, volume_totalsize_in_MB):
+    """ Check whether input arguments for API '_tenant_access_add' are valid """
+    error_info = check_argument_for_tenant_access(name, datastore)
+    if error_info:
+        return error_info
+    
+    error_info, privileges = _tenant_access_ls(name)
+    if error_info:
+        return error_info
+    
+    if privilege_exist(privileges, datastore):
+        error_msg = error_code.error_code_to_message[error_code.ErrorCode.PRIVILEGE_ALREADY_EXIST].format(name, datastore)
+        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        return error_info
+
+def check_argument_for_tenant_access_set(name, datastore, allow_create, default_datastore, volume_maxsize_in_MB, volume_totalsize_in_MB):
+    """ Check whether input arguments for API '_tenant_access_set' are valid """
+    error_info = check_argument_for_tenant_access(name, datastore)
+    if error_info:
+        return error_info
+    
+    error_info, privileges = _tenant_access_ls(name)
+    if error_info:
+        return error_info
+    
+    if not privilege_exist(privileges, datastore):
+        error_msg = error_code.error_code_to_message[error_code.ErrorCode.PRIVILEGE_NOT_FOUND].format(name, datastore)
+        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        return error_info
+
     
 def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False, volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
     """ API to add datastore access for a tenant """
@@ -442,6 +496,15 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
     logging.debug("_tenant_access_add: name=%s datastore=%s, allow_create=%s "
                   "volume_maxsize_in_MB=%s volume_totalsize_in_MB=%s", name, datastore, allow_create,
                   volume_maxsize_in_MB, volume_totalsize_in_MB)
+    error_info = check_argument_for_tenant_access_add(name=name,
+                                                      datastore=datastore,
+                                                      allow_create=allow_create,
+                                                      default_datastore=default_datastore,
+                                                      volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                      volume_totalsize_in_MB=volume_totalsize_in_MB)
+    if error_info:
+        return error_info
+
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info
@@ -528,6 +591,10 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
 def _tenant_access_rm(name, datastore):
     """ API to remove datastore access for a tenant """
     logging.debug("_tenant_access_rm: name=%s datastore=%s", name, datastore)
+    error_info = check_argument_for_tenant_access(name, datastore)
+    if error_info:
+        return error_info
+
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info

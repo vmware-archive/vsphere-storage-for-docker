@@ -31,6 +31,7 @@ class ErrorCode:
 
     # Privilege related error code start
     PRIVILEGE_NOT_FOUND = 201
+    PRIVILEGE_ALREADY_EXIST = 202
     # Privilege related error code end
 
     # DATASTORE related error code start
@@ -44,6 +45,7 @@ class ErrorCode:
     # VMODL related error code end
 
     INTERNAL_ERROR = 501
+    INVALID_ARGUMENT = 502
 
 
 error_code_to_message = {
@@ -59,6 +61,7 @@ error_code_to_message = {
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
 
     ErrorCode.PRIVILEGE_NOT_FOUND : "No privilege exists for ({0}, {1})",
+    ErrorCode.PRIVILEGE_ALREADY_EXIST : "privilege for ({0}, {1}) already exists",
 
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
 
@@ -66,7 +69,8 @@ error_code_to_message = {
     ErrorCode.VMODL_TENANT_NAME_TOO_LONG : "Tenant name exceeds 64 characters: {0}",
     ErrorCode.VMODL_TENANT_DESC_TOO_LONG : "Tenant description exceeds 256 characters: {0}",
 
-    ErrorCode.INTERNAL_ERROR : "Internal Error({0})"
+    ErrorCode.INTERNAL_ERROR : "Internal Error({0})",
+    ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})"
 }
 
 class ErrorInfo:
