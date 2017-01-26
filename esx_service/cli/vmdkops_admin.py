@@ -37,6 +37,7 @@ import auth_data
 import auth_api
 
 NOT_AVAILABLE = 'N/A'
+UNSET = "Unset"
 
 def main():
     log_config.configure()
@@ -986,9 +987,9 @@ def generate_tenant_access_ls_rows(privileges):
             datastore = vmdk_utils.get_datastore_name(p.datastore_url)
         allow_create = ("False", "True")[p.allow_create]
         # p[auth_data_const.COL_MAX_VOLUME_SIZE] is max_volume_size in MB
-        max_vol_size = "Unset" if p.max_volume_size == 0 else human_readable(p.max_volume_size*MB)
+        max_vol_size = UNSET if p.max_volume_size == 0 else human_readable(p.max_volume_size * MB)
         # p[auth_data_const.COL_USAGE_QUOTA] is total_size in MB
-        total_size = "Unset" if p.usage_quota == 0 else human_readable(p.usage_quota*MB)
+        total_size = UNSET if p.usage_quota == 0 else human_readable(p.usage_quota * MB)
         rows.append([datastore, allow_create, max_vol_size, total_size])
 
     return rows

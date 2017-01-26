@@ -30,7 +30,7 @@ def get_auth_mgr():
     try:
         auth_mgr = auth.get_auth_mgr()
     except auth_data.DbConnectionError as e:
-        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, "Failed to connect auth DB")
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, "Failed to connect to auth DB")
         return error_info, None
     return None, auth_mgr
 

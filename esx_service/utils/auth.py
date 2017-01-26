@@ -322,6 +322,11 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
 
     return result
 
+def err_msg_no_table(table_name):
+    error_msg = "table " + table_name + " does not exist"
+    logging.error(error_msg)
+    return error_msg
+
 def tables_exist():
     """ Check tables needed for authorization exist or not. """
     _auth_mgr = get_auth_mgr()
@@ -334,8 +339,7 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_msg = "table tenants does not exist"
-        logging.error(error_msg)
+        error_msg = err_msg_no_table('tenant')
         return error_msg, False
 
     try:
@@ -346,8 +350,7 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_msg = "table vms does not exist"
-        logging.error(error_msg)
+        error_msg = err_msg_no_table('vms')
         return error_msg, False
 
     try:
@@ -358,8 +361,7 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_msg = "table privileges does not exist"
-        logging.error(error_msg)
+        error_msg = err_msg_no_table('privileges')
         return error_msg, False
 
     try:
@@ -370,8 +372,7 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_msg = "table volumes does not exist"
-        logging.error(error_msg)
+        error_msg = err_msg_no_table('volumes')
         return error_msg, False
 
     return None, True
