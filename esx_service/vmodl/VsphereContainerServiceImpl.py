@@ -60,7 +60,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             logging.error("Failed to create tenant: %s", error_info.msg)
 
             if error_info.code == ErrorCode.TENANT_ALREADY_EXIST:
-                raise vim.fault.AlreadyExists(name=name)
+                raise vim.fault.AlreadyExists(name="name")
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
@@ -107,7 +107,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             if error_info.code == ErrorCode.TENANT_NOT_EXIST:
                 raise vim.fault.NotFound(msg=error_info.msg)
             elif error_info.code == ErrorCode.TENANT_ALREADY_EXIST:
-                raise vim.fault.AlreadyExists(name=new_name)
+                raise vim.fault.AlreadyExists(name="new_name")
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
@@ -123,8 +123,15 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_vm_add(tenant.name, vms)
         if error_info:
-            logging.error("Failed to add VMs: %s to tenant: %s", vms, tenant.name)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to add VMs to tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.VM_ALREADY_IN_TENANT:
+                raise vim.fault.AlreadyExists(name="vms")
+            elif error_info.code == ErrorCode.VM_NOT_FOUND:
+                raise vmodl.fault.InvalidArgument(invalidProperty="vms")
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully added VMs: %s to tenant: %s", vms, tenant.name)
     
@@ -137,8 +144,13 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_vm_rm(tenant.name, vms)
         if error_info:
-            logging.error("Failed to remove VMs: %s from tenant: %s", vms, tenant.name)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to remove VMs from tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.VM_NOT_FOUND:
+                raise vmodl.fault.InvalidArgument(invalidProperty="vms")
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed VMs: %s from tenant: %s", vms, tenant.name)
     
@@ -153,8 +165,13 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_vm_replace(tenant.name, vms)
         if error_info:
-            logging.error("Failed to replace VMs for tenant: %s", tenant.name)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to replace VMs for tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.VM_NOT_FOUND:
+                raise vmodl.fault.InvalidArgument(invalidProperty="vms")
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully replaced VMs for tenant: %s", tenant.name)
 
@@ -169,8 +186,15 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                                                  volume_totalsize_in_MB=privilege.volume_total_size,
                                                  default_datastore=default_datastore)
         if error_info:
-            logging.error("Failed to add privilege to tenant: %s", tenant.name)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to add privilege to tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.PRIVILEGE_ALREADY_EXIST:
+                raise vim.fault.AlreadyExists(name="privilege")
+            elif error_info.code == ErrorCode.DS_NOT_EXIST:
+                raise vmodl.fault.InvalidArgument(invalidProperty="privilege")
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully added privilege to tenant: %s", tenant.name)
 
@@ -183,11 +207,12 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                                                  volume_maxsize_in_MB=volume_max_size,
                                                  volume_totalsize_in_MB=volume_total_size)
         if error_info:
-            if error_info.code == ErrorCode.PRIVILEGE_NOT_FOUND:
-                logging.error(error_info.msg)
-                raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to update privilege for tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.PRIVILEGE_NOT_FOUND:
+                raise vmodl.fault.InvalidArgument(invalidProperty="datastore")
             else:
-                logging.error("Failed to update privilege for tenant: %s", tenant.name)
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully updated privilege for tenant: %s", tenant.name)
@@ -197,8 +222,13 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         error_info = auth_api._tenant_access_rm(tenant.name, datastore)
         if error_info:
-            logging.error("Failed to remove privilege (datastore=%s) from tenant: %s", datastore, tenant.name)
-            raise vim.fault.VcsFault(msg=error_info.msg)
+            logging.error("Failed to remove privilege from tenant: %s", error_info.msg)
+            if error_info.code == ErrorCode.TENANT_NOT_EXIST:
+                raise vim.fault.NotFound(msg=error_info.msg)
+            elif error_info.code == ErrorCode.DS_NOT_EXIST:
+                raise vmodl.fault.InvalidArgument(invalidProperty="datastore")
+            else:
+                raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed privilege (datastore=%s) from tenant: %s", datastore, tenant.name)
 

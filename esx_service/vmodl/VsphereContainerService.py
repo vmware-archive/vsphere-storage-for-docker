@@ -273,13 +273,14 @@ class TenantManager:
    @param tenant A tenant instance to be added VMs
    @param vms VMs to be added to this tenant.
    @throws vim.fault.NotFound If the tenant does not exist.
-   @throws vmodl.fault.InvalidArgument If the given VMs are invlid,
-           e.g. empty or not exist, etc.
+   @throws vim.fault.AlreadyExists If the given VMs already belong to this tenant.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
    @Method(parent=_name, wsdlName="AddVMs",
            faults=["vim.fault.NotFound",
+                   "vim.fault.AlreadyExists",
                    "vmodl.fault.InvalidArgument",
                    "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
@@ -294,8 +295,7 @@ class TenantManager:
    @param tenant A tenant instance to be removed VMs
    @param vms List of VMs to be removed from this tenant.
    @throws vim.fault.NotFound If the tenant does not exist.
-   @throws vmodl.fault.InvalidArgument If the given VMs are invalid,
-           e.g. empty, not exist, or not associated with this tenant, etc.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
@@ -316,8 +316,7 @@ class TenantManager:
    @param tenant A tenant instance.
    @param vms VMs to be added to this tenant replacing existing VMs.
    @throws vim.fault.NotFound If the tenant does not exist.
-   @throws vmodl.fault.InvalidArgument If the given VMs are invalid,
-           e.g. empty or not exist, etc.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
@@ -339,6 +338,7 @@ class TenantManager:
    @param default_datastore If set to true, switch the default datastore
           for this tenant. False by default.
    @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vim.fault.AlreadyExists If the specified privilege already exists in this tenant.
    @throws vmodl.fault.InvalidArgument If the specified privilege is invalid,
            e.g. missing parameters or containing invalid parameters, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
@@ -346,6 +346,7 @@ class TenantManager:
    )
    @Method(parent=_name, wsdlName="AddPrivilege",
            faults=["vim.fault.NotFound",
+                   "vim.fault.AlreadyExists",
                    "vmodl.fault.InvalidArgument",
                    "vim.fault.VcsFault"])
    @Param(name="tenant", typ="vim.vcs.Tenant")
@@ -367,7 +368,7 @@ class TenantManager:
           Zero means unlimited quota.
    @throws vim.fault.NotFound If the tenant does not exist.
    @throws vmodl.fault.InvalidArgument If the specified parameters are invalid,
-           e.g. volume total size exceeds the datastore capacity, etc.
+           e.g. datastore not exist or not associated with this tenant, etc.
    @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
