@@ -27,6 +27,8 @@ class ErrorCode:
     # VM related error code start
     VM_NOT_FOUND = 101
     REPLACE_VM_EMPTY = 102
+    VM_ALREADY_IN_TENANT = 103
+    VM_NOT_IN_TENANT = 104
     # VM related error code end
 
     # Privilege related error code start
@@ -36,6 +38,7 @@ class ErrorCode:
 
     # DATASTORE related error code start
     DEFAULT_DS_NOT_SET = 301
+    DS_NOT_EXIST = 302
     # DATASTORE related error code end
 
     # VMODL related error code start
@@ -59,11 +62,14 @@ error_code_to_message = {
 
     ErrorCode.VM_NOT_FOUND : "Cannot find vm {0}",
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
+    ErrorCode.VM_ALREADY_IN_TENANT : "Some VMs in {0} have already been associated with tenant '{1}', cannot add them again",
+    ErrorCode.VM_NOT_IN_TENANT : "Some VMs in {0} have not been associated with tenant '{1}', cannot remove them",
 
     ErrorCode.PRIVILEGE_NOT_FOUND : "No privilege exists for ({0}, {1})",
     ErrorCode.PRIVILEGE_ALREADY_EXIST : "privilege for ({0}, {1}) already exists",
 
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
+    ErrorCode.DS_NOT_EXIST : "Datastore {0} does not exist",
 
     ErrorCode.VMODL_TENANT_NAME_EMPTY : "Tenant name is empty",
     ErrorCode.VMODL_TENANT_NAME_TOO_LONG : "Tenant name exceeds 64 characters: {0}",
