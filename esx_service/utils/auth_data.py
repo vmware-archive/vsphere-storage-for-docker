@@ -210,6 +210,7 @@ class DockerVolumeTenant:
             return str(error_info), None
         else:
             datastore_url = result[auth_data_const.COL_DEFAULT_DATASTORE_URL]
+            logging.debug("get_default_datastore: datastore_url=%s", datastore_url)
             if not datastore_url:
                 # datastore_url read from DB is empty
                 error_info = error_code.DEFAULT_DS_NOT_SET

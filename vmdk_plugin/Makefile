@@ -355,6 +355,11 @@ clean-docker:
 	-$(SSH) $(TEST_VM) 'docker rm `docker ps -a -q`'
 	-$(SSH) $(TEST_VM) 'docker volume rm `docker volume ls -q`'
 
+AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
+clean-auth-db:
+	@echo "Removing auth DB file at $(ESX):$(AUTH_DB_PATH)"		
+	$(SSH) root@$(ESX) 'rm -f $(AUTH_DB_PATH)'
+
 clean-all: clean clean-vm clean-esx
 
 # full circle
