@@ -25,5 +25,5 @@ TENANT_SET_ACCESS_PRIVILEGES_FAILED = "Tenant {0} set access privileges on datas
 # VM related error message 
 VM_NOT_FOUND = "Cannot find vm {0}"
 
-# DATASTORE related error message
+# DATASTORE related error message  
 DEFAULT_DS_NOT_SET = "Default datastore is not set"
