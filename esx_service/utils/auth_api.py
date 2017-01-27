@@ -333,7 +333,7 @@ def _tenant_ls(name=None):
     error_info, tenant_list = get_tenant_list_from_db(name)
     return error_info, tenant_list
 
-def any_vm_already_exists(existing_vms, vms):
+def any_vm_already_exist(existing_vms, vms):
     """
         Check whehter any vm in @param "vms" already exist in @param "existing_vms"
     """
@@ -343,7 +343,7 @@ def any_vm_already_exists(existing_vms, vms):
     
     return False
 
-def any_vm_not_exists(existing_vms, vms):
+def any_vm_not_exist(existing_vms, vms):
     """
         Check whehter any vm in @param "vms" does not exist in @param "existing_vms"
     """
@@ -375,9 +375,8 @@ def _tenant_vm_add(name, vm_list):
     if error_info:
         return error_info
     
-    if any_vm_already_exists(existing_vms, vms):
-        error_msg = error_code.error_code_to_message[error_code.ErrorCode.VM_ALREADY_IN_TENANT].format(vm_list, name)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+    if any_vm_already_exist(existing_vms, vms):
+        error_info = error_code.generate_error_info(ErrorCode.VM_ALREADY_IN_TENANT, vm_list, name)
         return error_info
     
     error_info, auth_mgr = get_auth_mgr()
@@ -414,9 +413,8 @@ def _tenant_vm_rm(name, vm_list):
     if error_info:
         return error_info
     
-    if any_vm_not_exists(existing_vms, vms):
-        error_msg = error_code.error_code_to_message[error_code.ErrorCode.VM_NOT_IN_TENANT].format(vm_list, name)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+    if any_vm_not_exist(existing_vms, vms):
+        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_IN_TENANT, vm_list, name)
         return error_info
 
     error_info, auth_mgr = get_auth_mgr()
@@ -491,8 +489,7 @@ def check_datastore(datastore_name):
         return None
 
     if not datastore_exist(datastore_name):
-        error_msg = error_code.error_code_to_message[error_code.ErrorCode.DS_NOT_EXIST].format(datastore_name)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.DS_NOT_EXIST, datastore_name)
         return error_info
     
     return None
@@ -531,8 +528,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         return error_info
     
     if privilege_exist(existing_privileges, datastore):
-        error_msg = error_code.error_code_to_message[error_code.ErrorCode.PRIVILEGE_ALREADY_EXIST].format(name, datastore)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_ALREADY_EXIST, name, datastore)
         return error_info
 
     privileges = generate_privileges(datastore=datastore, 
@@ -594,8 +590,7 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
         return error_info
     
     if not privilege_exist(existing_privileges, datastore):
-        error_msg = error_code.error_code_to_message[error_code.ErrorCode.PRIVILEGE_NOT_FOUND].format(name, datastore)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_NOT_FOUND, name, datastore)
         return error_info
     
     datastore_url = vmdk_utils.get_datastore_url(datastore)
@@ -645,8 +640,7 @@ def _tenant_access_rm(name, datastore):
         return error_info
     
     if not privilege_exist(existing_privileges, datastore):
-        error_msg = error_code.error_code_to_message[error_code.ErrorCode.PRIVILEGE_NOT_FOUND].format(name, datastore)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_NOT_FOUND, name, datastore)
         return error_info
     
     error_info, auth_mgr = get_auth_mgr()
