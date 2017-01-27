@@ -11,6 +11,10 @@ To read more about code development and testing please read
 as well as the
 [FAQ on the project site](https://vmware.github.io/docker-volume-vsphere/documentation/user-guide/faq/).
 
+## Detailed documentation
+
+Detailed documentation can be found in our [GitHub Documenation Page](http://vmware.github.io/docker-volume-vsphere/documentation/). 
+
 ## Download
 
 **[Click here to download (Github releases)] (https://github.com/vmware/docker-volume-vsphere/releases)**
@@ -60,11 +64,14 @@ sudo rpm -ivh <name>.rpm # Photon or rpm based distros
 ```
 
 ## Using Docker CLI
-
+Refer to [tenancy
+documentation](http://vmware.github.io/docker-volume-vsphere/documentation/features/tenancy/) for setting up tenants.
 ```
+# To select datastore use --name=MyVolume@<Datastore Name>
 $ docker volume create --driver=vmdk --name=MyVolume -o size=10gb
 $ docker volume ls
 $ docker volume inspect MyVolume
+# To select datastore use MyVolume@<Datastore Name>
 $ docker run --rm -it -v MyVolume:/mnt/myvol busybox
 $ cd /mnt/myvol # to access volume inside container, exit to quit
 $ docker volume rm MyVolume
@@ -158,7 +165,7 @@ Guest Operating System:
 * [![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### Internal
-* [VMware Internal Slack] (https://vmware.slack.com/archives/docker-volume-vsphere)
+* [VMware Code Slack](https://vmwarecode.slack.com/archives/docker-volume-vsphere)
 
 # Blogs
 
