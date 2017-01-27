@@ -252,6 +252,8 @@ func TestSanity(t *testing.T) {
 	}
 }
 
+/*
+
 // Test concurrent volume operations
 // - concurrent create/delete between different docker hosts
 // - concurrent create/delete on the same docker host
@@ -375,4 +377,4 @@ func TestConcurrency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
+} */
