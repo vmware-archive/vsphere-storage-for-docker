@@ -376,16 +376,21 @@ class TestVsphereContainerService(unittest.TestCase):
         with self.assertRaises(vim.fault.NotFound):
             self.tenantMgr.RemoveVMs(tenant, vms)
 
-    def test_remove_vms_invalid_arg(self):
+    def test_remove_vms_invalid_arg_1(self):
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
-        # Add a VM to the tenant
-        vms = [self.vm1_name]
-        self.tenantMgr.AddVMs(tenant, vms)
-
         # Remove a non-existent VM from the tenant
         vms = [VM_NOT_EXIST]
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.RemoveVMs(tenant, vms)
+
+    def test_remove_vms_invalid_arg_2(self):
+        # Create a tenant
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+
+        # Remove a VM not belonging to this tenant
+        vms = [self.vm1_name]
         with self.assertRaises(vmodl.fault.InvalidArgument):
             self.tenantMgr.RemoveVMs(tenant, vms)
 
@@ -617,19 +622,21 @@ class TestVsphereContainerService(unittest.TestCase):
         with self.assertRaises(vim.fault.NotFound):
             self.tenantMgr.RemovePrivilege(tenant, privilege.datastore)
 
-    def test_remove_privilege_invalid_arg(self):
+    def test_remove_privilege_invalid_arg_1(self):
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
-
-        # Create a privilege
-        privilege = self.create_privilege()
-
-        # Add privilege to the tenant
-        self.tenantMgr.AddPrivilege(tenant, privilege)
 
         # Remove a privilege with non-existent datastore from the tenant
         with self.assertRaises(vmodl.fault.InvalidArgument):
             self.tenantMgr.RemovePrivilege(tenant, DS_NOT_EXIST)
+
+    def test_remove_privilege_invalid_arg_2(self):
+        # Create a tenant
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+
+        # Remove a privilege not associated with this tenant
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.RemovePrivilege(tenant, self.datastore)
 
     def test_update_privilege(self):
         # Create a tenant
@@ -671,24 +678,21 @@ class TestVsphereContainerService(unittest.TestCase):
         with self.assertRaises(vim.fault.NotFound):
             self.tenantMgr.UpdatePrivilege(tenant, self.datastore, allow_create=False, volume_max_size=1024, volume_total_size=2048)
 
-    def test_update_privilege_invalid_arg(self):
+    def test_update_privilege_invalid_arg_1(self):
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
-
-        # Create a privilege
-        privilege = self.create_privilege()
-
-        # Add privilege to the tenant
-        self.tenantMgr.AddPrivilege(tenant, privilege)
 
         # Update the privilege with non-existent datastore
         with self.assertRaises(vmodl.fault.InvalidArgument):
             self.tenantMgr.UpdatePrivilege(tenant, DS_NOT_EXIST, allow_create=False, volume_max_size=1024, volume_total_size=2048)
 
+    def test_update_privilege_invalid_arg_2(self):
+        # Create a tenant
+        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
+
         # Update the privilege with a datastore not associated with this tenant
-        if self.datastore2:
-            with self.assertRaises(vmodl.fault.InvalidArgument):
-                self.tenantMgr.UpdatePrivilege(tenant, self.datastore2, allow_create=False, volume_max_size=1024, volume_total_size=2048)
+        with self.assertRaises(vmodl.fault.InvalidArgument):
+            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, allow_create=False, volume_max_size=1024, volume_total_size=2048)
 
     def test_get_privilege(self):
         # Create a tenant

@@ -147,7 +147,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             logging.error("Failed to remove VMs from tenant: %s", error_info.msg)
             if error_info.code == ErrorCode.TENANT_NOT_EXIST:
                 raise vim.fault.NotFound(msg=error_info.msg)
-            elif error_info.code == ErrorCode.VM_NOT_FOUND:
+            elif error_info.code == ErrorCode.VM_NOT_FOUND or error_info.code == ErrorCode.VM_NOT_IN_TENANT:
                 raise vmodl.fault.InvalidArgument(invalidProperty="vms")
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
@@ -225,7 +225,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
             logging.error("Failed to remove privilege from tenant: %s", error_info.msg)
             if error_info.code == ErrorCode.TENANT_NOT_EXIST:
                 raise vim.fault.NotFound(msg=error_info.msg)
-            elif error_info.code == ErrorCode.DS_NOT_EXIST:
+            elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.PRIVILEGE_NOT_FOUND:
                 raise vmodl.fault.InvalidArgument(invalidProperty="datastore")
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
