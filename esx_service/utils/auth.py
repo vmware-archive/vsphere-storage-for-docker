@@ -54,7 +54,7 @@ def get_default_tenant():
         VM which does not belong to any tenant explicitly will 
         be assigned to DEFAULT tenant if DEFAULT tenant exists
         Return value:
-        -- error_info: return None on success or error info on failure
+        -- error_msg: return None on success or error info on failure
         -- tenant_uuid: return DEFAULT tenant uuid on success,  
            return None on failure or DEFAULT tenant does not exist
         -- tenant_name: return DEFAULT tenant name on success,
@@ -69,8 +69,8 @@ def get_default_tenant():
             )
         result = cur.fetchone()
     except sqlite3.Error as e:
-        error_info = "Error {0} when querying from tenants table for tenant {1}".format(e, DEFAULT_TENANT)
-        logging.error(error_info)
+        error_msg = "Error {0} when querying from tenants table for tenant {1}".format(e, DEFAULT_TENANT)
+        logging.error(error_msg)
         return str(e), None, None
     if result:
         # found DEFAULT tenant
@@ -79,7 +79,9 @@ def get_default_tenant():
         return None, tenant_uuid, DEFAULT_TENANT
     else:
         # cannot find DEFAULT tenant
-        logging.debug(error_code.TENANT_NOT_EXIST.format(DEFAULT_TENANT))
+        err_code = error_code.ErrorCode.TENANT_NOT_EXIST
+        err_msg = error_code.error_code_to_message[err_code].format(DEFAULT_TENANT)
+        logging.debug(err_msg)
         return None, None, None
 
 
@@ -88,7 +90,7 @@ def get_default_privileges():
         DEFAULT privilege will match any (tenant_uuid, datastore) pair which
         does not have an entry in privileges table explicitly
         Return value:
-        -- error_info: return None on success or error info on failure
+        -- error_msg: return None on success or error info on failure
         -- privilegs: return a list of privileges for DEFAULT privilege if 
            DEFAULT tenant exists,
            return None on failure or DEFAULT does not exist 
@@ -104,8 +106,8 @@ def get_default_privileges():
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
-        error_info = "Error {0} when querying privileges table for DEFAULT privilege".format(e)
-        logging.error(error_info)
+        error_msg = "Error {0} when querying privileges table for DEFAULT privilege".format(e)
+        logging.error(error_msg)
         return str(e), None
 
     return None, privileges
@@ -114,7 +116,7 @@ def get_tenant(vm_uuid):
     """ 
         Get tenant which owns this VM by querying the auth DB.
         Return value:
-        -- error_info: return None on success or error info on failure
+        -- error_msg: return None on success or error info on failure
         -- tenant_uuid: return tenant uuid which the VM with given vm_uuid is associated to, 
            return None if the VM is not associated to any tenant
         -- tenant_name: return tenant name which the VM with given vm_uuid is associated to,
@@ -154,14 +156,15 @@ def get_tenant(vm_uuid):
 
         return None, tenant_uuid, tenant_name
     else:
-        error_info, tenant_uuid, tenant_name = get_default_tenant()
-        if error_info:
-            return error_info, None, None
+        error_msg, tenant_uuid, tenant_name = get_default_tenant()
+        if error_msg:
+            return error_msg, None, None
         if not tenant_uuid:
              vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
-             error_info = error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name)
-             logging.debug(error_info)
-             return error_info, None, None
+             err_code = error_code.ErrorCode.VM_NOT_BELONG_TO_TENANT
+             err_msg = error_code.error_code_to_message[err_code].format(vm_name)
+             logging.debug(err_msg)
+             return err_msg, None, None
         return None, tenant_uuid, tenant_name
 
 
@@ -169,7 +172,7 @@ def get_privileges(tenant_uuid, datastore):
     """ Return privileges for given (tenant_uuid, datastore) pair by
         querying the auth DB.
         Return value:
-        -- error_info: return None on success or error info on failure
+        -- error_msg: return None on success or error info on failure
         -- privilegs: return a list of privileges for given (tenant_uuid, datastore)
            return None on failure 
     """
@@ -191,8 +194,8 @@ def get_privileges(tenant_uuid, datastore):
         return None, privileges
     else:
         # check default privileges
-        error_info, privileges = get_default_privileges()
-        return error_info, privileges
+        error_msg, privileges = get_default_privileges()
+        return error_msg, privileges
 
 def has_privilege(privileges, type=None):
     """ Check whether the param "privileges" has the specific type of privilege set.
@@ -248,7 +251,7 @@ def get_total_storage_used(tenant_uuid, datastore):
         by querying auth DB.
 
         Return value:
-        -- error_info: return None on success or error info on failure
+        -- error_msg: return None on success or error info on failure
         -- total_storage_used: return total storage used for given (tenant_uuid, datastore)
                                return None on failure
 
@@ -278,8 +281,8 @@ def check_usage_quota(opts, tenant_uuid, datastore, privileges):
     """ Check if the volume can be created without violating the quota. """
     if privileges:
         vol_size_in_MB = convert.convert_to_MB(get_vol_size(opts))
-        error_info, total_storage_used = get_total_storage_used(tenant_uuid, datastore)
-        if error_info:
+        error_msg, total_storage_used = get_total_storage_used(tenant_uuid, datastore)
+        if error_msg:
             # cannot get the total_storage_used, to be safe, return False
             return False
         usage_quota = privileges[auth_data_const.COL_USAGE_QUOTA]
@@ -319,6 +322,11 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
 
     return result
 
+def err_msg_no_table(table_name):
+    error_msg = "table " + table_name + " does not exist"
+    logging.error(error_msg)
+    return error_msg
+
 def tables_exist():
     """ Check tables needed for authorization exist or not. """
     _auth_mgr = get_auth_mgr()
@@ -331,9 +339,8 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_info = "table tenants does not exist"
-        logging.error(error_info)
-        return error_info, False
+        error_msg = err_msg_no_table('tenant')
+        return error_msg, False
 
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'vms';")
@@ -343,9 +350,8 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_info = "table vms does not exist"
-        logging.error(error_info)
-        return error_info, False
+        error_msg = err_msg_no_table('vms')
+        return error_msg, False
 
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'privileges';")
@@ -355,9 +361,8 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_info = "table privileges does not exist"
-        logging.error(error_info)
-        return error_info, False
+        error_msg = err_msg_no_table('privileges')
+        return error_msg, False
 
     try:
         cur = _auth_mgr.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'volumes';")
@@ -367,9 +372,8 @@ def tables_exist():
         return str(e), False
 
     if not result:
-        error_info = "table volumes does not exist"
-        logging.error(error_info)
-        return error_info, False
+        error_msg = err_msg_no_table('volumes')
+        return error_msg, False
 
     return None, True
 
@@ -394,31 +398,32 @@ def authorize(vm_uuid, datastore, cmd, opts):
     try:
         get_auth_mgr()
     except auth_data.DbConnectionError as e:
-        error_info = "Failed to connect auth DB({0})".format(e)
-        return error_info, None, None
+        error_msg = "Failed to connect auth DB({0})".format(e)
+        return error_msg, None, None
 
     # If table "tenants", "vms", "privileges" or "volumes" does not exist
     # don't need auth check
     if not tables_exist():
         logging.error("Required tables in auth db do not exist")
-        error_info = "Required tables in aut db do not exist"
-        return error_info, None, None
+        error_msg = "Required tables in aut db do not exist"
+        return error_msg, None, None
 
-    error_info, tenant_uuid, tenant_name = get_tenant(vm_uuid)
-    if error_info:
-        return error_info, None, None
+    error_msg, tenant_uuid, tenant_name = get_tenant(vm_uuid)
+    if error_msg:
+        return error_msg, None, None
 
     if not tenant_uuid:
         # This VM does not associate any tenant(including DEFAULT tenant),  
         # need reject the request
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
-        error_info = error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name)
-        logging.debug(error_info)
-        return error_info, None, None
+        err_code = error_code.ErrorCode.VM_NOT_BELONG_TO_TENANT
+        err_msg = error_code.error_code_to_message[err_code].format(vm_name)
+        logging.debug(err_msg)
+        return err_msg, None, None
     else:
-        error_info, privileges = get_privileges(tenant_uuid, datastore)
-        if error_info:
-            return error_info, None, None
+        error_msg, privileges = get_privileges(tenant_uuid, datastore)
+        if error_msg:
+            return error_msg, None, None
         logging.debug("authorize: tenant_uuid=%s, datastore=%s, privileges=%s",
                        tenant_uuid, datastore, privileges)
         result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges)
@@ -480,7 +485,7 @@ def get_row_from_tenants_table(conn, tenant_uuid):
         Get a row from tenants table for a given tenant.
 
         Return value:
-        -- error_info: return None on success or error string
+        -- error_msg: return None on success or error string
         -- result: returns a row in tenants table with given tenant_uuid on success, 
            return None on failure 
     """
@@ -503,7 +508,7 @@ def get_row_from_vms_table(conn, tenant_uuid):
         Get rows from vms table for a given tenant.
 
         Return value:
-        -- error_info: return None on success or error string
+        -- error_msg: return None on success or error string
         -- result: returns rows in vms table with given tenant_uuid on success, 
            return None on failure  
     """
@@ -525,7 +530,7 @@ def get_row_from_privileges_table(conn, tenant_uuid):
         Get rows from privileges table for a given tenant
 
         Return value:
-        -- error_info: return None on success or error string
+        -- error_msg: return None on success or error string
         -- result: returns rows in privileges table with given tenant_uuid on success, 
            return None on failure 
     """

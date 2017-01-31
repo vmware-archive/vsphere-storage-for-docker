@@ -27,6 +27,7 @@ import error_code
 import threadutils
 import log_config
 import auth
+from error_code import ErrorCode
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
@@ -64,6 +65,48 @@ class DbConnectionError(Exception):
 
     def __str__(self):
         return "DB connection error %s" % self.db_path
+
+class DatastoreAccessPrivilege:
+    """ This class abstract the access privilege to a datastore .
+    """
+    def __init__(self, tenant_id, datastore_url, allow_create, max_volume_size, usage_quota):
+            """ Constuct a DatastoreAccessPrivilege object. """
+            self.tenant_id = tenant_id
+            self.datastore_url = datastore_url
+            self.allow_create = allow_create
+            self.max_volume_size = max_volume_size
+            self.usage_quota = usage_quota
+
+def create_datastore_access_privileges(privileges):
+    """
+        Return a list of DatastoreAccessPrivilege object with given input
+        @Param privileges: a list of dict dictionary, each element in this list represents 
+        a row in privileges table in auth-db 
+    """
+    ds_access_privileges = []
+    for p in privileges:
+        dp = DatastoreAccessPrivilege(tenant_id = p[auth_data_const.COL_TENANT_ID],
+                                      datastore_url = p[auth_data_const.COL_DATASTORE_URL],
+                                      allow_create = p[auth_data_const.COL_ALLOW_CREATE],
+                                      max_volume_size = p[auth_data_const.COL_MAX_VOLUME_SIZE],
+                                      usage_quota = p[auth_data_const.COL_USAGE_QUOTA])
+        ds_access_privileges.append(dp)
+    
+    return ds_access_privileges
+
+def create_vm_list(vms):
+    """
+        Return a list of vm_uuid with given input
+        @Param vms: a list of tuple, each tuple has format like this (vm_uuid,)
+        Example:
+        Input: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4',), (u'564dca08-2772-aa20-a0a0-afae6b255fee',)]
+        Output: [u'564d6857-375a-b048-53b5-3feb17c2cdc4', u'564dca08-2772-aa20-a0a0-afae6b255fee']
+    """
+    vm_list = []
+    for v in vms:
+        vm_list.append(v[0])
+    
+    return vm_list
 
 class DockerVolumeTenant:
     """ This class abstracts the operations to manage a DockerVolumeTenant.
@@ -120,6 +163,29 @@ class DockerVolumeTenant:
             conn.commit()
         except sqlite3.Error as e:
             logging.error("Error %s when removing from vms table with vms %s",
+                          e, vms)
+            return str(e)
+
+        return None
+    
+    def replace_vms(self, conn, vms):
+        """ Remove vms from the vms table for this tenant. """
+        tenant_id = self.id
+        vms = [(vm_id, tenant_id) for (vm_id) in vms]
+        try:
+            # Delete old VMs
+            conn.execute(
+                    "DELETE FROM vms WHERE tenant_id = ?", 
+                    [tenant_id]
+            )
+
+            conn.executemany(
+                  "INSERT INTO vms(vm_id, tenant_id) VALUES (?, ?)",
+                  vms
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            logging.error("Error %s when replace vms table with vms %s",
                           e, vms)
             return str(e)
 
@@ -200,20 +266,19 @@ class DockerVolumeTenant:
         Get default_datastore for this tenant
 
         Return value:
-            error_info: return None on success or error info on failure
+            error_msg: return None on success or error info on failure
             datastore: return default_datastore name on success or None on failure 
         """
-        error_info, result = auth.get_row_from_tenants_table(conn, self.id)
-        if error_info:
+        error_msg, result = auth.get_row_from_tenants_table(conn, self.id)
+        if error_msg:
             logging.error("Error %s when getting default datastore for tenant_id %s",
-                          error_info, self.id)
-            return str(error_info), None
+                          error_msg, self.id)
+            return str(error_msg), None
         else:
             datastore_url = result[auth_data_const.COL_DEFAULT_DATASTORE_URL]
             logging.debug("get_default_datastore: datastore_url=%s", datastore_url)
             if not datastore_url:
                 # datastore_url read from DB is empty
-                error_info = error_code.DEFAULT_DS_NOT_SET
                 return None, None
             else:
                 datastore = vmdk_utils.get_datastore_name(datastore_url)
@@ -341,13 +406,13 @@ class AuthorizationDataManager:
     
     def create_default_tenant(self):
         """ Create DEFAULT tenant """
-        error_info, tenant = self.create_tenant(
+        error_msg, tenant = self.create_tenant(
                                            name=auth.DEFAULT_TENANT, 
                                            description="This is a default tenant", 
                                            vms=[], 
                                            privileges=[])
-        if error_info:
-            err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info)
+        if error_msg:
+            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
             logging.warning(err)
     
     def create_default_privileges(self):
@@ -363,15 +428,15 @@ class AuthorizationDataManager:
                        'max_volume_size': 0,
                        'usage_quota': 0}]
 
-        error_info, tenant = self.get_tenant(auth.DEFAULT_TENANT)
-        if error_info:
-            err = error_code.TENANT_NOT_EXIST.format(auth.DEFAULT_TENANT)
+        error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+        if error_msg:
+            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth.DEFAULT_TENANT)
             logging.warning(err)
             return
 
-        error_info = tenant.set_datastore_access_privileges(self.conn, privileges)
-        if error_info:
-            err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
+        error_msg = tenant.set_datastore_access_privileges(self.conn, privileges)
+        if error_msg:
+            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_msg)
             logging.warning(err)
 
     def get_db_version(self):
@@ -412,8 +477,8 @@ class AuthorizationDataManager:
         """
         major_ver = 0
         minor_ver = 0
-        error_info, major_ver, minor_ver = self.get_db_version()
-        if error_info:
+        error_msg, major_ver, minor_ver = self.get_db_version()
+        if error_msg:
             logging.error("need_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
             return False
         
@@ -587,17 +652,11 @@ class AuthorizationDataManager:
 
         """
         logging.debug ("create_tenant name=%s", name)
-        error_info, exist_tenant = self.get_tenant(name)
-        if exist_tenant:
-            error_info = error_code.TENANT_ALREADY_EXIST.format(name)
-            logging.warning(error_info)
-            return error_info, exist_tenant
-
         if privileges:
             for p in privileges:
                 if not all_columns_set(p):
-                    error_info = "Not all columns are set in privileges"
-                    return error_info, None
+                    error_msg = "Not all columns are set in privileges"
+                    return error_msg, None
                     
         # Create the entry in the tenants table
         default_datastore_url=""
@@ -673,6 +732,7 @@ class AuthorizationDataManager:
                 vms = cur.fetchall()
 
                 logging.debug("vms=%s", vms)
+                vm_list = create_vm_list(vms)
                 
                 # search privileges and default_privileges for this tenant
                 privileges = []
@@ -681,12 +741,15 @@ class AuthorizationDataManager:
                     (id,)    
                 )
                 privileges = cur.fetchall()
+                ds_access_privileges = create_datastore_access_privileges(privileges)
 
                 logging.debug("privileges=%s", privileges)
+                logging.debug("ds_access_privileges=%s", ds_access_privileges)
+                
                 tenant = DockerVolumeTenant(name=name,
                                             description=description,
-                                            vms=vms,
-                                            privileges=privileges,
+                                            vms=vm_list,
+                                            privileges=ds_access_privileges,
                                             id=id,
                                             default_datastore_url=default_datastore_url)
         except sqlite3.Error as e:
@@ -718,7 +781,7 @@ class AuthorizationDataManager:
                     (id,)
                 )
                 vms = cur.fetchall()
-                
+                vm_list = create_vm_list(vms)
                 # search privileges and default_privileges for this tenant
                 privileges = []
                 cur = self.conn.execute(
@@ -726,10 +789,15 @@ class AuthorizationDataManager:
                     (id,)    
                 )
                 privileges = cur.fetchall()
+                ds_access_privileges = create_datastore_access_privileges(privileges)
+
+                logging.debug("privileges=%s", privileges)
+                logging.debug("ds_access_privileges=%s", ds_access_privileges)
+
                 tenant = DockerVolumeTenant(name=name,
                                             description=description,
-                                            vms=vms,
-                                            privileges=privileges,
+                                            vms=vm_list,
+                                            privileges=ds_access_privileges,
                                             id=id,
                                             default_datastore_url=default_datastore_url)
                 tenant_list.append(tenant)
@@ -771,7 +839,7 @@ class AuthorizationDataManager:
             logging.error("Error %s when querying from tenants table", e)
             return str(e)
 
-        error_info = ""
+        error_msg = ""
         if result:    
             logging.debug("remove_volumes_for_tenant: %s %s", tenant_id, result)
             tenant_name = result[0]
@@ -790,7 +858,7 @@ class AuthorizationDataManager:
                                           datastore=vmdk['datastore'])
                 if err:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
-                    error_info += str(err)
+                    error_msg += str(err)
             
             VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
             # delete the symlink /vmfs/volume/datastore_name/tenant_name
@@ -814,15 +882,15 @@ class AuthorizationDataManager:
                 except os.error as e:
                     msg = "remove dir {0} failed with error {1}".format(path, e)
                     logging.error(msg)
-                    error_info += str(err)
+                    error_msg += str(err)
 
         err = self.remove_volumes_from_volumes_table(tenant_id)
         if err:
             logging.error("Failed to remove volumes from database %s", err)
-            error_info += str(err)
+            error_msg += str(err)
        
-        if error_info:
-            return error_info
+        if error_msg:
+            return error_msg
         
         return None
 
@@ -837,9 +905,9 @@ class AuthorizationDataManager:
         """
         logging.debug("remove_tenant: tenant_id%s, remove_volumes=%d", tenant_id, remove_volumes)
         if remove_volumes:
-            error_info = self._remove_volumes_for_tenant(tenant_id)
-            if error_info:
-                return error_info
+            error_msg = self._remove_volumes_for_tenant(tenant_id)
+            if error_msg:
+                return error_msg
 
         try:
             self.conn.execute(
@@ -882,9 +950,9 @@ class AuthorizationDataManager:
             logging.debug("get_tenant_name: tenant_uuid=%s tenant_name=%s", tenant_uuid, tenant_name)
             return None, tenant_name
         else:
-            error_info =  error_code.TENANT_NAME_NOT_FOUND.format(tenant_uuid)
-            logging.debug("get_tenant_name:"+error_info)
-            return error_info, None
+            error_msg =  error_code.error_code_to_message[ErrorCode.TENANT_NAME_NOT_FOUND].format(tenant_uuid)
+            logging.debug("get_tenant_name:"+error_msg)
+            return error_msg, None
 
 def main():
     log_config.configure()

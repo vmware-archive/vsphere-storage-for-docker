@@ -97,6 +97,8 @@ start() {
    done
 
    check_running_status
+   # brute force hack - restart vsanmgmtd to force it to read and server out VMODL py files
+   /etc/init.d/vsanmgmtd restart ; sleep 3 ; 
    exit $?
 }
 

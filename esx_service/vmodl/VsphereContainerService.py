@@ -37,115 +37,70 @@ except ImportError:
       return Decorate
 
 
-# _VERSION = newestVersions.Get("vim")
-_VERSION = 'vim.version.version10'
+_VERSION = newestVersions.Get("vim")
 
-class VsphereContainerService:
-   _name = "vim.vcs.VsphereContainerService"
-
-   @JavaDocs(parent=_name, docs =
-   """
-   This is the bootstrapping class for vSphere Container Service (VCS).
-   VCS enables customers to run stateful containerized applications on top
-   of VMware vSphere platform. This service addresses persistent storage
-   requirements for Docker containers in vSphere environments, and enables
-   multitenancy, security and access control from a single location.
-   """
-   )
-   @Internal(parent=_name)
-   @ManagedType(name=_name, version=_VERSION)
-   def __init__(self):
-       pass
-
-   @JavaDocs(parent=_name, docs=
-   """
-   Get the TenantManager instance.
-   @return TenantManager instance.
-   """
-   )
-   @Method(parent=_name, wsdlName="GetTenantManager")
-   @Return(typ="vim.vcs.TenantManager")
-   def GetTenantManager(self):
-       pass
-
-class TenantManager:
-   _name = "vim.vcs.TenantManager"
+class VcsFault:
+   _name = "vim.fault.VcsFault"
 
    @JavaDocs(parent=_name, docs =
    """
-   This class manages the lifecycle of tenants for vSphere Container Service.
+   Common base type for all vSphere Container Service exceptions.
+   """
+   )
+   @DataType(name=_name, version=_VERSION, wsdlName="VcsFault", base="vim.fault.VimFault")
+   def __init__(self):
+      pass
+
+class DatastoreAccessPrivilege:
+   _name = "vim.vcs.storage.DatastoreAccessPrivilege"
+
+   @JavaDocs(parent=_name, docs =
+   """
+   A privilege defines operations against a datastore and limits on those operations.
    """
    )
    @Internal(parent=_name)
-   @ManagedType(name=_name, version=_VERSION)
+   @DataType(name=_name, version=_VERSION)
    def __init__(self):
        pass
 
-   @JavaDocs(parent=_name, docs=
+   @JavaDocs(parent=_name, docs =
    """
-   Create a Tenant instance.
-   @param name Name of the tenant.
-   @param description Detailed description of the tenant. Optional.
-   @throws vmodl.fault.InvalidArgument If the given name or description exceeds maximum length.
-   @throws vim.fault.AlreadyExists If the given tenant name already exists.
+   Datastore of this privilege. A tenant who has this privilege will have access
+   on this datastore.
    """
    )
-   @Method(parent=_name, wsdlName="CreateTenant",
-           faults=["vmodl.fault.InvalidArgument", "vim.fault.AlreadyExists"])
-   @Param(name="name", typ="string")
-   @Param(name="description", typ="string", flags=F_OPTIONAL)
-   @Return(typ="vim.vcs.Tenant")
-   def CreateTenant(self, name, description=None):
+   @Attribute(parent=_name, typ="string")
+   def datastore(self):
        pass
 
-   @JavaDocs(parent=_name, docs=
+   @JavaDocs(parent=_name, docs =
    """
-   Remove a Tenant instance. Remove all volumes created by this tenant
-   if remove_volumes flag is set to True.
-   @param name Tenant name
-   @param remove_volumes Default value is False. If set to True,
-          remove all volumes created by this Tenant.
-   @throws vim.fault.NotFound If the Tenant name does not exist.
+   Indicates whether the tenant is allowed to create and delete volumes on
+   this datastore. If it is false, the tenant is allowed to mount and unmount
+   volumes only.
    """
    )
-   @Method(parent=_name, wsdlName="RemoveTenant", faults=["vim.fault.NotFound"])
-   @Param(name="name", typ="string")
-   @Param(name="remove_volumes", typ="boolean", flags=F_OPTIONAL)
-   @Return(typ="void")
-   def RemoveTenant(self, name, remove_volumes=False):
+   @Attribute(parent=_name, typ="boolean")
+   def allow_create(self):
        pass
 
-   @JavaDocs(parent=_name, docs=
+   @JavaDocs(parent=_name, docs =
    """
-   Query Tenant for the given name.
-   @param name Tenant name.
-   @return Tenant for the given name, or all tenants if name is not set.
-   @throws vim.fault.NotFound If the Tenant name does not exist.
+   Maximum size (in MiB) of one single volume. Zero means unlimited size.
    """
    )
-   @Method(parent=_name, wsdlName="GetTenants", faults=["vim.fault.NotFound"])
-   @Param(name="name", typ="string", flags=F_OPTIONAL)
-   @Return(typ="vim.vcs.Tenant[]")
-   def GetTenants(self, name=None):
-       pass 
+   @Attribute(parent=_name, typ="int")
+   def volume_max_size(self):
+       pass
 
-   @JavaDocs(parent=_name, docs=
+   @JavaDocs(parent=_name, docs =
    """
-   Modify the attributes of a Tenant instance.
-   @param name Current name of the tenant
-   @param new_name New name of the tenant
-   @param new_description New description of the tenant
-   @throws vim.fault.NotFound If the name does not exist.
-   @throws vim.fault.AlreadyExists If the new_name already exists.
+   Total storage usage quota (in MiB) allowed on this datastore. Zero means unlimited quota.
    """
    )
-   @Method(parent=_name, wsdlName="ModifyTenant",
-           faults=["vim.fault.NotFound", "vim.fault.AlreadyExists"])
-   @Param(name="name", typ="string")
-   @Param(name="new_name", typ="string", flags=F_OPTIONAL)
-   @Param(name="new_description", typ="string", flags=F_OPTIONAL)
-   @Return(typ="void")
-   def ModifyTenant(self, name, new_name=None, new_description=None):
+   @Attribute(parent=_name, typ="int")
+   def volume_total_size(self):
        pass
 
 class Tenant:
@@ -159,7 +114,7 @@ class Tenant:
    """
    )
    @Internal(parent=_name)
-   @ManagedType(name=_name, version=_VERSION)
+   @DataType(name=_name, version=_VERSION)
    def __init__(self):
        pass
 
@@ -197,7 +152,7 @@ class Tenant:
    (i.e. volume_name without @datastore suffix). 
    """
    )
-   @Attribute(parent=_name, typ="vim.Datastore", flags=F_OPTIONAL)
+   @Attribute(parent=_name, typ="string", flags=F_OPTIONAL)
    def default_datastore(self):
        pass
 
@@ -206,7 +161,7 @@ class Tenant:
    VMs belonging to this tenant.
    """
    )
-   @Attribute(parent=_name, typ="vim.VirtualMachine[]", flags=F_OPTIONAL)
+   @Attribute(parent=_name, typ="string[]", flags=F_OPTIONAL)
    def vms(self):
        pass
 
@@ -219,184 +174,264 @@ class Tenant:
    def privileges(self):
        pass
 
-   @JavaDocs(parent=_name, docs=
+class TenantManager:
+   _name = "vim.vcs.TenantManager"
+
+   @JavaDocs(parent=_name, docs =
    """
-   Add VMs to this tenant. Adding a VM already belonging to this Tenant has no effect.
-   @param vms VMs to be added to this tenant.
+   This class manages the lifecycle of tenants for vSphere Container Service.
    """
    )
-   @Method(parent=_name, wsdlName="AddVMs")
-   @Param(name="vms", typ="vim.VirtualMachine[]")
-   @Return(typ='void')
-   def AddVMs(self, vms):
+   @Internal(parent=_name)
+   @ManagedType(name=_name, version=_VERSION)
+   def __init__(self):
+       pass
+
+   @JavaDocs(parent=_name, docs=
+   """
+   Create a Tenant instance.
+   @param name Name of the tenant.
+   @param description Detailed description of the tenant. Optional.
+   @return New tenant for the given name and description
+   @throws vmodl.fault.InvalidArgument If the given parameters are invalid.
+   @throws vim.fault.AlreadyExists If the given tenant name already exists.
+   @throws vim.fault.VcsFault If an internal server error occurs.
+   """
+   )
+   @Method(parent=_name, wsdlName="CreateTenant",
+           faults=["vmodl.fault.InvalidArgument",
+                   "vim.fault.AlreadyExists",
+                   "vim.fault.VcsFault"])
+   @Param(name="name", typ="string")
+   @Param(name="description", typ="string", flags=F_OPTIONAL)
+   @Return(typ="vim.vcs.Tenant")
+   def CreateTenant(self, name, description=None):
+       pass
+
+   @JavaDocs(parent=_name, docs=
+   """
+   Remove a Tenant instance. Remove all volumes created by this tenant
+   if remove_volumes flag is set to True.
+   @param name Tenant name
+   @param remove_volumes Default value is False. If set to True,
+          remove all volumes created by this Tenant.
+   @throws vim.fault.NotFound If the tenant name does not exist.
+   @throws vim.fault.VcsFault If an internal server error occurs.
+   """
+   )
+   @Method(parent=_name, wsdlName="RemoveTenant",
+           faults=["vim.fault.NotFound", "vim.fault.VcsFault"])
+   @Param(name="name", typ="string")
+   @Param(name="remove_volumes", typ="boolean", flags=F_OPTIONAL)
+   @Return(typ="void")
+   def RemoveTenant(self, name, remove_volumes=False):
+       pass
+
+   @JavaDocs(parent=_name, docs=
+   """
+   Query Tenant for the given name.
+   @param name Tenant name.
+   @return Tenant for the given name, or all tenants if name is not set.
+   @throws vim.fault.VcsFault If an internal server error occurs.
+   """
+   )
+   @Method(parent=_name, wsdlName="GetTenants", faults=["vim.fault.VcsFault"])
+   @Param(name="name", typ="string", flags=F_OPTIONAL)
+   @Return(typ="vim.vcs.Tenant[]", flags=F_OPTIONAL)
+   def GetTenants(self, name=None):
+       pass 
+
+   @JavaDocs(parent=_name, docs=
+   """
+   Update the attributes of a Tenant instance.
+   @param name Current name of the tenant
+   @param new_name New name of the tenant
+   @param description New description of the tenant
+   @param default_datastore New default datastore of the tenant
+   @throws vmodl.fault.InvalidArgument If the given parameters are invalid.
+   @throws vim.fault.NotFound If the name does not exist.
+   @throws vim.fault.AlreadyExists If the new_name already exists.
+   @throws vim.fault.VcsFault If an internal server error occurs.
+   """
+   )
+   @Method(parent=_name, wsdlName="UpdateTenant",
+           faults=["vmodl.fault.InvalidArgument",
+                   "vim.fault.NotFound",
+                   "vim.fault.AlreadyExists",
+                   "vim.fault.VcsFault"])
+   @Param(name="name", typ="string")
+   @Param(name="new_name", typ="string", flags=F_OPTIONAL)
+   @Param(name="description", typ="string", flags=F_OPTIONAL)
+   @Param(name="default_datastore", typ="string", flags=F_OPTIONAL)
+   @Return(typ="void")
+   def UpdateTenant(self, name, new_name=None, description=None, default_datastore=None):
+       pass
+
+   @JavaDocs(parent=_name, docs=
+   """
+   Add VMs to this tenant. Adding a VM already belonging to this tenant has no effect.
+   @param tenant A tenant instance to be added VMs
+   @param vms VMs to be added to this tenant.
+   @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vim.fault.AlreadyExists If the given VMs already belong to this tenant.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid.
+   @throws vim.fault.VcsFault If an internal server error occurs.
+   """
+   )
+   @Method(parent=_name, wsdlName="AddVMs",
+           faults=["vim.fault.NotFound",
+                   "vim.fault.AlreadyExists",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
+   @Param(name="tenant", typ="vim.vcs.Tenant")
+   @Param(name="vms", typ="string[]")
+   @Return(typ="void")
+   def AddVMs(self, tenant, vms):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
    Remove VMs from this tenant.
+   @param tenant A tenant instance to be removed VMs
    @param vms List of VMs to be removed from this tenant.
-   @throws vim.fault.NotFound If any VM does not exist or does not belong to this tenant.
-
+   @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid.
+   @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
-   @Method(parent=_name, wsdlName="RemoveVMs", faults=["vim.fault.NotFound"])
-   @Param(name="vms", typ="vim.VirtualMachine[]")
-   @Return(typ='void')
-   def RemoveVMs(self, vms):
-       pass
-
-   @JavaDocs(parent=_name, docs=
-   """
-   Get all VMs belonging to this tenant.
-   @return VMs belonging to this tenant.
-   """
-   )
-   @Method(parent=_name, wsdlName="GetVMs")
-   @Return(typ='vim.VirtualMachine[]')
-   def GetVMs(self):
+   @Method(parent=_name, wsdlName="RemoveVMs",
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
+   @Param(name="tenant", typ="vim.vcs.Tenant")
+   @Param(name="vms", typ="string[]")
+   @Return(typ="void")
+   def RemoveVMs(self, tenant, vms):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
    Replace VMs for this tenant. All existing VMs will be removed and replaced with
    new ones.
+   @param tenant A tenant instance.
    @param vms VMs to be added to this tenant replacing existing VMs.
+   @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vmodl.fault.InvalidArgument If the given VMs are invalid.
+   @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
-   @Method(parent=_name, wsdlName="ReplaceVMs")
-   @Param(name="vms", typ="vim.VirtualMachine[]")
-   @Return(typ='void')
-   def ReplaceVMs(self, vms):
+   @Method(parent=_name, wsdlName="ReplaceVMs",
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
+   @Param(name="tenant", typ="vim.vcs.Tenant")
+   @Param(name="vms", typ="string[]")
+   @Return(typ="void")
+   def ReplaceVMs(self, tenant, vms):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
    Add a datastore access privilege for this tenant.
+   @param tenant A tenant instance.
    @param privilege privilege to be assigned to this tenant.
-   @param switch_default_datastore If set to true, switch the default datastore
+   @param default_datastore If set to true, switch the default datastore
           for this tenant. False by default.
+   @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vim.fault.AlreadyExists If the specified privilege already exists in this tenant.
+   @throws vmodl.fault.InvalidArgument If the specified privilege is invalid,
+           e.g. missing parameters or containing invalid parameters, etc.
+   @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
-   @Method(parent=_name, wsdlName="AddPrivilege")
+   @Method(parent=_name, wsdlName="AddPrivilege",
+           faults=["vim.fault.NotFound",
+                   "vim.fault.AlreadyExists",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
+   @Param(name="tenant", typ="vim.vcs.Tenant")
    @Param(name="privilege", typ="vim.vcs.storage.DatastoreAccessPrivilege")
-   @Param(name="switch_default_datastore", typ="boolean", flags=F_OPTIONAL)
-   @Return(typ='void')
-   def AddPrivilege(self, privilege, switch_default_datastore=False):
+   @Param(name="default_datastore", typ="boolean", flags=F_OPTIONAL)
+   @Return(typ="void")
+   def AddPrivilege(self, tenant, privilege, default_datastore=False):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
-   Modify datastore access privilege for this tenant. Datastore itself cannot be changed.
+   Update datastore access privilege for this tenant. Datastore itself cannot be changed.
+   @param tenant A tenant instance.
    @param datastore Privilege settings on this datastore will be changed.
    @param allow_create If set to true, this tenant is allowed to create and delete volumes on
           the datastore. If false, the tenant is allowed to mount and unmount volumes only.
    @param volume_max_size Maximum size (in MiB) of one single volume. Zero means unlimited size.
    @param volume_total_size Total storage usage quota (in MiB) allowed on this datastore.
           Zero means unlimited quota.
-   @throws vim.fault.NotFound If the given datastore does not exist for this tenant.
+   @throws vim.fault.NotFound If the tenant does not exist.
    @throws vmodl.fault.InvalidArgument If the specified parameters are invalid,
-           e.g. volume total size exceeds the datastore capacity.
+           e.g. datastore not exist or not associated with this tenant, etc.
+   @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
-   @Method(parent=_name, wsdlName="ModifyPrivilege",
-           faults=["vim.fault.NotFound", "vmodl.fault.InvalidArgument"])
-   @Param(name="datastore", typ="vim.Datastore")
+   @Method(parent=_name, wsdlName="UpdatePrivilege",
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
+   @Param(name="tenant", typ="vim.vcs.Tenant")
+   @Param(name="datastore", typ="string")
    @Param(name="allow_create", typ="boolean", flags=F_OPTIONAL)
    @Param(name="volume_max_size", typ="int", flags=F_OPTIONAL)
    @Param(name="volume_total_size", typ="int", flags=F_OPTIONAL)
-   @Return(typ='void')
-   def ModifyPrivilege(self, datastore, allow_create, volume_max_size, volume_total_size):
+   @Return(typ="void")
+   def UpdatePrivilege(self, tenant, datastore, allow_create, volume_max_size, volume_total_size):
        pass
 
    @JavaDocs(parent=_name, docs=
    """
    Remove access privilege on the given datastore from this tenant.
+   @param tenant A tenant instance.
    @param datastore Privilege on this datastore will be removed from this tenant.
+   @throws vim.fault.NotFound If the tenant does not exist.
+   @throws vmodl.fault.InvalidArgument If the specified datastore is invalid,
+           e.g. not exist or not associated with this tenant, etc.
+   @throws vim.fault.VcsFault If an internal server error occurs.
    """
    )
-   @Method(parent=_name, wsdlName="RemovePrivilege")
-   @Param(name="datastore", typ="vim.Datastore")
-   @Return(typ='void')
-   def RemovePrivilege(self, datastore):
+   @Method(parent=_name, wsdlName="RemovePrivilege",
+           faults=["vim.fault.NotFound",
+                   "vmodl.fault.InvalidArgument",
+                   "vim.fault.VcsFault"])
+   @Param(name="tenant", typ="vim.vcs.Tenant")
+   @Param(name="datastore", typ="string")
+   @Return(typ="void")
+   def RemovePrivilege(self, tenant, datastore):
        pass
 
-   @JavaDocs(parent=_name, docs=
-   """
-   Get privilege of this tenant on the given datastore.
-   @datastore If set, return privilege for this datastore only; otherwise return all privileges.
-   @return Privilege of this tenant on the given datastore.
-   @throw NotFound If this tenant has no privilege on the given datastore.
-   """
-   )
-   @Method(parent=_name, wsdlName="GetPrivileges",
-        faults=["vim.fault.NotFound"])
-   @Param(name="datastore", typ="vim.Datastore", flags=F_OPTIONAL)
-   @Return(typ='vim.vcs.storage.DatastoreAccessPrivilege[]')
-   def GetPrivileges(self, datastore):
-       pass
-
-   @JavaDocs(parent=_name, docs=
-   """
-   Modify default datastore for a tenant.
-   @param datastore New default datastore for this tenant.
-   """
-   )
-   @Method(parent=_name, wsdlName="ModifyDatastore")
-   @Param(name="datastore", typ="vim.Datastore")
-   @Return(typ='void')
-   def ModifyDefaultDatastore(self, datastore):
-       pass
-
-class DatastoreAccessPrivilege:
-   _name = "vim.vcs.storage.DatastoreAccessPrivilege"
+class VsphereContainerService:
+   _name = "vim.vcs.VsphereContainerService"
 
    @JavaDocs(parent=_name, docs =
    """
-   A privilege defines operations against a datastore and limits on those operations.
+   This is the bootstrapping class for vSphere Container Service (VCS).
+   VCS enables customers to run stateful containerized applications on top
+   of VMware vSphere platform. This service addresses persistent storage
+   requirements for Docker containers in vSphere environments, and enables
+   multitenancy, security and access control from a single location.
    """
    )
    @Internal(parent=_name)
-   @DataType(name=_name, version=_VERSION)
+   @ManagedType(name=_name, version=_VERSION)
    def __init__(self):
        pass
 
-   @JavaDocs(parent=_name, docs =
+   @JavaDocs(parent=_name, docs=
    """
-   Datastore of this privilege. A tenant who has this privilege will have access
-   on this datastore.
-   """
-   )
-   @Attribute(parent=_name, typ="vim.Datastore")
-   def datastore(self):
-       pass
-
-   @JavaDocs(parent=_name, docs =
-   """
-   Indicates whether the tenant is allowed to create and delete volumes on
-   this datastore. If it's false, the tenant is allowed to mount and unmount
-   volumes only.
+   Get the TenantManager instance.
+   @return TenantManager instance.
    """
    )
-   @Attribute(parent=_name, typ="boolean")
-   def allow_create(self):
-       pass
-
-   @JavaDocs(parent=_name, docs =
-   """
-   Maximum size (in MiB) of one single volume. Zero means unlimited size.
-   """
-   )
-   @Attribute(parent=_name, typ="int")
-   def volume_max_size(self):
-       pass
-
-   @JavaDocs(parent=_name, docs =
-   """
-   Total storage usage quota (in MiB) allowed on this datastore. Zero means unlimited quota.
-   """
-   )
-   @Attribute(parent=_name, typ="int")
-   def volume_total_size(self):
+   @Method(parent=_name, wsdlName="GetTenantManager")
+   @Return(typ="vim.vcs.TenantManager")
+   def GetTenantManager(self):
        pass
 
 RegisterVmodlTypes()

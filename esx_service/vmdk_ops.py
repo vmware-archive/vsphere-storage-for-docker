@@ -52,6 +52,7 @@ from pyVim.connect import Connect, Disconnect
 from pyVim import vmconfig
 
 from pyVmomi import VmomiSupport, vim, vmodl
+from pyVmomi.VmomiSupport import newestVersions
 
 sys.dont_write_bytecode = True
 
@@ -85,6 +86,7 @@ import sqlite3
 import convert
 import error_code
 import auth_api
+from error_code import ErrorCode
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -223,7 +225,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
         auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
     else:
-        logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
+        logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
 
 def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
@@ -525,7 +527,7 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
         error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
         return error_info
     elif not vm_name:
-        logging.debug(error_code.VM_NOT_BELONG_TO_TENANT.format(vm_name))
+        logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
     return None
 
@@ -714,11 +716,12 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         # for DEFAULT tenant, set default_datastore to vm_datastore
         default_datastore = vm_datastore
     else:
-        # if default_datastore is not set for tenant, error_info will be set to 
-        # DEFAULT_DS_NOT_SET, default_datastore will be set to None
+        # if default_datastore is not set for tenant,
+        # default_datastore will be set to None
         error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
-        # default_datastore is not specified, use vm_datastore
-        if not default_datastore:
+        # if get default_datastore fails or default_datastore is not specified, 
+        # use vm_datastore
+        if error_info or not default_datastore:
             default_datastore = vm_datastore
     
     logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
@@ -801,14 +804,25 @@ def connectLocalSi(force=False):
     global _service_instance
     if not _service_instance:
         try:
-            logging.info("Connecting to the local Service Instance")
-            _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
+            logging.info("Connecting to the local Service Instance as 'dcui' ")
+
+            # Connect to local server as user "dcui" since this is the Admin that does not lose its
+            # Admin permissions even when the host is in lockdown mode. User "dcui" does not have a
+            # password - it is used by the ESXi local application DCUI (Direct Console User Interface)
+            # Version must be set to access newer features, such as VSAN.
+            _service_instance = pyVim.connect.Connect(
+                host='localhost',
+                user='dcui',
+                version=newestVersions.Get('vim'))
         except Exception as e:
             logging.exception("Failed to the local Service Instance as 'dcui', exiting: ")
             sys.exit(1)
     elif force:
         logging.warning("Reconnecting to the local Service Instance")
-        _service_instance = pyVim.connect.Connect(host='localhost', user='dcui')
+        _service_instance = pyVim.connect.Connect(
+            host='localhost',
+            user='dcui',
+            version=newestVersions.Get('vim'))
 
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()

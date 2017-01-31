@@ -48,6 +48,7 @@ VMCI_SRV_LIBS  := $(VMCI_SRV_LIB) $(VMCI_SRV_LIB64)
 
 # Source code - all .py stuff which is not tests
 PY_SRC   := $(filter-out %_test.py, $(wildcard *.py))
+PY_VMODL := $(filter-out %_test.py, $(wildcard vmodl/*.py))
 # exclude __init__.py to avoid clash with __init__.py from parent
 PY_CLI   := $(filter-out %_test.py, $(wildcard cli/[a-z]*.py))
 PY_UTILS := $(filter-out %_test.py, $(wildcard utils/*.py))
@@ -115,8 +116,10 @@ TO_ESX_INITD := $(INIT_SCRIPT)
 PY_SQLITE := tools/sqlite/sqlite3
 SO_SQLITE := tools/sqlite/*.so
 
+VMODL_PY := $(shell find ../esx_service/vmodl -name '*.py')
+
 # copy files to staging area and then build the VIB
-$(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD) $(PY_SQLITE) $(SO_SQLITE)
+$(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)  $(VMODL_PY) $(PY_SQLITE) $(SO_SQLITE)
 	@echo Staging in $(PAYLOAD)
 ifeq ($(INCLUDE_UI), true)
 	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
@@ -134,6 +137,7 @@ endif
 	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
 	cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
+	VMDKOPS_PAYLOAD=$(VMDKOPS_PAYLOAD) $(MAKE)  --directory=vmodl copy_to_payload
 	@chmod -R u+x $(VMDKOPS_BIN)
 	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)
 	$(VIBAUTHOR) $(VIBAUTHOR_PARAMS)
@@ -153,10 +157,14 @@ PYLINT_IGNORE := --errors-only -d import-error,no-name-in-module
 PYLINT_COMMAND := pylint $(PYLINT_IGNORE) --rcfile pylint_cfg.ini
 
 .PHONY: pylint
-pylint: .lint_src .lint_cli .lint_util
+pylint: .lint_src .lint_vmodl .lint_cli .lint_util
 
 .lint_src: $(PY_SRC)
 	$(PYLINT_COMMAND) ../esx_service
+	@touch $@
+
+.lint_vmodl: $(PY_VMODL)
+	$(PYLINT_COMMAND) ../esx_service/vmodl
 	@touch $@
 
 .lint_cli: $(PY_CLI)
