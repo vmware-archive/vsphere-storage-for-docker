@@ -129,9 +129,8 @@ lib = None
 # For managing resource locks.
 lockManager = threadutils.LockManager()
 
-# Run executable on ESX as needed for vmkfstools invocation (until normal disk create is written)
-# Returns the integer return value and the stdout str on success and integer return value and
-# the stderr str on error
+# Run executable on ESX as needed.
+# Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
 def RunCommand(cmd):
     """RunCommand
 
