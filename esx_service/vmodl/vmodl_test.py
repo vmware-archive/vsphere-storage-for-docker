@@ -581,6 +581,8 @@ class TestVsphereContainerService(unittest.TestCase):
             self.tenantMgr.AddPrivilege(tenant, privilege)
 
     def test_add_privilege_invalid_volume_size(self):
+        """ Test add privilege with volume_total_size lesser than existing volume_max_size """
+
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
