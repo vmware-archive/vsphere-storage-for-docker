@@ -40,6 +40,9 @@ type Config struct {
 	LogPath       string `json:",omitempty"`
 	MaxLogSizeMb  int    `json:",omitempty"`
 	MaxLogAgeDays int    `json:",omitempty"`
+	Target        string `json:",omitempty"`
+	Project       string `json:",omitempty"`
+	Host          string `json:",omitempty"`
 }
 
 // Load the configuration from a file and return a Config.

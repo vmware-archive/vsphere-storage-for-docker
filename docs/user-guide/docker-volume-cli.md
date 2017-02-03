@@ -8,7 +8,7 @@ The service works with existing Docker volume commands.
 4. [Docker volume rm](https://docs.docker.com/engine/reference/commandline/volume_rm/)
 
 
-The Docker volume commands are supported for both the Vmdk and Photon platforms with minor differences in capabilities. Features that are specific to either of the platforms are mentioned explicitly below. The "vmdk" volume driver is used to provision and manage volumes on the VSphere platform and can be named interchangeably as either "vmdk" (used in the examples below).
+The Docker volume commands are supported for both the Vmdk and Photon platforms with minor differences in capabilities. Features that are specific to either of the platforms are mentioned explicitly below.
 <script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
 ## Docker volume create options

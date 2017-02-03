@@ -119,19 +119,43 @@ func main() {
 		"config":    *configFile,
 	}).Info("Starting plugin ")
 
-	log.WithFields(log.Fields{
-		"target":  *targetURL,
-		"project": *projectID,
-		"host":    *vmID,
-		"port":    *port}).Info("Plugin options - ")
+	// Load the configuration if one was provided.
+	c, err := config.Load(*configFile)
+	if err != nil {
+		log.Warning("Failed to load config file %s: %v", *configFile, err)
+	}
 
-	if *driverName == photonDriver {
+	// The vmdk driver doesn't depend on the config file for options.
+	if *driverName == photonDriver && err == nil {
+		if *targetURL == "" {
+			*targetURL = c.Target
+		}
+		if *projectID == "" {
+			*projectID = c.Project
+		}
+		if *vmID == "" {
+			*vmID = c.Host
+		}
+
+		log.WithFields(log.Fields{
+			"target":  *targetURL,
+			"project": *projectID,
+			"host":    *vmID}).Info("Plugin options - ")
+
+		if *targetURL == "" || *projectID == "" || *vmID == "" {
+			log.Warning("Invalid options specified for target/project/host")
+			fmt.Printf("Invalid options specified for target - %s project - %s host - %s. Exiting.\n",
+				*targetURL, *projectID, *vmID)
+			os.Exit(1)
+		}
 		driver = photon.NewVolumeDriver(*targetURL, *projectID,
 			*vmID, mountRoot)
 	} else if *driverName == vmdkDriver {
+		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
+
 		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot)
 	} else {
-		log.Warning("Unknown driver, exiting - ", *driverName)
+		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)
 	}
 
