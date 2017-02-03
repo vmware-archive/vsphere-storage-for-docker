@@ -191,7 +191,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.NotFound(msg=error_info.msg)
             elif error_info.code == ErrorCode.PRIVILEGE_ALREADY_EXIST:
                 raise vim.fault.AlreadyExists(name="privilege")
-            elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.INVALID_ARGUMENT:
+            elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE:
                 raise vmodl.fault.InvalidArgument(msg=error_info.msg)
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
@@ -212,7 +212,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.NotFound(msg=error_info.msg)
             elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.PRIVILEGE_NOT_FOUND:
                 raise vmodl.fault.InvalidArgument(invalidProperty="datastore")
-            elif error_info.code == ErrorCode.INVALID_ARGUMENT:
+            elif error_info.code == ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE:
                 raise vmodl.fault.InvalidArgument(msg=error_info.msg)
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)

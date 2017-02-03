@@ -504,24 +504,21 @@ def privilege_exist(privileges, datastore_name):
     return False
 
 def check_privilege_parameters(privilege):
-    """ Check whether the privilege parameters are invalid """
-
+    """
+        Check whether the privilege parameters are invalid
+        Params:
+        -- privilege: privilege is a dictionary that contains privilege properties
+        Return value:
+        -- error_info: return None on success or error info on failure
+    """
     volume_maxsize = privilege[auth_data_const.COL_MAX_VOLUME_SIZE]
     volume_totalsize = privilege[auth_data_const.COL_USAGE_QUOTA]
 
     # If both volume max size and volume total size are set,
     # volume max size should not exceed volume total size
     if (volume_maxsize and volume_totalsize and (volume_maxsize > volume_totalsize)):
-        error_msg = "Volume max size {0}MB exceeds the total size {1}MB".format(
-            volume_maxsize, volume_totalsize)
-        error_info = error_code.generate_error_info(ErrorCode.INVALID_ARGUMENT, error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE, volume_maxsize, volume_totalsize)
         return error_info
-
-    # If volume total size is set, but volume max size is NOT set,
-    # volume max size should be set to the same as volume total size
-    if (volume_totalsize and not volume_maxsize):
-        print('Note: volume max size will be set to the same value as volume total size: {0}MB'.format(volume_totalsize))
-        privilege[auth_data_const.COL_MAX_VOLUME_SIZE] = volume_totalsize
 
     return None;
 

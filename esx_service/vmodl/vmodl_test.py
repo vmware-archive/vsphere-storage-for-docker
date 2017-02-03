@@ -489,29 +489,6 @@ class TestVsphereContainerService(unittest.TestCase):
         # Verify the default datastore
         self.assertEqual(result[0].default_datastore, self.datastore)
 
-    def test_add_privilege_without_volume_max_size(self):
-        # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
-
-        # Create a privilege without volume_max_size
-        privilege = vim.vcs.storage.DatastoreAccessPrivilege()
-        privilege.datastore =  self.datastore
-        privilege.allow_create = True
-        privilege.volume_total_size = 1024
-
-        # Add privilege to the tenant
-        self.tenantMgr.AddPrivilege(tenant, privilege)
-
-        # Get the privilege
-        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
-        self.assertTrue(result)
-        p = result[0].privileges
-        self.assertTrue(p)
-
-        # Verify that the volume_max_size was set to the same value as volume_total_size
-        self.assertEqual(p[0].volume_total_size, 1024)
-        self.assertEqual(p[0].volume_max_size, p[0].volume_total_size)
-
     def test_add_privilege_default_datastore_false(self):
         if not self.datastore2:
             return
@@ -695,32 +672,9 @@ class TestVsphereContainerService(unittest.TestCase):
         self.assertEqual(p[0].volume_max_size, 1024)
         self.assertEqual(p[0].volume_total_size, 2048)
 
-    def test_update_privilege_without_volume_max_size(self):
-        # Create a tenant
-        tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
-
-        # Create a privilege without volume size settings
-        privilege = vim.vcs.storage.DatastoreAccessPrivilege()
-        privilege.datastore =  self.datastore
-        privilege.allow_create = True
-
-        # Add privilege to the tenant
-        self.tenantMgr.AddPrivilege(tenant, privilege)
-
-        # Update the privilege
-        self.tenantMgr.UpdatePrivilege(tenant, self.datastore, volume_total_size=1024)
-
-        # Get the privilege
-        result = self.tenantMgr.GetTenants(name=TENANT_NAME)
-        self.assertTrue(result)
-        p = result[0].privileges
-        self.assertTrue(p)
-
-        # Verify that the volume_max_size was set to the same value as volume_total_size
-        self.assertEqual(p[0].volume_total_size, 1024)
-        self.assertEqual(p[0].volume_max_size, p[0].volume_total_size)
-
     def test_update_privilege_with_invalid_volume_size(self):
+        """ Test privilege update with volume_max_size greater than volume_total_size """
+
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
@@ -737,6 +691,8 @@ class TestVsphereContainerService(unittest.TestCase):
             self.tenantMgr.UpdatePrivilege(tenant, self.datastore, volume_max_size=2048, volume_total_size=1024)
 
     def test_update_privilege_with_invalid_total_size(self):
+        """ Test privilege update with volume_total_size lesser than existing volume_max_size """
+
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
@@ -754,6 +710,8 @@ class TestVsphereContainerService(unittest.TestCase):
             self.tenantMgr.UpdatePrivilege(tenant, self.datastore, volume_total_size=1024)
 
     def test_update_privilege_with_invalid_max_size(self):
+        """ Test privilege update with volume_max_size greater than existing volume_total_size """
+
         # Create a tenant
         tenant = self.tenantMgr.CreateTenant(name=TENANT_NAME, description=TENANT_DESC)
 
