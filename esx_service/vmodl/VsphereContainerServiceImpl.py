@@ -13,8 +13,8 @@
 # limitations under the License.
 
 """
-Copyright 2016 VMware, Inc.  All rights reserved. 
-Licensed under the Apache License, Version 2.0 
+Copyright 2016 VMware, Inc.  All rights reserved.
+Licensed under the Apache License, Version 2.0
 http://www.apache.org/licenses/LICENSE-2.0
 """
 
@@ -77,7 +77,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.NotFound(msg=error_info.msg)
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
-        
+
         logging.info("Successfully removed tenant: name=%s", name)
 
     def GetTenants(self, name=None):
@@ -134,7 +134,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully added VMs: %s to tenant: %s", vms, tenant.name)
-    
+
     def RemoveVMs(self, tenant, vms):
         if len(vms) == 0:
             logging.error("Remove VMs: the VM list is empty")
@@ -153,7 +153,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
         logging.info("Succssfully removed VMs: %s from tenant: %s", vms, tenant.name)
-    
+
     def ReplaceVMs(self, tenant, vms):
         if len(vms) == 0:
             logging.error("Replace VMs: the VM list is empty")
@@ -191,8 +191,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.NotFound(msg=error_info.msg)
             elif error_info.code == ErrorCode.PRIVILEGE_ALREADY_EXIST:
                 raise vim.fault.AlreadyExists(name="privilege")
-            elif error_info.code == ErrorCode.DS_NOT_EXIST:
-                raise vmodl.fault.InvalidArgument(invalidProperty="privilege")
+            elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE:
+                raise vmodl.fault.InvalidArgument(msg=error_info.msg)
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
@@ -212,6 +212,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
                 raise vim.fault.NotFound(msg=error_info.msg)
             elif error_info.code == ErrorCode.DS_NOT_EXIST or error_info.code == ErrorCode.PRIVILEGE_NOT_FOUND:
                 raise vmodl.fault.InvalidArgument(invalidProperty="datastore")
+            elif error_info.code == ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE:
+                raise vmodl.fault.InvalidArgument(msg=error_info.msg)
             else:
                 raise vim.fault.VcsFault(msg=error_info.msg)
 
@@ -247,7 +249,7 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         result.name = tenant.name
         result.description = tenant.description
 
-        # Populate default datastore 
+        # Populate default datastore
         if tenant.default_datastore_url:
             result.default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
 

@@ -34,6 +34,7 @@ class ErrorCode:
     # Privilege related error code start
     PRIVILEGE_NOT_FOUND = 201
     PRIVILEGE_ALREADY_EXIST = 202
+    PRIVILEGE_INVALID_VOLUME_SIZE = 203
     # Privilege related error code end
 
     # DATASTORE related error code start
@@ -66,7 +67,8 @@ error_code_to_message = {
     ErrorCode.VM_NOT_IN_TENANT : "Some VMs in {0} have not been associated with tenant '{1}', cannot remove them",
 
     ErrorCode.PRIVILEGE_NOT_FOUND : "No privilege exists for ({0}, {1})",
-    ErrorCode.PRIVILEGE_ALREADY_EXIST : "privilege for ({0}, {1}) already exists",
+    ErrorCode.PRIVILEGE_ALREADY_EXIST : "Privilege for ({0}, {1}) already exists",
+    ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE : "Volume max size {0}MB exceeds the total size {1}MB",
 
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
     ErrorCode.DS_NOT_EXIST : "Datastore {0} does not exist",
@@ -88,7 +90,7 @@ class ErrorInfo:
     def __init__(self, code, msg):
         self.code = code
         self.msg = msg
-    
+
 def join_args(fmstr, *args):
     return fmstr.format(*args)
 
@@ -96,12 +98,12 @@ def generate_error_info(err_code, *params):
     """
         Return error_info object with given err_code and params
         @Param err_code: error_code
-        @Param *params: varialbe number of params which are 
+        @Param *params: varialbe number of params which are
          needed to construct error message
     """
     fmstr = error_code_to_message[err_code]
     err_msg = join_args(fmstr, *params)
     error_info = ErrorInfo(err_code, err_msg)
-    return error_info  
+    return error_info
 
 
