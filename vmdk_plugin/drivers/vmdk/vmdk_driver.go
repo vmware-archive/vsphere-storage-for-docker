@@ -297,6 +297,25 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: errAttach.Error()}
 	}
 
+	skipInotify := false
+
+	watcher, err := inotify.NewWatcher()
+
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": r.Name},
+		).Error("Failed to create watcher, skip inotify ")
+		skipInotify = true
+	} else {
+		err = watcher.Watch(watchPath)
+		if err != nil {
+			log.WithFields(
+				log.Fields{"name": r.Name},
+			).Error("Failed to watch /dev, skip inotify ")
+			skipInotify = true
+		}
+	}
+
 	device, errGetDevicePath := fs.GetDevicePath(dev)
 	if errGetDevicePath != nil {
 		log.WithFields(log.Fields{"name": r.Name,
@@ -310,6 +329,34 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
 		}
 		return volume.Response{Err: errGetDevicePath.Error()}
+	}
+
+	if skipInotify {
+		time.Sleep(sleepBeforeMount)
+	}
+loop:
+	for {
+		select {
+		case ev := <-watcher.Event:
+			log.Debug("event: ", ev)
+			if ev.Name == device {
+				// Log when the device is discovered
+				log.WithFields(
+					log.Fields{"name": r.Name, "event": ev},
+				).Info("Attach complete ")
+				break loop
+			}
+		case err := <-watcher.Error:
+			log.WithFields(
+				log.Fields{"name": r.Name, "device": device, "error": err},
+			).Error("Hit error during watch ")
+			break loop
+		case <-time.After(devWaitTimeout):
+			log.WithFields(
+				log.Fields{"name": r.Name, "timeout": devWaitTimeout, "device": device},
+			).Warning("Reached timeout while waiting for device, trying to mount anyways ")
+			break loop
+		}
 	}
 
 	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
