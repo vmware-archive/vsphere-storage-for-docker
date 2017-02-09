@@ -35,7 +35,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
-	"golang.org/x/exp/inotify"
 )
 
 const (
@@ -151,24 +150,7 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		return mountpoint, err
 	}
 
-	skipInotify := false
-
-	watcher, err := inotify.NewWatcher()
-
-	if err != nil {
-		log.WithFields(
-			log.Fields{"name": name, "dir": mountpoint},
-		).Error("Failed to create watcher, skip inotify ")
-		skipInotify = true
-	} else {
-		err = watcher.Watch(watchPath)
-		if err != nil {
-			log.WithFields(
-				log.Fields{"name": name, "dir": mountpoint},
-			).Error("Failed to watch /dev, skip inotify ")
-			skipInotify = true
-		}
-	}
+	watcher, skipInotify := fs.DevAttachWaitPrep(name, watchPath)
 
 	// Have ESX attach the disk
 	dev, err := d.ops.Attach(name, nil)
@@ -189,31 +171,11 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		time.Sleep(sleepBeforeMount)
 		return mountpoint, fs.Mount(mountpoint, fstype, device, false)
 	}
-loop:
-	for {
-		select {
-		case ev := <-watcher.Event:
-			log.Debug("event: ", ev)
-			if ev.Name == device {
-				// Log when the device is discovered
-				log.WithFields(
-					log.Fields{"name": name, "event": ev},
-				).Info("Attach complete ")
-				break loop
-			}
-		case err := <-watcher.Error:
-			log.WithFields(
-				log.Fields{"name": name, "device": device, "error": err},
-			).Error("Hit error during watch ")
-			break loop
-		case <-time.After(devWaitTimeout):
-			log.WithFields(
-				log.Fields{"name": name, "timeout": devWaitTimeout, "device": device},
-			).Warning("Reached timeout while waiting for device, trying to mount anyways ")
-			break loop
-		}
-	}
 
+	fs.DevAttachWait(watcher, name, device)
+
+	// May have timed out waiting for the attach to complete,
+	// attempt the mount anyway.
 	return mountpoint, fs.Mount(mountpoint, fstype, device, isReadOnly)
 }
 
@@ -297,24 +259,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: errAttach.Error()}
 	}
 
-	skipInotify := false
-
-	watcher, err := inotify.NewWatcher()
-
-	if err != nil {
-		log.WithFields(
-			log.Fields{"name": r.Name},
-		).Error("Failed to create watcher, skip inotify ")
-		skipInotify = true
-	} else {
-		err = watcher.Watch(watchPath)
-		if err != nil {
-			log.WithFields(
-				log.Fields{"name": r.Name},
-			).Error("Failed to watch /dev, skip inotify ")
-			skipInotify = true
-		}
-	}
+	watcher, skipInotify := fs.DevAttachWaitPrep(r.Name, watchPath)
 
 	device, errGetDevicePath := fs.GetDevicePath(dev)
 	if errGetDevicePath != nil {
@@ -334,30 +279,10 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	if skipInotify {
 		time.Sleep(sleepBeforeMount)
 	}
-loop:
-	for {
-		select {
-		case ev := <-watcher.Event:
-			log.Debug("event: ", ev)
-			if ev.Name == device {
-				// Log when the device is discovered
-				log.WithFields(
-					log.Fields{"name": r.Name, "event": ev},
-				).Info("Attach complete ")
-				break loop
-			}
-		case err := <-watcher.Error:
-			log.WithFields(
-				log.Fields{"name": r.Name, "device": device, "error": err},
-			).Error("Hit error during watch ")
-			break loop
-		case <-time.After(devWaitTimeout):
-			log.WithFields(
-				log.Fields{"name": r.Name, "timeout": devWaitTimeout, "device": device},
-			).Warning("Reached timeout while waiting for device, trying to mount anyways ")
-			break loop
-		}
-	}
+
+	// Wait for the attach to complete, may timeout
+	// in which case we continue creating the file system.
+	fs.DevAttachWait(watcher, r.Name, device)
 
 	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
 	if errMkfs != nil {

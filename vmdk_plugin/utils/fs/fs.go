@@ -42,6 +42,7 @@ const (
 	devWaitTimeout  = 1 * time.Second
 	bdevPath        = "/sys/block/"
 	deleteFile      = "/device/delete"
+	watchPath       = "/dev/disk/by-id"
 )
 
 // FstypeDefault contains the default FS when not specified by the user
@@ -54,6 +55,51 @@ var BinSearchPath = []string{"/bin", "/sbin", "/usr/bin", "/usr/sbin"}
 type VolumeDevSpec struct {
 	Unit                    string
 	ControllerPciSlotNumber string
+}
+
+// DevAttachWaitPrep create the wather
+func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
+	watcher, errWatcher := inotify.NewWatcher()
+
+	if errWatcher != nil {
+		log.WithFields(log.Fields{"Name": name}).Error("Failed to create watcher, skip inotify ")
+		return nil, true
+	} else {
+		err := watcher.Watch(devPath)
+		if err != nil {
+			log.WithFields(log.Fields{"Name": name}).Error("Failed to watch /dev, skip inotify ")
+			return nil, true
+		}
+	}
+	return watcher, false
+}
+
+func DevAttachWait(watcher *inotify.Watcher, name string, device string) {
+loop:
+	for {
+		select {
+		case ev := <-watcher.Event:
+			log.Debug("event: ", ev)
+			if ev.Name == device {
+				// Log when the device is discovered
+				log.WithFields(
+					log.Fields{"device": device, "event": ev},
+				).Info("Scan complete ")
+				break loop
+			}
+		case err := <-watcher.Error:
+			log.WithFields(
+				log.Fields{"device": device, "error": err},
+			).Error("Hit error during watch ")
+			break loop
+		case <-time.After(devWaitTimeout):
+			log.WithFields(
+				log.Fields{"timeout": devWaitTimeout, "device": device},
+			).Warning("Exceeded timeout while waiting for device attach to complete")
+			break loop
+		}
+	}
+
 }
 
 // Mkdir creates a directory at the specified path
@@ -185,46 +231,11 @@ func GetDevicePathByID(id string) (string, error) {
 		}
 	}
 
-	skipInotify := false
+	watcher, skipInotify := DevAttachWaitPrep(id, watchPath)
 
-	watcher, errWatcher := inotify.NewWatcher()
-
-	if errWatcher != nil {
-		log.WithFields(log.Fields{"id": id}).Error("Failed to create watcher, skip inotify ")
-		skipInotify = true
-	} else {
-		err = watcher.Watch("/dev/disk/by-id")
-		if err != nil {
-			log.WithFields(log.Fields{"id": id}).Error("Failed to watch /dev, skip inotify ")
-			skipInotify = true
-		}
-	}
 	device := makeDevicePathWithID(id)
 
-loop:
-	for {
-		select {
-		case ev := <-watcher.Event:
-			log.Debug("event: ", ev)
-			if ev.Name == device {
-				// Log when the device is discovered
-				log.WithFields(
-					log.Fields{"device": device, "event": ev},
-				).Info("Scan complete ")
-				break loop
-			}
-		case err := <-watcher.Error:
-			log.WithFields(
-				log.Fields{"device": device, "error": err},
-			).Error("Hit error during watch ")
-			break loop
-		case <-time.After(devWaitTimeout):
-			log.WithFields(
-				log.Fields{"timeout": devWaitTimeout, "device": device},
-			).Warning("Reached timeout while waiting for device ")
-			break loop
-		}
-	}
+	DevAttachWait(watcher, id, device)
 
 	if skipInotify {
 		time.Sleep(10)
