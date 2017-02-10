@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"reflect"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -156,6 +157,11 @@ func main() {
 		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
+		os.Exit(1)
+	}
+
+	if reflect.ValueOf(driver).IsNil() == true {
+		log.Warning("Error in driver initialization exiting - ", *driverName)
 		os.Exit(1)
 	}
 
