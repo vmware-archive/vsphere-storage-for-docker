@@ -632,7 +632,7 @@ def get_vol_path(datastore, tenant_name=None):
             errMsg = "Failed to initialize volume path {0} - {1}".format(path, out)
             logging.warning(errMsg)
             return None, err(errMsg)
-        
+
         # create the symbol link /vmfs/volumes/datastore_name/dockvol/tenant_name
         symlink_path = os.path.join(dock_vol_path, tenant_name)
         if not os.path.isdir(symlink_path):
@@ -718,13 +718,13 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         # if default_datastore is not set for tenant,
         # default_datastore will be set to None
         error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
-        # if get default_datastore fails or default_datastore is not specified, 
+        # if get default_datastore fails or default_datastore is not specified,
         # use vm_datastore
         if error_info or not default_datastore:
             default_datastore = vm_datastore
-    
+
     logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
-                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)    
+                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)
 
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
@@ -855,11 +855,10 @@ def findDeviceByPath(vmdk_path, vm):
         # Filename format is as follows:
         #   "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
         logging.debug("d.backing.fileName %s", d.backing.fileName)
-        backing_disk = d.backing.fileName.split(" ")[1]
-
-        # datastore='[datastore name]'
-        datastore = d.backing.fileName.split(" ")[0]
-        datastore = datastore[1:-1]
+        ds, disk_path = d.backing.fileName.rsplit("]", 1)
+        datastore = ds[1:]
+        backing_disk = disk_path.lstrip()
+        logging.debug("findDeviceByPath: datastore=%s, backing_disk=%s", datastore, backing_disk)
 
         # Construct the parent dir and vmdk name, resolving
         # links if any.
