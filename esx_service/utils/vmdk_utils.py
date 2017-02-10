@@ -100,8 +100,11 @@ def get_datastores():
     'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore
     """
-    if datastores == None:
-        init_datastoreCache()
+    # if datastores == None:
+    #     init_datastoreCache()
+    # we should not use cached value, user may change datastore name on the fly
+    # need to repull the info
+    init_datastoreCache()
     return datastores
 
 def get_volumes(tenant_re):

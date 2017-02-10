@@ -855,11 +855,10 @@ def findDeviceByPath(vmdk_path, vm):
         # Filename format is as follows:
         #   "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
         logging.debug("d.backing.fileName %s", d.backing.fileName)
-        backing_disk = d.backing.fileName.split(" ")[1]
-
-        # datastore='[datastore name]'
-        datastore = d.backing.fileName.split(" ")[0]
-        datastore = datastore[1:-1]
+        ds, disk_path = d.backing.fileName.rsplit("]", 1)
+        datastore = ds[1:]
+        backing_disk = disk_path.lstrip()
+        logging.debug("findDeviceByPath: datastore=%s, backing_disk=%s", datastore, backing_disk)
 
         # Construct the parent dir and vmdk name, resolving
         # links if any.
