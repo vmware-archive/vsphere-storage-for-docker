@@ -240,7 +240,7 @@ func GetDevicePathByID(id string) (string, error) {
 	} else {
 		// Wait for the attach to complete, may timeout
 		// in which case we continue creating the file system.
-		DevAttachWait(watcher, r.Name, device)
+		DevAttachWait(watcher, id, device)
 	}
 	_, err = os.Stat(device)
 	if err != nil {
