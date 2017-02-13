@@ -57,7 +57,7 @@ type VolumeDevSpec struct {
 	ControllerPciSlotNumber string
 }
 
-// DevAttachWaitPrep create the wather
+// DevAttachWaitPrep create the watcher
 func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	watcher, errWatcher := inotify.NewWatcher()
 
@@ -235,10 +235,12 @@ func GetDevicePathByID(id string) (string, error) {
 
 	device := makeDevicePathWithID(id)
 
-	DevAttachWait(watcher, id, device)
-
 	if skipInotify {
 		time.Sleep(10)
+	} else {
+		// Wait for the attach to complete, may timeout
+		// in which case we continue creating the file system.
+		DevAttachWait(watcher, r.Name, device)
 	}
 	_, err = os.Stat(device)
 	if err != nil {

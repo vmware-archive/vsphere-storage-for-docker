@@ -278,12 +278,11 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 
 	if skipInotify {
 		time.Sleep(sleepBeforeMount)
+	} else {
+		// Wait for the attach to complete, may timeout
+		// in which case we continue creating the file system.
+		fs.DevAttachWait(watcher, r.Name, device)
 	}
-
-	// Wait for the attach to complete, may timeout
-	// in which case we continue creating the file system.
-	fs.DevAttachWait(watcher, r.Name, device)
-
 	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
 	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name,
