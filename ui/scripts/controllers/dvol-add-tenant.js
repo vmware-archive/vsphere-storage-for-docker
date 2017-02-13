@@ -11,14 +11,14 @@ define([], function() {
     DialogService.setConfirmOptions({
       label: $scope.editMode ? 'Save' : 'Add',
       onClick: function() {
-        DialogService.currentDialog().opaque.save($scope.tenant, $scope.datacenterVmsGrid.selectedItems);
+        DialogService.currentDialog().opaque.save($scope.tenant, $scope.availableVmsGrid.selectedItems);
         return true;
       }
     });
 
-    var grid = DvolVmGridService.makeVmsGrid('datacenterVmsGrid', [], null, 'MULTI', false);
+    var grid = DvolVmGridService.makeVmsGrid('availableVmsGrid', [], null, 'MULTI', false);
 
-    $scope.datacenterVmsGrid = grid.grid;
+    $scope.availableVmsGrid = grid.grid;
 
     var vmSearchOptions = {
       filters: [
@@ -30,7 +30,7 @@ define([], function() {
       placeholder: 'Search'
     };
 
-    GridUtils.addSearch($scope.datacenterVmsGrid, vmSearchOptions);
+    GridUtils.addSearch($scope.availableVmsGrid, vmSearchOptions);
 
   };
 

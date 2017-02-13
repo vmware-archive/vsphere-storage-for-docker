@@ -1,216 +1,155 @@
-/* global define */
+/* global define _ */
 
 define([], function() {
   'use strict';
 
-  function generateId() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0;
-      var v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
+  return function(DvolVmodlService) {
 
-  return function($q) {
+    //
+    //
+    //
+    // The VMODL API Wrapper
+    //
 
-    function get(tenantId) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
+    //
+    // eventually the VMODL api will support get Tenant by Name
+    // for now we just use listTenants
+    //
+    function getTenantByName(tenantName) {
+      return listTenants()
+      .then(function(tenants) {
         var matches = tenants.filter(function(t) {
-          return t.id === tenantId;
+          return t.name === tenantName;
         });
-        var tenant = matches[0];
-        if (tenant) {
-          d.resolve(tenant);
+        return matches.length > 0 && matches[0];
+      });
+    }
+
+    function listTenants() {
+      return DvolVmodlService.listTenants();
+    }
+
+    //
+    // In the UI, creating a tenant can optionally involve
+    // associating a set of VMs with that tenant
+    // These actions are distinct in the VMODL
+    // so we make the calls in series here
+    //
+    function createTenant(tenant, vms) {
+      var tenantArgs = {
+        name: tenant.name,
+        description: tenant.description,
+        default_privileges: tenant.default_privileges
+      };
+      var p = DvolVmodlService.createTenant(tenantArgs);
+      if (vms && vms.length > 0) {
+        return p.then(function() {
+          var vmsArgs = {
+            name: tenant.name,
+            vms: vms
+          };
+          return DvolVmodlService.addVMsToTenant(vmsArgs);
+        });
+      }
+      return p;
+    }
+
+    function removeTenant(tenantId) {
+      DvolVmodlService.removeTenant({
+        name: tenantId
+      });
+    }
+
+    function listDatastoreAccessForTenant(tenantId) {
+      return DvolVmodlService.listDatastoreAccessForTenant({
+        name: tenantId
+      });
+    }
+
+
+    function removeDatastoreAccessForTenant(tenantId, datastoreId) {
+      return DvolVmodlService.removeDatastoreAccessForTenant({
+        name: tenantId,
+        datastore: datastoreId
+      });
+    }
+
+    //
+    // The VMODL api supports removing multiple VMs in the same call
+    // Our original removeVmFromTenant implementation supports only one,
+    // So we just call the api with a singleton vm
+    // not taking advantage of the multiple vm option for now
+    //
+    function removeVmFromTenant(tenantId, vmId) {
+      return DvolVmodlService.removeVMsFromTenant({
+        name: tenantId,
+        vms: [vmId]
+      });
+    }
+
+    function listVmsForTenant(tenantId) {
+      return DvolVmodlService.listVmsForTenant({
+        name: tenantId
+      });
+    }
+
+    function addVmsToTenant(tenantId, vmIds) {
+      return DvolVmodlService.addVMsToTenant({
+        name: tenantId,
+        vms: vmIds
+      });
+    }
+
+    //
+    // a utility function
+    //
+    function transformPermissionsToRights(perms) {
+      return ['create', 'mount', 'delete'].filter(function(r) {
+        return perms[r + '_volumes'];
+      });
+    }
+    //
+    function addDatastoreAccessForTenant(tenantId, datastore) {
+      return DvolVmodlService.addDatastoreAccessForTenant({
+        name: tenantId,
+        datastore: datastore.datastore.name,
+        rights: transformPermissionsToRights(datastore.permissions),
+        volume_maxsize: datastore.permissions.volume_maxsize,
+        volume_totalsize: datastore.permissions.volume_totalsize
+      });
+    }
+
+    function modifyDatastoreAccessForTenant(tenantId, updatedDatastore) {
+      var addRights = [];
+      var removeRights = [];
+      ['create', 'mount', 'delete'].forEach(function(p) {
+        if (updatedDatastore.permissions[p + '_volumes']) {
+          addRights.push(p);
+        } else {
+          removeRights.push(p);
         }
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function getAll() {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        d.resolve(tenants);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function add(tenant, vms) {
-      var d = $q.defer();
-      setTimeout(function() {
-        tenant.id = generateId();
-        tenant.vms = (vms || []).map(function(vm) {
-          return vm.id;
-        });
-        tenant.datastores = {};
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        tenants.push(tenant);
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve(tenants);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function remove(tenantId) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var newTenants = tenants.filter(function(t) {
-          return t.id !== tenantId;
-        });
-        localStorage.setItem('tenants', JSON.stringify(newTenants));
-        d.resolve(newTenants);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function removeDatastore(tenantId, datastoreId) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var matches = tenants.filter(function(t) {
-          return t.id === tenantId;
-        });
-        if (!matches.length === 1) return; // handle error
-        var tenant = matches[0];
-        delete tenant.datastores[datastoreId];
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve();
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function removeVm(tenantId, removeThisId) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var matches = tenants.filter(function(t) {
-          return t.id === tenantId;
-        });
-        if (!matches.length === 1) return; // handle error
-        var tenant = matches[0];
-        if (!tenant.vms || tenant.vms.length < 1) return; // handle error
-        var newAssocs = tenant.vms.filter(function(assocId) {
-          return assocId !== removeThisId;
-        });
-        tenant.vms = newAssocs;
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve(tenant);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function dedupe(a) {
-      return a.filter(function(item, pos) {
-        return a.indexOf(item) === pos;
+      });
+      return DvolVmodlService.modifyDatastoreAccessForTenant({
+        name: tenantId,
+        datastore: updatedDatastore.datastore,
+        add_rights: addRights,
+        remove_rights: removeRights,
+        max_volume_size: updatedDatastore.permissions.max_volume_size,
+        usage_quota: updatedDatastore.permissions.usage_quota
       });
     }
 
-    function addVms(tenantId, vmIds) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var matches = tenants.filter(function(t) {
-          return t.id === tenantId;
-        });
-        if (!matches.length === 1) return; // TODO: handle asnyc error
-        var tenant = matches[0];
-        tenant.vms = tenant.vms || [];
-        var newVms = dedupe(tenant.vms.concat(vmIds));
-        tenant.vms = newVms;
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve(tenant);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function addDatastores(tenantId, datastores) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var matches = tenants.filter(function(t) {
-          return t.id === tenantId;
-        });
-        if (!matches.length === 1) return; // TODO: handle asnyc error
-        var tenant = matches[0];
-        tenant.datastores = tenant.datastores || {};
-        datastores.forEach(function(ds) {
-          tenant.datastores[ds.datastore] = ds;
-        });
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve(tenant);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function updateDatastore(tenantId, newlyEditedDatastore) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var matches = tenants.filter(function(t) {
-          return t.id === tenantId;
-        });
-        if (matches.length !== 1) return;  // needs async error handling
-        var tenant = matches[0];
-        if (!tenant) return; // needs async error handling
-        tenant.datastores[newlyEditedDatastore.datastore] = newlyEditedDatastore;
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve(tenant);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    function update(newlyEditedTenant) {
-      var d = $q.defer();
-      setTimeout(function() {
-        var tenants = JSON.parse(localStorage.getItem('tenants')) || [];
-        var matches = tenants.filter(function(t) {
-          return t.id === newlyEditedTenant.id;
-        });
-        if (matches.length !== 1) return;  // needs async error handling
-        var tenant = matches[0];
-        if (!tenant) return; // needs async error handling
-        dedupe(Object.keys(tenant).concat(Object.keys(newlyEditedTenant))).forEach(function(k) {
-          tenant[k] = newlyEditedTenant.hasOwnProperty(k) ? newlyEditedTenant[k] : tenant[k];
-        });
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-        d.resolve(tenant);
-        setState(tenants);
-      }, 200);
-      return d.promise;
-    }
-
-    var state = {};
-    function setState(tenantsArr) {
-      var tenantsObj = {};
-      tenantsArr.forEach(function(t) {
-        tenantsObj[t.id] = t;
-      });
-      state.tenants = tenantsObj;
-    }
-
-    this.getAll = getAll;
-    this.removeDatastore = removeDatastore;
-    this.removeVm = removeVm;
-    this.remove = remove;
-    this.get = get;
-    this.add = add;
-    this.addVms = addVms;
-    this.addDatastores = addDatastores;
-    this.updateDatastore = updateDatastore;
-    this.update = update;
-    this.state = state;
+    this.listTenants = listTenants;
+    this.getTenantByName = getTenantByName;
+    this.createTenant = createTenant;
+    this.removeTenant = removeTenant;
+    this.listVmsForTenant = listVmsForTenant;
+    this.addVmsToTenant = addVmsToTenant;
+    this.addDatastoreAccessForTenant = addDatastoreAccessForTenant;
+    this.listDatastoreAccessForTenant = listDatastoreAccessForTenant;
+    this.modifyDatastoreAccessForTenant = modifyDatastoreAccessForTenant;
+    this.removeDatastoreAccessForTenant = removeDatastoreAccessForTenant;
+    this.removeVmFromTenant = removeVmFromTenant;
 
   };
 

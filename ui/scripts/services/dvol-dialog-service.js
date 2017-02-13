@@ -3,7 +3,7 @@
 define([], function() {
   'use strict';
 
-  return function() {
+  return function($window) {
 
     var rejectOptions = {
       label: 'Cancel',
@@ -45,7 +45,7 @@ define([], function() {
         return {
           title: 'Add Datastores',
           width: '585px',
-          height: '360px',
+          height: '480px',
           icon: 'esx-icon-datastore-add',
           content: 'plugins/docker-volume-plugin/views/dvol-add-datastores-dialog.html',
           rejectOptions: rejectOptions
@@ -58,6 +58,21 @@ define([], function() {
           icon: 'esx-icon-datastore-manage',
           content: 'plugins/docker-volume-plugin/views/dvol-edit-datastore-dialog.html',
           rejectOptions: rejectOptions
+        };
+      case 'dvol.server-error':
+        return {
+          title: 'Server Error',
+          width: '360px',
+          height: '320px',
+          content: 'plugins/docker-volume-plugin/views/dvol-server-error.html',
+          confirmOptions: {
+            label: 'Ok',
+            onClick: function() {
+              // redirect
+              $window.location.href = '/ui/#/host';
+              return true;
+            }
+          }
         };
       default:
         return {};

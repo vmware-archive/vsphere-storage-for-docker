@@ -1,0 +1,102 @@
+
+
+1. List Tenants
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><ListTenants xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this></ListTenants></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soapenv:Body><ListTenantsResponse xmlns='urn:vim25'><returnval><id></id><name>tenant1</name><description>My first tenant</description><default_datastore>default_ds</default_datastore><default_privileges><datastore>default_ds</datastore><create_volumes>true</create_volumes><delete_volumes>true</delete_volumes><mount_volumes>true</mount_volumes><max_volume_size>No_limit</max_volume_size><usage_quota>No_limit</usage_quota></default_privileges><vms>tenant1-vm1</vms><vms>tenant1-vm2</vms></returnval><returnval><id></id><name>tenant2</name><description>My second tenant</description><default_datastore>default_ds</default_datastore><default_privileges><datastore>default_ds</datastore><create_volumes>true</create_volumes><delete_volumes>true</delete_volumes><mount_volumes>true</mount_volumes><max_volume_size>No_limit</max_volume_size><usage_quota>No_limit</usage_quota></default_privileges><vms>tenant2-vm1</vms><vms>tenant2-vm2</vms><privileges><datastore>datastore1</datastore><create_volumes>true</create_volumes><delete_volumes>false</delete_volumes><mount_volumes>true</mount_volumes><max_volume_size>1GB</max_volume_size><usage_quota>10TB</usage_quota></privileges></returnval></ListTenantsResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+
+2. Create Tenant
+
+Create Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><CreateTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>Some Tenant</name><description>Some Tenant Desc</description><default_datastore>undefined</default_datastore><default_privileges>undefined</default_privileges></CreateTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<soapenv:Body><CreateTenantResponse xmlns='urn:vim25'><returnval><id></id><name>Some Tenant</name><description>Some Tenant Desc</description><default_datastore>undefined</default_datastore><default_privileges><datastore></datastore><create_volumes>false</create_volumes><delete_volumes>false</delete_volumes><mount_volumes>false</mount_volumes><max_volume_size></max_volume_size><usage_quota></usage_quota></default_privileges></returnval></CreateTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+
+3. Modify Tenant
+
+**** not supported ****
+
+
+
+4. Remove Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><RemoveTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>undefined</name></RemoveTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soapenv:Body><RemoveTenantResponse xmlns='urn:vim25'></RemoveTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+
+5. List VMs For Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><ListVMsForTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>tenant1</name></ListVMsForTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soapenv:Body><ListVMsForTenantResponse xmlns='urn:vim25'><returnval>test-vm1</returnval><returnval>test-vm2</returnval></ListVMsForTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+
+6. Add VMs to Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><AddVMsToTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>Some Tenant</name><vms>["VM 1","VM 2"]</vms></AddVMsToTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body><AddVMsToTenantResponse xmlns='urn:vim25'></AddVMsToTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+7. Remove Vm From Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><RemoveVMsFromTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>tenant1</name><vms>["test-vm1"]</vms></RemoveVMsFromTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body><RemoveVMsFromTenantResponse xmlns='urn:vim25'></RemoveVMsFromTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+
+8. List Datastore Access For Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><ListDatastoreAccessForTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>tenant1</name></ListDatastoreAccessForTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soapenv:Body><ListDatastoreAccessForTenantResponse xmlns='urn:vim25'><returnval><datastore>default_ds</datastore><create_volumes>true</create_volumes><delete_volumes>true</delete_volumes><mount_volumes>true</mount_volumes><max_volume_size>No_limit</max_volume_size><usage_quota>No_limit</usage_quota></returnval><returnval><datastore>datastore1</datastore><create_volumes>true</create_volumes><delete_volumes>false</delete_volumes><mount_volumes>true</mount_volumes><max_volume_size>1GB</max_volume_size><usage_quota>10TB</usage_quota></returnval></ListDatastoreAccessForTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+9. Add Datastore Access For Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><AddDatastoreAccessForTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>undefined</name><datastore>undefined</datastore><rights>[]</rights><volume_maxsize>undefined</volume_maxsize><volume_totalsize>undefined</volume_totalsize></AddDatastoreAccessForTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soapenv:Body><AddDatastoreAccessForTenantResponse xmlns='urn:vim25'></AddDatastoreAccessForTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+10. Remove Datastore Access from Tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><RemoveDatastoreAccessForTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>tenant1</name><datastore>default_ds</datastore></RemoveDatastoreAccessForTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body><RemoveDatastoreAccessForTenantResponse xmlns='urn:vim25'></RemoveDatastoreAccessForTenantResponse></soapenv:Body></soapenv:Envelope>
+
+
+
+11. Modify Datastore Access for tenant
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><ModifyDatastoreAccessForTenant xmlns="urn:vim25"><_this type="VimHostVsanDockerPersistentVolumeSystem" >vsan-docker-persistent-volumes</_this><name>tenant2</name><datastore>foo_ds</datastore><add_rights>["create"]</add_rights><remove_rights>["mount","delete"]</remove_rights><max_volume_size>asdfajsd;fjasd</max_volume_size><usage_quota>123</usage_quota></ModifyDatastoreAccessForTenant></soapenv:Body></soapenv:Envelope>
+
+<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body><ModifyDatastoreAccessForTenantResponse xmlns='urn:vim25'></ModifyDatastoreAccessForTenantResponse></soapenv:Body></soapenv:Envelope>
