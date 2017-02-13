@@ -25,7 +25,7 @@ define([], function() {
       {
         field: 'description',
         displayName: 'Description',
-        width: '50%',
+        width: '40%',
         template: function(dataItem) {
           if (angular.isDefined(dataItem.description)) {
             return dataItem.description;
@@ -34,16 +34,16 @@ define([], function() {
         }
       },
       {
-        width: '20%',
-        field: 'id',
-        displayName: 'ID'
+        width: '30%',
+        field: 'default_datastore',
+        displayName: 'Default datastore'
       }
     ];
 
 
     var gridProps = {
       id: 'tenantsGrid',
-      idDataField: 'id',
+      idDataField: 'name',
       columnDefs: columnDefs,
       sortMode: vuiConstants.grid.sortMode.SINGLE,
       selectionMode: vuiConstants.grid.selectionMode.SINGLE,
@@ -62,7 +62,7 @@ define([], function() {
       var tenantsGrid = GridUtils.Grid(gridProps);
 
       function refresh() {
-        return DvolTenantService.getAll().then(function(tenants) {
+        return DvolTenantService.listTenants().then(function(tenants) {
           tenantsGrid.data = mapTenantsToGrid(tenants);
         });
       }

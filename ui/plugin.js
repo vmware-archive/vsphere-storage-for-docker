@@ -18,13 +18,14 @@ define([
   //
   'plugins/docker-volume-plugin/scripts/services/dvol-context-menu.js',
   'plugins/docker-volume-plugin/scripts/services/dvol-dialog-service.js',
-  'plugins/docker-volume-plugin/scripts/services/dvol-datacenter-vm-service.js',
-  'plugins/docker-volume-plugin/scripts/services/dvol-vms-grid-service.js',
+  'plugins/docker-volume-plugin/scripts/services/dvol-vm-service.js',
+  'plugins/docker-volume-plugin/scripts/services/dvol-vm-grid-service.js',
   'plugins/docker-volume-plugin/scripts/services/dvol-tenant-service.js',
   'plugins/docker-volume-plugin/scripts/services/dvol-datastore-service.js',
   'plugins/docker-volume-plugin/scripts/services/dvol-datastore-grid-service.js',
   'plugins/docker-volume-plugin/scripts/services/dvol-tenant-grid-service.js',
-  'plugins/docker-volume-plugin/scripts/services/dvol-vsan-service.js',
+  'plugins/docker-volume-plugin/scripts/services/dvol-soap-service.js',
+  'plugins/docker-volume-plugin/scripts/services/dvol-vmodl-service.js',
   'services/grid-utils',
   'services/vm/vm'
   //
@@ -45,13 +46,14 @@ define([
   //
   DvolContextMenuService,
   DvolDialogService,
-  DvolDatacenterVmService,
+  DvolVmService,
   DvolVmGridService,
   DvolTenantService,
   DvolDatastoreService,
   DvolDatastoreGridService,
   DvolTenantGridService,
-  DvolVsanService,
+  DvolSoapService,
+  DvolVmodlService,
   GridUtils,
   VMService,
   StorageService,
@@ -75,13 +77,14 @@ define([
   .service({
     'DvolDialogService': DvolDialogService,
     'DvolContextMenuService': DvolContextMenuService,
-    'DvolDatacenterVmService': DvolDatacenterVmService,
+    'DvolVmService': DvolVmService,
     'DvolVmGridService': DvolVmGridService,
     'DvolTenantService': DvolTenantService,
     'DvolDatastoreService': DvolDatastoreService,
     'DvolDatastoreGridService': DvolDatastoreGridService,
     'DvolTenantGridService': DvolTenantGridService,
-    'DvolVsanService': DvolVsanService,
+    'DvolSoapService': DvolSoapService,
+    'DvolVmodlService': DvolVmodlService,
     'GridUtils': GridUtils,
     'vuiConstants': vuiConstants
   })

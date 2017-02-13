@@ -4,7 +4,7 @@
 define([], function() {
   'use strict';
 
-  return function($scope, $rootScope, DialogService, DvolVmGridService, DvolTenantService, GridUtils) {
+  return function($scope, $q, $rootScope, DialogService, DvolVmGridService, DvolTenantService, GridUtils) {
 
     var vmsGridActions = [
       {
@@ -13,20 +13,20 @@ define([], function() {
         iconClass: 'esx-icon-vm',
         tooltipText: 'Add Virtual Machines',
         enabled: true,
-        onClick: function() {  // (evt, action)
+        onClick: function() {
           var selectedTenant = $scope.tenantsGrid.selectedItems[0];
           DialogService.showDialog('dvol.add-vms', {
+            selectedTenantRow: selectedTenant,
             save: function(selectedVmsRows) {
               if (!selectedTenant) return; // TODO: async error
               if (!selectedVmsRows) return;
               var selectedVmsIds = selectedVmsRows.map(function(vm) {
-                return vm.moid || vm.id;
+                return vm.name;
               });
               if (selectedVmsIds.length < 1) return;
-              DvolTenantService.addVms(selectedTenant.id, selectedVmsIds)
+              DvolTenantService.addVmsToTenant(selectedTenant.id, selectedVmsIds)
                 .then(vmsGrid.refresh);
-            },
-            vmsAlreadyInTenant: DvolTenantService.state.tenants[$scope.tenantsGrid.selectedItems[0].id].vms
+            }
           });
         }
       },
@@ -41,7 +41,7 @@ define([], function() {
           if (!selectedTenant) return;
           var selectedVm = $scope.vmsGrid.selectedItems[0];
           if (!selectedVm) return;
-          DvolTenantService.removeVm(selectedTenant.id, selectedVm.moid || selectedVm.id)
+          DvolTenantService.removeVmFromTenant(selectedTenant.name, selectedVm.name)
             .then(vmsGrid.refresh);
         }
       },
@@ -59,12 +59,19 @@ define([], function() {
 
     function filterVmsForThisTenant(allVms) {
       var selectedTenantRow = $scope.tenantsGrid.selectedItems[0];
-      if (!selectedTenantRow) return [];
-      var selectedTenant = DvolTenantService.state.tenants[selectedTenantRow.id];
-      var filteredVms = allVms.filter(function(vm) {
-        return selectedTenant.vms.indexOf(vm.moid) >= 0;
+      if (!selectedTenantRow) return $q.reject('ERROR: attempting to get VMs for a tenant but no tenant is selected');
+      return DvolTenantService.listVmsForTenant(selectedTenantRow.name)
+      .then(function(tenantVms) {
+        var filteredVms = [];
+        allVms.forEach(function(vm) {
+          tenantVms.forEach(function(tvm) {
+            if (vm.name === tvm) {
+              filteredVms.push(vm);
+            }
+          });
+        });
+        return filteredVms;
       });
-      return filteredVms;
     }
 
     var vmsGrid = DvolVmGridService.makeVmsGrid('vmsGrid', vmsGridActions, filterVmsForThisTenant, 'SINGLE', true);

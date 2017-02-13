@@ -1,12 +1,17 @@
 /* global define */
 
+
 define(['angular'], function(angular) {
   'use strict';
 
   return function(
-      $rootScope, $q, $log, $location, $interval, $filter, $timeout, $sce, $window,
-      VIMService, TaskService, StorageService, NotificationService, AuthService, StorageManager
+      $q, $log, $location, AuthService, StorageManager
   ) {
+
+    //
+    // We use a raw SOAP request to communicate with the API
+    // We tried several higher-level alternatives without success
+    //
 
     var performRawSOAPRequest = function(
      type, moid, methodName, vers, args) {
@@ -61,6 +66,7 @@ define(['angular'], function(angular) {
       xhr.setRequestHeader('Content-Type', 'text/xml; charset=utf-8');
       xhr.setRequestHeader('SOAPAction', 'urn:vim25/' + version);
       xhr.setRequestHeader('VMware-CSRF-Token', _csrfToken);
+
       xhr.send(soapReq);
 
       xhr.onreadystatechange = function() {
@@ -77,18 +83,14 @@ define(['angular'], function(angular) {
 
     };
 
-    this.getTenants = function() {
-
-      var p = performRawSOAPRequest(
+    this.request = function(action, args) {
+      return performRawSOAPRequest(
         'VimHostVsanDockerPersistentVolumeSystem',
         'vsan-docker-persistent-volumes',
-        'GetTenantList',
+        action,
         '6.0',
-        ''
+        args
       );
-
-      return p;
-
     };
 
   };

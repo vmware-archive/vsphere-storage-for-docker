@@ -86,30 +86,24 @@ define([], function() {
 
     var permColumnDefs = [
       {
-        field: 'create',
-        displayName: 'Create'
+        field: 'create_volumes',
+        displayName: 'Create Volumes'
       },
       {
-        field: 'mount',
-        displayName: 'Mount'
+        field: 'mount_volumes',
+        displayName: 'Mount Volumes'
       },
       {
-        field: 'remove',
-        displayName: 'Remove'
+        field: 'delete_volumes',
+        displayName: 'Delete Volumes'
       },
       {
-        field: 'maxVolume',
-        displayName: 'Max Volume',
-        template: function(dataItem) {
-          return dataItem.maxVolume + ' GB';
-        }
+        field: 'max_volume_size',
+        displayName: 'Max Volume'
       },
       {
-        field: 'totalVolume',
-        displayName: 'Total volume',
-        template: function(dataItem) {
-          return dataItem.totalVolume + ' GB';
-        }
+        field: 'usage_quota',
+        displayName: 'Usage Quota'
       }
     ];
 
@@ -135,9 +129,20 @@ define([], function() {
       datastoresGrid.search = null;
 
       function refresh() {
-        return DvolDatastoreService.get().then(function(datastores) {
-          datastoresGrid.data = mapDatastoresToGrid(filterFn ? filterFn(datastores) : datastores);
-        });
+        var p;
+        if (filterFn) {
+          p = DvolDatastoreService.get()
+          .then(filterFn)
+          .then(function(filteredDatastores) {
+            datastoresGrid.data = mapDatastoresToGrid(filteredDatastores);
+          });
+        } else {
+          p = DvolDatastoreService.get()
+          .then(function(datastores) {
+            datastoresGrid.data = mapDatastoresToGrid(datastores);
+          });
+        }
+        return p;
       }
 
       refresh();
