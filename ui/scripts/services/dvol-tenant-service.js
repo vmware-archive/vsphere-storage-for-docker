@@ -13,6 +13,15 @@ define([], function() {
 
   return function($q) {
 
+
+    //
+    // We might want to have a get action for tenant
+    // As the api stands now, we'd need to run:
+    //
+    // DvolVsanService.listTenants
+    // DvolVsanService.listDatastoreAccessForTenant
+    // DvolVsanService.listVMsForTenant
+    //
     function get(tenantId) {
       var d = $q.defer();
       setTimeout(function() {
@@ -29,6 +38,9 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // DvolVsanService.listTenants
+    //
     function getAll() {
       var d = $q.defer();
       setTimeout(function() {
@@ -39,6 +51,10 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // DvolVsanService.createTenant
+    // DvolVsanService.addVMsToTenant
+    //
     function add(tenant, vms) {
       var d = $q.defer();
       setTimeout(function() {
@@ -56,6 +72,9 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // DvolVsanService.removeTenant
+    //
     function remove(tenantId) {
       var d = $q.defer();
       setTimeout(function() {
@@ -70,6 +89,9 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // DvolVsanService.removeDatastoreAccessForTenant
+    //
     function removeDatastore(tenantId, datastoreId) {
       var d = $q.defer();
       setTimeout(function() {
@@ -87,6 +109,13 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // DvolVsanService.removeVMsFromTenant
+    //
+    // NOTE: decide if we want to support multiple VMs at same time
+    // as it is now, we would just call the api with a single vm
+    // and not take advantage of the multiple vm option
+    //
     function removeVm(tenantId, removeThisId) {
       var d = $q.defer();
       setTimeout(function() {
@@ -114,6 +143,9 @@ define([], function() {
       });
     }
 
+    //
+    // DvolVsanService.addVMsToTenant
+    //
     function addVms(tenantId, vmIds) {
       var d = $q.defer();
       setTimeout(function() {
@@ -133,6 +165,10 @@ define([], function() {
       return d.promise;
     }
 
+
+    //
+    // DvolVsanService.addDatastoreAccessForTenant
+    //
     function addDatastores(tenantId, datastores) {
       var d = $q.defer();
       setTimeout(function() {
@@ -153,6 +189,9 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // DvolVsanService.modifyDatastoreAccessForTenant
+    //
     function updateDatastore(tenantId, newlyEditedDatastore) {
       var d = $q.defer();
       setTimeout(function() {
@@ -171,6 +210,9 @@ define([], function() {
       return d.promise;
     }
 
+    //
+    // ??? This is missing in API
+    //
     function update(newlyEditedTenant) {
       var d = $q.defer();
       setTimeout(function() {

@@ -16,12 +16,63 @@ define([], function() {
     // TODO: remove this
     //
 
-    DvolVsanService.getTenants()
-    .then(function(res) {
-      console.log('getTenants: ' + res);
-    }, function(err) {
-      console.log('ERROR getTenants: ' + err);
-    });
+    var mockTenant = {
+      name: 'ui-created-tenant',
+      description: 'a mock tenant named ui-created-tenant'
+    };
+
+    var mockDatastore = {
+      name: 'datastore1'
+    };
+
+    DvolVsanService.createTenant(mockTenant)
+    .then(DvolVsanService.listTenants())
+    .then(DvolVsanService.addDatastoreAccessForTenant({
+      name: mockTenant.name,
+      datastore: mockDatastore.name,
+      rights: ['create', 'mount'],
+      volume_maxsize: '550MB',
+      volume_totalsize: '3TB'
+    }))
+    .then(DvolVsanService.modifyDatastoreAccessForTenant({
+      name: mockTenant.name,
+      datastore: mockDatastore.name,
+      add_rights: ['delete'],
+      remove_righs: ['mount'],
+      volume_maxsize: '650MB',
+      volume_totalsize: '4TB'
+    }))
+    .then(DvolVsanService.removeTenant({
+      name: mockTenant.name
+    }))
+    .then(DvolVsanService.addVMsToTenant({
+      name: mockTenant.name,
+      vms: ['virual-machine-1', 'virtual-machine-2', 'virtual-machine-3']
+    }))
+    .then(DvolVsanService.removeVMsFromTenant({
+      name: mockTenant.name,
+      vms: ['virtual-machine-1']
+    }))
+    .then(DvolVsanService.listVMsForTenant({
+      name: mockTenant.name
+    }))
+    .then(DvolVsanService.getDatastoreAccessPrivileges())
+    .then(DvolVsanService.createDatastoreAccessPrivileges({
+      datastore: mockDatastore.name,
+      create_volumes: true,
+      delete_volumes: false,
+      mount_volumes: false,
+      max_volume_size: '600MB',
+      usage_quota: '3TB'
+    }))
+    .then(DvolVsanService.removeDatastoreAccessForTenant({
+      name: mockTenant.name,
+      datastore: mockDatastore.name
+    }))
+    .then(DvolVsanService.listDatastoreAccessForTenant({
+      name: mockTenant.name
+    }));
+
 
     //
     // -----------------------------
