@@ -24,6 +24,10 @@ import log_config
 import logging
 from error_code import ErrorCode
 from error_code import ErrorInfo
+import re
+
+# regex for valid tenant name
+VALID_TENANT_NAME_REG = "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
 
 def get_auth_mgr():
     """ Get a connection to auth DB. """
@@ -239,9 +243,22 @@ def get_default_datastore(name):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info, default_datastore
 
+def is_valid_tenant_name(name):
+    """ Check the given name is a valid tenant name """
+    pattern = "^" + VALID_TENANT_NAME_REG + "$"
+    valid_name_reg = re.compile(pattern)
+    if valid_name_reg.match(name):
+        return True
+    else:
+        return False
+
 def _tenant_create(name, description="", vm_list=None, privileges=None):
     """ API to create a tenant """
     logging.debug("_tenant_create: name=%s description=%s vm_list=%s privileges=%s", name, description, vm_list, privileges)
+    if not is_valid_tenant_name(name):
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAME_REG)
+        return error_info, None
+
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
@@ -288,6 +305,10 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         if exist_tenant:
             error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
             return error_info
+
+        if not is_valid_tenant_name(name):
+            error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAME_REG)
+            return error_info, None
 
         error_msg = tenant.set_name(auth_mgr.conn, name, new_name)
         if error_msg:
