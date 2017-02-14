@@ -57,7 +57,7 @@ type VolumeDevSpec struct {
 	ControllerPciSlotNumber string
 }
 
-// DevAttachWaitPrep create the watcher
+// DevAttachWaitPrep create the watcher.
 func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	watcher, errWatcher := inotify.NewWatcher()
 
