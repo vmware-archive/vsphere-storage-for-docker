@@ -22,6 +22,7 @@ class ErrorCode:
     TENANT_CREATE_FAILED = 5
     TENANT_SET_ACCESS_PRIVILEGES_FAILED = 6
     TENANT_GET_FAILED = 7
+    TENANT_NAME_INVALID = 8
     # Tenant related error code end
 
     # VM related error code start
@@ -50,6 +51,7 @@ class ErrorCode:
 
     INTERNAL_ERROR = 501
     INVALID_ARGUMENT = 502
+    VOLUME_NAME_INVALID = 503
 
 
 error_code_to_message = {
@@ -60,6 +62,7 @@ error_code_to_message = {
     ErrorCode.TENANT_CREATE_FAILED : "Tenant {0} create failed with err: {1}",
     ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED : "Tenant {0} set access privileges on datastore {1} failed with err: {2}",
     ErrorCode.TENANT_GET_FAILED : "Get Tenant {0} failed",
+    ErrorCode.TENANT_NAME_INVALID : "Tenant name {0} is invalid, only {1} is allowed",
 
     ErrorCode.VM_NOT_FOUND : "Cannot find vm {0}",
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
@@ -78,7 +81,8 @@ error_code_to_message = {
     ErrorCode.VMODL_TENANT_DESC_TOO_LONG : "Tenant description exceeds 256 characters: {0}",
 
     ErrorCode.INTERNAL_ERROR : "Internal Error({0})",
-    ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})"
+    ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})",
+     ErrorCode.VOLUME_NAME_INVALID : "Volume name {0} is invalid, only {1} is allowed"
 }
 
 class ErrorInfo:

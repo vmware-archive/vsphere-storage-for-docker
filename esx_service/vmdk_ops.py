@@ -87,6 +87,7 @@ import convert
 import error_code
 import auth_api
 from error_code import ErrorCode
+import re
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -129,6 +130,9 @@ lib = None
 # For managing resource locks.
 lockManager = threadutils.LockManager()
 
+# regex for valid volume name
+VALID_VOLUME_NAME_REG = "[a-zA-Z0-9][a-zA-Z0-9_.-]*"
+
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
 def RunCommand(cmd):
@@ -153,12 +157,24 @@ def RunCommand(cmd):
 
     return (s, o)
 
+def is_valid_volume_name(name):
+    """ Check the given name is a valid volume name """
+    pattern = "^" + VALID_VOLUME_NAME_REG + "$"
+    valid_name_reg = re.compile(pattern)
+    if valid_name_reg.match(name):
+        return True
+    else:
+        return False
 
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
+    if not is_valid_volume_name(vol_name):
+        error_info = error_code.generate_error_info(ErrorCode.VOLUME_NAME_INVALID, vol_name, VALID_VOLUME_NAME_REG)
+        return err(error_info.msg)
+
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
 

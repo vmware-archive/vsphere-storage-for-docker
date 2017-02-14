@@ -235,7 +235,7 @@ def list_vmdks(path, volname="", show_snapshots=False):
 def vmdk_is_a_descriptor(path, file_name):
     """
     Is the file a vmdk descriptor file?  We assume any file that ends in .vmdk,
-    does not have -delta or -flat or he likes at the end of filename,
+    does not have -delta or -flat or -digest or -ctk at the end of filename,
     and has a size less than MAX_DESCR_SIZE is a descriptor file.
     """
 
