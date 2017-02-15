@@ -138,8 +138,8 @@ else
     -e "PKG_VERSION=$PKG_VERSION" \
     -e "INCLUDE_UI=$INCLUDE_UI" \
     -e "ESX=$2" \
-    -e "VM1=$4" \
-    -e "VM2=$3" \
+    -e "VM1=$3" \
+    -e "VM2=$4" \
     -e "SSH_KEY_OPT=$SSH_KEY_OPT" \
     -v $docker_socket:$docker_socket  \
     -v $ssh_key_path:$ssh_key_opt_container:ro \
