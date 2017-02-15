@@ -116,7 +116,7 @@ class TestParsing(unittest.TestCase):
 
     def test_policy_ls_badargs(self):
         self.assert_parse_error('policy ls --name=yo')
-        
+
     def test_tenant_create(self):
         args = self.parser.parse_args('tenant create --name=tenant1 --vm-list vm1,vm2'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_create)
@@ -139,7 +139,7 @@ class TestParsing(unittest.TestCase):
         # If arg "remove_volumes" is not specified in the CLI, then args.remove_volumes
         # will be None
         self.assertEqual(args.remove_volumes, False)
-        
+
 
     def test_tenant_rm_missing_name(self):
         self.assert_parse_error('tenant rm')
@@ -147,13 +147,13 @@ class TestParsing(unittest.TestCase):
     def test_tenant_ls(self):
         args = self.parser.parse_args('tenant ls'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_ls)
-    
+
     def test_tenant_vm_add(self):
         args = self.parser.parse_args('tenant vm add --name=tenant1 --vm-list vm1,vm2'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_add)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
-    
+
     def test_tenant_vm_add_missing_option_fails(self):
         self.assert_parse_error('tenant vm add')
         self.assert_parse_error('tenant vm add --name=tenant1')
@@ -163,19 +163,19 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_rm)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
-    
+
     def test_tenant_vm_rm_missing_option_fails(self):
         self.assert_parse_error('tenant vm add')
         self.assert_parse_error('tenant vm add --name=tenant1')
-    
+
     def test_tenant_vm_ls(self):
         args = self.parser.parse_args('tenant vm ls --name=tenant1'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_ls)
         self.assertEqual(args.name, 'tenant1')
-    
+
     def test_tenant_vm_ls_missing_option_fails(self):
         self.assert_parse_error('tenant vm ls')
-    
+
     def test_tenant_access_add(self):
         args = self.parser.parse_args('tenant access add --name=tenant1 --datastore=datastore1 --default-datastore --allow-create --volume-maxsize=500MB --volume-totalsize=1GB'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_add)
@@ -185,14 +185,14 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.default_datastore, True)
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
-    
+
     def test_tenant_access_add_missing_option_fails(self):
         self.assert_parse_error('tenant access add')
         self.assert_parse_error('tenant access add --name=tenant1')
-    
+
     def test_tenant_access_add_invalid_option_fails(self):
         self.assert_parse_error('tenant access add --name=tenant1 --datastore=datastore1 --rights=create mount')
-            
+
     def test_tenant_access_set(self):
         args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --allow-create=True --volume-maxsize=500MB --volume-totalsize=1GB'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
@@ -201,7 +201,7 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.allow_create, "True")
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
-    
+
     def test_tenant_accss_set_not_set_allow_create(self):
         args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --volume-maxsize=500MB --volume-totalsize=1GB'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
@@ -210,29 +210,29 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.allow_create, None)
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
-        
+
     def test_tenant_access_set_missing_option_fails(self):
         self.assert_parse_error('tenant access set')
         self.assert_parse_error('tenant access set --name=tenant1')
-    
+
     def test_tenant_access_set_invalid_option_fails(self):
         self.assert_parse_error('tenant access set --name=tenant1 --datastore=datastore1 --rights=crete,mount')
-    
+
     def test_tenant_access_rm(self):
         args = self.parser.parse_args('tenant access rm --name=tenant1 --datastore=datastore1'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_rm)
         self.assertEqual(args.name, 'tenant1')
         self.assertEqual(args.datastore, 'datastore1')
 
-    def test_tenant_access_rm_missing_option_fails(self): 
+    def test_tenant_access_rm_missing_option_fails(self):
         self.assert_parse_error('tenant access rm')
         self.assert_parse_error('tenant access rm --name=tenant1')
-    
+
     def test_tenant_access_ls(self):
         args = self.parser.parse_args('tenant access ls --name=tenant1'.split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_ls)
         self.assertEqual(args.name, 'tenant1')
-    
+
     def test_tenant_access_ls_missing_option_fails(self):
         self.assert_parse_error('tenant access ls')
 
@@ -427,13 +427,13 @@ class TestStatus(unittest.TestCase):
         self.assertEqual(vmdkops_admin.status(None), None)
 
 class TestTenant(unittest.TestCase):
-    """ 
-        Test tenant functionality 
+    """
+        Test tenant functionality
     """
 
     # The following tests are covered:
     # 1. tenant command
-    # Test tenant create, tenant ls and tenant rm 
+    # Test tenant create, tenant ls and tenant rm
     # tenant update to update tenant description and default_datastore
     # tenant update to rename a tenant
     # 2. tenant vm command
@@ -458,28 +458,28 @@ class TestTenant(unittest.TestCase):
 
     def setUp(self):
         """ Setup run before each test """
-        
+
         if (not self.datastore_name):
             datastores = vmdk_utils.get_datastores()
             if datastores:
                 datastore = datastores[0]
                 self.datastore_name = datastore[0]
                 self.datastore_path = datastore[2]
-            
+
                 if len(datastores) > 1:
                     datastore1 = datastores[1]
                     self.datastore1_name = datastore1[0]
                     self.datastoer1_path = datastore[2]
-      
+
             else:
-            
+
                 self.assertFalse(True)
 
         self.cleanup()
         # get service_instance, and create VMs
         si = vmdk_ops.get_si()
-        error, self.vm1 = vmdk_ops_test.create_vm(si=si, 
-                                    vm_name=self.vm1_name, 
+        error, self.vm1 = vmdk_ops_test.create_vm(si=si,
+                                    vm_name=self.vm1_name,
                                     datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
@@ -488,8 +488,8 @@ class TestTenant(unittest.TestCase):
 
         logging.info("TestTenant: create vm1 name=%s Done", self.vm1_name)
 
-        error, self.vm2 = vmdk_ops_test.create_vm(si=si, 
-                                    vm_name=self.vm2_name, 
+        error, self.vm2 = vmdk_ops_test.create_vm(si=si,
+                                    vm_name=self.vm2_name,
                                     datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
@@ -497,34 +497,34 @@ class TestTenant(unittest.TestCase):
 
         logging.info("TestTenant: create vm2 name=%s Done", self.vm2_name)
 
-          
+
     def tearDown(self):
         """ Cleanup after each test """
-        self.cleanup()      
-            
+        self.cleanup()
+
     def cleanup(self):
         # cleanup existing tenant
         error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_name, 
+                                         name=self.tenant1_name,
                                          remove_volumes=True)
-                                         
+
         error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_new_name, 
-                                         remove_volumes=True)                                          
-        
+                                         name=self.tenant1_new_name,
+                                         remove_volumes=True)
+
         # remove VM
         si = vmdk_ops.get_si()
         vmdk_ops_test.remove_vm(si, self.vm1)
         vmdk_ops_test.remove_vm(si, self.vm2)
-    
+
     def test_tenant(self):
         """ Test AdminCLI command for tenant management """
         # create tenant1
         vm_list = [self.vm1_name]
         error_info, tenant = auth_api._tenant_create(
-                                                    name=self.tenant1_name, 
-                                                    description="Test tenant1" ,  
-                                                    vm_list=vm_list, 
+                                                    name=self.tenant1_name,
+                                                    description="Test tenant1" ,
+                                                    vm_list=vm_list,
                                                     privileges=[])
         self.assertEqual(None, error_info)
 
@@ -534,12 +534,12 @@ class TestTenant(unittest.TestCase):
         header = vmdkops_admin.tenant_ls_headers()
         rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
         self.assertEqual(len(header), TENANT_LS_EXPECTED_COLUMN_COUNT)
-        
+
         # Two tenants in the list, "_DEFAULT" and "test_tenant1"
         # rows[0] is for "_DEFAULT" tenant, and rows[1] is for "test_tenant1"
         self.assertEqual(len(rows), 2)
 
-        # There are 5 columns for each row, the name of the columns are 
+        # There are 5 columns for each row, the name of the columns are
         # "Uuid", "Name", "Description", "Default_datastore", "VM_list"
         # Sample output of rows[1]:
         # [u'9e1be0ce-3d58-40f6-a335-d6e267e34baa', u'test_tenant1', u'Test tenant1', '', 'test_vm1']
@@ -552,13 +552,13 @@ class TestTenant(unittest.TestCase):
                          convert_to_str(rows[1][3]),
                          convert_to_str(rows[1][4])
                          ]
-        
+
         self.assertEqual(expected_output, actual_output)
 
         # tenant update to update description and default_datastore
         error_info = auth_api._tenant_update(
-                                             name=self.tenant1_name, 
-                                             description="This is test tenant1",  
+                                             name=self.tenant1_name,
+                                             description="This is test tenant1",
                                              default_datastore=self.datastore_name)
         self.assertEqual(None, error_info)
 
@@ -582,7 +582,7 @@ class TestTenant(unittest.TestCase):
 
         # tenant update to rename the tenant
         error_info  = auth_api._tenant_update(
-                                              name=self.tenant1_name, 
+                                              name=self.tenant1_name,
                                               new_name=self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
@@ -601,11 +601,11 @@ class TestTenant(unittest.TestCase):
                          convert_to_str(rows[1][3]),
                          convert_to_str(rows[1][4])
                          ]
-        
+
 
         # tenant rm to remove the tenant
         error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_new_name, 
+                                         name=self.tenant1_new_name,
                                          remove_volumes=True)
         self.assertEqual(None, error_info)
 
@@ -614,23 +614,23 @@ class TestTenant(unittest.TestCase):
 
         header = vmdkops_admin.tenant_ls_headers()
         rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
-       
+
         # right now, should only have 1 tenant, which is "_DEFAULT" tenant
         self.assertEqual(len(rows), 1)
-    
+
     def test_tenant_vm(self):
         """ Test AdminCLI command for tenant vm management """
         # create tenant1 without adding any vms and privilege
         error_info, tenant = auth_api._tenant_create(
-                                                    name=self.tenant1_name, 
-                                                    description="Test tenant1",  
-                                                    vm_list=[], 
+                                                    name=self.tenant1_name,
+                                                    description="Test tenant1",
+                                                    vm_list=[],
                                                     privileges=[])
         self.assertEqual(None, error_info)
 
         error_info, vms = auth_api._tenant_vm_ls(self.tenant1_name)
         self.assertEqual(None, error_info)
-        
+
         headers = vmdkops_admin.tenant_vm_ls_headers()
         rows = vmdkops_admin.generate_tenant_vm_ls_rows(vms)
 
@@ -638,17 +638,17 @@ class TestTenant(unittest.TestCase):
         expected_output = []
         actual_output = rows
         self.assertEqual(expected_output, actual_output)
-        
+
         # tenant vm add to add two VMs to the tenant
         error_info = auth_api._tenant_vm_add(
                                              name=self.tenant1_name,
-                                             vm_list=[self.vm1_name, self.vm2_name]) 
+                                             vm_list=[self.vm1_name, self.vm2_name])
         self.assertEqual(None, error_info)
 
         error_info, vms = auth_api._tenant_vm_ls(self.tenant1_name)
         self.assertEqual(None, error_info)
 
-        # There are 2 columns for each row, the name of the columns are 
+        # There are 2 columns for each row, the name of the columns are
         # "Uuid", "Name"
         # Sample output of a row:
         # [u'564d2b7d-187c-eaaf-60bc-e015b5cdc3eb', 'test_vm1']
@@ -659,19 +659,19 @@ class TestTenant(unittest.TestCase):
         expected_output = [self.vm1_name, self.vm2_name]
         actual_output = [rows[0][1],
                          rows[1][1]]
-        self.assertEqual(expected_output, actual_output)                 
-        
+        self.assertEqual(expected_output, actual_output)
+
         # tenant vm rm to remove one VM from the tenant
         error_info = auth_api._tenant_vm_rm(
                                              name=self.tenant1_name,
-                                             vm_list=[self.vm2_name]) 
+                                             vm_list=[self.vm2_name])
         self.assertEqual(None, error_info)
 
         error_info, vms = auth_api._tenant_vm_ls(self.tenant1_name)
         self.assertEqual(None, error_info)
 
         rows = vmdkops_admin.generate_tenant_vm_ls_rows(vms)
-        
+
         # tenant should only have one VM now
         self.assertEqual(len(rows), 1)
 
@@ -684,12 +684,12 @@ class TestTenant(unittest.TestCase):
 
         # create tenant1 without adding any vms and privileges
         error_info, tenant = auth_api._tenant_create(
-                                                    name=self.tenant1_name, 
-                                                    description="Test tenant1",  
-                                                    vm_list=[self.vm1_name], 
+                                                    name=self.tenant1_name,
+                                                    description="Test tenant1",
+                                                    vm_list=[self.vm1_name],
                                                     privileges=[])
         self.assertEqual(None, error_info)
-        
+
         # add first access privilege for tenant
         # allow_create = False
         # max_volume size = 600MB
@@ -709,7 +709,7 @@ class TestTenant(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         header = vmdkops_admin.tenant_access_ls_headers()
-        # There are 4 columns for each row, the name of the columns are 
+        # There are 4 columns for each row, the name of the columns are
         # "Datastore", "Allow_create", "Max_volume_size", "Total_size"
         # Sample output of a row:
         # ['datastore1', 'False', '600.00MB', '1.00GB']
@@ -748,7 +748,7 @@ class TestTenant(unittest.TestCase):
 
         rows = vmdkops_admin.generate_tenant_access_ls_rows(privileges)
         self.assertEqual(len(rows), 1)
-       
+
 
         expected_output = [self.datastore_name,
                            "True",
@@ -764,19 +764,19 @@ class TestTenant(unittest.TestCase):
             # second datastore is available, can test tenant access add with --default_datastore
             error_info, tenant_list = auth_api._tenant_ls()
             self.assertEqual(None, error_info)
-    
+
             # Two tenants in the list, "_DEFAULT" and "test_tenant1"
             # rows[0] is for "_DEFAULT" tenant, and rows[1] is for "test_tenant1"
 
-            # There are 5 columns for each row, the name of the columns are 
+            # There are 5 columns for each row, the name of the columns are
             # "Uuid", "Name", "Description", "Default_datastore", "VM_list"
             # Sample output of one row:
-            # [u'9e1be0ce-3d58-40f6-a335-d6e267e34baa', u'test_tenant1', u'Test tenant1', '', 'test_vm1'] 
+            # [u'9e1be0ce-3d58-40f6-a335-d6e267e34baa', u'test_tenant1', u'Test tenant1', '', 'test_vm1']
             rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
 
             # get "default_datastore" from the output
             actual_output = rows[1][3]
-            expected_output = self.datastore_name             
+            expected_output = self.datastore_name
             self.assertEqual(expected_output, actual_output)
 
             # add second access privilege for tenant
@@ -796,12 +796,12 @@ class TestTenant(unittest.TestCase):
 
             error_info, tenant_list = auth_api._tenant_ls()
             self.assertEqual(None, error_info)
-    
-            
+
+
             rows = vmdkops_admin.generate_tenant_ls_rows(tenant_list)
             # get "default_datastore" from the output
             actual_output = rows[1][3]
-            expected_output = self.datastore1_name             
+            expected_output = self.datastore1_name
             self.assertEqual(expected_output, actual_output)
 
             error_info = auth_api._tenant_access_rm(name=self.tenant1_name,
@@ -811,7 +811,7 @@ class TestTenant(unittest.TestCase):
         # remove access privileges
         error_info = auth_api._tenant_access_rm(name=self.tenant1_name,
         datastore=self.datastore_name)
-                                               
+
         self.assertEqual(None, error_info)
 
         error_info, privileges = auth_api._tenant_access_ls(self.tenant1_name)
