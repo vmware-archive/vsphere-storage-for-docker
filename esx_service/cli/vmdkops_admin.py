@@ -39,6 +39,10 @@ import auth_api
 NOT_AVAILABLE = 'N/A'
 UNSET = "Unset"
 
+# Volume attributes
+VOL_SIZE = 'size'
+VOL_ALLOC = 'allocated'
+
 def main():
     log_config.configure()
     kv.init()
@@ -617,26 +621,17 @@ def get_metadata(volPath):
 def get_vmdk_size_info(path):
     """
     Get the capacity and used space for a given VMDK given its absolute path.
-    Values are returned as strings in human readable form (e.g. 10.00MB)
+    Values are returned as strings in human readable form (e.g. 10MB)
 
-    Currently this data is retrieved via a call to vmkfstools.
-    The output being parsed looks like the following:
-
-    Capacity bytes: 209715200
-    Used bytes: 27262976
-    Unshared bytes: 27262976
+    Using get_vol_info api from volume kv. The info returned by this
+    api is in human readable form
     """
     try:
-        cmd = "vmkfstools --extendedstatinfo {0}".format(path).split()
-        output = subprocess.check_output(cmd)
-        result = output.decode('utf-8')
-        lines = result.split('\n')
-        capacity_in_bytes = lines[0].split()[2]
-        used_in_bytes = lines[1].split()[2]
-        return {'capacity': human_readable(int(capacity_in_bytes)),
-                'used': human_readable(int(used_in_bytes))}
+        vol_info = kv.get_vol_info(path)
+        return {'capacity': vol_info[VOL_SIZE],
+                'used': vol_info[VOL_ALLOC]}
     except subprocess.CalledProcessError:
-        sys.exit("Failed to stat {0}.".format(path) \
+        sys.exit("Failed to retrieve volume info for {0}.".format(path) \
             + " VMDK corrupted. Please remove and then retry")
 
 
