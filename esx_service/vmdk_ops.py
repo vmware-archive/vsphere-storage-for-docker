@@ -131,7 +131,9 @@ lib = None
 lockManager = threadutils.LockManager()
 
 # regex for valid volume name
-VALID_VOLUME_NAME_REG = "[a-zA-Z0-9][a-zA-Z0-9_.-]*"
+VALID_VOLUME_NAME_REGEXP = "[a-zA-Z0-9][a-zA-Z0-9_.-]*"
+global valid_volume_name_reg
+valid_volume_name_reg = re.compile("^" + VALID_VOLUME_NAME_REGEXP + "$")
 
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
@@ -157,23 +159,11 @@ def RunCommand(cmd):
 
     return (s, o)
 
-def is_valid_volume_name(name):
-    """ Check the given name is a valid volume name """
-    pattern = "^" + VALID_VOLUME_NAME_REG + "$"
-    valid_name_reg = re.compile(pattern)
-    if valid_name_reg.match(name):
-        return True
-    else:
-        return False
-
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
-    if not is_valid_volume_name(vol_name):
-        error_info = error_code.generate_error_info(ErrorCode.VOLUME_NAME_INVALID, vol_name, VALID_VOLUME_NAME_REG)
-        return err(error_info.msg)
 
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
@@ -670,6 +660,7 @@ def parse_vol_name(full_vol_name):
     # Note that N is a digit and there are exactly 6 of them (hardcoded in ESXi)
     # vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
     #
+    global valid_volume_name_reg
     try:
         at = full_vol_name.rindex('@')
         vol_name = full_vol_name[:at]
@@ -681,6 +672,9 @@ def parse_vol_name(full_vol_name):
     # now block the '-NNNNN' volume names
     if re.match(vmdk_utils.SNAP_NAME_REGEXP, vol_name):
         raise ValidationError("Volume names ending with '-NNNNNN' (where N is a digit) are not supported")
+    if not valid_volume_name_reg.match(vol_name):
+        error_info = error_code.generate_error_info(ErrorCode.VOLUME_NAME_INVALID, vol_name, VALID_VOLUME_NAME_REGEXP)
+        raise ValidationError(error_info.msg)
     if len(vol_name) > MAX_VOL_NAME_LEN:
         raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))
     if ds_name and len(ds_name) > MAX_DS_NAME_LEN:
