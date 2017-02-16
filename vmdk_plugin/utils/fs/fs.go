@@ -64,16 +64,19 @@ func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	if errWatcher != nil {
 		log.WithFields(log.Fields{"Name": name}).Error("Failed to create watcher, skip inotify ")
 		return nil, true
-	} else {
-		err := watcher.Watch(devPath)
-		if err != nil {
-			log.WithFields(log.Fields{"Name": name}).Error("Failed to watch /dev, skip inotify ")
-			return nil, true
-		}
 	}
+
+	err := watcher.Watch(devPath)
+
+	if err != nil {
+		log.WithFields(log.Fields{"Name": name}).Error("Failed to watch /dev, skip inotify ")
+		return nil, true
+	}
+
 	return watcher, false
 }
 
+// DevAttachWait waits for attach operation to be completed
 func DevAttachWait(watcher *inotify.Watcher, name string, device string) {
 loop:
 	for {
