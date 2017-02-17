@@ -45,7 +45,8 @@ func GetVmAttachedToVolUsingAdminCli(volName string, hostname string) string {
 		log.Fatal("Null value is returned by admin cli when looking for attached to vm field for volume. Output: ", op)
 	}
 	if len(volProps) != 2 {
-		log.Fatalf("Admin cli output is expected to consist of two elements only - volume name and attached-to-vm status. Actual output %s ", op)
+		log.Fatalf("Admin cli output is expected to consist of two elements only - "+
+			"volume name and attached-to-vm status. Actual output %s ", op)
 	}
 	return volProps[1]
 }
@@ -59,7 +60,8 @@ func GetVolumePropertiesAdminCli(volName string, hostname string) string {
 		log.Fatal("Null value is returned by admin cli when looking for, size, disk-format and attached to vm. Output: ", op)
 	}
 	if len(strings.Fields(op)) != 4 {
-		log.Fatalf("Output is expected to consist of four elements only - volume name, attached-to-vm status, size and disk-format. Actual output: %s", op)
+		log.Fatalf("Output is expected to consist of four elements only - "+
+			"volume name, attached-to-vm status, size and disk-format. Actual output: %s", op)
 	}
 	return op
 }
@@ -81,7 +83,8 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 		expctedLen = 3
 	}
 	if len(strings.Fields(op)) != expctedLen {
-		log.Fatalf("Docker cli inpect output is expected to consist of three elements only - size, disk-format and attached-to-vm status. Actual output: %s", op)
+		log.Fatalf("Docker cli inpect output is expected to consist of three elements only - "+
+			"size, disk-format and attached-to-vm status. Actual output: %s", op)
 	}
 	return op
 }

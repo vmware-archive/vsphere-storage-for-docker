@@ -76,14 +76,16 @@ func TestVolumeProperties(t *testing.T) {
 				containerName = "busybox_" + strconv.FormatInt(time.Now().Unix(), 20)
 				log.Println("Creating a volume of Format Type - ", formatTypes[k])
 				volName := TestInputParamsUtil.GetVolumeNameWithTimeStamp("dockerVol")
-				_, err := TestUtil.InvokeCommand(vms[vmIndx], "docker volume create --driver=vmdk --name="+volName+" -o size="+volSizes[i]+" -o diskformat="+formatTypes[k])
+				_, err := TestUtil.InvokeCommand(vms[vmIndx], "docker volume create --driver=vmdk --name="+
+					volName+" -o size="+volSizes[i]+" -o diskformat="+formatTypes[k])
 				if err != nil {
 					log.Fatalf("Failed to create a volume named: %s. Error - %v ", volName, err)
 				} else {
 					log.Println("\n successfully created a  volume -- ", volName)
 					dockerVolmRmvCmd = dockerVolmRmvCmd + " " + volName
 				}
-				log.Println("Verifying volume properties like size, disk-format and attached-to-vm fields at vm and esx for volume - ", volName)
+				log.Println("Verifying volume properties like size, disk-format and attached-to-vm fields "+
+					"at vm and esx for volume - ", volName)
 				volmPropertiesAdminCli := TestUtil.GetVolumePropertiesAdminCli(volName, esx)
 				expctdPropsAdmin := []string{"100MB", formatTypes[k], "detached"}
 				if !hasElement(expctdPropsAdmin, volmPropertiesAdminCli) {
@@ -104,7 +106,8 @@ func TestVolumeProperties(t *testing.T) {
 					vmNameFrmDockerCli := TestUtil.GetVmAttachedToVolUsingDockerCli(volName, vms[vmIndx])
 					// TODO: get vm name based on ip and compare ith with the docker cli and admin cli
 					if vmNameFrmDockerCli != vmNameFrmAdminCli {
-						log.Fatalf("Information mis-match - Attached-to-VM field for volume from docker cli is [%s] and attched-to-vm field from admin cli is [%s]", vmNameFrmDockerCli, vmNameFrmAdminCli)
+						log.Fatalf("Information mis-match - Attached-to-VM field for volume from docker cli is [%s]"+
+							"and attched-to-vm field from admin cli is [%s]", vmNameFrmDockerCli, vmNameFrmAdminCli)
 					}
 					volmPropertiesDkrCli := TestUtil.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
 					expctdPropsDkr := []string{"100MB", formatTypes[k]}
@@ -117,7 +120,8 @@ func TestVolumeProperties(t *testing.T) {
 				if !hasElement(expctdPropsAdmin, volmPropertiesAdminCli) {
 					log.Fatal("Volume properties on admin cli do not matches with the expected values")
 				}
-				log.Println("Finished verifying volume properties like size, disk-format and attached-to-vm fields at vm and esx for volume - ", volName)
+				log.Println("Finished verifying volume properties like size, disk-format and attached-to-vm fields"+
+					" at vm and esx for volume - ", volName)
 				TestUtil.ExecCmd(vms[vmIndx], "docker stop "+containerName+" ; docker rm "+containerName)
 			}
 		}
