@@ -32,11 +32,14 @@ from error_code import ErrorCode
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
 # DB schema and VMODL version
+# Bump the DB_MINOR_VER to 1.1
+# in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
 DB_MAJOR_VER = 1
-DB_MINOR_VER = 0
+DB_MINOR_VER = 1
 VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
 
+# TODO: Need to replace with right URL before cut the release
 CONVERT_SCRIPT_URL = "TBD"
 
 def all_columns_set(privileges):
@@ -60,7 +63,8 @@ def get_version_str(major_ver, minor_ver):
     return res 
  
 class DbConnectionError(Exception):
-    """ An exception thrown when connection to a sqlite database fails. """
+    """ An exception thrown when a client tries to establish a connection to the DB.
+    """
 
     def __init__(self, db_path):
         self.db_path = db_path
@@ -69,7 +73,8 @@ class DbConnectionError(Exception):
         return "DB connection error %s" % self.db_path
 
 class DbAccessError(Exception):
-   """ An exception thrown when access to a sqlite database fails. """
+   """ An exception thrown when when a client tries to run a SQL using an established connection.
+   """
 
    def __init__(self, db_path, msg):
        self.db_path = db_path
@@ -505,28 +510,36 @@ class AuthorizationDataManager:
             return True
         
         return False
-        
-    def is_valid_default_tenant_uuid(self, tenant_uuid):
-        """ check given tenant_uuid is equal to DEFAULT_TENANT_UUID """
-        return tenant_uuid == auth.DEFAULT_TENANT_UUID
-    
-    def validate_default_tenant(self):
-        """ Validate whehter DEFAULT_TENANT read from auth DB
-            has the right uuid
-            If the validation fails, an exception will be raised
+
+    def handle_upgrade_db_from_ver_1_0_to_ver_1_1(self):
         """
+            Handle auth DB upgrade from version 1.0 to version 1.1
+        """
+        # in DB version 1.0, _DEFAULT_TENANT was created using a random generated UUID
+        # in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
         error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
         if error_msg:
             raise DbAccessError(self.db_path, error_msg)
-        if not self.is_valid_default_tenant_uuid(tenant.id):
-            error_msg = """
+        error_msg = """
                         Your ESX installation seems to be using config db created by previous version of
                         vSphere Docker Volume Service, and requires upgrade.
                         Please download script from {0} and run the script on each ESX where vSphere Docker
                         Volume Service is installed.  (_DEFAULT_UUID = {1}, expected = {2})
-                        """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
-            logging.error(error_msg)
-            raise DbAccessError(self.db_path, error_msg)
+                     """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
+        logging.error(error_msg)
+        raise DbAccessError(self.db_path, error_msg)
+
+    def handle_upgrade_db(self):
+        major_ver = 0
+        minor_ver = 0
+        error_msg, major_ver, minor_ver = self.get_db_version()
+        if error_msg:
+            logging.error("handle_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
+
+        if DB_MAJOR_VER == 1 and DB_MINOR_VER == 1:
+            # DB version read from auth-DB is 1.0, upgrade is needed
+            if major_ver == 1 and minor_ver == 0:
+                self.handle_upgrade_db_from_ver_1_0_to_ver_1_1()
 
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`. 
@@ -554,27 +567,8 @@ class AuthorizationDataManager:
 
         if not need_create_table:
             if os.path.isfile(self.db_path) and self.need_upgrade_db():
-                # Currently, when need upgrade, raise exception
-                # TODO: add code to handle DB schema upgrade 
-                # when schema changes
-                raise DbConnectionError(self.db_path)        
-            
-            self.validate_default_tenant()
-            # error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
-            # if error_msg:
-            #     raise DbConnectionError(self.db_path)
-            # if not self.is_valid_default_tenant_uuid(tenant.id):
-            #     error_msg = """
-            #                 Your ESX installation seems to be using config db created by previous version of
-            #                 vSphere Docker Volume Service, and requires upgrade.
-            #                 Please download script from {0} and run the script on each ESX where vSphere Docker
-            #                 Volume Service is installed.  (_DEFAULT_UUID = {1}, expected = {2})
-            #                 """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
-            #     logging.error(error_msg)
-            #     raise DbAccessError(self.db_path, error_msg)
-        
-        
-        
+                self.handle_upgrade_db()
+
         if need_create_table:
             self.create_tables()
             self.create_default_tenant()

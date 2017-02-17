@@ -25,8 +25,10 @@ import logging
 from error_code import ErrorCode
 from error_code import ErrorInfo
 
-def get_auth_mgr():
-    """ Get a connection to auth DB. """
+def get_auth_mgr_object():
+    """ Get a auth_mgr object which needed to connect to auth DB. """
+    # auth.get_auth_mgr will not throw an Exception
+    # it will return err_msg when it fails
     err_msg, auth_mgr = auth.get_auth_mgr()
     if err_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, err_msg)
@@ -40,7 +42,7 @@ def get_tenant_from_db(name):
         -- error_code: return None on success or error info on failure
         -- tenant: return tenant object on success or None on failure 
     """
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info, None
 
@@ -56,7 +58,7 @@ def get_tenant_name(tenant_uuid):
         -- error_info: return None on success or error info on failure
         -- tenant_name: return tenant name on success or None on failure 
     """
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info, None
 
@@ -72,7 +74,7 @@ def create_tenant_in_db(name, description, vms, privileges):
         -- error_info: return None on success or error info on failure
         -- tenant: return tenant object on success or None on failure
     """
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info, None
     
@@ -104,7 +106,7 @@ def get_tenant_list_from_db(name=None):
         -- error_info: return None on success or error info on failure
         -- tenant_list: return a list of tenant objects on success or None on failure
     """
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info, None
 
@@ -228,7 +230,7 @@ def get_default_datastore(name):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)  
         return error_info, None
     
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info, None
     
@@ -273,7 +275,7 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
     
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
 
@@ -317,7 +319,7 @@ def _tenant_rm(name, remove_volumes=False):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
     
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
 
@@ -378,7 +380,7 @@ def _tenant_vm_add(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_ALREADY_IN_TENANT, vm_list, name)
         return error_info
     
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
 
@@ -416,7 +418,7 @@ def _tenant_vm_rm(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_IN_TENANT, vm_list, name)
         return error_info
 
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
       
@@ -463,7 +465,7 @@ def _tenant_vm_replace(name, vm_list):
         return error_info
 
     logging.debug("_tenant_vm_replace: vms=%s", vms)
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
       
@@ -536,7 +538,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
                                      volume_totalsize_in_MB=volume_totalsize_in_MB)
     logging.debug("_tenant_access_add: privileges=%s", privileges)
     
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
 
@@ -610,7 +612,7 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
                                         volume_totalsize_in_MB=volume_totalsize_in_MB)
     logging.debug("_tenant_access_set: modified privileges_dict=%s", privileges_dict)
 
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
 
@@ -642,7 +644,7 @@ def _tenant_access_rm(name, datastore):
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_NOT_FOUND, name, datastore)
         return error_info
     
-    error_info, auth_mgr = get_auth_mgr()
+    error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
 
