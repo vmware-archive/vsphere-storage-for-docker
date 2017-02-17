@@ -27,10 +27,9 @@ from error_code import ErrorInfo
 
 def get_auth_mgr():
     """ Get a connection to auth DB. """
-    try:
-        auth_mgr = auth.get_auth_mgr()
-    except auth_data.DbConnectionError as e:
-        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, "Failed to connect to auth DB")
+    err_msg, auth_mgr = auth.get_auth_mgr()
+    if err_msg:
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, err_msg)
         return error_info, None
     return None, auth_mgr
 
