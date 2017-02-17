@@ -245,7 +245,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         return err("Invalid datastore '%s'.\n" \
                     "Known datastores: %s.\n" \
                     "Default datastore: %s" \
-                    % (src_datastore, ", ".join(get_datastore_names_list), vm_datastore))
+                    % (src_datastore, ", ".join(get_datastore_names_list()), vm_datastore))
 
     error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid,
                                                           src_datastore, auth.CMD_ATTACH, {})
@@ -742,7 +742,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err("Invalid datastore '%s'.\n" \
                 "Known datastores: %s.\n" \
                 "Default datastore: %s" \
-                % (datastore, ", ".join(get_datastore_names_list), vm_datastore))
+                % (datastore, ", ".join(get_datastore_names_list()), vm_datastore))
 
     error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore, cmd, opts)
     if error_info:
