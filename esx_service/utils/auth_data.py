@@ -518,7 +518,28 @@ class AuthorizationDataManager:
     def is_valid_default_tenant_uuid(self, tenant_uuid):
         """ check given tenant_uuid is equal to DEFAULT_TENANT_UUID """
         return tenant_uuid == auth.DEFAULT_TENANT_UUID
+<<<<<<< HEAD
 >>>>>>> e7b9a72... Fix for issue 193.
+=======
+    
+    def validate_default_tenant(self):
+        """ Validate whehter DEFAULT_TENANT read from auth DB
+            has the right uuid
+            If the validation fails, an exception will be raised
+        """
+        error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+        if error_msg:
+            raise DbAccessError(self.db_path, error_msg)
+        if not self.is_valid_default_tenant_uuid(tenant.id):
+            error_msg = """
+                        Your ESX installation seems to be using config db created by previous version of
+                        vSphere Docker Volume Service, and requires upgrade.
+                        Please download script from {0} and run the script on each ESX where vSphere Docker
+                        Volume Service is installed.  (_DEFAULT_UUID = {1}, expected = {2})
+                        """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
+            logging.error(error_msg)
+            raise DbAccessError(self.db_path, error_msg)
+>>>>>>> d319e01... Address comments from Prashant and Sam.
 
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`.
@@ -561,18 +582,19 @@ class AuthorizationDataManager:
 =======
                 raise DbConnectionError(self.db_path)        
             
-            error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
-            if error_msg:
-                raise DbConnectionError(self.db_path)
-            if not self.is_valid_default_tenant_uuid(tenant.id):
-                error_msg = """
-                            Your ESX installation seems to be using config db created by previous version of
-                            Vsphere Docker Volume Service, and requires upgrade.
-                            Please download script from {0} and run the script on each ESX where you are using
-                            the product.  (_DEFAULT_UUID = {1}, expected = {2})
-                            """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
-                logging.error(error_msg)
-                raise DbAccessError(self.db_path, error_msg)
+            self.validate_default_tenant()
+            # error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+            # if error_msg:
+            #     raise DbConnectionError(self.db_path)
+            # if not self.is_valid_default_tenant_uuid(tenant.id):
+            #     error_msg = """
+            #                 Your ESX installation seems to be using config db created by previous version of
+            #                 vSphere Docker Volume Service, and requires upgrade.
+            #                 Please download script from {0} and run the script on each ESX where vSphere Docker
+            #                 Volume Service is installed.  (_DEFAULT_UUID = {1}, expected = {2})
+            #                 """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
+            #     logging.error(error_msg)
+            #     raise DbAccessError(self.db_path, error_msg)
         
         
         
