@@ -19,22 +19,37 @@ govc snapshot.revert -vm $ESX_6_0 init
 
 echo "Waiting for revert to complete";
 
+DIR=$(dirname ${BASH_SOURCE[0]})
+. $DIR/../scripts/wait_for.sh
+
+# Threshold to time out 
+retryCount=30
+
 echo ESX 6.5
-until govc vm.ip $ESX_6_5
-do
-    echo "Waiting for revert to complete for ESX6.5";
-    sleep 1;
-done
+wait_for "govc vm.ip $ESX_6_5" $retryCount
 
 echo ESX 6.0
-until govc vm.ip $ESX_6_0
-do
-    echo "Waiting for revert to complete for ESX6.0";
-    sleep 1;
-done
+wait_for "govc vm.ip $ESX_6_0" $retryCount
 
 echo "Reset complete"
-sleep 5;
+
+'
+Let's set environment variables pointing to ESX6.5.
+
+This part is needed and keep it latest whenever new VMs are added to
+ESX6.5 or removed. CI is running tests against ESX6.5 (docker host resided 
+on vmfs) very first hence the retry mechanism added for the docker host 
+exist on vmfs datastore.
+'
+export GOVC_URL=$GOVC_URL_6_5
+export GOVC_USERNAME=$GOVC_USERNAME_ESX
+export GOVC_PASSWORD=$GOVC_PASSWORD_ESX
+
+echo "Wait for VM to get ready"
+
+wait_for "$GOVC_GET_IP photon.vmfs" $retryCount
+wait_for "$GOVC_GET_IP Ubuntu.16.10" $retryCount
+
 echo "Resume testing"
 
 exit 0
