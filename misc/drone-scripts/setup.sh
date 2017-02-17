@@ -33,14 +33,13 @@ wait_for "govc vm.ip $ESX_6_0" $retryCount
 
 echo "Reset complete"
 
-'
-Let's set environment variables pointing to ESX6.5.
+# setting environment variables pointing to ESX6.5.
 
-This part is needed and keep it latest whenever new VMs are added to
-ESX6.5 or removed. CI is running tests against ESX6.5 (docker host resided 
-on vmfs) very first hence the retry mechanism added for the docker host 
-exist on vmfs datastore.
-'
+#This part is needed and keep it latest whenever new VMs are added to
+#ESX6.5 or removed. CI is running tests against ESX6.5 (docker host resided 
+#on vmfs) very first hence the retry mechanism added for the docker host 
+#exist on vmfs datastore.
+
 export GOVC_URL=$GOVC_URL_6_5
 export GOVC_USERNAME=$GOVC_USERNAME_ESX
 export GOVC_PASSWORD=$GOVC_PASSWORD_ESX
