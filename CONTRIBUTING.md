@@ -251,10 +251,11 @@ A typical workflow for a developer should be.
 
 ## CI System
 
-We are using the CI system that has been up by the CNA folks (@casualjim && @frapposelli).
-The CI system is based on https://drone.io/
+We are using the CI system that has been up by the CNA folks (@casualjim, @frapposelli & @mhagen-vmware).
+The CI system is based on https://drone.io/  URL for the server is  https://ci.vmware.run/
+To be able to change the integration between CI and GitHub, first become admin using the self serve portal.
 
-The URL for the server is located https://ci.vmware.run/
+Behind the firewall there is a HW node running ESX that hosts 2 ESX VMs (v6.0u2 and v6.5). Each VM in turn contains a VSAN datastore as well as a VMFS datastore with 2 VMs per datastore.
 
 There is a webhook setup between github repo and the CI server. The CI server uses
 .drone.yml file to drive the CI workflow.
