@@ -11,7 +11,6 @@
 package e2e_test
 
 import (
-	"fmt"
 	TestUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/test_util"
 	"log"
 	"os"
@@ -29,38 +28,57 @@ var (
 
 /*
 Test steps:
-1. Create a new tenant named tenant1_abc.
-   Command: /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1_abc
-2. Create another tenant with same name tenant1_abc
+1. Create a new tenant.
+   Command: /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=<tenantName>
+2. Create another tenant with same name.
    Tenant creation will fail as we had already created tenant with same name
-3. Do a list of tenants and check if we have only one tenant1_abc present.
+3. Do a list of tenants and check if we have only one with same name  present.
    Command: /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
 */
 func TestCreateTwoTenantsWithSameName(t *testing.T) {
-	log.Println("This is a negative test to create two tenants with same.")
+	log.Println("This is a negative test to create two tenants with same name.")
+	executeTest(t)
+	deleteTenant(esx, tenantName)
+}
+
+func executeTest(t *testing.T) {
 	log.Println("Creating a tenant..")
 	tenantName = "tenant1_" + strconv.FormatInt(time.Now().Unix(), 20)
-	_, err := TestUtil.InvokeCommand(esx, ADMIN_CLI_TENANT+"create --name="+tenantName)
+	out, err := TestUtil.InvokeCommand(esx, ADMIN_CLI_TENANT+"create --name="+tenantName)
 	if err != nil {
 		log.Fatalf("Failed to create a tenant named: %s . Error: %v ", tenantName, err)
 	} else {
 		log.Printf("\n Successfully created a  tenant named - %s ", tenantName)
 	}
+	log.Println("Creating another tenant with the same name - ", tenantName)
+	out, err = TestUtil.InvokeCommand(esx, ADMIN_CLI_TENANT+"create --name="+tenantName)
 
-	// again creating a tenant with the same name
-	log.Println("Creating another tenant with same name - ", tenantName)
-	TestUtil.InvokeCommand(esx, ADMIN_CLI_TENANT+"create --name="+tenantName)
+	if !strings.Contains(string(out), tenantName+" already exists") {
+		log.Fatalf("Failing the test as two tenants with same name get created. Tenant name - [%s]. Out: [%s]", tenantName, string(out))
+	}
 
-	// checking if both tenants exist
-	out, err := TestUtil.InvokeCommand(esx, ADMIN_CLI_TENANT+"ls 2>/dev/null")
+	// Checking if both tenants exist by using tenant ls command
+	out, err = TestUtil.InvokeCommand(esx, ADMIN_CLI_TENANT+"ls 2>/dev/null")
 	if err != nil {
 		log.Fatalf("Failed to get list of tenants. Error: %v ", err)
 	}
-	fmt.Println("OUT: ", string(out))
 	occurence := strings.Count(string(out), tenantName)
-	fmt.Println("COUNT: ", strings.Count(string(out), tenantName))
-	if occurence == 0 || occurence > 1 {
+	if occurence > 1 {
 		log.Fatalf("Two tenants with same name [%s] exist.", tenantName)
 	}
-	log.Println("Pass: Test to create two tenants with same name finished.")
+	log.Println("Test to create two tenants with same name finished successfully.")
+}
+
+// following method deletes a tenant.
+// It will be deleted after PR # 914 is approved as there is already a method in that
+// PR which does the same thing
+func deleteTenant(ipAddr string, tenantName string) {
+	cmd := ADMIN_CLI_TENANT + "rm --name=" + tenantName
+	_, err := TestUtil.InvokeCommand(ipAddr, cmd)
+	if err != nil {
+		log.Fatalf("Failed to delete the tenant - [%s]. Error - %v ", tenantName, err)
+	} else {
+		log.Println("Successfully deleted the tenant - ", tenantName)
+	}
+
 }
