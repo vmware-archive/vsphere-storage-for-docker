@@ -390,8 +390,8 @@ usage: vmdkops_admin.py tenant access set [-h]
                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
                                           --name NAME
                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          [--allow-create] --datastore
-                                          DATASTORE
+                                          [--allow-create Value{True|False} e.g. True]
+                                          --datastore DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -401,7 +401,10 @@ optional arguments:
   --name NAME           Tenant name
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
-  --allow-create        Allow create and delete on datastore if set to True
+  --allow-create Value{True|False} - e.g. True
+                        Allow create and delete on datastore if set to True;
+                        disallow create and delete on datastore if set to
+                        False
   --datastore DATASTORE
                         Datastore name
 
