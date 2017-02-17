@@ -37,6 +37,8 @@ DB_MINOR_VER = 0
 VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
 
+CONVERT_SCRIPT_URL = "TBD"
+
 def all_columns_set(privileges):
         if not privileges:
             return False
@@ -65,6 +67,16 @@ class DbConnectionError(Exception):
 
     def __str__(self):
         return "DB connection error %s" % self.db_path
+
+class DbAccessError(Exception):
+   """ An exception thrown when access to a sqlite database fails. """
+
+   def __init__(self, db_path, msg):
+       self.db_path = db_path
+       self.msg = msg
+
+   def __str__(self):
+       return "DB access error at {0} ({1})".format(self.db_path, self.msg)
 
 class DatastoreAccessPrivilege:
     """ This class abstract the access privilege to a datastore .
@@ -410,7 +422,8 @@ class AuthorizationDataManager:
                                            name=auth.DEFAULT_TENANT, 
                                            description="This is a default tenant", 
                                            vms=[], 
-                                           privileges=[])
+                                           privileges=[],
+                                           tenant_uuid=auth.DEFAULT_TENANT_UUID)
         if error_msg:
             err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
             logging.warning(err)
@@ -493,6 +506,10 @@ class AuthorizationDataManager:
         
         return False
         
+    def is_valid_default_tenant_uuid(self, tenant_uuid):
+        """ check given tenant_uuid is equal to DEFAULT_TENANT_UUID """
+        return tenant_uuid == auth.DEFAULT_TENANT_UUID
+
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`. 
         
@@ -514,15 +531,30 @@ class AuthorizationDataManager:
         if not self.conn:
             raise DbConnectionError(self.db_path)
         
+        # Return rows as Row instances instead of tuples
+        self.conn.row_factory = sqlite3.Row
+
         if not need_create_table:
             if os.path.isfile(self.db_path) and self.need_upgrade_db():
                 # Currently, when need upgrade, raise exception
                 # TODO: add code to handle DB schema upgrade 
                 # when schema changes
                 raise DbConnectionError(self.db_path)        
+            
+            error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+            if error_msg:
+                raise DbConnectionError(self.db_path)
+            if not self.is_valid_default_tenant_uuid(tenant.id):
+                error_msg = """
+                            Your ESX installation seems to be using config db created by previous version of
+                            Vsphere Docker Volume Service, and requires upgrade.
+                            Please download script from {0} and run the script on each ESX where you are using
+                            the product.  (_DEFAULT_UUID = {1}, expected = {2})
+                            """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
+                logging.error(error_msg)
+                raise DbAccessError(self.db_path, error_msg)
         
-        # Return rows as Row instances instead of tuples
-        self.conn.row_factory = sqlite3.Row
+        
         
         if need_create_table:
             self.create_tables()
@@ -642,10 +674,10 @@ class AuthorizationDataManager:
 
         return None        
 
-    def create_tenant(self, name, description, vms, privileges):
+    def create_tenant(self, name, description, vms, privileges, tenant_uuid=None):
         """ Create a tenant in the database. 
-        
-        A tenant id will be auto-generated and returned. 
+        If tenant_uuid is None, tenant id will be auto-generated and returned,
+        otherwise, the uuid specified by param "tenant_uuid" will be used
         vms are list of vm_id. Privileges are dictionaries
         with keys matching the row names in the privileges table. Tenant id is
         filled in for both the vm and privileges tables.
@@ -664,7 +696,8 @@ class AuthorizationDataManager:
                                     description=description, 
                                     vms=vms,
                                     privileges=privileges,
-                                    default_datastore_url=default_datastore_url)
+                                    default_datastore_url=default_datastore_url,
+                                    id=tenant_uuid)
 
         id = tenant.id
         try:
