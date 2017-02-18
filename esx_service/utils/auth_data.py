@@ -40,7 +40,7 @@ VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
 
 # TODO: Need to replace with right URL before cut the release
-CONVERT_SCRIPT_URL = "TBD"
+UPGRADE_README = "https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/UpgradeFrom_Pre0.11.1.md"
 
 def all_columns_set(privileges):
         if not privileges:
@@ -521,11 +521,10 @@ class AuthorizationDataManager:
         if error_msg:
             raise DbAccessError(self.db_path, error_msg)
         error_msg = """
-                        Your ESX installation seems to be using config db created by previous version of
-                        vSphere Docker Volume Service, and requires upgrade.
-                        Please download script from {0} and run the script on each ESX where vSphere Docker
-                        Volume Service is installed.  (_DEFAULT_UUID = {1}, expected = {2})
-                     """.format(CONVERT_SCRIPT_URL, tenant.id, auth.DEFAULT_TENANT_UUID)
+                        Your ESX installation seems to be using configuration DB created by previous
+                        version of vSphere Docker Volume Service, and requires upgrade.
+                        See {0} for more information.  (_DEFAULT_UUID = {1}, expected = {2})
+                     """.format(UPGRADE_README, tenant.id, auth.DEFAULT_TENANT_UUID)
         logging.error(error_msg)
         raise DbAccessError(self.db_path, error_msg)
 
