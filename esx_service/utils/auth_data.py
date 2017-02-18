@@ -424,9 +424,9 @@ class AuthorizationDataManager:
     def create_default_tenant(self):
         """ Create DEFAULT tenant """
         error_msg, tenant = self.create_tenant(
-                                           name=auth.DEFAULT_TENANT, 
-                                           description="This is a default tenant", 
-                                           vms=[], 
+                                           name=auth.DEFAULT_TENANT,
+                                           description="This is a default tenant",
+                                           vms=[],
                                            privileges=[],
                                            tenant_uuid=auth.DEFAULT_TENANT_UUID)
         if error_msg:
@@ -688,7 +688,7 @@ class AuthorizationDataManager:
         return None
 
     def create_tenant(self, name, description, vms, privileges, tenant_uuid=None):
-        """ Create a tenant in the database. 
+        """ Create a tenant in the database.
         If tenant_uuid is None, tenant id will be auto-generated and returned,
         otherwise, the uuid specified by param "tenant_uuid" will be used
         vms are list of vm_id. Privileges are dictionaries
