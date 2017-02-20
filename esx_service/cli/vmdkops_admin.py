@@ -567,7 +567,10 @@ def get_attached_to(metadata):
     try:
         vm_name = vmdk_ops.vm_uuid2name(metadata[kv.ATTACHED_VM_UUID])
         if not vm_name:
+            if metadata[kv.ATTACHED_VM_UUID]:
+                return metadata[kv.ATTACHED_VM_UUID]
             return kv.DETACHED
+
         return vm_name
     except:
         return kv.DETACHED
