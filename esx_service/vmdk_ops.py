@@ -130,11 +130,6 @@ lib = None
 # For managing resource locks.
 lockManager = threadutils.LockManager()
 
-# regex for valid volume name
-VALID_VOLUME_NAME_REGEXP = "[a-zA-Z0-9][a-zA-Z0-9_.-]*"
-global valid_volume_name_reg
-valid_volume_name_reg = re.compile("^" + VALID_VOLUME_NAME_REGEXP + "$")
-
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
 def RunCommand(cmd):
@@ -660,7 +655,6 @@ def parse_vol_name(full_vol_name):
     # Note that N is a digit and there are exactly 6 of them (hardcoded in ESXi)
     # vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
     #
-    global valid_volume_name_reg
     try:
         at = full_vol_name.rindex('@')
         vol_name = full_vol_name[:at]
@@ -672,9 +666,6 @@ def parse_vol_name(full_vol_name):
     # now block the '-NNNNN' volume names
     if re.match(vmdk_utils.SNAP_NAME_REGEXP, vol_name):
         raise ValidationError("Volume names ending with '-NNNNNN' (where N is a digit) are not supported")
-    if not valid_volume_name_reg.match(vol_name):
-        error_info = error_code.generate_error_info(ErrorCode.VOLUME_NAME_INVALID, vol_name, VALID_VOLUME_NAME_REGEXP)
-        raise ValidationError(error_info.msg)
     if len(vol_name) > MAX_VOL_NAME_LEN:
         raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))
     if ds_name and len(ds_name) > MAX_DS_NAME_LEN:
