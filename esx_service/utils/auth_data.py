@@ -32,10 +32,15 @@ from error_code import ErrorCode
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 
 # DB schema and VMODL version
+# Bump the DB_MINOR_VER to 1.1
+# in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
 DB_MAJOR_VER = 1
-DB_MINOR_VER = 0
+DB_MINOR_VER = 1
 VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
+
+# TODO: Need to replace with right URL before cut the release
+UPGRADE_README = "https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/UpgradeFrom_Pre0.11.1.md"
 
 def all_columns_set(privileges):
         if not privileges:
@@ -58,13 +63,25 @@ def get_version_str(major_ver, minor_ver):
     return res
 
 class DbConnectionError(Exception):
-    """ An exception thrown when connection to a sqlite database fails. """
+    """ An exception thrown when a client tries to establish a connection to the DB.
+    """
 
     def __init__(self, db_path):
         self.db_path = db_path
 
     def __str__(self):
         return "DB connection error %s" % self.db_path
+
+class DbAccessError(Exception):
+   """ An exception thrown when when a client tries to run a SQL using an established connection.
+   """
+
+   def __init__(self, db_path, msg):
+       self.db_path = db_path
+       self.msg = msg
+
+   def __str__(self):
+       return "DB access error at {0} ({1})".format(self.db_path, self.msg)
 
 class DatastoreAccessPrivilege:
     """ This class abstract the access privilege to a datastore .
@@ -410,7 +427,8 @@ class AuthorizationDataManager:
                                            name=auth.DEFAULT_TENANT,
                                            description="This is a default tenant",
                                            vms=[],
-                                           privileges=[])
+                                           privileges=[],
+                                           tenant_uuid=auth.DEFAULT_TENANT_UUID)
         if error_msg:
             err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
             logging.warning(err)
@@ -493,6 +511,35 @@ class AuthorizationDataManager:
 
         return False
 
+    def handle_upgrade_db_from_ver_1_0_to_ver_1_1(self):
+        """
+            Handle auth DB upgrade from version 1.0 to version 1.1
+        """
+        # in DB version 1.0, _DEFAULT_TENANT was created using a random generated UUID
+        # in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
+        error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+        if error_msg:
+            raise DbAccessError(self.db_path, error_msg)
+        error_msg = """
+                        Your ESX installation seems to be using configuration DB created by previous
+                        version of vSphere Docker Volume Service, and requires upgrade.
+                        See {0} for more information.  (_DEFAULT_UUID = {1}, expected = {2})
+                     """.format(UPGRADE_README, tenant.id, auth.DEFAULT_TENANT_UUID)
+        logging.error(error_msg)
+        raise DbAccessError(self.db_path, error_msg)
+
+    def handle_upgrade_db(self):
+        major_ver = 0
+        minor_ver = 0
+        error_msg, major_ver, minor_ver = self.get_db_version()
+        if error_msg:
+            logging.error("handle_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
+
+        if DB_MAJOR_VER == 1 and DB_MINOR_VER == 1:
+            # DB version read from auth-DB is 1.0, upgrade is needed
+            if major_ver == 1 and minor_ver == 0:
+                self.handle_upgrade_db_from_ver_1_0_to_ver_1_1()
+
     def connect(self):
         """ Connect to a sqlite database file given by `db_path`.
 
@@ -514,15 +561,12 @@ class AuthorizationDataManager:
         if not self.conn:
             raise DbConnectionError(self.db_path)
 
-        if not need_create_table:
-            if os.path.isfile(self.db_path) and self.need_upgrade_db():
-                # Currently, when need upgrade, raise exception
-                # TODO: add code to handle DB schema upgrade
-                # when schema changes
-                raise DbConnectionError(self.db_path)
-
         # Return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
+
+        if not need_create_table:
+            if os.path.isfile(self.db_path) and self.need_upgrade_db():
+                self.handle_upgrade_db()
 
         if need_create_table:
             self.create_tables()
@@ -642,10 +686,10 @@ class AuthorizationDataManager:
 
         return None
 
-    def create_tenant(self, name, description, vms, privileges):
+    def create_tenant(self, name, description, vms, privileges, tenant_uuid=None):
         """ Create a tenant in the database.
-
-        A tenant id will be auto-generated and returned.
+        If tenant_uuid is None, tenant id will be auto-generated and returned,
+        otherwise, the uuid specified by param "tenant_uuid" will be used
         vms are list of vm_id. Privileges are dictionaries
         with keys matching the row names in the privileges table. Tenant id is
         filled in for both the vm and privileges tables.
@@ -664,7 +708,8 @@ class AuthorizationDataManager:
                                     description=description,
                                     vms=vms,
                                     privileges=privileges,
-                                    default_datastore_url=default_datastore_url)
+                                    default_datastore_url=default_datastore_url,
+                                    id=tenant_uuid)
 
         id = tenant.id
         try:
