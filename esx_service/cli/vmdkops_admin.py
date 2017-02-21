@@ -790,8 +790,12 @@ def generate_vm_list(vms_uuid):
     res = ""
     for vm_uuid in vms_uuid:
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
-        res = res + vm_name
-        res = res + ","
+        # If the VM name cannot be resolved then its possible
+        # the VM has been deleted or migrated off the host,
+        # skip the VM in that case.
+        if vm_name:
+            res = res + vm_name
+            res = res + ","
 
     if res:
         res = res[:-1]
