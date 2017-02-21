@@ -114,16 +114,23 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         self.policy_names = ['good', 'impossible']
         self.orig_policy_content = ('(("proportionalCapacity" i0) '
                                      '("hostFailuresToTolerate" i0))')
+
+        self.impossible_policy_content = ('(("proportionalCapacity" i0) '
+                                     '("hostFailuresToTolerate" i3))')
+
         self.new_policy_content = '(("hostFailuresToTolerate" i0))'
-        for n in self.policy_names:
-            vsan_policy.create(n, self.orig_policy_content)
+
+        vsan_policy.create('good', self.orig_policy_content)
+        vsan_policy.create('impossible', self.impossible_policy_content)
+
 
     def tearDown(self):
         vmdk_ops.removeVMDK(self.name)
 
         self.vmdk = None
-        for n in self.policy_names:
-            vsan_policy.delete(n)
+
+        vsan_policy.delete('good')
+        vsan_policy.delete('impossible')
 
     def testCreateDelete(self):
         err = vmdk_ops.createVMDK(vm_name=self.vm_name,
@@ -238,7 +245,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             ["2000mb", "good", True, "zeroedthick"],
             ["14000pb", "good", False, "zeroedthick"],
             ["bad size", "good", False, "eagerzeroedthick"],
-            ["100mb", "impossible", True, "eagerzeroedthick"],
+            ["100mb", "impossible", False, "eagerzeroedthick"],
             ["100mb", "good", True, "thin"],
         ]
         path = vsan_info.get_vsan_dockvols_path()

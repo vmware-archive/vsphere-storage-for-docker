@@ -66,15 +66,16 @@ def is_on_vsan(vmdk_path):
 def set_policy(vmdk_path, policy_string):
     """
     Sets policy for an object backing <vmdk_path> to <policy>.
-    Returns True on success
+    Returns None on success else return the output error. This can be
+    displayed at the client
     """
     uuid = vmdk_ops.get_vsan_uuid(vmdk_path)
     rc, out = vmdk_ops.RunCommand(OBJTOOL_SET_POLICY.format(uuid,
                                                             policy_string))
     if rc != 0:
         logging.warning("Failed to set policy for %s : %s", vmdk_path, out)
-        return False
-    return True
+        return out
+    return None
 
 
 def same_policy(vmdk_path, policy_string):
@@ -85,7 +86,6 @@ def same_policy(vmdk_path, policy_string):
                                                                          "")
     return existing_policy_string == policy_string.expandtabs(1).replace(" ",
                                                                          "")
-
 
 def get_policy(vmdk_path):
     """
