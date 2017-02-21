@@ -999,8 +999,8 @@ def handle_stale_attach(vmdk_path, kv_uuid):
                                                                 cur_vm.config.name)
              return err(msg)
        else:
-          logging.warning("Failed to find VM %s that attached the disk %s, resetting volume metadata",
-                          cur_vm.config.name, vmdk_path)
+          logging.warning("Failed to find VM (id %s) attaching the disk %s, resetting volume metadata",
+                          kv_uuid, vmdk_path)
           ret = reset_vol_meta(vmdk_path)
           if ret:
              return ret
