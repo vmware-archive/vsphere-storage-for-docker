@@ -528,7 +528,7 @@ def ls_dash_c(columns, tenant_reg):
 def all_ls_headers():
     """ Return a list of all header for ls -l """
     return ['Volume', 'Datastore', 'Created By VM', 'Created',
-            'Attached To VM', 'Policy', 'Capacity', 'Used',
+            'Attached To VM (name/uuid)', 'Policy', 'Capacity', 'Used',
             'Disk Format', 'Filesystem Type', 'Access', 'Attach As']
 
 def generate_ls_rows(tenant_reg):
