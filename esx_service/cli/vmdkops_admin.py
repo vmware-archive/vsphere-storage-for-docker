@@ -528,7 +528,7 @@ def ls_dash_c(columns, tenant_reg):
 def all_ls_headers():
     """ Return a list of all header for ls -l """
     return ['Volume', 'Datastore', 'Created By VM', 'Created',
-            'Attached To VM', 'Policy', 'Capacity', 'Used',
+            'Attached To VM (name/uuid)', 'Policy', 'Capacity', 'Used',
             'Disk Format', 'Filesystem Type', 'Access', 'Attach As']
 
 def generate_ls_rows(tenant_reg):
@@ -563,11 +563,14 @@ def get_creation_info(metadata):
 
 
 def get_attached_to(metadata):
-    """ Return which VM a volume is attached to based on its metadata """
+    """ Return which VM a volume is attached to based on its metadata. """
     try:
         vm_name = vmdk_ops.vm_uuid2name(metadata[kv.ATTACHED_VM_UUID])
         if not vm_name:
+            if metadata[kv.ATTACHED_VM_UUID]:
+                return metadata[kv.ATTACHED_VM_UUID]
             return kv.DETACHED
+
         return vm_name
     except:
         return kv.DETACHED
