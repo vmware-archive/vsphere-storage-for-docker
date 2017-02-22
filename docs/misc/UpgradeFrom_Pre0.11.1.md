@@ -16,7 +16,7 @@ In 0.11 they do not see each other's Docker volumes.
 
 # Upgrade
 
-The issue is fixed in Release 0.11.1
+The issue is fixed in Release 0.11.2
 
 ## Upgrade to newer build when you DO NOT have Docker volumes to retain
 
@@ -25,7 +25,7 @@ you can do the following to upgrade an existing installation:
 
 * remove the Docker volumes (all files and directories in `dockvols` folder on your datastore)
 * remove the configuration DB  `/etc/vmware/vmdkops/auth-db`
-* upgrade ESX to the newer release (0.11.1) per installation instructions on github.com. Only ESX part (VIB) needs upgrading to 0.11.1, you may skip upgrading
+* upgrade ESX to the newer release (0.11.2) per installation instructions on github.com. Only ESX part (VIB) needs upgrading to 0.11.2, you may skip upgrading
 vSphere Docker Volume Service RPMs on Docker VMs.
 * restart Docker services (e.g. `systemctl restart docker`) to clear up Docker volume cache
 (optional)
