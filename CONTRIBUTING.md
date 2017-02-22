@@ -34,6 +34,36 @@ Failure to pass test would result in reverting a change.
 Do not hesitate to ask your colleagues if you need help or have questions.
 Post your question to Telegram or drop a line to cna-storage@vmware.com
 
+## Cutting a new release
+
+Once a release has been tagged, the CI system will start a build and push the binaries to GitHub Releases page. Creating the release on GitHub is a manual process but the binaries for it will be auto generated.
+
+Typical steps followed.
+
+Tag a release
+```
+git tag -a -m "0.11 Release for Jan 2017" 0.11
+```
+
+Push the tag
+```
+git push origin 0.11
+```
+
+Check to see if the new release shows up on GitHub and the CI build has started.
+
+
+Generate the change log
+```
+docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate
+```
+
+Manually eye ball the list to make sure Issues are relevant to the release (Some times labels such as wontfix have not been applied to an Issue)
+
+Head to GitHub and author a new release add the changelog for the tag created.
+
+Update documentation following steps listed below.
+
 ## Documentation
 
 Documentation is published to [GitHub
