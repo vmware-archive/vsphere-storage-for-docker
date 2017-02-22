@@ -632,7 +632,7 @@ def get_vol_path(datastore, tenant_name=None):
             errMsg = "Failed to initialize volume path {0} - {1}".format(path, out)
             logging.warning(errMsg)
             return None, err(errMsg)
-        
+
         # create the symbol link /vmfs/volumes/datastore_name/dockvol/tenant_name
         symlink_path = os.path.join(dock_vol_path, tenant_name)
         if not os.path.isdir(symlink_path):
@@ -718,13 +718,13 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         # if default_datastore is not set for tenant,
         # default_datastore will be set to None
         error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
-        # if get default_datastore fails or default_datastore is not specified, 
+        # if get default_datastore fails or default_datastore is not specified,
         # use vm_datastore
         if error_info or not default_datastore:
             default_datastore = vm_datastore
-    
+
     logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
-                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)    
+                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)
 
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
@@ -999,8 +999,8 @@ def handle_stale_attach(vmdk_path, kv_uuid):
                                                                 cur_vm.config.name)
              return err(msg)
        else:
-          logging.warning("Failed to find VM %s that attached the disk %s, resetting volume metadata",
-                          cur_vm.config.name, vmdk_path)
+          logging.warning("Failed to find VM (id %s) attaching the disk %s, resetting volume metadata",
+                          kv_uuid, vmdk_path)
           ret = reset_vol_meta(vmdk_path)
           if ret:
              return ret
