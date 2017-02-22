@@ -136,7 +136,7 @@ DRIVER              VOLUME NAME
 
 Step 5: Run “docker volume create”  to create a new volume “new-tenant1-vol1” and run “docker volume ls”,   should only able to see this volume which was just created
 ``` 
-root@photon-JQQBWNwG6 [ ~ ]# docker volume create --driver=vmdk --name=new-tenant1-vol1 -o size=100MB
+root@photon-JQQBWNwG6 [ ~ ]# docker volume create --driver=vsphere --name=new-tenant1-vol1 -o size=100MB
 new-tenant1-vol1
 root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME

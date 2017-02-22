@@ -8,5 +8,5 @@ VSAN provides software defined storage and for each storage object it can specif
 Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.
 ```
 vmdkops-admin policy create --name=myPolicy --content="string"
-docker volume create --driver=vmdk --name=MyVol -o vsan-policy-name=myPolicy
+docker volume create --driver=vsphere --name=MyVol -o vsan-policy-name=myPolicy
 ```
