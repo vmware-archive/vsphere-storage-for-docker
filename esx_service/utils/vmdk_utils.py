@@ -26,6 +26,9 @@ import auth
 import auth_api
 import log_config
 import auth
+import error_code
+from error_code import ErrorCode
+from error_code import ErrorInfo
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -92,7 +95,7 @@ def validate_datastore(datastore):
             return True
     return False
 
-def get_datastores():
+def get_datastores(need_refresh=False):
     """
     Returns a list of (name, url-name, dockvol_path), with an element per datastore
     where:
@@ -100,7 +103,7 @@ def get_datastores():
     'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore
     """
-    if datastores == None:
+    if datastores == None or need_refresh:
         init_datastoreCache()
     return datastores
 
@@ -320,6 +323,8 @@ def get_datastore_url(datastore_name):
         return auth.DEFAULT_DS_URL
 
     # Query datastore URL from VIM API
+    ds_obj = [d.info.name for d in get_datastore_objects()]
+    logging.debug("get_datastore_url: ds_objects=%s", ds_obj)
     res = [d.info.url for d in get_datastore_objects() if d.info.name == datastore_name]
     return res[0]
 
@@ -331,8 +336,26 @@ def get_datastore_name(datastore_url):
         return auth.DEFAULT_DS
 
     # Query datastore name from VIM API
+    logging.debug("get_datastore_name: ds_objects=%s", get_datastore_objects())
     res = [d.info.name for d in get_datastore_objects() if d.info.url == datastore_url]
     return res[0]
+
+def get_datastore_name_from_config_path(config_path):
+    """Returns datastore NAME in config_path (not url-name which may be used in path)
+    """
+    # path is always /vmfs/volumes/<datastore>/... , so extract datastore:
+    config_ds_name = config_path.split("/")[3]
+    # get_datastore() return the cached value
+    # if datastore is changed outside
+    # ds_name may have a stale value
+    # therefore, force to refresh datastore cache by calling get_datastores()
+    # with need_refresh=True
+    ds_name = [x[0] for x in get_datastores(need_refresh=True) \
+                    if x[0] == config_ds_name or x[1] == config_ds_name ]
+    if len(ds_name) != 1:
+        logging.error("get_datastore_name_from_config_path: found more than one match: %s" % ds_name)
+    logging.debug("get_datastore_name: path=%s name=%s" % (config_ds_name, ds_name))
+    return None, ds_name[0]
 
 def main():
     log_config.configure()

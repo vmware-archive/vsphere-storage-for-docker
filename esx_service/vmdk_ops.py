@@ -681,19 +681,6 @@ def get_full_vol_name(vmdk_name, datastore):
     logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
 
-
-# TBD - move to vmdk_utils
-def get_datastore_name(config_path):
-    """Returns datastore NAME in config_path (not url-name which may be used in path)"""
-    # path is always /vmfs/volumes/<datastore>/... , so extract datastore:
-    config_ds_name = config_path.split("/")[3]
-    ds_name = [x[0] for x in vmdk_utils.get_datastores() \
-                    if x[0] == config_ds_name or x[1] == config_ds_name ]
-    if len(ds_name) != 1:
-        logging.error("get_datastore_name: found more than one match: %s" % ds_name)
-    logging.debug("get_datastore_name: path=%s name=%s" % (config_ds_name, ds_name))
-    return ds_name[0]
-
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     """
@@ -708,7 +695,10 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     Returns None (if all OK) or error string
     """
     logging.debug("config_path=%s", config_path)
-    vm_datastore = get_datastore_name(config_path)
+    error_info, vm_datastore = vmdk_utils.get_datastore_name_from_config_path(config_path)
+    if error_info:
+        return err(error_info)
+
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
