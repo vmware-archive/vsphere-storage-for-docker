@@ -111,7 +111,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
     def setUp(self):
         self.name = vmdk_utils.get_vmdk_path(path, self.volName)
-        self.policy_names = ['good', 'impossible']
+        self.policy_names = ['good', 'impossible', 'bad_string']
         self.orig_policy_content = ('(("proportionalCapacity" i0) '
                                      '("hostFailuresToTolerate" i0))')
 
@@ -120,8 +120,13 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
         self.new_policy_content = '(("hostFailuresToTolerate" i0))'
 
+        # Missing paranthesis at the end
+        self.bad_string_policy_content = ('(("proportionalCapacity" i0) '
+                                     '("hostFailuresToTolerate" i3)')
+
         vsan_policy.create('good', self.orig_policy_content)
         vsan_policy.create('impossible', self.impossible_policy_content)
+        vsan_policy.create('bad_string', self.bad_string_policy_content)
 
 
     def tearDown(self):
@@ -129,8 +134,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
         self.vmdk = None
 
-        vsan_policy.delete('good')
-        vsan_policy.delete('impossible')
+        for n in self.policy_names:
+            vsan_policy.delete(n)
+
 
     def testCreateDelete(self):
         err = vmdk_ops.createVMDK(vm_name=self.vm_name,
@@ -247,6 +253,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             ["bad size", "good", False, "eagerzeroedthick"],
             ["100mb", "impossible", False, "eagerzeroedthick"],
             ["100mb", "good", True, "thin"],
+            ["100mb", "bad_string", False, "eagerzeroedthick"],
         ]
         path = vsan_info.get_vsan_dockvols_path()
         i = 0
