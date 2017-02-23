@@ -40,6 +40,7 @@ import error_code
 import vmdk_utils
 import random
 import convert
+from error_code import ErrorCode
 
 # Max volumes count we can attach to a singe VM.
 MAX_VOL_COUNT_FOR_ATTACH = 60
@@ -434,7 +435,7 @@ def create_vm(si, vm_name, datastore_name):
                 task = vm.PowerOnVM_Task()
                 vmdk_ops.wait_for_tasks(si, [task])
         else:
-            error_info = error_code.VM_NOT_FOUND.format(vm_name)
+            error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, vm_name)
             logging.error("Cannot find vm %s", vm_name)
             return error_info, None
 
@@ -715,7 +716,10 @@ class VmdkTenantTestCase(unittest.TestCase):
         """ Create default tenant and privilege if not exist"""
 
         # create DEFAULT tenant if needed
-        error_info, tenant_uuid, tenant_name = auth.get_default_tenant()
+        error_msg, tenant_uuid, tenant_name = auth.get_default_tenant()
+        if error_msg:
+            logging.warning(error_msg)
+
         if not tenant_uuid:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
             error_info, tenant = auth_api._tenant_create(
@@ -723,12 +727,16 @@ class VmdkTenantTestCase(unittest.TestCase):
                                            description="This is a default tenant",
                                            vm_list=[],
                                            privileges=[])
-        if error_info:
-            err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info)
-            logging.warning(err)
+            if error_info:
+                logging.warning(error_info.msg)
+
+            self.assertEqual(error_info, None)
 
         # create DEFAULT privilege if needed
-        error_info, privileges = auth.get_default_privileges()
+        error_msg, privileges = auth.get_default_privileges()
+        if error_msg:
+            logging.warning(error_msg)
+
         if not privileges:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT privileges")
             error_info = auth_api._tenant_access_add(name=auth.DEFAULT_TENANT,
@@ -738,8 +746,8 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                     volume_maxsize_in_MB=0,
                                                     volume_totalsize_in_MB=0)
             if error_info:
-                err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
-                logging.warning(err)
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
 
     def setUp(self):
         """ Setup run before each test """

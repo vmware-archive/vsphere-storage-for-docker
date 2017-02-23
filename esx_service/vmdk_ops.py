@@ -87,6 +87,7 @@ import convert
 import error_code
 import auth_api
 from error_code import ErrorCode
+import re
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -153,12 +154,12 @@ def RunCommand(cmd):
 
     return (s, o)
 
-
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
+
     if os.path.isfile(vmdk_path):
         return err("File %s already exists" % vmdk_path)
 
@@ -855,11 +856,10 @@ def findDeviceByPath(vmdk_path, vm):
         # Filename format is as follows:
         #   "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
         logging.debug("d.backing.fileName %s", d.backing.fileName)
-        backing_disk = d.backing.fileName.split(" ")[1]
-
-        # datastore='[datastore name]'
-        datastore = d.backing.fileName.split(" ")[0]
-        datastore = datastore[1:-1]
+        ds, disk_path = d.backing.fileName.rsplit("]", 1)
+        datastore = ds[1:]
+        backing_disk = disk_path.lstrip()
+        logging.debug("findDeviceByPath: datastore=%s, backing_disk=%s", datastore, backing_disk)
 
         # Construct the parent dir and vmdk name, resolving
         # links if any.
