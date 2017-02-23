@@ -70,7 +70,7 @@ func init() {
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
-	flag.StringVar(&driverName, "d", "vmdk", "Driver name. We refcount volumes on this driver")
+	flag.StringVar(&driverName, "d", "vsphere", "Driver name. We refcount volumes on this driver")
 	flag.IntVar(&parallelVolumes, "parallel_volumes", 5, "Volumes per docker daemon for create/delete concurrent tests")
 	flag.IntVar(&parallelClones, "parallel_clones", 3, "Volumes per docker daemon for clone concurrent tests")
 	flag.Parse()

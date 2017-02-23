@@ -76,7 +76,7 @@ func TestVolumeProperties(t *testing.T) {
 				containerName = "busybox_" + strconv.FormatInt(time.Now().Unix(), 20)
 				log.Println("Creating a volume of Format Type - ", formatTypes[k])
 				volName := TestInputParamsUtil.GetVolumeNameWithTimeStamp("dockerVol")
-				_, err := TestUtil.InvokeCommand(vms[vmIndx], "docker volume create --driver=vmdk --name="+
+				_, err := TestUtil.InvokeCommand(vms[vmIndx], "docker volume create --driver=vsphere --name="+
 					volName+" -o size="+volSizes[i]+" -o diskformat="+formatTypes[k])
 				if err != nil {
 					log.Fatalf("Failed to create a volume named: %s. Error - %v ", volName, err)

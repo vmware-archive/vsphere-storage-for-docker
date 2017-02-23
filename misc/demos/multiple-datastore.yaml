@@ -3,7 +3,7 @@ scenes:
   - name: Docker volume commands
     action: echo "Post install, use the plugin for docker volume operations"
   - name: Create a volume
-    action:  docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+    action:  docker volume create --driver=vsphere --name=MyVolume -o size=10gb
     wait: true
   - name: Explain
     action: echo "Let us look at where the volume is on ESX"
@@ -18,7 +18,7 @@ scenes:
     action: echo "Plugin can select datastore format:volume@<datastore>"
     wait: true
   - name: Create a volume
-    action:  docker volume create --driver=vmdk --name=MyVolume@datastore1 -o size=10gb
+    action:  docker volume create --driver=vsphere --name=MyVolume@datastore1 -o size=10gb
     wait: true
   - name: Explain
     action: echo "Let's check the datastore1"
