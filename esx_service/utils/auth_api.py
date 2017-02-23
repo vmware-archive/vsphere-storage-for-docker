@@ -247,11 +247,18 @@ def get_default_datastore(name):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info, default_datastore
 
+def is_tenant_name_valid(name):
+    """ Check given tenant name is valid or not """
+    if valid_tenant_name_reg.match(name):
+        return True
+    else:
+        return False
+
 def _tenant_create(name, description="", vm_list=None, privileges=None):
     """ API to create a tenant """
     global valid_tenant_name_reg
     logging.debug("_tenant_create: name=%s description=%s vm_list=%s privileges=%s", name, description, vm_list, privileges)
-    if not valid_tenant_name_reg.match(name):
+    if not is_tenant_name_valid(name):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAME_REGEXP)
         return error_info, None
 
@@ -304,7 +311,7 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
             error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
             return error_info
 
-        if not valid_tenant_name_reg.match(name):
+        if not is_tenant_name_valid(name):
             error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAME_REGEXP)
             return error_info, None
 

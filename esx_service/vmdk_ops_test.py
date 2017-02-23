@@ -719,7 +719,6 @@ class VmdkTenantTestCase(unittest.TestCase):
         error_msg, tenant_uuid, tenant_name = auth.get_default_tenant()
         if error_msg:
             logging.warning(error_msg)
-            return
 
         if not tenant_uuid:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
@@ -731,11 +730,12 @@ class VmdkTenantTestCase(unittest.TestCase):
             if error_info:
                 logging.warning(error_info.msg)
 
+            self.assertEqual(error_info, None)
+
         # create DEFAULT privilege if needed
         error_msg, privileges = auth.get_default_privileges()
         if error_msg:
             logging.warning(error_msg)
-            return
 
         if not privileges:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT privileges")
@@ -747,6 +747,7 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                     volume_totalsize_in_MB=0)
             if error_info:
                 logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
 
     def setUp(self):
         """ Setup run before each test """
