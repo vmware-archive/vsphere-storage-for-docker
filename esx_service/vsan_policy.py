@@ -291,8 +291,8 @@ def policy_in_use(path, name):
     Check if a policy is in use by a VMDK and return the name of the first VMDK
     using it if it is, None otherwise
     """
-    for vmdk in vmdk_utils.list_vmdks(path):
-        policy = kv_get_vsan_policy_name(os.path.join(path, vmdk))
+    for vmdk in list_volumes_and_policies():
+        policy = vmdk['policy']
         if policy == name:
             return vmdk
     return None
