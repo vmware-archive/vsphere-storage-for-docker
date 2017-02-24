@@ -1179,10 +1179,8 @@ class VmdkTenantTestCase(unittest.TestCase):
 class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
     """ Unit test for VMDK ops for multi-tenancy """
     logging.info("Running VmdkTenantPolicyUsageTestCase")
-    default_tenant_vol1_name = "default_tenant_vol1"
-    default_tenant_vol2_name = "default_tenant_vol2"
-    default_tenant_vol3_name = "default_tenant_vol3"
-    default_tenant_vol4_name = "default_tenant_vol4"
+    default_tenant_vol1_name = "default_tenant_vol_1"
+    default_tenant_vol2_name = "default_tenant_vol_2"
 
     default_tenant_vols = [default_tenant_vol1_name, default_tenant_vol2_name]
 
@@ -1190,14 +1188,8 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
     vm1 = None
     vm1_config_path = None
 
-    vm2_name = generate_test_vm_name()
-    vm2 = None
-    vm2_config_path = None
-
     datastore_name = None
     datastore_path = None
-    datastore1_name = None
-    datastore1_path = None
 
     def create_default_tenant_and_privileges(self):
         """ Create default tenant and privilege if not exist"""
@@ -1241,12 +1233,6 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
                 self.datastore_path = datastore[2]
                 logging.debug("datastore_name=%s datastore_path=%s", self.datastore_name,
                                                                      self.datastore_path)
-                if len(datastores) > 1:
-                    datastore1 = datastores[1]
-                    self.datastore1_name = datastore1[0]
-                    self.datastoer1_path = datastore[2]
-                    logging.debug("Found second datastore: datastore_name=%s datastore_path=%s",
-                                  self.datastore1_name, self.datastore1_path)
             else:
                 logging.error("Cannot find a valid datastore")
                 self.assertFalse(True)
@@ -1262,14 +1248,6 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
 
         self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
         logging.info("VmdkTenantPolicyUsageTestCase: create vm1 name=%s Done", self.vm1_name)
-
-        error, self.vm2 = create_vm(si=si,
-                                    vm_name=self.vm2_name,
-                                    datastore_name=self.datastore_name)
-        if error:
-            self.assertFalse(True)
-        self.vm2_config_path = vmdk_utils.get_vm_config_path(self.vm2_name)
-        logging.info("VmdkTenantPolicyUsageTestCase: create vm2 name=%s Done", self.vm2_name)
 
         # create DEFAULT tenant DEFAULT privilege if missing
         self.create_default_tenant_and_privileges()
@@ -1294,7 +1272,6 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         # remove VM
         si = vmdk_ops.get_si()
         remove_vm(si, self.vm1)
-        remove_vm(si, self.vm2)
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
@@ -1311,7 +1288,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         opts={'vsan-policy-name': 'good', u'fstype': u'ext4'}
 
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_CREATE, self.default_tenant_vol3_name, opts)
+                                auth.CMD_CREATE, self.default_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
 
         # delete should fail because policy is in use
@@ -1333,7 +1310,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         # run remove command
         opts = {}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_REMOVE, self.default_tenant_vol3_name, opts)
+                                auth.CMD_REMOVE, self.default_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
 
         self.assertEqual(None, vsan_policy.delete(self.name))
@@ -1353,13 +1330,14 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         opts={'vsan-policy-name': 'good', u'fstype': u'ext4'}
 
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_CREATE, self.default_tenant_vol3_name, opts)
+                                auth.CMD_CREATE, self.default_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
 
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_CREATE, self.default_tenant_vol4_name, opts)
+                                auth.CMD_CREATE, self.default_tenant_vol2_name, opts)
         self.assertEqual(None, error_info)
 
+        # Checking the usage count. Should be equal to number of volumes created
         associated_vmdk_count = 0
         for v in vsan_policy.list_volumes_and_policies():
             if v['policy'] == "good":
@@ -1371,12 +1349,21 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         # try to delete the volume again, which should succeed
         opts = {}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_REMOVE, self.default_tenant_vol3_name, opts)
+                                auth.CMD_REMOVE, self.default_tenant_vol1_name, opts)
         self.assertEqual(None, error_info)
 
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_REMOVE, self.default_tenant_vol4_name, opts)
+                                auth.CMD_REMOVE, self.default_tenant_vol2_name, opts)
         self.assertEqual(None, error_info)
+
+        # Checking the usage count. Should be equal to 0 as the volumes have been deleted
+        associated_vmdk_count = 0
+        for v in vsan_policy.list_volumes_and_policies():
+            if v['policy'] == "good":
+                associated_vmdk_count = associated_vmdk_count + 1
+
+        self.assertEqual(associated_vmdk_count, 0,
+                        "volumes-policy association listing failed")
 
         vsan_policy.delete(self.name)
 
