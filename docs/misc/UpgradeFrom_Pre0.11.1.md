@@ -38,9 +38,9 @@ The script is located [here](https://raw.githubusercontent.com/vmware/docker-vol
 
 Upgrade steps are as follows: 
 * Install VIB with Release 0.11.2 (or later) on each ESX.
-* [this step is for Release 0.11.2 only. For 0.12 and later, skip this step]
- * On each ESX, place vmdkops_post_update.11.1.py into /usr/lib/vmware/vmdkops/bin/, e.g.
-`cd /usr/lib/vmware/vmdkops/bin/ wget https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py; chmod a+x vmdkops_post_update.11.1.py;`
+* Download the upgrade script. This step is for Release 0.11.2 only. For 0.12 and later, skip directly to running the script.
+ * Download the script from https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py and place it into /usr/lib/vmware/vmdkops/bin/ on each ESX
+  * make it executabe on each ESX : `cd /usr/lib/vmware/vmdkops/bin/ ; chmod a+x vmdkops_post_update.11.1.py;`
 * on each ESX, run `/usr/lib/vmware/vmdkops/bin/vmdkops_post_update.11.1.py`
 
 To understand which steps the script is taking, please look at the [source](https://github.com/vmware/docker-volume-vsphere/blob/master/esx_service/cli/vmdkops_post_update.11.1.py)
