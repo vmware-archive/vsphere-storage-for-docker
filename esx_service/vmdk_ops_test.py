@@ -1221,20 +1221,18 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
                 err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
                 logging.warning(err)
 
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                     "VSAN is not found - skipping policy usage tests")
     def setUp(self):
         """ Setup run before each test """
         logging.info("VmdkTenantPolicyUsageTestCase setUp path =%s", path)
 
         if (not self.datastore_name):
-            datastores = vmdk_utils.get_datastores()
-            if datastores:
-                datastore = datastores[0]
-                self.datastore_name = datastore[0]
-                self.datastore_path = datastore[2]
-                logging.debug("datastore_name=%s datastore_path=%s", self.datastore_name,
-                                                                     self.datastore_path)
-            else:
-                logging.error("Cannot find a valid datastore")
+            self.datastore_name = vsan_info.get_vsan_datastore().info.name
+            self.datastore_path = vsan_info.get_vsan_datastore().info.url
+
+            if not self.datastore_name:
+                logging.error("Cannot find a vsan datastore")
                 self.assertFalse(True)
 
         self.cleanup()
