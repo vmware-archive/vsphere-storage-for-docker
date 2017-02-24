@@ -119,7 +119,7 @@ def update_vsan_objects_with_policy(name, content):
     for v in list_volumes_and_policies():
         if v['policy'] == name:
             volume_name = v['volume']
-            vmdk_path = os.path.join(dockvols_path, volume_name)
+            vmdk_path = os.path.join(v['path'], volume_name)
             if vsan_info.set_policy(vmdk_path, content):
                 update_count = 1
             else:
@@ -250,9 +250,11 @@ def list_volumes_and_policies():
     if not path:
         return []
 
-    for vmdk in vmdk_utils.list_vmdks(path):
-        policy = kv_get_vsan_policy_name(os.path.join(path, vmdk))
-        vmdks_and_policies.append({'volume': vmdk, 'policy': policy})
+    for volume in vmdk_utils.get_volumes("*"):
+        logging.debug("volume data is %s", volume)
+        policy = kv_get_vsan_policy_name(os.path.join(volume['path'], volume['filename']))
+        vmdks_and_policies.append({'volume': volume['filename'], 'policy': policy,
+                                    'path': volume['path']})
     return vmdks_and_policies
 
 
@@ -289,8 +291,8 @@ def policy_in_use(path, name):
     Check if a policy is in use by a VMDK and return the name of the first VMDK
     using it if it is, None otherwise
     """
-    for vmdk in vmdk_utils.list_vmdks(path):
-        policy = kv_get_vsan_policy_name(os.path.join(path, vmdk))
+    for vmdk in list_volumes_and_policies():
+        policy = vmdk['policy']
         if policy == name:
             return vmdk
     return None

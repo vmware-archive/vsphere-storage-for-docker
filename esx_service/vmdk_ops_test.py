@@ -205,33 +205,6 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
-    def testPolicyUpdate(self):
-        path = vsan_info.get_vsan_dockvols_path()
-        vmdk_path = vmdk_utils.get_vmdk_path(path, self.volName)
-        err = vmdk_ops.createVMDK(vm_name=self.vm_name,
-                                  vmdk_path=vmdk_path,
-                                  vol_name=self.volName,
-                                  opts={'vsan-policy-name': 'good'})
-        self.assertEqual(err, None, err)
-        self.assertEqual(None, vsan_policy.update('good',
-                                                  self.new_policy_content))
-        # Setting an identical policy returns an error msg
-        self.assertNotEqual(None, vsan_policy.update('good',
-                                                     self.new_policy_content))
-
-        backup_policy_file = vsan_policy.backup_policy_filename(self.name)
-        #Ensure there is no backup policy file
-        self.assertFalse(os.path.isfile(backup_policy_file))
-
-        # Fail to update because of a bad policy, and ensure there is no backup
-        self.assertNotEqual(None, vsan_policy.update('good', 'blah'))
-        self.assertFalse(os.path.isfile(backup_policy_file))
-
-        err = vmdk_ops.removeVMDK(vmdk_path)
-        self.assertEqual(err, None, err)
-
-    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
-                    "VSAN is not found - skipping vsan_info tests")
     def testPolicy(self):
         # info for testPolicy
         testInfo = [
@@ -1047,6 +1020,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_REMOVE, self.tenant1_vol1_name, opts)
         self.assertEqual(None, error_info)
 
+
     def test_vmdkops_on_different_tenants(self):
         """ Test vmdkops on VMs which belong to different tenant """
         logging.info("test_vmdkops_on_different_tenants")
@@ -1208,6 +1182,196 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(len(result), 2)
         self.assertEqual("tenant1_vol1@"+self.datastore_name, result[0]['Name'])
         self.assertEqual("tenant1_vol2@"+self.datastore_name, result[1]['Name'])
+
+
+class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
+    """ Unit test for VMDK ops for multi-tenancy """
+    logging.info("Running VmdkTenantPolicyUsageTestCase")
+    default_tenant_vol1_name = "default_tenant_vol_1"
+    default_tenant_vol2_name = "default_tenant_vol_2"
+
+    default_tenant_vols = [default_tenant_vol1_name, default_tenant_vol2_name]
+
+    vm1_name = generate_test_vm_name()
+    vm1 = None
+    vm1_config_path = None
+
+    datastore_name = None
+    datastore_path = None
+
+    def create_default_tenant_and_privileges(self):
+        """ Create default tenant and privilege if not exist"""
+
+        # create DEFAULT tenant if needed
+        error_info, tenant_uuid, tenant_name = auth.get_default_tenant()
+        if not tenant_uuid:
+            logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
+            error_info, tenant = auth_api._tenant_create(
+                                           name=auth.DEFAULT_TENANT,
+                                           description="This is a default tenant",
+                                           vm_list=[],
+                                           privileges=[])
+        if error_info:
+            err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info)
+            logging.warning(err)
+
+        # create DEFAULT privilege if needed
+        error_info, privileges = auth.get_default_privileges()
+        if not privileges:
+            logging.debug("create_default_tenant_and_privileges: create DEFAULT privileges")
+            error_info = auth_api._tenant_access_add(name=auth.DEFAULT_TENANT,
+                                                    datastore=auth.DEFAULT_DS,
+                                                    allow_create=True,
+                                                    default_datastore=False,
+                                                    volume_maxsize_in_MB=0,
+                                                    volume_totalsize_in_MB=0)
+            if error_info:
+                err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
+                logging.warning(err)
+
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                     "VSAN is not found - skipping policy usage tests")
+    def setUp(self):
+        """ Setup run before each test """
+        logging.info("VmdkTenantPolicyUsageTestCase setUp path =%s", path)
+
+        if (not self.datastore_name):
+            self.datastore_name = vsan_info.get_vsan_datastore().info.name
+            self.datastore_path = vsan_info.get_vsan_datastore().info.url
+
+            if not self.datastore_name:
+                logging.error("Cannot find a vsan datastore")
+                self.assertFalse(True)
+
+        self.cleanup()
+        # get service_instance, and create VMs
+        si = vmdk_ops.get_si()
+        error, self.vm1 = create_vm(si=si,
+                                    vm_name=self.vm1_name,
+                                    datastore_name=self.datastore_name)
+        if error:
+            self.assertFalse(True)
+
+        self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
+        logging.info("VmdkTenantPolicyUsageTestCase: create vm1 name=%s Done", self.vm1_name)
+
+        # create DEFAULT tenant DEFAULT privilege if missing
+        self.create_default_tenant_and_privileges()
+
+    def tearDown(self):
+        """ Cleanup after each test """
+        logging.info("VmdkTenantPolicyUsageTestCase  tearDown path")
+        self.cleanup()
+
+    def cleanup(self):
+        # cleanup existing volume under DEFAULT tenant
+        logging.info("VmdkTenantPolicyUsageTestCase cleanup")
+        if self.datastore_path:
+            default_tenant_path = os.path.join(self.datastore_path, auth.DEFAULT_TENANT)
+            for vol in self.default_tenant_vols:
+                vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
+                response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)
+                if not "Error" in response:
+                    logging.debug("cleanup: remove volume %s", vmdk_path)
+                    vmdk_ops.removeVMDK(vmdk_path)
+
+        # remove VM
+        si = vmdk_ops.get_si()
+        remove_vm(si, self.vm1)
+
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                    "VSAN is not found - skipping vsan_info tests")
+    def testPolicyUpdateBackupDelete(self):
+        self.orig_policy_content = ('(("proportionalCapacity" i0) '
+                                     '("hostFailuresToTolerate" i0))')
+
+        self.name = 'good'
+        vsan_policy.create(self.name, self.orig_policy_content)
+
+        vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
+
+        # run create command
+        opts={'vsan-policy-name': 'good', u'fstype': u'ext4'}
+
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
+                                auth.CMD_CREATE, self.default_tenant_vol1_name, opts)
+        self.assertEqual(None, error_info)
+
+        # delete should fail because policy is in use
+        self.assertNotEqual(None, vsan_policy.delete(self.name))
+
+        # Setting an identical policy returns an error msg
+        self.assertNotEqual(None, vsan_policy.update('good',
+                                    self.orig_policy_content))
+
+        backup_policy_file = vsan_policy.backup_policy_filename(self.name)
+        #Ensure there is no backup policy file
+        self.assertFalse(os.path.isfile(backup_policy_file))
+
+        # Fail to update because of a bad policy, and ensure there is no backup
+        self.assertNotEqual(None, vsan_policy.update('good', 'blah'))
+        self.assertFalse(os.path.isfile(backup_policy_file))
+
+        # try to delete the volume again, which should succeed
+        # run remove command
+        opts = {}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
+                                auth.CMD_REMOVE, self.default_tenant_vol1_name, opts)
+        self.assertEqual(None, error_info)
+
+        self.assertEqual(None, vsan_policy.delete(self.name))
+
+    @unittest.skipIf(not vsan_info.get_vsan_datastore(),
+                    "VSAN is not found - skipping vsan_info tests")
+    def testPolicyUsageCount(self):
+        self.orig_policy_content = ('(("proportionalCapacity" i0) '
+                                     '("hostFailuresToTolerate" i0))')
+
+        self.name = 'good'
+        vsan_policy.create(self.name, self.orig_policy_content)
+
+        vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
+
+        # run create command
+        opts={'vsan-policy-name': 'good', u'fstype': u'ext4'}
+
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
+                                auth.CMD_CREATE, self.default_tenant_vol1_name, opts)
+        self.assertEqual(None, error_info)
+
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
+                                auth.CMD_CREATE, self.default_tenant_vol2_name, opts)
+        self.assertEqual(None, error_info)
+
+        # Checking the usage count. Should be equal to number of volumes created
+        associated_vmdk_count = 0
+        for v in vsan_policy.list_volumes_and_policies():
+            if v['policy'] == "good":
+                associated_vmdk_count = associated_vmdk_count + 1
+
+        self.assertEqual(associated_vmdk_count, 2,
+                        "volumes-policy association listing failed")
+
+        # try to delete the volume again, which should succeed
+        opts = {}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
+                                auth.CMD_REMOVE, self.default_tenant_vol1_name, opts)
+        self.assertEqual(None, error_info)
+
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
+                                auth.CMD_REMOVE, self.default_tenant_vol2_name, opts)
+        self.assertEqual(None, error_info)
+
+        # Checking the usage count. Should be equal to 0 as the volumes have been deleted
+        associated_vmdk_count = 0
+        for v in vsan_policy.list_volumes_and_policies():
+            if v['policy'] == "good":
+                associated_vmdk_count = associated_vmdk_count + 1
+
+        self.assertEqual(associated_vmdk_count, 0,
+                        "volumes-policy association listing failed")
+
+        vsan_policy.delete(self.name)
 
 if __name__ == '__main__':
     # configure the log, find the dir and run the tests
