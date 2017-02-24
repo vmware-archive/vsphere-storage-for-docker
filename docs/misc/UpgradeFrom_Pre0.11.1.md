@@ -33,8 +33,17 @@ vSphere Docker Volume Service RPMs on Docker VMs.
 
 ## Upgrade to newer build when you DO have Docker volumes to retain
 
-We are working on a script to upgrade automatically, and plan to release it in the week of 2/20.
+We provide a script to migrate data and configuration from Release 0.11 (or 0.10) to 0.11.2.
+The script is located [here](https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py).
 
+Upgrade steps are as follows: 
+* Install VIB with Release 0.11.2 (or later) on each ESX.
+* [this step is for Release 0.11.2 only. For 0.12 and later, skip this step]
+ * On each ESX, place vmdkops_post_update.11.1.py into /usr/lib/vmware/vmdkops/bin/, e.g.
+`cd /usr/lib/vmware/vmdkops/bin/ wget https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py; chmod a+x vmdkops_post_update.11.1.py;`
+* on each ESX, run `/usr/lib/vmware/vmdkops/bin/vmdkops_post_update.11.1.py`
+
+To understand which steps the script is taking, please look at the [source](https://github.com/vmware/docker-volume-vsphere/blob/master/esx_service/cli/vmdkops_post_update.11.1.py)
 
 # Contact
 
