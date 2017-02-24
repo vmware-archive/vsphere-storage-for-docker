@@ -190,7 +190,8 @@ def modify_privileges(privileges, allow_create, volume_maxsize_in_MB, volume_tot
     logging.debug("modify_privileges: allow_create=%s, volume_maxsize_in_MB=%s, volume_totalsize_in_MB=%s",
                   allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB)
     if allow_create is not None:
-        if allow_create == "True":
+        allow_create = str(allow_create)
+        if allow_create.lower() == "true":
             privileges = set_privileges(allow_create, privileges, 1)
         else:
             privileges = set_privileges(allow_create, privileges, 0)

@@ -735,30 +735,56 @@ class TestTenant(unittest.TestCase):
         # change total_volume size to 2GB
         volume_maxsize_in_MB = convert.convert_to_MB("1000MB")
         volume_totalsize_in_MB = convert.convert_to_MB("3GB")
-        error_info = auth_api._tenant_access_set(name=self.tenant1_name,
-                                                 datastore=self.datastore_name,
-                                                 allow_create="True",
-                                                 volume_maxsize_in_MB=volume_maxsize_in_MB,
-                                                 volume_totalsize_in_MB=volume_totalsize_in_MB
-                                             )
-        self.assertEqual(None, error_info)
 
-        error_info, privileges = auth_api._tenant_access_ls(self.tenant1_name)
-        self.assertEqual(None, error_info)
+        for val in ["False", "FALSE", "false", "Invalid"]:
+            error_info = auth_api._tenant_access_set(name=self.tenant1_name,
+                                                    datastore=self.datastore_name,
+                                                    allow_create=val,
+                                                    volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                    volume_totalsize_in_MB=volume_totalsize_in_MB
+                                                )
+            self.assertEqual(None, error_info)
 
-        rows = vmdkops_admin.generate_tenant_access_ls_rows(privileges)
-        self.assertEqual(len(rows), 1)
+            error_info, privileges = auth_api._tenant_access_ls(self.tenant1_name)
+            self.assertEqual(None, error_info)
 
+            rows = vmdkops_admin.generate_tenant_access_ls_rows(privileges)
+            self.assertEqual(len(rows), 1)
 
-        expected_output = [self.datastore_name,
-                           "True",
-                           "1000.00MB",
-                           "3.00GB"]
-        actual_output = [rows[0][0],
-                         rows[0][1],
-                         rows[0][2],
-                         rows[0][3]]
-        self.assertEqual(expected_output, actual_output)
+            expected_output = [self.datastore_name,
+                            "False",
+                            "1000.00MB",
+                            "3.00GB"]
+            actual_output = [rows[0][0],
+                            rows[0][1],
+                            rows[0][2],
+                            rows[0][3]]
+            self.assertEqual(expected_output, actual_output)
+
+        for val in ["True", "TRUE", "true"]:
+            error_info = auth_api._tenant_access_set(name=self.tenant1_name,
+                                                    datastore=self.datastore_name,
+                                                    allow_create=val,
+                                                    volume_maxsize_in_MB=volume_maxsize_in_MB,
+                                                    volume_totalsize_in_MB=volume_totalsize_in_MB
+                                                )
+            self.assertEqual(None, error_info)
+
+            error_info, privileges = auth_api._tenant_access_ls(self.tenant1_name)
+            self.assertEqual(None, error_info)
+
+            rows = vmdkops_admin.generate_tenant_access_ls_rows(privileges)
+            self.assertEqual(len(rows), 1)
+
+            expected_output = [self.datastore_name,
+                            "True",
+                            "1000.00MB",
+                            "3.00GB"]
+            actual_output = [rows[0][0],
+                            rows[0][1],
+                            rows[0][2],
+                            rows[0][3]]
+            self.assertEqual(expected_output, actual_output)
 
         if self.datastore1_name:
             # second datastore is available, can test tenant access add with --default_datastore

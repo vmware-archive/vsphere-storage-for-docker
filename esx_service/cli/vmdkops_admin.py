@@ -922,7 +922,10 @@ def tenant_vm_ls(args):
     rows = generate_tenant_vm_ls_rows(vms)
     print(cli_table.create(header, rows))
 
-
+# Allowing upper/lower case true, false values but not
+# any random strings
+def validate_create_value(allow_create):
+    return ((allow_create.lower() == "true") or (allow_create.lower() == "false"))
 
 def tenant_access_add(args):
     """ Handle tenant access command """
@@ -955,9 +958,13 @@ def tenant_access_set(args):
     if args.volume_totalsize:
         volume_totalsize_in_MB = convert.convert_to_MB(args.volume_totalsize)
 
+    if not validate_create_value(str(args.allow_create)):
+        msg = "Invalid value for --alow-create {0}".format(args.allow_create)
+        return operation_fail(msg)
+
     error_info = auth_api._tenant_access_set(name=args.name, 
                                              datastore=args.datastore,
-                                             allow_create=args.allow_create, 
+                                             allow_create=args.allow_create,
                                              volume_maxsize_in_MB=volume_maxsize_in_MB, 
                                              volume_totalsize_in_MB=volume_totalsize_in_MB)
 
