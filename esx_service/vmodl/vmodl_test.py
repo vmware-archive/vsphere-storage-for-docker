@@ -690,7 +690,7 @@ class TestVsphereContainerService(unittest.TestCase):
 
         # Update the privilege with invalid volume size
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, volume_max_size=2048, volume_total_size=1024)
+            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, allow_create=True, volume_max_size=2048, volume_total_size=1024)
 
     def test_update_privilege_with_invalid_total_size(self):
         """ Test privilege update with volume_total_size lesser than existing volume_max_size """
@@ -709,7 +709,7 @@ class TestVsphereContainerService(unittest.TestCase):
 
         # Update the privilege with invalid volume size
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, volume_total_size=1024)
+            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, allow_create=True, volume_total_size=1024)
 
     def test_update_privilege_with_invalid_max_size(self):
         """ Test privilege update with volume_max_size greater than existing volume_total_size """
@@ -728,7 +728,7 @@ class TestVsphereContainerService(unittest.TestCase):
 
         # Update the privilege with invalid volume size
         with self.assertRaises(vmodl.fault.InvalidArgument):
-            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, volume_max_size=2048)
+            self.tenantMgr.UpdatePrivilege(tenant, self.datastore, allow_create=True, volume_max_size=2048)
 
     def test_update_privilege_tenant_not_exists(self):
         # Create a tenant

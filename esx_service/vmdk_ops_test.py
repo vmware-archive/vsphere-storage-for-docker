@@ -1005,6 +1005,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         volume_totalsize_in_MB = convert.convert_to_MB('2GB')
         error_info = auth_api._tenant_access_set(name=self.tenant1_new_name,
                                                  datastore=self.datastore_name,
+                                                 allow_create=True,
                                                  volume_totalsize_in_MB=volume_totalsize_in_MB)
 
         self.assertEqual(None, error_info)

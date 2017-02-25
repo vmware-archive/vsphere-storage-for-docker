@@ -161,6 +161,11 @@ def set_privileges(allow_create, privileges, value):
     privileges[auth_data_const.COL_ALLOW_CREATE] = value
     return privileges
 
+# Allowing case insensitive true, false values but not
+# any random strings
+def validate_allow_create_value(allow_create):
+    return ((allow_create == "true") or (allow_create == "false"))
+
 def generate_privileges(datastore, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB):
     """ Generate privileges based on input params """
     logging.debug("generate_privileges: datastore=%s allow_create=%s"
@@ -190,8 +195,8 @@ def modify_privileges(privileges, allow_create, volume_maxsize_in_MB, volume_tot
     logging.debug("modify_privileges: allow_create=%s, volume_maxsize_in_MB=%s, volume_totalsize_in_MB=%s",
                   allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB)
     if allow_create is not None:
-        allow_create = str(allow_create)
-        if allow_create.lower() == "true":
+        # allow_create has been valided. It is either "true" or "false"
+        if allow_create == "true":
             privileges = set_privileges(allow_create, privileges, 1)
         else:
             privileges = set_privileges(allow_create, privileges, 0)
@@ -632,10 +637,20 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
         error_info = ErrorInfo(err_code, err_msg)
         return error_info
 
+    allow_create_val = str(allow_create)
+    allow_create_val = allow_create_val.lower()
+
+    if not validate_allow_create_value(allow_create_val):
+        err_code = ErrorCode.PRIVILEGE_INVALID_ALLOW_CREATE_VALUE
+        err_msg = error_code.error_code_to_message[err_code].format(allow_create)
+        logging.error(err_msg)
+        error_info = ErrorInfo(err_code, err_msg)
+        return error_info
+
     privileges_dict = generate_privileges_dict(privileges[0])
     logging.debug("_tenant_access_set: originial privileges_dict=%s", privileges_dict)
     privileges_dict = modify_privileges(privileges=privileges_dict,
-                                        allow_create=allow_create,
+                                        allow_create=allow_create_val,
                                         volume_maxsize_in_MB=volume_maxsize_in_MB,
                                         volume_totalsize_in_MB=volume_totalsize_in_MB)
     logging.debug("_tenant_access_set: modified privileges_dict=%s", privileges_dict)
