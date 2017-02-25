@@ -121,9 +121,9 @@ def update_vsan_objects_with_policy(name, content):
             volume_name = v['volume']
             vmdk_path = os.path.join(v['path'], volume_name)
             if vsan_info.set_policy(vmdk_path, content):
-                update_count = 1
-            else:
                 failed_updates.append(volume_name)
+            else:
+                update_count = 1
 
     if len(failed_updates) != 0:
         if update_count == 0:
@@ -240,7 +240,7 @@ def set_policy_by_name(vmdk_path, policy_name):
     """ Set policy for a given volume. """
     content = get_policy_content(policy_name)
     if not content:
-        return False
+        return 'Error: {0} does not exist'.format(policy_name)
     return vsan_info.set_policy(vmdk_path, content)
 
 def list_volumes_and_policies():

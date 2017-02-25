@@ -202,22 +202,25 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
 
     # Handle vsan policy
     if kv.VSAN_POLICY_NAME in opts:
-        if not vsan_policy.set_policy_by_name(vmdk_path, opts[kv.VSAN_POLICY_NAME]):
-            # Drop the failed option
-            # A warning is being logged in the called functions
-            del opts[kv.VSAN_POLICY_NAME]
+        # Attempt to set policy to vmdk
+        # set_policy_to_vmdk() deleted vmdk if couldn't set policy
+        set_err = set_policy_to_vmdk(vmdk_path=vmdk_path,
+                            opts=opts,
+                            vol_name=vol_name)
+        if set_err:
+            return set_err
 
     if not create_kv_store(vm_name, vmdk_path, opts):
         msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
         logging.warning(msg)
         error_info = err(msg)
-        remove_err = removeVMDK(vmdk_path=vmdk_path,
-                                vol_name=vol_name,
-                                vm_name=vm_name,
-                                tenant_uuid=tenant_uuid,
-                                datastore=datastore)
-        if remove_err:
-            error_info = error_info + remove_err
+        clean_err = cleanVMDK(vmdk_path=vmdk_path,
+                            vol_name=vol_name)
+
+        if clean_err:
+            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+            error_info = error_info + clean_err
+
         return error_info
 
     # create succeed, insert the volume information into "volumes" table
@@ -306,16 +309,20 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         except vim.fault.VimFault as ex:
             return err("Failed to clone volume: {0}".format(ex.msg))
 
+    vol_name = vmdk_utils.strip_vmdk_extension(src_vmdk_path.split("/")[-1])
 
     # Handle vsan policy
     if kv.VSAN_POLICY_NAME in opts:
-        if not vsan_policy.set_policy_by_name(vmdk_path, opts[kv.VSAN_POLICY_NAME]):
-            # Drop the failed option
-            # A warning is being logged in the called functions
-            del opts[kv.VSAN_POLICY_NAME]
+        # Attempt to set policy to vmdk
+        # set_policy_to_vmdk() deleted vmdk if couldn't set policy
+        set_err = set_policy_to_vmdk(vmdk_path=vmdk_path,
+                            opts=opts,
+                            vol_name=vol_name)
+
+        if set_err:
+            return set_err
 
     # Update volume meta
-    vol_name = vmdk_utils.strip_vmdk_extension(src_vmdk_path.split("/")[-1])
     vol_meta = kv.getAll(vmdk_path)
     vol_meta[kv.CREATED_BY] = vm_name
     vol_meta[kv.CREATED] = time.asctime(time.gmtime())
@@ -402,6 +409,29 @@ def validate_vsan_policy_name(policy_name, vmdk_path):
 
     if not vsan_policy.policy_exists(policy_name):
         raise ValidationError('Policy {0} does not exist'.format(policy_name))
+
+def set_policy_to_vmdk(vmdk_path, opts, vol_name=None):
+    """
+    Set VSAN policy to the vmdk object
+    If failed, delete the vmdk file and return the error info to be displayed
+    on client
+    """
+    out = vsan_policy.set_policy_by_name(vmdk_path, opts[kv.VSAN_POLICY_NAME])
+    if out:
+        # If policy is incompatible/wrong, return the error and delete the vmdk_path
+        msg = ("Failed to create volume %s: %s" % (vol_name, out))
+        logging.warning(msg)
+        error_info = err(msg)
+        clean_err = cleanVMDK(vmdk_path=vmdk_path,
+                            vol_name=vol_name)
+
+        if clean_err:
+            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+            error_info = error_info + clean_err
+
+        return error_info
+
+    return None
 
 def validate_disk_allocation_format(alloc_format):
     """
@@ -490,17 +520,16 @@ def vol_info(vol_meta, vol_size_info, datastore):
     return vinfo
 
 
-# Return error, or None for OK
-def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datastore=None):
-    logging.info("*** removeVMDK: %s", vmdk_path)
-
-    # Check the current volume status
-    kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
-    if kv_status_attached:
-        if handle_stale_attach(vmdk_path, kv_uuid):
-            logging.info("*** removeVMDK: %s is in use, VM uuid = %s", vmdk_path, kv_uuid)
-            return err("Failed to remove volume {0}, in use by VM uuid = {1}.".format(
-                vmdk_path, kv_uuid))
+def cleanVMDK(vmdk_path, vol_name=None):
+    """
+    Delete the vmdk file. Retry if the attempt fails
+    Invoked as a part of removeVMDK procedure and
+    cases requiring deletion of vmdk file only (when meta file
+    hasn't been generated)
+    eg: Unsuccesful attempt to apply vsan policy and when failed
+    to create metadata for vmdk_path
+    """
+    logging.info("*** cleanVMDK: %s", vmdk_path)
 
     # Form datastore path from vmdk_path
     volume_datastore_path = vmdk_utils.get_datastore_path(vmdk_path)
@@ -522,7 +551,33 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
                 retry_count += 1
                 time.sleep(vmdk_utils.VMDK_RETRY_SLEEP)
 
-    # remove succeed, remove infomation of this volume from volumes table
+    return None
+
+# Return error, or None for OK
+def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datastore=None):
+    """
+    Checks the status of the vmdk file using its meta file
+    If it is not attached, then cleans(deletes) the vmdk file.
+    If clean is successful, delete the volume from volume table
+    """
+    logging.info("*** removeVMDK: %s", vmdk_path)
+
+    # Check the current volume status
+    kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
+    if kv_status_attached:
+        if handle_stale_attach(vmdk_path, kv_uuid):
+            logging.info("*** removeVMDK: %s is in use, VM uuid = %s", vmdk_path, kv_uuid)
+            return err("Failed to remove volume {0}, in use by VM uuid = {1}.".format(
+                vmdk_path, kv_uuid))
+
+    # Cleaning .vmdk file
+    clean_err = cleanVMDK(vmdk_path, vol_name)
+
+    if clean_err:
+        logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+        return clean_err
+
+    # clean succeeded, remove infomation of this volume from volumes table
     if tenant_uuid:
         error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
         return error_info

@@ -84,9 +84,8 @@ class TestVsanInfo(unittest.TestCase):
         # different content:
         notsame_policy = \
             '(("hostFailuresToTolerate" i0) ("forceProvisioning" i0))'
-        self.assertTrue(
-            vsan_info.set_policy(self.VMDK_PATH, policy_string),
-            "failed to set")
+        err = vsan_info.set_policy(self.VMDK_PATH, policy_string)
+        self.assertEqual(err, None, "failed to set")
         # get policy and check it
         p = vsan_info.get_policy(self.VMDK_PATH)
         self.assertTrue(
