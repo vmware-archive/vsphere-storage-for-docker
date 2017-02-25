@@ -35,10 +35,10 @@ the following:
 ```
 $ docker volume ls
 DRIVER       VOLUME NAME
-vmdk         volume1
-vmdk         volume2
-vmdk         volume1@vsanDatastore
-vmdk         volume2@vsanDatastore
+vsphere         volume1
+vsphere         volume2
+vsphere         volume1@vsanDatastore
+vsphere         volume2@vsanDatastore
 ```
 
 # Volume name usage
