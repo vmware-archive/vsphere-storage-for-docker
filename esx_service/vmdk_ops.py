@@ -217,7 +217,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
                             vol_name=vol_name)
 
         if clean_err:
-            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err.msg)
+            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
             error_info = error_info + clean_err
 
         return error_info
@@ -425,7 +425,7 @@ def set_policy_to_vmdk(vmdk_path, opts, vol_name=None):
                             vol_name=vol_name)
 
         if clean_err:
-            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err.msg)
+            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
             error_info = error_info + clean_err
 
         return error_info
@@ -573,7 +573,7 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
     clean_err = cleanVMDK(vmdk_path, vol_name)
 
     if clean_err:
-        logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err.msg)
+        logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
         return clean_err
 
     # clean succeeded, remove infomation of this volume from volumes table
