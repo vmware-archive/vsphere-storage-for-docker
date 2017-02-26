@@ -30,6 +30,7 @@ package photon
 //"golang.org/x/exp/inotify"
 import (
 	"fmt"
+	"net"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -57,50 +58,112 @@ const (
 // VolumeDriver - Photon volume driver struct
 type VolumeDriver struct {
 	client    *photon.Client
-	hostID    string
-	mountRoot string
+	host      string
 	project   string
-	refCounts *refcount.RefCountsMap
+	tenant    string
 	target    string
+	mountRoot string
+	refCounts *refcount.RefCountsMap
 }
 
-func (d *VolumeDriver) verifyTarget() error {
-	// Try fetching the project for the given project ID,
-	// verifies the target (client) and the project.
-	_, err := d.client.Projects.Get(d.project)
-
-	if err == nil {
-		// Fetch the VM using given host ID.
-		_, err = d.client.VMs.Get(d.hostID)
+func (d *VolumeDriver) identifyHost(hostIP string) {
+	// Get the list of tenants and projects and identify
+	// the VM ID for this host and its project and tenant
+	// IDs.
+	tenants, err := d.client.Tenants.GetAll()
+	if err != nil {
+		log.WithFields(log.Fields{"target": d.target}).Warning("Invalid target, unable to get list of tenants, exiting.")
+		return
 	}
-	return err
+	for _, tenant := range tenants.Items {
+		// Get all projects for this tenant
+		projects, err := d.client.Tenants.GetProjects(tenant.ID, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"target": d.target}).Warning("Invalid target, unable to get list of projects, exiting.")
+			return
+		}
+		for _, project := range projects.Items {
+			vms, err := d.client.Projects.GetVMs(project.ID, nil)
+			if err != nil {
+				log.WithFields(log.Fields{"target": d.target}).Warning("Invalid target, unable to fetch list of VMs, exiting.")
+				return
+			}
+			for _, vm := range vms.Items {
+				var taskErr error
+				netTask, err := d.client.VMs.GetNetworks(vm.ID)
+				if err == nil {
+					taskErr = d.taskWait(netTask.ID)
+				}
+				if err != nil || taskErr != nil {
+					log.WithFields(log.Fields{"target": d.target, "error": err, "task-error": taskErr}).
+						Warning("Invalid target, unable to get VM properties, exiting.")
+					return
+				}
+				props := netTask.ResourceProperties.(map[string]interface{})
+				networkConn := props["networkConnections"].([]map[string]interface{})
+				for _, network := range networkConn {
+					if hostIP == network["ipAddress"] {
+						d.tenant = tenant.ID
+						d.project = project.ID
+						d.host = vm.ID
+						return
+					}
+				}
+			}
+		}
+	}
+
+	log.WithFields(log.Fields{"target": d.target}).Warning("Unable to identify this host on this target, exiting.")
+	return
+}
+
+func (d *VolumeDriver) getHostIP() (hostIP string) {
+	ifAddrs, err := net.InterfaceAddrs()
+
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Warning("Unable to get interface addresses for this host.")
+		return
+	}
+	for _, ifAddr := range ifAddrs {
+		ipaddr := ifAddr.(*net.IPNet)
+		if !ipaddr.IP.IsLoopback() && ipaddr.IP.To4() != nil {
+			hostIP = ipaddr.IP.String()
+			log.WithFields(log.Fields{"host IP": hostIP}).Info("Found host IP - ")
+			return
+		}
+	}
+	return
 }
 
 // NewVolumeDriver - creates Driver, creates client for given target
-func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir string) *VolumeDriver {
+func NewVolumeDriver(targetURL string, mountDir string) *VolumeDriver {
 
 	d := &VolumeDriver{
-		target:  targetURL,
-		project: projectID,
-		hostID:  hostID,
+		target: targetURL,
 	}
+
 	// Use default timeout of thirty seconds and retry of three
 	d.client = photon.NewClient(targetURL, nil, nil)
 
-	err := d.verifyTarget()
-	if err != nil {
-		log.WithFields(log.Fields{"target": targetURL, "project-id": projectID}).Warning("Invalid target and or project ID, exiting.")
+	// Get host IP address
+	hostIP := d.getHostIP()
+
+	d.identifyHost(hostIP)
+	if d.host == "" {
+		log.WithFields(log.Fields{"target": targetURL}).Warning("Unable to identify this host on the given target, exiting.")
 		return nil
 	}
 	d.mountRoot = mountDir
+
+	// Get VM ID for this host, get the IP for the VM
+	// and a match with what Photon returns.
+
 	d.refCounts = refcount.NewRefCountsMap()
 	d.refCounts.Init(d, mountDir, driverName)
 
 	log.WithFields(log.Fields{
 		"version": version,
 		"target":  targetURL,
-		"project": projectID,
-		"hostID":  hostID,
 	}).Info("Docker Photon plugin started ")
 
 	return d
@@ -240,7 +303,7 @@ func (d *VolumeDriver) List(r volume.Request) volume.Response {
 
 func (d *VolumeDriver) attachVolume(name string, id string) error {
 	diskOp := photon.VmDiskOperation{DiskID: id}
-	attachTask, errAttach := d.client.VMs.AttachDisk(d.hostID, &diskOp)
+	attachTask, errAttach := d.client.VMs.AttachDisk(d.host, &diskOp)
 	if errAttach != nil {
 		log.WithFields(log.Fields{"name": name, "error": errAttach}).Error("Failed to attach volume ")
 		return errAttach
@@ -259,7 +322,7 @@ func (d *VolumeDriver) attachVolume(name string, id string) error {
 
 func (d *VolumeDriver) detachVolume(name string, id string) error {
 	diskOp := photon.VmDiskOperation{DiskID: id}
-	detachTask, errDetach := d.client.VMs.DetachDisk(d.hostID, &diskOp)
+	detachTask, errDetach := d.client.VMs.DetachDisk(d.host, &diskOp)
 	if errDetach != nil {
 		log.WithFields(log.Fields{"name": name, "error": errDetach}).Error("Failed to detach volume ")
 		return errDetach
@@ -388,7 +451,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		Kind:       photonPersistentDisk,
 		CapacityGB: size,
 		//TODO: later
-		//Affinities: []photon.LocalitySpec{{Kind: "vm", ID: d.hostID}},
+		//Affinities: []photon.LocalitySpec{{Kind: "vm", ID: d.host}},
 		Name: r.Name,
 		Tags: tags}
 

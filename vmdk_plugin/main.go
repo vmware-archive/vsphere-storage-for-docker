@@ -103,8 +103,6 @@ func main() {
 
 	// photon driver options
 	targetURL := flag.String("target", "", "Photon controller URL")
-	projectID := flag.String("project", "", "Project ID of the docker host")
-	vmID := flag.String("host", "", "ID of docker host")
 
 	// vmdk driver options
 	port := flag.Int("port", 1019, "Default port to connect to ESX service")
@@ -131,26 +129,15 @@ func main() {
 		if *targetURL == "" {
 			*targetURL = c.Target
 		}
-		if *projectID == "" {
-			*projectID = c.Project
-		}
-		if *vmID == "" {
-			*vmID = c.Host
-		}
 
-		log.WithFields(log.Fields{
-			"target":  *targetURL,
-			"project": *projectID,
-			"host":    *vmID}).Info("Plugin options - ")
+		log.WithFields(log.Fields{"target": *targetURL}).Info("Plugin options - ")
 
-		if *targetURL == "" || *projectID == "" || *vmID == "" {
-			log.Warning("Invalid options specified for target/project/host")
-			fmt.Printf("Invalid options specified for target - %s project - %s host - %s. Exiting.\n",
-				*targetURL, *projectID, *vmID)
+		if *targetURL == "" {
+			log.Warning("Invalid options specified for Photon target.")
+			fmt.Printf("Invalid options specified for target - %s. Exiting.\n", *targetURL)
 			os.Exit(1)
 		}
-		driver = photon.NewVolumeDriver(*targetURL, *projectID,
-			*vmID, mountRoot)
+		driver = photon.NewVolumeDriver(*targetURL, mountRoot)
 	} else if *driverName == vmdkDriver {
 		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
 
