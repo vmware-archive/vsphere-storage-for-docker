@@ -161,10 +161,24 @@ def set_privileges(allow_create, privileges, value):
     privileges[auth_data_const.COL_ALLOW_CREATE] = value
     return privileges
 
-# Allowing case insensitive true, false values but not
-# any random strings
-def validate_allow_create_value(allow_create):
-    return ((allow_create == "true") or (allow_create == "false"))
+# Validating case insensitive true, false strings
+def validate_string_to_bool(allow_create):
+    is_valid = True
+
+    # If already bool, return
+    if type(allow_create) is bool:
+        return allow_create, is_valid
+
+    allow_create = str(allow_create).lower()
+
+    if allow_create == "true":
+        return True, is_valid
+    elif allow_create == "false":
+        return False, is_valid
+    else:
+        is_valid = False
+        return allow_create, is_valid
+
 
 def generate_privileges(datastore, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB):
     """ Generate privileges based on input params """
@@ -178,8 +192,11 @@ def generate_privileges(datastore, allow_create, volume_maxsize_in_MB, volume_to
         datastore_url = vmdk_utils.get_datastore_url(datastore)
     privileges[auth_data_const.COL_DATASTORE_URL] = datastore_url
 
-    if allow_create is True:
-        set_privileges(allow_create, privileges, 1)
+    # Initialed privilege value is False(0) when dict is created
+    # Change only when it is has been validated to True
+    if allow_create is not None:
+        if allow_create:
+            privileges = set_privileges(allow_create, privileges, 1)
 
     if volume_maxsize_in_MB:
         privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = volume_maxsize_in_MB
@@ -194,9 +211,12 @@ def modify_privileges(privileges, allow_create, volume_maxsize_in_MB, volume_tot
     """ Modify privileges based on input params """
     logging.debug("modify_privileges: allow_create=%s, volume_maxsize_in_MB=%s, volume_totalsize_in_MB=%s",
                   allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB)
+
+    # If None, don't change the privilege
+    # If not None, change accordingly
     if allow_create is not None:
-        # allow_create has been valided. It is either "true" or "false"
-        if allow_create == "true":
+        # allow_create has been validated. It is either True or False
+        if allow_create:
             privileges = set_privileges(allow_create, privileges, 1)
         else:
             privileges = set_privileges(allow_create, privileges, 0)
@@ -560,6 +580,17 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_ALREADY_EXIST, name, datastore)
         return error_info
 
+    if allow_create is not None:
+        allow_create_val, valid = validate_string_to_bool(allow_create)
+
+        if not valid:
+            err_code = ErrorCode.PRIVILEGE_INVALID_ALLOW_CREATE_VALUE
+            err_msg = error_code.error_code_to_message[err_code].format(allow_create)
+            logging.error(err_msg)
+            return ErrorInfo(err_code, err_msg)
+
+        allow_create = allow_create_val
+
     privileges = generate_privileges(datastore=datastore,
                                      allow_create=allow_create,
                                      volume_maxsize_in_MB=volume_maxsize_in_MB,
@@ -637,20 +668,21 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
         error_info = ErrorInfo(err_code, err_msg)
         return error_info
 
-    allow_create_val = str(allow_create)
-    allow_create_val = allow_create_val.lower()
+    if allow_create is not None:
+        allow_create_val, valid = validate_string_to_bool(allow_create)
 
-    if not validate_allow_create_value(allow_create_val):
-        err_code = ErrorCode.PRIVILEGE_INVALID_ALLOW_CREATE_VALUE
-        err_msg = error_code.error_code_to_message[err_code].format(allow_create)
-        logging.error(err_msg)
-        error_info = ErrorInfo(err_code, err_msg)
-        return error_info
+        if not valid:
+            err_code = ErrorCode.PRIVILEGE_INVALID_ALLOW_CREATE_VALUE
+            err_msg = error_code.error_code_to_message[err_code].format(allow_create)
+            logging.error(err_msg)
+            return ErrorInfo(err_code, err_msg)
+
+        allow_create = allow_create_val
 
     privileges_dict = generate_privileges_dict(privileges[0])
     logging.debug("_tenant_access_set: originial privileges_dict=%s", privileges_dict)
     privileges_dict = modify_privileges(privileges=privileges_dict,
-                                        allow_create=allow_create_val,
+                                        allow_create=allow_create,
                                         volume_maxsize_in_MB=volume_maxsize_in_MB,
                                         volume_totalsize_in_MB=volume_totalsize_in_MB)
     logging.debug("_tenant_access_set: modified privileges_dict=%s", privileges_dict)
