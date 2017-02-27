@@ -162,6 +162,8 @@ def set_privileges(allow_create, privileges, value):
     return privileges
 
 # Validating case insensitive true, false strings
+# returning boolean value of arguement if it is valid
+# else returning it as invalid
 def validate_string_to_bool(allow_create):
     is_valid = True
 
@@ -192,11 +194,8 @@ def generate_privileges(datastore, allow_create, volume_maxsize_in_MB, volume_to
         datastore_url = vmdk_utils.get_datastore_url(datastore)
     privileges[auth_data_const.COL_DATASTORE_URL] = datastore_url
 
-    # Initialed privilege value is False(0) when dict is created
-    # Change only when it is has been validated to True
-    if allow_create is not None:
-        if allow_create:
-            privileges = set_privileges(allow_create, privileges, 1)
+    if allow_create is True:
+        privileges = set_privileges(allow_create, privileges, 1)
 
     if volume_maxsize_in_MB:
         privileges[auth_data_const.COL_MAX_VOLUME_SIZE] = volume_maxsize_in_MB
@@ -216,7 +215,7 @@ def modify_privileges(privileges, allow_create, volume_maxsize_in_MB, volume_tot
     # If not None, change accordingly
     if allow_create is not None:
         # allow_create has been validated. It is either True or False
-        if allow_create:
+        if allow_create is True:
             privileges = set_privileges(allow_create, privileges, 1)
         else:
             privileges = set_privileges(allow_create, privileges, 0)
