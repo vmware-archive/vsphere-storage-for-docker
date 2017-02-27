@@ -117,6 +117,11 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		break
 	}
 
+	if ans.buf == nil {
+		msg := "VMCI call to ESX failed, returned nil data."
+		log.Warnf(msg)
+		return nil, errors.New(msg)
+	}
 	response := []byte(C.GoString(ans.buf))
 	C.free(unsafe.Pointer(ans.buf))
 	err = unmarshalError(response)

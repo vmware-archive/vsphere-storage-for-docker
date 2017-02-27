@@ -291,6 +291,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    ret = recv(s->sock_id, a->buf, b, 0);
    if (ret == -1 || ret != b) {
       free(a->buf);
+      a->buf = NULL;
       return CONN_FAILURE;
    }
 
@@ -348,6 +349,8 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
 
    req.mlen = strnlen(json_request, MAXBUF) + 1;
    req.msg = json_request;
+
+   ans->buf = NULL;
 
    return host_request(be, &req, ans, ESX_VMCI_CID, port);
 }
