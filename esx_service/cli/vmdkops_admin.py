@@ -362,6 +362,7 @@ def commands():
                                 '--allow-create': {
                                     'help': 
                                     'Allow create and delete on datastore if set to True; disallow create and delete on datastore if set to False',
+                                    'metavar': 'Value{True|False} - e.g. True'
                                 },
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',

@@ -738,10 +738,19 @@ class TestTenant(unittest.TestCase):
 
         self.parser = vmdkops_admin.create_parser()
 
-        for val in ["False", "FALSE", "false"]:
+        privilege_test_info = [
+            ["False", "False"],
+            ["FALSE", "False"],
+            ["false", "False"],
+            ["True", "True"],
+            ["TRUE", "True"],
+            ["true", "True"],
+        ]
+
+        for val in privilege_test_info:
             command = ("tenant access set --name={0} ".format(self.tenant1_name))
             command += ("--datastore={0} ".format(self.datastore_name))
-            command += ("--allow-create={0} ".format(val))
+            command += ("--allow-create={0} ".format(val[0]))
             command += ("--volume-maxsize=500MB --volume-totalsize=1GB")
 
             args = self.parser.parse_args(command.split())
@@ -755,33 +764,7 @@ class TestTenant(unittest.TestCase):
             self.assertEqual(len(rows), 1)
 
             expected_output = [self.datastore_name,
-                            "False",
-                            "500.00MB",
-                            "1.00GB"]
-            actual_output = [rows[0][0],
-                            rows[0][1],
-                            rows[0][2],
-                            rows[0][3]]
-            self.assertEqual(expected_output, actual_output)
-
-        for val in ["True", "TRUE", "true"]:
-            command = ("tenant access set --name={0} ".format(self.tenant1_name))
-            command += ("--datastore={0} ".format(self.datastore_name))
-            command += ("--allow-create={0} ".format(val))
-            command += ("--volume-maxsize=500MB --volume-totalsize=1GB")
-
-            args = self.parser.parse_args(command.split())
-            error_info = vmdkops_admin.tenant_access_set(args)
-            self.assertEqual(None, error_info)
-
-            error_info, privileges = auth_api._tenant_access_ls(self.tenant1_name)
-            self.assertEqual(None, error_info)
-
-            rows = vmdkops_admin.generate_tenant_access_ls_rows(privileges)
-            self.assertEqual(len(rows), 1)
-
-            expected_output = [self.datastore_name,
-                            "True",
+                            val[1],
                             "500.00MB",
                             "1.00GB"]
             actual_output = [rows[0][0],

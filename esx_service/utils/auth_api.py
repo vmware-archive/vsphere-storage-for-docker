@@ -161,10 +161,13 @@ def set_privileges(allow_create, privileges, value):
     privileges[auth_data_const.COL_ALLOW_CREATE] = value
     return privileges
 
-# Validating case insensitive true, false strings
-# returning boolean value of arguement if it is valid
-# else returning it as invalid
+
 def validate_string_to_bool(allow_create):
+    """
+    Validating case insensitive true, false strings
+    Return boolean value of the arguement if it is valid,
+    else return original value. Also return status if arguement is valid or not
+    """
     is_valid = True
 
     # If already bool, return
@@ -579,7 +582,11 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_ALREADY_EXIST, name, datastore)
         return error_info
 
+    # Possible value:
+    # None -  no change required
+    # True/False (boolean or string) - change to corresponding True/False
     if allow_create is not None:
+        # validate to boolean value if it is a string
         allow_create_val, valid = validate_string_to_bool(allow_create)
 
         if not valid:
