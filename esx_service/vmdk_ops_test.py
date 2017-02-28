@@ -706,23 +706,33 @@ class VmdkTenantTestCase(unittest.TestCase):
         error_msg, tenant_uuid, tenant_name = auth.get_default_tenant()
         if error_msg:
             logging.warning(error_msg)
+        self.assertEqual(error_msg, None)
 
         if not tenant_uuid:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
-            error_info, tenant = auth_api._tenant_create(
+            error_info, auth_mgr = auth_api.get_auth_mgr_object()
+            if error_info:
+                err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info.msg)
+                logging.warning(err)
+            self.assertEqual(error_info, None)
+
+            error_msg, tenant = auth_mgr.create_tenant(
                                            name=auth.DEFAULT_TENANT,
                                            description="This is a default tenant",
-                                           vm_list=[],
-                                           privileges=[])
-            if error_info:
-                logging.warning(error_info.msg)
+                                           vms=[],
+                                           privileges=[],
+                                           tenant_uuid=auth.DEFAULT_TENANT_UUID)
 
-            self.assertEqual(error_info, None)
+            if error_msg:
+                err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_msg)
+                logging.warning(err)
+            self.assertEqual(error_msg, None)
 
         # create DEFAULT privilege if needed
         error_msg, privileges = auth.get_default_privileges()
         if error_msg:
             logging.warning(error_msg)
+        self.assertEqual(error_msg, None)
 
         if not privileges:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT privileges")
