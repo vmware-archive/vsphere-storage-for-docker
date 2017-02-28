@@ -98,7 +98,10 @@ start() {
 
    check_running_status
    # brute force hack - restart vsanmgmtd to force it to read and server out VMODL py files
-   /etc/init.d/vsanmgmtd restart ; sleep 3 ; 
+   # turned off until we support kill switch.
+   # see https://github.com/vmware/docker-volume-vsphere/pull/975 for details.
+
+   # /etc/init.d/vsanmgmtd restart ; sleep 3 ;
    exit $?
 }
 

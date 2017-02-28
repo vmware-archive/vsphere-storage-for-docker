@@ -31,7 +31,15 @@
 # stub = vmodl_test.connect_to_vcs()
 # vmodl_test.get_tenants(stub)       # print tenant list
 
-import sys, ssl
+import os, sys
+
+# nothing to test until we put VMODL back in the VIB
+# See https://github.com/vmware/docker-volume-vsphere/pull/975 for details.
+if "INSTALL_VMODL" not in os.environ:
+    print("Skipping VMODL test - INSTALL_VMODL is not defined")
+    sys.exit(0)
+
+import ssl
 sys.path.append('/lib64/python3.5/site-packages/pyMo/vim/vsan')
 sys.path.append('/lib/python2.7/site-packages/pyMo/vim/vsan')
 

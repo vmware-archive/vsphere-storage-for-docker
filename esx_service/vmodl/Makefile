@@ -14,9 +14,9 @@
 #
 # Basic makefile to validate and package python stuff
 #
-# Example: 
+# Example:
 # ESX=10.132.15.22 make test # deploys to ESX, runs *_test.py files to validate the stuff
-# 
+#
 
 # SSH/SCP commands. Use 'DEBUG=echo make' to print info instead of copying files or running ssh
 SSH := $(DEBUG) ssh -kTax -o StrictHostKeyChecking=no
@@ -28,11 +28,11 @@ PY2_COMMON = /lib/python2.7
 TARGET2 := $(PY2_COMMON)/site-packages/pyMo/vim/vsan
 TARGET3 := $(PY3_COMMON)/site-packages/pyMo/vim/vsan
 
-# Find the target location for the correct python version 
+# Find the target location for the correct python version
 TARGET_LOC = $(shell $(SSH) root@$(ESX) \
 	"if [ -d $(TARGET2) ] ; then echo $(TARGET2) ; else echo $(TARGET3); fi")
 
-# Note: in ESX source, here are the location: 
+# Note: in ESX source, here are the location:
 #bora/vsan/<component>/esx/pyMo (Impl and __init)
 #bora/vsan/pyvmodl (model)
 
@@ -45,7 +45,9 @@ PYFILES   := $(MODEL) $(EXT) $(IMPL)
 TESTFILES := $(shell find . -name '*_test.py')
 TMP_LOC   := $(shell echo /tmp/dockvol-vmodl_unittest$$RANDOM)
 
-deploy: 
+ifdef INSTALL_VMODL
+
+deploy:
 	@echo Making test dir...
 	$(SSH) root@$(ESX) 'mkdir -p $(TARGET2) $(TARGET3) $(TMP_LOC)'
 	@echo Copying VMODL python files to root@$(ESX):$(TARGET2) ...
@@ -56,8 +58,8 @@ deploy:
 	@$(SCP) $(TESTFILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)
 
 # Testing. Note that vsanmgmtd neeeds a second or two between 'restart' returns
-# and the daemon start to really listen 
-test: deploy 
+# and the daemon start to really listen
+test: deploy
 	@echo Restarting VSAN mgmt daemon and running tests...
 	@$(SSH) root@$(ESX) \
         'set -x ; \
@@ -74,3 +76,13 @@ copy_to_payload:
 	mkdir -p ../$(VMDKOPS_PAYLOAD)$(TARGET2) ../$(VMDKOPS_PAYLOAD)$(TARGET3)
 	cp $(PYFILES) $(TESTFILES) ../$(VMDKOPS_PAYLOAD)$(TARGET2)
 	cp $(PYFILES) $(TESTFILES) ../$(VMDKOPS_PAYLOAD)$(TARGET3)
+
+else
+
+deploy test copy_to_payload:
+	@echo "Ignoring VMODL '$@' target."
+	@echo See https://github.com/vmware/docker-volume-vsphere/pull/975 for details.
+
+endif
+
+
