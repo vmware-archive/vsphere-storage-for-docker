@@ -781,7 +781,8 @@ class TestTenant(unittest.TestCase):
 
             args = self.parser.parse_args(command.split())
             error_info = vmdkops_admin.tenant_access_set(args)
-            self.assertNotEqual(None, error_info)
+            expected_message = "Invalid value {0} for allow-create option".format(val)
+            self.assertEqual(expected_message, error_info)
 
         if self.datastore1_name:
             # second datastore is available, can test tenant access add with --default_datastore
