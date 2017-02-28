@@ -101,23 +101,9 @@ func main() {
 	// Define command line options
 	logLevel := flag.String("log_level", "info", "Logging Level")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
+	driverName := flag.String("driver", "", "Volume driver")
 
-	// Load the configuration if one was provided.
-	c, err := config.Load(*configFile)
-	if err != nil {
-		log.Warning("Failed to load config file %s: %v", *configFile, err)
-	}
-
-	// Default driver, overridden by the config file
-	name := vsphereDriver
-	if c.Driver != "" {
-		name = c.Driver
-	}
-
-	// Driver specified on the command line overrides option in the config file
-	driverName := flag.String("driver", name, "Volume driver")
-
-	// photon driver options
+	// Photon driver options
 	targetURL := flag.String("target", "", "Photon controller URL")
 	projectID := flag.String("project", "", "Project ID of the docker host")
 	vmID := flag.String("host", "", "ID of docker host")
@@ -129,6 +115,22 @@ func main() {
 	flag.Parse()
 
 	logInit(logLevel, nil, configFile)
+
+	// Load the configuration if one was provided.
+	c, err := config.Load(*configFile)
+	if err != nil {
+		log.Warning("Failed to load config file %s: %v", *configFile, err)
+	}
+
+	// If no driver provided on the command line, use the one in the
+	// config file or the default.
+	if *driverName == "" {
+		if err == nil && c.Driver != "" {
+			*driverName = c.Driver
+		} else {
+			*driverName = vsphereDriver
+		}
+	}
 
 	log.WithFields(log.Fields{
 		"driver":    *driverName,
