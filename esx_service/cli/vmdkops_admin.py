@@ -362,6 +362,7 @@ def commands():
                                 '--allow-create': {
                                     'help': 
                                     'Allow create and delete on datastore if set to True; disallow create and delete on datastore if set to False',
+                                    'metavar': 'Value{True|False} - e.g. True'
                                 },
                                 '--volume-maxsize': {
                                     'help': 'Maximum size of the volume that can be created',
@@ -923,7 +924,6 @@ def tenant_vm_ls(args):
     print(cli_table.create(header, rows))
 
 
-
 def tenant_access_add(args):
     """ Handle tenant access command """
     volume_maxsize_in_MB = None
@@ -957,7 +957,7 @@ def tenant_access_set(args):
 
     error_info = auth_api._tenant_access_set(name=args.name, 
                                              datastore=args.datastore,
-                                             allow_create=args.allow_create, 
+                                             allow_create=args.allow_create,
                                              volume_maxsize_in_MB=volume_maxsize_in_MB, 
                                              volume_totalsize_in_MB=volume_totalsize_in_MB)
 

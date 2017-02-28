@@ -36,6 +36,7 @@ class ErrorCode:
     PRIVILEGE_NOT_FOUND = 201
     PRIVILEGE_ALREADY_EXIST = 202
     PRIVILEGE_INVALID_VOLUME_SIZE = 203
+    PRIVILEGE_INVALID_ALLOW_CREATE_VALUE = 204
     # Privilege related error code end
 
     # DATASTORE related error code start
@@ -72,6 +73,7 @@ error_code_to_message = {
     ErrorCode.PRIVILEGE_NOT_FOUND : "No privilege exists for ({0}, {1})",
     ErrorCode.PRIVILEGE_ALREADY_EXIST : "Privilege for ({0}, {1}) already exists",
     ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE : "Volume max size {0}MB exceeds the total size {1}MB",
+    ErrorCode.PRIVILEGE_INVALID_ALLOW_CREATE_VALUE : "Invalid value {0} for allow-create option",
 
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
     ErrorCode.DS_NOT_EXIST : "Datastore {0} does not exist",
