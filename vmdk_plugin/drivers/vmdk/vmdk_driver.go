@@ -15,9 +15,9 @@
 package vmdk
 
 //
-// VMWare VMDK Docker Data Volume plugin.
+// VMWare vSphere Docker Data Volume plugin.
 //
-// Provide support for --driver=vmdk in Docker, when Docker VM is running under ESX.
+// Provide support for --driver=vsphere in Docker, when Docker VM is running under ESX.
 //
 // Serves requests from Docker Engine related to VMDK volume operations.
 // Depends on vmdk-opsd service to be running on hosting ESX
@@ -41,8 +41,7 @@ const (
 	devWaitTimeout   = 1 * time.Second
 	sleepBeforeMount = 1 * time.Second
 	watchPath        = "/dev/disk/by-path"
-	version          = "VMDK Volume Driver v0.3"
-	driverName       = "vmdk"
+	version          = "vSphere Volume Driver v0.4"
 )
 
 // VolumeDriver - VMDK driver struct
@@ -55,7 +54,7 @@ type VolumeDriver struct {
 var mountRoot string
 
 // NewVolumeDriver creates Driver which to real ESX (useMockEsx=False) or a mock
-func NewVolumeDriver(port int, useMockEsx bool, mountDir string) *VolumeDriver {
+func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName string) *VolumeDriver {
 	var d *VolumeDriver
 
 	vmdkops.EsxPort = port

@@ -66,7 +66,7 @@ Refer to [tenancy
 documentation](http://vmware.github.io/docker-volume-vsphere/documentation/features/tenancy/) for setting up tenants.
 ```
 # To select datastore use --name=MyVolume@<Datastore Name>
-$ docker volume create --driver=vmdk --name=MyVolume -o size=10gb
+$ docker volume create --driver=vsphere --name=MyVolume -o size=10gb
 $ docker volume ls
 $ docker volume inspect MyVolume
 # To select datastore use MyVolume@<Datastore Name>

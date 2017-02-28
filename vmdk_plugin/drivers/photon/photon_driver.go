@@ -17,7 +17,7 @@ package photon
 //
 // VMWare VMDK Docker Data Volume plugin.
 //
-// Provide support for --driver=vmdk in Docker, when Docker VM is running under ESX.
+// Provide support for --driver=photon in Docker, when Docker VM is running under ESX.
 //
 // Serves requests from Docker Engine related to VMDK volume operations.
 // Depends on vmdk-opsd service to be running on hosting ESX

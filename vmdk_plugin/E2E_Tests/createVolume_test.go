@@ -38,7 +38,7 @@ The issue was observed on photon so steps are mentioned for photon OS only in fa
 test should be OS agnostic.
 
 1. create docker volume using following command
-	docker volume create --driver=vmdk --name=testVol -o size=10gb
+	docker volume create --driver=vsphere --name=testVol -o size=10gb
 2. verify volume is created correctly or not
 3. delete created volume
 

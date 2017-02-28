@@ -86,7 +86,7 @@ GREP="$DEBUG grep"
 echo "Testing refcounts..."
 
 echo "Creating volume $vname and $count containers using it"
-$DOCKER volume create --driver=vmdk --name=$vname -o size=1gb
+$DOCKER volume create --driver=vsphere --name=$vname -o size=1gb
 if [ "$?" -ne 0 ] ; then
    echo FAILED TO CREATE $vname
    exit 1

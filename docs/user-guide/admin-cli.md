@@ -531,7 +531,7 @@ some-policy  (("proportionalCapacity" i0)("hostFailuresToTolerate" i0)  Unused
 ```
 
 When creating a virtual disk using `docker volume create`, the policy name should be given with the `-o`
-option such as `docker volume create --driver=vmdk --name=some-vol -o vsan-policy-name=some-policy`.
+option such as `docker volume create --driver=vsphere --name=some-vol -o vsan-policy-name=some-policy`.
 The number of virtual disks using the policy will then show up in the `Active` column.
 
 #### Update

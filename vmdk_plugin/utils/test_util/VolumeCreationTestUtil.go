@@ -30,7 +30,7 @@ var SSH_OPTS []string = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0]
 // defaults.
 func CreateDefaultVolume(ip string, name string) ([]byte, error) {
 	fmt.Printf("\ncreating volume [%s] on VM[%s]", name, ip)
-	return InvokeCommand(ip, "docker volume create --driver=vmdk --name="+name)
+	return InvokeCommand(ip, "docker volume create --driver=vsphere --name="+name)
 }
 
 // This helper deletes the created volume as per passed volume name.

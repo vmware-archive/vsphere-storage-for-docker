@@ -39,6 +39,8 @@ const (
 	mountRoot     = "/mnt/vmdk" // VMDK and photon volumes are mounted here
 	photonDriver  = "photon"
 	vmdkDriver    = "vmdk"
+	vsphereDriver = "vsphere"
+	defaultPort   = 1019
 )
 
 // An equivalent function is not exported from the SDK.
@@ -97,28 +99,22 @@ func main() {
 	var driver volume.Driver
 
 	// Define command line options
-	driverName := flag.String("driver", "vmdk", "Volume driver")
-	logLevel := flag.String("log_level", "debug", "Logging Level")
+	logLevel := flag.String("log_level", "info", "Logging Level")
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
+	driverName := flag.String("driver", "", "Volume driver")
 
-	// photon driver options
+	// Photon driver options
 	targetURL := flag.String("target", "", "Photon controller URL")
 	projectID := flag.String("project", "", "Project ID of the docker host")
 	vmID := flag.String("host", "", "ID of docker host")
 
-	// vmdk driver options
-	port := flag.Int("port", 1019, "Default port to connect to ESX service")
+	// vSphere driver options
+	port := flag.Int("port", defaultPort, "Default port to connect to ESX service")
 	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX service")
 
 	flag.Parse()
 
 	logInit(logLevel, nil, configFile)
-
-	log.WithFields(log.Fields{
-		"driver":    *driverName,
-		"log_level": *logLevel,
-		"config":    *configFile,
-	}).Info("Starting plugin ")
 
 	// Load the configuration if one was provided.
 	c, err := config.Load(*configFile)
@@ -126,7 +122,23 @@ func main() {
 		log.Warning("Failed to load config file %s: %v", *configFile, err)
 	}
 
-	// The vmdk driver doesn't depend on the config file for options.
+	// If no driver provided on the command line, use the one in the
+	// config file or the default.
+	if *driverName == "" {
+		if err == nil && c.Driver != "" {
+			*driverName = c.Driver
+		} else {
+			*driverName = vsphereDriver
+		}
+	}
+
+	log.WithFields(log.Fields{
+		"driver":    *driverName,
+		"log_level": *logLevel,
+		"config":    *configFile,
+	}).Info("Starting plugin ")
+
+	// The vSphere driver doesn't depend on the config file for options
 	if *driverName == photonDriver && err == nil {
 		if *targetURL == "" {
 			*targetURL = c.Target
@@ -151,10 +163,13 @@ func main() {
 		}
 		driver = photon.NewVolumeDriver(*targetURL, *projectID,
 			*vmID, mountRoot)
-	} else if *driverName == vmdkDriver {
+	} else if *driverName == vsphereDriver || *driverName == vmdkDriver {
+		if *driverName == vmdkDriver {
+			log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing ...")
+		}
 		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
 
-		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot)
+		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)
