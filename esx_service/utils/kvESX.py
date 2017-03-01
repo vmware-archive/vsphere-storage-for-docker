@@ -358,7 +358,7 @@ def convert(size):
     Size conversions
     """
     if size < KB:
-        return size
+        return str(size)
     elif size < MB:
         return '{0}{1}'.format(int(size / KB), 'KB')
     elif size < GB:
