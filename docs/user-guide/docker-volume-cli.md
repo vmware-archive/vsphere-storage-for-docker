@@ -1,12 +1,4 @@
-[TOC]
 # Using the Service in Docker
-The service works with existing Docker volume commands.
-
-1. [Docker volume create](https://docs.docker.com/engine/reference/commandline/volume_create/)
-2. [Docker volume inspect](https://docs.docker.com/engine/reference/commandline/volume_inspect/)
-3. [Docker volume ls](https://docs.docker.com/engine/reference/commandline/volume_ls/)
-4. [Docker volume rm](https://docs.docker.com/engine/reference/commandline/volume_rm/)
-
 
 The Docker volume commands are supported for both the vSphere and Photon platforms with minor differences in capabilities. Features that are specific to either of the platforms are mentioned explicitly below.
 <script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
@@ -82,8 +74,80 @@ docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume 
 Specifies a volume to be cloned when creating a new volume. The created clone is completely independent from the original volume and will inherit the same options, which can be changed with the exception of the size and fstype.
  
 ### flavor (Photon only)
-...
+```
 docker volume create --driver=vsphere --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
-...
+```
 
 The flavor specifies the name of the persistent disk flavor that must have already been created in the Photon Controller. The flavor indicats the resource limits that are applied to the volume being created.
+
+## Docker volume list
+```
+docker volume ls
+DRIVER              VOLUME NAME
+vsphere                MyVolume@vsanDatastore
+vsphere                minio1@vsanDatastore
+vsphere                minio2@vsanDatastore
+vsphere                redis-data@vsanDatastore
+```
+## Docker volume inspect
+You can use `docker volume inspect` command to see vSphere attributes of a particular volume.
+```
+docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+```
+```
+docker volume inspect MyVolume
+[
+    {
+        "Driver": "vmdk",
+        "Labels": {},
+        "Mountpoint": "/mnt/vmdk/MyVolume",
+        "Name": "MyVolume",
+        "Options": {
+            "fstype": "xfs",
+            "size": "2gb",
+            "vsan-policy-name": "myPolicy"
+        },
+        "Scope": "global",
+        "Status": {
+            "access": "read-write",
+            "attach-as": "independent_persistent",
+            "capacity": {
+                "allocated": "32MB",
+                "size": "2GB"
+            },
+            "clone-from": "None",
+            "created": "Wed Mar  1 20:06:02 2017",
+            "created by VM": "esx1_swarm01",
+            "datastore": "vsanDatastore",
+            "diskformat": "thin",
+            "fstype": "xfs",
+            "status": "detached",
+            "vsan-policy-name": "myPolicy"
+        }
+    }
+]
+```
+
+## Docker Compose
+```
+cat nginx-stack-vsphere.yaml 
+version: "3"
+services:
+  nginx:
+    image: nginx
+    ports:
+      - "5000:80"
+    volumes:
+      - log:/var/log/nginx
+    deploy:
+      replicas: 1 
+      restart_policy:
+        condition: on-failure
+
+volumes:
+   log:
+      driver: vsphere
+```
+```
+docker stack deploy -c  nginx-stack-vsphere.yaml nginx
+```

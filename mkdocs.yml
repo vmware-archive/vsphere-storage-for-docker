@@ -1,29 +1,27 @@
 site_name: vSphere Docker Volume Service
 pages:
     - Home: index.md
-    - Installation and Deployment: user-guide/install.md
-    - Features:
-        - Tenancy: features/tenancy.md
-        - VSAN Policy: features/vsan-policy.md
-        - Integration with vCenter: features/vcenter.md
+    - Setup: 
+        - Installation: user-guide/install.md
+        - Advanced Configuration: user-guide/docker-plugin-drivers.md
     - User Guide:
-        - Docker Volume CLI:
-            - Basic commands: user-guide/docker-volume-cli.md
-            - Multiple Datastores: user-guide/datastores.md
-        - Backend ESX Overview:
-            - Volume Layout: user-guide/vsphere-overview.md
+        - Create & manage docker volumes: user-guide/docker-volume-cli.md
+        - Multiple Datastores: user-guide/datastores.md
         - Admin CLI: user-guide/admin-cli.md
+        - Volume Layout on backend: user-guide/vsphere-overview.md
+    - Advanced Features:
+        - Tenancy: features/tenancy.md
+        - Policy Management: features/vsan-policy.md
+        - Integration with vCenter: features/vcenter.md
     - FAQ: user-guide/faq.md
     - Blog:
-        - 2016:
-            - September:
-                - Release announcement and updates: blog/2016-9-28.md
-            - October:
-                - 0.8.1 Release (Tenancy) and stateful containers meetup: blog/2016-10-28.md
+        - Release announcement and updates: blog/2016-9-28.md
+        - 0.8.1 Release (Tenancy) and stateful containers meetup: blog/2016-10-28.md
 theme: readthedocs
 google_analytics: ['UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/']
 site_favicon: favicon.ico
-site_author: cna-storage@vmware.com
+site_author: containers@vmware.com
+site_name: vSphere Docker Volume Service
 site_url: https://vmware.github.io/docker-volume-vsphere/
 dev_addr: 0.0.0.0:8000
 markdown_extensions:

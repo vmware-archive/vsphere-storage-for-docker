@@ -1,4 +1,4 @@
-[TOC]
+
 # Introduction
 
 With the vSphere Docker Volume Service, each ESXi host manages multiple VMs, with
@@ -411,8 +411,6 @@ optional arguments:
 ```
 
 ## Volume
-
-### List
 
 #### Help
 ```bash

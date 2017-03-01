@@ -1,3 +1,5 @@
+* IMPORTANT: This is an experimental feature supported only on standalone ESX as of release 0.12. We are seeking feedback/requirements to support mult-tenancy across vSphere Cluster/Datacenter. You can drop us a note at containers@vmware.com.
+
 # Tenancy
 
 Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or "tenants." Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With tenancy, you can achieve isolation of resources of one tenant from other tenants. 

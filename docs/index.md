@@ -1,4 +1,4 @@
-# vSphere Docker Volume Service - Introduction
+** vSphere Docker Volume Service - Introduction **
 
 vSphere Docker Volume Service enables you to run stateful containerized applications on top of VMware vSphere. 
 
@@ -13,9 +13,10 @@ This service is integrated with [Docker Volume Plugin framework](https://docs.do
  
 <script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
-# Feedback
+** Feedback **
 
-On going work and feature requests are tracked using [GitHub Issues](https://github.com/vmware/docker-volume-vsphere/issues). Please feel free to file [issues](https://github.com/vmware/docker-volume-vsphere/issues) or email [cna-storage@vmware.com](mailto:cna-storage@vmware.com)
+On going work and feature requests are tracked using [GitHub Issues](https://github.com/vmware/docker-volume-vsphere/issues). Please feel free to file [issues](https://github.com/vmware/docker-volume-vsphere/issues) or email [containers@vmware.com](mailto:containers@vmware.com)
 
-# Documentation Version
+** Documentation Version **
+
 The documentation here is for the latest release. The current master documentation can be found in markdown format in the [documentation folder](https://github.com/vmware/docker-volume-vsphere/tree/master/docs). For older releases, browse to [releases](https://github.com/vmware/docker-volume-vsphere/releases) select the release, click on the tag for the release and browse the docs folder.
