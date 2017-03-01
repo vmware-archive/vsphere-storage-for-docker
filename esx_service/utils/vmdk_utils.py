@@ -74,7 +74,8 @@ def init_datastoreCache():
             continue
         datastores.append((datastore.info.name,
                            os.path.split(datastore.info.url)[1],
-                           dockvols_path))
+                           dockvols_path,
+                           datastore.info.url))
 
 def validate_datastore(datastore):
     """
@@ -119,7 +120,7 @@ def get_volumes(tenant_re):
     # tenant_re = "*" : return all volumes under /vmfs/volumes/datastore1/dockervol
     logging.debug("get_volumes: tenant_pattern(%s)", tenant_re)
     volumes = []
-    for (datastore, url_name, path) in get_datastores():
+    for (datastore, url_name, path, url) in get_datastores():
         logging.debug("get_volumes: %s %s %s", datastore, url_name, path)
         if not tenant_re:
             for file_name in list_vmdks(path):
@@ -319,8 +320,12 @@ def get_datastore_url(datastore_name):
     if datastore_name == auth.DEFAULT_DS:
         return auth.DEFAULT_DS_URL
 
+    # validate_datastore will refresh the cache if datastore_name is not in cache
+    if not validate_datastore(datastore_name):
+        return None
+
     # Query datastore URL from VIM API
-    res = [d.info.url for d in get_datastore_objects() if d.info.name == datastore_name]
+    res = [d[3] for d in get_datastores() if d[0] == datastore_name]
     return res[0]
 
 def get_datastore_name(datastore_url):
@@ -331,7 +336,7 @@ def get_datastore_name(datastore_url):
         return auth.DEFAULT_DS
 
     # Query datastore name from VIM API
-    res = [d.info.name for d in get_datastore_objects() if d.info.url == datastore_url]
+    res = [d[0] for d in get_datastores() if d[3] == datastore_url]
     return res[0]
 
 def main():
