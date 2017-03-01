@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="cna-storage@vmware.com">
+  <meta name="author" content="containers@vmware.com">
   
   <title>Multiple Datastores - vSphere Docker Volume Service</title>
   
@@ -73,34 +73,20 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>Setup</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/tenancy/">Tenancy</a>
+        <a class="" href="../install/">Installation</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/vsan-policy/">VSAN Policy</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
+        <a class="" href="../docker-plugin-drivers/">Advanced Configuration</a>
         
     </li>
 
@@ -114,13 +100,8 @@
 
         
             
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="../docker-volume-cli/">Basic commands</a>
+        <a class="" href="../docker-volume-cli/">Create & manage docker volumes</a>
         
     </li>
 
@@ -131,35 +112,50 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#consuming-multiple-data-stores">Consuming multiple data stores</a></li>
-                
-            
             </ul>
         
     </li>
 
         
-    </ul>
-
-        
             
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
+    <li class="toctree-l1 ">
+        <a class="" href="../admin-cli/">Admin CLI</a>
+        
+    </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../vsphere-overview/">Volume Layout</a>
+        <a class="" href="../vsphere-overview/">Volume Layout on backend</a>
         
     </li>
 
         
     </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Advanced Features</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../admin-cli/">Admin CLI</a>
+        <a class="" href="../../features/tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vsan-policy/">Policy Management</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
         
     </li>
 
@@ -180,28 +176,10 @@
 
         
             
-    <ul class="subnav">
-    <li><span>2016</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>September</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
         
     </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>October</span></li>
 
         
             
@@ -209,12 +187,6 @@
         <a class="" href="../../blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
         
     </li>
-
-        
-    </ul>
-
-        
-    </ul>
 
         
     </ul>
@@ -245,10 +217,6 @@
           <li>User Guide &raquo;</li>
         
       
-        
-          <li>Docker Volume CLI &raquo;</li>
-        
-      
     
     <li>Multiple Datastores</li>
     <li class="wy-breadcrumbs-aside">
@@ -260,7 +228,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="consuming-multiple-data-stores">Consuming multiple data stores<a class="headerlink" href="#consuming-multiple-data-stores" title="Permanent link">&para;</a></h1>
+                <p><strong> Consuming multiple data stores </strong></p>
 <p>The service by default creates a volume in the datastore that hosts the VM. Optionally Docker volumes can be provisioned on a specific datastore by directly addressing the datastore when specifying the name in the format &lt;volume name&gt;@&lt;datastore name&gt;</p>
 <script type="text/javascript" src="https://asciinema.org/a/80428.js" id="asciicast-80428" async></script>
               
@@ -270,10 +238,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../vsphere-overview/" class="btn btn-neutral float-right" title="Volume Layout">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../admin-cli/" class="btn btn-neutral float-right" title="Admin CLI">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../docker-volume-cli/" class="btn btn-neutral" title="Basic commands"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../docker-volume-cli/" class="btn btn-neutral" title="Create & manage docker volumes"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -302,7 +270,7 @@
         <span><a href="../docker-volume-cli/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../vsphere-overview/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../admin-cli/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

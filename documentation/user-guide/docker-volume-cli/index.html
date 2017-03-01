@@ -6,9 +6,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="cna-storage@vmware.com">
+  <meta name="author" content="containers@vmware.com">
   
-  <title>Basic commands - vSphere Docker Volume Service</title>
+  <title>Create & manage docker volumes - vSphere Docker Volume Service</title>
   
 
   <link rel="shortcut icon" href="../../favicon.ico">
@@ -24,7 +24,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Basic commands";
+    var mkdocs_page_name = "Create & manage docker volumes";
     var mkdocs_page_input_path = "user-guide/docker-volume-cli.md";
     var mkdocs_page_url = "/user-guide/docker-volume-cli/";
   </script>
@@ -73,34 +73,20 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>Setup</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/tenancy/">Tenancy</a>
+        <a class="" href="../install/">Installation</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/vsan-policy/">VSAN Policy</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
+        <a class="" href="../docker-plugin-drivers/">Advanced Configuration</a>
         
     </li>
 
@@ -114,19 +100,20 @@
 
         
             
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
     <li class="toctree-l1 current">
-        <a class="current" href="./">Basic commands</a>
+        <a class="current" href="./">Create & manage docker volumes</a>
         
             <ul>
             
                 <li class="toctree-l3"><a href="#using-the-service-in-docker">Using the Service in Docker</a></li>
                 
                     <li><a class="toctree-l4" href="#docker-volume-create-options">Docker volume create options</a></li>
+                
+                    <li><a class="toctree-l4" href="#docker-volume-list">Docker volume list</a></li>
+                
+                    <li><a class="toctree-l4" href="#docker-volume-inspect">Docker volume inspect</a></li>
+                
+                    <li><a class="toctree-l4" href="#docker-compose">Docker Compose</a></li>
                 
             
             </ul>
@@ -141,27 +128,45 @@
     </li>
 
         
-    </ul>
-
-        
             
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
+    <li class="toctree-l1 ">
+        <a class="" href="../admin-cli/">Admin CLI</a>
+        
+    </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../vsphere-overview/">Volume Layout</a>
+        <a class="" href="../vsphere-overview/">Volume Layout on backend</a>
         
     </li>
 
         
     </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Advanced Features</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../admin-cli/">Admin CLI</a>
+        <a class="" href="../../features/tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vsan-policy/">Policy Management</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
         
     </li>
 
@@ -182,28 +187,10 @@
 
         
             
-    <ul class="subnav">
-    <li><span>2016</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>September</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
         
     </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>October</span></li>
 
         
             
@@ -211,12 +198,6 @@
         <a class="" href="../../blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
         
     </li>
-
-        
-    </ul>
-
-        
-    </ul>
 
         
     </ul>
@@ -247,12 +228,8 @@
           <li>User Guide &raquo;</li>
         
       
-        
-          <li>Docker Volume CLI &raquo;</li>
-        
-      
     
-    <li>Basic commands</li>
+    <li>Create & manage docker volumes</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -262,32 +239,7 @@
           <div role="main">
             <div class="section">
               
-                <div class="toc">
-<ul>
-<li><a href="#using-the-service-in-docker">Using the Service in Docker</a><ul>
-<li><a href="#docker-volume-create-options">Docker volume create options</a><ul>
-<li><a href="#size">size</a></li>
-<li><a href="#vsan-policy-name-vsphere-only">vsan-policy-name (vSphere only)</a></li>
-<li><a href="#diskformat-vsphere-only">diskformat (vSphere only)</a></li>
-<li><a href="#attach_as-vsphere-only">attach_as (vSphere only)</a></li>
-<li><a href="#access-vsphere-only">access (vSphere only)</a></li>
-<li><a href="#fstype">fstype</a></li>
-<li><a href="#clone-from-vsphere-only">clone-from (vSphere only)</a></li>
-<li><a href="#flavor-photon-only">flavor (Photon only)</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
-<h1 id="using-the-service-in-docker">Using the Service in Docker<a class="headerlink" href="#using-the-service-in-docker" title="Permanent link">&para;</a></h1>
-<p>The service works with existing Docker volume commands.</p>
-<ol>
-<li><a href="https://docs.docker.com/engine/reference/commandline/volume_create/">Docker volume create</a></li>
-<li><a href="https://docs.docker.com/engine/reference/commandline/volume_inspect/">Docker volume inspect</a></li>
-<li><a href="https://docs.docker.com/engine/reference/commandline/volume_ls/">Docker volume ls</a></li>
-<li><a href="https://docs.docker.com/engine/reference/commandline/volume_rm/">Docker volume rm</a></li>
-</ol>
+                <h1 id="using-the-service-in-docker">Using the Service in Docker<a class="headerlink" href="#using-the-service-in-docker" title="Permanent link">&para;</a></h1>
 <p>The Docker volume commands are supported for both the vSphere and Photon platforms with minor differences in capabilities. Features that are specific to either of the platforms are mentioned explicitly below.
 <script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script></p>
 <h2 id="docker-volume-create-options">Docker volume create options<a class="headerlink" href="#docker-volume-create-options" title="Permanent link">&para;</a></h2>
@@ -345,10 +297,79 @@ docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume 
 
 <p>Specifies a volume to be cloned when creating a new volume. The created clone is completely independent from the original volume and will inherit the same options, which can be changed with the exception of the size and fstype.</p>
 <h3 id="flavor-photon-only">flavor (Photon only)<a class="headerlink" href="#flavor-photon-only" title="Permanent link">&para;</a></h3>
-<p>&hellip;
-docker volume create &ndash;driver=vsphere &ndash;name=CloneVolume -o flavor=<Photon persistent disk flavor name>
-&hellip;</p>
+<pre><code>docker volume create --driver=vsphere --name=CloneVolume -o flavor=&lt;Photon persistent disk flavor name&gt;
+</code></pre>
+
 <p>The flavor specifies the name of the persistent disk flavor that must have already been created in the Photon Controller. The flavor indicats the resource limits that are applied to the volume being created.</p>
+<h2 id="docker-volume-list">Docker volume list<a class="headerlink" href="#docker-volume-list" title="Permanent link">&para;</a></h2>
+<pre><code>docker volume ls
+DRIVER              VOLUME NAME
+vsphere                MyVolume@vsanDatastore
+vsphere                minio1@vsanDatastore
+vsphere                minio2@vsanDatastore
+vsphere                redis-data@vsanDatastore
+</code></pre>
+
+<h2 id="docker-volume-inspect">Docker volume inspect<a class="headerlink" href="#docker-volume-inspect" title="Permanent link">&para;</a></h2>
+<p>You can use <code>docker volume inspect</code> command to see vSphere attributes of a particular volume.</p>
+<pre><code>docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+</code></pre>
+
+<pre><code>docker volume inspect MyVolume
+[
+    {
+        &quot;Driver&quot;: &quot;vmdk&quot;,
+        &quot;Labels&quot;: {},
+        &quot;Mountpoint&quot;: &quot;/mnt/vmdk/MyVolume&quot;,
+        &quot;Name&quot;: &quot;MyVolume&quot;,
+        &quot;Options&quot;: {
+            &quot;fstype&quot;: &quot;xfs&quot;,
+            &quot;size&quot;: &quot;2gb&quot;,
+            &quot;vsan-policy-name&quot;: &quot;myPolicy&quot;
+        },
+        &quot;Scope&quot;: &quot;global&quot;,
+        &quot;Status&quot;: {
+            &quot;access&quot;: &quot;read-write&quot;,
+            &quot;attach-as&quot;: &quot;independent_persistent&quot;,
+            &quot;capacity&quot;: {
+                &quot;allocated&quot;: &quot;32MB&quot;,
+                &quot;size&quot;: &quot;2GB&quot;
+            },
+            &quot;clone-from&quot;: &quot;None&quot;,
+            &quot;created&quot;: &quot;Wed Mar  1 20:06:02 2017&quot;,
+            &quot;created by VM&quot;: &quot;esx1_swarm01&quot;,
+            &quot;datastore&quot;: &quot;vsanDatastore&quot;,
+            &quot;diskformat&quot;: &quot;thin&quot;,
+            &quot;fstype&quot;: &quot;xfs&quot;,
+            &quot;status&quot;: &quot;detached&quot;,
+            &quot;vsan-policy-name&quot;: &quot;myPolicy&quot;
+        }
+    }
+]
+</code></pre>
+
+<h2 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h2>
+<pre><code>cat nginx-stack-vsphere.yaml 
+version: &quot;3&quot;
+services:
+  nginx:
+    image: nginx
+    ports:
+      - &quot;5000:80&quot;
+    volumes:
+      - log:/var/log/nginx
+    deploy:
+      replicas: 1 
+      restart_policy:
+        condition: on-failure
+
+volumes:
+   log:
+      driver: vsphere
+</code></pre>
+
+<pre><code>docker stack deploy -c  nginx-stack-vsphere.yaml nginx
+</code></pre>
               
             </div>
           </div>
@@ -359,7 +380,7 @@ docker volume create &ndash;driver=vsphere &ndash;name=CloneVolume -o flavor=<Ph
         <a href="../datastores/" class="btn btn-neutral float-right" title="Multiple Datastores">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../../features/vcenter/" class="btn btn-neutral" title="Integration with vCenter"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../docker-plugin-drivers/" class="btn btn-neutral" title="Advanced Configuration"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -385,7 +406,7 @@ docker volume create &ndash;driver=vsphere &ndash;name=CloneVolume -o flavor=<Ph
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../../features/vcenter/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../docker-plugin-drivers/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../datastores/" style="color: #fcfcfc">Next &raquo;</a></span>

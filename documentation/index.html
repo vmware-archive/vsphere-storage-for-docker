@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="cna-storage@vmware.com">
+  <meta name="author" content="containers@vmware.com">
   
   <title>vSphere Docker Volume Service</title>
   
@@ -71,49 +71,26 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#vsphere-docker-volume-service-introduction">vSphere Docker Volume Service - Introduction</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#feedback">Feedback</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#documentation-version">Documentation Version</a></li>
-                
-            
             </ul>
         
     </li>
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="user-guide/install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>Setup</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="features/tenancy/">Tenancy</a>
+        <a class="" href="user-guide/install/">Installation</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="features/vsan-policy/">VSAN Policy</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="features/vcenter/">Integration with vCenter</a>
+        <a class="" href="user-guide/docker-plugin-drivers/">Advanced Configuration</a>
         
     </li>
 
@@ -127,13 +104,8 @@
 
         
             
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="user-guide/docker-volume-cli/">Basic commands</a>
+        <a class="" href="user-guide/docker-volume-cli/">Create & manage docker volumes</a>
         
     </li>
 
@@ -145,27 +117,45 @@
     </li>
 
         
-    </ul>
-
-        
             
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
+    <li class="toctree-l1 ">
+        <a class="" href="user-guide/admin-cli/">Admin CLI</a>
+        
+    </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="user-guide/vsphere-overview/">Volume Layout</a>
+        <a class="" href="user-guide/vsphere-overview/">Volume Layout on backend</a>
         
     </li>
 
         
     </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Advanced Features</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="user-guide/admin-cli/">Admin CLI</a>
+        <a class="" href="features/tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="features/vsan-policy/">Policy Management</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="features/vcenter/">Integration with vCenter</a>
         
     </li>
 
@@ -186,28 +176,10 @@
 
         
             
-    <ul class="subnav">
-    <li><span>2016</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>September</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="blog/2016-9-28/">Release announcement and updates</a>
         
     </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>October</span></li>
 
         
             
@@ -215,12 +187,6 @@
         <a class="" href="blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
         
     </li>
-
-        
-    </ul>
-
-        
-    </ul>
 
         
     </ul>
@@ -258,7 +224,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="vsphere-docker-volume-service-introduction">vSphere Docker Volume Service - Introduction<a class="headerlink" href="#vsphere-docker-volume-service-introduction" title="Permanent link">&para;</a></h1>
+                <p><strong> vSphere Docker Volume Service - Introduction </strong></p>
 <p>vSphere Docker Volume Service enables you to run stateful containerized applications on top of VMware vSphere. </p>
 <p>It is designed to meet the needs of Enterprise IT and application developers and offers the following benefits:</p>
 <ul>
@@ -270,9 +236,9 @@
 <p>This service is integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>. It does not need credential management or configuration management. </p>
 <script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
-<h1 id="feedback">Feedback<a class="headerlink" href="#feedback" title="Permanent link">&para;</a></h1>
-<p>On going work and feature requests are tracked using <a href="https://github.com/vmware/docker-volume-vsphere/issues">GitHub Issues</a>. Please feel free to file <a href="https://github.com/vmware/docker-volume-vsphere/issues">issues</a> or email <a href="mailto:cna-storage@vmware.com">cna-storage@vmware.com</a></p>
-<h1 id="documentation-version">Documentation Version<a class="headerlink" href="#documentation-version" title="Permanent link">&para;</a></h1>
+<p><strong> Feedback </strong></p>
+<p>On going work and feature requests are tracked using <a href="https://github.com/vmware/docker-volume-vsphere/issues">GitHub Issues</a>. Please feel free to file <a href="https://github.com/vmware/docker-volume-vsphere/issues">issues</a> or email <a href="mailto:containers@vmware.com">containers@vmware.com</a></p>
+<p><strong> Documentation Version </strong></p>
 <p>The documentation here is for the latest release. The current master documentation can be found in markdown format in the <a href="https://github.com/vmware/docker-volume-vsphere/tree/master/docs">documentation folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
               
             </div>
@@ -281,7 +247,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="user-guide/install/" class="btn btn-neutral float-right" title="Installation and Deployment">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="user-guide/install/" class="btn btn-neutral float-right" title="Installation">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -319,5 +285,5 @@
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2017-02-28 23:48:50.739956
+Build Date UTC : 2017-03-01 20:38:34.247021
 -->

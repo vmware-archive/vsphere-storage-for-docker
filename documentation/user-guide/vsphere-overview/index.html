@@ -6,9 +6,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="cna-storage@vmware.com">
+  <meta name="author" content="containers@vmware.com">
   
-  <title>Volume Layout - vSphere Docker Volume Service</title>
+  <title>Volume Layout on backend - vSphere Docker Volume Service</title>
   
 
   <link rel="shortcut icon" href="../../favicon.ico">
@@ -24,7 +24,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Volume Layout";
+    var mkdocs_page_name = "Volume Layout on backend";
     var mkdocs_page_input_path = "user-guide/vsphere-overview.md";
     var mkdocs_page_url = "/user-guide/vsphere-overview/";
   </script>
@@ -73,34 +73,20 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>Setup</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/tenancy/">Tenancy</a>
+        <a class="" href="../install/">Installation</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../features/vsan-policy/">VSAN Policy</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
+        <a class="" href="../docker-plugin-drivers/">Advanced Configuration</a>
         
     </li>
 
@@ -114,13 +100,8 @@
 
         
             
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="../docker-volume-cli/">Basic commands</a>
+        <a class="" href="../docker-volume-cli/">Create & manage docker volumes</a>
         
     </li>
 
@@ -132,22 +113,18 @@
     </li>
 
         
-    </ul>
-
-        
             
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
+    <li class="toctree-l1 ">
+        <a class="" href="../admin-cli/">Admin CLI</a>
+        
+    </li>
 
         
             
     <li class="toctree-l1 current">
-        <a class="current" href="./">Volume Layout</a>
+        <a class="current" href="./">Volume Layout on backend</a>
         
             <ul>
-            
-                <li class="toctree-l3"><a href="#docker-volumes-on-esx">Docker volumes on ESX</a></li>
-                
             
             </ul>
         
@@ -155,11 +132,30 @@
 
         
     </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Advanced Features</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../admin-cli/">Admin CLI</a>
+        <a class="" href="../../features/tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vsan-policy/">Policy Management</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../features/vcenter/">Integration with vCenter</a>
         
     </li>
 
@@ -180,28 +176,10 @@
 
         
             
-    <ul class="subnav">
-    <li><span>2016</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>September</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
         
     </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>October</span></li>
 
         
             
@@ -209,12 +187,6 @@
         <a class="" href="../../blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
         
     </li>
-
-        
-    </ul>
-
-        
-    </ul>
 
         
     </ul>
@@ -245,12 +217,8 @@
           <li>User Guide &raquo;</li>
         
       
-        
-          <li>Backend ESX Overview &raquo;</li>
-        
-      
     
-    <li>Volume Layout</li>
+    <li>Volume Layout on backend</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -260,7 +228,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="docker-volumes-on-esx">Docker volumes on ESX<a class="headerlink" href="#docker-volumes-on-esx" title="Permanent link">&para;</a></h1>
+                <p><strong> Docker volumes on ESX </strong></p>
 <p>Docker volumes on vSphere are powered by <a href="https://en.wikipedia.org/wiki/VMDK">VMDKs</a>. VMDKs can reside on datastores created on top of varying backends (NFS, SAN, VSAN, vVol). vSphere Docker Volume Service supports high availability for Docker volumes and allows for any VM requesting for the volume to gain access to it. The ability to attach the VMDK(Docker volume) to any VM when paired with a cluster manager such as Swarm allows a persistent container to be highly available.</p>
 <p>The VMDKs on ESX are stored on the datastore in a folder that is independent of a VM.</p>
 <script type="text/javascript" src="https://asciinema.org/a/80424.js" id="asciicast-80424" async></script>
@@ -271,10 +239,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../admin-cli/" class="btn btn-neutral float-right" title="Admin CLI">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../features/tenancy/" class="btn btn-neutral float-right" title="Tenancy">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../datastores/" class="btn btn-neutral" title="Multiple Datastores"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../admin-cli/" class="btn btn-neutral" title="Admin CLI"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -300,10 +268,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../datastores/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../admin-cli/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../admin-cli/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../../features/tenancy/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

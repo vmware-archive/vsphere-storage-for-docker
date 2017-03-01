@@ -4,58 +4,72 @@
     
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//</loc>
-     <lastmod>2017-02-28</lastmod>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
+        
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/install/</loc>
-     <lastmod>2017-02-28</lastmod>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/docker-plugin-drivers/</loc>
+     <lastmod>2017-03-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/docker-volume-cli/</loc>
+     <lastmod>2017-03-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/datastores/</loc>
+     <lastmod>2017-03-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/admin-cli/</loc>
+     <lastmod>2017-03-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/vsphere-overview/</loc>
+     <lastmod>2017-03-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//features/tenancy/</loc>
-     <lastmod>2017-02-28</lastmod>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//features/vsan-policy/</loc>
-     <lastmod>2017-02-28</lastmod>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//features/vcenter/</loc>
-     <lastmod>2017-02-28</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    
-
-    
-        
-    <url>
-     <loc>https://vmware.github.io/docker-volume-vsphere/</loc>
-     <lastmod></lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
-     <loc>https://vmware.github.io/docker-volume-vsphere/</loc>
-     <lastmod></lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
-     <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/admin-cli/</loc>
-     <lastmod>2017-02-28</lastmod>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -64,7 +78,7 @@
     
     <url>
      <loc>https://vmware.github.io/docker-volume-vsphere//user-guide/faq/</loc>
-     <lastmod>2017-02-28</lastmod>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -72,8 +86,14 @@
     
         
     <url>
-     <loc>https://vmware.github.io/docker-volume-vsphere/</loc>
-     <lastmod></lastmod>
+     <loc>https://vmware.github.io/docker-volume-vsphere//blog/2016-9-28/</loc>
+     <lastmod>2017-03-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://vmware.github.io/docker-volume-vsphere//blog/2016-10-28/</loc>
+     <lastmod>2017-03-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="cna-storage@vmware.com">
+  <meta name="author" content="containers@vmware.com">
   
   <title>Tenancy - vSphere Docker Volume Service</title>
   
@@ -73,15 +73,66 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Setup</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/install/">Installation and Deployment</a>
+        <a class="" href="../../user-guide/install/">Installation</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/docker-plugin-drivers/">Advanced Configuration</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>User Guide</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/docker-volume-cli/">Create & manage docker volumes</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/datastores/">Multiple Datastores</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/admin-cli/">Admin CLI</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/vsphere-overview/">Volume Layout on backend</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Advanced Features</span></li>
 
         
             
@@ -110,7 +161,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../vsan-policy/">VSAN Policy</a>
+        <a class="" href="../vsan-policy/">Policy Management</a>
         
     </li>
 
@@ -118,58 +169,6 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../vcenter/">Integration with vCenter</a>
-        
-    </li>
-
-        
-    </ul>
-<li>
-          
-            <li>
-    <ul class="subnav">
-    <li><span>User Guide</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/docker-volume-cli/">Basic commands</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/datastores/">Multiple Datastores</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/vsphere-overview/">Volume Layout</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/admin-cli/">Admin CLI</a>
         
     </li>
 
@@ -190,28 +189,10 @@
 
         
             
-    <ul class="subnav">
-    <li><span>2016</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>September</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
         
     </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>October</span></li>
 
         
             
@@ -219,12 +200,6 @@
         <a class="" href="../../blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
         
     </li>
-
-        
-    </ul>
-
-        
-    </ul>
 
         
     </ul>
@@ -252,7 +227,7 @@
     
       
         
-          <li>Features &raquo;</li>
+          <li>Advanced Features &raquo;</li>
         
       
     
@@ -266,7 +241,10 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="tenancy">Tenancy<a class="headerlink" href="#tenancy" title="Permanent link">&para;</a></h1>
+                <ul>
+<li>IMPORTANT: This is an experimental feature supported only on standalone ESX as of release 0.12. We are seeking feedback/requirements to support mult-tenancy across vSphere Cluster/Datacenter. You can drop us a note at containers@vmware.com.</li>
+</ul>
+<h1 id="tenancy">Tenancy<a class="headerlink" href="#tenancy" title="Permanent link">&para;</a></h1>
 <p>Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or &ldquo;tenants.&rdquo; Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With tenancy, you can achieve isolation of resources of one tenant from other tenants. </p>
 <p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a tenant.  A tenant can be granted access to create, delete or mount volumes on a specific datastore. VMs assigned to a tenant can then execute Docker volume APIs on an assigned datastores. Within a datastore multiple tenants can store their Docker volumes. A tenant cannot access volumes created by a different tenant i.e. tenants have their own independent namespace, even if tenants share datastores. VMs cannot be shared between tenants.</p>
 <p>Key attributes of tenancy:</p>
@@ -303,10 +281,10 @@ If &ldquo;default_datastore&rdquo; is not set for a tenant, then datastore where
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../vsan-policy/" class="btn btn-neutral float-right" title="VSAN Policy">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../vsan-policy/" class="btn btn-neutral float-right" title="Policy Management">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../../user-guide/install/" class="btn btn-neutral" title="Installation and Deployment"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../user-guide/vsphere-overview/" class="btn btn-neutral" title="Volume Layout on backend"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -332,7 +310,7 @@ If &ldquo;default_datastore&rdquo; is not set for a tenant, then datastore where
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../../user-guide/install/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../../user-guide/vsphere-overview/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../vsan-policy/" style="color: #fcfcfc">Next &raquo;</a></span>

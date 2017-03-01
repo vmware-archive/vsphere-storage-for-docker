@@ -6,9 +6,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="cna-storage@vmware.com">
+  <meta name="author" content="containers@vmware.com">
   
-  <title>VSAN Policy - vSphere Docker Volume Service</title>
+  <title>Policy Management - vSphere Docker Volume Service</title>
   
 
   <link rel="shortcut icon" href="../../favicon.ico">
@@ -24,7 +24,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "VSAN Policy";
+    var mkdocs_page_name = "Policy Management";
     var mkdocs_page_input_path = "features/vsan-policy.md";
     var mkdocs_page_url = "/features/vsan-policy/";
   </script>
@@ -73,47 +73,20 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/install/">Installation and Deployment</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
-    <li><span>Features</span></li>
+    <li><span>Setup</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../tenancy/">Tenancy</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">VSAN Policy</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#what-is-vsan">What is VSAN</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#vsan-policy">VSAN Policy</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#mapping-docker-volumes-to-vsan-objects-with-policy">Mapping Docker volumes to VSAN objects with policy</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../user-guide/install/">Installation</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../vcenter/">Integration with vCenter</a>
+        <a class="" href="../../user-guide/docker-plugin-drivers/">Advanced Configuration</a>
         
     </li>
 
@@ -127,13 +100,8 @@
 
         
             
-    <ul class="subnav">
-    <li><span>Docker Volume CLI</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/docker-volume-cli/">Basic commands</a>
+        <a class="" href="../../user-guide/docker-volume-cli/">Create & manage docker volumes</a>
         
     </li>
 
@@ -145,27 +113,58 @@
     </li>
 
         
-    </ul>
-
-        
             
-    <ul class="subnav">
-    <li><span>Backend ESX Overview</span></li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../user-guide/admin-cli/">Admin CLI</a>
+        
+    </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/vsphere-overview/">Volume Layout</a>
+        <a class="" href="../../user-guide/vsphere-overview/">Volume Layout on backend</a>
         
     </li>
 
         
     </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Advanced Features</span></li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../user-guide/admin-cli/">Admin CLI</a>
+        <a class="" href="../tenancy/">Tenancy</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Policy Management</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#what-is-vsan">What is vSAN</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#vsan-policy">vSAN Policy</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#mapping-docker-volumes-to-vsan-objects-with-policy">Mapping Docker volumes to vSAN objects with policy</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../vcenter/">Integration with vCenter</a>
         
     </li>
 
@@ -186,28 +185,10 @@
 
         
             
-    <ul class="subnav">
-    <li><span>2016</span></li>
-
-        
-            
-    <ul class="subnav">
-    <li><span>September</span></li>
-
-        
-            
     <li class="toctree-l1 ">
         <a class="" href="../../blog/2016-9-28/">Release announcement and updates</a>
         
     </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>October</span></li>
 
         
             
@@ -215,12 +196,6 @@
         <a class="" href="../../blog/2016-10-28/">0.8.1 Release (Tenancy) and stateful containers meetup</a>
         
     </li>
-
-        
-    </ul>
-
-        
-    </ul>
 
         
     </ul>
@@ -248,11 +223,11 @@
     
       
         
-          <li>Features &raquo;</li>
+          <li>Advanced Features &raquo;</li>
         
       
     
-    <li>VSAN Policy</li>
+    <li>Policy Management</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -262,14 +237,18 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="what-is-vsan">What is VSAN<a class="headerlink" href="#what-is-vsan" title="Permanent link">&para;</a></h1>
-<p><a href="http://www.vmware.com/products/virtual-san.html">VSAN</a> is a shared storage (all ESX nodes in a cluster can access the same VSAN store), hyper-converged (VSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.</p>
-<h1 id="vsan-policy">VSAN Policy<a class="headerlink" href="#vsan-policy" title="Permanent link">&para;</a></h1>
-<p>VSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.</p>
-<h1 id="mapping-docker-volumes-to-vsan-objects-with-policy">Mapping Docker volumes to VSAN objects with policy<a class="headerlink" href="#mapping-docker-volumes-to-vsan-objects-with-policy" title="Permanent link">&para;</a></h1>
+                <h1 id="what-is-vsan">What is vSAN<a class="headerlink" href="#what-is-vsan" title="Permanent link">&para;</a></h1>
+<p><a href="http://www.vmware.com/products/virtual-san.html">vSAN</a> is a shared storage (all ESX nodes in a cluster can access the same vSAN store), hyper-converged (vSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.</p>
+<h1 id="vsan-policy">vSAN Policy<a class="headerlink" href="#vsan-policy" title="Permanent link">&para;</a></h1>
+<p>vSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.</p>
+<h1 id="mapping-docker-volumes-to-vsan-objects-with-policy">Mapping Docker volumes to vSAN objects with policy<a class="headerlink" href="#mapping-docker-volumes-to-vsan-objects-with-policy" title="Permanent link">&para;</a></h1>
 <p>Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.</p>
-<pre><code>vmdkops-admin policy create --name=myPolicy --content=&quot;string&quot;
-docker volume create --driver=vsphere --name=MyVol -o vsan-policy-name=myPolicy
+<pre><code>ESX# vmdkops_admin.py policy create —name=myPolicy —content='((&quot;proportionalCapacity&quot; i0)(&quot;hostFailuresToTolerate&quot; i0))'
+Successfully created policy: myPolicy
+</code></pre>
+
+<pre><code>swarm-1# docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+MyVolume
 </code></pre>
               
             </div>
