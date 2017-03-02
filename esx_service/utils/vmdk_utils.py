@@ -325,7 +325,7 @@ def get_datastore_url(datastore_name):
 
     # Query datastore URL from VIM API
     # get_datastores() return a list of tuple
-    # each tuple has for format like (datastore_name, datastore_url, dockvol_path)
+    # each tuple has format like (datastore_name, datastore_url, dockvol_path)
     res = [d[1] for d in get_datastores() if d[0] == datastore_name]
     return res[0]
 
@@ -338,9 +338,19 @@ def get_datastore_name(datastore_url):
 
     # Query datastore name from VIM API
     # get_datastores() return a list of tuple
-    # each tuple has for format like (datastore_name, datastore_url, dockvol_path)
+    # each tuple has format like (datastore_name, datastore_url, dockvol_path)
     res = [d[0] for d in get_datastores() if d[1] == datastore_url]
     return res[0]
+
+def get_datastore_url_from_config_path(config_path):
+    """Returns datastore url in config_path """
+    # path can be /vmfs/volumes/<datastore_url_name>/...
+    # or /vmfs/volumes/datastore_name/...
+    # so extract datastore_url_name:
+    config_ds_url = os.path.join("/vmfs/volumes/", os.path.realpath(config_path).split("/")[3])
+    logging.debug("get_datastore_url_from_config_path: config_path=%s config_ds_url=%s"
+                  % (config_path, config_ds_url))
+    return config_ds_url
 
 def main():
     log_config.configure()

@@ -741,19 +741,7 @@ def get_full_vol_name(vmdk_name, datastore):
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
     logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
-
-
-# TBD - move to vmdk_utils
-def get_datastore_url_from_config_path(config_path):
-    """Returns datastore url in config_path """
-    # path can be /vmfs/volumes/<datastore_url_name>/...
-    # or /vmfs/volumes/datastore_name/...
-    # so extract datastore_url_name:
-    config_ds_url = os.path.join("/vmfs/volumes/", os.path.realpath(config_path).split("/")[3])
-    logging.debug("get_datastore_url_from_config_path: config_path=%s config_ds_url=%s"
-                  % (config_path, config_ds_url))
-    return config_ds_url
-
+    
 def datastore_path_exist(datastore_name):
     """ Check whether path /vmfs/volumes/datastore_name" exist or not """
     ds_path = os.path.join("/vmfs/volumes/", datastore_name)
@@ -762,8 +750,7 @@ def datastore_path_exist(datastore_name):
 def get_datastore_name(datastore_url):
     """ Get datastore_name with given datastore_url """
     datastore_name = vmdk_utils.get_datastore_name(datastore_url)
-    datastore_path = os.path.join("/vmfs/volumes/", datastore_name)
-    if not datastore_path_exist(datastore_path):
+    if not datastore_path_exist(datastore_name):
         # path /vmfs/volumes/datastore_name does not exist
         # the possible reason is datastore_name which got from
         # datastore cache is invalid(old name)
@@ -787,7 +774,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     Returns None (if all OK) or error string
     """
     logging.debug("config_path=%s", config_path)
-    vm_datastore_url = get_datastore_url_from_config_path(config_path)
+    vm_datastore_url = vmdk_utils.get_datastore_url_from_config_path(config_path)
     vm_datastore = get_datastore_name(vm_datastore_url)
 
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
