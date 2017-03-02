@@ -232,8 +232,8 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
 
-def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore_url=None):
-    logging.info("*** cloneVMDK: %s opts = %s vm_uuid=%s vm_datastore_url=%s", vmdk_path, opts, vm_uuid, vm_datastore_url)
+def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
+    logging.info("*** cloneVMDK: %s opts = %s vm_uuid=%s datastore_url=%s", vmdk_path, opts, vm_uuid, datastore_url)
 
     # Get source volume path for cloning
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
@@ -245,13 +245,13 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore_url=None):
     except ValidationError as ex:
         return err(str(ex))
     if not src_datastore:
-        src_datastore_url = vm_datastore_url
-        src_datastore = vmdk_utils.get_datastore_name(vm_datastore_url)
+        src_datastore_url = datastore_url
+        src_datastore = vmdk_utils.get_datastore_name(datastore_url)
     elif not vmdk_utils.validate_datastore(src_datastore):
         return err("Invalid datastore '%s'.\n" \
                     "Known datastores: %s.\n" \
                     "Default datastore_url: %s" \
-                    % (src_datastore, ", ".join(get_datastore_names_list()), vm_datastore_url))
+                    % (src_datastore, ", ".join(get_datastore_names_list()), datastore_url))
     else:
         src_datastore_url = vmdk_utils.get_datastore_url(src_datastore)
 

@@ -294,7 +294,7 @@ class DockerVolumeTenant:
 
         Return value:
             error_msg: return None on success or error info on failure
-            datastore: return default_datastore url on success or None on failure
+            datastore_url: return default_datastore url on success or None on failure
         """
         error_msg, result = auth.get_row_from_tenants_table(conn, self.id)
         if error_msg:

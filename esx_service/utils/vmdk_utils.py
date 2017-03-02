@@ -97,7 +97,7 @@ def get_datastores():
     Returns a list of (name, url, dockvol_path), with an element per datastore
     where:
     'name' is datastore name (e.g. 'vsanDatastore') ,
-    'url-name' is datastore URL (e.g. '/vmfs/volumes/vsan:572904f8c031435f-3513e0db551fcc82')
+    'url' is datastore URL (e.g. '/vmfs/volumes/vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore
     """
     if datastores == None:
@@ -324,6 +324,8 @@ def get_datastore_url(datastore_name):
         return None
 
     # Query datastore URL from VIM API
+    # get_datastores() return a list of tuple
+    # each tuple has for format like (datastore_name, datastore_url, dockvol_path)
     res = [d[1] for d in get_datastores() if d[0] == datastore_name]
     return res[0]
 
@@ -335,6 +337,8 @@ def get_datastore_name(datastore_url):
         return auth.DEFAULT_DS
 
     # Query datastore name from VIM API
+    # get_datastores() return a list of tuple
+    # each tuple has for format like (datastore_name, datastore_url, dockvol_path)
     res = [d[0] for d in get_datastores() if d[1] == datastore_url]
     return res[0]
 
