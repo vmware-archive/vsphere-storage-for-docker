@@ -55,7 +55,7 @@ Check to see if the new release shows up on GitHub and the CI build has started.
 
 Generate the change log
 ```
-docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate
+docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
 ```
 
 Manually eye ball the list to make sure Issues are relevant to the release (Some times labels such as wontfix have not been applied to an Issue)
