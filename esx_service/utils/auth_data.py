@@ -62,6 +62,15 @@ def get_version_str(major_ver, minor_ver):
     res = str(major_ver) + "." + str(minor_ver)
     return res
 
+def get_dockvol_path_tenant_path(datastore_name, tenant_id):
+        """ Return dockvol path and tenant_path for given datastore and tenant """
+
+        # dockvol_path has the format like "/vmfs/volumes/<datastore_name>"
+        # tenant_path has the format like "/vmfs/volumes/<datastore_name>/tenant_id"
+        dockvol_path = os.path.join("/vmfs/volumes", datastore_name, vmdk_ops.DOCK_VOLS_DIR)
+        tenant_path = os.path.join(dockvol_path, tenant_id)
+        return dockvol_path, tenant_path
+
 class DbConnectionError(Exception):
     """ An exception thrown when a client tries to establish a connection to the DB.
     """
@@ -227,14 +236,14 @@ class DockerVolumeTenant:
         # rename the old symbol link /vmfs/volumes/datastore_name/tenant_name
         # to a new name /vmfs/volumes/datastore_name/new_tenant_name
         # which still point to path /vmfs/volumes/datastore_name/tenant_uuid
-        for (datastore, url_name, path, url) in vmdk_utils.get_datastores():
-            dock_vol_path = os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR)
-            tenant_path = os.path.join(dock_vol_path, tenant_id)
+        for (datastore, url, path) in vmdk_utils.get_datastores():
+            dockvol_path, tenant_path = get_dockvol_path_tenant_path(datastore_name=datastore,
+                                                                     tenant_id = tenant_id)
             logging.debug("set_name: try to update the symlink to path %s", tenant_path)
 
             if os.path.isdir(tenant_path):
-                exist_symlink_path = os.path.join(dock_vol_path, name)
-                new_symlink_path = os.path.join(dock_vol_path, new_name)
+                exist_symlink_path = os.path.join(dockvol_path, name)
+                new_symlink_path = os.path.join(dockvol_path, new_name)
                 if os.path.isdir(exist_symlink_path):
                     logging.info("Renaming the symlink %s to %s", exist_symlink_path, new_symlink_path)
                     os.rename(exist_symlink_path, new_symlink_path)
@@ -245,6 +254,7 @@ class DockerVolumeTenant:
                         logging.info("Symlink %s is created to point to path %s", new_symlink_path, path)
 
         return None
+
 
 
     def set_description(self, conn, description):
@@ -908,13 +918,13 @@ class AuthorizationDataManager:
             VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
             # delete the symlink /vmfs/volume/datastore_name/tenant_name
             # which point to /vmfs/volumes/datastore_name/tenant_uuid
-            for (datastore, url_name, path, url) in vmdk_utils.get_datastores():
-                dock_vol_path = os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR)
-                tenant_path = os.path.join(dock_vol_path, tenant_id)
+            for (datastore, url, path) in vmdk_utils.get_datastores():
+                dockvol_path, tenant_path = get_dockvol_path_tenant_path(datastore_name=datastore,
+                                                                         tenant_id=tenant_id)
                 logging.debug(VOL_RM_LOG_PREFIX + "try to remove symlink to %s", tenant_name, tenant_path)
 
                 if os.path.isdir(tenant_path):
-                    exist_symlink_path = os.path.join(dock_vol_path, tenant_name)
+                    exist_symlink_path = os.path.join(dockvol_path, tenant_name)
                     if os.path.isdir(exist_symlink_path):
                         os.remove(exist_symlink_path)
                         logging.debug(VOL_RM_LOG_PREFIX + "removing symlink %s", tenant_name, exist_symlink_path)

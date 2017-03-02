@@ -73,9 +73,8 @@ def init_datastoreCache():
         if err:
             continue
         datastores.append((datastore.info.name,
-                           os.path.split(datastore.info.url)[1],
-                           dockvols_path,
-                           datastore.info.url))
+                           datastore.info.url,
+                           dockvols_path))
 
 def validate_datastore(datastore):
     """
@@ -95,10 +94,10 @@ def validate_datastore(datastore):
 
 def get_datastores():
     """
-    Returns a list of (name, url-name, dockvol_path), with an element per datastore
+    Returns a list of (name, url, dockvol_path), with an element per datastore
     where:
     'name' is datastore name (e.g. 'vsanDatastore') ,
-    'url-name' is the last element of datastore URL (e.g. 'vsan:572904f8c031435f-3513e0db551fcc82')
+    'url-name' is datastore URL (e.g. '/vmfs/volumes/vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore
     """
     if datastores == None:
@@ -120,8 +119,8 @@ def get_volumes(tenant_re):
     # tenant_re = "*" : return all volumes under /vmfs/volumes/datastore1/dockervol
     logging.debug("get_volumes: tenant_pattern(%s)", tenant_re)
     volumes = []
-    for (datastore, url_name, path, url) in get_datastores():
-        logging.debug("get_volumes: %s %s %s", datastore, url_name, path)
+    for (datastore, url, path) in get_datastores():
+        logging.debug("get_volumes: %s %s %s", datastore, url, path)
         if not tenant_re:
             for file_name in list_vmdks(path):
                 # path : docker_vol path
@@ -325,7 +324,7 @@ def get_datastore_url(datastore_name):
         return None
 
     # Query datastore URL from VIM API
-    res = [d[3] for d in get_datastores() if d[0] == datastore_name]
+    res = [d[1] for d in get_datastores() if d[0] == datastore_name]
     return res[0]
 
 def get_datastore_name(datastore_url):
@@ -336,7 +335,7 @@ def get_datastore_name(datastore_url):
         return auth.DEFAULT_DS
 
     # Query datastore name from VIM API
-    res = [d[0] for d in get_datastores() if d[3] == datastore_url]
+    res = [d[0] for d in get_datastores() if d[1] == datastore_url]
     return res[0]
 
 def main():

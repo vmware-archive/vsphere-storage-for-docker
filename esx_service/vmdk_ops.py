@@ -754,10 +754,24 @@ def get_datastore_url_from_config_path(config_path):
                   % (config_path, config_ds_url))
     return config_ds_url
 
-def datastore_path_exist(datastore):
-    """ Check whether path /vmfs/volumes/datastore" exist or not """
-    ds_path = os.path.join("/vmfs/volumes/", datastore)
+def datastore_path_exist(datastore_name):
+    """ Check whether path /vmfs/volumes/datastore_name" exist or not """
+    ds_path = os.path.join("/vmfs/volumes/", datastore_name)
     return os.path.exists(ds_path)
+
+def get_datastore_name(datastore_url):
+    """ Get datastore_name with given datastore_url """
+    datastore_name = vmdk_utils.get_datastore_name(datastore_url)
+    datastore_path = os.path.join("/vmfs/volumes/", datastore_name)
+    if not datastore_path_exist(datastore_path):
+        # path /vmfs/volumes/datastore_name does not exist
+        # the possible reason is datastore_name which got from
+        # datastore cache is invalid(old name)
+        # need to refresh cache, and try again
+        vmdk_utils.init_datastoreCache()
+        datastore_name = vmdk_utils.get_datastore_name(datastore_url)
+
+    return datastore_name
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
@@ -774,14 +788,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     """
     logging.debug("config_path=%s", config_path)
     vm_datastore_url = get_datastore_url_from_config_path(config_path)
-    vm_datastore = vmdk_utils.get_datastore_name(vm_datastore_url)
-    if not datastore_path_exist(vm_datastore):
-        # path /vmfs/volumes/vm_datastore_name does not exist
-        # the possible reason is vm_datastore_name which got from
-        # datastore cache is invalid(old name)
-        # need to refresh cache
-        vmdk_utils.init_datastoreCache()
-        vm_datastore = vmdk_utils.get_datastore_name(vm_datastore_url)
+    vm_datastore = get_datastore_name(vm_datastore_url)
 
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
@@ -793,22 +800,14 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     else:
         # if default_datastore is not set for tenant,
         # default_datastore_url will be set to None
-        error_info, default_datastore_url = auth_api.get_default_datastore(tenant_name)
+        error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
         # if get_default_datastore fails or default_datastore_url is not specified,
         # use vm_datastore_url
         if error_info or not default_datastore_url:
             default_datastore_url = vm_datastore_url
             default_datastore = vm_datastore
         else:
-             default_datastore = vmdk_utils.get_datastore_name(default_datastore_url)
-             if not datastore_path_exist(default_datastore):
-                 # path /vmfs/volumes/default_datastore_name does not exist
-                 # the possible reason is default_datastore_name which got from
-                 # datastore cache is invalid(old name)
-                 # need to refresh cache
-                 vmdk_utils.init_datastoreCache()
-                 default_datastore = vmdk_utils.get_datastore_name(default_datastore_url)
-
+             default_datastore = get_datastore_name(default_datastore_url)
 
     logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore_url=%s",
                   vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url)
@@ -840,15 +839,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         return err(error_info)
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
-    datastore = vmdk_utils.get_datastore_name(datastore_url)
-    datastore_path = os.path.join("/vmfs/volumes/", datastore)
-    if not datastore_path_exist(datastore):
-        # path /vmfs/volumes/datastore_name does not exist
-        # the possible reason is datastore_name which got from
-        # datastore cache is invalid(old name)
-        # need to refresh cache
-        vmdk_utils.init_datastoreCache()
-        datastore = vmdk_utils.get_datastore_name(datastore_url)
+    datastore = get_datastore_name(datastore_url)
 
     path, errMsg = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest for tenant %s with path %s", tenant_name, path)

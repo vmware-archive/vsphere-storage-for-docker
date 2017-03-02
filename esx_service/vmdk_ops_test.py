@@ -265,7 +265,7 @@ class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
                 logging.error("Cannot find a valid datastore")
                 self.assertFalse(True)
             self.vm_datastore = datastore[0]
-            self.vm_datastore_url = datastore[3]
+            self.vm_datastore_url = datastore[1]
 
         path, err = vmdk_ops.get_vol_path(self.vm_datastore, auth.DEFAULT_TENANT)
         self.assertEqual(err, None, err)
@@ -579,7 +579,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
             if datastores:
                 datastore = datastores[0]
                 self.datastore_name = datastore[0]
-                self.datastore_url = datastore[3]
+                self.datastore_url = datastore[1]
                 self.datastore_path = datastore[2]
                 logging.debug("datastore_name=%s datastore_url=%s datastore_path=%s",
                               self.datastore_name, self.datastore_url, self.datastore_path)

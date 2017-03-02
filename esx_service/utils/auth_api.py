@@ -242,7 +242,7 @@ def generate_privileges_dict(privileges):
     privileges_dict[auth_data_const.COL_USAGE_QUOTA] = privileges.usage_quota
     return privileges_dict
 
-def get_default_datastore(name):
+def get_default_datastore_url(name):
     """
         Get default_datastore url for given tenant
         Return value:
@@ -752,7 +752,7 @@ def _tenant_access_rm(name, datastore):
 
     # get dafault_datastore, if default_datastore is the same as param "datastore"
     # need to set default_datastore_url to "" in tenants table
-    error_info, default_datastore_url = get_default_datastore(name)
+    error_info, default_datastore_url = get_default_datastore_url(name)
     if error_info:
         return error_info
 
