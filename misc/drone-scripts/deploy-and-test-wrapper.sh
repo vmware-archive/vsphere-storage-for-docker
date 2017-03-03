@@ -89,10 +89,10 @@ INCLUDE_HOSTD="false"
 TESTS=""
 if [ -e /tmp/$ESX ]
 then
-   TESTS="test-vm e2e-dkrVolDriver-test"
+   TESTS="e2e-dkrVolDriver-test test-vm"
 else
    touch /tmp/$ESX
-   TESTS="testasroot test-esx test-vm e2e-dkrVolDriver-test"
+   TESTS="e2e-dkrVolDriver-test testasroot test-esx test-vm"
 fi
 
 if make -s clean-auth-db deploy-esx deploy-vm $TESTS TEST_VOL_NAME=vol.build$BUILD_NUMBER;
