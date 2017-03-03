@@ -436,8 +436,7 @@ class AuthorizationDataManager:
                                            name=auth.DEFAULT_TENANT,
                                            description="This is a default tenant",
                                            vms=[],
-                                           privileges=[],
-                                           tenant_uuid=auth.DEFAULT_TENANT_UUID)
+                                           privileges=[])
         if error_msg:
             err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
             logging.warning(err)
@@ -695,7 +694,7 @@ class AuthorizationDataManager:
 
         return None
 
-    def create_tenant(self, name, description, vms, privileges, tenant_uuid=None):
+    def create_tenant(self, name, description, vms, privileges):
         """ Create a tenant in the database.
         If tenant_uuid is None, tenant id will be auto-generated and returned,
         otherwise, the uuid specified by param "tenant_uuid" will be used
@@ -710,7 +709,11 @@ class AuthorizationDataManager:
                 if not all_columns_set(p):
                     error_msg = "Not all columns are set in privileges"
                     return error_msg, None
-
+                    
+        if name == auth.DEFAULT_DS:
+            tenant_uuid = auth.DEFAULT_TENANT_UUID
+        else:
+            tenant_uuid = None
         # Create the entry in the tenants table
         default_datastore_url=""
         tenant = DockerVolumeTenant(name=name,

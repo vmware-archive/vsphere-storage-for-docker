@@ -722,8 +722,7 @@ class VmdkTenantTestCase(unittest.TestCase):
                                            name=auth.DEFAULT_TENANT,
                                            description="This is a default tenant",
                                            vms=[],
-                                           privileges=[],
-                                           tenant_uuid=auth.DEFAULT_TENANT_UUID)
+                                           privileges=[])
 
             if error_msg:
                 err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_msg)

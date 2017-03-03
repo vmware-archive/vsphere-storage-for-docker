@@ -688,7 +688,7 @@ def get_vol_path(datastore, tenant_name=None):
 
     if tenant_name and not os.path.isdir(path):
         # The mkdir command is used to create "tenant_name" folder inside DOCK_VOLS_DIR on "datastore"
-        cmd = "{0} {1}".format(MKDIR_CMD, path)
+        cmd = "{0} '{1}'".format(MKDIR_CMD, path)
         rc, out = RunCommand(cmd)
         if rc != 0:
             errMsg = "Failed to initialize volume path {0} - {1}".format(path, out)
