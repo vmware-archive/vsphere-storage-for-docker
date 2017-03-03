@@ -771,7 +771,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     For VM, the function gets vm_uuid, vm_name and config_path
     <opts> is a json options string blindly passed to a specific operation
 
-    Returns None (if all OK) or error string
+    Returns None (if all OK) or error string 
     """
     logging.debug("config_path=%s", config_path)
     vm_datastore_url = vmdk_utils.get_datastore_url_from_config_path(config_path)
