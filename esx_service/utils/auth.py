@@ -178,20 +178,19 @@ def get_tenant(vm_uuid):
         return None, tenant_uuid, tenant_name
 
 
-def get_privileges(tenant_uuid, datastore):
-    """ Return privileges for given (tenant_uuid, datastore) pair by
+def get_privileges(tenant_uuid, datastore_url):
+    """ Return privileges for given (tenant_uuid, datastore_url) pair by
         querying the auth DB.
         Return value:
         -- error_msg: return None on success or error info on failure
-        -- privilegs: return a list of privileges for given (tenant_uuid, datastore)
+        -- privilegs: return a list of privileges for given (tenant_uuid, datastore_url)
            return None on failure
     """
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None
     privileges = []
-    logging.debug("get_privileges tenant_uuid=%s datastore=%s", tenant_uuid, datastore)
-    datastore_url = vmdk_utils.get_datastore_url(datastore)
+    logging.debug("get_privileges tenant_uuid=%s datastore_url=%s", tenant_uuid, datastore_url)
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT * FROM privileges WHERE tenant_id = ? and datastore_url = ?",
@@ -199,8 +198,8 @@ def get_privileges(tenant_uuid, datastore):
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
-        logging.error("Error %s when querying privileges table for tenant_id %s and datastore %s",
-                      e, tenant_uuid, datastore)
+        logging.error("Error %s when querying privileges table for tenant_id %s and datastore_url %s",
+                      e, tenant_uuid, datastore_url)
         return str(e), None
     if privileges:
         return None, privileges
@@ -258,13 +257,13 @@ def check_max_volume_size(opts, privileges):
         # no privileges
         return True
 
-def get_total_storage_used(tenant_uuid, datastore):
-    """ Return total storage used by (tenant_uuid, datastore)
+def get_total_storage_used(tenant_uuid, datastore_url):
+    """ Return total storage used by (tenant_uuid, datastore_url)
         by querying auth DB.
 
         Return value:
         -- error_msg: return None on success or error info on failure
-        -- total_storage_used: return total storage used for given (tenant_uuid, datastore)
+        -- total_storage_used: return total storage used for given (tenant_uuid, datastore_url)
                                return None on failure
 
     """
@@ -273,30 +272,29 @@ def get_total_storage_used(tenant_uuid, datastore):
     if err_msg:
         return err_msg, total_storage_used
 
-    datastore_url = vmdk_utils.get_datastore_url(datastore)
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT SUM(volume_size) FROM volumes WHERE tenant_id = ? and datastore_url = ?",
             (tenant_uuid, datastore_url)
             )
     except sqlite3.Error as e:
-        logging.error("Error %s when querying storage table for tenant_id %s and datastore %s",
-                      e, tenant_uuid, datastore)
+        logging.error("Error %s when querying storage table for tenant_id %s and datastore_url %s",
+                      e, tenant_uuid, datastore_url)
         return str(e), total_storage_used
     result = cur.fetchone()
     if result:
         if result[0]:
             total_storage_used = result[0]
-            logging.debug("total storage used for (tenant %s datastore %s) is %s MB", tenant_uuid,
-                          datastore, total_storage_used)
+            logging.debug("total storage used for (tenant %s datastore_url %s) is %s MB", tenant_uuid,
+                          datastore_url, total_storage_used)
 
     return None, total_storage_used
 
-def check_usage_quota(opts, tenant_uuid, datastore, privileges):
+def check_usage_quota(opts, tenant_uuid, datastore_url, privileges):
     """ Check if the volume can be created without violating the quota. """
     if privileges:
         vol_size_in_MB = convert.convert_to_MB(get_vol_size(opts))
-        error_msg, total_storage_used = get_total_storage_used(tenant_uuid, datastore)
+        error_msg, total_storage_used = get_total_storage_used(tenant_uuid, datastore_url)
         if error_msg:
             # cannot get the total_storage_used, to be safe, return False
             return False
@@ -311,7 +309,7 @@ def check_usage_quota(opts, tenant_uuid, datastore, privileges):
         # no privileges
         return True
 
-def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
+def check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges):
     """
         Check whether the (tenant_uuid, datastore) has the privileges to run
         the given command.
@@ -328,7 +326,7 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges):
             result = "No create privilege"
         if not check_max_volume_size(opts, privileges):
             result = "volume size exceeds the max volume size limit"
-        if not check_usage_quota(opts, tenant_uuid, datastore, privileges):
+        if not check_usage_quota(opts, tenant_uuid, datastore_url, privileges):
             result = "The total volume size exceeds the usage quota"
 
     if cmd == CMD_REMOVE:
@@ -394,7 +392,7 @@ def tables_exist():
 
     return None, True
 
-def authorize(vm_uuid, datastore, cmd, opts):
+def authorize(vm_uuid, datastore_url, cmd, opts):
     """ Check whether the command can be run on this VM.
 
         Return value: result, tenant_uuid, tenant_name
@@ -408,7 +406,7 @@ def authorize(vm_uuid, datastore, cmd, opts):
 
     """
     logging.debug("Authorize: vm_uuid=%s", vm_uuid)
-    logging.debug("Authorize: datastore=%s", datastore)
+    logging.debug("Authorize: datastore_url=%s", datastore_url)
     logging.debug("Authorize: cmd=%s", cmd)
     logging.debug("Authorize: opt=%s", opts)
 
@@ -438,20 +436,20 @@ def authorize(vm_uuid, datastore, cmd, opts):
         logging.debug(err_msg)
         return err_msg, None, None
     else:
-        error_msg, privileges = get_privileges(tenant_uuid, datastore)
+        error_msg, privileges = get_privileges(tenant_uuid, datastore_url)
         if error_msg:
             return error_msg, None, None
-        logging.debug("authorize: tenant_uuid=%s, datastore=%s, privileges=%s",
-                       tenant_uuid, datastore, privileges)
-        result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore, privileges)
+        logging.debug("authorize: tenant_uuid=%s, datastore_url=%s, privileges=%s",
+                       tenant_uuid, datastore_url, privileges)
+        result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges)
 
         if not result:
-            logging.info("cmd %s with opts %s on tenant_uuid %s datastore %s is allowed to execute",
-                         cmd, opts, tenant_uuid, datastore)
+            logging.info("cmd %s with opts %s on tenant_uuid %s datastore_url %s is allowed to execute",
+                         cmd, opts, tenant_uuid, datastore_url)
 
         return result, tenant_uuid, tenant_name
 
-def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB):
+def add_volume_to_volumes_table(tenant_uuid, datastore_url, vol_name, vol_size_in_MB):
     """
         Insert volume to volumes table.
         Return None on success or error string.
@@ -460,9 +458,9 @@ def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB
     if err_msg:
         return err_msg
 
-    logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore,
+    logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore_url,
                   vol_name, vol_size_in_MB)
-    datastore_url = vmdk_utils.get_datastore_url(datastore)
+
     try:
         _auth_mgr.conn.execute(
             "INSERT INTO volumes(tenant_id, datastore_url, volume_name, volume_size) VALUES (?, ?, ?, ?)",
@@ -470,13 +468,13 @@ def add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB
             )
         _auth_mgr.conn.commit()
     except sqlite3.Error as e:
-        logging.error("Error %s when insert into volumes table for tenant_id %s and datastore %s",
-                      e, tenant_uuid, datastore)
+        logging.error("Error %s when insert into volumes table for tenant_id %s and datastore_url %s",
+                      e, tenant_uuid, datastore_url)
         return str(e)
 
     return None
 
-def remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name):
+def remove_volume_from_volumes_table(tenant_uuid, datastore_url, vol_name):
     """
         Remove volume from volumes table.
         Return None on success or error string.
@@ -485,9 +483,8 @@ def remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name):
     if err_msg:
         return err_msg
 
-    logging.debug("remove volumes from volumes table(%s %s %s)", tenant_uuid, datastore,
+    logging.debug("remove volumes from volumes table(%s %s %s)", tenant_uuid, datastore_url,
                   vol_name)
-    datastore_url = vmdk_utils.get_datastore_url(datastore)
     try:
         _auth_mgr.conn.execute(
                     "DELETE FROM volumes WHERE tenant_id = ? AND datastore_url = ? AND volume_name = ?",
@@ -495,8 +492,8 @@ def remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name):
             )
         _auth_mgr.conn.commit()
     except sqlite3.Error as e:
-        logging.error("Error %s when remove from volumes table for tenant_id %s and datastore %s",
-                      e, tenant_uuid, datastore)
+        logging.error("Error %s when remove from volumes table for tenant_id %s and datastore_url %s",
+                      e, tenant_uuid, datastore_url)
         return str(e)
 
     return None

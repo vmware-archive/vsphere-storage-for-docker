@@ -505,7 +505,6 @@ def ls(args):
     else:
         header = all_ls_headers()
         rows = generate_ls_rows(tenant_reg)
-
     print(cli_table.create(header, rows))
 
 
@@ -814,7 +813,7 @@ def generate_tenant_ls_rows(tenant_list):
             default_datastore = ""
         else:
             default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
-        
+
         vm_list = generate_vm_list(tenant.vms)
         rows.append([uuid, name, description, default_datastore, vm_list])
 

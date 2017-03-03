@@ -157,7 +157,7 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore=None):
+def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore_url=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
 
     if os.path.isfile(vmdk_path):
@@ -170,7 +170,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
 
     if kv.CLONE_FROM in opts:
         return cloneVMDK(vm_name, vmdk_path, opts,
-                         vm_uuid, datastore)
+                         vm_uuid, datastore_url)
 
     if not kv.DISK_ALLOCATION_FORMAT in opts:
         disk_format = kv.DEFAULT_ALLOCATION_FORMAT
@@ -191,6 +191,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
 
     # Form datastore path from vmdk_path
     volume_datastore_path = vmdk_utils.get_datastore_path(vmdk_path)
+    logging.debug("volume_datastore_path=%s", volume_datastore_path)
 
     si = get_si()
     task = si.content.virtualDiskManager.CreateVirtualDisk(
@@ -226,13 +227,13 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
     # create succeed, insert the volume information into "volumes" table
     if tenant_uuid:
         vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
-        auth.add_volume_to_volumes_table(tenant_uuid, datastore, vol_name, vol_size_in_MB)
+        auth.add_volume_to_volumes_table(tenant_uuid, datastore_url, vol_name, vol_size_in_MB)
     else:
         logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
 
-def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
-    logging.info("*** cloneVMDK: %s opts = %s", vmdk_path, opts)
+def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
+    logging.info("*** cloneVMDK: %s opts = %s vm_uuid=%s datastore_url=%s", vmdk_path, opts, vm_uuid, datastore_url)
 
     # Get source volume path for cloning
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
@@ -244,15 +245,18 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
     except ValidationError as ex:
         return err(str(ex))
     if not src_datastore:
-        src_datastore = vm_datastore
+        src_datastore_url = datastore_url
+        src_datastore = vmdk_utils.get_datastore_name(datastore_url)
     elif not vmdk_utils.validate_datastore(src_datastore):
         return err("Invalid datastore '%s'.\n" \
                     "Known datastores: %s.\n" \
-                    "Default datastore: %s" \
-                    % (src_datastore, ", ".join(get_datastore_names_list()), vm_datastore))
+                    "Default datastore_url: %s" \
+                    % (src_datastore, ", ".join(get_datastore_names_list()), datastore_url))
+    else:
+        src_datastore_url = vmdk_utils.get_datastore_url(src_datastore)
 
     error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid,
-                                                          src_datastore, auth.CMD_ATTACH, {})
+                                                          src_datastore_url, auth.CMD_ATTACH, {})
     if error_info:
         errmsg = "Failed to authorize VM: {0}, datastore: {1}".format(error_info, src_datastore)
         logging.warning("*** cloneVMDK: %s", errmsg)
@@ -281,9 +285,10 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, vm_datastore=None):
         # Reauthorize with size info of the volume being cloned
         src_vol_info = kv.get_vol_info(src_vmdk_path)
         datastore = vmdk_utils.get_datastore_from_vmdk_path(vmdk_path)
+        datastore_url = vmdk_utils.get_datastore_url(datastore)
         opts["size"] = src_vol_info["size"]
         error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid,
-                                                              datastore, auth.CMD_CREATE, opts)
+                                                              datastore_url, auth.CMD_CREATE, opts)
         if error_info:
             return err(error_info)
 
@@ -554,7 +559,7 @@ def cleanVMDK(vmdk_path, vol_name=None):
     return None
 
 # Return error, or None for OK
-def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datastore=None):
+def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datastore_url=None):
     """
     Checks the status of the vmdk file using its meta file
     If it is not attached, then cleans(deletes) the vmdk file.
@@ -579,7 +584,7 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
 
     # clean succeeded, remove infomation of this volume from volumes table
     if tenant_uuid:
-        error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore, vol_name)
+        error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore_url, vol_name)
         return error_info
     elif not vm_name:
         logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
@@ -677,7 +682,7 @@ def get_vol_path(datastore, tenant_name=None):
         cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
         rc, out = RunCommand(cmd)
         if rc != 0:
-            errMsg = "{0} creation failed - {1} on {2}".format(DOCK_VOLS_DIR, os.strerror(rc), datastore)
+            errMsg = "{0} creation failed - {1} on datastore {2}".format(DOCK_VOLS_DIR, os.strerror(rc), datastore)
             logging.warning(errMsg)
             return None, err(errMsg)
 
@@ -736,19 +741,24 @@ def get_full_vol_name(vmdk_name, datastore):
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
     logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
+    
+def datastore_path_exist(datastore_name):
+    """ Check whether path /vmfs/volumes/datastore_name" exist or not """
+    ds_path = os.path.join("/vmfs/volumes/", datastore_name)
+    return os.path.exists(ds_path)
 
+def get_datastore_name(datastore_url):
+    """ Get datastore_name with given datastore_url """
+    datastore_name = vmdk_utils.get_datastore_name(datastore_url)
+    if not datastore_path_exist(datastore_name):
+        # path /vmfs/volumes/datastore_name does not exist
+        # the possible reason is datastore_name which got from
+        # datastore cache is invalid(old name)
+        # need to refresh cache, and try again
+        vmdk_utils.init_datastoreCache()
+        datastore_name = vmdk_utils.get_datastore_name(datastore_url)
 
-# TBD - move to vmdk_utils
-def get_datastore_name(config_path):
-    """Returns datastore NAME in config_path (not url-name which may be used in path)"""
-    # path is always /vmfs/volumes/<datastore>/... , so extract datastore:
-    config_ds_name = config_path.split("/")[3]
-    ds_name = [x[0] for x in vmdk_utils.get_datastores() \
-                    if x[0] == config_ds_name or x[1] == config_ds_name ]
-    if len(ds_name) != 1:
-        logging.error("get_datastore_name: found more than one match: %s" % ds_name)
-    logging.debug("get_datastore_name: path=%s name=%s" % (config_ds_name, ds_name))
-    return ds_name[0]
+    return datastore_name
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
@@ -761,27 +771,33 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     For VM, the function gets vm_uuid, vm_name and config_path
     <opts> is a json options string blindly passed to a specific operation
 
-    Returns None (if all OK) or error string
+    Returns None (if all OK) or error string 
     """
     logging.debug("config_path=%s", config_path)
-    vm_datastore = get_datastore_name(config_path)
+    vm_datastore_url = vmdk_utils.get_datastore_url_from_config_path(config_path)
+    vm_datastore = get_datastore_name(vm_datastore_url)
+
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
     if tenant_name == auth.DEFAULT_TENANT:
         # for DEFAULT tenant, set default_datastore to vm_datastore
+        default_datastore_url = vm_datastore_url
         default_datastore = vm_datastore
     else:
         # if default_datastore is not set for tenant,
-        # default_datastore will be set to None
-        error_info, default_datastore = auth_api.get_default_datastore(tenant_name)
-        # if get default_datastore fails or default_datastore is not specified,
-        # use vm_datastore
-        if error_info or not default_datastore:
+        # default_datastore_url will be set to None
+        error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
+        # if get_default_datastore fails or default_datastore_url is not specified,
+        # use vm_datastore_url
+        if error_info or not default_datastore_url:
+            default_datastore_url = vm_datastore_url
             default_datastore = vm_datastore
+        else:
+             default_datastore = get_datastore_name(default_datastore_url)
 
-    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore=%s",
-                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore)
+    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore_url=%s",
+                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url)
 
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
@@ -792,20 +808,26 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         vol_name, datastore = parse_vol_name(full_vol_name)
     except ValidationError as ex:
         return err(str(ex))
-    if not datastore:
-        datastore = default_datastore
 
-    if not vmdk_utils.validate_datastore(datastore):
+    if datastore and not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
                 "Known datastores: %s.\n" \
                 "Default datastore: %s" \
-                % (datastore, ", ".join(get_datastore_names_list()), vm_datastore))
+                % (datastore, ", ".join(get_datastore_names_list()), default_datastore))
 
-    error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore, cmd, opts)
+    if not datastore:
+        datastore_url = default_datastore_url
+        datastore = default_datastore
+    else:
+        datastore_url = vmdk_utils.get_datastore_url(datastore)
+
+    error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore_url, cmd, opts)
     if error_info:
         return err(error_info)
 
     # get /vmfs/volumes/<volid>/dockvols path on ESX:
+    datastore = get_datastore_name(datastore_url)
+
     path, errMsg = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest for tenant %s with path %s", tenant_name, path)
     if path is None:
@@ -828,17 +850,17 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
             response = getVMDK(vmdk_path, vol_name, datastore)
         elif cmd == "create":
             response = createVMDK(vmdk_path=vmdk_path,
-                                  vm_name=vm_name,
-                                  vol_name=vol_name,
-                                  opts=opts,
-                                  tenant_uuid=tenant_uuid,
-                                  datastore=datastore)
+                                vm_name=vm_name,
+                                vol_name=vol_name,
+                                opts=opts,
+                                tenant_uuid=tenant_uuid,
+                                datastore_url=datastore_url)
         elif cmd == "remove":
             response = removeVMDK(vmdk_path=vmdk_path,
-                                  vol_name=vol_name,
-                                  vm_name=vm_name,
-                                  tenant_uuid=tenant_uuid,
-                                  datastore=datastore)
+                                vol_name=vol_name,
+                                vm_name=vm_name,
+                                tenant_uuid=tenant_uuid,
+                                datastore_url=datastore_url)
 
         # For attach/detach reconfigure tasks, hold a per vm lock.
         elif cmd == "attach":
@@ -920,8 +942,7 @@ def findDeviceByPath(vmdk_path, vm):
         # Construct the parent dir and vmdk name, resolving
         # links if any.
         dvol_dir = os.path.dirname(vmdk_path)
-        datastore_url = vmdk_utils.get_datastore_url(datastore)
-        datastore_prefix = os.path.realpath(datastore_url) + '/'
+        datastore_prefix = os.path.realpath(os.path.join("/vmfs/volumes", datastore)) + '/'
         real_vol_dir = os.path.realpath(dvol_dir).replace(datastore_prefix, "")
         virtual_disk = os.path.join(real_vol_dir, os.path.basename(vmdk_path))
         logging.debug("dvol_dir=%s datastore_prefix=%s real_vol_dir=%s", dvol_dir, datastore_prefix,real_vol_dir)
@@ -1321,7 +1342,9 @@ def set_vol_opts(name, options):
        logging.warning(msg)
        return False
 
-    # get /vmfs/volumes/<datastore>/dockvols path on ESX:
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
+
+    # get /vmfs/volumes/<datastore_url>/dockvols path on ESX:
     path, errMsg = get_vol_path(datastore)
 
     if path is None:

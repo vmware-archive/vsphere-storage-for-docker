@@ -167,7 +167,6 @@ def set_privileges(allow_create, privileges, value):
     privileges[auth_data_const.COL_ALLOW_CREATE] = value
     return privileges
 
-
 def validate_string_to_bool(allow_create):
     """
     Validating case insensitive true, false strings
@@ -190,17 +189,12 @@ def validate_string_to_bool(allow_create):
         is_valid = False
         return allow_create, is_valid
 
-
-def generate_privileges(datastore, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB):
+def generate_privileges(datastore_url, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB):
     """ Generate privileges based on input params """
-    logging.debug("generate_privileges: datastore=%s allow_create=%s"
+    logging.debug("generate_privileges: datastore_url=%s allow_create=%s"
                   "volume_maxsize_in_MB=%s volume_totalsize_in_MB=%s",
-                  datastore, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB)
+                  datastore_url, allow_create, volume_maxsize_in_MB, volume_totalsize_in_MB)
     privileges = default_privileges()[0]
-    if datastore == auth.DEFAULT_DS:
-        datastore_url = auth.DEFAULT_DS_URL
-    else:
-        datastore_url = vmdk_utils.get_datastore_url(datastore)
     privileges[auth_data_const.COL_DATASTORE_URL] = datastore_url
 
     if allow_create is True:
@@ -248,9 +242,9 @@ def generate_privileges_dict(privileges):
     privileges_dict[auth_data_const.COL_USAGE_QUOTA] = privileges.usage_quota
     return privileges_dict
 
-def get_default_datastore(name):
+def get_default_datastore_url(name):
     """
-        Get default_datastore for given tenant
+        Get default_datastore url for given tenant
         Return value:
         --- error_info: return None on success or error info on failure
         --- default_datastore: return name of default_datastore on success or None on failure
@@ -270,10 +264,10 @@ def get_default_datastore(name):
         return error_info, None
 
     # if default_datastore is not set for this tenant, default_datastore will be None
-    error_msg, default_datastore = tenant.get_default_datastore(auth_mgr.conn)
+    error_msg, default_datastore_url = tenant.get_default_datastore(auth_mgr.conn)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
-    return error_info, default_datastore
+    return error_info, default_datastore_url
 
 def is_tenant_name_valid(name):
     """ Check given tenant name is valid or not """
@@ -351,6 +345,10 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
             return error_info
     if default_datastore:
+        error_info = check_datastore(default_datastore)
+        if error_info:
+            return error_info
+
         datastore_url = vmdk_utils.get_datastore_url(default_datastore)
         error_msg= tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
@@ -528,31 +526,21 @@ def _tenant_vm_replace(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
-def datastore_exist(datastore_name):
-    """ Check datastore with given name exists or not """
-    datastores = vmdk_utils.get_datastore_objects()
-    for datastore in datastores:
-        if datastore_name == datastore.info.name:
-            return True
-
-    return False
-
 def check_datastore(datastore_name):
     """ Check datastore with given name is a valid datastore or not """
     if datastore_name == auth.DEFAULT_DS:
         return None
 
-    if not datastore_exist(datastore_name):
+    if not vmdk_utils.validate_datastore(datastore_name):
         error_info = error_code.generate_error_info(ErrorCode.DS_NOT_EXIST, datastore_name)
         return error_info
 
     return None
 
-def privilege_exist(privileges, datastore_name):
+def privilege_exist(privileges, datastore_url):
     """ Check whether a entry with given datastore_name exists in privileges """
     for p in privileges:
-        ds_name = vmdk_utils.get_datastore_name(p.datastore_url)
-        if ds_name == datastore_name:
+        if datastore_url == p.datastore_url:
             return True
 
     return False
@@ -574,7 +562,7 @@ def check_privilege_parameters(privilege):
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_INVALID_VOLUME_SIZE, volume_maxsize, volume_totalsize)
         return error_info
 
-    return None;
+    return None
 
 def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False, volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
     """ API to add datastore access for a tenant """
@@ -595,11 +583,13 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
     if error_info:
         return error_info
 
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
+
     error_info, existing_privileges = _tenant_access_ls(name)
     if error_info:
         return error_info
 
-    if privilege_exist(existing_privileges, datastore):
+    if privilege_exist(existing_privileges, datastore_url):
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_ALREADY_EXIST, name, datastore)
         return error_info
 
@@ -618,7 +608,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
 
         allow_create = allow_create_val
 
-    privileges = generate_privileges(datastore=datastore,
+    privileges = generate_privileges(datastore_url=datastore_url,
                                      allow_create=allow_create,
                                      volume_maxsize_in_MB=volume_maxsize_in_MB,
                                      volume_totalsize_in_MB=volume_totalsize_in_MB)
@@ -648,10 +638,6 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
                    tenant.id, result)
 
     if len(result) == 1 or default_datastore:
-        if datastore == auth.DEFAULT_DS:
-            datastore_url = auth.DEFAULT_DS_URL
-        else:
-            datastore_url = vmdk_utils.get_datastore_url(datastore)
         error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
@@ -676,16 +662,16 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
     if error_info:
         return error_info
 
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
 
     error_info, existing_privileges = _tenant_access_ls(name)
     if error_info:
         return error_info
 
-    if not privilege_exist(existing_privileges, datastore):
+    if not privilege_exist(existing_privileges, datastore_url):
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_NOT_FOUND, name, datastore)
         return error_info
 
-    datastore_url = vmdk_utils.get_datastore_url(datastore)
     logging.debug("_tenant_access_set: datastore_url=%s", datastore_url)
     privileges = [d for d in tenant.privileges if d.datastore_url == datastore_url]
 
@@ -743,23 +729,21 @@ def _tenant_access_rm(name, datastore):
     if error_info:
         return error_info
 
+    datastore_url = vmdk_utils.get_datastore_url(datastore)
+
     error_info, existing_privileges = _tenant_access_ls(name)
     if error_info:
         return error_info
 
-    if not privilege_exist(existing_privileges, datastore):
+    if not privilege_exist(existing_privileges, datastore_url):
         error_info = error_code.generate_error_info(ErrorCode.PRIVILEGE_NOT_FOUND, name, datastore)
         return error_info
-        
+
     error_info, auth_mgr = get_auth_mgr_object()
 
     if error_info:
         return error_info
 
-    if datastore == auth.DEFAULT_DS:
-        datastore_url = auth.DEFAULT_DS_URL
-    else:
-        datastore_url = vmdk_utils.get_datastore_url(datastore)
     logging.debug("_tenant_access_rm: datastore_url=%s", datastore_url)
     error_msg = tenant.remove_datastore_access_privileges(auth_mgr.conn, datastore_url)
     if error_msg:
@@ -768,11 +752,11 @@ def _tenant_access_rm(name, datastore):
 
     # get dafault_datastore, if default_datastore is the same as param "datastore"
     # need to set default_datastore_url to "" in tenants table
-    error_info, default_datastore = get_default_datastore(name)
+    error_info, default_datastore_url = get_default_datastore_url(name)
     if error_info:
         return error_info
 
-    if default_datastore == datastore:
+    if default_datastore_url == datastore_url:
         error_msg  = tenant.set_default_datastore(auth_mgr.conn, "")
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
