@@ -93,10 +93,18 @@ def create_tenant_in_db(name, description, vms, privileges):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
         return error_info, None
 
-    error_msg, tenant = auth_mgr.create_tenant(name=name,
-                                                description=description,
-                                                vms=vms,
-                                                privileges=privileges)
+    if name == auth.DEFAULT_TENANT:
+        # create tenant _DEFAULT with constant UUID
+        error_msg, tenant = auth_mgr.create_tenant(name=name,
+                                                   description=description,
+                                                   vms=vms,
+                                                   privileges=privileges,
+                                                   tenant_uuid=auth.DEFAULT_TENANT_UUID)
+    else:
+        error_msg, tenant = auth_mgr.create_tenant(name=name,
+                                                   description=description,
+                                                   vms=vms,
+                                                   privileges=privileges)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
 
