@@ -299,8 +299,20 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
     if not description:
         description = ""
 
-    logging.debug("_tenant_create: vms=%s", vms)
+    error_info, tenant_list = get_tenant_list_from_db()
+
+    if error_info:
+        return error_info, None
+
     vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
+
+    if vms_uuid_list and any_vm_part_of_another_tenant(vms_uuid_list, tenant_list):
+        error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT, vm_list, name)
+        logging.error("_tenant_create: %s", error_info.msg)
+        return error_info, None
+
+    logging.debug("_tenant_create: vms=%s", vms)
+
     error_info, tenant = create_tenant_in_db(
                                              name=name,
                                              description=description,
@@ -407,6 +419,16 @@ def any_vm_not_exist(existing_vms, vms):
     return False
 
 
+def any_vm_part_of_another_tenant(vm_list, tenant_list):
+    """
+        Check if any vm in vm_list is a part of any tenant in tenant_list
+    """
+    for tenant in tenant_list:
+        for vm_uuid in vm_list:
+            if vm_uuid in tenant.vms:
+                return True
+    return False
+
 def _tenant_vm_add(name, vm_list):
     """ API to add vms for a tenant """
     logging.debug("_tenant_vm_add: name=%s vm_list=%s", name, vm_list)
@@ -432,13 +454,24 @@ def _tenant_vm_add(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_ALREADY_IN_TENANT, vm_list, name)
         return error_info
 
+    error_info, tenant_list = get_tenant_list_from_db()
+
+    if error_info:
+        return error_info
+
+    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
+
+    if vms_uuid_list and any_vm_part_of_another_tenant(vms_uuid_list, tenant_list):
+        error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT, vm_list, name)
+        logging.error("_tenant_vm_add: %s", error_info.msg)
+        return error_info
+
     error_info, auth_mgr = get_auth_mgr_object()
 
     if error_info:
         return error_info
 
     logging.debug("_tenant_vm_add: vms=%s", vms)
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
     error_msg = tenant.add_vms(auth_mgr.conn, vms_uuid_list)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)

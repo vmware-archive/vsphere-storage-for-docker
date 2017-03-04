@@ -30,6 +30,7 @@ class ErrorCode:
     REPLACE_VM_EMPTY = 102
     VM_ALREADY_IN_TENANT = 103
     VM_NOT_IN_TENANT = 104
+    VM_IN_ANOTHER_TENANT = 105
     # VM related error code end
 
     # Privilege related error code start
@@ -69,6 +70,7 @@ error_code_to_message = {
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
     ErrorCode.VM_ALREADY_IN_TENANT : "Some VMs in {0} have already been associated with tenant '{1}', cannot add them again",
     ErrorCode.VM_NOT_IN_TENANT : "Some VMs in {0} have not been associated with tenant '{1}', cannot remove them",
+    ErrorCode.VM_IN_ANOTHER_TENANT : "Some VMs in {0} have already been associated with another tenants, can't add them to tenant '{1}'",
 
     ErrorCode.PRIVILEGE_NOT_FOUND : "No privilege exists for ({0}, {1})",
     ErrorCode.PRIVILEGE_ALREADY_EXIST : "Privilege for ({0}, {1}) already exists",
