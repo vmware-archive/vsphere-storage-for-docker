@@ -236,9 +236,8 @@ def commands():
                     'func': tenant_rm,
                     'help': 'Delete a tenant',
                     'args': {
-                        '--name': {
+                        'name': {
                             'help': 'The name of the tenant',
-                            'required': True
                       },
                       '--remove-volumes': {
                         'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant',
@@ -914,6 +913,13 @@ def generate_tenant_vm_ls_rows(vms):
 
 def tenant_vm_ls(args):
     """ Handle tenant vm ls command """
+
+    # Handling _DEFAULT tenant case separately to print info message
+    # instead of printing empty list
+    if (args.name == "_DEFAULT"):
+        print("All VMs that do not belong to any tenant belong to _DEFAULT tenant")
+        return
+
     error_info, vms = auth_api._tenant_vm_ls(args.name)
     if error_info:
         return operation_fail(error_info.msg)
