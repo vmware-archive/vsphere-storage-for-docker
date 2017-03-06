@@ -41,7 +41,7 @@ then
 	exit 1
 fi
 
-ver=`docker -v`
+ver=`docker version -f '{{.Server.Version}}'`
 if [ $? -ne 0 ]
 then
    echo '***********************************************************'
@@ -58,14 +58,14 @@ then
    exit 2
 fi
 
-min_ver=`echo $ver | grep -o '\.[0-9]*\.' | sed 's/\.//g'`
-if [ $min_ver -lt 8 ]
+maj_ver=`echo $ver | sed 's/\..*$//'`
+min_ver=`echo $ver | sed 's/[0-9]*\.//' | sed 's/\..*$//'`
+if [ $maj_ver -lt 17 -a $min_ver -lt 8 ]
 then
    echo '***********************************************************'
    echo "Error: need Docker 1.8 or later. Found $ver"
    echo "         Please update docker to a newer version"
    exit 3
-
 fi
 
 # Docker container images used in the build
@@ -122,7 +122,7 @@ then
 elif [ "$1" == "pylint" ]
 then
   $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
-else 
+else
   docker_socket=/var/run/docker.sock
   if [ -z $SSH_KEY_OPT ]
   then
