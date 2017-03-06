@@ -871,14 +871,18 @@ def connectLocalSi(force=False):
                 user='dcui',
                 version=newestVersions.Get('vim'))
         except Exception as e:
-            logging.exception("Failed to the local Service Instance as 'dcui', exiting: ")
-            sys.exit(1)
+            logging.exception("Failed to the local Service Instance as 'dcui', please ensure the ESX Host Agent is running on this host.")
+            return
     elif force:
-        logging.warning("Reconnecting to the local Service Instance")
-        _service_instance = pyVim.connect.Connect(
-            host='localhost',
-            user='dcui',
-            version=newestVersions.Get('vim'))
+        try:
+            logging.warning("Reconnecting to the local Service Instance")
+            _service_instance = pyVim.connect.Connect(
+                host='localhost',
+                user='dcui',
+                version=newestVersions.Get('vim'))
+        except Exception as e:
+            logging.exception("Failed to the local Service Instance as 'dcui', please ensure the ESX Host Agent is running on this host.")
+            return
 
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()
