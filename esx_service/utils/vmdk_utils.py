@@ -60,13 +60,15 @@ def init_datastoreCache():
     """
     global datastores
     logging.debug("init_datastoreCache: %s", datastores)
+    datastores = []
 
     si = vmdk_ops.get_si()
+    if not si:
+        return
 
     #  We are connected to ESX so childEntity[0] is current DC/Host
     ds_objects = \
       si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
-    datastores = []
 
     for datastore in ds_objects:
         dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
@@ -310,6 +312,8 @@ def log_volume_lsof(vol_name):
 def get_datastore_objects():
     """ return all datastore objects """
     si = vmdk_ops.get_si()
+    if not si:
+        return []
     return si.content.rootFolder.childEntity[0].datastore
 
 def get_datastore_url(datastore_name):
