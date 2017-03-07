@@ -893,8 +893,7 @@ def connectLocalSi(force=False):
                 user='dcui',
                 version=newestVersions.Get('vim'))
         except Exception as e:
-            logging.exception("Failed to the local Service Instance as 'dcui', exiting: ")
-            sys.exit(1)
+            logging.exception("Failed to create the local Service Instance as 'dcui', continuing... : ")
     elif force:
         logging.warning("Reconnecting to the local Service Instance")
         _service_instance = pyVim.connect.Connect(
@@ -917,6 +916,11 @@ def get_si():
         except:
             connectLocalSi(force=True)
     return _service_instance
+
+def is_service_available():
+    if not get_si():
+        return False
+    return True
 
 def get_datastore_names_list():
     """returns names of known datastores"""
@@ -1493,6 +1497,13 @@ def handleVmciRequests(port):
             skip_count = MAX_SKIP_COUNT  # reset the counter, just in case
 
         client_socket = c # Bind to avoid race conditions.
+
+        if not get_si():
+            svc_connect_err = 'Service is presently unavailable, ensure the ESX Host Agent is running on this host'
+            logging.warning(svc_connect_err)
+            send_vmci_reply(client_socket, err(svc_connect_err))
+            continue
+
         # Fire a thread to execute the request
         threadutils.start_new_thread(
             target=execRequestThread,
