@@ -23,6 +23,7 @@ import logging
 import fnmatch
 import vmdk_ops
 import auth
+import auth_data_const
 import auth_api
 import log_config
 import auth
@@ -316,8 +317,8 @@ def get_datastore_url(datastore_name):
     """ return datastore url for given datastore name """
 
     # Return default datastore URL for default datastore name
-    if datastore_name == auth.DEFAULT_DS:
-        return auth.DEFAULT_DS_URL
+    if datastore_name == auth_data_const.DEFAULT_DS:
+        return auth_data_const.DEFAULT_DS_URL
 
     # validate_datastore will refresh the cache if datastore_name is not in cache
     if not validate_datastore(datastore_name):
@@ -333,8 +334,8 @@ def get_datastore_name(datastore_url):
     """ return datastore name for given datastore url """
 
     # Return default datastore name for default datastore URL
-    if datastore_url == auth.DEFAULT_DS_URL:
-        return auth.DEFAULT_DS
+    if datastore_url == auth_data_const.DEFAULT_DS_URL:
+        return auth_data_const.DEFAULT_DS
 
     # Query datastore name from VIM API
     # get_datastores() return a list of tuple

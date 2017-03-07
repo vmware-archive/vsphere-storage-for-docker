@@ -528,7 +528,7 @@ def _tenant_vm_replace(name, vm_list):
 
 def check_datastore(datastore_name):
     """ Check datastore with given name is a valid datastore or not """
-    if datastore_name == auth.DEFAULT_DS:
+    if datastore_name == auth_data_const.DEFAULT_DS:
         return None
 
     if not vmdk_utils.validate_datastore(datastore_name):

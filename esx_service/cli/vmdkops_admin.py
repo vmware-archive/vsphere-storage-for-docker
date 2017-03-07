@@ -159,8 +159,9 @@ def commands():
                     'func': policy_rm,
                     'help': 'Remove a storage policy',
                     'args': {
-                        'name': {
-                            'help': 'Policy name'
+                        '--name': {
+                            'help': 'Policy name',
+                            'required': True
                         }
                     }
                 },
@@ -236,8 +237,9 @@ def commands():
                     'func': tenant_rm,
                     'help': 'Delete a tenant',
                     'args': {
-                        'name': {
+                        '--name': {
                             'help': 'The name of the tenant',
+                            'required': True
                       },
                       '--remove-volumes': {
                         'help': 'BE CAREFUL: Removes this tenant volumes when removing a tenant',
@@ -808,7 +810,7 @@ def generate_tenant_ls_rows(tenant_list):
         uuid = tenant.id
         name = tenant.name
         description = tenant.description
-        if not tenant.default_datastore_url or tenant.default_datastore_url == auth.DEFAULT_DS_URL:
+        if not tenant.default_datastore_url or tenant.default_datastore_url == auth_data_const.DEFAULT_DS_URL:
             default_datastore = ""
         else:
             default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
@@ -916,8 +918,8 @@ def tenant_vm_ls(args):
 
     # Handling _DEFAULT tenant case separately to print info message
     # instead of printing empty list
-    if (args.name == "_DEFAULT"):
-        print("All VMs that do not belong to any tenant belong to _DEFAULT tenant")
+    if (args.name == auth_data_const.DEFAULT_TENANT):
+        print("{0} tenant contains all VMs which were not added to other tenants".format(auth_data_const.DEFAULT_TENANT))
         return
 
     error_info, vms = auth_api._tenant_vm_ls(args.name)
@@ -988,7 +990,7 @@ def generate_tenant_access_ls_rows(privileges):
     """ Generate output for tenant access ls command """
     rows = []
     for p in privileges:
-        if not p.datastore_url or p.datastore_url == auth.DEFAULT_DS_URL:
+        if not p.datastore_url or p.datastore_url == auth_data_const.DEFAULT_DS_URL:
             datastore = ""
         else:
             datastore = vmdk_utils.get_datastore_name(p.datastore_url)
