@@ -243,7 +243,7 @@ func (r RefCountsMap) Decr(vol string) (uint, error) {
 	rc.count--
 
 	if rc.count < 0 {
-		log.Warning("Decr: Internal error, refcnt is negative. Trying to recover, deleting the counter - name=%s refcnt=%d", vol, rc.count)
+		log.Warningf("Decr: Internal error, refcnt is negative. Trying to recover, deleting the counter - name=%s refcnt=%d", vol, rc.count)
 	}
 	// Deletes the refcount only if there are no references
 	if rc.count <= 0 {

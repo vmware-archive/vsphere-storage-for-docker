@@ -119,7 +119,7 @@ func main() {
 	// Load the configuration if one was provided.
 	c, err := config.Load(*configFile)
 	if err != nil {
-		log.Warning("Failed to load config file %s: %v", *configFile, err)
+		log.Warningf("Failed to load config file %s: %v", *configFile, err)
 	}
 
 	// If no driver provided on the command line, use the one in the
@@ -171,12 +171,12 @@ func main() {
 
 		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName)
 	} else {
-		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
+		log.Warningf("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)
 	}
 
 	if reflect.ValueOf(driver).IsNil() == true {
-		log.Warning("Error in driver initialization exiting - ", *driverName)
+		log.Warningf("Error in driver initialization exiting - ", *driverName)
 		os.Exit(1)
 	}
 
