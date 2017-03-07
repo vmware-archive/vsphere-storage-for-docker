@@ -93,12 +93,24 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	ans := (*C.be_answer)(C.malloc(C.sizeof_struct_be_answer))
 	defer C.free(unsafe.Pointer(ans))
 
+	var ret C.be_sock_status
 	for i := 0; i <= maxRetryCount; i++ {
-		_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
+		ret, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
+		if ret == 0 {
+			// Received no error, exit loop.
+			// C.Vmci_GetReply indicates success/faulure by <ret> value.
+			// Cgo  interface adds <err> based on errno. We do not explicitly
+			// reset errno in our code. Still, we do not want a stale errno
+			// to confuse this code into thinking there was an error even when ret==0,
+			// so explicitly declare success on <ret> value only, and
+			break
+		}
+
+		var msg string
 		if err != nil {
 			var errno syscall.Errno
 			errno = err.(syscall.Errno)
-			msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
+			msg = fmt.Sprintf("Run '%s' failed: %v (errno=%d).", cmd, err, int(errno))
 
 			// Still below maximum number of retries, log and continue
 			if i < maxRetryCount {
@@ -110,11 +122,11 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 			if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
 				msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
 			}
-			log.Warnf(msg)
-			return nil, errors.New(msg)
+		} else {
+			msg = "Internal issue: ret != 0 but errno is not set. Cancelling operation."
 		}
-		// Received no error, exit loop
-		break
+		log.Warnf(msg)
+		return nil, errors.New(msg)
 	}
 
 	response := []byte(C.GoString(ans.buf))

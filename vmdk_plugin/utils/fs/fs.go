@@ -62,14 +62,16 @@ func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	watcher, errWatcher := inotify.NewWatcher()
 
 	if errWatcher != nil {
-		log.WithFields(log.Fields{"Name": name}).Error("Failed to create watcher, skip inotify ")
+		log.WithFields(log.Fields{"Name": name}).Error("Failed to create watcher. Skipping inotify ")
 		return nil, true
 	}
 
 	err := watcher.Watch(devPath)
 
 	if err != nil {
-		log.WithFields(log.Fields{"Name": name}).Error("Failed to watch /dev, skip inotify ")
+		log.WithFields(log.Fields{
+			"Name": name, "path": devPath, "err": err.Error(),
+		}).Error("Failed to watch. Skipping inotify ")
 		return nil, true
 	}
 
