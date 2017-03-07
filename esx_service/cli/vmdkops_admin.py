@@ -47,7 +47,7 @@ def main():
     log_config.configure()
     kv.init()
     if not vmdk_ops.is_service_available():
-       sys.exit('Unable to connect to the host-agent on this host, ensure the ESX host agent is running before retrying.')
+       sys.exit('Unable to connect to the host-agent on this host, ensure the ESXi host agent is running before retrying.')
     args = parse_args()
     if args:
        args.func(args)

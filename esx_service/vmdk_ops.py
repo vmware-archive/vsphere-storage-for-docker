@@ -1499,7 +1499,7 @@ def handleVmciRequests(port):
         client_socket = c # Bind to avoid race conditions.
 
         if not get_si():
-            svc_connect_err = 'Service is presently unavailable, ensure the ESX Host Agent is running on this host'
+            svc_connect_err = 'Service is presently unavailable, ensure the ESXi Host Agent is running on this host'
             logging.warning(svc_connect_err)
             send_vmci_reply(client_socket, err(svc_connect_err))
             continue
