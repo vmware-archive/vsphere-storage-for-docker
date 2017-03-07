@@ -93,22 +93,28 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	ans := (*C.be_answer)(C.malloc(C.sizeof_struct_be_answer))
 	defer C.free(unsafe.Pointer(ans))
 
+	var ret C.be_sock_status
 	for i := 0; i <= maxRetryCount; i++ {
-		_, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
-		if err != nil {
-			var errno syscall.Errno
-			errno = err.(syscall.Errno)
-			msg := fmt.Sprintf("'%s' failed: %v (errno=%d).", cmd, err, int(errno))
+		ret, err = C.Vmci_GetReply(C.int(EsxPort), cmdS, beS, ans)
+		if ret != 0 {
+			var msg string
+			if err != nil {
+				var errno syscall.Errno
+				errno = err.(syscall.Errno)
+				msg = fmt.Sprintf("Run '%s' failed: %v (errno=%d).", cmd, err, int(errno))
 
-			// Still below maximum number of retries, log and continue
-			if i < maxRetryCount {
-				log.Warnf(msg + " Retrying...")
-				time.Sleep(time.Second * 1)
-				continue
-			}
+				// Still below maximum number of retries, log and continue
+				if i < maxRetryCount {
+					log.Warnf(msg + " Retrying...")
+					time.Sleep(time.Second * 1)
+					continue
+				}
 
-			if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
-				msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
+				if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
+					msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
+				}
+			} else {
+				msg = "Internal issue: ret != 0 but errno is not set. Cancelling operation."
 			}
 			log.Warnf(msg)
 			return nil, errors.New(msg)
