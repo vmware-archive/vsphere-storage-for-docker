@@ -21,7 +21,7 @@ import os
 ADMIN_CLI = '/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py'
 
 # Number of expected columns in ADMIN_CLI ls
-EXPECTED_COLUMN_COUNT = 12
+EXPECTED_COLUMN_COUNT = 13
 
 class TestVmdkopsAdminSanity(unittest.TestCase):
     """ Test output from running vmdkops_admin.py """

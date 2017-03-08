@@ -151,9 +151,19 @@ def get_volumes(tenant_re):
                         for file_name in list_vmdks(root):
                             volumes.append({'path': root,
                                             'filename': file_name,
-                                            'datastore': datastore})
+                                            'datastore': datastore,
+                                            'tenant' : tenant_name})
                 else:
+                    # cannot find this tenant, this tenant was removed
+                    # mark those volumes created by "orphan" tenant
                     logging.debug("get_volumes: cannot find tenant_name for tenant_uuid=%s", sub_dir_name)
+                    logging.debug("get_volumes: path=%s root=%s sub_dir_name=%s",
+                                path, root, sub_dir_name)
+                    for file_name in list_vmdks(root):
+                        volumes.append({'path': root,
+                                        'filename': file_name,
+                                        'datastore': datastore,
+                                        'tenant' : auth.ORPHAN_TENANT})
     logging.debug("volumes %s", volumes)
     return volumes
 

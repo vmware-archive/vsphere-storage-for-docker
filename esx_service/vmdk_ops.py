@@ -1354,10 +1354,12 @@ def set_vol_opts(name, tenant_name, options):
 
     # try to set opts on a volume which was created by a non-exist tenant
     # fail the request
-    error_info = auth_api.check_tenant_exist(tenant_name)
-    if not error_info:
-        logging.warning(error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(tenant_name))
-        return False
+    if tenant_name:
+    # if tenant_name is "None", which means the function is called without multi-tenancy
+        error_info = auth_api.check_tenant_exist(tenant_name)
+        if not error_info:
+            logging.warning(error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(tenant_name))
+            return False
 
     # get /vmfs/volumes/<datastore_url>/dockvols path on ESX:
     path, errMsg = get_vol_path(datastore, tenant_name)
