@@ -119,7 +119,7 @@ func main() {
 	// Load the configuration if one was provided.
 	c, err := config.Load(*configFile)
 	if err != nil {
-		log.Warning("Failed to load config file %s: %v", *configFile, err)
+		log.Warningf("Failed to load config file %s: %v", *configFile, err)
 	}
 
 	// If no driver provided on the command line, use the one in the
@@ -165,7 +165,7 @@ func main() {
 			*vmID, mountRoot)
 	} else if *driverName == vsphereDriver || *driverName == vmdkDriver {
 		if *driverName == vmdkDriver {
-			log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing ...")
+			log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing...")
 		}
 		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
 

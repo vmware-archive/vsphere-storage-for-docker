@@ -400,7 +400,11 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 			log.Fields{"name": r.Name, "error": err.Error()},
 		).Error("Failed to mount ")
 
-		d.decrRefCount(r.Name)
+		refcnt, _ := d.decrRefCount(r.Name)
+		if refcnt == 0 {
+			log.Infof("Detaching %s - it is not used anymore", r.Name)
+			d.ops.Detach(r.Name, nil) // try to detach before failing the request for volume
+		}
 		return volume.Response{Err: err.Error()}
 	}
 
