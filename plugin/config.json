@@ -1,7 +1,10 @@
 {
 	"Description": "VMWare vSphere Docker Volume plugin",
 	"Documentation": "http://vmware.github.io/docker-volume-vsphere/documentation",
-	"Entrypoint": ["/usr/bin/docker-volume-vsphere", "--log_level", "info"],
+	"Entrypoint": ["/usr/bin/docker-volume-vsphere",
+					"--config", "/etc/docker-volume-vsphere.conf",
+					"--log_level", "info"
+	],
 	"PropagatedMount": "/mnt/vmdk",
 	"Mounts": [
 		{
@@ -15,6 +18,13 @@
 			"Description" : "The plugin uses /var/run/docker.sock to ask Docker some questions",
 			"Source" : "/var/run",
 			"Destination" : "/var/run",
+			"Type": "bind",
+			"Options": ["rbind"]
+		},
+		{
+			"Description" : "Location to look for config file (/etc/docker-volume-vsphere.conf)",
+			"Source" : "/etc",
+			"Destination" : "/etc",
 			"Type": "bind",
 			"Options": ["rbind"]
 		},
