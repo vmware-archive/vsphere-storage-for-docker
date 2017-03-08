@@ -171,12 +171,12 @@ func main() {
 
 		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName)
 	} else {
-		log.Warningf("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
+		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)
 	}
 
 	if reflect.ValueOf(driver).IsNil() == true {
-		log.Warningf("Error in driver initialization exiting - ", *driverName)
+		log.Warning("Error in driver initialization exiting - ", *driverName)
 		os.Exit(1)
 	}
 
