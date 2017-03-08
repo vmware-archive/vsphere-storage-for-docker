@@ -418,6 +418,10 @@ def commands():
                     'help': 'Volume to set options for, specified as "volume@datastore".',
                     'required': True
                 },
+                '--tenant': {
+                    'help': 'Name of the tenant which volume to set belongs to.',
+                    'required': True
+                },
                 '--options': {
                     'help': 'Options (specifically, access) to be set on the volume.',
                     'required': True
@@ -723,7 +727,7 @@ def status(args):
 
 def set_vol_opts(args):
     try:
-        set_ok = vmdk_ops.set_vol_opts(args.volume, args.options)
+        set_ok = vmdk_ops.set_vol_opts(args.volume, args.tenant, args.options)
         if set_ok:
            print('Successfully updated settings for : {0}'.format(args.volume))
         else:
