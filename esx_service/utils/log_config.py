@@ -35,8 +35,8 @@ LOG_LEVEL_DEFAULT = 'INFO'
 # Defaults for log files - used to generate conf file if it is missing
 # Note: log file location should be synced with CI and 'make'
 LOG_FILE = "/var/log/vmware/vmdk_ops.log"
-LOG_MAX_BYTES = 10485760  # 10MB
-LOG_MAX_BACKUPS = 5
+LOG_MAX_BYTES = 1048576  # 1MB
+LOG_MAX_BACKUPS = 1
 LOG_CONFIG_DEFAULT = {
     "info": [
         "Logging configuration for vmdk_opsd service, in python logging config format.",
