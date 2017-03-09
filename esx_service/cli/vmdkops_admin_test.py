@@ -640,6 +640,15 @@ class TestTenant(unittest.TestCase):
         actual_output = rows
         self.assertEqual(expected_output, actual_output)
 
+        # Trying to create tenant with duplicate vm names
+        error_info, tenant_dup = auth_api._tenant_create(
+                                                    name="Tenant_dup",
+                                                    description="tenant_duplicate",
+                                                    vm_list=[self.vm1_name, self.vm1_name],
+                                                    privileges=[])
+
+        self.assertEqual(error_code.ErrorCode.VM_DUPLICATE, error_info.code)
+
         # tenant vm add to add two VMs to the tenant
         error_info = auth_api._tenant_vm_add(
                                              name=self.tenant1_name,
@@ -672,7 +681,13 @@ class TestTenant(unittest.TestCase):
                                               vm_list=[self.vm1_name])
         self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
 
-        # tenant rm to remove the tenant3
+        # Replace should fail since vm1 is already a part of tenant1
+        error_info  = auth_api._tenant_vm_replace(
+                                              name=tenant3.name,
+                                              vm_list=[self.vm1_name])
+        self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
+
+        # remove the tenant3
         error_info = auth_api._tenant_rm(name=tenant3.name)
         self.assertEqual(None, error_info)
 

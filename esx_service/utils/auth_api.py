@@ -282,6 +282,18 @@ def is_tenant_name_valid(name):
     else:
         return False
 
+def is_vm_duplicate(vm_list):
+    """
+    Check if vm names in vm_list contain duplicates
+    """
+
+    if len(vm_list) != len(set(vm_list)):
+        error_info = error_code.generate_error_info(ErrorCode.VM_DUPLICATE, vm_list)
+        logging.error(error_info.msg)
+        return error_info
+
+    return None
+
 def _tenant_create(name, description="", vm_list=None, privileges=None):
     """ API to create a tenant """
     logging.debug("_tenant_create: name=%s description=%s vm_list=%s privileges=%s", name, description, vm_list, privileges)
@@ -289,29 +301,29 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAME_REGEXP)
         return error_info, None
 
-    error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
-    if error_msg:
-        not_found_vm_list = ",".join(not_found_vms)
-        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
-        return error_info, None
-
     # if param "description" is not set by caller, the default value is empty string
     if not description:
         description = ""
 
-    error_info, tenant_list = get_tenant_list_from_db()
+    # VM list can be empty during tenant create. Validate only if it exists
+    vms_uuid_list = []
+    if vm_list:
+        error_info = is_vm_duplicate(vm_list)
+        if error_info:
+            return error_info, None
 
-    if error_info:
-        return error_info, None
+        error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
+        if error_msg:
+            not_found_vm_list = ",".join(not_found_vms)
+            error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
+            return error_info, None
 
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
+        error_info = vm_in_tenant(name, vms)
+        if error_info:
+            return error_info, None
 
-    if vms_uuid_list and any_vm_part_of_another_tenant(vms_uuid_list, tenant_list):
-        error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT, vm_list, name)
-        logging.error("_tenant_create: %s", error_info.msg)
-        return error_info, None
-
-    logging.debug("_tenant_create: vms=%s", vms)
+        logging.debug("_tenant_create: vms=%s", vms)
+        vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
 
     error_info, tenant = create_tenant_in_db(
                                              name=name,
@@ -398,36 +410,57 @@ def _tenant_ls(name=None):
     error_info, tenant_list = get_tenant_list_from_db(name)
     return error_info, tenant_list
 
-def any_vm_already_exist(existing_vms, vms):
+def vm_already_exist(name, vms):
     """
-        Check whehter any vm in @param "vms" already exist in @param "existing_vms"
+        Check whether any vm in @param "vms" already exists in tenant @param "name"
     """
-    for vm in vms:
-        if vm[0] in existing_vms:
-            return True
+    error_info, existing_vms = _tenant_vm_ls(name)
+    if error_info:
+        return error_info
 
-    return False
+    for vm_id, vm_name in vms:
+        if vm_id in existing_vms:
+            error_info = error_code.generate_error_info(ErrorCode.VM_ALREADY_IN_TENANT,
+                                                        vm_name, name)
+            logging.error(error_info.msg)
+            return error_info
 
-def any_vm_not_exist(existing_vms, vms):
-    """
-        Check whehter any vm in @param "vms" does not exist in @param "existing_vms"
-    """
-    for vm in vms:
-        if not vm[0] in existing_vms:
-            return True
+    return None
 
-    return False
+def vm_not_exist(name, vms):
+    """
+        Check whether any vm in @param "vms" does not exist in tenant @param "name"
+    """
+    error_info, existing_vms = _tenant_vm_ls(name)
+    if error_info:
+        return error_info
+
+    for vm_id, vm_name in vms:
+        if not vm_id in existing_vms:
+            error_info = error_code.generate_error_info(ErrorCode.VM_NOT_IN_TENANT, vm_name, name)
+            logging.error(error_info.msg)
+            return error_info
+
+    return None
 
 
-def any_vm_part_of_another_tenant(vm_list, tenant_list):
+def vm_in_tenant(name, vms):
     """
-        Check if any vm in vm_list is a part of any tenant in tenant_list
+        Check if any vm in @param "vms" is a part of another tenant
     """
+    error_info, tenant_list = get_tenant_list_from_db()
+    if error_info:
+        return error_info
+
     for tenant in tenant_list:
-        for vm_uuid in vm_list:
-            if vm_uuid in tenant.vms:
-                return True
-    return False
+        for vm_id, vm_name in vms:
+            if vm_id in tenant.vms:
+                error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT,
+                                                            vm_name, name)
+                logging.error(error_info.msg)
+                return error_info
+
+    return None
 
 def _tenant_vm_add(name, vm_list):
     """ API to add vms for a tenant """
@@ -440,30 +473,26 @@ def _tenant_vm_add(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
+    if not vm_list:
+        error_info = error_code.generate_error_info(ErrorCode.VM_LIST_EMPTY)
+        return error_info
+
+    error_info = is_vm_duplicate(vm_list)
+    if error_info:
+        return error_info
+
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info
 
-    error_info, existing_vms = _tenant_vm_ls(name)
+    error_info = vm_already_exist(name, vms)
     if error_info:
         return error_info
 
-    if any_vm_already_exist(existing_vms, vms):
-        error_info = error_code.generate_error_info(ErrorCode.VM_ALREADY_IN_TENANT, vm_list, name)
-        return error_info
-
-    error_info, tenant_list = get_tenant_list_from_db()
-
+    error_info = vm_in_tenant(name, vms)
     if error_info:
-        return error_info
-
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
-
-    if vms_uuid_list and any_vm_part_of_another_tenant(vms_uuid_list, tenant_list):
-        error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT, vm_list, name)
-        logging.error("_tenant_vm_add: %s", error_info.msg)
         return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
@@ -472,6 +501,7 @@ def _tenant_vm_add(name, vm_list):
         return error_info
 
     logging.debug("_tenant_vm_add: vms=%s", vms)
+    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
     error_msg = tenant.add_vms(auth_mgr.conn, vms_uuid_list)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
@@ -488,6 +518,14 @@ def _tenant_vm_rm(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
+    if not vm_list:
+        error_info = error_code.generate_error_info(ErrorCode.VM_LIST_EMPTY)
+        return error_info
+
+    error_info = is_vm_duplicate(vm_list)
+    if error_info:
+        return error_info
+
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
@@ -496,12 +534,8 @@ def _tenant_vm_rm(name, vm_list):
 
     logging.debug("_tenant_vm_rm: vms=%s", vms)
 
-    error_info, existing_vms = _tenant_vm_ls(name)
+    error_info = vm_not_exist(name, vms)
     if error_info:
-        return error_info
-
-    if any_vm_not_exist(existing_vms, vms):
-        error_info = error_code.generate_error_info(ErrorCode.VM_NOT_IN_TENANT, vm_list, name)
         return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
@@ -531,10 +565,6 @@ def _tenant_vm_ls(name):
 def _tenant_vm_replace(name, vm_list):
     """ API to replace vms for a tenant """
     logging.debug("_tenant_vm_replace: name=%s vm_list=%s", name, vm_list)
-    if not vm_list:
-        error_info = error_code.generate_error_info(ErrorCode.REPLACE_VM_EMPTY)
-        return error_info
-
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info
@@ -543,11 +573,27 @@ def _tenant_vm_replace(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
+    if not vm_list:
+        error_info = error_code.generate_error_info(ErrorCode.REPLACE_VM_EMPTY)
+        return error_info
+
+    error_info = is_vm_duplicate(vm_list)
+    if error_info:
+        return error_info
+
     error_msg, vms, not_found_vms = generate_tuple_from_vm_list(vm_list)
 
     if error_msg:
         not_found_vm_list = ",".join(not_found_vms)
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
+        return error_info
+
+    error_info = vm_already_exist(name, vms)
+    if error_info:
+        return error_info
+
+    error_info = vm_in_tenant(name, vms)
+    if error_info:
         return error_info
 
     logging.debug("_tenant_vm_replace: vms=%s", vms)
