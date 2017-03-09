@@ -18,6 +18,7 @@
 VM_LOGFILE="/var/log/docker-volume-vsphere.log"
 ESX_LOGFILE="/var/log/vmware/vmdk_ops.log"
 HOSTD_LOGFILE="/var/log/hostd.log"
+SYS_LOGFILE="/var/log/syslog"
 
 dump_log_esx() {
   log $ESX_LOGFILE
@@ -31,6 +32,15 @@ dump_log_esx() {
 
 dump_log_vm(){
   $SSH $USER@$1 cat $VM_LOGFILE
+  log $SYS_LOGFILE
+  is_syslog_present=`$SSH $USER@$1 [[ -e $SYS_LOGFILE ]] && echo true || echo false`
+  log $is_syslog_present
+  if [ $is_syslog_present == "false" ]
+  then
+    log "collecting logs through journalctl"
+    $SSH $USER@$1 "journalctl > $SYS_LOGFILE"
+  fi
+  $SSH $USER@$1 cat $SYS_LOGFILE
 }
 
 truncate_vm_logs() {
