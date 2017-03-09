@@ -123,6 +123,7 @@ PVSCSI_MAX_TARGETS = 16
 
 # Service instance provide from connection to local hostd
 _service_instance = None
+is_connected = False
 
 # VMCI library used to communicate with clients
 lib = None
@@ -880,6 +881,7 @@ def connectLocalSi(force=False):
 	Initialize a connection to the local SI
 	'''
     global _service_instance
+    global is_connected
     if not _service_instance:
         try:
             logging.info("Connecting to the local Service Instance as 'dcui' ")
@@ -892,15 +894,26 @@ def connectLocalSi(force=False):
                 host='localhost',
                 user='dcui',
                 version=newestVersions.Get('vim'))
+            is_connected = True
         except Exception as e:
-            logging.exception("Failed to the local Service Instance as 'dcui', exiting: ")
-            sys.exit(1)
+            logging.exception("Failed to the local Service Instance as 'dcui', please ensure the ESX Host Agent is running on this host.")
+            return
     elif force:
-        logging.warning("Reconnecting to the local Service Instance")
-        _service_instance = pyVim.connect.Connect(
-            host='localhost',
-            user='dcui',
-            version=newestVersions.Get('vim'))
+        # The service instance may not be valid any more and the host agent too may not be reachable
+        # track the status of the service instance so subsequent requests to the service are blocked
+        # till the service instance is re-initialized.
+        try:
+            logging.warning("Reconnecting to the local Service Instance")
+            _service_instance = pyVim.connect.Connect(
+                host='localhost',
+                user='dcui',
+                version=newestVersions.Get('vim'))
+            is_connected = True
+        except Exception as e:
+            logging.exception("Failed to the local Service Instance as 'dcui', please ensure the ESX Host Agent is running on this host.")
+            is_connected = False
+            _service_instance = None
+            return
 
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()
@@ -913,7 +926,8 @@ def get_si():
 	'''
     with lockManager.get_lock('siLock'):
         try:
-            _service_instance.CurrentTime()
+            if _service_instance:
+                _service_instance.CurrentTime()
         except:
             connectLocalSi(force=True)
     return _service_instance
@@ -1421,10 +1435,17 @@ def execRequestThread(client_socket, cartel, request):
     '''
     Execute requests in a thread context with a per volume locking.
     '''
+    global is_connected
     # Before we start, block to allow main thread or other running threads to advance.
     # https://docs.python.org/2/faq/library.html#none-of-my-threads-seem-to-run-why
     time.sleep(0.001)
     try:
+        if not is_connected: 
+            connectLocalSi()
+            if not is_connected:
+                svc_instance_error = 'Failed to get local service instance, ensure the ESX Host Agent is running on the host.'
+                send_vmci_reply(client_socket, err(svc_instance_error))
+                return
         # Get VM name & ID from VSI (we only get cartelID from vmci, need to convert)
         vmm_leader = vsi.get("/userworld/cartel/%s/vmmLeader" % str(cartel))
         group_info = vsi.get("/vm/%s/vmmGroupInfo" % vmm_leader)
