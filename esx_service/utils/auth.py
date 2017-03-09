@@ -33,10 +33,6 @@ CMD_ATTACH = 'attach'
 CMD_DETACH = 'detach'
 
 SIZE = 'size'
-DEFAULT_TENANT = '_DEFAULT'
-DEFAULT_TENANT_UUID = '11111111-1111-1111-1111-111111111111'
-DEFAULT_DS  = '_DEFAULT'
-DEFAULT_DS_URL = DEFAULT_DS + "_URL"
 
 # thread local storage in this module namespace
 thread_local = threadutils.get_local_storage()
@@ -71,22 +67,22 @@ def get_default_tenant():
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT id FROM tenants WHERE name = ?",
-            (DEFAULT_TENANT, )
+            (auth_data_const.DEFAULT_TENANT, )
             )
         result = cur.fetchone()
     except sqlite3.Error as e:
-        error_msg = "Error {0} when querying from tenants table for tenant {1}".format(e, DEFAULT_TENANT)
+        error_msg = "Error {0} when querying from tenants table for tenant {1}".format(e, auth_data_const.DEFAULT_TENANT)
         logging.error(error_msg)
         return str(e), None, None
     if result:
         # found DEFAULT tenant
         tenant_uuid = result[0]
-        logging.debug("Found DEFAULT tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, DEFAULT_TENANT)
-        return None, tenant_uuid, DEFAULT_TENANT
+        logging.debug("Found DEFAULT tenant, tenant_uuid %s, tenant_name %s", tenant_uuid, auth_data_const.DEFAULT_TENANT)
+        return None, tenant_uuid, auth_data_const.DEFAULT_TENANT
     else:
         # cannot find DEFAULT tenant
         err_code = error_code.ErrorCode.TENANT_NOT_EXIST
-        err_msg = error_code.error_code_to_message[err_code].format(DEFAULT_TENANT)
+        err_msg = error_code.error_code_to_message[err_code].format(auth_data_const.DEFAULT_TENANT)
         logging.debug(err_msg)
         return None, None, None
 
@@ -110,7 +106,7 @@ def get_default_privileges():
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT * FROM privileges WHERE datastore_url = ?",
-            (DEFAULT_DS_URL,)
+            (auth_data_const.DEFAULT_DS_URL,)
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:

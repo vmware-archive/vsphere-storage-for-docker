@@ -85,6 +85,7 @@ import auth
 import sqlite3
 import convert
 import error_code
+import auth_data_const
 import auth_api
 from error_code import ErrorCode
 import re
@@ -780,7 +781,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
-    if tenant_name == auth.DEFAULT_TENANT:
+    if tenant_name == auth_data_const.DEFAULT_TENANT:
         # for DEFAULT tenant, set default_datastore to vm_datastore
         default_datastore_url = vm_datastore_url
         default_datastore = vm_datastore

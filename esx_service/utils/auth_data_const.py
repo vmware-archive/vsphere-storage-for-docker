@@ -34,3 +34,9 @@ COL_USAGE_QUOTA = 'usage_quota'
 # column name in volume table
 COL_VOLUME_NAME = 'volume_name'
 COL_VOLUME_SIZE = 'volume_size'
+
+# default tenant constants
+DEFAULT_TENANT = '_DEFAULT'
+DEFAULT_TENANT_UUID = '11111111-1111-1111-1111-111111111111'
+DEFAULT_DS  = '_DEFAULT'
+DEFAULT_DS_URL = DEFAULT_DS + "_URL"

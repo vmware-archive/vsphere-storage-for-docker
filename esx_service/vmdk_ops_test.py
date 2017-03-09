@@ -36,6 +36,7 @@ import uuid
 import auth
 import auth_data
 import auth_api
+import auth_data_const
 import error_code
 import vmdk_utils
 import random
@@ -267,7 +268,7 @@ class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
             self.vm_datastore = datastore[0]
             self.vm_datastore_url = datastore[1]
 
-        path, err = vmdk_ops.get_vol_path(self.vm_datastore, auth.DEFAULT_TENANT)
+        path, err = vmdk_ops.get_vol_path(self.vm_datastore, auth_data_const.DEFAULT_TENANT)
         self.assertEqual(err, None, err)
 
         self.name = vmdk_utils.get_vmdk_path(path, self.volName)
@@ -714,18 +715,18 @@ class VmdkTenantTestCase(unittest.TestCase):
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
             error_info, auth_mgr = auth_api.get_auth_mgr_object()
             if error_info:
-                err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_info.msg)
+                err = error_code.TENANT_CREATE_FAILED.format(auth_data_const.DEFAULT_TENANT, error_info.msg)
                 logging.warning(err)
             self.assertEqual(error_info, None)
 
             error_msg, tenant = auth_mgr.create_tenant(
-                                           name=auth.DEFAULT_TENANT,
+                                           name=auth_data_const.DEFAULT_TENANT,
                                            description="This is a default tenant",
                                            vms=[],
                                            privileges=[])
 
             if error_msg:
-                err = error_code.TENANT_CREATE_FAILED.format(auth.DEFAULT_TENANT, error_msg)
+                err = error_code.TENANT_CREATE_FAILED.format(auth_data_const.DEFAULT_TENANT, error_msg)
                 logging.warning(err)
             self.assertEqual(error_msg, None)
 
@@ -737,8 +738,8 @@ class VmdkTenantTestCase(unittest.TestCase):
 
         if not privileges:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT privileges")
-            error_info = auth_api._tenant_access_add(name=auth.DEFAULT_TENANT,
-                                                    datastore=auth.DEFAULT_DS,
+            error_info = auth_api._tenant_access_add(name=auth_data_const.DEFAULT_TENANT,
+                                                    datastore=auth_data_const.DEFAULT_DS,
                                                     allow_create=True,
                                                     default_datastore=False,
                                                     volume_maxsize_in_MB=0,
@@ -827,7 +828,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         # cleanup existing volume under DEFAULT tenant
         logging.info("VMDKTenantTest cleanup")
         if self.datastore_path:
-            default_tenant_path = os.path.join(self.datastore_path, auth.DEFAULT_TENANT)
+            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT)
             for vol in self.default_tenant_vols:
                 vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
                 response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)
@@ -885,7 +886,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         # remove DEFAULT privileges, and run create command, which should fail
-        error_info = auth_api._tenant_access_rm(auth.DEFAULT_TENANT, auth.DEFAULT_DS)
+        error_info = auth_api._tenant_access_rm(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS)
         self.assertEqual(None, error_info)
 
         opts={u'size': u'100MB', u'fstype': u'ext4'}
@@ -893,7 +894,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertNotEqual(None, error_info)
 
         # remove DEFAULT tenant, and run create command, which should fail
-        error_info = auth_api._tenant_rm(auth.DEFAULT_TENANT, False)
+        error_info = auth_api._tenant_rm(auth_data_const.DEFAULT_TENANT, False)
         self.assertEqual(None, error_info)
 
         opts={u'size': u'100MB', u'fstype': u'ext4'}
@@ -1232,7 +1233,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         if not tenant_uuid:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
             error_info, tenant = auth_api._tenant_create(
-                                           name=auth.DEFAULT_TENANT,
+                                           name=auth_data_const.DEFAULT_TENANT,
                                            description="This is a default tenant",
                                            vm_list=[],
                                            privileges=[])
@@ -1244,14 +1245,14 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         error_info, privileges = auth.get_default_privileges()
         if not privileges:
             logging.debug("create_default_tenant_and_privileges: create DEFAULT privileges")
-            error_info = auth_api._tenant_access_add(name=auth.DEFAULT_TENANT,
-                                                    datastore=auth.DEFAULT_DS_URL,
+            error_info = auth_api._tenant_access_add(name=auth_data_const.DEFAULT_TENANT,
+                                                    datastore=auth_data_const.DEFAULT_DS_URL,
                                                     allow_create=True,
                                                     default_datastore=False,
                                                     volume_maxsize_in_MB=0,
                                                     volume_totalsize_in_MB=0)
             if error_info:
-                err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_info)
+                err = error_code.TENANT_SET_ACCESS_PRIVILEGES_FAILED.format(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS, error_info)
                 logging.warning(err)
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
@@ -1292,7 +1293,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         # cleanup existing volume under DEFAULT tenant
         logging.info("VmdkTenantPolicyUsageTestCase cleanup")
         if self.datastore_path:
-            default_tenant_path = os.path.join(self.datastore_path, auth.DEFAULT_TENANT)
+            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT)
             for vol in self.default_tenant_vols:
                 vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
                 response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)

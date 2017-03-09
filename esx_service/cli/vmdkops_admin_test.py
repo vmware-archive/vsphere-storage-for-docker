@@ -103,7 +103,7 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.name, 'testPolicy')
 
     def test_policy_rm(self):
-        args = self.parser.parse_args('policy rm testPolicy'.split())
+        args = self.parser.parse_args('policy rm --name=testPolicy'.split())
         self.assertEqual(args.func, vmdkops_admin.policy_rm)
         self.assertEqual(args.name, 'testPolicy')
 

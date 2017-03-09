@@ -433,12 +433,12 @@ class AuthorizationDataManager:
     def create_default_tenant(self):
         """ Create DEFAULT tenant """
         error_msg, tenant = self.create_tenant(
-                                           name=auth.DEFAULT_TENANT,
+                                           name=auth_data_const.DEFAULT_TENANT,
                                            description="This is a default tenant",
                                            vms=[],
                                            privileges=[])
         if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth.DEFAULT_TENANT, error_msg)
+            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth_data_const.DEFAULT_TENANT, error_msg)
             logging.warning(err)
 
     def create_default_privileges(self):
@@ -449,20 +449,20 @@ class AuthorizationDataManager:
         this privilege will have full permission (create, delete, and mount)
         and no max_volume_size and usage_quota limitation
         """
-        privileges = [{'datastore_url': auth.DEFAULT_DS_URL,
+        privileges = [{'datastore_url': auth_data_const.DEFAULT_DS_URL,
                        'allow_create': 1,
                        'max_volume_size': 0,
                        'usage_quota': 0}]
 
-        error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+        error_msg, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
         if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth.DEFAULT_TENANT)
+            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth_data_const.DEFAULT_TENANT)
             logging.warning(err)
             return
 
         error_msg = tenant.set_datastore_access_privileges(self.conn, privileges)
         if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth.DEFAULT_TENANT, auth.DEFAULT_DS, error_msg)
+            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS, error_msg)
             logging.warning(err)
 
     def get_db_version(self):
@@ -525,14 +525,14 @@ class AuthorizationDataManager:
         """
         # in DB version 1.0, _DEFAULT_TENANT was created using a random generated UUID
         # in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
-        error_msg, tenant = self.get_tenant(auth.DEFAULT_TENANT)
+        error_msg, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
         if error_msg:
             raise DbAccessError(self.db_path, error_msg)
         error_msg = """
                         Your ESX installation seems to be using configuration DB created by previous
                         version of vSphere Docker Volume Service, and requires upgrade.
                         See {0} for more information.  (_DEFAULT_UUID = {1}, expected = {2})
-                     """.format(UPGRADE_README, tenant.id, auth.DEFAULT_TENANT_UUID)
+                     """.format(UPGRADE_README, tenant.id, auth_data_const.DEFAULT_TENANT_UUID)
         logging.error(error_msg)
         raise DbAccessError(self.db_path, error_msg)
 
@@ -710,8 +710,8 @@ class AuthorizationDataManager:
                     error_msg = "Not all columns are set in privileges"
                     return error_msg, None
                     
-        if name == auth.DEFAULT_DS:
-            tenant_uuid = auth.DEFAULT_TENANT_UUID
+        if name == auth_data_const.DEFAULT_DS:
+            tenant_uuid = auth_data_const.DEFAULT_TENANT_UUID
         else:
             tenant_uuid = None
         # Create the entry in the tenants table
