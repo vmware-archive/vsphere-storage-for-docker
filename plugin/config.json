@@ -2,8 +2,7 @@
 	"Description": "VMWare vSphere Docker Volume plugin",
 	"Documentation": "http://vmware.github.io/docker-volume-vsphere/documentation",
 	"Entrypoint": ["/usr/bin/docker-volume-vsphere",
-					"--config", "/etc/docker-volume-vsphere.conf",
-					"--log_level", "info"
+					"--config", "/etc/docker-volume-vsphere.conf"
 	],
 	"PropagatedMount": "/mnt/vmdk",
 	"Mounts": [
@@ -48,6 +47,13 @@
 		"Capabilities": ["CAP_SYS_ADMIN"],
 		"Devices": null
 
+	},
+	"Env": [ {
+      "name": "DVV_LOG_LEVEL",
+      "description": "Log level - info, warn, error or debug",
+      "value": "info",
+      "Settable": [ "value"]
 	}
+	]
 }
 

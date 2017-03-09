@@ -1,4 +1,4 @@
-=== Support for building docker-volume-vsphere(DVV) as Docker Managed Plugin
+### Support for building docker-volume-vsphere(DVV) as Docker Managed Plugin
 
 Docker managed plugins are currently documented [here](https://docs.docker.com/engine/extend/)
 
@@ -21,3 +21,11 @@ docker plugin install --disable cnastorage/docker-volume-vsphere:0.12
 ```
 
 The `docker volume` command behaves as before but the plugin name in `docker create` is either what was passed as `--alias` or the full plugin name , i.e. `cnastorage/docker-volume-vsphere:0.12`
+
+#### Logs
+
+The plugin logs are still at `/var/log/docker-volume-vsphere.log`
+However, you can change the log level by passing `DVV_LOG_LEVEL` key to `docker plugin install`, e.g.
+```
+ docker plugin install --grant-all-permissions  cnastorage/docker-volume-vsphere:0.12  DVV_LOG_LEVEL=debug
+ ```

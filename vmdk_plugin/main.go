@@ -98,8 +98,13 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 func main() {
 	var driver volume.Driver
 
-	// Define command line options
-	logLevel := flag.String("log_level", "info", "Logging Level")
+	// Get options from ENV (where available), and from command line.
+	// ENV takes precedence, so we can modify it in Docker plugin install
+	logEnv := os.Getenv("DVV_LOG_LEVEL")
+	logLevel := &logEnv
+	if *logLevel == "" {
+		logLevel = flag.String("log_level", "info", "Logging Level")
+	}
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 	driverName := flag.String("driver", "", "Volume driver")
 
