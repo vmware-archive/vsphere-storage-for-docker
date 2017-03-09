@@ -369,7 +369,7 @@ def validate_opts(opts, vmdk_path):
     if len(invalid) != 0:
         msg = 'Invalid options: {0} \n'.format(list(invalid)) \
                + 'Valid options and defaults: ' \
-               + '{0}'.format(zip(list(valid_opts), defaults))
+               + '{0}'.format(list(zip(list(valid_opts), defaults)))
         raise ValidationError(msg)
 
     # For validation of clone (in)compatible options
