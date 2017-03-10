@@ -100,7 +100,7 @@ func main() {
 
 	// Get options from ENV (where available), and from command line.
 	// ENV takes precedence, so we can modify it in Docker plugin install
-	logEnv := os.Getenv("DVV_LOG_LEVEL")
+	logEnv := os.Getenv("VDVS_LOG_LEVEL")
 	logLevel := &logEnv
 	if *logLevel == "" {
 		logLevel = flag.String("log_level", "info", "Logging Level")

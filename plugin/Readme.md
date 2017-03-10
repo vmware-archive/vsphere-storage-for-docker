@@ -13,7 +13,8 @@ be installed on Docker (1.13+) as follows:
 
 * no question asked, and pretend the plugin name is 'vsphere' (can be used in `volume create` and `plugin rm`)
 ```
-docker plugin install --grant-all-permissions --alias vsphere cnastorage/docker-volume-vsphere:0.12
+docker plugin install --grant-all-permissions --alias vsphere \
+  cnastorage/docker-volume-vsphere:0.12
 ```
 * vanilla interactive install as disabled plugin (will require `docker plugin enable `  to be operational
 ```
@@ -25,7 +26,8 @@ The `docker volume` command behaves as before but the plugin name in `docker cre
 #### Logs
 
 The plugin logs are still at `/var/log/docker-volume-vsphere.log`
-However, you can change the log level by passing `DVV_LOG_LEVEL` key to `docker plugin install`, e.g.
+However, you can change the log level by passing `VDVS_LOG_LEVEL` key to `docker plugin install`, e.g.
 ```
- docker plugin install --grant-all-permissions  cnastorage/docker-volume-vsphere:0.12  DVV_LOG_LEVEL=debug
+ docker plugin install --grant-all-permissions \
+   cnastorage/docker-volume-vsphere:0.12  VDVS_LOG_LEVEL=debug
  ```

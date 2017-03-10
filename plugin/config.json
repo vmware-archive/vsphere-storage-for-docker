@@ -49,7 +49,7 @@
 
 	},
 	"Env": [ {
-      "name": "DVV_LOG_LEVEL",
+      "name": "VDVS_LOG_LEVEL",
       "description": "Log level - info, warn, error or debug",
       "value": "info",
       "Settable": [ "value"]
