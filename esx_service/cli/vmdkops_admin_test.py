@@ -342,7 +342,7 @@ class TestLs(unittest.TestCase):
         self.assertEqual(EXPECTED_COLUMN_COUNT, len(header))
         self.assertEqual(len(volumes), len(rows))
         for i in range(len(volumes)):
-            self.assertEqual(volumes[i]['filename'], rows[i][1] + '.vmdk')
+            self.assertEqual(volumes[i]['filename'], rows[i][0] + '.vmdk')
 
 class TestSet(unittest.TestCase):
     """ Test set functionality """

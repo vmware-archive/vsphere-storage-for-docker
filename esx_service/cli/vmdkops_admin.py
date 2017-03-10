@@ -419,7 +419,7 @@ def commands():
                     'required': True
                 },
                 '--tenant': {
-                    'help': 'Name of the tenant which volume to set belongs to.',
+                    'help': 'Name of the tenant the volume belongs to.',
                     'required': True
                 },
                 '--options': {
@@ -534,15 +534,14 @@ def ls_dash_c(columns, tenant_reg):
 
 def all_ls_headers():
     """ Return a list of all header for ls -l """
-    return ['Tenant', 'Volume', 'Datastore', 'Created By VM', 'Created',
-            'Attached To VM (name/uuid)', 'Policy', 'Capacity', 'Used',
-            'Disk Format', 'Filesystem Type', 'Access', 'Attach As']
+    return ['Volume', 'Datastore', 'VM-Group', 'Capacity', 'Used', 'Filesystem', 'Policy',
+            'Disk Format', 'Attached-to', 'Access', 'Attach-as', 'Created By', 'Created Date']
 
 def generate_ls_rows(tenant_reg):
     """ Gather all volume metadata into rows that can be used to format a table """
     rows = []
     for v in vmdk_utils.get_volumes(tenant_reg):
-        if 'tenant' not in v or v['tenant'] == auth.ORPHAN_TENANT:
+        if 'tenant' not in v or v['tenant'] == auth_data_const.ORPHAN_TENANT:
             tenant = 'N/A'
         else:
             tenant = v['tenant']
@@ -557,9 +556,9 @@ def generate_ls_rows(tenant_reg):
         fstype = get_fstype(metadata)
         access = get_access(metadata)
         attach_as = get_attach_as(metadata)
-        rows.append([tenant, name, v['datastore'], created_by, created, attached_to,
-                     policy, size_info['capacity'], size_info['used'],
-                     diskformat, fstype, access, attach_as])
+        rows.append([name, v['datastore'], tenant, size_info['capacity'], size_info['used'], fstype, policy,
+                     diskformat, attached_to, access, attach_as, created_by, created])
+
     return rows
 
 

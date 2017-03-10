@@ -27,6 +27,7 @@ import auth_data_const
 import auth_api
 import log_config
 import auth
+import auth_data_const
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -163,7 +164,7 @@ def get_volumes(tenant_re):
                         volumes.append({'path': root,
                                         'filename': file_name,
                                         'datastore': datastore,
-                                        'tenant' : auth.ORPHAN_TENANT})
+                                        'tenant' : auth_data_const.ORPHAN_TENANT})
     logging.debug("volumes %s", volumes)
     return volumes
 
