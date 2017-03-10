@@ -318,7 +318,7 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
             error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
             return error_info, None
 
-        error_info = vm_in_tenant(name, vms)
+        error_info = vm_in_any_tenant(vms)
         if error_info:
             return error_info, None
 
@@ -410,7 +410,7 @@ def _tenant_ls(name=None):
     error_info, tenant_list = get_tenant_list_from_db(name)
     return error_info, tenant_list
 
-def vm_already_exist(name, vms):
+def vm_already_in_tenant(name, vms):
     """
         Check whether any vm in @param "vms" already exists in tenant @param "name"
     """
@@ -444,7 +444,7 @@ def vm_not_exist(name, vms):
     return None
 
 
-def vm_in_tenant(name, vms):
+def vm_in_any_tenant(vms):
     """
         Check if any vm in @param "vms" is a part of another tenant
     """
@@ -456,7 +456,7 @@ def vm_in_tenant(name, vms):
         for vm_id, vm_name in vms:
             if vm_id in tenant.vms:
                 error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT,
-                                                            vm_name, name)
+                                                            vm_name, tenant.name)
                 logging.error(error_info.msg)
                 return error_info
 
@@ -487,11 +487,11 @@ def _tenant_vm_add(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info
 
-    error_info = vm_already_exist(name, vms)
+    error_info = vm_already_in_tenant(name, vms)
     if error_info:
         return error_info
 
-    error_info = vm_in_tenant(name, vms)
+    error_info = vm_in_any_tenant(vms)
     if error_info:
         return error_info
 
@@ -588,11 +588,11 @@ def _tenant_vm_replace(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info
 
-    error_info = vm_already_exist(name, vms)
+    error_info = vm_already_in_tenant(name, vms)
     if error_info:
         return error_info
 
-    error_info = vm_in_tenant(name, vms)
+    error_info = vm_in_any_tenant(vms)
     if error_info:
         return error_info
 

@@ -72,7 +72,7 @@ error_code_to_message = {
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
     ErrorCode.VM_ALREADY_IN_TENANT : "VM '{0}' has already been associated with tenant '{1}', cannot add it again",
     ErrorCode.VM_NOT_IN_TENANT : "VM '{0}' has not been associated with tenant '{1}', cannot remove it",
-    ErrorCode.VM_IN_ANOTHER_TENANT : "VM '{0}' has already been associated with another tenant, can't add it to tenant '{1}'",
+    ErrorCode.VM_IN_ANOTHER_TENANT : "VM '{0}' has already been associated with tenant '{1}', can't add it",
     ErrorCode.VM_LIST_EMPTY : "VM list cannot be empty",
     ErrorCode.VM_DUPLICATE : "VMs {0} contain duplicates, they should be unique",
 

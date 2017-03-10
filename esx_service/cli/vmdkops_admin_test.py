@@ -642,8 +642,8 @@ class TestTenant(unittest.TestCase):
 
         # Trying to create tenant with duplicate vm names
         error_info, tenant_dup = auth_api._tenant_create(
-                                                    name="Tenant_dup",
-                                                    description="tenant_duplicate",
+                                                    name="tenant_add_dup_vms",
+                                                    description="Tenant with duplicate VMs",
                                                     vm_list=[self.vm1_name, self.vm1_name],
                                                     privileges=[])
 
