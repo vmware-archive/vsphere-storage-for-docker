@@ -433,7 +433,7 @@ class AuthorizationDataManager:
     def create_default_tenant(self):
         """ Create DEFAULT tenant """
         error_msg, tenant = self.create_tenant(
-                                           name=auth.DEFAULT_TENANT,
+                                           name=auth_data_const.DEFAULT_TENANT,
                                            description="This is a default vm-group",
                                            vms=[],
                                            privileges=[])
