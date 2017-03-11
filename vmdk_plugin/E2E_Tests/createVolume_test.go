@@ -46,19 +46,23 @@ expectation: volume should be created correctly
 
 */
 
+var dockerHosts = []string{os.Getenv("VM2"), os.Getenv("VM1")}
+
 func TestVolumeCreationFirstTime(t *testing.T) {
 	var err error
 	var out []byte
-	volumeName := volumeNameUtil.GetVolumeNameWithTimeStamp("abc")
+	for _, host := range dockerHosts {
+		volumeName := volumeNameUtil.GetVolumeNameWithTimeStamp("abc")
 
-	// create volume
-	out, err = TestUtil.CreateDefaultVolume(os.Getenv("VM1"), volumeName)
+		// create volume
+		out, err = TestUtil.CreateDefaultVolume(host, volumeName)
 
-	if err != nil {
-		t.Fatalf("\nError has occurred [%s] \n\twhile creating volume [%s] very first time: err -> %v", out, volumeName, err)
-	} else {
-		t.Logf("\nTestcase passed: successfully able to create volume [%s]\n", out)
-		// delete volume
-		TestUtil.DeleteVolume(volumeName, os.Getenv("VM1"))
+		if err != nil {
+			t.Errorf("\nError has occurred [%s] \n\twhile creating volume [%s] very first time: err -> %v", out, volumeName, err)
+		} else {
+			t.Logf("\nTestcase passed: successfully able to create volume [%s]\n", out)
+			// delete volume
+			TestUtil.DeleteVolume(volumeName, host)
+		}
 	}
 }
