@@ -414,7 +414,15 @@ def validate_vsan_policy_name(policy_name, vmdk_path):
         raise ValidationError('Cannot use a VSAN policy on a non-VSAN datastore')
 
     if not vsan_policy.policy_exists(policy_name):
-        raise ValidationError('Policy {0} does not exist'.format(policy_name))
+        err_msg = 'Policy {0} does not exist.'.format(policy_name)
+
+        # If valid policies exist, append their names along with error message
+        # for available policy names that can be used
+        avail_policies = vsan_policy.get_policies()
+        if avail_policies:
+            avail_msg = ' Available policies are: {0}'.format(list(avail_policies.keys()))
+            err_msg = err_msg + avail_msg
+        raise ValidationError(err_msg)
 
 def set_policy_to_vmdk(vmdk_path, opts, vol_name=None):
     """
