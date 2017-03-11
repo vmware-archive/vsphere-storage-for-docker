@@ -28,6 +28,7 @@ import auth_api
 import log_config
 import logging
 import convert
+import error_code
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 12
@@ -639,6 +640,15 @@ class TestTenant(unittest.TestCase):
         actual_output = rows
         self.assertEqual(expected_output, actual_output)
 
+        # Trying to create tenant with duplicate vm names
+        error_info, tenant_dup = auth_api._tenant_create(
+                                                    name="tenant_add_dup_vms",
+                                                    description="Tenant with duplicate VMs",
+                                                    vm_list=[self.vm1_name, self.vm1_name],
+                                                    privileges=[])
+
+        self.assertEqual(error_code.ErrorCode.VM_DUPLICATE, error_info.code)
+
         # tenant vm add to add two VMs to the tenant
         error_info = auth_api._tenant_vm_add(
                                              name=self.tenant1_name,
@@ -646,6 +656,39 @@ class TestTenant(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         error_info, vms = auth_api._tenant_vm_ls(self.tenant1_name)
+        self.assertEqual(None, error_info)
+
+        # create tenant2 with vm1 a part of it. Should fail as VM can be a part
+        # of just one tenant
+        error_info, tenant2 = auth_api._tenant_create(
+                                                    name="Test_tenant2",
+                                                    description="Test_tenant2",
+                                                    vm_list=[self.vm1_name],
+                                                    privileges=[])
+        self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
+
+        # create tenant3 and then try to add vm1 to it which is a part of
+        # another tenant. Should fail as VM can be a part of just one tenant
+        error_info, tenant3 = auth_api._tenant_create(
+                                                    name="Test_tenant3",
+                                                    description="Test_tenant3",
+                                                    vm_list=[],
+                                                    privileges=[])
+        self.assertEqual(None, error_info)
+
+        error_info  = auth_api._tenant_vm_add(
+                                              name=tenant3.name,
+                                              vm_list=[self.vm1_name])
+        self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
+
+        # Replace should fail since vm1 is already a part of tenant1
+        error_info  = auth_api._tenant_vm_replace(
+                                              name=tenant3.name,
+                                              vm_list=[self.vm1_name])
+        self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
+
+        # remove the tenant3
+        error_info = auth_api._tenant_rm(name=tenant3.name)
         self.assertEqual(None, error_info)
 
         # There are 2 columns for each row, the name of the columns are
