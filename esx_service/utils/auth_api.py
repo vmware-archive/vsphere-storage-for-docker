@@ -73,6 +73,25 @@ def get_tenant_name(tenant_uuid):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info, tenant_name
 
+def check_tenant_exist(name):
+    """ Check tenant with @param name exist or not
+        Return value:
+        -- Return None if tenant with given name does not exist
+        -- Return error_info on failure or the tenant with given name exists
+    """
+    error_info, auth_mgr = get_auth_mgr_object()
+    if error_info:
+        return error_info
+
+    error_msg, exist_tenant = auth_mgr.get_tenant(name)
+    if error_msg:
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
+        return error_info
+
+    if exist_tenant:
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
+        return error_info
+
 def create_tenant_in_db(name, description, vms, privileges):
     """
         Create a tenant object in DB
@@ -80,17 +99,12 @@ def create_tenant_in_db(name, description, vms, privileges):
         -- error_info: return None on success or error info on failure
         -- tenant: return tenant object on success or None on failure
     """
-    error_info, auth_mgr = get_auth_mgr_object()
+    error_info = check_tenant_exist(name)
     if error_info:
         return error_info, None
 
-    error_msg, exist_tenant = auth_mgr.get_tenant(name)
-    if error_msg:
-        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
-        return error_info, None
-
-    if exist_tenant:
-        error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
+    error_info, auth_mgr = get_auth_mgr_object()
+    if error_info:
         return error_info, None
 
     error_msg, tenant = auth_mgr.create_tenant(name=name,
@@ -346,14 +360,9 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
 
     if new_name:
         # check whether tenant with new_name already exist or not
-        error_msg, exist_tenant = auth_mgr.get_tenant(new_name)
-        if error_msg:
-            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
-            return error_info
-
-        if exist_tenant:
-            error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
-            return error_info
+        error_info = check_tenant_exist(new_name)
+        if error_info:
+            return error_info, None
 
         if not is_tenant_name_valid(name):
             error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAME_REGEXP)

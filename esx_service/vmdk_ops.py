@@ -1337,7 +1337,7 @@ def disk_detach_int(vmdk_path, vm, device):
 
 
 # Edit settings for a volume identified by its full path
-def set_vol_opts(name, options):
+def set_vol_opts(name, tenant_name, options):
     # Create a dict of the options, the options are provided as
     # "access=read-only" and we get a dict like {'access': 'read-only'}
     opts_list = "".join(options.replace("=", ":").split())
@@ -1350,6 +1350,9 @@ def set_vol_opts(name, options):
        logging.exception(ex)
        return False
 
+    logging.debug("set_vol_opts: name=%s options=%s vol_name=%s, datastore=%s",
+                  name, options, vol_name, datastore)
+
     if not datastore:
        msg = "Invalid datastore '{0}'.\n".format(datastore)
        logging.warning(msg)
@@ -1357,8 +1360,17 @@ def set_vol_opts(name, options):
 
     datastore_url = vmdk_utils.get_datastore_url(datastore)
 
+    # try to set opts on a volume which was created by a non-exist tenant
+    # fail the request
+    if tenant_name:
+    # if tenant_name is "None", which means the function is called without multi-tenancy
+        error_info = auth_api.check_tenant_exist(tenant_name)
+        if not error_info:
+            logging.warning(error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(tenant_name))
+            return False
+
     # get /vmfs/volumes/<datastore_url>/dockvols path on ESX:
-    path, errMsg = get_vol_path(datastore)
+    path, errMsg = get_vol_path(datastore, tenant_name)
 
     if path is None:
        msg = "Failed to get datastore path {0}".format(path)
@@ -1366,6 +1378,8 @@ def set_vol_opts(name, options):
        return False
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
+
+    logging.debug("set_vol_opts: path=%s vmdk_path=%s", path, vmdk_path)
 
     if not os.path.isfile(vmdk_path):
        msg = 'Volume {0} not found.'.format(vol_name)

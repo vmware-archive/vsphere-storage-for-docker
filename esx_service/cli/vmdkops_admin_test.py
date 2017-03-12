@@ -31,7 +31,7 @@ import convert
 import error_code
 
 # Number of expected columns in ADMIN_CLI ls
-EXPECTED_COLUMN_COUNT = 12
+EXPECTED_COLUMN_COUNT = 13
 
 # Number of expected columns in "tenant ls"
 TENANT_LS_EXPECTED_COLUMN_COUNT = 5
@@ -256,19 +256,22 @@ class TestParsing(unittest.TestCase):
         self.assert_parse_error('set --volume=volume_name')
 
     def test_set(self):
-        args = self.parser.parse_args('set --volume=vol_name@datastore --options="access=read-only"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --tenant=tenant1 --options="access=read-only"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
+        self.assertEqual(args.tenant, 'tenant1')
         self.assertEqual(args.options, '"access=read-only"')
 
-        args = self.parser.parse_args('set --volume=vol_name@datastore --options="attach-as=persistent"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --tenant=tenant1 --options="attach-as=persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
+        self.assertEqual(args.tenant, 'tenant1')
         self.assertEqual(args.options, '"attach-as=persistent"')
 
-        args = self.parser.parse_args('set --volume=vol_name@datastore --options="attach-as=independent_persistent"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --tenant=tenant1 --options="attach-as=independent_persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
+        self.assertEqual(args.tenant, 'tenant1')
         self.assertEqual(args.options, '"attach-as=independent_persistent"')
 
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
@@ -394,7 +397,9 @@ class TestSet(unittest.TestCase):
             vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
 
             attach_as_arg = 'attach-as={}'.format(attach_as_opt)
-            set_ok = vmdk_ops.set_vol_opts(vol_arg, attach_as_arg)
+            set_ok = vmdk_ops.set_vol_opts(name=vol_arg,
+                                           tenant_name=None,
+                                           options=attach_as_arg)
             self.assertTrue(set_ok)
 
             metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v[
@@ -412,7 +417,9 @@ class TestSet(unittest.TestCase):
             # generate string like "testvol0@datastore1"
             vol_arg = '@'.join([v['filename'].replace('.vmdk', ''), v['datastore']])
             access_arg = 'access={}'.format(access_opt)
-            set_ok = vmdk_ops.set_vol_opts(vol_arg, access_arg)
+            set_ok = vmdk_ops.set_vol_opts(name=vol_arg,
+                                           tenant_name=None,
+                                           options=access_arg)
             self.assertTrue(set_ok)
 
             metadata = vmdkops_admin.get_metadata(os.path.join(v['path'], v[

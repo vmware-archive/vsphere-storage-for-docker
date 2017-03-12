@@ -27,6 +27,7 @@ import auth_data_const
 import auth_api
 import log_config
 import auth
+import auth_data_const
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -151,9 +152,19 @@ def get_volumes(tenant_re):
                         for file_name in list_vmdks(root):
                             volumes.append({'path': root,
                                             'filename': file_name,
-                                            'datastore': datastore})
+                                            'datastore': datastore,
+                                            'tenant' : tenant_name})
                 else:
+                    # cannot find this tenant, this tenant was removed
+                    # mark those volumes created by "orphan" tenant
                     logging.debug("get_volumes: cannot find tenant_name for tenant_uuid=%s", sub_dir_name)
+                    logging.debug("get_volumes: path=%s root=%s sub_dir_name=%s",
+                                path, root, sub_dir_name)
+                    for file_name in list_vmdks(root):
+                        volumes.append({'path': root,
+                                        'filename': file_name,
+                                        'datastore': datastore,
+                                        'tenant' : auth_data_const.ORPHAN_TENANT})
     logging.debug("volumes %s", volumes)
     return volumes
 
