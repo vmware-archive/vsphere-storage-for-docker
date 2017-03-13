@@ -11,12 +11,57 @@ of all virtual disks created and in use on the host.  For these reasons, an admi
 created that runs on the ESXi host and that provides access to information not visible from the
 Docker CLI.
 
-The admin cli also enables ESX admins to implement tenancy.
+The admin CLI also enables ESX admins to implement access control and basic storage quotas.
+
+Admin CLI is located at `/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py`. It supports `--help`  at
+every command and sub-command. e.g.
+```
+[root@localhost:~] alias vmdkops_admin=/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py
+[root@localhost:~] vmdkops_admin --help
+usage: vmdkops_admin.py [-h] {volume,policy,status,config,vm-group} ...
+
+vSphere Docker Volume Service admin CLI
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+Manage VMDK-based Volumes for Docker:
+
+  {volume,policy,status,config,vm-group}
+                        action
+    volume              Manipulate volumes
+    policy              Configure and display storage policy information
+    status              Show the status of the vmdk_ops service
+    config              Init and manage Config DB which enables quotas and
+                        access control
+    vm-group            Administer and monitor volume access control
+[root@localhost:~] vmdkops_admin volume --help
+usage: vmdkops_admin.py volume [-h] {set,ls} ...
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+Manipulate volumes:
+
+  {set,ls}    action
+    set       Edit settings for a given volume
+    ls        List volumes
+```
+
+It also prompts for available choices, e.g.
+```
+[root@localhost:~] vmdkops_admin volume hm
+usage: vmdkops_admin.py volume [-h] {set,ls} ...
+vmdkops_admin.py volume: error: invalid choice: 'hm' (choose from 'set', 'ls')
+```
+
 
 The remainder of this document will describe each admin CLI command and provide examples
 of their usage.
 
 ## Vmgroup
+
+vm-groups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vm-group, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastore and access privileges (`access` and `update` subcommands).
 
 ### Help
 ```bash
@@ -653,17 +698,112 @@ enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issue
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name=some-policy
 Successfully removed policy: some-policy
 ```
+
+## Config
+
+Creates, removes, moves and reports on status of config DB. Config DB keep authentication information, and without initializing it no access control is supported. Also, configuring access control will fail, e.g.
+```
+[root@localhost:~] vmdkops_admin  vm-group create --name MY
+Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
+```
+
+#### Init
+
+Initialized the config is optional. If the config is not initialized, there will be no access control and all `vm-group` commands will fail with appropriate messages.
+
+Before configuring access control or quotas, the config needs to be inited to either local (`init --local`) or shared (`init --datastore=ds_name) mode
+
+```
+[root@localhost:~] vmdkops_admin config init -h
+usage: vmdkops_admin.py config init [-h] [--local] [--force]
+                                    [--datastore DATASTORE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --local               Allows local (SingleNode) Init
+  --force               Force operation, ignore warnings
+  --datastore DATASTORE
+                        Config DB will be placed on a shared datastore
+```
+
+Example:
+
+```
+[root@localhost:~] vmdkops_admin status
+Version: 0.12.fea683a-0.0.1
+Status: Running
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+DB_SharedLocation: n/a
+DB_Mode: NotConfigured (no local DB or symlink)  <===== NOT CONFIGURED
+Pid: 5979199
+Port: 1019
+LogConfigFile: /etc/vmware/vmdkops/log_config.json
+LogFile: /var/log/vmware/vmdk_ops.log
+LogLevel: DEBUG
+
+[root@localhost:~] vmdkops_admin config init --local
+Creating new DB at /etc/vmware/vmdkops/auth-db
+Restarting the vmdkops service to pick up new configuration
+Stopping vmdkops-opsd with PID=5979199
+vmdkops-opsd is not running
+Starting vmdkops-opsd
+vmdkops-opsd is running pid=5979684
+
+[root@localhost:~] vmdkops_admin status
+Version: 0.12.fea683a-0.0.1
+Status: Running
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+DB_SharedLocation: /etc/vmware/vmdkops/auth-db
+DB_Mode: SingleNode (local DB exists)    <==== LOCAL configuration
+Pid: 5979684
+Port: 1019
+LogConfigFile: /etc/vmware/vmdkops/log_config.json
+LogFile: /var/log/vmware/vmdk_ops.log
+LogLevel: DEBUG
+```
+
+
+#### Remove
+
+Allows to remove configuration. Either `--local` or `--datastore` flag needs to be passed.
+Also to make sure it is not typed accidentally, the command requires `--force` flag to actually execute the request
+
+```
+[root@localhost:~] vmdkops_admin config remove -h
+usage: vmdkops_admin.py config remove [-h] [--local] [--no-backup] [--force]
+                                      [--datastore DATASTORE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --local               Removes only local link or local DB
+  --no-backup           Do not create DB backup before removing
+  --force               Force operation, ignore warnings
+  --datastore DATASTORE
+                        Remove Config DB from a specific datastore
+```
+
+
+#### Status
+
+To get config DB  status, use  `/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status` command.
+
+#### Move
+
+Allows to relocate config DB between datastores. [Not implemented yet]
 ## Status
 
 Show config and run-time information about the service.
 
 ```bash
 [root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
- Version: 1.0.0-0.0.1
- Status: Running
- Pid: 161104
- Port: 1019
- LogConfigFile: /etc/vmware/vmdkops/log_config.json
- LogFile: /var/log/vmware/vmdk_ops.log
- LogLevel: INFO
+Version: 0.12.fea683a-0.0.1
+Status: Running
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+DB_SharedLocation: /etc/vmware/vmdkops/auth-db
+DB_Mode: SingleNode (local DB exists)
+Pid: 5979684
+Port: 1019
+LogConfigFile: /etc/vmware/vmdkops/log_config.json
+LogFile: /var/log/vmware/vmdk_ops.log
+LogLevel: DEBUG
 ```

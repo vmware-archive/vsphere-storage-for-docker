@@ -193,7 +193,7 @@ TEST_FILES := $(shell find . -name '*_test.py')
 
 # By default, we run all *_test.py. Use TEST_PATTERN to narrow the test set, e.g.
 # e.g. make test-esx TEST_PATTERN='*admin*'
-TEST_PATTERN := '*'
+TEST_PATTERN ?= '*'
 
 test-esx:
 	@echo "Copying files to $(ESX):$(TMP_LOC) and running .py unittests ..."

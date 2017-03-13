@@ -22,6 +22,8 @@ ADMIN_CLI = '/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py'
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 13
+# lines 'status' commands produces.
+EXPECTED_STATUS_LINES = 10
 
 class TestVmdkopsAdminSanity(unittest.TestCase):
     """ Test output from running vmdkops_admin.py """
@@ -64,12 +66,20 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         output = output.decode('utf-8')
         # Remove the last "line" which is just the empty string from the split
         lines = output.split('\n')[:-1]
-        self.assertEqual(len(lines), 7)
+        self.assertEqual(len(lines), EXPECTED_STATUS_LINES)
         expected_headers = ['Version', 'Status', 'Pid', 'Port', 'LogConfigFile',
-                           'LogFile', 'LogLevel']
+                            'LogFile', 'LogLevel', 'DB_LocalPath', 'DB_SharedLocation', 'DB_Mode']
         headers = list(map(lambda s: s.split(': ')[0], lines))
-        self.assertEqual(expected_headers, headers)
+        for h in headers:
+            self.assertIn(h, expected_headers)
 
+    def test_config(self):
+        """ check command presence"""
+        cmds = ["", "remove", "init", "move"]
+        for c in cmds:
+            cmd = '{} config {} -h'.format(ADMIN_CLI, c)
+            # Ignoring output as long as there are no failures
+            subprocess.check_output(cmd, shell=True, stderr=self.devnull)
 
 def all_dashes(string):
     return all(map(lambda char: char == '-', string))

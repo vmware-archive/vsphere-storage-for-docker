@@ -19,6 +19,8 @@ import argparse
 import os
 import subprocess
 import sys
+import os.path
+import shutil
 
 import vmdk_ops
 # vmdkops python utils are in PY_LOC, so add to path.
@@ -213,14 +215,14 @@ def commands():
                 }
             }
         },
-        #
-        # vmgroup {create, update, rm , ls} - manipulates vmgroup
-        # vmgroup vm {add, rm, ls}  - manipulates VMs for a vmgroup
-        # vmgroup access {add, set, rm, ls} - manipulates datastore access right for a vmgroup
-        #
-        # Internally, "vmgroup" is called "tenant", and we decide to keep the name of functions as "tenant_*"
-
-        'vmgroup': {
+        'vm-group': {
+            #
+            # vm-group {create, update, rm , ls} - manipulates vm-group
+            # vm-group vm {add, rm, ls}  - manipulates VMs for a vm-group
+            # vm-group access {add, set, rm, ls} - manipulates datastore access right for a vm-group
+            #
+            # Internally, "vm-group" is called "tenant".
+            # We decided to keep the name of functions as "tenant_*" for now
             'help': 'Administer and monitor volume access control',
             'cmds': {
                 'create': {
@@ -432,6 +434,64 @@ def commands():
                 }
             }
         },
+        'config': {
+            'help': 'Init and manage Config DB which enables quotas and access control',
+            'cmds': {
+                'init': {
+                    'func': config_init,
+                    'help': "Init Config DB to allows quotas and access groups (vm-groups)",
+                    'args': {
+                        '--datastore': {
+                            'help': 'Config DB will be placed on a shared datastore',
+                        },
+                        '--local': {
+                            'help': 'Allows local (SingleNode) Init',
+                            'action': 'store_true'
+                        },
+                        '--force': {
+                            'help': 'Force operation, ignore warnings',
+                            'action': 'store_true'
+                        }
+                    }
+                },
+                'remove': {
+                    'func': config_rm,
+                    'help': 'Remove Config DB',
+                    'args': {
+                        '--datastore': {
+                            'help': 'Remove Config DB from a specific datastore',
+                        },
+                        '--local': {
+                            'help': 'Removes only local link or local DB',
+                            'action': 'store_true'
+                        },
+                        '--no-backup': {
+                            'help': 'Do not create DB backup before removing',
+                            'action': 'store_true'
+                        },
+                        '--force': {
+                            'help': 'Force operation, ignore warnings',
+                            'action': 'store_true'
+                        }
+                    }
+
+                },
+                'move': {
+                    'func': config_mv,
+                    'help': "Relocate config DB from its current location [not supported yet]",
+                    'args': {
+                        '--force': {
+                            'help': 'Force operation, ignore warnings',
+                            'action': 'store_true'
+                        },
+                        '--to': {
+                            'help': 'Where to move the DB to.',
+                            'required': True
+                        }
+                    }
+                },
+            }
+        },
         'status': {
             'func': status,
             'help': 'Show the status of the vmdk_ops service'
@@ -441,14 +501,14 @@ def commands():
 
 def create_parser():
     """ Create a CLI parser via argparse based on the dictionary returned from commands() """
-    parser = argparse.ArgumentParser(description='Manage VMDK Volumes')
-    add_subparser(parser, commands())
+    parser = argparse.ArgumentParser(description='vSphere Docker Volume Service admin CLI')
+    add_subparser(parser, commands(), title='Manage VMDK-based Volumes for Docker')
     return parser
 
 
-def add_subparser(parser, cmds_dict):
+def add_subparser(parser, cmds_dict, title="", description=""):
     """ Recursively add subcommand parsers based on a dictionary of commands """
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(title=title, description=description, help="action")
     for cmd, attributes in cmds_dict.items():
         subparser = subparsers.add_parser(cmd, help=attributes['help'])
         if 'func' in attributes:
@@ -458,7 +518,7 @@ def add_subparser(parser, cmds_dict):
                 opts = build_argparse_opts(opts)
                 subparser.add_argument(arg, **opts)
         if 'cmds' in attributes:
-            add_subparser(subparser, attributes['cmds'])
+            add_subparser(subparser, attributes['cmds'], title=attributes['help'])
 
 
 def build_argparse_opts(opts):
@@ -732,15 +792,26 @@ def policy_update(args):
 
 
 def status(args):
-    print("Version: {0}".format(get_version()))
+    """Prints misc. status information. Returns an array of 1 element dicts"""
+    result = []
+    result.append({"Version": str(get_version())})
     (status, pid) = get_service_status()
-    print("Status: {0}".format(status))
+    result.append({"Status": str(status)})
+    with auth_data.AuthorizationDataManager() as auth:
+        auth.connect()
+        for (k, v) in auth.get_info().items():
+            result.append({k: v})
+        # TODO: print more stuff (link, DB, DS type, counts of object)
+        # TODO: add this print to be called from status() as well
     if pid:
-        print("Pid: {0}".format(pid))
-        print("Port: {0}".format(get_listening_port(pid)))
-    print("LogConfigFile: {0}".format(log_config.LOG_CONFIG_FILE))
-    print("LogFile: {0}".format(log_config.LOG_FILE))
-    print("LogLevel: {0}".format(log_config.get_log_level()))
+        result.append({"Pid": str(pid)})
+        result.append({"Port": str(get_listening_port(pid))})
+    result.append({"LogConfigFile": log_config.LOG_CONFIG_FILE})
+    result.append({"LogFile": log_config.LOG_FILE})
+    result.append({"LogLevel": log_config.get_log_level()})
+    for r in result:
+        print("{}: {}".format(r.keys()[0], r.values()[0]))
+    return result
 
 
 def set_vol_opts(args):
@@ -847,10 +918,10 @@ def generate_tenant_ls_rows(tenant_list):
 def tenant_create(args):
     """ Handle tenant create command """
     error_info, tenant = auth_api._tenant_create(
-                                                 name=args.name,
-                                                 description="",
-                                                 vm_list=args.vm_list,
-                                                 privileges=[])
+        name=args.name,
+        description="",
+        vm_list=args.vm_list,
+        privileges=[])
     if error_info:
         return operation_fail(error_info.msg)
     else:
@@ -971,7 +1042,7 @@ def tenant_access_add(args):
                                              allow_create=args.allow_create,
                                              volume_maxsize_in_MB=volume_maxsize_in_MB,
                                              volume_totalsize_in_MB=volume_totalsize_in_MB
-                                             )
+                                            )
 
     if error_info:
         return operation_fail(error_info.msg)
@@ -1038,6 +1109,224 @@ def tenant_access_ls(args):
     header = tenant_access_ls_headers()
     rows = generate_tenant_access_ls_rows(privileges)
     print(cli_table.create(header, rows))
+
+# ==== CONFIG DB manipulation functions ====
+
+def create_db_symlink(path, link_path):
+    """Force-creates a symlink to path"""
+    if os.path.islink(link_path):
+        os.remove(link_path)
+    try:
+        os.symlink(path, link_path)
+    except Exception as ex:
+        print("Failed to create symlink at {} to {}".format(auth_data.AUTH_DB_PATH, path))
+        sys.exit(ex)
+
+
+def db_move_to_backup(path):
+    """Saves a DB copy side by side. Basically, glorified copy"""
+    print("Warning: full DB backup is not implemented yet. Copying {} to .bck".format(path))
+    #TODO:
+    # - get a name as path.bck-date
+    # - copy a file, yell if it's problem (just FYI)
+    shutil.move(path, path + ".bck")
+    return
+
+
+def is_local_vmfs(datastore_name):
+    """return True if datastore is local VMFS one"""
+    # TODO - check for datastore being on local VMFS volume:
+    # si = pyVim.connect.Connect()
+    # host = pyVim.host.GetHostSystem(si)
+    # fss = host.configManager.storageSystem.fileSystemVolumeInfo.mountInfo
+    # vmfs_volume_info = [f.volume for f in fss if f.volume.name == datastore_name abd f.volume.type == "VMFS"]
+    # return vmfs_volume_info and vmfs_volume_info.local
+    return False
+
+
+def service_restart():
+    """Brute force restart the service, it does need it."""
+    # Note1: iNotify in the service would be better bu iNotify is only supported
+    # in ESX user space in 6.5+ (TBD: verify & file an issue).
+    print("Restarting the vmdkops service to pick up new configuration")
+    os.system("/etc/init.d/vmdk-opsd restart")
+
+
+# TODO - rename local functions to __* or hide in config_init
+
+def err_override(_msg, _info):
+    """A helper to form help messages - adds Error: and some extra info"""
+    msg = "Error: {}".format(_msg) + " . Add '--force' flag to force the request execution" + \
+          "\nAdditional information: {}".format(_info)
+    print(msg)
+    return msg
+
+def err_out(_msg):
+    "another trivial helper - print a message and return it"
+    print(_msg)
+    return _msg
+
+def config_elsewhere(datastore):
+    """Returns a list of config DBs on other datastore, or None if None exists"""
+    # TODO - actual implementation: scan vim datastores, check for dockvol/file_name
+    #  return None or [list of config DBs]
+    if datastore == 'Some':
+        return [datastore] # trick pylint until we implement the code
+    return None
+
+def check_ds_local_args(args):
+    """
+    checks consistency in --local and --datastore args, an datastore presense
+    :Return: None for success, errmsg for error
+    """
+    if not args.datastore and not args.local:
+        return err_out("Error: one of '--datastore' or '--local' have to be set")
+    if args.datastore and args.local:
+        return err_out("Error: only one of '--datastore' or '--local' can be set")
+    if args.datastore:
+        #TODO: check datastore argument is valid (we already have a code somewhere)
+        pass
+    return None
+
+
+
+def config_init(args):
+    """
+    Init Config DB to allows quotas and access groups (vm-groups)
+    :return: None for success, string for error
+    """
+
+    err = check_ds_local_args(args)
+    if err:
+        return err
+
+    if args.datastore:
+        ds_name = args.datastore
+        db_path = auth_data.AuthorizationDataManager.ds_to_db_path(ds_name)
+        # check that the target datastore is NOT local VMFS, bail out if it is (--force to overide)
+        if is_local_vmfs(ds_name) and not args.force:
+            return err_override("{} is a local datastore.".format(ds_name) +
+                                "Shared datastores are recommended.", "N/A")
+        # Check other datastores, bail out if dockvold/DB exists there.
+        other_ds_config = config_elsewhere(ds_name)
+        if other_ds_config and not args.force:
+            return err_override("Configuration is already inited: {}".format(other_ds_config), "N/A")
+    else:
+        db_path = auth_data.AUTH_DB_PATH
+
+    link_path = auth_data.AUTH_DB_PATH # where was the DB, now is a link
+
+
+    # Check the existing config mode
+    with auth_data.AuthorizationDataManager() as auth:
+        try:
+            auth.connect()
+            if auth.mode == auth_data.DBMode.SingleNode and auth.db_is_empty():
+                print("Removing empty local DB at {}".format(link_path))
+                os.remove(link_path)
+                auth.mode = auth_data.DBMode.NotConfigured
+            info = auth.get_info()
+        except auth_data.DbAccessError as ex:
+            return err_out("Fatal: DB link or DB is corrupted. Check {} ({}".format(link_path, ex))
+
+    if auth.mode  == auth_data.DBMode.NotConfigured:
+        pass
+    elif auth.mode  == auth_data.DBMode.MultiEsx:
+        if not args.force:
+            return err_override("Config DB is already initialized.", info)
+        else:
+            os.remove(link_path)
+    elif auth.mode  == auth_data.DBMode.SingleNode:
+        if not args.force:
+            return err_override("Local DB already exists {}".format(link_path), info)
+        db_move_to_backup(link_path)
+    else:
+        raise Exception("Fatal: Internal error - unknown mode (value %s)" % auth.mode )
+
+
+    if not os.path.exists(db_path):
+        print("Creating new DB at {}".format(db_path))
+        auth = auth_data.AuthorizationDataManager(db_path)
+        err = auth.new_db()
+        if err:
+            return err_out("Init failed: %s" % str(err))
+
+    # Almost done -  just create link and refresh the service
+    if not args.local:
+        print("Creating a symlink to DB at {}".format(link_path))
+        create_db_symlink(db_path, link_path)
+    service_restart()
+    return None
+
+
+def config_rm(args):
+    """
+    Remove Config DB.BaseException
+    :return: None for success, string for error
+    """
+
+    # TODO
+    # This command should ask for double confirmation, reset the DB_PATH,
+    # and delete the database instance
+    # Other ESXs will detect this change (DB is missing) and
+    # reset the DB_PATH (if new DB cannot be discovered)
+
+    err = check_ds_local_args(args)
+    if err:
+        return err
+
+    if not args.force:
+        return err_out("Warning: Config DB removal requires '--force' flag to execute the request")
+
+    if args.datastore:
+        db_path = auth_data.AuthorizationDataManager.ds_to_db_path(args.datastore)
+
+    link_path = auth_data.AUTH_DB_PATH # where was the DB, now is a link
+
+
+    try:
+        os.remove(link_path)
+    except Exception as ex:
+        return err_out("Configuration rm failed ({})".format(ex))
+    print("Removed {}".format(link_path))
+
+    if args.local:
+        return None
+
+    if args.no_backup:
+        os.remove(db_path)
+    else:
+        db_move_to_backup(db_path)
+
+    service_restart()
+    return None
+
+
+def config_mv(args):
+    """
+    Relocate config DB from its current location [not supported yet]
+    :return: None for success, string for error
+    """
+
+    if not args.force:
+        return err_out("Config DB Move to {} ".format(args.to) +
+                       "requires '--force' flag to execute the request.")
+
+    # TODO: question
+    # Should it work only in MultiEsx mode (link and DB exist), should fail in all other modes ?
+
+    # TODO:
+    # check the mode and reject the move if its not MultiEsx
+    # checks if target exists upfront, and fail if it does
+    # stop service
+    # mv the DB instance 'to' , and flip the symlink.
+    # restart service
+    # need --dryrun or --yes
+    # issue: works really with discovery only , as others need to find it out
+    print("Sorry, configuration move ('config mv' command) is not supported yet")
+    return None
+
+# ==== Run it now ====
 
 if __name__ == "__main__":
     main()

@@ -692,7 +692,7 @@ def get_vol_path(datastore, tenant_name=None):
     if tenant_name:
         error_info, tenant = auth_api.get_tenant_from_db(tenant_name)
         if error_info:
-            logging.error("get_vol_path: cannont find tenant info for tenant %s", tenant_name)
+            logging.error("get_vol_path: failed to find tenant info for tenant %s", tenant_name)
             path = dock_vol_path
         path = os.path.join(dock_vol_path, tenant.id)
     else:

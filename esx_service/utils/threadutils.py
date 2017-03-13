@@ -74,11 +74,11 @@ def get_lock_decorator(reentrant=False):
             """
             # Get lock memory address for debugging
             lockaddr = hex(id(lock))
-            logging.debug("Trying to acquire lock: %s @ %s, caller: %s, args: %s %s",
-                          lock, lockaddr, func.__name__, args, kwargs)
+            # logging.debug("Trying to acquire lock: %s @ %s, caller: %s, args: %s %s",
+            #               lock, lockaddr, func.__name__, args, kwargs)
             with lock:
-                logging.debug("Acquired lock: %s @ %s, caller: %s, args: %s %s",
-                              lock, lockaddr, func.__name__, args, kwargs)
+                # logging.debug("Acquired lock: %s @ %s, caller: %s, args: %s %s",
+                #               lock, lockaddr, func.__name__, args, kwargs)
                 return func(*args, **kwargs)
         return protected
     return lock_decorator

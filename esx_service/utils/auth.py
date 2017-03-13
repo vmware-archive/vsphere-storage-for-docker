@@ -50,7 +50,7 @@ def get_auth_mgr():
 
 def get_default_tenant():
     """
-        Get DEFAULT tenant by querying the auth DB.
+        Get DEFAULT tenant by querying the auth DB or from hardcoded defaults.
         VM which does not belong to any tenant explicitly will
         be assigned to DEFAULT tenant if DEFAULT tenant exists
         Return value:
@@ -64,6 +64,10 @@ def get_default_tenant():
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None, None
+
+    if _auth_mgr.allow_all_access():
+        return None, auth_data_const.DEFAULT_TENANT_UUID, auth_data_const.DEFAULT_TENANT
+
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT id FROM tenants WHERE name = ?",
@@ -100,6 +104,10 @@ def get_default_privileges():
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None
+
+    if _auth_mgr.allow_all_access():
+        return None, _auth_mgr.get_default_privileges_dict()
+
     privileges = []
     logging.debug("get_default_privileges")
 
@@ -129,6 +137,10 @@ def get_tenant(vm_uuid):
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None, None
+
+    if _auth_mgr.allow_all_access():
+        return None, auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_TENANT_UUID
+
     try:
         cur = _auth_mgr.conn.execute(
                     "SELECT tenant_id FROM vms WHERE vm_id = ?",
@@ -185,6 +197,9 @@ def get_privileges(tenant_uuid, datastore_url):
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None
+
+    # TBD return _auth_mgr.get_defaut_privileges_dict() when both params matchm otherwise return std err
+
     privileges = []
     logging.debug("get_privileges tenant_uuid=%s datastore_url=%s", tenant_uuid, datastore_url)
     try:
@@ -406,17 +421,18 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
     logging.debug("Authorize: cmd=%s", cmd)
     logging.debug("Authorize: opt=%s", opts)
 
-    try:
-        get_auth_mgr()
-    except (auth_data.DbConnectionError, auth_data.DbAccessError) as e:
-        error_msg = str(e)
+    error_msg, _auth_mgr = get_auth_mgr()
+    if error_msg:
         return error_msg, None, None
+
+    if _auth_mgr.allow_all_access():
+        return None, auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_TENANT_UUID
 
     # If table "tenants", "vms", "privileges" or "volumes" does not exist
     # don't need auth check
     if not tables_exist():
-        logging.error("Required tables in auth db do not exist")
-        error_msg = "Required tables in aut db do not exist"
+        error_msg = "Required tables do not exist in auth db"
+        logging.error(error_msg)
         return error_msg, None, None
 
     error_msg, tenant_uuid, tenant_name = get_tenant(vm_uuid)
@@ -457,6 +473,12 @@ def add_volume_to_volumes_table(tenant_uuid, datastore_url, vol_name, vol_size_i
     logging.debug("add to volumes table(%s %s %s %s)", tenant_uuid, datastore_url,
                   vol_name, vol_size_in_MB)
 
+    if _auth_mgr.allow_all_access():
+        if tenant_uuid != auth_data_const.DEFAULT_TENANT_UUID:
+            logging.info("No access control, skipping volumes tracing in auth DB")
+            return None
+        logging.debug("Skipping Add volume to DB %s (allow_all_access)", tenant_uuid)
+
     try:
         _auth_mgr.conn.execute(
             "INSERT INTO volumes(tenant_id, datastore_url, volume_name, volume_size) VALUES (?, ?, ?, ?)",
@@ -481,6 +503,11 @@ def remove_volume_from_volumes_table(tenant_uuid, datastore_url, vol_name):
 
     logging.debug("remove volumes from volumes table(%s %s %s)", tenant_uuid, datastore_url,
                   vol_name)
+
+    if _auth_mgr.allow_all_access():
+        logging.debug("Skipping Rm volume from DB %s (allow_all_access)", tenant_uuid)
+        return None
+
     try:
         _auth_mgr.conn.execute(
                     "DELETE FROM volumes WHERE tenant_id = ? AND datastore_url = ? AND volume_name = ?",

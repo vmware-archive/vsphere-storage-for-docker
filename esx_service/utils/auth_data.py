@@ -32,7 +32,10 @@ import log_config
 import auth
 from error_code import ErrorCode
 
-AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
+AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db' # location of auth.db symlink
+CONFIG_DB_NAME = "vmdkops_config.db"         # name of the configuration DB file
+DB_STATE_CHECK_SEC = 300 # interval to check for DB state, in seconds
+DB_REF = "Config DB "  # we will use it in logging
 
 # DB schema and VMODL version
 # Bump the DB_MINOR_VER to 1.1
@@ -43,6 +46,34 @@ VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
 
 UPGRADE_README = "https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/UpgradeFrom_Pre0.11.1.md"
+
+
+class DBMode(object):
+    """
+    Modes of Aut DB. Calculated on first access and used to make decisions
+    about the need for authentication. Also will be used in changes discovery (TBD)
+    """
+
+    Unknown = 0        # The value was not calculated yet
+    NotConfigured = 1  # path does not exist, or an empty DB (which we delete)
+                       # this turn on "no access control" mode for external code
+    SingleNode = 2     # path exists and is a non-empty DB. "legacy singe ESX" mode
+    MultiEsx = 3       # Normal op, symlink to nonempty DB.
+    BrokenLink = 4     # symlink exists but points nowhere, or it's a file which is not the DB
+    str_dict = {       # strings for print when requested:
+        Unknown: "Unknown (not checked yet)",
+        NotConfigured: "NotConfigured (no local DB or symlink)",
+        SingleNode: "SingleNode (local DB exists)",
+        MultiEsx: "MultiEsx (local symlink pointing to shared DB)",
+        BrokenLink: "BrokenLink (Broken link or corrupted DB file)"
+    }
+    def __init__(self, value=Unknown):
+        self.value = value
+    def __str__(self):
+        return DBMode.str_dict[self.value]
+    def __eq__(self, other):
+        return self.value == other
+
 
 def all_columns_set(privileges):
     if not privileges:
@@ -74,27 +105,18 @@ def get_dockvol_path_tenant_path(datastore_name, tenant_id):
     return dockvol_path, tenant_path
 
 class DbConnectionError(Exception):
-    """ An exception thrown when a client tries to establish a connection to the DB. """
-
-    def __init__(self, db_path):
-        self.db_path = db_path
-
-    def __str__(self):
-        return "DB connection error %s" % self.db_path
+    """ Thrown when a client tries to establish a connection to the DB. """
+    def __init__(self, path):
+        super(DbConnectionError, self).__init__("DB connection error {}".format(path))
 
 class DbAccessError(Exception):
-    """ An exception thrown when when a client tries to run a SQL using an established connection.
-    """
-
+    """ Thrown when a client fails to run a SQL using an established connection. """
     def __init__(self, db_path, msg):
-        self.db_path = db_path
-        self.msg = msg
-
-    def __str__(self):
-        return "DB access error at {0} ({1})".format(self.db_path, self.msg)
+        super(DbAccessError, self).__init__("DB access error at {} ({})".format(db_path, msg))
 
 class DatastoreAccessPrivilege:
-    """ This class abstract the access privilege to a datastore .
+    """
+    This class abstracts the access privilege to a datastore.
     """
     def __init__(self, tenant_id, datastore_url, allow_create, max_volume_size, usage_quota):
         """ Construct a DatastoreAccessPrivilege object. """
@@ -397,84 +419,61 @@ class DockerVolumeTenant:
 
 
 class AuthorizationDataManager:
-    """ This class abstracts the creation, modification and retrieval of
+    """
+    This class abstracts the creation, modification and retrieval of
     authorization data used by vmdk_ops as well as the VMODL interface for
     Docker volume management.
-
-    init arg:
-    The constructor of this class takes "db_path" as an argument.
-    "db_path" specifies the path of sqlite3 database
-    If caller does not pass the value of this argument, function "get_auth_db_path"
-    will be called to figure out the value
-    otherwise, the value passed by caller will be used
-
     """
 
-    def __init__(self, db_path=None):
-        if not db_path:
-            self.db_path = self.get_auth_db_path()
-        else:
-            self.db_path = db_path
-        self.conn = None
+    @classmethod
+    def ds_to_db_path(cls, datastore):
+        """Form full path to DB based on expected location on the datastore"""
+        return os.path.join("/vmfs/volumes", datastore, vmdk_ops.DOCK_VOLS_DIR, CONFIG_DB_NAME)
+
+    def __init__(self, db_path=AUTH_DB_PATH):
+        """
+        The AuthorizationDataManager constructor gets passed an optional "db_path".
+        "db_path" specifies the path of sqlite3 database. Default is defined in AUTH_DB_PATH.
+        Note that regular control flow is as follows:
+        'auth=AuthorizationDataManager(); auth.connect(); auth.<use>'.
+        For creating a DB though, the control flow is as follows:
+        'with  AuthorizationDataManager()as auth ; auth.new_db(). The create and use new instance.
+        """
+
+        # Note: Eventually we will place the DB file on VSAN ,most likely
+        # under /vmfs/volume/vsanDatastore/DOCKVOL/etc/....
+        # For now we refer to it from a fixed place in AUTH_DB_PATH
+        # See issue #618 for more details.
+
+        self.db_path = db_path
+        self.conn = self.__mode = None
 
     def __del__(self):
+        """ Destructor. For now, only closes the connection"""
+        return self.__close()
+
+    def __enter__(self):
+        """Support for 'with' statement"""
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        """Support for 'with'statement"""
+        pass
+
+    def __close(self):
+        """ Close the connection to the DB"""
         if self.conn:
             self.conn.close()
+            self.conn = None
 
-    def get_auth_db_path(self):
-        """ Return the path of authorization database.
 
-        DB tables should be stored in VSAN datastore
-        DB file should be stored under /vmfs/volume/VSAN_datastore/
-        See issue #618
-        Currently, it is hardcoded.
-
-        """
-        return AUTH_DB_PATH
-
-    def create_default_tenant(self):
-        """ Create DEFAULT tenant """
-        error_msg, tenant = self.create_tenant(
-            name=auth_data_const.DEFAULT_TENANT,
-            description="This is a default vmgroup",
-            vms=[],
-            privileges=[])
-        if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth_data_const.DEFAULT_TENANT, error_msg)
-            logging.warning(err)
-
-    def create_default_privileges(self):
-        """
-        create DEFAULT privilege
-        This privilege will match any <tenant(DEFAULT and normal), datastore> pair
-        which does not have an entry in privileges table explicitly
-        this privilege will have full permission (create, delete, and mount)
-        and no max_volume_size and usage_quota limitation
-        """
-        privileges = [{'datastore_url': auth_data_const.DEFAULT_DS_URL,
-                       'allow_create': 1,
-                       'max_volume_size': 0,
-                       'usage_quota': 0}]
-
-        error_msg, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
-        if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth_data_const.DEFAULT_TENANT)
-            logging.warning(err)
-            return
-
-        error_msg = tenant.set_datastore_access_privileges(self.conn, privileges)
-        if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS, error_msg)
-            logging.warning(err)
-
-    def get_db_version(self):
+    def __get_db_version(self):
         """
         Get DB schema version from auth-db
         """
-        major_ver = 0
-        minor_ver = 0
+        major_ver = minor_ver = 0
 
-        # check table "versions" exist or not
+        # check if  "versions" exists
         # if table "versions" does not exist, return major_ver=0 and minor_ver=0
         try:
             cur = self.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'versions';")
@@ -496,18 +495,18 @@ class AuthorizationDataManager:
 
         major_ver = result[0][1]
         minor_ver = result[0][2]
-        logging.debug("get_db_version: major_ver=%d minor_ver=%d", major_ver, minor_ver)
+        logging.debug("__get_db_version: major_ver=%d minor_ver=%d", major_ver, minor_ver)
         return None, major_ver, minor_ver
 
-    def need_upgrade_db(self):
+    def __need_upgrade_db(self):
         """
             Check whether auth-db schema need to be upgraded or not
         """
         major_ver = 0
         minor_ver = 0
-        error_msg, major_ver, minor_ver = self.get_db_version()
+        error_msg, major_ver, minor_ver = self.__get_db_version()
         if error_msg:
-            logging.error("need_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
+            logging.error("__need_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
             return False
 
         if major_ver != DB_MAJOR_VER or minor_ver != DB_MINOR_VER:
@@ -521,12 +520,10 @@ class AuthorizationDataManager:
 
         return False
 
-    def handle_upgrade_db_from_ver_1_0_to_ver_1_1(self):
-        """
-            Handle auth DB upgrade from version 1.0 to version 1.1
-        """
-        # in DB version 1.0, _DEFAULT_TENANT was created using a random generated UUID
-        # in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
+    def _handle_upgrade_1_0_to_1_1(self):
+        """Handle auth DB upgrade from version 1.0 to version 1.1"""
+        # in DB version 1.0, _DEFAULT_TENANT is created using a random generated UUID
+        # in DB version 1.1, _DEFAULT_TENANT is created using a constant UUID
         error_msg, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
         if error_msg:
             raise DbAccessError(self.db_path, error_msg)
@@ -538,86 +535,176 @@ class AuthorizationDataManager:
         logging.error(error_msg)
         raise DbAccessError(self.db_path, error_msg)
 
-    def handle_upgrade_db(self):
-        major_ver = 0
-        minor_ver = 0
-        error_msg, major_ver, minor_ver = self.get_db_version()
+    def __handle_upgrade(self):
+        error_msg, major_ver, minor_ver = self.__get_db_version()
         if error_msg:
-            logging.error("handle_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
+            logging.error("__handle_upgrade: fail to get auth-db schema version, cannot upgrade")
+            return
 
         if DB_MAJOR_VER == 1 and DB_MINOR_VER == 1:
             # DB version read from auth-DB is 1.0, upgrade is needed
             if major_ver == 1 and minor_ver == 0:
-                self.handle_upgrade_db_from_ver_1_0_to_ver_1_1()
+                self._handle_upgrade_1_0_to_1_1()
 
-    def connect(self):
-        """ Connect to a sqlite database file given by `db_path`.
 
-        Ensure foreign key
-        constraints are enabled on the database and set the return type for
-        select operations to dict-like 'Rows' instead of tuples.
-
-        Raises a ConnectionFailed exception when connect fails.
-
+    def __connect(self):
         """
-        need_create_table = False
-
-        if not os.path.isfile(self.db_path):
-            logging.debug("auth DB %s does not exist, try to create table", self.db_path)
-            need_create_table = True
-
+        Private function for connecting and setting return type for select ops.
+        Raises a ConnectionFailed exception when fails to connect.
+        """
+        if self.conn:
+            logging.info("AuthorizationDataManagerReconnecting to %s on request", self.db_path)
+            self.__close()
         self.conn = sqlite3.connect(self.db_path)
-
         if not self.conn:
             raise DbConnectionError(self.db_path)
-
-        # Return rows as Row instances instead of tuples
+        # Use return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
 
-        if not need_create_table:
-            if os.path.isfile(self.db_path) and self.need_upgrade_db():
-                self.handle_upgrade_db()
 
-        if need_create_table:
-            self.create_tables()
-            self.create_default_tenant()
-            self.create_default_privileges()
+    def connect(self):
+        """
+        Connect to a sqlite database at `db_path`. Validates mode, checks for upgrades.
+        If the DB does not exist, simply exists leving self.__mode as NotConfigured
+        """
 
-    def create_tables(self):
+        self.__mode = self.__discover_mode_and_connect()
+
+        if self.__mode == DBMode.BrokenLink:
+            raise DbAccessError(self.db_path, "Auth DB incorrect or broken link")
+
+        if self.__mode == DBMode.NotConfigured:
+            logging.info("Auth DB %s is missing, allowing all access", self.db_path)
+            return
+
+        self.__handle_upgrade()
+
+    @property
+    def mode(self):
+        """Getter for current mode. Note that it can only be tst by calling self.connect()"""
+        return DBMode(self.__mode)
+    @mode.setter
+    def mode(self, mode):
+        self.__mode = mode
+
+    def __discover_mode_and_connect(self):
+        """
+        Checks correctness of symlink for <path>, location and content for the DB
+        and returns the auth_data.DBMode
+        Also does remediation like removing empty DB (for NotConfigured state)
+        """
+
+
+        logging.info("Running DB mode discovery for %s", self.db_path)
+        # check if the path exists (without following symlinks)
+        if not os.path.lexists(self.db_path):
+            logging.debug(DB_REF + "does not exist. mode NotConfigured")
+            return DBMode.NotConfigured
+
+        if not os.path.exists(self.db_path):
+            logging.error(DB_REF + "broken link - {} is".format(self.db_path))
+            return DBMode.BrokenLink
+
+        # OK, DB exists (link or actual file) , so time to connect
+        self.__connect()
+
+        # it's a single node config file. Check if the DB is empty so we can drop it.
+        if not os.path.islink(self.db_path):
+            logging.debug(DB_REF + "exists and has modifications, mode->SingleNode")
+            return DBMode.SingleNode
+
+        # let's check if the db content seems good
+        (err, major, minor) = self.__get_db_version()
+        if err:
+            logging.error(DB_REF + "Location {}, error: {}".format(self.db_path, err))
+            return DBMode.BrokenLink
+
+        logging.debug(DB_REF + "found. maj_ver={} min_ver={} mode->MultiEsx".format(major, minor))
+        return DBMode.MultiEsx
+
+    def allow_all_access(self):
+        """Allow all access if we are in NotConfigured mode"""
+        return self.__mode == DBMode.NotConfigured
+
+    def is_connected(self):
+        """helper for outside world"""
+        return self.conn != None
+
+    def get_info(self):
+        """Returns a dict with useful info for misc. status commands"""
+        db_location = "n/a"
+        if os.path.islink(self.db_path):
+            db_location = os.readlink(self.db_path)
+        elif os.path.exists(self.db_path):
+            db_location = self.db_path
+        return {"DB_Mode": str(self.mode), "DB_LocalPath": self.db_path, "DB_SharedLocation": db_location}
+
+    def __err_config_init_needed(self):
+        """Return standard error msg for NotConfigured mode"""
+        return "Error: Please init configuration in vmdkops_admin before trying to change it"
+
+
+    def db_is_empty(self):
+        """
+        Returns true if the DB only has default tables and no custom content
+        Assumes the DB is already connected to (i.e. exists and has defaut content)
+        """
+        if not self.conn:
+            logging.error("Internal error: no connection in db_is_empty %s", self.db_path)
+            return False
+
+        # TODO: ACTUALLY check if DB is empty:
+        # version 1.0 or 1.1
+        # 1 _DEFAULT tenant, with empty default_datastore: 11111111-1111-1111-1111-111111111111|_DEFAULT|This is a default tenant|
+        # 1 privilege with no config : 11111111-1111-1111-1111-111111111111|_DEFAULT_URL|1|0|0
+        # empty VMs table
+        # 'volumes' don't matter
+
+        return False
+
+    def new_db(self):
+        """
+        Create brand new DB content at self.db_path. Expects clean slate.
+        :returns: None for success , a string (with error) for error
+        """
+        if not self.conn:
+            self.__connect()
+        err = self.__create_tables()
+        if err:
+            return err
+        err = self.__create_default_tenant()
+        if err:
+            return err
+        err = self.__create_default_privileges()
+        if err:
+            return err
+        return None
+
+    def __create_tables(self):
         """ Create tables used for per-datastore authorization.
 
         This function should only be called once per datastore.
         It will raise an exception if the schema file isn't
         accessible or the tables already exist.
-
         """
         try:
-            self.conn.execute(
-                '''
-                    PRAGMA foreign_key = ON;
-                '''
-
-            )
-            self.conn.execute(
-                '''
-                    CREATE TABLE tenants(
-                    -- uuid for the tenant, which is generated by create_tenant() API
+            self.conn.execute('PRAGMA foreign_key = ON')
+            self.conn.execute('''
+                CREATE TABLE tenants(
+                    -- uuid for the tenant. Generated by create_tenant() API
                     id TEXT PRIMARY KEY NOT NULL,
-                    -- name of the tenant, which is specified by user when creating the tenant
+                    -- name of the tenant. Specified by user when creating the tenant
                     -- this field can be changed later by using set_name() API
                     name TEXT UNIQUE NOT NULL,
-                    -- brief description of the tenant, which is specified by user when creating the tenant
+                    -- brief description of the tenant. Specified by user when creating the tenant
                     -- this field can be changed laster by using set_description API
                     description TEXT,
                     -- default_datastore url
                     default_datastore_url TEXT
-                    )
-                '''
-            )
+                    )''')
 
-            self.conn.execute(
-                '''
-                CREATE TABLE vms(
+            self.conn.execute('''
+            CREATE TABLE vms(
                 -- uuid for the VM, which is generated when VM is created
                 -- this uuid will be passed in to executeRequest()
                 -- this field need to be specified when adding a VM to a tenant
@@ -625,14 +712,10 @@ class AuthorizationDataManager:
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
-                );
-                '''
-            )
+                ); ''')
 
-
-            self.conn.execute(
-                '''
-                CREATE TABLE privileges(
+            self.conn.execute('''
+            CREATE TABLE privileges(
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
                 -- datastore url
@@ -647,13 +730,10 @@ class AuthorizationDataManager:
                 usage_quota INTEGER,
                 PRIMARY KEY (tenant_id, datastore_url),
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
-                );
-                '''
-            )
+                );''')
 
-            self.conn.execute(
-                '''
-                CREATE TABLE volumes (
+            self.conn.execute('''
+            CREATE TABLE volumes (
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
                 -- datastore url
@@ -663,13 +743,10 @@ class AuthorizationDataManager:
                 volume_size INTEGER,
                 PRIMARY KEY(tenant_id, datastore_url, volume_name),
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
-                );
-                '''
-            )
+                );''')
 
-            self.conn.execute(
-                '''
-                CREATE TABLE versions (
+            self.conn.execute('''
+            CREATE TABLE versions (
                 id INTEGER PRIMARY KEY NOT NULL,
                 -- DB major version
                 major_ver INTEGER NOT NULL,
@@ -679,19 +756,14 @@ class AuthorizationDataManager:
                 vmodl_major_ver INTEGER NOT NULL,
                 -- VMODL minor version
                 vmodl_minor_ver INTEGER NOT NULL
-                );
-                '''
-            )
+                );''')
 
             # insert latest DB version and VMODL version to table "versions"
-            self.conn.execute(
-                " INSERT INTO versions(id, major_ver, minor_ver, vmodl_major_ver, vmodl_minor_ver) VALUES (?, ?, ?, ?, ?)",
-                (0, DB_MAJOR_VER, DB_MINOR_VER, VMODL_MAJOR_VER, VMODL_MINOR_VER)
-            )
-
-            self.conn.commit()
+            self.conn.execute("INSERT INTO versions(id, major_ver, minor_ver, vmodl_major_ver, vmodl_minor_ver) " +
+                              "VALUES (?, ?, ?, ?, ?)",
+                              (0, DB_MAJOR_VER, DB_MINOR_VER, VMODL_MAJOR_VER, VMODL_MINOR_VER))
         except sqlite3.Error as e:
-            logging.error("Error %s when creating auth DB tables", e)
+            logging.error("Error '%s` when creating auth DB tables", e)
             return str(e)
 
         return None
@@ -703,9 +775,12 @@ class AuthorizationDataManager:
         vms are list of vm_id. Privileges are dictionaries
         with keys matching the row names in the privileges table. Tenant id is
         filled in for both the vm and privileges tables.
-
         """
+
         logging.debug("create_tenant name=%s", name)
+        if self.allow_all_access():
+            return self.__err_config_init_needed(), None
+
         if privileges:
             for p in privileges:
                 if not all_columns_set(p):
@@ -761,9 +836,63 @@ class AuthorizationDataManager:
 
         return None, tenant
 
+    def __create_default_tenant(self):
+        """ Create DEFAULT tenant in DB"""
+        error_msg, tenant = self.create_tenant(
+            name=auth_data_const.DEFAULT_TENANT,
+            description=auth_data_const.DEFAULT_TENANT_DESCR,
+            vms=[],
+            privileges=[])
+        if error_msg:
+            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth_data_const.DEFAULT_TENANT, error_msg)
+            logging.warning(err)
+            return err
+        return None
+
+    def get_default_privileges_dict(self):
+        """Form a dictionary with default privileges used in cresting of default tenant"""
+        return  [{'datastore_url': auth_data_const.DEFAULT_DS_URL,
+                  'allow_create': 1,
+                  'max_volume_size': 0,
+                  'usage_quota': 0}]
+
+    def __create_default_privileges(self):
+        """
+        This privilege will match any <tenant, datastore> pair
+        which does not have an entry in privileges table explicitly
+        this privilege will have full permission (create, delete, and mount)
+        and no max_volume_size and usage_quota limitation
+        """
+        privileges = self.get_default_privileges_dict()
+
+        error_msg, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
+        if error_msg:
+            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth_data_const.DEFAULT_TENANT)
+            logging.warning(err)
+            return err
+
+        error_msg = tenant.set_datastore_access_privileges(self.conn, privileges)
+        if error_msg:
+            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS, error_msg)
+            logging.warning(err)
+            return err
+        return None
+
+
     def get_tenant(self, tenant_name):
-        """ Return a DockerVolumeTenant object which match the given tenant_name """
+        """ Return an object which match the given tenant_name """
         logging.debug("get_tenant: tenant_name=%s", tenant_name)
+        if self.allow_all_access():
+            if tenant_name == auth_data_const.DEFAULT_TENANT:
+                return None, DockerVolumeTenant(name=tenant_name,
+                                                description=auth_data_const.DEFAULT_TENANT_DESCR,
+                                                vms=[],
+                                                privileges=self.get_default_privileges_dict(),
+                                                id=auth_data_const.DEFAULT_TENANT_UUID,
+                                                default_datastore_url=auth_data_const.DEFAULT_DS_URL)
+            else:
+                return self.__err_config_init_needed(), None
+
         tenant = None
         try:
             cur = self.conn.execute(
@@ -819,6 +948,10 @@ class AuthorizationDataManager:
 
     def list_tenants(self):
         """ Return a list of DockerVolumeTenants objects. """
+        if self.allow_all_access():
+            _, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
+            return None, [tenant]
+
         tenant_list = []
         try:
             cur = self.conn.execute(
@@ -868,12 +1001,15 @@ class AuthorizationDataManager:
 
     def remove_volumes_from_volumes_table(self, tenant_id):
         """ Remove all volumes from volumes table. """
+        if self.allow_all_access():
+            logging.info("[AllowAllAccess] skipping volume record removal for %s", tenant_id)
+            return None
+
         try:
             self.conn.execute(
-                    "DELETE FROM volumes WHERE tenant_id = ?",
-                    [tenant_id]
+                "DELETE FROM volumes WHERE tenant_id = ?",
+                [tenant_id]
             )
-
             self.conn.commit()
         except sqlite3.Error as e:
             logging.error("Error %s when removing volumes from volumes table for tenant_id %s",
@@ -882,16 +1018,16 @@ class AuthorizationDataManager:
 
         return None
 
-    def _remove_volumes_for_tenant(self, tenant_id):
+
+    def __remove_volumes_for_tenant(self, tenant_id):
         """ Delete all volumes belongs to this tenant.
 
             Do not use it outside of removing a tenant.
-
         """
         try:
             cur = self.conn.execute(
-            "SELECT name FROM tenants WHERE id = ?",
-            (tenant_id,)
+                "SELECT name FROM tenants WHERE id = ?",
+                (tenant_id,)
             )
             result = cur.fetchone()
         except sqlite3.Error as e:
@@ -923,7 +1059,7 @@ class AuthorizationDataManager:
             VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
             # delete the symlink /vmfs/volume/datastore_name/tenant_name
             # which point to /vmfs/volumes/datastore_name/tenant_uuid
-            for (datastore, url, path) in vmdk_utils.get_datastores():
+            for (datastore, _, path) in vmdk_utils.get_datastores():
                 dockvol_path, tenant_path = get_dockvol_path_tenant_path(datastore_name=datastore,
                                                                          tenant_id=tenant_id)
                 logging.debug(VOL_RM_LOG_PREFIX + "try to remove symlink to %s", tenant_name, tenant_path)
@@ -955,17 +1091,20 @@ class AuthorizationDataManager:
         return None
 
     def remove_tenant(self, tenant_id, remove_volumes):
-        """ Remove a tenant with given id.
+        """
+        Remove a tenant with given id.
 
-            A row with given tenant_id will be removed from table tenants, vms,
-            and privileges.
-            All the volumes created by this tenant will be removed if remove_volumes
-            is set to True.
-
+        A row with given tenant_id will be removed from table tenants, vms,
+        and privileges.
+        If remove_volumes is True -  all volumes for this tenant will be removed as well.
         """
         logging.debug("remove_tenant: tenant_id%s, remove_volumes=%d", tenant_id, remove_volumes)
+
+        if self.allow_all_access():
+            return self.__err_config_init_needed()
+
         if remove_volumes:
-            error_msg = self._remove_volumes_for_tenant(tenant_id)
+            error_msg = self.__remove_volumes_for_tenant(tenant_id)
             if error_msg:
                 return error_msg
 
@@ -994,6 +1133,13 @@ class AuthorizationDataManager:
     def get_tenant_name(self, tenant_uuid):
         """ Return tenant_name which match the given tenant_uuid """
         logging.debug("get_tenant_name: tenant_uuid=%s", tenant_uuid)
+
+        if self.allow_all_access():
+            if tenant_uuid == auth_data_const.DEFAULT_TENANT_UUID:
+                return None, auth_data_const.DEFAULT_TENANT
+            else:
+                return self.__err_config_init_needed(), None
+
         try:
             cur = self.conn.execute(
                 "SELECT * FROM tenants WHERE id=?",

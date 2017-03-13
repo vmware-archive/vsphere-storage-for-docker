@@ -30,6 +30,7 @@ import logging
 import convert
 import error_code
 import auth_data_const
+import auth_data
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 13
@@ -279,6 +280,27 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.volume, 'vol_name@datastore')
         self.assertEqual(args.vmgroup, 'vmgroup1')
         self.assertEqual(args.options, '"attach-as=independent_persistent"')
+
+    def test_config_parse(self):
+        '''Validate that the parser accepts the known config commands'''
+        valid_commands = [
+            'config init --datastore=store1',
+            'config init --datastore=store1 --force',
+            'config remove --datastore=vsanDatastore',
+            'config remove --datastore=vsanDatastore --no-backup --force --link-only',
+            'config move --to=datastore',
+            'config move --to=datastore --force'
+        ]
+        for cmd in valid_commands:
+            args = self.parser.parse_args(cmd.split())
+
+    @unittest.expectedFailure
+    def test_config_parse_fail(self):
+        '''Expected failures in config command parse'''
+        invalid_commands = ['status --all', 'config init --force', 'config remove --no-backup', 'config move --force']
+        for cmd in invalid_commands:
+            args = self.parser.parse_args(cmd.split())
+
 
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
     def assert_parse_error(self, command):
@@ -937,6 +959,46 @@ class TestTenant(unittest.TestCase):
         error_info = auth_api._tenant_vm_add(name=auth_data_const.DEFAULT_TENANT,
                                              vm_list=[self.vm1_name])
         self.assertEqual(error_code.ErrorCode.FEATURE_NOT_SUPPORTED, error_info.code)
+
+
+class TestConfig(unittest.TestCase):
+    """ Test 'config' functionality """
+
+    def __init__(self, *args, **kwargs):
+        super(TestConfig, self).__init__(*args, **kwargs)
+        # pick up a datastore for tests
+        for (datastore, url, path) in vmdk_utils.get_datastores():
+            print("TODO - get DS for testConfig: {} {} {}".format(datastore, url, path))
+        self.ds_name = "Datastore2" # TBD - grab it from above
+        self.db_path = auth_data.AuthorizationDataManager.ds_to_db_path(self.ds_name)
+        self.link_path = auth_data.AUTH_DB_PATH
+        self.parser = vmdkops_admin.create_parser()
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+
+    def test_config(self):
+        '''Config testing'''
+        try:
+            os.remove(self.db_path)
+            os.remove(self.link_path)
+        except:
+            pass
+
+        # TBD: Init config and check status - should be NotConfigured
+        print "TEST*"
+        args = self.parser.parse_args('config init --datastore={}'.format(self.ds_name).split())
+        self.assertEqual(vmdkops_admin.config_init(args), None)
+        config_args = self.parser.parse_args('status'.split())
+        print("Config args" , config_args)
+        # init
+        # check status - should be MultiEsx
+        # init - shoud fail
+        # init -f should succeed
 
 if __name__ == '__main__':
     kv.init()
