@@ -57,13 +57,13 @@ The vm-group to VM association can be done at create time.
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create --name=vm-group1 --vm-list=photon-6
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create --name=vm-group1 --vm-list=photon6
 vm-group create succeeded
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
-035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon-6
+035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon6
 
 
 ```
@@ -91,7 +91,7 @@ List existing vm-groups, the datastores vm-groups have access to and the VMs ass
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
-035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon-6
+035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon6
 
 ```
 
@@ -112,7 +112,7 @@ Sample:
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
-035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon-6
+035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon6
 
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group update --name=vm-group1 --description="New description of vm-group1" --new-name=new-vm-group1 --default-datastore=datastore1
 vm-group modify succeeded
@@ -120,7 +120,7 @@ vm-group modify succeeded
 Uuid                                  Name           Description                   Default_datastore  VM_list
 ------------------------------------  -------------  ----------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vm-group
-035ddfb7-349b-4ba1-8abf-e77a430d5098  new-vm-group1  New description of vm-group1  datastore1         photon-6
+035ddfb7-349b-4ba1-8abf-e77a430d5098  new-vm-group1  New description of vm-group1  datastore1         photon6
 
 ```
 
@@ -149,7 +149,7 @@ Remove a vm-group, optionally all volumes for a vm-group can be removed as well.
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group rm --name=new-vm-group1 --remove-volumes
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group rm --name=vm-group1 --remove-volumes
 All Volumes will be removed
 vm-group rm succeeded
 
@@ -182,7 +182,7 @@ VMs can be assigned to only one vm-group at a time.
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
-6d810c66-ffc7-47c8-8870-72114f86c2cf  vm-group1                                                 photon-6
+6d810c66-ffc7-47c8-8870-72114f86c2cf  vm-group1                                                 photon6
 
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm add --name=vm-group1 --vm-list=photon7
 vm-group vm add succeeded
@@ -194,7 +194,7 @@ vm-group vm add succeeded
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
 Uuid                                  Name
 ------------------------------------  --------
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon-6
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
 564d99a2-4097-9966-579f-3dc4082b10c9  photon7
 ```
 
@@ -206,7 +206,7 @@ vm-group vm rm succeeded
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
 Uuid                                  Name
 ------------------------------------  --------
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon-6
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
 
 ```
 
@@ -216,7 +216,7 @@ Replace VMs from a vm-group's list of VMs. VMs which are replaced will no longer
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
 Uuid                                  Name
 ------------------------------------  --------
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon-6
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
 
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm replace --name=vm-group1 --vm-list=photon7
 vm-group vm replace succeeded
@@ -421,7 +421,7 @@ Set command allows to change the existing access control in place for a vm-group
 Sample:
 
 ```shell
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group  access ls --name=vm-group1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  False         500.00MB         1.00GB

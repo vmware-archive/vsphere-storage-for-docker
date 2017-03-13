@@ -84,7 +84,7 @@ Uuid                                  Name       Description                 Def
  
 After this point, the manually upgrade is done, and tenancy operations will succeed.
  
-#### Case2:  Has vm-group configured before
+#### Case2: Has vm-group configured before
 Step 1: Backup data manually.
 
 Example below has a vm-group ```vm-group1``` with VM ```photon-6``` assigned to this vm-group1 and one volumes: vol1@datastore1 created.
