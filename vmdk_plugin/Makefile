@@ -200,7 +200,8 @@ FPM_COMMON := -p $(BIN) \
 .PHONY: deb
 deb: pkg-prep deb-pkg-prep
 	@$(CHECK) pkg
-	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE) > $(MIN_DOCKER_VERSION)' -t deb .
+	#$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE) > $(MIN_DOCKER_VERSION)' -t deb .
+	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -t deb .
 
 # Upstart needed for older versions of Ubuntu
 .PHONY: deb-pkg-prep
