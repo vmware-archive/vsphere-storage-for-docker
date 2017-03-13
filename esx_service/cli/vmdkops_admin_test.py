@@ -42,6 +42,8 @@ TENANT_VM_LS_EXPECTED_COLUMN_COUNT = 2
 # Number of expected columns in "tenant vm ls"
 TENANT_ACCESS_LS_EXPECTED_COLUMN_COUNT = 4
 
+VMGROUP = 'vm-group'
+
 def convert_to_str(unicode_or_str):
     python_version = sys.version_info.major
     if python_version >= 3:
@@ -117,70 +119,73 @@ class TestParsing(unittest.TestCase):
 
     def test_policy_ls_badargs(self):
         self.assert_parse_error('policy ls --name=yo')
+    
+    # NOTE: "tenant" is renamed to "vm-group", but we only change it in command line
+    # all the function name remain unchanged
 
     def test_tenant_create(self):
-        args = self.parser.parse_args('tenant create --name=tenant1 --vm-list vm1,vm2'.split())
+        args = self.parser.parse_args((VMGROUP + ' create --name=vm-group1 --vm-list vm1,vm2').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_create)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
 
     def test_tenant_create_missing_option_fails(self):
-        self.assert_parse_error('tenant create')
+        self.assert_parse_error(VMGROUP + ' create')
 
     def test_tenant_rm(self):
-        args = self.parser.parse_args('tenant rm --name=tenant1 --remove-volumes'.split())
+        args = self.parser.parse_args((VMGROUP + ' rm --name=vm-group1 --remove-volumes').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_rm)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.remove_volumes, True)
 
     def test_tenant_rm_without_arg_remove_volumes(self):
-        args = self.parser.parse_args('tenant rm --name=tenant1'.split())
+        args = self.parser.parse_args((VMGROUP + ' rm --name=vm-group1').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_rm)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         # If arg "remove_volumes" is not specified in the CLI, then args.remove_volumes
         # will be None
         self.assertEqual(args.remove_volumes, False)
 
 
     def test_tenant_rm_missing_name(self):
-        self.assert_parse_error('tenant rm')
+        self.assert_parse_error(VMGROUP + ' rm')
 
     def test_tenant_ls(self):
-        args = self.parser.parse_args('tenant ls'.split())
+        args = self.parser.parse_args((VMGROUP + ' ls').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_ls)
 
     def test_tenant_vm_add(self):
-        args = self.parser.parse_args('tenant vm add --name=tenant1 --vm-list vm1,vm2'.split())
+        args = self.parser.parse_args((VMGROUP + ' vm add --name=vm-group1 --vm-list vm1,vm2').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_add)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
 
     def test_tenant_vm_add_missing_option_fails(self):
-        self.assert_parse_error('tenant vm add')
-        self.assert_parse_error('tenant vm add --name=tenant1')
+        self.assert_parse_error(VMGROUP + ' vm add')
+        self.assert_parse_error(VMGROUP + ' vm add --name=vm-group1')
 
     def test_tenant_vm_rm(self):
-        args = self.parser.parse_args('tenant vm rm --name=tenant1 --vm-list vm1,vm2'.split())
+        args = self.parser.parse_args((VMGROUP + ' vm rm --name=vm-group1 --vm-list vm1,vm2').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_rm)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.vm_list, ['vm1', 'vm2'])
 
     def test_tenant_vm_rm_missing_option_fails(self):
-        self.assert_parse_error('tenant vm add')
-        self.assert_parse_error('tenant vm add --name=tenant1')
+        self.assert_parse_error(VMGROUP + ' vm add')
+        self.assert_parse_error(VMGROUP + ' vm add --name=vm-group1')
 
     def test_tenant_vm_ls(self):
-        args = self.parser.parse_args('tenant vm ls --name=tenant1'.split())
+        args = self.parser.parse_args((VMGROUP + ' vm ls --name=vm-group1').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_vm_ls)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
 
     def test_tenant_vm_ls_missing_option_fails(self):
-        self.assert_parse_error('tenant vm ls')
+        self.assert_parse_error(VMGROUP + ' vm ls')
 
     def test_tenant_access_add(self):
-        args = self.parser.parse_args('tenant access add --name=tenant1 --datastore=datastore1 --default-datastore --allow-create --volume-maxsize=500MB --volume-totalsize=1GB'.split())
+        args = self.parser.parse_args((VMGROUP + ' access add --name=vm-group1 --datastore=datastore1 --default-datastore --allow-create --volume-maxsize=500MB --volume-totalsize=1GB').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_add)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.datastore, 'datastore1')
         self.assertEqual(args.allow_create, True)
         self.assertEqual(args.default_datastore, True)
@@ -188,54 +193,54 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.volume_totalsize, '1GB')
 
     def test_tenant_access_add_missing_option_fails(self):
-        self.assert_parse_error('tenant access add')
-        self.assert_parse_error('tenant access add --name=tenant1')
+        self.assert_parse_error(VMGROUP + ' access add')
+        self.assert_parse_error(VMGROUP + ' access add --name=vm-group1')
 
     def test_tenant_access_add_invalid_option_fails(self):
-        self.assert_parse_error('tenant access add --name=tenant1 --datastore=datastore1 --rights=create mount')
+        self.assert_parse_error(VMGROUP + ' access add --name=vm-group1 --datastore=datastore1 --rights=create mount')
 
     def test_tenant_access_set(self):
-        args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --allow-create=True --volume-maxsize=500MB --volume-totalsize=1GB'.split())
+        args = self.parser.parse_args((VMGROUP + ' access set --name=vm-group1 --datastore=datastore1 --allow-create=True --volume-maxsize=500MB --volume-totalsize=1GB').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.datastore, 'datastore1')
         self.assertEqual(args.allow_create, "True")
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
 
     def test_tenant_accss_set_not_set_allow_create(self):
-        args = self.parser.parse_args('tenant access set --name=tenant1 --datastore=datastore1 --volume-maxsize=500MB --volume-totalsize=1GB'.split())
+        args = self.parser.parse_args((VMGROUP + ' access set --name=vm-group1 --datastore=datastore1 --volume-maxsize=500MB --volume-totalsize=1GB').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_set)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.datastore, 'datastore1')
         self.assertEqual(args.allow_create, None)
         self.assertEqual(args.volume_maxsize, '500MB')
         self.assertEqual(args.volume_totalsize, '1GB')
 
     def test_tenant_access_set_missing_option_fails(self):
-        self.assert_parse_error('tenant access set')
-        self.assert_parse_error('tenant access set --name=tenant1')
+        self.assert_parse_error(VMGROUP + ' access set')
+        self.assert_parse_error(VMGROUP + ' access set --name=vm-group1')
 
     def test_tenant_access_set_invalid_option_fails(self):
-        self.assert_parse_error('tenant access set --name=tenant1 --datastore=datastore1 --rights=crete,mount')
+        self.assert_parse_error(VMGROUP + ' access set --name=vm-group1 --datastore=datastore1 --rights=crete,mount')
 
     def test_tenant_access_rm(self):
-        args = self.parser.parse_args('tenant access rm --name=tenant1 --datastore=datastore1'.split())
+        args = self.parser.parse_args((VMGROUP + ' access rm --name=vm-group1 --datastore=datastore1').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_rm)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
         self.assertEqual(args.datastore, 'datastore1')
 
     def test_tenant_access_rm_missing_option_fails(self):
-        self.assert_parse_error('tenant access rm')
-        self.assert_parse_error('tenant access rm --name=tenant1')
+        self.assert_parse_error(VMGROUP + ' access rm')
+        self.assert_parse_error(VMGROUP + ' access rm --name=vm-group1')
 
     def test_tenant_access_ls(self):
-        args = self.parser.parse_args('tenant access ls --name=tenant1'.split())
+        args = self.parser.parse_args((VMGROUP + ' access ls --name=vm-group1').split())
         self.assertEqual(args.func, vmdkops_admin.tenant_access_ls)
-        self.assertEqual(args.name, 'tenant1')
+        self.assertEqual(args.name, 'vm-group1')
 
     def test_tenant_access_ls_missing_option_fails(self):
-        self.assert_parse_error('tenant access ls')
+        self.assert_parse_error(VMGROUP + ' access ls')
 
     def test_status(self):
         args = self.parser.parse_args(['status'])
@@ -438,6 +443,10 @@ class TestTenant(unittest.TestCase):
     """
         Test tenant functionality
     """
+
+    # NOTE:We rename "tenant" to "vm-group", but we do not plan to
+    # change the name used in the following test
+    # only the command itself will be changed from "tenantxxx" to "vm-group xxx"
 
     # The following tests are covered:
     # 1. tenant command
@@ -798,7 +807,7 @@ class TestTenant(unittest.TestCase):
         ]
 
         for val in privilege_test_info:
-            command = ("tenant access set --name={0} ".format(self.tenant1_name))
+            command = ("vm-group access set --name={0} ".format(self.tenant1_name))
             command += ("--datastore={0} ".format(self.datastore_name))
             command += ("--allow-create={0} ".format(val[0]))
             command += ("--volume-maxsize=500MB --volume-totalsize=1GB")
@@ -824,7 +833,7 @@ class TestTenant(unittest.TestCase):
             self.assertEqual(expected_output, actual_output)
 
         for val in ["INVALID", ""]:
-            command = ("tenant access set --name={0} ".format(self.tenant1_name))
+            command = ("vm-group access set --name={0} ".format(self.tenant1_name))
             command += ("--datastore={0} ".format(self.datastore_name))
             command += ("--allow-create={0} ".format(val))
             command += ("--volume-maxsize=500MB --volume-totalsize=1GB")

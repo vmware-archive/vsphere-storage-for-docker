@@ -11,7 +11,7 @@ All output from the admin cli defaults to human readable formats. It will be mad
 The majority of testing will be automated. We can ensure that parsing calls the right callbacks with
 the right information by generating representative input and mocking the callbacks to assert that
 the right information is parsed and delivered correctly. Additionally, and specifically for testing
-access control, we can create access control definition (tenants and privileges) 
+access control, we can create access control definition (vm-groups and privileges) 
 and then test that they act as expected by invoking vmdk_ops commmands on behalf of a fake VM.
 Unit
 tests for stateless logic can be fed mock input representing data from sidecar and the filesystem.
@@ -69,9 +69,9 @@ Examples:
 
 Note that on volume creation from docker, a policy name will be passed with a `-o` option.
 
-# tenant
-Create, delete, configure and show access control settings for a Tenant.
-A tenant is defined as a collection of VMs, so access control settings are assigned via a
+# vm-group
+Create, delete, configure and show access control settings for a vm-group.
+A vm-group is defined as a collection of VMs, so access control settings are assigned via a
 VM naming convention.
 *** The rest of section below needs rework as it represents obsolete "role" design ***
 An example will help clarify

@@ -434,7 +434,7 @@ class AuthorizationDataManager:
         """ Create DEFAULT tenant """
         error_msg, tenant = self.create_tenant(
                                            name=auth_data_const.DEFAULT_TENANT,
-                                           description="This is a default tenant",
+                                           description="This is a default vm-group",
                                            vms=[],
                                            privileges=[])
         if error_msg:
@@ -709,7 +709,7 @@ class AuthorizationDataManager:
                 if not all_columns_set(p):
                     error_msg = "Not all columns are set in privileges"
                     return error_msg, None
-                    
+
         if name == auth_data_const.DEFAULT_DS:
             tenant_uuid = auth_data_const.DEFAULT_TENANT_UUID
         else:

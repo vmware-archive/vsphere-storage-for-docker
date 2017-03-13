@@ -16,266 +16,303 @@ The admin cli also enables ESX admins to implement tenancy.
 The remainder of this document will describe each admin CLI command and provide examples
 of their usage.
 
-## Tenant
+## Vm-group
 
 ### Help
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant -h
-usage: vmdkops_admin.py tenant [-h] {create,vm,update,access,ls,rm} ...
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group -h
+usage: vmdkops_admin.py vm-group [-h] {create,vm,update,access,ls,rm} ...
 
 positional arguments:
   {create,vm,update,access,ls,rm}
-    create              Create a new tenant
-    vm                  Add, removes and lists VMs in a tenant
-    update              Update an existing tenant
-    access              Add or remove Datastore access and quotas for a tenant
-    ls                  List tenants and the VMs they are applied to
-    rm                  Delete a tenant
+    create              Create a new vm-group
+    vm                  Add, removes and lists VMs in a vm-group
+    update              Update an existing vm-group
+    access              Add or remove Datastore access and quotas for a vm-
+                        group
+    ls                  List vm-groups and the VMs they are applied to
+    rm                  Delete a vm-group
 
 optional arguments:
   -h, --help            show this help message and exit
 ```
 
 ### Create
-A tenant named "_DEFAULT" will be created automatically post install.
+A vm-group named "_DEFAULT" will be created automatically post install.
 
-Creates a new named tenant and optionally assigns VMs. Valid tenant name is only allowed to be "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
-
-Sample:
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1
-tenant create succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant
-3277ad45-e916-4e06-8fd5-381e6090d15b  tenant1
-```
-
-The tenant to VM association can be done at create time.
+Creates a new named vm-group and optionally assigns VMs. Valid vm-group name is only allowed to be "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create --name=tenant1 --vm-list=photon4
-tenant create succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant
-c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                                photon4
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create --name=vm-group1
+vm-group create succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+1ddb5b46-6a9f-4649-8e48-c47039905752  vm-group1
+```
+
+The vm-group to VM association can be done at create time.
+
+Sample:
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create --name=vm-group1 --vm-list=photon6
+vm-group create succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  --------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon6
+
+
 ```
 
 #### Help
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant create -h
-usage: vmdkops_admin.py tenant create [-h] --name NAME
-                                      [--description DESCRIPTION]
-                                      [--vm-list vm1, vm2, ...]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create -h
+usage: vmdkops_admin.py vm-group create [-h] --name NAME
+                                        [--description DESCRIPTION]
+                                        [--vm-list vm1, vm2, ...]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --name NAME           The name of the tenant
+  --name NAME           The name of the vm-group
   --description DESCRIPTION
-                        The description of the tenant
+                        The description of the vm-group
   --vm-list vm1, vm2, ...
-                        A list of VM names to place in this Tenant
+                        A list of VM names to place in this vm-group
+
 ```
 ### List
-List existing tenants, the datastores tenants have access to and the VMs assigned.
+List existing vm-groups, the datastores vm-groups have access to and the VMs assigned.
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant
-c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                                                photon4
+[root@localhost:~] usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  --------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon6
+
 ```
 
 #### Help
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls -h
-usage: vmdkops_admin.py tenant ls [-h]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls -h
+usage: vmdkops_admin.py vm-group ls [-h]
 
 optional arguments:
   -h, --help  show this help message and exit
 ```
 
 ### Update
-Update existing tenant. This command allows to update "Description" and "Default_datastore" fields, or rename an existing tenant.
+Update existing vm-group. This command allows to update "Description" and "Default_datastore" fields, or rename an existing vm-group.
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-a11dda75-0632-4fe0-9caa-d2308bf73df7  _DEFAULT  This is a default tenant
-946570fe-9842-491f-a172-426284b36eeb  tenant1                             datastore2         photon4
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  --------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+035ddfb7-349b-4ba1-8abf-e77a430d5098  vm-group1                                                 photon6
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant update --name=tenant1 --description="New description of tenant1" --new-name=new-tenant1 --default-datastore=datastore1
-tenant modify succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name         Description                 Default_datastore  VM_list
-------------------------------------  -----------  --------------------------  -----------------  -------
-a11dda75-0632-4fe0-9caa-d2308bf73df7  _DEFAULT     This is a default tenant
-946570fe-9842-491f-a172-426284b36eeb  new-tenant1  New description of tenant1  datastore1         photon4
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group update --name=vm-group1 --description="New description of vm-group1" --new-name=new-vm-group1 --default-datastore=datastore1
+vm-group modify succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name           Description                   Default_datastore  VM_list
+------------------------------------  -------------  ----------------------------  -----------------  --------
+11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vm-group
+035ddfb7-349b-4ba1-8abf-e77a430d5098  new-vm-group1  New description of vm-group1  datastore1         photon6
+
 ```
 
 #### Help
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant update -h
-usage: vmdkops_admin.py tenant update [-h] --name NAME
-                                      [--default-datastore DEFAULT_DATASTORE]
-                                      [--description DESCRIPTION]
-                                      [--new-name NEW_NAME]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group  update -h
+usage: vmdkops_admin.py vm-group update [-h] --name NAME
+                                        [--default-datastore DEFAULT_DATASTORE]
+                                        [--description DESCRIPTION]
+                                        [--new-name NEW_NAME]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --name NAME           The name of the tenant
+  --name NAME           The name of the vm-group
   --default-datastore DEFAULT_DATASTORE
                         The name of the datastore to be used by default for
                         volumes placement
   --description DESCRIPTION
-                        The new description of the tenant
-  --new-name NEW_NAME   The new name of the tenant
+                        The new description of the vm-group
+  --new-name NEW_NAME   The new name of the vm-group
 
 ```
 
 ### Remove
-Remove a tenant, optionally all volumes for a tenant can be removed as well.
+Remove a vm-group, optionally all volumes for a vm-group can be removed as well.
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm --name=tenant1 --remove-volumes
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group rm --name=vm-group1 --remove-volumes
 All Volumes will be removed
-tenant rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant
+vm-group rm succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name      Description                 Default_datastore  VM_list
+------------------------------------  --------  --------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vm-group
 ```
 
 #### Help
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant rm -h
-usage: vmdkops_admin.py tenant rm [-h] --name NAME [--remove-volumes]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group rm -h
+usage: vmdkops_admin.py vm-group rm [-h] --name NAME [--remove-volumes]
 
 optional arguments:
   -h, --help        show this help message and exit
-  --name NAME       The name of the tenant
-  --remove-volumes  BE CAREFUL: Removes this tenant volumes when removing a
-                    tenant
+  --name NAME       The name of the vm-group
+  --remove-volumes  BE CAREFUL: Removes this vm-group volumes when removing a
+                    vm-group
 
 ```
 
 ### Virtual Machine
 
 #### Add
-Add a VM to a tenant. A VM can only access the datastores for the tenant it is assigned to.
-VMs can be assigned to only one tenant at a time.
+Add a VM to a vm-group. A VM can only access the datastores for the vm-group it is assigned to.
+VMs can be assigned to only one vm-group at a time.
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm add --name=tenant1 --vm-list=photon5
-tenant vm add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  --------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+6d810c66-ffc7-47c8-8870-72114f86c2cf  vm-group1                                                 photon6
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm add --name=vm-group1 --vm-list=photon7
+vm-group vm add succeeded
+
 ```
 
 #### List
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
 Uuid                                  Name
-------------------------------------  -------
-564df562-3d58-c99a-e76e-e8792b77ca2d  photon4
-564d4728-f1c7-2029-d01e-51f5e6536cd9  photon5
+------------------------------------  --------
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
+564d99a2-4097-9966-579f-3dc4082b10c9  photon7
 ```
 
 #### Remove
-Remove a VM from a tenant's list of VMs. VM will no longer be able to access the volumes created for the tenant.
+Remove a VM from a vm-group's list of VMs. VM will no longer be able to access the volumes created for the vm-group.
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm rm --name=tenant1 --vm-list=photon5
-tenant vm rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm rm --name=vm-group1 --vm-list=photon7
+vm-group vm rm succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
 Uuid                                  Name
-------------------------------------  -------
-564df562-3d58-c99a-e76e-e8792b77ca2d  photon4
+------------------------------------  --------
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
+
+```
+
+### Replace
+Replace VMs from a vm-group's list of VMs. VMs which are replaced will no longer be able to access the volumes created for the vm-group.
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
+Uuid                                  Name
+------------------------------------  --------
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm replace --name=vm-group1 --vm-list=photon7
+vm-group vm replace succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm ls --name=vm-group1
+Uuid                                  Name
+------------------------------------  --------
+564d99a2-4097-9966-579f-3dc4082b10c9  photon7
 ```
 
 #### Help
 ```
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant vm -h
-usage: vmdkops_admin.py tenant vm [-h] {rm,add,ls} ...
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm -h
+usage: vmdkops_admin.py vm-group vm [-h] {rm,add,ls,replace} ...
 
 positional arguments:
-  {rm,add,ls}
-    rm         Remove VM(s) from a tenant
-    add        Add a VM(s) to a tenant
-    ls         list VMs in a tenant
+  {rm,add,ls,replace}
+    rm                 Remove VM(s) from a vm-group
+    add                Add a VM(s) to a vm-group
+    ls                 list VMs in a vm-group
+    replace            Replace VM(s) for a vm-group
 
 optional arguments:
-  -h, --help   show this help message and exit
+  -h, --help           show this help message and exit
+
 ```
 
 ### Access
-Change the access control for a tenant.
+Change the access control for a vm-group.
 This includes ability to grant privileges & set resource consumption limits for a datastore.
 
 #### Help
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access -h
-usage: vmdkops_admin.py tenant access [-h] {rm,add,set,ls} ...
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access -h
+usage: vmdkops_admin.py vm-group access [-h] {rm,add,set,ls} ...
 
 positional arguments:
   {rm,add,set,ls}
-    rm             Remove all access to a datastore for a tenant
-    add            Add a datastore access for a tenant
-    set            Modify datastore access for a tenant
-    ls             List all access info for a tenant
+    rm             Remove all access to a datastore for a vm-group
+    add            Add a datastore access for a vm-group
+    set            Modify datastore access for a vm-group
+    ls             List all access info for a vm-group
 
 optional arguments:
   -h, --help       show this help message and exit
+
 ```
 
 #### Add
-Grants datastore access to a tenant.
+Grants datastore access to a vm-group.
 
-The datastore will be automatically set as "default_datastore" for the tenant
-when you grant first datastore access for a tenant.
+The datastore will be automatically set as "default_datastore" for the vm-group
+when you grant first datastore access for a vm-group.
 
 Sample:
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB
-tenant access add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access add --name=vm-group1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB
+vm-group access add succeeded
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant
-c932f2bf-6554-442a-86f6-ec721dd3dced  tenant1                             datastore1         photon4
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+6d810c66-ffc7-47c8-8870-72114f86c2cf  vm-group1                              datastore1         photon7
 ```
 
-The datastore will be set as "default_datastore" for the tenant when you grant datastore access for a tenant with "--default-datastore" flag.
+The datastore will be set as "default_datastore" for the vm-group when you grant datastore access for a vm-group with "--default-datastore" flag.
 
 Sample:
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore2  --allow-create --default-datastore --volume-maxsize=500MB --volume-totalsize=1GB
-tenant access add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access add --name=vm-group1 --datastore=datastore2  --allow-create --default-datastore --volume-maxsize=500MB --volume-totalsize=1GB
+vm-group access add succeeded
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
-datastore1  True          500.00MB         1.00GB
+datastore1  False         500.00MB         1.00GB
 datastore2  True          500.00MB         1.00GB
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant ls
-Uuid                                  Name      Description               Default_datastore  VM_list
-------------------------------------  --------  ------------------------  -----------------  -------
-527e94ec-43e9-4d78-81fe-d99ab06a54b3  _DEFAULT  This is a default tenant
-371a68e3-8c86-467a-a4dc-753f3066ca8a  tenant1                             datastore2         photon4
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+Uuid                                  Name       Description                 Default_datastore  VM_list
+------------------------------------  ---------  --------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+6d810c66-ffc7-47c8-8870-72114f86c2cf  vm-group1                              datastore2         photon7
+
 ```
 
 By default no "allow_create" right is given
 
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name tenant1 --datastore datastore1
-tenant access add succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access add --name=vm-group1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB
+vm-group access add succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  False         500.00MB         1.00GB
@@ -283,122 +320,143 @@ datastore1  False         500.00MB         1.00GB
 
 "allow_create" right is given when you run the command with "--allow-create" flag.
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=500MB --volume-totalsize=1GB
-tenant access add succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access add --name=vm-group1 --datastore=datastore2  --allow-create --default-datastore --volume-maxsize=500MB --volume-totalsize=1GB
+vm-group access add succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
-datastore1  True          500.00MB         1.00GB
+datastore1  False         500.00MB         1.00GB
+datastore2  True          500.00MB         1.00GB
 ```
 
 ##### Help
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access add -h
-usage: vmdkops_admin.py tenant access add [-h]
-                                          [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
-                                          [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          [--allow-create] --name NAME
-                                          [--default-datastore] --datastore
-                                          DATASTORE
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access add -h
+usage: vmdkops_admin.py vm-group access add [-h]
+                                            [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
+                                            [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
+                                            [--allow-create] --name NAME
+                                            [--default-datastore] --datastore
+                                            DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
   --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
-                        on the datastore for this tenant
+                        on the datastore for this vm-group
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
-  --allow-create        Allow create and delete on the datastore if set to True
-  --name NAME           The name of the tenant
-  --default-datastore   Mark datastore as a default datastore for this tenant
+  --allow-create        Allow create and delete on datastore if set
+  --name NAME           The name of the vm-group
+  --default-datastore   Mark datastore as a default datastore for this vm-
+                        group
   --datastore DATASTORE
                         Datastore which access is controlled
+
 
 ```
 
 #### List
-List the current access control granted to a tenant.
+List the current access control granted to a vm-group.
 
 When displaying the result keep in mind:
 
 - For capacity Unset indicates no limits
 
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
+datastore1  False         500.00MB         1.00GB
+datastore2  True          500.00MB         1.00GB
 ```
 
 ##### Help
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls -h
-usage: vmdkops_admin.py tenant access ls [-h] --name NAME
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls -h
+usage: vmdkops_admin.py vm-group access ls [-h] --name NAME
 
 optional arguments:
   -h, --help   show this help message and exit
-  --name NAME  The name of the tenant
+  --name NAME  The name of the vm-group
+
 ```
 
 #### Remove
-Remove access to a datastore for a tenant.
+Remove access to a datastore for a vm-group.
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm --name=tenant1 --datastore=datastore1
-tenant access rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
-Datastore  Allow_create  Max_volume_size  Total_size
----------  ------------  ---------------  ----------
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore1  False         500.00MB         1.00GB
+datastore2  True          500.00MB         1.00GB
+
+[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group  access rm --name=vm-group1 --datastore=datastore1
+vm-group access rm succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore2  True          500.00MB         1.00GB
 ```
 
 ##### Help
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access rm -h
-usage: vmdkops_admin.py tenant access rm [-h] --name NAME --datastore
-                                         DATASTORE
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group  access rm -h
+usage: vmdkops_admin.py vm-group access rm [-h] --name NAME --datastore
+                                           DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
-  --name NAME           The name of the tenant
+  --name NAME           The name of the vm-group
   --datastore DATASTORE
                         Datstore which access is controlled
 
 ```
 
 #### Set
-Set command allows to change the existing access control in place for a tenant.
+Set command allows to change the existing access control in place for a vm-group.
 
 Sample:
 
 ```shell
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  False         500.00MB         1.00GB
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set --name=tenant1 --datastore=datastore1 --allow-create --volume-maxsize=1000MB --volume-totalsize=2GB
-tenant access set succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access ls --name=tenant1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access set --name=vm-group1 --datastore=datastore1 --allow-create=True  --volume-maxsize=1000MB --volume-totalsize=2GB
+vm-group access set succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls
+usage: vmdkops_admin.py vm-group access ls [-h] --name NAME
+vmdkops_admin.py vm-group access ls: error: argument --name is required
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access ls --name=vm-group1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  True          1000.00MB        2.00GB
+
+
+
 ```
 
 ##### Help
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py tenant access set -h
-usage: vmdkops_admin.py tenant access set [-h]
-                                          [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
-                                          --name NAME
-                                          [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                          [--allow-create Value{True|False} e.g. True]
-                                          --datastore DATASTORE
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access set -h
+usage: vmdkops_admin.py vm-group access set [-h]
+                                            [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
+                                            --name NAME
+                                            [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
+                                            [--allow-create Value{True|False} - e.g. True]
+                                            --datastore DATASTORE
 
 optional arguments:
   -h, --help            show this help message and exit
   --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
-                        on the datastore for this tenant
-  --name NAME           Tenant name
+                        on the datastore for this vm-group
+  --name NAME           The name of the vm-group
   --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
   --allow-create Value{True|False} - e.g. True
