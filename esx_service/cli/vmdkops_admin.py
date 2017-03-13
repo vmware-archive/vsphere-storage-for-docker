@@ -130,9 +130,9 @@ def commands():
             'args': {
                 '-c': {
                     'help': 'Display selected columns',
-                    'choices': ['volume', 'datastore', 'created-by', 'created',
-                                'attached-to', 'policy', 'capacity', 'used','disk-format',
-                                'fstype', 'access', 'attach-as'],
+                    'choices': ['volume', 'datastore', 'vm-group', 'capacity', 'used',
+                                'fstype', 'policy', 'disk-format', 'attached-to','access',
+                                'attach-as', 'created-by', 'created'],
                     'metavar': 'Col1,Col2,...'
                 },
                 '--tenant' : {
