@@ -127,6 +127,7 @@ docker volume inspect MyVolume
     }
 ]
 ```
+Note: For disk formats zeroedthick and zeroedthick, the allocated size would be total size plus the size of replicas.
 
 ## Docker Compose
 ```
