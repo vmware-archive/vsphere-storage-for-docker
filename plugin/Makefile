@@ -37,7 +37,7 @@ PLUGIN_NAME=$(DOCKER_HUB_USER)/docker-volume-vsphere
 BIN_LOC := ../build
 BINARY := docker-volume-vsphere
 
-# Tmp docker image used to constuct rootfs + our binaries
+# Tmp docker image used to construct rootfs + our binaries
 TMP_IMAGE = $(PLUGIN_NAME):rootfs
 # Tmp container used for exporting rootfs from it
 TMP_CONTAINER := tmp
