@@ -649,7 +649,7 @@ for a virtual disk, and reset virtual disks to the default storage policy is a n
 enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issues/577).
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm some-policy
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name=some-policy
 Successfully removed policy: some-policy
 ```
 ## Status
