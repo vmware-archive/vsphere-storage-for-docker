@@ -1650,4 +1650,8 @@ class ValidationError(Exception):
 
 # start the server
 if __name__ == "__main__":
+    # Setting LANG environment variable if it is unset to ensure proper encoding
+    if os.environ.get('LANG') is None:
+        os.environ['LANG'] = "en_US.UTF-8"
+        os.execve(__file__, sys.argv, os.environ)
     main()
