@@ -200,7 +200,7 @@ FPM_COMMON := -p $(BIN) \
 .PHONY: deb
 deb: pkg-prep deb-pkg-prep
 	@$(CHECK) pkg
-	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -d '$(DOCKER_PACKAGE) > $(MIN_DOCKER_VERSION)' -t deb .
+	$(FPM) --deb-no-default-config-files $(FPM_COMMON) -t deb .
 
 # Upstart needed for older versions of Ubuntu
 .PHONY: deb-pkg-prep
@@ -208,12 +208,11 @@ deb-pkg-prep:
 	@mkdir -p $(UPSTART_INIT)
 	@cp $(UPSTART_CONF) $(UPSTART_INIT)
 
-# Target to build for rpm based systems. Due to variations in how docker is packaged between RHEL and Photon, 
+# Target to build for rpm based systems. Due to variations in how docker is packaged between RHEL and Photon,
 # skip dependency check vs building 2 different rpm packages.
 .PHONY: rpm
 rpm: pkg-prep
 	@$(CHECK) pkg
-	#$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -d '$(DOCKER_PACKAGE_PHOTON) > $(MIN_DOCKER_VERSION)' -t rpm .
 	$(FPM) --epoch $(EPOCH) $(FPM_COMMON) -t rpm .
 
 .PHONY: pkg-prep
