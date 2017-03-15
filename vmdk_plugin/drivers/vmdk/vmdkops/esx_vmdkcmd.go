@@ -23,12 +23,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"sync"
 	"syscall"
 	"time"
 	"unsafe"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -90,7 +89,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	defer C.free(unsafe.Pointer(beS))
 
 	// Get the response data in json
-	ans := (*C.be_answer)(C.malloc(C.sizeof_struct_be_answer))
+	ans := (*C.be_answer)(C.calloc(1, C.sizeof_struct_be_answer))
 	defer C.free(unsafe.Pointer(ans))
 
 	var ret C.be_sock_status
@@ -110,27 +109,26 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		if err != nil {
 			var errno syscall.Errno
 			errno = err.(syscall.Errno)
-			msg = fmt.Sprintf("Run '%s' failed: %v (errno=%d).", cmd, err, int(errno))
-
-			// Still below maximum number of retries, log and continue
+			msg = fmt.Sprintf("Run '%s' failed: %v (errno=%d) - %s", cmd, err, int(errno), C.GoString(&ans.errBuf[0]))
 			if i < maxRetryCount {
 				log.Warnf(msg + " Retrying...")
 				time.Sleep(time.Second * 1)
 				continue
 			}
-
 			if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
 				msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
 			}
 		} else {
-			msg = "Internal issue: ret != 0 but errno is not set. Cancelling operation."
+			msg = fmt.Sprintf("Internal issue: ret != 0 but errno is not set. Cancelling operation - %s ", C.GoString(&ans.errBuf[0]))
 		}
+
 		log.Warnf(msg)
 		return nil, errors.New(msg)
 	}
 
 	response := []byte(C.GoString(ans.buf))
-	C.free(unsafe.Pointer(ans.buf))
+	C.Vmci_FreeBuf(ans)
+
 	err = unmarshalError(response)
 	if err != nil && len(err.Error()) != 0 {
 		return nil, err

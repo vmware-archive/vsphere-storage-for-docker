@@ -31,6 +31,8 @@
 #include "vmci_sockets.h"
 #include "connection_types.h"
 
+#define ERR_BUF_LEN 512
+
 // operations status. 0 is OK
 typedef int be_sock_status;
 
@@ -59,7 +61,8 @@ typedef struct be_request {
 #define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
 
 typedef struct be_answer {
-   char *buf;   // calloced, so needs to be free()
+   char *buf;                  // response buffer
+   char errBuf[ERR_BUF_LEN];   // error response buffer
 } be_answer;
 
 //
@@ -262,38 +265,44 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    }
 
    // Now get the reply (blocking, wait on ESX-side execution):
-
    // MAGIC:
    b = 0;
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b ) {
+      snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive magic data: received %d expected %d bytes\n",
+               ret, sizeof b);
       return CONN_FAILURE;
    }
    if (b != MAGIC) {
-      fprintf(stderr, "Wrong magic: got 0x%x expected 0x%x\n", b, MAGIC);
+      snprintf(a->errBuf, ERR_BUF_LEN, "Wrong magic: got 0x%x expected 0x%x\n", b, MAGIC);
       errno = EBADMSG;
       return CONN_FAILURE;
    }
 
    // length
-   b = 0;
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
-      fprintf(stderr, "Failed to receive len: ret %d (%s)\n", ret, strerror(errno));
+      snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive data len : ret %d (%s)\n",
+               ret, strerror(errno));
       return CONN_FAILURE;
    }
 
+   // Alloc the recv buffer, skip retries on mem. alloc error
    a->buf = calloc(1, b);
    if (!a->buf) {
+      snprintf(a->errBuf, ERR_BUF_LEN, "Failed to allocate memory len : %d\n", b);
+      errno = ENOMEM;
       return CONN_FAILURE;
    }
 
    ret = recv(s->sock_id, a->buf, b, 0);
    if (ret == -1 || ret != b) {
       free(a->buf);
+      a->buf = NULL;
+      snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive message data: received %d expected %d\n",
+               ret, b);
       return CONN_FAILURE;
    }
-
    return CONN_SUCCESS;
 }
 
@@ -324,7 +333,6 @@ host_request(be_funcs *be, be_request* req, be_answer* ans, int cid, int port)
 
    ret = be->get_reply(&id, req, ans);
    be->release_sock(&id);
-
    return ret;
 }
 
@@ -350,4 +358,13 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
    req.msg = json_request;
 
    return host_request(be, &req, ans, ESX_VMCI_CID, port);
+}
+
+void
+Vmci_FreeBuf(be_answer *ans)
+{
+   if (ans && ans->buf) {
+         free(ans->buf);
+         ans->buf = NULL;
+   }
 }

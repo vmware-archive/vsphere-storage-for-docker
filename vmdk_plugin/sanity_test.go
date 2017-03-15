@@ -252,8 +252,6 @@ func TestSanity(t *testing.T) {
 	}
 }
 
-/*
-
 // Test concurrent volume operations
 // - concurrent create/delete between different docker hosts
 // - concurrent create/delete on the same docker host
@@ -297,7 +295,7 @@ func TestConcurrency(t *testing.T) {
 		for i := 0; i < len(clients)*parallelVolumes*2; i++ {
 			err := <-results
 			if err != nil {
-				t.Fatalf("Create/delete concurrent test failed, err: %v", err)
+				t.Errorf("Create/delete concurrent test failed, err: %v", err)
 			}
 		}
 	} else {
@@ -322,7 +320,7 @@ func TestConcurrency(t *testing.T) {
 	for i := 0; i < 3*parallelVolumes1*2; i++ {
 		err := <-results
 		if err != nil {
-			t.Fatalf("Same docker host concurrent create/delete test failed, err: %v", err)
+			t.Errorf("Same docker host concurrent create/delete test failed, err: %v", err)
 		}
 	}
 
@@ -368,7 +366,7 @@ func TestConcurrency(t *testing.T) {
 	for i := 0; i < len(clients)*parallelClones*2; i++ {
 		err := <-results
 		if err != nil {
-			t.Fatalf("Running clone concurrent test failed, err: %v", err)
+			t.Errorf("Running clone concurrent test failed, err: %v", err)
 		}
 	}
 
@@ -377,4 +375,4 @@ func TestConcurrency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-} */
+}

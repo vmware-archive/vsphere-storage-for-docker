@@ -26,15 +26,14 @@ package vmdk
 
 import (
 	"fmt"
-	"path/filepath"
-	"sync"
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
+	"path/filepath"
+	"sync"
+	"time"
 )
 
 const (
@@ -251,6 +250,9 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	if errAttach != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errAttach}).Error("Attach volume failed, removing the volume ")
+		// An internal error for the attach may have the volume attached to this client,
+		// detach before removing below.
+		d.ops.Detach(r.Name, nil)
 		errRemove := d.ops.Remove(r.Name, nil)
 		if errRemove != nil {
 			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
@@ -370,7 +372,7 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	fstype := fs.FstypeDefault
 	isReadOnly := false
 	if err != nil {
-		_, err := d.decrRefCount(r.Name)
+		d.decrRefCount(r.Name)
 		return volume.Response{Err: err.Error()}
 	}
 	// Check access type.
