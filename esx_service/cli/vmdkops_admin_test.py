@@ -261,22 +261,22 @@ class TestParsing(unittest.TestCase):
         self.assert_parse_error('set --volume=volume_name')
 
     def test_set(self):
-        args = self.parser.parse_args('set --volume=vol_name@datastore --tenant=tenant1 --options="access=read-only"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --vm-group=vm-group1 --options="access=read-only"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
-        self.assertEqual(args.tenant, 'tenant1')
+        self.assertEqual(args.vm_group, 'vm-group1')
         self.assertEqual(args.options, '"access=read-only"')
 
-        args = self.parser.parse_args('set --volume=vol_name@datastore --tenant=tenant1 --options="attach-as=persistent"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --vm-group=vm-group1 --options="attach-as=persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
-        self.assertEqual(args.tenant, 'tenant1')
+        self.assertEqual(args.vm_group, 'vm-group1')
         self.assertEqual(args.options, '"attach-as=persistent"')
 
-        args = self.parser.parse_args('set --volume=vol_name@datastore --tenant=tenant1 --options="attach-as=independent_persistent"'.split())
+        args = self.parser.parse_args('set --volume=vol_name@datastore --vm-group=vm-group1 --options="attach-as=independent_persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
-        self.assertEqual(args.tenant, 'tenant1')
+        self.assertEqual(args.vm_group, 'vm-group1')
         self.assertEqual(args.options, '"attach-as=independent_persistent"')
 
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.

@@ -487,28 +487,28 @@ List all properties for all Docker volumes that exist on datastores accessible t
 
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
-Tenant    Volume    Datastore   Created By VM  Created                   Attached To VM (name/uuid)  Policy  Capacity  Used  Disk Format  Filesystem Type  Access Attach As
---------  --------  ----------  -------------  ------------------------  --------------------------  ------  --------  ----  -----------  ---------------  ----------  ----------------------
-_DEFAULT  vol1      datastore1  photon-6       Sat Sep 10 01:11:07 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  testvol   datastore1  photon-6       Sat Sep 10 04:21:02 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  Vol100MB  datastore1  photon-6       Sat Sep 10 08:36:29 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  persistent
-tenant1   vol1      datastore1  photon-6       Sat Sep 10 09:36:51 2016  detached                    N/A     500MB     23MB  thin         ext4             read-write  independent_persistent
+Volume  Datastore   VM-Group   Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
+------  ----------  ---------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
+vol1    datastore1  _DEFAULT   100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
+vol12   datastore1  _DEFAULT   100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
+vol1    datastore1  vm-group1  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
+vol2    datastore1  vm-group1  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
 ```
 
 Note that the `Policy` column shows the named VSAN storage policy created with the same tool
 (vmdkops_admin.py).  Since these example virtual disks live on a VMFS datastore they do not have a storage
 policy and show up as `N/A'.
 
-Note that the `Tenant` column shows the tenant by which the volume was created. If the tenant which created the volume has been removed, the `Tenant` column shows up as 'N/A'. See the following example:
+Note that the `VM-Group` column shows the vm-group by which the volume was created. If the vm-group which created the volume has been removed, the `VM-Group` column shows up as 'N/A'. See the following example:
 
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
-Tenant    Volume    Datastore   Created By VM  Created                   Attached To VM (name/uuid)  Policy  Capacity  Used  Disk Format  Filesystem Type  Access Attach As
---------  --------  ----------  -------------  ------------------------  --------------------------  ------  --------  ----  -----------  ---------------  ----------  ----------------------
-_DEFAULT  vol1      datastore1  photon-6       Sat Sep 10 01:11:07 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  testvol   datastore1  photon-6       Sat Sep 10 04:21:02 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  Vol100MB  datastore1  photon-6       Sat Sep 10 08:36:29 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  persistent
-N/A       vol1      datastore1  photon-6       Sat Sep 10 09:36:51 2016  detached                    N/A     500MB     23MB  thin         ext4             read-write  independent_persistent
+Volume  Datastore   VM-Group  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
+------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
+vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
+vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
+vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
+vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
 ```
 
 #### List selected columns
@@ -527,13 +527,13 @@ Note that the that the choices are given in a comma separated list with no space
 the help given above with `vmdkops_admin ls -h`.
 
 ### Set
-Modify attribute settings on a given volume. The volume is identified by its name, tenant_name which the volume belongs to and datastore,
+Modify attribute settings on a given volume. The volume is identified by its name, vm-group_name which the volume belongs to and datastore,
 for example if the volume name is `container-vol` then the volume is specified as "container-vol@datastore-name".
 The attributes to set/modify are specified as a comma separated list as "<attr1>=<value>, <attr2>=<value>....". For example,
 a command line would look like this.
 
 ```bash
-$ vmdkops-admin set --volume=<volume@datastore> --tenant=<tenant_name> --options="<attr1>=<value>, <attr2>=<value>, ..."
+$ vmdkops-admin set --volume=<volume@datastore> --vm-group=<vm-group_name> --options="<attr1>=<value>, <attr2>=<value>, ..."
 ```
 
 The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
@@ -552,26 +552,27 @@ A sample use case:
 
 The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.
 
-Example: 
+Example:
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
-Tenant    Volume    Datastore   Created By VM  Created                   Attached To VM (name/uuid)  Policy  Capacity  Used  Disk Format  Filesystem Type  Access      Attach As
---------  --------  ----------  -------------  ------------------------  --------------------------  ------  --------  ----  -----------  ---------------  ----------  ----------------------
-_DEFAULT  vol1      datastore1  photon-6       Sat Sep 10 01:11:07 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  testvol   datastore1  photon-6       Sat Sep 10 04:21:02 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  Vol100MB  datastore1  photon-6       Sat Sep 10 08:36:29 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  persistent
-N/A       vol1      datastore1  photon-6       Sat Sep 10 09:36:51 2016  detached                    N/A     500MB     23MB  thin         ext4             read-write  independent_persistent
+Volume  Datastore   VM-Group  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
+------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
+vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
+vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
+vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
+vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
 
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py set --volume=vol1@datastore1 --vm-group=_DEFAULT --options="access=read-only"
+Successfully updated settings for : vol1@datastore1
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py set --volume=Vol100MB@datastore1 --tenant=_DEFAULT --options="access=read-only"
-Successfully updated settings for : Vol100MB@datastore1
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
-Tenant    Volume    Datastore   Created By VM  Created                   Attached To VM (name/uuid)  Policy  Capacity  Used  Disk Format  Filesystem Type  Access      Attach As
---------  --------  ----------  -------------  ------------------------  --------------------------  ------  --------  ----  -----------  ---------------  ----------  ----------------------
-_DEFAULT  vol1      datastore1  photon-6       Sat Sep 10 01:11:07 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  testvol   datastore1  photon-6       Sat Sep 10 04:21:02 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-_DEFAULT  Vol100MB  datastore1  photon-6       Sat Sep 10 08:36:29 2016  detached                    N/A     100MB     13MB  thin         ext4             read-only   persistent
-N/A       vol1      datastore1  photon-6       Sat Sep 10 09:36:51 2016  detached                    N/A     500MB     23MB  thin         ext4             read-write  independent_persistent
+Volume  Datastore   VM-Group  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
+------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
+vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-only   independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
+vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
+vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
+vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
+
 ```
 
 
