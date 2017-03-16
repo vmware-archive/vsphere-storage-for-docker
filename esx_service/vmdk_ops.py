@@ -104,6 +104,10 @@ MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are lim
 MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 VMDK_ADAPTER_TYPE = 'busLogic'  # default adapter type
 
+#VMCI Version
+# !!! server side VMCI version, need to change according with client side version !!! 
+VMCI_VERSION = "12"
+
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
 ECONNABORTED = 103 # Error on non privileged client
@@ -1469,6 +1473,15 @@ def execRequestThread(client_socket, cartel, request):
             reply_string = {u'Error': "Failed to parse json '%s'." % request}
             send_vmci_reply(client_socket, reply_string)
         else:
+            logging.debug("execRequestThread: req=%s", req)
+            version = req["version"]
+            if version != VMCI_VERSION:
+                if int(version) < int(VMCI_VERSION):
+                    reply_string = err("Client version ({0}) is lower than server version ({1}), please upgrade client.".format(version, VMCI_VERSION))
+                else:
+                    reply_string = err("Client version ({0}) is higher than server version ({1}), please upgrade server.".format(version, VMCI_VERSION))
+                send_vmci_reply(client_socket, reply_string)
+
             opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
             reply_string = executeRequest(vm_uuid=vm_uuid,
                                 vm_name=vm_name,

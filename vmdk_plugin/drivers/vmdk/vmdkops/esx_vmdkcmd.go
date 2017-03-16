@@ -23,11 +23,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"os"
 	"sync"
 	"syscall"
 	"time"
 	"unsafe"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -44,12 +46,14 @@ type EsxVmdkCmd struct {
 const (
 	commBackendName string = "vsocket"
 	maxRetryCount          = 5
+	vmciCurrVersion        = "12"
 )
 
 // A request to be passed to ESX service
 type requestToVmci struct {
 	Ops     string     `json:"cmd"`
 	Details VolumeInfo `json:"details"`
+	Version string     `json:"version"`
 }
 
 // VolumeInfo we get about the volume from upstairs
@@ -74,10 +78,20 @@ var EsxPort int
 func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
 	vmdkCmd.Mtx.Lock()
 	defer vmdkCmd.Mtx.Unlock()
-
+	var versionEnv = os.Getenv("VMCI_VERSION")
+	log.Debugf("Run get request: version=%s", versionEnv)
+	// TODO: versionEnv need to read from enviroment variable when Nirdesh's Makefile is ready
+	// versionEnv = "13"
+	var vmciVersion string
+	if versionEnv == "" {
+		vmciVersion = vmciCurrVersion
+	} else {
+		vmciVersion = versionEnv
+	}
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
-		Details: VolumeInfo{Name: name, Options: opts}})
+		Details: VolumeInfo{Name: name, Options: opts},
+		Version: vmciVersion})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to marshal json: %v", err)
 	}

@@ -58,6 +58,13 @@
       "description": "non-empty if pre-existing volumes need to be discovered ",
 	  "value": "",
       "Settable": [ "value"]
-	}]
+	},
+	{
+      "name": "VMCI_VERSION",
+      "description": "Request VMCI version",
+      "value": "",
+      "Settable": [ "value"]
+	}
+	]
 }
 
