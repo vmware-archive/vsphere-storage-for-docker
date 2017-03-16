@@ -37,10 +37,10 @@ Currently the following are supported
 2. Thin Provision ([thin]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
 3. Thick Provision Eager Zeroed ([eagerzeroedthick]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
 
-### attach_as (vSphere only)
+### attach-as (vSphere only)
 ```
-docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach_as=independent_persistent
-docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach_as=persistent
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=independent_persistent
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=persistent
 ```
 Docker volumes are backed by VMDKs. VMDKs are attached to the VM in which Docker is requesting for a volume during Docker run. VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
 
