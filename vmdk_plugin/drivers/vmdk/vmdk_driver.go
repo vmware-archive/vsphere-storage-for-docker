@@ -37,7 +37,6 @@ import (
 )
 
 const (
-	devWaitTimeout   = 1 * time.Second
 	sleepBeforeMount = 1 * time.Second
 	watchPath        = "/dev/disk/by-path"
 	version          = "vSphere Volume Driver v0.4"
