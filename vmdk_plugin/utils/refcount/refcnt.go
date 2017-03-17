@@ -74,6 +74,7 @@ package refcount
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -152,6 +153,11 @@ func newRefCount() *refCount {
 // This functions does not sync with mount/unmount handlers and should be called
 // and completed BEFORE we start accepting Mount/unmount requests.
 func (r RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string) {
+	e := os.Getenv("VDVS_DISCOVER_VOLUMES")
+	if  e == "" {
+		log.Debug("RefCountsMap.Init: Skipping Docker volumes discovery - VDVS_DISCOVER_VOLUMES not set")
+		return
+	}
 	c, err := client.NewClient(DockerUSocket, ApiVersion, nil, defaultHeaders)
 	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
