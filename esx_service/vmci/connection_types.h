@@ -29,6 +29,13 @@
 #define START_NON_PRIVILEGED_PORT 1024
 
 /*
+ * Check and set errno helper
+ * Useful when send/recv gets us less than we wanted, and we want to set errno
+ * for the caller to know about the protocol Issue
+ */
+ #define CHECK_ERRNO(_ret)  {if (_ret >= 0 && errno == 0) { errno = EBADMSG; }}
+
+/*
  * This function acquires and returns address family for vSockets.
  * On failure returns -1 an sets errno (if not set by VMCISock_GetAFValue ())
  *

@@ -154,6 +154,7 @@ vmci_get_one_op(const int s,    // socket to listen on
                ret, strerror(errno), b, MAGIC);
       close(client_socket);
       errno = saved_errno;
+      CHECK_ERRNO(ret);
       return CONN_FAILURE;
    }
 
@@ -184,6 +185,7 @@ vmci_get_one_op(const int s,    // socket to listen on
                ret, strerror(errno), b);
       close(client_socket);
       errno = saved_errno;
+      CHECK_ERRNO(ret);
       return CONN_FAILURE;
    }
    // do protocol sanity check
@@ -255,6 +257,7 @@ vmci_reply(const int client_socket,      // socket to use
 failed:
    close(client_socket);
    errno = saved_errno;
+   CHECK_ERRNO(ret);
    return CONN_FAILURE;
 }
 

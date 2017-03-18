@@ -251,16 +251,19 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    b = MAGIC;
    ret = send(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
+      CHECK_ERRNO(ret);
       return CONN_FAILURE;
    }
 
    ret = send(s->sock_id, &r->mlen, sizeof r->mlen, 0);
    if (ret == -1 || ret != sizeof r->mlen) {
+      CHECK_ERRNO(ret);
       return CONN_FAILURE;
    }
 
    ret = send(s->sock_id, r->msg, r->mlen, 0);
    if (ret == -1 || ret != r->mlen) {
+      CHECK_ERRNO(ret);
       return CONN_FAILURE;
    }
 
@@ -269,6 +272,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    b = 0;
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b ) {
+      CHECK_ERRNO(ret);
       snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive magic data: received %d expected %d bytes\n",
                ret, sizeof b);
       return CONN_FAILURE;
@@ -282,6 +286,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    // length
    ret = recv(s->sock_id, &b, sizeof b, 0);
    if (ret == -1 || ret != sizeof b) {
+      CHECK_ERRNO(ret);
       snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive data len : ret %d (%s)\n",
                ret, strerror(errno));
       return CONN_FAILURE;
@@ -299,6 +304,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    if (ret == -1 || ret != b) {
       free(a->buf);
       a->buf = NULL;
+      CHECK_ERRNO(ret);
       snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive message data: received %d expected %d\n",
                ret, b);
       return CONN_FAILURE;

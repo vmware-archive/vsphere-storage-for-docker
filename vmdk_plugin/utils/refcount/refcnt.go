@@ -286,8 +286,8 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) 
 		for _, mount := range containerJSONInfo.Mounts {
 			if mount.Driver == driverName {
 				r.Incr(mount.Name)
-				log.Debugf("  name=%v (driver=%s source=%s)",
-					mount.Name, mount.Driver, mount.Source)
+				log.Debugf("  name=%v (driver=%s source=%s) (%v)",
+					mount.Name, mount.Driver, mount.Source, mount)
 			}
 		}
 	}
