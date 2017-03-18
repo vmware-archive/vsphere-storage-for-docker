@@ -21,7 +21,7 @@
 #
 # You can use the following environment vars to change the behavior :
 #
-# DOCKER_HUB_USER - name of user and dockerhub repo to use. Default is `whoami`
+# DOCKER_HUB_REPO - name of user and dockerhub repo to use. Default is `whoami`
 #                   Please 'docker login' there is you want to push
 # VERSION_TAG     - How you want the version to look. Default is "current git tag +1 "
 # EXTRA_TAG       - additional info you want in tag. Default is "-dev"
@@ -31,10 +31,10 @@
 #   make
 #          --> resulting name (for my build as of 3/17/17)  msterin/docker-volume-vsphere:0.13-dev
 #
-# 	DOCKER_HUB_USER=vmware EXTRA_TAG= VERSION_TAG=latest make
+# 	DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make
 #           --> resulting name vmware/docker-volume-vsphere:latest
 #
-#   DOCKER_HUB_USER=cnastorage EXTRA_TAG=-CI make
+#   DOCKER_HUB_REPO=cnastorage EXTRA_TAG=-CI make
 #           --> resulting name cnastorage/docker-volume-vspehere:0.13-CI
 #
 
@@ -43,7 +43,7 @@ GIT_SHA := $(shell git rev-parse --revs-only --short HEAD)
 GIT_TAG := $(shell git describe --tags --abbrev=0 $(GIT_SHA))
 
 # Allow these vars to be suplied in environment
-DOCKER_HUB_USER ?= $(shell whoami)
+DOCKER_HUB_REPO ?= $(shell whoami)
 # "git tag + 1" , so "0.11" becomes "0.12"
 VERSION_TAG ?= $(shell echo $(GIT_TAG) | awk -F. '{printf ("%d.%d", $$1, $$2+1)}' )
 EXTRA_TAG ?= -dev
@@ -52,7 +52,7 @@ EXTRA_TAG ?= -dev
 PLUGIN_TAG := $(VERSION_TAG)$(EXTRA_TAG)
 
 # plugin name - used as a base for full plugin name and container for extracting rootfs
-PLUGIN_NAME=$(DOCKER_HUB_USER)/docker-volume-vsphere
+PLUGIN_NAME=$(DOCKER_HUB_REPO)/docker-volume-vsphere
 
 # Binaries we want to pick up from the actual build
 BIN_LOC := ../build
@@ -72,7 +72,7 @@ all: info clean plugin push
 
 info:
 	@echo Using the following config:
-	@echo DOCKER_HUB_USER $(DOCKER_HUB_USER) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)
+	@echo DOCKER_HUB_REPO $(DOCKER_HUB_REPO) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)
 	@echo PLUGIN_NAME $(PLUGIN_NAME):$(PLUGIN_TAG)
 
 
@@ -100,4 +100,4 @@ plugin:
 push:
 	@echo Pushing $(PLUGIN_NAME):$(PLUGIN_TAG)  to dockerhub.io...
 	@docker plugin push $(PLUGIN_NAME):$(PLUGIN_TAG) || \
-			echo 'Please make sure the plugin is built ("make clean plugin") and you have logged in to docker hub first ("docker login -u $(DOCKER_HUB_USER)")'
+			echo 'Please make sure the plugin is built ("make clean plugin") and you have logged in to docker hub first ("docker login -u $(DOCKER_HUB_REPO)")'
