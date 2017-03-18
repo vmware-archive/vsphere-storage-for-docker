@@ -12,21 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Makefile for Docker data volume *managed* plugin construction
+#
+# Makefile for Docker data volume *managed* plugin.
+#
 # This Makefile assumes it's in ./plugin in the tree and the binaries are already built
 # Eventually we will throw away deb/rpm build from ../vmdk_plugin/Makefile and will use only
 # managed plugin
 
-# Makefile by default build a name in this format (example) 'msterin/docker-volume-vsphere:0.13-dev'
 #
-# You can use the following environment vars to change the behavior :
+# Makefile names the plugin simlarly to this (for example) 'msterin/docker-volume-vsphere:0.13-dev'
 #
-# DOCKER_HUB_REPO - name of user and dockerhub repo to use. Default is `whoami`
-#                   Please 'docker login' there is you want to push
+# Make targets:
+#    info (helpful info), clean (remove build artefacts), plugin, (build plugin), push (push to dockerhub)
+#
+# Use the following environment vars to change the behavior :
+#
+# DOCKER_HUB_REPO - Dockerhub repo to use, in both name forming and in pushing to dockerhub.
+#                   Defaults to the result of `whoami` command.
+#                   Note: you first need to run 'docker login' in order for 'make push' to succeed 
 # VERSION_TAG     - How you want the version to look. Default is "current git tag +1 "
 # EXTRA_TAG       - additional info you want in tag. Default is "-dev"
 #
-# To check resuting settings use  "make info"
+# To check resulting settings use  "make info"
 # examples:
 #   make
 #          --> resulting name (for my build as of 3/17/17)  msterin/docker-volume-vsphere:0.13-dev
