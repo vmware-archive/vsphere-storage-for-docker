@@ -74,13 +74,13 @@ def commands():
              args dictionary may contain the following keys:
 
              * help - The help for a given option which is displayed when the `-h` flag is given
-                      with mention to a given command. (i.e. `./vmdkops_admin.py ls -h`). Help for
+                      with mention to a given command. (i.e. `./vmdkops_admin.py volume ls -h`). Help for
                       all options are shown for the command.
 
              * action - The action to take when the option is given. This is directly passed to
                         argparse. Note that `store_true` just means pass the option to the callback
                         as a boolean `True` value and don't require option parameters.
-                        (i.e. `./vmdkops_admin.py ls -l`). Other options for the action value can be
+                        (i.e. `./vmdkops_admin.py volume ls -l`). Other options for the action value can be
                         found in the argparse documentation.
                         https://docs.python.org/3/library/argparse.html#action
 
@@ -119,24 +119,48 @@ def commands():
              defined. For example, `tenant create` has a callback, but if a user runs the program
              like: `./vmdkops_admin.py tenant` they will get the following error:
              ```
-             usage: vmdkops_admin.py tenant [-h] {rm,create,set,ls,get} ...
+             usage: vmdkops_admin.py tenant [-h] {rm,create,volume,get} ...
              vmdkops_admin.py tenant: error: too few arguments
              ```
     """
+
     return {
-        'ls': {
-            'func': ls,
-            'help': 'List volumes',
-            'args': {
-                '-c': {
-                    'help': 'Display selected columns',
-                    'choices': ['volume', 'datastore', 'vm-group', 'capacity', 'used',
-                                'fstype', 'policy', 'disk-format', 'attached-to','access',
-                                'attach-as', 'created-by', 'created'],
-                    'metavar': 'Col1,Col2,...'
+        'volume' : {
+            'help': "Manipulate volumes",
+            'cmds': {
+                'ls': {
+                    'func': ls,
+                    'help': 'List volumes',
+                    'args': {
+                        '-c': {
+                            'help': 'Display selected columns',
+                            'choices': ['volume', 'datastore', 'vm-group', 'capacity', 'used',
+                                        'fstype', 'policy', 'disk-format', 'attached-to', 'access',
+                                        'attach-as', 'created-by', 'created'],
+                            'metavar': 'Col1,Col2,...'
+                        },
+                        '--vm-group' : {
+                            'help': 'Displays volumes for a given vm-group'
+                        }
+                    }
                 },
-                '--vm-group' : {
-                    'help': 'Displays volumes for a given vm-group'
+                'set': {
+                    'func': set_vol_opts,
+                    'help': 'Edit settings for a given volume',
+                    'args': {
+                        '--volume': {
+                            'help': 'Volume to set options for, specified as "volume@datastore".',
+                            'required': True
+                        },
+                        '--vm-group': {
+                            'help': 'Name of the vm-group the volume belongs to.',
+                            'required': True
+                        },
+                        '--options': {
+                            'help': 'Options (specifically, access) to be set on the volume.',
+                            'required': True
+                        }
+                    }
                 }
             }
         },
@@ -193,8 +217,8 @@ def commands():
         # vm-group {create, update, rm , ls} - manipulates vm-group
         # vm-group vm {add, rm, ls}  - manipulates VMs for a vm-group
         # vm-group access {add, set, rm, ls} - manipulates datastore access right for a vm-group
-
-        # Internally, "vm-group" is called "tenant", and we decide to keep the name of functions as "tenant_xxx" 
+        #
+        # Internally, "vm-group" is called "tenant", and we decide to keep the name of functions as "tenant_*"
 
         'vm-group': {
             'help': 'Administer and monitor volume access control',
@@ -214,7 +238,7 @@ def commands():
                         '--vm-list': {
                             'help': 'A list of VM names to place in this vm-group',
                             'metavar': 'vm1, vm2, ...',
-                            'type': comma_seperated_string
+                            'type': comma_separated_string
                         }
                     }
                 },
@@ -233,7 +257,7 @@ def commands():
                             'help': 'The new description of the vm-group',
                         },
                         '--default-datastore': {
-                            'help': 'The name of the datastore to be used by default for volumes placement',
+                            'help': 'Datastore to be used by default for volumes placement',
                         }
                     }
                 },
@@ -268,7 +292,7 @@ def commands():
                                 },
                                 '--vm-list': {
                                     'help': "A list of VM names to add to this vm-group",
-                                    'type': comma_seperated_string,
+                                    'type': comma_separated_string,
                                     'required': True
                                 }
                             }
@@ -284,7 +308,7 @@ def commands():
                                 },
                                 '--vm-list': {
                                     'help': "A list of VM names to rm from this vm-group",
-                                    'type': comma_seperated_string,
+                                    'type': comma_separated_string,
                                     'required': True
                                 }
                             }
@@ -300,7 +324,7 @@ def commands():
                                 },
                                 '--vm-list': {
                                     'help': "A list of VM names to replace for this vm-group",
-                                    'type': comma_seperated_string,
+                                    'type': comma_separated_string,
                                     'required': True
                                 }
                             }
@@ -336,7 +360,7 @@ def commands():
                                 '--default-datastore': {
                                     'help': "Mark datastore as a default datastore for this vm-group",
                                     'action': 'store_true'
-                                },                            
+                                },
                                 '--allow-create': {
                                     'help': 'Allow create and delete on datastore if set',
                                     'action': 'store_true'
@@ -411,24 +435,6 @@ def commands():
         'status': {
             'func': status,
             'help': 'Show the status of the vmdk_ops service'
-        },
-        'set': {
-            'func': set_vol_opts,
-            'help': 'Edit settings for a given volume',
-            'args': {
-                '--volume': {
-                    'help': 'Volume to set options for, specified as "volume@datastore".',
-                    'required': True
-                },
-                '--vm-group': {
-                    'help': 'Name of the vm-group the volume belongs to.',
-                    'required': True
-                },
-                '--options': {
-                    'help': 'Options (specifically, access) to be set on the volume.',
-                    'required': True
-                }
-            }
         }
     }
 
@@ -473,7 +479,7 @@ def parse_args():
        parser.print_help()
 
 
-def comma_seperated_string(string):
+def comma_separated_string(string):
     return string.split(',')
 
 
@@ -523,9 +529,9 @@ def ls_dash_c(columns, tenant_reg):
     all_rows = generate_ls_rows(tenant_reg)
     indexes = []
     headers = []
-    choices = commands()['ls']['args']['-c']['choices']
-    for i in range(len(choices)):
-        if choices[i] in columns:
+    choices = commands()['volume']['cmds']['ls']['args']['-c']['choices']
+    for i, choice in enumerate(choices):
+        if choice in columns:
             indexes.append(i)
             headers.append(all_headers[i])
     rows = []
@@ -643,6 +649,9 @@ def get_vmdk_size_info(path):
     """
     try:
         vol_info = kv.get_vol_info(path)
+        if not vol_info: # race: volume is already gone
+            return {'capacity': NOT_AVAILABLE,
+                    'used': NOT_AVAILABLE}
         return {'capacity': vol_info[VOL_SIZE],
                 'used': vol_info[VOL_ALLOC]}
     except subprocess.CalledProcessError:
@@ -863,7 +872,7 @@ def tenant_rm(args):
     if args.remove_volumes:
         print("All Volumes will be removed")
         remove_volumes = True
-    
+
     error_info = auth_api._tenant_rm(args.name, remove_volumes)
 
     if error_info:
@@ -958,7 +967,7 @@ def tenant_access_add(args):
                                              volume_maxsize_in_MB=volume_maxsize_in_MB,
                                              volume_totalsize_in_MB=volume_totalsize_in_MB
                                              )
-      
+
     if error_info:
         return operation_fail(error_info.msg)
     else:
@@ -973,10 +982,10 @@ def tenant_access_set(args):
     if args.volume_totalsize:
         volume_totalsize_in_MB = convert.convert_to_MB(args.volume_totalsize)
 
-    error_info = auth_api._tenant_access_set(name=args.name, 
+    error_info = auth_api._tenant_access_set(name=args.name,
                                              datastore=args.datastore,
                                              allow_create=args.allow_create,
-                                             volume_maxsize_in_MB=volume_maxsize_in_MB, 
+                                             volume_maxsize_in_MB=volume_maxsize_in_MB,
                                              volume_totalsize_in_MB=volume_totalsize_in_MB)
 
     if error_info:

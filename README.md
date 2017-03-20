@@ -11,7 +11,7 @@ as well as the
 
 ## Detailed documentation
 
-Detailed documentation can be found in our [GitHub Documenation Page](http://vmware.github.io/docker-volume-vsphere/documentation/). 
+Detailed documentation can be found in our [GitHub Documenation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
 
 ## Download
 
@@ -77,7 +77,7 @@ $ docker volume rm MyVolume
 
 ## Using ESXi Admin CLI
 ```
-$ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+$ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 ```
 
 ## Restarting Docker and vSphere Docker Volume Service

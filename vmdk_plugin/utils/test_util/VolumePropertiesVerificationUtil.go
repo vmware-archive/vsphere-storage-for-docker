@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-var ADMIN_CLI_LS = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls "
+var ADMIN_CLI_LS = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls "
 var DOCKER_CLI_INSPC = "docker volume inspect "
 
 // returns attached to vm field of volume using docker cli

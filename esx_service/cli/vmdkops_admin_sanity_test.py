@@ -34,7 +34,7 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         self.devnull.close()
 
     def test_ls(self):
-        cmd = '{0} ls'.format(ADMIN_CLI)
+        cmd = '{} volume ls'.format(ADMIN_CLI)
         # Don't print errors about stty using a bad ioctl (we aren't attached to
         # a tty here)
         output = subprocess.check_output(cmd, shell=True, stderr=self.devnull)

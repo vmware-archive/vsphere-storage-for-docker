@@ -17,11 +17,11 @@ Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/w
 
 ### What is VMCI and vSock and why is it needed?
 
-vSphere Docker Volume Service uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow [VMware tools installation](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F) or use open vmtools 
-```apt-get install open-vm-tools```. 
-Additional reading for differences between VMware tools and open vm tools: 
+vSphere Docker Volume Service uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow [VMware tools installation](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F) or use open vmtools
+```apt-get install open-vm-tools```.
+Additional reading for differences between VMware tools and open vm tools:
 
-* [Open-VM-Tools (OVT): The Future Of VMware Tools For Linux](http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html) 
+* [Open-VM-Tools (OVT): The Future Of VMware Tools For Linux](http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html)
 * [VMware Tools vs Open VM Tools](http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools)
 
 ### I see "connection reset by peer (errno=104)" in the [service's logs](https://github.com/vmware/docker-volume-vsphere#logging), what is the cause?
@@ -56,34 +56,34 @@ The corresponding errors in the vmdk_ops.log file.
 
 ```
 [root@localhost:~] cat /var/log/vmware/vmdk_ops.log
- 
+
 08/29/16 08:20:23 297059 [MainThread] [ERROR  ] version 0.0 in auth-db does not match latest DB version 1.0
 08/29/16 08:20:23 297059 [MainThread] [ERROR  ] DB upgrade is not supported. Please remove the DB file at /etc/vmware/vmdkops/auth-db. All existing configuration will be removed and need to be recreated after removing the DB file.
 ```
- 
+
 ### How to handle the upgrade manually?
 
 #### Case 1: No vm-group configured before
- 
+
 If no vm-group has been configured, user just needs to delete the auth-db file
 
 Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
 
-``` 
+```
 [root@localhost:/etc/vmware/vmdkops]rm /etc/vmware/vmdkops/auth-db
 ```
 
 Step 2: Verify “vm-group ls” command
-``` 
+```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  -------
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
 
 ```
- 
+
 After this point, the manually upgrade is done, and tenancy operations will succeed.
- 
+
 #### Case2: Has vm-group configured before
 Step 1: Backup data manually.
 
@@ -105,7 +105,7 @@ Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
 
 Step 3: Verify “vm-group ls” command, now only  ```_DEFAULT``` should be listed.
 
-``` 
+```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
 Uuid                                  Name      Description                 Default_datastore  VM_list
 ------------------------------------  --------  --------------------------  -----------------  -------
@@ -137,24 +137,24 @@ Uuid                                  Name           Description                
 ```
 
 Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vm-group1” which was created before will not be visible
-``` 
+```
 root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME
 ```
 
 Step 5: Run “docker volume create”  to create a new volume “new-vol1” and run “docker volume ls”,   should only able to see this volume which was just created
-``` 
+```
 root@photon-KwqUODFXp [ ~ ]# docker volume create --driver=vsphere --name=new-vol1 -o size=100MB
 new-vol1
 root@photon-KwqUODFXp [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME
 vsphere             new-vol1@datastore1
 ```
- 
+
 Volume “vol1” which was created before still exists, and can be seen from the following AdminCLI command
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume    Datastore   Created By VM  Created                   Attached To VM (name/uuid)  Policy  Capacity  Used  Disk Format  Filesystem Type  Access      Attach As
 --------  ----------  -------------  ------------------------  --------------------------  ------  --------  ----  -----------  ---------------  ----------  ----------------------
 vol1      datastore1  photon-6       Sun Sep 11 07:30:47 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
