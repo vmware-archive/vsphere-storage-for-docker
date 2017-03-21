@@ -832,6 +832,7 @@ class TestTenant(unittest.TestCase):
                             rows[0][3]]
             self.assertEqual(expected_output, actual_output)
 
+        print("[Negative test case]: Expected invalid values for allow-create option")
         for val in ["INVALID", ""]:
             command = ("vm-group access set --name={0} ".format(self.tenant1_name))
             command += ("--datastore={0} ".format(self.datastore_name))

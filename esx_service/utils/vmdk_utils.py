@@ -28,6 +28,10 @@ import auth_api
 import log_config
 import auth
 import auth_data_const
+import error_code
+
+from pyVim import vmconfig
+from pyVmomi import vim
 
 import pyVim
 from pyVim.invt import GetVmFolder, FindChild
@@ -306,6 +310,28 @@ def get_vm_config_path(vm_name):
     # datastore_path has the format like this /vmfs/volumes/datastore_name
     vm_config_path = os.path.join(datastore_path, path)
     return vm_config_path
+
+def check_volumes_mounted(vm_list):
+    """
+    Return error_info any vm in @param vm_list have docker volume mounted
+    """
+    for vm_id in vm_list:
+        vm = vmdk_ops.findVmByUuid(vm_id)
+        for d in vm.config.hardware.device:
+            # if device is not a virtual disk, skip this device
+            if type(d) != vim.vm.device.VirtualDisk:
+                continue
+
+            # Filename format is as follows:
+            # "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
+            # Trim the datastore name and keep disk path.
+            _, disk_path = d.backing.fileName.rsplit("]", 1)
+            logging.info("backing disk name is %s", disk_path)
+            # If disk path start with "dockvols", the disk is a docker volume
+            if disk_path.lstrip().startswith(vmdk_ops.DOCK_VOLS_DIR):
+                error_info = error_code.generate_error_info(error_code.ErrorCode.VM_WITH_MOUNTED_VOLUMES, vm.config.name)
+                return error_info
+    return None
 
 def log_volume_lsof(vol_name):
     """Log volume open file descriptors"""
