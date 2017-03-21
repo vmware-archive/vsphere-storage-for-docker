@@ -78,6 +78,31 @@ function check_recovery_record {
     return 0
 }
 
+function test_crash_recovery {
+    # Turning this off for PR #1047.
+    # TBD: bring it back when bringing discovery back (see PR #1050)
+    echo "Skippint crash recovery check (see #1050)... "
+    return
+
+    timeout=$1
+    echo "Checking recovery for VMDK plugin kill -9"
+    kill -9 `pidof docker-volume-vsphere`
+    until pids=$(pidof docker-volume-vsphere)
+    do
+        echo "Waiting for docker-volume-vsphere to restart"
+        sleep 1
+    done
+
+    echo "Waiting for plugin init"
+    sleep 3
+    sync  # give log the time to flush
+    wait_for check_recovery_record $timeout
+    if [ "$?" -ne 0 ] ; then
+        echo PLUGIN RESTART TEST FAILED. Did not find proper recovery record
+        exit 1
+    fi
+}
+
 DOCKER="$DEBUG docker"
 GREP="$DEBUG grep"
 
@@ -130,22 +155,7 @@ $DOCKER volume rm $vname 2> /dev/null ; if [ $? -eq 0 ] ; then
    exit 1
 fi
 
-echo "Checking recovery for VMDK plugin kill -9"
-kill -9 `pidof docker-volume-vsphere`
-until pids=$(pidof docker-volume-vsphere)
-do
-   echo "Waiting for docker-volume-vsphere to restart"
-   sleep 1
-done
-
-echo "Waiting for plugin init"
-sleep 3
-sync  # give log the time to flush
-wait_for check_recovery_record $timeout
-if [ "$?" -ne 0 ] ; then
-   echo PLUGIN RESTART TEST FAILED. Did not find proper recovery record
-   exit 1
-fi
+test_crash_recovery $timeout
 
 # kill containers but keep the volume around
 cleanup_containers
