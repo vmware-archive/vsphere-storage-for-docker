@@ -246,6 +246,8 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name,
 		"fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
 
+	watcher, skipInotify := fs.DevAttachWaitPrep(r.Name, watchPath)
+
 	dev, errAttach := d.ops.Attach(r.Name, nil)
 	if errAttach != nil {
 		log.WithFields(log.Fields{"name": r.Name,
@@ -259,8 +261,6 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		}
 		return volume.Response{Err: errAttach.Error()}
 	}
-
-	watcher, skipInotify := fs.DevAttachWaitPrep(r.Name, watchPath)
 
 	device, errGetDevicePath := fs.GetDevicePath(dev)
 	if errGetDevicePath != nil {

@@ -39,7 +39,7 @@ const (
 	pciAddrLen      = 10                       // Length of PCI dev addr
 	diskPathByDevID = "/dev/disk/by-id/wwn-0x" // Path for devices named by ID
 	scsiHostPath    = "/sys/class/scsi_host/"  // Path for scsi hosts
-	devWaitTimeout  = 1 * time.Second          // give it plenty of time to sense the attached disk
+	devWaitTimeout  = 10 * time.Second         // give it plenty of time to sense the attached disk
 	bdevPath        = "/sys/block/"
 	deleteFile      = "/device/delete"
 	watchPath       = "/dev/disk/by-id"
@@ -61,6 +61,11 @@ type VolumeDevSpec struct {
 func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	watcher, errWatcher := inotify.NewWatcher()
 
+	log.WithFields(log.Fields{
+		"name":    name,
+		"devPath": devPath,
+	}).Debug("XX In DevAttachWaitPrep ")
+
 	if errWatcher != nil {
 		log.WithFields(log.Fields{"Name": name}).Error("Failed to create watcher. Skipping inotify ")
 		return nil, true
@@ -80,6 +85,11 @@ func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 
 // DevAttachWait waits for attach operation to be completed
 func DevAttachWait(watcher *inotify.Watcher, name string, device string) {
+	log.WithFields(log.Fields{
+		"name":   name,
+		"device": device,
+	}).Debug("XX In DevAttachWait ")
+
 loop:
 	for {
 		select {
