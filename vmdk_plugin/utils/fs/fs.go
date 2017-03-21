@@ -34,12 +34,12 @@ import (
 )
 
 const (
+	devWaitTimeout  = 1 * time.Second          // short timeout to wait for disk attach to complete
 	sysPciDevs      = "/sys/bus/pci/devices"   // All PCI devices on the host
 	sysPciSlots     = "/sys/bus/pci/slots"     // PCI slots on the host
 	pciAddrLen      = 10                       // Length of PCI dev addr
 	diskPathByDevID = "/dev/disk/by-id/wwn-0x" // Path for devices named by ID
 	scsiHostPath    = "/sys/class/scsi_host/"  // Path for scsi hosts
-	devWaitTimeout  = 1 * time.Second          // give it plenty of time to sense the attached disk
 	bdevPath        = "/sys/block/"
 	deleteFile      = "/device/delete"
 	watchPath       = "/dev/disk/by-id"
@@ -78,8 +78,7 @@ func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	return watcher, false
 }
 
-// DevAttachWait waits for attach operation to be completed
-func DevAttachWait(watcher *inotify.Watcher, name string, device string) {
+func devAttachWaitInt(watcher *inotify.Watcher, name string, device string, timeout time.Duration) {
 loop:
 	for {
 		select {
@@ -97,14 +96,24 @@ loop:
 				log.Fields{"device": device, "error": err},
 			).Error("Hit error during watch ")
 			break loop
-		case <-time.After(devWaitTimeout):
+		case <-time.After(timeout):
 			log.WithFields(
-				log.Fields{"timeout": devWaitTimeout, "device": device},
+				log.Fields{"timeout": timeout, "device": device},
 			).Warning("Exceeded timeout while waiting for device attach to complete")
 			break loop
 		}
 	}
 
+}
+
+// DevAttachWait waits for attach operation to be completed
+func DevAttachWait(watcher *inotify.Watcher, name string, device string) {
+	devAttachWaitInt(watcher, name, device, devWaitTimeout)
+	_, err := os.Stat(device)
+	// If the device isn't attached yet retry with a longer timeout
+	if err != nil {
+		devAttachWaitInt(watcher, name, device, devWaitTimeout*5)
+	}
 }
 
 // Mkdir creates a directory at the specified path
