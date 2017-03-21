@@ -61,11 +61,6 @@ type VolumeDevSpec struct {
 func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 	watcher, errWatcher := inotify.NewWatcher()
 
-	log.WithFields(log.Fields{
-		"name":    name,
-		"devPath": devPath,
-	}).Debug("XX In DevAttachWaitPrep ")
-
 	if errWatcher != nil {
 		log.WithFields(log.Fields{"Name": name}).Error("Failed to create watcher. Skipping inotify ")
 		return nil, true
@@ -85,11 +80,6 @@ func DevAttachWaitPrep(name string, devPath string) (*inotify.Watcher, bool) {
 
 // DevAttachWait waits for attach operation to be completed
 func DevAttachWait(watcher *inotify.Watcher, name string, device string) {
-	log.WithFields(log.Fields{
-		"name":   name,
-		"device": device,
-	}).Debug("XX In DevAttachWait ")
-
 loop:
 	for {
 		select {
