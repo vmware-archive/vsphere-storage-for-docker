@@ -472,8 +472,8 @@ optional arguments:
 
 #### Help
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls -h
-usage: vmdkops_admin.py ls [-h] [-c Col1,Col2,...]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls -h
+usage: vmdkops_admin.py volume ls [-h] [-c Col1,Col2,...]
 
 optional arguments:
   -h, --help        show this help message and exit
@@ -486,7 +486,7 @@ optional arguments:
 List all properties for all Docker volumes that exist on datastores accessible to the host.
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume  Datastore   VM-Group   Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
 ------  ----------  ---------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
 vol1    datastore1  _DEFAULT   100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
@@ -502,7 +502,7 @@ policy and show up as `N/A'.
 Note that the `VM-Group` column shows the vm-group by which the volume was created. If the vm-group which created the volume has been removed, the `VM-Group` column shows up as 'N/A'. See the following example:
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume  Datastore   VM-Group  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
 ------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
 vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
@@ -516,7 +516,7 @@ vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         d
 Show only the selected columns.
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls -c volume,datastore,attached-to
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls -c volume,datastore,attached-to
 Volume     Datastore   Attached To VM
 ---------  ----------  --------------
 large-vol  datastore1  detached
@@ -554,7 +554,7 @@ The container images themselves can be smaller as they share the libs and possib
 
 Example:
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume  Datastore   VM-Group  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
 ------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
 vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
@@ -562,10 +562,10 @@ vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         d
 vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
 vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py set --volume=vol1@datastore1 --vm-group=_DEFAULT --options="access=read-only"
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume set --volume=vol1@datastore1 --vm-group=_DEFAULT --options="access=read-only"
 Successfully updated settings for : vol1@datastore1
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume  Datastore   VM-Group  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
 ------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
 vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-only   independent_persistent  photon-6    Sun Sep 11 21:36:13 2016

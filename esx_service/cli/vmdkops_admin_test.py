@@ -75,18 +75,18 @@ class TestParsing(unittest.TestCase):
         self.parser = vmdkops_admin.create_parser()
 
     def test_parse_ls_no_options(self):
-        args = self.parser.parse_args(['ls'])
+        args = self.parser.parse_args('volume ls'.split())
         self.assertEqual(args.func, vmdkops_admin.ls)
         self.assertEqual(args.c, None)
 
     def test_parse_ls_dash_c(self):
         args = self.parser.parse_args(
-            'ls -c created-by,created'.split())
+            'volume ls -c created-by,created'.split())
         self.assertEqual(args.func, vmdkops_admin.ls)
         self.assertEqual(args.c, ['created-by', 'created'])
 
     def test_parse_ls_dash_c_invalid_argument(self):
-        self.assert_parse_error('ls -c personality')
+        self.assert_parse_error('volume ls -c personality')
 
     def test_policy_no_args_fails(self):
         # Py2 argsparse throws in this case, Py3 peacefully shows help
@@ -119,7 +119,7 @@ class TestParsing(unittest.TestCase):
 
     def test_policy_ls_badargs(self):
         self.assert_parse_error('policy ls --name=yo')
-    
+
     # NOTE: "tenant" is renamed to "vm-group", but we only change it in command line
     # all the function name remain unchanged
 
@@ -261,19 +261,19 @@ class TestParsing(unittest.TestCase):
         self.assert_parse_error('set --volume=volume_name')
 
     def test_set(self):
-        args = self.parser.parse_args('set --volume=vol_name@datastore --vm-group=vm-group1 --options="access=read-only"'.split())
+        args = self.parser.parse_args('volume set --volume=vol_name@datastore --vm-group=vm-group1 --options="access=read-only"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
         self.assertEqual(args.vm_group, 'vm-group1')
         self.assertEqual(args.options, '"access=read-only"')
 
-        args = self.parser.parse_args('set --volume=vol_name@datastore --vm-group=vm-group1 --options="attach-as=persistent"'.split())
+        args = self.parser.parse_args('volume set --volume=vol_name@datastore --vm-group=vm-group1 --options="attach-as=persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
         self.assertEqual(args.vm_group, 'vm-group1')
         self.assertEqual(args.options, '"attach-as=persistent"')
 
-        args = self.parser.parse_args('set --volume=vol_name@datastore --vm-group=vm-group1 --options="attach-as=independent_persistent"'.split())
+        args = self.parser.parse_args('volume set --volume=vol_name@datastore --vm-group=vm-group1 --options="attach-as=independent_persistent"'.split())
         self.assertEqual(args.func, vmdkops_admin.set_vol_opts)
         self.assertEqual(args.volume, 'vol_name@datastore')
         self.assertEqual(args.vm_group, 'vm-group1')
