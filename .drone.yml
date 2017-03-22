@@ -5,7 +5,7 @@ clone:
 build:
 
   serialize_branches:
-    image: &build_cnt cnastorage/vibauthor-and-go:0.9
+    image: &build_cnt cnastorage/vibauthor-and-go:0.10
     environment: &setup_env
       - DRONE_TOKEN=$$DRONE_TOKEN
       - DRONE_SERVER=$$DRONE_SERVER
@@ -127,7 +127,7 @@ build:
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
     when: *branches
 
-  test_events: 
+  test_events:
     image: *build_cnt
     privileged: true
     environment: *setup_env
