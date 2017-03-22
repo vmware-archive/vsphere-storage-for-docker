@@ -261,12 +261,12 @@ TMP_LOC := /tmp/$(PLUGNAME)
 
 # script sources live here. All scripts are copied to test VM during deployment
 # scripts started locally to deploy to and clean up test machines
-DEPLOY_VM_SH  := $(DEPLOY_TOOLS deployvm
-DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS deployvmtest
-DEPLOY_VM_PLUGIN := $(DEPLOY_TOOLS deployplugin
-DEPLOY_ESX_SH := $(DEPLOY_TOOLS deployesx
-CLEANVM_SH    := $(DEPLOY_TOOLS cleanvm
-CLEANESX_SH   := $(DEPLOY_TOOLS cleanesx
+DEPLOY_VM_SH  := $(DEPLOY_TOOLS) deployvm
+DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS) deployvmtest
+DEPLOY_VM_PLUGIN_SH := $(DEPLOY_TOOLS) deployplugin
+DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
+CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
+CLEANESX_SH   := $(DEPLOY_TOOLS) cleanesx
 
 
 #
@@ -283,7 +283,7 @@ deploy-vm: clean-vm
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 deploy-vm-plugin:
-	$(DEPLOY_VM_PLUGIN) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN) $(SCRIPTS)
+	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN) $(SCRIPTS)
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
 

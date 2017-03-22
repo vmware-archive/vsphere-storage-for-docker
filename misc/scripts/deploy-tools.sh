@@ -67,13 +67,12 @@ function deployplugin {
     do
         TARGET=root@$ip
         log "Cleaning up older files from $TARGET if exists..."
-        $SSH $TARGET rm -fr $TMP_LOC; $MKDIR_P $TMP_LOC $BUILD_LOC
+        $SSH $TARGET "rm -fr $TMP_LOC; $MKDIR_P $TMP_LOC $BUILD_LOC"
         log "Copying required files to $TARGET ..."
         $SCP $PLUGIN_BIN $TARGET:$BUILD_LOC
         $SCP $MANAGED_PLUGIN_SRC $TARGET:$TMP_LOC
-        setupVMType
-        $SSH $TARGET 'cd ' $PLUGIN_LOC '; make info clean plugin'
-        if [ $? -ne 0 ]; then
+        if [ -z  "$($SSH $TARGET 'which make')" ]; then
+            setupVMType
             case $FILE_EXT in
             deb)
                 log "installing make on ubuntu machine"
@@ -84,8 +83,9 @@ function deployplugin {
                 $SSH $TARGET 'tdnf install make -y'
                 ;;
             esac
-            $SSH $TARGET 'cd ' $PLUGIN_LOC '; make info clean plugin'
+
         fi
+        $SSH $TARGET 'cd ' $PLUGIN_LOC '; make info clean plugin'
         managedPluginSanityCheck
     done
 }
