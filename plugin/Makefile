@@ -29,7 +29,7 @@
 #
 # DOCKER_HUB_REPO - Dockerhub repo to use, in both name forming and in pushing to dockerhub.
 #                   Defaults to the result of `whoami` command.
-#                   Note: you first need to run 'docker login' in order for 'make push' to succeed 
+#                   Note: you first need to run 'docker login' in order for 'make push' to succeed
 # VERSION_TAG     - How you want the version to look. Default is "current git tag +1 "
 # EXTRA_TAG       - additional info you want in tag. Default is "-dev"
 #
@@ -87,7 +87,7 @@ clean:
 	@echo "=== Cleaning work files, images and plugin(s)..."
 	rm -rf ./rootfs
 	rm -f $(BINARY)
-	-docker plugin rm $(PLUGIN_NAME):$(PLUGIN_TAG)
+	-docker plugin rm $(PLUGIN_NAME):$(PLUGIN_TAG) -f
 	-docker rmi $(TMP_IMAGE)
 
 
