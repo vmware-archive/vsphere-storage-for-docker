@@ -577,14 +577,17 @@ def get_creation_info(metadata):
 def get_attached_to(metadata):
     """ Return which VM a volume is attached to based on its metadata. """
     try:
-        vm_name = vmdk_ops.vm_uuid2name(metadata[kv.ATTACHED_VM_UUID])
-        if not vm_name:
+        if kv.ATTACHED_VM_UUID in metadata:
+            vm_name = vmdk_ops.vm_uuid2name(metadata[kv.ATTACHED_VM_UUID])
+            if vm_name:
+                return vm_name
             # If vm name couldn't be retrieved through uuid, use name from KV
-            if metadata[kv.ATTACHED_VM_UUID]:
+            elif metadata[kv.ATTACHED_VM_NAME]:
                 return metadata[kv.ATTACHED_VM_NAME]
+            else:
+                return metadata[kv.ATTACHED_VM_UUID]
+        else:
             return kv.DETACHED
-
-        return vm_name
     except:
         return kv.DETACHED
 

@@ -509,7 +509,7 @@ def vol_info(vol_meta, vol_size_info, datastore):
         vm = findVmByUuid(vol_meta[kv.ATTACHED_VM_UUID])
         if vm:
             vinfo[ATTACHED_TO_VM] = vm.config.name
-        else:
+        elif vol_meta[kv.ATTACHED_VM_NAME]:
             # If vm name couldn't be retrieved through uuid, use name from KV
             vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
 
