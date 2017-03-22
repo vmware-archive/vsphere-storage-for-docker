@@ -60,8 +60,8 @@
       "Settable": [ "value"]
 	},
 	{
-      "name": "VMCI_VERSION",
-      "description": "Request VMCI version",
+      "name": "TEST_PROTOCOL_VERSION",
+      "description": "Client protocol version used in test",
       "value": "",
       "Settable": [ "value"]
 	}

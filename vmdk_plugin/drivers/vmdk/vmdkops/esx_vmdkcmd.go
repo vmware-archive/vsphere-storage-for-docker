@@ -44,9 +44,9 @@ type EsxVmdkCmd struct {
 }
 
 const (
-	commBackendName string = "vsocket"
-	maxRetryCount          = 5
-	vmciCurrVersion        = "12"
+	commBackendName        string = "vsocket"
+	maxRetryCount                 = 5
+	protocolCurrentVersion        = "2"
 )
 
 // A request to be passed to ESX service
@@ -78,20 +78,15 @@ var EsxPort int
 func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
 	vmdkCmd.Mtx.Lock()
 	defer vmdkCmd.Mtx.Unlock()
-	var versionEnv = os.Getenv("VMCI_VERSION")
-	log.Debugf("Run get request: version=%s", versionEnv)
-	// TODO: versionEnv need to read from enviroment variable when Nirdesh's Makefile is ready
-	// versionEnv = "13"
-	var vmciVersion string
-	if versionEnv == "" {
-		vmciVersion = vmciCurrVersion
-	} else {
-		vmciVersion = versionEnv
+	protocolVersion := os.Getenv("TEST_PROTOCOL_VERSION")
+	log.Debugf("Run get request: version=%s", protocolVersion)
+	if protocolVersion == "" {
+		protocolVersion = protocolCurrentVersion
 	}
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
 		Details: VolumeInfo{Name: name, Options: opts},
-		Version: vmciVersion})
+		Version: protocolVersion})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to marshal json: %v", err)
 	}

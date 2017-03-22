@@ -104,9 +104,9 @@ MAX_JSON_SIZE = 1024 * 4  # max buf size for query json strings. Queries are lim
 MAX_SKIP_COUNT = 16       # max retries on VMCI Get Ops failures
 VMDK_ADAPTER_TYPE = 'busLogic'  # default adapter type
 
-#VMCI Version
-# !!! server side VMCI version, need to change according with client side version !!! 
-VMCI_VERSION = "12"
+# Server side understand protocol version. If you are changing client/server protocol we use
+# over VMCI, PLEASE DO NOT FORGET TO CHANGE IT FOR CLIENT in file <esx_vmdkcmd.go> !
+PROTOCOL_VERSION = "2"
 
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
@@ -1475,11 +1475,13 @@ def execRequestThread(client_socket, cartel, request):
         else:
             logging.debug("execRequestThread: req=%s", req)
             version = req["version"]
-            if version != VMCI_VERSION:
-                if int(version) < int(VMCI_VERSION):
-                    reply_string = err("Client version ({0}) is lower than server version ({1}), please upgrade client.".format(version, VMCI_VERSION))
+            if version != PROTOCOL_VERSION:
+                if int(version) < int(PROTOCOL_VERSION):
+                    reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}) , "
+                                       "please update the client.".format(version, PROTOCOL_VERSION))
                 else:
-                    reply_string = err("Client version ({0}) is higher than server version ({1}), please upgrade server.".format(version, VMCI_VERSION))
+                    reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}) , "
+                                       "please update the server.".format(version, PROTOCOL_VERSION))
                 send_vmci_reply(client_socket, reply_string)
 
             opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
