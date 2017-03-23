@@ -106,7 +106,7 @@ VMDK_ADAPTER_TYPE = 'busLogic'  # default adapter type
 
 # Server side understand protocol version. If you are changing client/server protocol we use
 # over VMCI, PLEASE DO NOT FORGET TO CHANGE IT FOR CLIENT in file <esx_vmdkcmd.go> !
-PROTOCOL_VERSION = "2"
+SERVER_PROTOCOL_VERSION = "2"
 
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
@@ -1474,19 +1474,16 @@ def execRequestThread(client_socket, cartel, request):
             send_vmci_reply(client_socket, reply_string)
         else:
             logging.debug("execRequestThread: req=%s", req)
-            if "verson" in req:
-                version = req["version"]
-                if version != PROTOCOL_VERSION:
-                    if int(version) < int(PROTOCOL_VERSION):
-                        reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}), "
-                                        "please update the client.".format(version, PROTOCOL_VERSION))
-                    else:
-                        reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}), "
-                                        "please update the server.".format(version, PROTOCOL_VERSION))
-                    send_vmci_reply(client_socket, reply_string)
-            else:
-                reply_string = err("vSphere Docker Volume Service client is too old, and cannot talk to server with version ({}), "
-                                        "please update the client.".format(PROTOCOL_VERSION))
+            # If req from client does not include version number, set the version to "1" by default
+            version = req["version"] if "version" in req else "1"
+            logging.debug("execRequestThread: version=%s", version)
+            if version != SERVER_PROTOCOL_VERSION:
+                if not version or int(version) < int(SERVER_PROTOCOL_VERSION):
+                    reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}), "
+                                    "please update the client.".format(version, SERVER_PROTOCOL_VERSION))
+                else:
+                    reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}), "
+                                    "please update the server.".format(version, SERVER_PROTOCOL_VERSION))
                 send_vmci_reply(client_socket, reply_string)
 
             opts = req["details"]["Opts"] if "Opts" in req["details"] else {}

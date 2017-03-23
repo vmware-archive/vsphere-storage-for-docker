@@ -48,7 +48,7 @@ const (
 	maxRetryCount          = 5
 	// Server side understand protocol version. If you are changing client/server protocol we use
 	// over VMCI, PLEASE DO NOT FORGET TO CHANGE IT FOR SERVER in file <vmdk_ops.py> !
-	protocolCurrentVersion = "2"
+	clientProtocolVersion = "2"
 )
 
 // A request to be passed to ESX service
@@ -83,7 +83,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	protocolVersion := os.Getenv("VDVS_TEST_PROTOCOL_VERSION")
 	log.Debugf("Run get request: version=%s", protocolVersion)
 	if protocolVersion == "" {
-		protocolVersion = protocolCurrentVersion
+		protocolVersion = clientProtocolVersion
 	}
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
