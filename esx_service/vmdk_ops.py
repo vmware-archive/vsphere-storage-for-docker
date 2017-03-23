@@ -1474,14 +1474,19 @@ def execRequestThread(client_socket, cartel, request):
             send_vmci_reply(client_socket, reply_string)
         else:
             logging.debug("execRequestThread: req=%s", req)
-            version = req["version"]
-            if version != PROTOCOL_VERSION:
-                if int(version) < int(PROTOCOL_VERSION):
-                    reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}) , "
-                                       "please update the client.".format(version, PROTOCOL_VERSION))
-                else:
-                    reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}) , "
-                                       "please update the server.".format(version, PROTOCOL_VERSION))
+            if "verson" in req:
+                version = req["version"]
+                if version != PROTOCOL_VERSION:
+                    if int(version) < int(PROTOCOL_VERSION):
+                        reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}), "
+                                        "please update the client.".format(version, PROTOCOL_VERSION))
+                    else:
+                        reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}), "
+                                        "please update the server.".format(version, PROTOCOL_VERSION))
+                    send_vmci_reply(client_socket, reply_string)
+            else:
+                reply_string = err("vSphere Docker Volume Service client is too old, and cannot talk to server with version ({}), "
+                                        "please update the client.".format(PROTOCOL_VERSION))
                 send_vmci_reply(client_socket, reply_string)
 
             opts = req["details"]["Opts"] if "Opts" in req["details"] else {}

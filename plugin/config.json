@@ -60,7 +60,7 @@
       "Settable": [ "value"]
 	},
 	{
-      "name": "TEST_PROTOCOL_VERSION",
+      "name": "VDVS_TEST_PROTOCOL_VERSION",
       "description": "Client protocol version used in test",
       "value": "",
       "Settable": [ "value"]
