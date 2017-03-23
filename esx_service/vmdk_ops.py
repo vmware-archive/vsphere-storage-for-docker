@@ -506,12 +506,14 @@ def vol_info(vol_meta, vol_size_info, datastore):
     vinfo[LOCATION] = datastore
 
     if kv.ATTACHED_VM_UUID in vol_meta:
-        vm = findVmByUuid(vol_meta[kv.ATTACHED_VM_UUID])
-        if vm:
-            vinfo[ATTACHED_TO_VM] = vm.config.name
-        elif vol_meta[kv.ATTACHED_VM_NAME]:
+        vm_name = vm_uuid2name(vol_meta[kv.ATTACHED_VM_UUID])
+        if vm_name:
+            vinfo[ATTACHED_TO_VM] = vm_name
+        elif kv.ATTACHED_VM_NAME in vol_meta:
             # If vm name couldn't be retrieved through uuid, use name from KV
             vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
+        else:
+            vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_UUID]
 
     if kv.VOL_OPTS in vol_meta:
        if kv.FILESYSTEM_TYPE in vol_meta[kv.VOL_OPTS]:

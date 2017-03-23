@@ -582,7 +582,7 @@ def get_attached_to(metadata):
             if vm_name:
                 return vm_name
             # If vm name couldn't be retrieved through uuid, use name from KV
-            elif metadata[kv.ATTACHED_VM_NAME]:
+            elif kv.ATTACHED_VM_NAME in metadata:
                 return metadata[kv.ATTACHED_VM_NAME]
             else:
                 return metadata[kv.ATTACHED_VM_UUID]
