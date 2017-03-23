@@ -94,14 +94,14 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	}
 
 	cmdS := C.CString(string(jsonStr))
-	defer C.free(unsafe.Pointer(cmdS))
+	//defer C.free(unsafe.Pointer(cmdS))
 
 	beS := C.CString(commBackendName)
 	defer C.free(unsafe.Pointer(beS))
 
 	// Get the response data in json
 	ans := (*C.be_answer)(C.calloc(1, C.sizeof_struct_be_answer))
-	defer C.free(unsafe.Pointer(ans))
+	//defer C.free(unsafe.Pointer(ans))
 
 	var ret C.be_sock_status
 	for i := 0; i <= maxRetryCount; i++ {
@@ -134,8 +134,13 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		}
 
 		log.Warnf(msg)
+		C.free(unsafe.Pointer(cmdS))
+		C.free(unsafe.Pointer(beS))
 		return nil, errors.New(msg)
 	}
+
+	C.free(unsafe.Pointer(cmdS))
+	C.free(unsafe.Pointer(beS))
 
 	response := []byte(C.GoString(ans.buf))
 	C.Vmci_FreeBuf(ans)
