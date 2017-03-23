@@ -106,7 +106,7 @@ VMDK_ADAPTER_TYPE = 'busLogic'  # default adapter type
 
 # Server side understand protocol version. If you are changing client/server protocol we use
 # over VMCI, PLEASE DO NOT FORGET TO CHANGE IT FOR CLIENT in file <esx_vmdkcmd.go> !
-SERVER_PROTOCOL_VERSION = "2"
+SERVER_PROTOCOL_VERSION = 2
 
 # Error codes
 VMCI_ERROR = -1 # VMCI C code uses '-1' to indicate failures
@@ -1475,15 +1475,15 @@ def execRequestThread(client_socket, cartel, request):
         else:
             logging.debug("execRequestThread: req=%s", req)
             # If req from client does not include version number, set the version to "1" by default
-            version = req["version"] if "version" in req else "1"
-            logging.debug("execRequestThread: version=%s", version)
-            if version != SERVER_PROTOCOL_VERSION:
-                if not version or int(version) < int(SERVER_PROTOCOL_VERSION):
+            client_protocol_version = int(req["version"]) if "version" in req else 1
+            logging.debug("execRequestThread: version=%d", client_protocol_version)
+            if client_protocol_version != SERVER_PROTOCOL_VERSION:
+                if client_protocol_version < SERVER_PROTOCOL_VERSION:
                     reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}), "
-                                    "please update the client.".format(version, SERVER_PROTOCOL_VERSION))
+                                    "please update the client.".format(client_protocol_version, SERVER_PROTOCOL_VERSION))
                 else:
                     reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}), "
-                                    "please update the server.".format(version, SERVER_PROTOCOL_VERSION))
+                                    "please update the server.".format(client_protocol_version, SERVER_PROTOCOL_VERSION))
                 send_vmci_reply(client_socket, reply_string)
 
             opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
