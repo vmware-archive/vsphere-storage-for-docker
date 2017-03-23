@@ -33,6 +33,8 @@ PLUGIN_NAME=docker-volume-vsphere
 VIB_NAME=esx-vmdkops-service
 TMP_LOC=/tmp/$PLUGIN_NAME
 VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
+BUILD_LOC=$TMP_LOC/build
+PLUGIN_LOC=$TMP_LOC/plugin
 
 # VM Functions
 
@@ -58,6 +60,40 @@ function deployvm {
         deployVMInstall
         deployVMPost
     done
+}
+
+function deployplugin {
+    for ip in $IP_LIST
+    do
+        TARGET=root@$ip
+        log "Cleaning up older files from $TARGET if exists..."
+        $SSH $TARGET "rm -fr $TMP_LOC; $MKDIR_P $TMP_LOC $BUILD_LOC"
+        log "Copying required files to $TARGET ..."
+        $SCP $PLUGIN_BIN $TARGET:$BUILD_LOC
+        $SCP $MANAGED_PLUGIN_SRC $TARGET:$TMP_LOC
+        if [ -z  "$($SSH $TARGET 'which make')" ]; then
+            setupVMType
+            case $FILE_EXT in
+            deb)
+                log "installing make on ubuntu machine"
+                $SSH $TARGET 'apt install make'
+                ;;
+            rpm)
+                log "installing make on photon machine"
+                $SSH $TARGET 'tdnf install make -y'
+                ;;
+            esac
+
+        fi
+        $SSH $TARGET 'cd ' $PLUGIN_LOC '; make info clean plugin'
+        managedPluginSanityCheck
+    done
+}
+
+function managedPluginSanityCheck {
+    $SCP $SCRIPTS/plugin_sanity_test.sh $TARGET:$BUILD_LOC
+    $SSH $TARGET 'sh '  $BUILD_LOC/plugin_sanity_test.sh
+    $SSH $TARGET 'cd ' $PLUGIN_LOC '; make clean'
 }
 
 function setupVMType {
@@ -117,7 +153,7 @@ function deployesx {
     do
         TARGET=root@$ip
         log "Deploying to ESX $TARGET"
-        $SSH $TARGET  rm -f /etc/vmware/vmdkops/log_config.json 
+        $SSH $TARGET  rm -f /etc/vmware/vmdkops/log_config.json
         deployESXPre
         deployESXInstall
         deployESXPost
@@ -177,7 +213,7 @@ function cleanesx {
         $SSH $TARGET "$RM_RF $TMP_LOC"
         $SSH $TARGET "$RM_RF $VMDK_OPS_UNITTEST"
     done
-    rm -f /etc/vmware/vmdkops/log_config.json 
+    rm -f /etc/vmware/vmdkops/log_config.json
 }
 
 # cleanvm
@@ -338,6 +374,16 @@ cleanvm)
             usage "Missing params: volume"
         fi
         cleanvm
+        ;;
+deployplugin)
+        PLUGIN_BIN="$2"
+        MANAGED_PLUGIN_SRC="$3"
+        SCRIPTS="$4"
+        if [ -z "$PLUGIN_BIN" -o -z "$MANAGED_PLUGIN_SRC" -o -z "$SCRIPTS" ]
+        then
+            usage "Missing params: plugin/binary/script folder"
+        fi
+        deployplugin
         ;;
 *)
         usage "Unknown function:  \"$FUNCTION_NAME\""

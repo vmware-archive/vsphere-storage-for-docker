@@ -21,7 +21,7 @@
 # suffixed with a sha1 of the most recent commit to the prefix of the
 # most recent tag. Tagged builds use the externally defined version,
 # developer builds use last tagged release and sha1 of the most recent commit.
-# Format: <last tagged release>.<last commit hash> 
+# Format: <last tagged release>.<last commit hash>
 PKG_VERSION ?= $(shell \
 	       git describe --tags `git rev-list --tags --max-count=1` \
 	       ).$(shell \
@@ -34,6 +34,7 @@ EPOCH := 0
 
 # Place binaries here
 BIN := ../build
+MANAGED_PLUGIN := ../plugin
 
 # Location for scripts
 SCRIPTS     := ../misc/scripts
@@ -56,6 +57,7 @@ AFTER_REMOVE   := $(SCRIPTS)/install/after-remove.sh
 #
 CHECK	    := $(SCRIPTS)/check.sh
 BUILD       := $(SCRIPTS)/build.sh
+DEPLOY_TOOLS := $(SCRIPTS)/deploy-tools.sh
 SYSTEMD_UNIT := $(SCRIPTS)/install/$(PLUGNAME).service
 UPSTART_CONF := $(SCRIPTS)/install/$(PLUGNAME).conf
 PACKAGE      := package
@@ -259,11 +261,12 @@ TMP_LOC := /tmp/$(PLUGNAME)
 
 # script sources live here. All scripts are copied to test VM during deployment
 # scripts started locally to deploy to and clean up test machines
-DEPLOY_VM_SH  := $(SCRIPTS)/deploy-tools.sh deployvm
-DEPLOY_VM_TEST_SH  := $(SCRIPTS)/deploy-tools.sh deployvmtest
-DEPLOY_ESX_SH := $(SCRIPTS)/deploy-tools.sh deployesx
-CLEANVM_SH    := $(SCRIPTS)/deploy-tools.sh cleanvm
-CLEANESX_SH   := $(SCRIPTS)/deploy-tools.sh cleanesx
+DEPLOY_VM_SH  := $(DEPLOY_TOOLS) deployvm
+DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS) deployvmtest
+DEPLOY_VM_PLUGIN_SH := $(DEPLOY_TOOLS) deployplugin
+DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
+CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
+CLEANESX_SH   := $(DEPLOY_TOOLS) cleanesx
 
 
 #
@@ -279,7 +282,8 @@ deploy-vm: clean-vm
 	$(DEPLOY_VM_SH) "$(VMS)" $(BIN)
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
-
+deploy-vm-plugin:
+	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN) $(SCRIPTS)
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
 
@@ -356,7 +360,7 @@ clean-docker:
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db'
 clean-auth-db:
-	@echo "Removing auth DB file at $(ESX):$(AUTH_DB_PATH)"		
+	@echo "Removing auth DB file at $(ESX):$(AUTH_DB_PATH)"
 	$(SSH) root@$(ESX) 'rm -f $(AUTH_DB_PATH)'
 
 clean-all: clean clean-vm clean-esx

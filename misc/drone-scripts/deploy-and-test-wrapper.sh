@@ -95,7 +95,7 @@ else
    TESTS="e2e-dkrVolDriver-test testasroot test-esx test-vm"
 fi
 
-if make -s clean-auth-db deploy-esx deploy-vm $TESTS TEST_VOL_NAME=vol.build$BUILD_NUMBER;
+if make -s clean-auth-db deploy-esx deploy-vm-plugin deploy-vm $TESTS TEST_VOL_NAME=vol.build$BUILD_NUMBER;
 then
   echo "=> Build Complete" `date`
   #stop_build $VM1 $BUILD_NUMBER
