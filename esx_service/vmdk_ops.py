@@ -575,6 +575,7 @@ def cleanVMDK(vmdk_path, vol_name=None):
             return None
         except vim.fault.VimFault as ex:
             if retry_count == vmdk_utils.VMDK_RETRY_COUNT or "Error caused by file" not in ex.msg:
+                logging.exception(ex)
                 return err("Failed to remove volume: {0}".format(ex.msg))
             else:
                 logging.warning("*** removeVMDK: Retrying removal on error: %s", ex.msg)
