@@ -274,7 +274,6 @@ func TestConcurrency(t *testing.T) {
 			"size": "1gb",
 		},
 	}
-
 	// Only run this if testing against different clients
 	if clients[0].endPoint != clients[1].endPoint {
 		fmt.Printf("Running create/delete concurrent test...\n")
@@ -303,27 +302,27 @@ func TestConcurrency(t *testing.T) {
 	}
 
 	// TODO: Temporarily disable test until #1062 is root caused & fixed.
-	// fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
-	// parallelVolumes1 := parallelVolumes / 2
-	// for idx := 0; idx < 3; idx++ {
-	// 	go func(idx int, c *client.Client) {
-	// 		for i := 0; i < parallelVolumes1; i++ {
-	// 			volName := fmt.Sprintf("%s-same%d%d", volumeName, idx, i)
-	// 			createRequest.Name = volName
-	// 			_, err := c.VolumeCreate(context.Background(), createRequest)
-	// 			results <- err
-	// 			err = c.VolumeRemove(context.Background(), volName)
-	// 			results <- err
-	// 		}
-	// 	}(idx, clients[0].client)
-	// }
+	fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
+	parallelVolumes1 := parallelVolumes / 2
+	for idx := 0; idx < 50; idx++ {
+		go func(idx int, c *client.Client) {
+			for i := 0; i < parallelVolumes1; i++ {
+				volName := fmt.Sprintf("%s-same%d%d", volumeName, idx, i)
+				createRequest.Name = volName
+				_, err := c.VolumeCreate(context.Background(), createRequest)
+				results <- err
+				err = c.VolumeRemove(context.Background(), volName)
+				results <- err
+			}
+		}(idx, clients[0].client)
+	}
 	// Read the results from the channel
-	// for i := 0; i < 3*parallelVolumes1*2; i++ {
-	// 	err := <-results
-	// 	if err != nil {
-	// 		t.Errorf("Same docker host concurrent create/delete test failed, err: %v", err)
-	// 	}
-	// }
+	for i := 0; i < 50*parallelVolumes1*2; i++ {
+		err := <-results
+		if err != nil {
+			t.Errorf("Same docker host concurrent create/delete test failed, err: %v", err)
+		}
+	}
 
 	fmt.Printf("Running clone concurrent test...\n")
 	masterVolName := volumeName + "Clone"
