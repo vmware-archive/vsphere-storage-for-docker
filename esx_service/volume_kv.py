@@ -37,6 +37,8 @@ CREATED = 'created'
 CREATED_BY = 'created-by'
 # The UUID of the VM that the volume is attached to
 ATTACHED_VM_UUID = 'attachedVMUuid'
+# The name of the VM that the volume is attached to
+ATTACHED_VM_NAME = "attachedVMName"
 
 # Dictionary of options passed in by the user
 VOL_OPTS = 'volOpts'
