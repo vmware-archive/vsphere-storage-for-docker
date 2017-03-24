@@ -104,7 +104,7 @@ loop:
 			break loop
 		}
 	}
-
+	watcher.Close()
 }
 
 // Mkdir creates a directory at the specified path
