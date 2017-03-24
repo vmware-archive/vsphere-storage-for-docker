@@ -53,7 +53,7 @@ def get_default_tenant():
         Get DEFAULT tenant by querying the auth DB or from hardcoded defaults.
         VM which does not belong to any tenant explicitly will
         be assigned to DEFAULT tenant if DEFAULT tenant exists
-        Return value:
+        Returns: (err, uuid, name)
         -- error_msg: return None on success or error info on failure
         -- tenant_uuid: return DEFAULT tenant uuid on success,
            return None on failure or DEFAULT tenant does not exist
@@ -127,7 +127,7 @@ def get_default_privileges():
 def get_tenant(vm_uuid):
     """
         Get tenant which owns this VM by querying the auth DB.
-        Return value:
+        Return: error_msg, tenant_uuid, tenant_name
         -- error_msg: return None on success or error info on failure
         -- tenant_uuid: return tenant uuid which the VM with given vm_uuid is associated to,
            return None if the VM is not associated to any tenant
@@ -137,14 +137,15 @@ def get_tenant(vm_uuid):
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None, None
-
+    logging.debug("auth.get_tenant: allow_all: %s, uuid: %s", _auth_mgr.allow_all_access(), vm_uuid)
     if _auth_mgr.allow_all_access():
-        return None, auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_TENANT_UUID
+        logging.debug("returning default info")
+        return None, auth_data_const.DEFAULT_TENANT_UUID, auth_data_const.DEFAULT_TENANT
 
     try:
         cur = _auth_mgr.conn.execute(
-                    "SELECT tenant_id FROM vms WHERE vm_id = ?",
-                    (vm_uuid, )
+            "SELECT tenant_id FROM vms WHERE vm_id = ?",
+            (vm_uuid, )
         )
         result = cur.fetchone()
     except sqlite3.Error as e:
@@ -426,7 +427,7 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         return error_msg, None, None
 
     if _auth_mgr.allow_all_access():
-        return None, auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_TENANT_UUID
+        return None, auth_data_const.DEFAULT_TENANT_UUID, auth_data_const.DEFAULT_TENANT
 
     # If table "tenants", "vms", "privileges" or "volumes" does not exist
     # don't need auth check
@@ -474,10 +475,12 @@ def add_volume_to_volumes_table(tenant_uuid, datastore_url, vol_name, vol_size_i
                   vol_name, vol_size_in_MB)
 
     if _auth_mgr.allow_all_access():
+        logging.debug("Skipping Add volume to DB %s (allow_all_access)", tenant_uuid)
         if tenant_uuid != auth_data_const.DEFAULT_TENANT_UUID:
+            return _auth_mgr.err_config_init_needed()
+        else:
             logging.info("No access control, skipping volumes tracing in auth DB")
             return None
-        logging.debug("Skipping Add volume to DB %s (allow_all_access)", tenant_uuid)
 
     try:
         _auth_mgr.conn.execute(

@@ -15,6 +15,9 @@ The admin CLI also enables ESX admins to implement access control and basic stor
 
 Admin CLI is located at `/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py`. It supports `--help`  at
 every command and sub-command. e.g.
+
+**NOTE** Access control is not supported for Stateless ESXi , as the code relies on Authorization Config DB (aka "Config DB"), or symlink to the Confg DB, being in /etc/vmware/vmdksops/auth-db.
+
 ```
 [root@localhost:~] alias vmdkops_admin=/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py
 [root@localhost:~] vmdkops_admin --help
@@ -61,7 +64,7 @@ of their usage.
 
 ## Vmgroup
 
-vm-groups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vm-group, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastore and access privileges (`access` and `update` subcommands).
+vm-groups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vm-group, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastores and access privileges (`access` and `update` subcommands).
 
 ### Help
 ```bash
@@ -685,7 +688,7 @@ This operation may take a while. Please be patient.
 Successfully updated policy: some-policy
 ```
 
-#### Remove
+#### Remove  (`rm`)
 
 Remove a VSAN storage policy. Note that a storage policy cannot be removed if it is currently in use
 by one or more virtual disks.
@@ -699,19 +702,27 @@ enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issue
 Successfully removed policy: some-policy
 ```
 
-## Config
+## `Config` (Authorization DB configuration)
 
-Creates, removes, moves and reports on status of config DB. Config DB keep authentication information, and without initializing it no access control is supported. Also, configuring access control will fail, e.g.
+Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vm-groups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
 ```
-[root@localhost:~] vmdkops_admin  vm-group create --name MY
+[root@localhost:~] vmdkops_admin vm-group create --name MY
 Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
 ```
 
-#### Init
+If the Config DB is not initialized, Docker Volume Service will use  "Config DB NotConfigured" Mode, when any request to create, remove, mount or unmount Docker volume is accepted.
 
-Initialized the config is optional. If the config is not initialized, there will be no access control and all `vm-group` commands will fail with appropriate messages.
+After initialization the service can use SingleNode mode - when the DB itself is located on the local ESXi node in `/etc/vmware/vmdkps/auth-db` file, or MultiNode mode - when the above location is a symlin to a shared datastore location.
 
-Before configuring access control or quotas, the config needs to be inited to either local (`init --local`) or shared (`init --datastore=ds_name) mode
+In SingleNode mode all vm-groups and authorization control is local for each ESXi node, and node do not share this information.
+
+In MultiNode mode, VSphere Docker Volume Service Authorization Config DB needs to be initialized on each ESXi host (`config init --datastore=<ds>`, and the nodes will share the authoration control.
+
+#### Init (`config init`)
+
+Initializing the config is optional. If the config is not initialized, there will be no access control and all `vm-group` commands will fail with appropriate messages.
+
+Before configuring access control or quotas, the config needs to be inited to either SingleNode (`init --local`) or MultiNode (`init --datastore=ds_name`) mode.
 
 ```
 [root@localhost:~] vmdkops_admin config init -h
@@ -763,23 +774,20 @@ LogLevel: DEBUG
 ```
 
 
-#### Remove
+#### Remove (`config rm`)
 
-Allows to remove configuration. Either `--local` or `--datastore` flag needs to be passed.
-Also to make sure it is not typed accidentally, the command requires `--force` flag to actually execute the request
+Allows to remove local configuration DB. Since this is a destructive operation, admin needs to type both `--local` flag (to confirm it's local only operation and does not impact shared database, if any) , and `--confirm` flag to confirm that she actually wants to delete the local Config DB.
+
+Running `vmdkops_admin config rm` with no flags prints an explanation on how to remove the shared config DB, if any.
 
 ```
-[root@localhost:~] vmdkops_admin config remove -h
-usage: vmdkops_admin.py config remove [-h] [--local] [--no-backup] [--force]
-                                      [--datastore DATASTORE]
+usage: vmdkops_admin.py config rm [-h] [--local] [--no-backup] [--confirm]
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --local               Removes only local link or local DB
-  --no-backup           Do not create DB backup before removing
-  --force               Force operation, ignore warnings
-  --datastore DATASTORE
-                        Remove Config DB from a specific datastore
+  -h, --help   show this help message and exit
+  --local      Remove only local link or local DB
+  --no-backup  Do not create DB backup before removing
+  --confirm    Explicitly confirm the operation
 ```
 
 
@@ -787,23 +795,58 @@ optional arguments:
 
 To get config DB  status, use  `/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status` command.
 
-#### Move
+#### Move (`config mv`)
 
-Allows to relocate config DB between datastores. [Not implemented yet]
+[Not implemented yet] Allows to relocate config DB between datastores.
+
 ## Status
 
 Show config and run-time information about the service.
 
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status  -h
+usage: vmdkops_admin.py status [-h] [--fast]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --fast      SKip some of the data collection (port, version)
+  ```
+
+
 ```bash
-[root@localhost:~]  /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
-Version: 0.12.fea683a-0.0.1
+[root@localhost:~] time /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
+Version: 0.12.0afa0ec-0.0.1
 Status: Running
 DB_LocalPath: /etc/vmware/vmdkops/auth-db
-DB_SharedLocation: /etc/vmware/vmdkops/auth-db
+DB_SharedLocation: N/A
 DB_Mode: SingleNode (local DB exists)
-Pid: 5979684
+Pid: 6298936
 Port: 1019
 LogConfigFile: /etc/vmware/vmdkops/log_config.json
 LogFile: /var/log/vmware/vmdk_ops.log
 LogLevel: DEBUG
+
+real	0m 2.01s
+user	0m 0.59s
+sys	0m 0.00s
+```
+
+ Some of the information retrieval may be slow (e.g. VIB version (`Version` field) # or VMCI port number (`Port` field). `--fast` flag skips slow data collection and prints `?` for fields with no information.
+
+```bash
+[root@localhost:~] time /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status --fast
+Version: ?
+Status: Running
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+DB_SharedLocation: N/A
+DB_Mode: SingleNode (local DB exists)
+Pid: 6298936
+Port: ?
+LogConfigFile: /etc/vmware/vmdkops/log_config.json
+LogFile: /var/log/vmware/vmdk_ops.log
+LogLevel: DEBUG
+
+real	0m 0.72s
+user	0m 0.51s
+sys	0m 0.00s
 ```

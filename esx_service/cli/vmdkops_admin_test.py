@@ -286,20 +286,22 @@ class TestParsing(unittest.TestCase):
         valid_commands = [
             'config init --datastore=store1',
             'config init --datastore=store1 --force',
-            'config remove --datastore=vsanDatastore',
-            'config remove --datastore=vsanDatastore --no-backup --force --link-only',
-            'config move --to=datastore',
-            'config move --to=datastore --force'
+            'config rm --local --confirm',
+            'config rm --no-backup --confirm --local',
+            'config mv --to=datastore'
         ]
         for cmd in valid_commands:
             args = self.parser.parse_args(cmd.split())
 
-    @unittest.expectedFailure
+
     def test_config_parse_fail(self):
         '''Expected failures in config command parse'''
-        invalid_commands = ['status --all', 'config init --force', 'config remove --no-backup', 'config move --force']
+        invalid_commands = ['status --all',
+                            'config init --confirm',
+                            'config rm --no-backup --datastore=DS1',
+                            'config mv --force']
         for cmd in invalid_commands:
-            args = self.parser.parse_args(cmd.split())
+            self.assert_parse_error(cmd)
 
 
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
@@ -460,7 +462,8 @@ class TestSet(unittest.TestCase):
 class TestStatus(unittest.TestCase):
     """ Test status functionality """
     def test_status(self):
-        self.assertEqual(vmdkops_admin.status(None), None)
+        args = vmdkops_admin.create_parser().parse_args("status".split())
+        self.assertEqual(vmdkops_admin.status(args), None)
 
 class TestTenant(unittest.TestCase):
     """
@@ -482,15 +485,15 @@ class TestTenant(unittest.TestCase):
     # tenant access create, tenant access ls and tenant access rm
     # tenant access set command to update allow_create, volume_maxsize and volume_totalsize
     # tenant access set command to update default_datastore
-    # Test convered are mainly positive test, no negative tests are done here
+    # Test are positive, no negative testing is done here.
 
     # tenant1 info
     tenant1_name = "test_tenant1"
     random_id = random.randint(0, 65536)
-    vm1_name = 'test_vm1_'+str(random_id)
+    vm1_name = 'test_vm1_' + str(random_id)
     vm1 = None
     random_id = random.randint(0, 65536)
-    vm2_name = 'test_vm2_'+str(random_id)
+    vm2_name = 'test_vm2_' + str(random_id)
     vm2 = None
     tenant1_new_name = "new_test_tenant1"
     datastore_name = None
@@ -512,7 +515,6 @@ class TestTenant(unittest.TestCase):
                     self.datastoer1_path = datastore[2]
 
             else:
-
                 self.assertFalse(True)
 
         self.cleanup()
@@ -591,7 +593,7 @@ class TestTenant(unittest.TestCase):
                          convert_to_str(rows[1][2]),
                          convert_to_str(rows[1][3]),
                          convert_to_str(rows[1][4])
-                         ]
+                        ]
 
         self.assertEqual(expected_output, actual_output)
 
@@ -622,14 +624,14 @@ class TestTenant(unittest.TestCase):
                          convert_to_str(rows[1][2]),
                          convert_to_str(rows[1][3]),
                          convert_to_str(rows[1][4])
-                         ]
+                        ]
 
         self.assertEqual(expected_output, actual_output)
 
         # tenant update to rename the tenant
-        error_info  = auth_api._tenant_update(
-                                              name=self.tenant1_name,
-                                              new_name=self.tenant1_new_name)
+        error_info = auth_api._tenant_update(
+            name=self.tenant1_name,
+            new_name=self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
 	# verify default vmgroup can't be renamed
@@ -966,12 +968,6 @@ class TestConfig(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TestConfig, self).__init__(*args, **kwargs)
-        # pick up a datastore for tests
-        for (datastore, url, path) in vmdk_utils.get_datastores():
-            print("TODO - get DS for testConfig: {} {} {}".format(datastore, url, path))
-        self.ds_name = "Datastore2" # TBD - grab it from above
-        self.db_path = auth_data.AuthorizationDataManager.ds_to_db_path(self.ds_name)
-        self.link_path = auth_data.AUTH_DB_PATH
         self.parser = vmdkops_admin.create_parser()
 
     def setUp(self):
@@ -980,24 +976,18 @@ class TestConfig(unittest.TestCase):
     def tearDown(self):
         pass
 
-
     def test_config(self):
         '''Config testing'''
-        try:
-            os.remove(self.db_path)
-            os.remove(self.link_path)
-        except:
-            pass
 
         # TBD: Init config and check status - should be NotConfigured
-        print "TEST*"
-        args = self.parser.parse_args('config init --datastore={}'.format(self.ds_name).split())
+        args = self.parser.parse_args('config rm --local --confirm'.split())
+        self.assertEqual(vmdkops_admin.config_rm(args), None)
+
+        args = self.parser.parse_args('config init --local'.split())
         self.assertEqual(vmdkops_admin.config_init(args), None)
-        config_args = self.parser.parse_args('status'.split())
-        print("Config args" , config_args)
         # init
-        # check status - should be MultiEsx
-        # init - shoud fail
+        # check status - should be MultiNode
+        # init - should fail
         # init -f should succeed
 
 if __name__ == '__main__':

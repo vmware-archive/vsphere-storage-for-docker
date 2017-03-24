@@ -96,7 +96,6 @@ PYTHON64_VERSION = 50659824
 # External tools used by the plugin.
 OBJ_TOOL_CMD = "/usr/lib/vmware/osfs/bin/objtool open -u "
 OSFS_MKDIR_CMD = "/usr/lib/vmware/osfs/bin/osfs-mkdir -n "
-MKDIR_CMD = "/bin/mkdir"
 
 # Defaults
 DOCK_VOLS_DIR = "dockvols"  # place in the same (with Docker VM) datastore
@@ -706,6 +705,7 @@ def get_vol_path(datastore, tenant_name=None):
     if not os.path.isdir(dock_vol_path):
         # The osfs tools are usable for DOCK_VOLS_DIR on all datastores
         cmd = "{0} {1}".format(OSFS_MKDIR_CMD, dock_vol_path)
+        logging.info("Creating %s, running '%s'", dock_vol_path, cmd)
         rc, out = RunCommand(cmd)
         if rc != 0:
             errMsg = "{0} creation failed - {1} on datastore {2}".format(DOCK_VOLS_DIR, os.strerror(rc), datastore)
@@ -714,10 +714,11 @@ def get_vol_path(datastore, tenant_name=None):
 
     if tenant_name and not os.path.isdir(path):
         # The mkdir command is used to create "tenant_name" folder inside DOCK_VOLS_DIR on "datastore"
-        cmd = "{0} '{1}'".format(MKDIR_CMD, path)
-        rc, out = RunCommand(cmd)
-        if rc != 0:
-            errMsg = "Failed to initialize volume path {0} - {1}".format(path, out)
+        logging.info("Creating directory %s", path)
+        try:
+            os.mkdir(path)
+        except Exception as ex:
+            errMsg = "Failed to initialize volume path {} - {}".format(path, ex)
             logging.warning(errMsg)
             return None, err(errMsg)
 
@@ -1444,9 +1445,18 @@ def set_vol_opts(name, tenant_name, options):
 
     return False
 
+def msg_about_signal(signalnum, details="exiting"):
+    logging.warn("Received signal num: %d, %s.", signalnum, details)
+    logging.warn("Operations in flight will be terminated")
+
 def signal_handler_stop(signalnum, frame):
-    logging.warn("Received signal num: ' %d '", signalnum)
+    msg_about_signal(signalnum, "exiting")
     sys.exit(0)
+
+def signal_handler_restart(signalnum, frame):
+    vmci_release_listening_socket()
+    msg_about_signal(signalnum, "restarting")
+    os.execve(__file__, sys.argv, os.environ)
 
 def load_vmci():
    global lib
@@ -1522,21 +1532,38 @@ def execRequestThread(client_socket, cartel, request):
         reply_string = err("Server returned an error: {0}".format(repr(ex_thr)))
         send_vmci_reply(client_socket, reply_string)
 
+# code to grab/release VMCI listening socket
+g_vmci_listening_socket = None
+
+def vmci_grab_listening_socket(port):
+    """call C code to open/bind/listen on the VMCI socket"""
+    global g_vmci_listening_socket
+    if  g_vmci_listening_socket:
+        logging.error("VMCI Listening socket - multiple init") # message for us. Should never  happen
+        return
+
+    g_vmci_listening_socket = lib.vmci_init(c_uint(port))
+    if g_vmci_listening_socket == VMCI_ERROR:
+        errno = get_errno()
+        raise OSError("Failed to initialize vSocket listener: %s (errno=%d)" \
+                        %  (os.strerror(errno), errno))
+
+def vmci_release_listening_socket():
+    """Calls C code to release the VMCI listening socket"""
+    if g_vmci_listening_socket:
+        lib.vmci_close(g_vmci_listening_socket)
+
 # load VMCI shared lib , listen on vSocket in main loop, handle requests
 def handleVmciRequests(port):
     skip_count = MAX_SKIP_COUNT  # retries for vmci_get_one_op failures
     bsize = MAX_JSON_SIZE
     txt = create_string_buffer(bsize)
     cartel = c_int32()
-    sock = lib.vmci_init(c_uint(port))
+    vmci_grab_listening_socket(port)
 
-    if sock == VMCI_ERROR:
-        errno = get_errno()
-        raise OSError("Failed to initialize vSocket listener: %s (errno=%d)" \
-                        %  (os.strerror(errno), errno))
 
     while True:
-        c = lib.vmci_get_one_op(sock, byref(cartel), txt, c_int(bsize))
+        c = lib.vmci_get_one_op(g_vmci_listening_socket, byref(cartel), txt, c_int(bsize))
         logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
                       c, txt.value)
 
@@ -1569,16 +1596,17 @@ def handleVmciRequests(port):
             target=execRequestThread,
             args=(client_socket, cartel.value, txt.value))
 
-    lib.close(sock)  # close listening socket when the loop is over
+    vmci_release_listening_socket() # close listening socket when the loop is over
 
 def usage():
     print("Usage: %s -p <vSocket Port to listen on>" % sys.argv[0])
 
 def main():
     log_config.configure()
-    logging.info("=== Starting vmdkops service ====")
+    logging.info("==== Starting vmdkops service pid=%d ====", os.getpid())
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
+    signal.signal(signal.SIGUSR1, signal_handler_restart)
     try:
         port = 1019
         opts, args = getopt.getopt(sys.argv[1:], 'hp:')

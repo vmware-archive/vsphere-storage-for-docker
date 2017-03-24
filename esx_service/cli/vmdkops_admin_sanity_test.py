@@ -23,7 +23,7 @@ ADMIN_CLI = '/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py'
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 13
 # lines 'status' commands produces.
-EXPECTED_STATUS_LINES = 10
+EXPECTED_STATUS_LINES = 12
 
 class TestVmdkopsAdminSanity(unittest.TestCase):
     """ Test output from running vmdkops_admin.py """
@@ -68,14 +68,15 @@ class TestVmdkopsAdminSanity(unittest.TestCase):
         lines = output.split('\n')[:-1]
         self.assertEqual(len(lines), EXPECTED_STATUS_LINES)
         expected_headers = ['Version', 'Status', 'Pid', 'Port', 'LogConfigFile',
-                            'LogFile', 'LogLevel', 'DB_LocalPath', 'DB_SharedLocation', 'DB_Mode']
+                            'LogFile', 'LogLevel', 'DB_LocalPath', 'DB_SharedLocation', 'DB_Mode',
+                            '=== Service', '=== Authorization Config DB']
         headers = list(map(lambda s: s.split(': ')[0], lines))
         for h in headers:
             self.assertIn(h, expected_headers)
 
     def test_config(self):
         """ check command presence"""
-        cmds = ["", "remove", "init", "move"]
+        cmds = ["", "rm", "init", "mv"]
         for c in cmds:
             cmd = '{} config {} -h'.format(ADMIN_CLI, c)
             # Ignoring output as long as there are no failures
