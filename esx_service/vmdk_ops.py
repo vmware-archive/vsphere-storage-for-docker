@@ -166,7 +166,9 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
 
     if os.path.isfile(vmdk_path):
-        return err("File %s already exists" % vmdk_path)
+        # We are mostly here due to race or Plugin VMCI retry #1076
+        logging.warning("File %s already exists", vmdk_path)
+        return None
 
     try:
         validate_opts(opts, vmdk_path)
@@ -205,6 +207,8 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         wait_for_tasks(si, [task])
     except vim.fault.VimFault as ex:
         return err("Failed to create volume: {0}".format(ex.msg))
+
+    logging.debug("Successfully created %s volume", vmdk_path)
 
     # Handle vsan policy
     if kv.VSAN_POLICY_NAME in opts:
@@ -566,6 +570,9 @@ def cleanVMDK(vmdk_path, vol_name=None):
             # Wait for delete, exit loop on success
             wait_for_tasks(si, [task])
             break
+        except vim.fault.FileNotFound as ex:
+            logging.warning("*** removeVMDK: File not found error: %s", ex.msg)
+            return None
         except vim.fault.VimFault as ex:
             if retry_count == vmdk_utils.VMDK_RETRY_COUNT or "Error caused by file" not in ex.msg:
                 return err("Failed to remove volume: {0}".format(ex.msg))
@@ -1318,10 +1325,11 @@ def disk_detach(vmdk_path, vm):
     if not device:
        # Could happen if the disk attached to a different VM - attach fails
        # and docker will insist to sending "unmount/detach" which also fails.
-       msg = "*** Detach failed: disk={0} not found. VM={1}".format(
-       vmdk_path, vm.config.uuid)
-       logging.warning(msg)
-       return err(msg)
+       # Or Plugin retrying operation due to socket errors #1076
+       # Return success since disk is anyway not attached
+       logging.warning("*** Detach disk={0} not found. VM={1}".format(
+                       vmdk_path, vm.config.uuid))
+       return None
 
     return disk_detach_int(vmdk_path, vm, device)
 
