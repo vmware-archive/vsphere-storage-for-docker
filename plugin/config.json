@@ -48,12 +48,7 @@
 		"Devices": null
 
 	},
-	"Env": [ {
-      "name": "VDVS_LOG_LEVEL",
-      "description": "Log level - info, warn, error or debug",
-      "value": "info",
-      "Settable": [ "value"]
-	},
+	"Env": [
 	{"name": "VDVS_DISCOVER_VOLUMES",
       "description": "non-empty if pre-existing volumes need to be discovered ",
 	  "value": "",
