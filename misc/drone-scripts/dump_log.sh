@@ -22,7 +22,7 @@ SYS_LOGFILE="/var/log/syslog"
 
 dump_log_esx() {
   log $ESX_LOGFILE
-  $SSH $USER@$1 cat $ESX_LOGFILE
+  $SSH $USER@$1 cat $ESX_LOGFILE*
   if [ $INCLUDE_HOSTD == "true" ]
   then
     log $HOSTD_LOGFILE
@@ -31,7 +31,7 @@ dump_log_esx() {
 }
 
 dump_log_vm(){
-  $SSH $USER@$1 cat $VM_LOGFILE
+  $SSH $USER@$1 cat $VM_LOGFILE*
   log $SYS_LOGFILE
   is_syslog_present=`$SSH $USER@$1 [[ -e $SYS_LOGFILE ]] && echo true || echo false`
   log $is_syslog_present
@@ -40,11 +40,12 @@ dump_log_vm(){
     log "collecting logs through journalctl"
     $SSH $USER@$1 "journalctl > $SYS_LOGFILE"
   fi
-  $SSH $USER@$1 cat $SYS_LOGFILE
+  $SSH $USER@$1 cat $SYS_LOGFILE*
 }
 
 truncate_vm_logs() {
   $SSH $USER@$1 "echo > $VM_LOGFILE"
+  $SSH $USER@$1 "echo > $SYS_LOGFILE"
 }
 
 truncate_esx_logs() {
