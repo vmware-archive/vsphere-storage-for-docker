@@ -162,7 +162,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
         self.assertNotEqual(err, None, err)
 
         err = vmdk_ops.removeVMDK(self.name)
-        self.assertNotEqual(err, None, err)
+        self.assertEqual(err, None, err)
 
     def testAccessOpts(self):
         err = vmdk_ops.createVMDK(vm_name=self.vm_name,
@@ -245,9 +245,9 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
                                             volume_kv.DISK_ALLOCATION_FORMAT: unit[3]})
             self.assertEqual(err == None, unit[2], err)
 
-            # clean up should fail if the created should have failed.
+            # clean up would succeed with #1084.
             err = vmdk_ops.removeVMDK(vmdk_path)
-            self.assertEqual(err == None, unit[2], err)
+            self.assertEqual(err, None, err)
 
 class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
     vm_name = generate_test_vm_name()
@@ -293,7 +293,7 @@ class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
         self.assertNotEqual(err, None, err)
 
         err = vmdk_ops.removeVMDK(self.name1)
-        self.assertNotEqual(err, None, err)
+        self.assertEqual(err, None, err)
 
         err = vmdk_ops.removeVMDK(self.name)
         self.assertEqual(err, None, err)
