@@ -304,7 +304,7 @@ func TestConcurrency(t *testing.T) {
 	// TODO: Temporarily disable test until #1062 is root caused & fixed.
 	fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
 	parallelVolumes1 := parallelVolumes / 2
-	for idx := 0; idx < 50; idx++ {
+	for idx := 0; idx < 5; idx++ {
 		go func(idx int, c *client.Client) {
 			for i := 0; i < parallelVolumes1; i++ {
 				volName := fmt.Sprintf("%s-same%d%d", volumeName, idx, i)

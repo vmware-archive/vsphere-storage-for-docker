@@ -23,8 +23,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	log "github.com/Sirupsen/logrus"
+	"os"
 	"runtime/debug"
 	"sync"
 	"syscall"
@@ -80,19 +80,16 @@ var EsxPort int
 func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
 	vmdkCmd.Mtx.Lock()
 	defer vmdkCmd.Mtx.Unlock()
-<<<<<<< HEAD
 	protocolVersion := os.Getenv("VDVS_TEST_PROTOCOL_VERSION")
 	log.Debugf("Run get request: version=%s", protocolVersion)
 	if protocolVersion == "" {
 		protocolVersion = clientProtocolVersion
 	}
-=======
 
 	// DBG - only panic
 	debug.SetPanicOnFault(true)
 	debug.SetTraceback("all")
 
->>>>>>> DEbug for plugin crash
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
 		Details: VolumeInfo{Name: name, Options: opts},
