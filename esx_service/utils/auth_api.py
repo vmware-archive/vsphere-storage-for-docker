@@ -660,6 +660,35 @@ def check_privilege_parameters(privilege):
 
     return None
 
+def need_update_default_ds(conn, tenant_id):
+    """
+        Check if need update default_datastore for this tenant
+    """
+    # In _tenant_access_add, we decide to automatically set the datastore for the first user added privilege
+    # of a given tenant as the "default_datastore" for that tenant
+    # For named tenant, if len(result) == 0, which means the privilege that user is trying to add is the
+    # first privilege for this tenant, should set the datastore to the "default_datastore" for this tenant
+    # For _DEFAULT tenant, if len(result) == 1, and the existing privilege is default_privilege, which
+    # means the privilege that user is trying to add is the first user added privilege for _DEFAULT tenant,
+    # and should set the datastore to the "default_datastore" for _DEFAULT tenant
+
+    error_msg, result = auth.get_row_from_privileges_table(conn, tenant_id)
+
+    if error_msg:
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
+        return error_info, False
+    logging.debug("need_update_default_ds: get_row_from_privileges_table for tenant id=%s return %s",
+                  tenant_id, result)
+
+    ds_access_privileges = auth_data.create_datastore_access_privileges(result)
+    if len(result) == 0 and tenant_id != auth_data_const.DEFAULT_TENANT_UUID:
+        return None, True
+    elif (len(result) == 1 and tenant_id == auth_data_const.DEFAULT_TENANT_UUID
+          and ds_access_privileges[0].datastore_url == auth_data_const.DEFAULT_DS_URL):
+        return None, True
+    else:
+        return None, False
+
 def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False, volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
     """ API to add datastore access for a tenant """
 
@@ -719,21 +748,16 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
     if error_info:
         return error_info
 
+    error_info, update_default_ds = need_update_default_ds(auth_mgr.conn, tenant.id)
+    if error_info:
+        return error_info
+
     error_msg = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges])
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         return error_info
 
-    error_msg, result = auth.get_row_from_privileges_table(auth_mgr.conn, tenant.id)
-    # if len(result) == 1, which means "datastore"" is the first datastore for this tenant,
-    # and should set this datastore to the "default_datastore" for this tenant
-    if error_msg:
-        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
-        return error_info
-    logging.debug("_tenant_access_add: get_row_from_privileges_table for tenant id=%s return %s",
-                  tenant.id, result)
-
-    if len(result) == 1 or default_datastore:
+    if update_default_ds or default_datastore:
         error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
