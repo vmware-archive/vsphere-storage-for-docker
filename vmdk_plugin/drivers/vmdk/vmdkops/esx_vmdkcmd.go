@@ -24,10 +24,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-<<<<<<< HEAD
 	"os"
-=======
->>>>>>> 3d6eb340b9608ad0be0fae9e47563cab316feffe
 	"runtime/debug"
 	"sync"
 	"syscall"
