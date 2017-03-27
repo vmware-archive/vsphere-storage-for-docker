@@ -36,15 +36,15 @@ class LockManager(object):
         with self._lock:
             try:
                 lock = self._lock_store[lockname]
-                logging.debug("LockManager.get_lock: existing lock: %s, %s",
-                              lockname, lock)
+                # logging.debug("LockManager.get_lock: existing lock: %s, %s",
+                #               lockname, lock)
             except KeyError:
                 lock = get_lock(reentrant)
                 self._lock_store[lockname] = lock
-                logging.debug("LockManager.get_lock: new lock: %s, %s",
-                              lockname, lock)
-            logging.debug("LockManager existing locks in store: %s",
-                          self._list_locks())
+                # logging.debug("LockManager.get_lock: new lock: %s, %s",
+                #               lockname, lock)
+            # logging.debug("LockManager existing locks in store: %s",
+            #               self._list_locks())
             return lock
 
     def _list_locks(self):

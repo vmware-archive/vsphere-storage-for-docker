@@ -820,7 +820,8 @@ def status(args):
     result.append({"=== Authorization Config DB": ""})
     result += config_db_get_status()
     for r in result:
-        print("{}: {}".format(r.keys()[0], r.values()[0]))
+        print("{}: {}".format(list(r.keys())[0], list(r.values())[0]))
+
     return None
 
 
@@ -1345,7 +1346,7 @@ def config_db_get_status():
 def config_status(args):
     """A subset of 'config' command - prints the DB config only"""
     for r in config_db_get_status():
-        print("{}: {}".format(r.keys()[0], r.values()[0]))
+        print("{}: {}".format(list(r.keys())[0], list(r.values())[0]))
     return None
 
 
