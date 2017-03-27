@@ -101,9 +101,13 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		return nil, fmt.Errorf("Failed to marshal json: %v", err)
 	}
 
+	msg := fmt.Sprintf("creating C string of cmdS %s len %d", string(jsonStr), len(string(jsonStr)))
+	log.Warnf(msg)
 	cmdS := C.CString(string(jsonStr))
 	defer C.free(unsafe.Pointer(cmdS))
 
+	msg = fmt.Sprintf("creating C string of beS %s len %d", commBackendName, len(commBackendName))
+	log.Warnf(msg)
 	beS := C.CString(commBackendName)
 	defer C.free(unsafe.Pointer(beS))
 
