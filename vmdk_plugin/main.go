@@ -103,7 +103,7 @@ func main() {
 	logEnv := os.Getenv("VDVS_LOG_LEVEL")
 	logLevel := &logEnv
 	if *logLevel == "" {
-		logLevel = flag.String("log_level", "info", "Logging Level")
+		logLevel = flag.String("log_level", "debug", "Logging Level")
 	}
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 	driverName := flag.String("driver", "", "Volume driver")
@@ -142,6 +142,12 @@ func main() {
 		"log_level": *logLevel,
 		"config":    *configFile,
 	}).Info("Starting plugin ")
+
+	env := os.Environ()
+
+	for _, val := range env {
+		log.Info("Env - ", val)
+	}
 
 	// The vSphere driver doesn't depend on the config file for options
 	if *driverName == photonDriver && err == nil {

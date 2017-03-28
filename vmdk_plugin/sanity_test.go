@@ -202,6 +202,7 @@ func getClients(t *testing.T) []testClient {
 	return clients
 }
 
+/*
 // Sanity test for VMDK volumes
 // - check we can attach/detach correct volume (we use 'touch' and 'stat' to validate
 // - check volumes are correctly created and deleted.
@@ -251,6 +252,7 @@ func TestSanity(t *testing.T) {
 		}
 	}
 }
+*/
 
 // Test concurrent volume operations
 // - concurrent create/delete between different docker hosts
@@ -274,106 +276,108 @@ func TestConcurrency(t *testing.T) {
 			"size": "1gb",
 		},
 	}
-
-	// Only run this if testing against different clients
-	if clients[0].endPoint != clients[1].endPoint {
-		fmt.Printf("Running create/delete concurrent test...\n")
-		// Create/delete goroutine
-		for idx, elem := range clients {
-			go func(idx int, c *client.Client) {
-				for i := 0; i < parallelVolumes; i++ {
-					volName := fmt.Sprintf("%s%d%d", volumeName, idx, i)
-					createRequest.Name = volName
-					_, err := c.VolumeCreate(context.Background(), createRequest)
-					results <- err
-					err = c.VolumeRemove(context.Background(), volName)
-					results <- err
-				}
-			}(idx, elem.client)
-		}
-		// Read the results from the channel
-		for i := 0; i < len(clients)*parallelVolumes*2; i++ {
-			err := <-results
-			if err != nil {
-				t.Errorf("Create/delete concurrent test failed, err: %v", err)
+	/*
+		// Only run this if testing against different clients
+		if clients[0].endPoint != clients[1].endPoint {
+			fmt.Printf("Running create/delete concurrent test...\n")
+			// Create/delete goroutine
+			for idx, elem := range clients {
+				go func(idx int, c *client.Client) {
+					for i := 0; i < parallelVolumes; i++ {
+						volName := fmt.Sprintf("%s%d%d", volumeName, idx, i)
+						createRequest.Name = volName
+						_, err := c.VolumeCreate(context.Background(), createRequest)
+						results <- err
+						err = c.VolumeRemove(context.Background(), volName)
+						results <- err
+					}
+				}(idx, elem.client)
 			}
+			// Read the results from the channel
+			for i := 0; i < len(clients)*parallelVolumes*2; i++ {
+				err := <-results
+				if err != nil {
+					t.Errorf("Create/delete concurrent test failed, err: %v", err)
+				}
+			}
+		} else {
+			fmt.Printf("Skipping create/delete concurrent test, same docker host. Will be tested next.\n")
 		}
-	} else {
-		fmt.Printf("Skipping create/delete concurrent test, same docker host. Will be tested next.\n")
-	}
+	*/
 
 	// TODO: Temporarily disable test until #1062 is root caused & fixed.
-	// fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
-	// parallelVolumes1 := parallelVolumes / 2
-	// for idx := 0; idx < 3; idx++ {
-	// 	go func(idx int, c *client.Client) {
-	// 		for i := 0; i < parallelVolumes1; i++ {
-	// 			volName := fmt.Sprintf("%s-same%d%d", volumeName, idx, i)
-	// 			createRequest.Name = volName
-	// 			_, err := c.VolumeCreate(context.Background(), createRequest)
-	// 			results <- err
-	// 			err = c.VolumeRemove(context.Background(), volName)
-	// 			results <- err
-	// 		}
-	// 	}(idx, clients[0].client)
-	// }
-	// Read the results from the channel
-	// for i := 0; i < 3*parallelVolumes1*2; i++ {
-	// 	err := <-results
-	// 	if err != nil {
-	// 		t.Errorf("Same docker host concurrent create/delete test failed, err: %v", err)
-	// 	}
-	// }
-
-	fmt.Printf("Running clone concurrent test...\n")
-	masterVolName := volumeName + "Clone"
-
-	// Create master volume for cloning
-	createRequest.Name = masterVolName
-	createRequest.DriverOpts["size"] = "100mb"
-
-	_, err := clients[0].client.VolumeCreate(context.Background(), createRequest)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Remove size option for clone
-	delete(createRequest.DriverOpts, "size")
-
-	// Change diskformat for the 1st clones to produce waits
-	createRequest.DriverOpts["diskformat"] = "eagerzeroedthick"
-
-	// Clone goroutine
-	for idx, elem := range clients {
+	fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
+	parallelVolumes1 := parallelVolumes / 2
+	for idx := 0; idx < 5; idx++ {
 		go func(idx int, c *client.Client) {
-			for i := 0; i < parallelClones; i++ {
-				volName := fmt.Sprintf("%s-clone%d%d", masterVolName, idx, i)
+			for i := 0; i < parallelVolumes1; i++ {
+				volName := fmt.Sprintf("%s-same%d%d", volumeName, idx, i)
 				createRequest.Name = volName
-				createRequest.DriverOpts["clone-from"] = masterVolName
-
-				// After 1st clone use thin diskformat
-				if i > 0 {
-					createRequest.DriverOpts["diskformat"] = "thin"
-				}
 				_, err := c.VolumeCreate(context.Background(), createRequest)
 				results <- err
 				err = c.VolumeRemove(context.Background(), volName)
 				results <- err
 			}
-		}(idx, elem.client)
+		}(idx, clients[0].client)
 	}
-
 	// Read the results from the channel
-	for i := 0; i < len(clients)*parallelClones*2; i++ {
+	for i := 0; i < 50*parallelVolumes1*2; i++ {
 		err := <-results
 		if err != nil {
-			t.Errorf("Running clone concurrent test failed, err: %v", err)
+			t.Errorf("Same docker host concurrent create/delete test failed, err: %v", err)
 		}
 	}
 
-	// Remove the master volume
-	clients[0].client.VolumeRemove(context.Background(), masterVolName)
-	if err != nil {
-		t.Fatal(err)
-	}
+	/*
+			fmt.Printf("Running clone concurrent test...\n")
+			masterVolName := volumeName + "Clone"
+
+			// Create master volume for cloning
+			createRequest.Name = masterVolName
+			createRequest.DriverOpts["size"] = "100mb"
+
+			_, err := clients[0].client.VolumeCreate(context.Background(), createRequest)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Remove size option for clone
+			delete(createRequest.DriverOpts, "size")
+
+			// Change diskformat for the 1st clones to produce waits
+			createRequest.DriverOpts["diskformat"] = "eagerzeroedthick"
+
+			// Clone goroutine
+			for idx, elem := range clients {
+				go func(idx int, c *client.Client) {
+					for i := 0; i < parallelClones; i++ {
+						volName := fmt.Sprintf("%s-clone%d%d", masterVolName, idx, i)
+						createRequest.Name = volName
+						createRequest.DriverOpts["clone-from"] = masterVolName
+
+						// After 1st clone use thin diskformat
+						if i > 0 {
+							createRequest.DriverOpts["diskformat"] = "thin"
+						}
+						_, err := c.VolumeCreate(context.Background(), createRequest)
+						results <- err
+						err = c.VolumeRemove(context.Background(), volName)
+						results <- err
+					}
+				}(idx, elem.client)
+			}
+
+			// Read the results from the channel
+			for i := 0; i < len(clients)*parallelClones*2; i++ {
+				err := <-results
+				if err != nil {
+					t.Errorf("Running clone concurrent test failed, err: %v", err)
+				}
+			}
+		// Remove the master volume
+		clients[0].client.VolumeRemove(context.Background(), masterVolName)
+		if err != nil {
+			t.Fatal(err)
+		}
+	*/
 }
