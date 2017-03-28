@@ -321,12 +321,13 @@ func TestConcurrency(t *testing.T) {
 		}(idx, clients[0].client)
 	}
 	// Read the results from the channel
-	for i := 0; i < 5*parallelVolumes1*2; i++ {
+	for i := 0; i < 50*parallelVolumes1*2; i++ {
 		err := <-results
 		if err != nil {
 			t.Errorf("Same docker host concurrent create/delete test failed, err: %v", err)
 		}
 	}
+
 	/*
 			fmt.Printf("Running clone concurrent test...\n")
 			masterVolName := volumeName + "Clone"

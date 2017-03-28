@@ -90,6 +90,10 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	debug.SetPanicOnFault(true)
 	debug.SetTraceback("all")
 
+	// DBG - only panic
+	debug.SetPanicOnFault(true)
+	debug.SetTraceback("all")
+
 	jsonStr, err := json.Marshal(&requestToVmci{
 		Ops:     cmd,
 		Details: VolumeInfo{Name: name, Options: opts},
