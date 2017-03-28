@@ -4,6 +4,7 @@ Before=docker.service
 Requires=docker.service
 
 [Service]
+Environment="GODEBUG=efence=1,gcrescanstacks=1,scavenge=1"
 ExecStart=/usr/local/bin/docker-volume-vsphere -port 1019
 Restart=always
 

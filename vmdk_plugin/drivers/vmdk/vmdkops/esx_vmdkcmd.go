@@ -23,13 +23,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"os"
+	"runtime/debug"
 	"sync"
 	"syscall"
 	"time"
 	"unsafe"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -92,6 +92,9 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 	if err != nil {
 		return nil, fmt.Errorf("Failed to marshal json: %v", err)
 	}
+
+	debug.SetPanicOnFault(true)
+	debug.SetTraceback("all")
 
 	cmdS := C.CString(string(jsonStr))
 	defer C.free(unsafe.Pointer(cmdS))
