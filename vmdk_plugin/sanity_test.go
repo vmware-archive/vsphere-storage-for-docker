@@ -86,6 +86,7 @@ func init() {
 		"conf_file":                *configFile,
 		"using_conf_file_defaults": usingConfigFileDefaults,
 	}).Info("VMDK plugin tests started ")
+	log.SetFormatter(new(VmwareFormatter))
 }
 
 // returns in-container mount point for a volume
@@ -209,7 +210,7 @@ func getClients(t *testing.T) []testClient {
 // - check we see it properly from another docker VM (-H2 flag)
 func TestSanity(t *testing.T) {
 
-	fmt.Printf("%s Running tests on  %s (may take a while)...\n",
+	fmt.Printf("%s START: Running TestSanity on  %s (may take a while)...\n",
 		time.Now().Format(time.RFC3339), TestInputParamsUtil.GetEndPoint1())
 
 	clients := getClients(t)
@@ -252,6 +253,9 @@ func TestSanity(t *testing.T) {
 				volumeName, elem.endPoint)
 		}
 	}
+	fmt.Printf("%s END: Running TestSanity on  %s (may take a while)...\n",
+		time.Now().Format(time.RFC3339), TestInputParamsUtil.GetEndPoint1())
+
 }
 
 // Test concurrent volume operations
@@ -279,7 +283,7 @@ func TestConcurrency(t *testing.T) {
 
 	// Only run this if testing against different clients
 	if clients[0].endPoint != clients[1].endPoint {
-		fmt.Printf("%s Running create/delete concurrent test...\n",
+		fmt.Printf("%s START: Running create/delete multi-host concurrent test ...\n",
 			time.Now().Format(time.RFC3339))
 		// Create/delete goroutine
 		for idx, elem := range clients {
@@ -304,6 +308,8 @@ func TestConcurrency(t *testing.T) {
 	} else {
 		fmt.Printf("Skipping create/delete concurrent test, same docker host. Will be tested next.\n")
 	}
+	fmt.Printf("%s END: Running create/delete multi-host concurrent test ...\n",
+		time.Now().Format(time.RFC3339))
 
 	// TODO: Temporarily disable test until #1062 is root caused & fixed.
 	// fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
@@ -328,7 +334,7 @@ func TestConcurrency(t *testing.T) {
 	// 	}
 	// }
 
-	fmt.Printf("%s Running clone concurrent test...\n",
+	fmt.Printf("%s START: Running clone concurrent test...\n",
 		time.Now().Format(time.RFC3339))
 	masterVolName := volumeName + "Clone"
 
@@ -380,4 +386,7 @@ func TestConcurrency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Printf("%s END: Running clone concurrent test...\n",
+		time.Now().Format(time.RFC3339))
+
 }
