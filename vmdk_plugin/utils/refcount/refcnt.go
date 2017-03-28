@@ -88,7 +88,7 @@ import (
 )
 
 const (
-	ApiVersion              = "v1.25"
+	ApiVersion              = "v1.24"
 	DockerUSocket           = "unix:///var/run/docker.sock"
 	defaultSleepIntervalSec = 1
 	timeoutInSecs           = 2
