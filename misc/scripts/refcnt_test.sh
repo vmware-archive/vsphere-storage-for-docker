@@ -79,10 +79,12 @@ function check_recovery_record {
 }
 
 function test_crash_recovery {
-    # Turning this off for PR #1047.
-    # TBD: bring it back when bringing discovery back (see PR #1050)
-    echo "Skippint crash recovery check (see #1050)... "
-    return
+    alive_containers = `docker ps | grep busybox | wc -l`
+    if [ $alive_containers -ne $count] ; then
+        echo "FAILED CRASH RECOVERY TEST. Not all test containers are running"
+        exit 1
+    fi
+    echo "$count containers are running with $vname attached"
 
     timeout=$1
     echo "Checking recovery for VMDK plugin kill -9"

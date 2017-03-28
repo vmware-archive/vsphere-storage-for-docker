@@ -88,11 +88,10 @@ import (
 )
 
 const (
-	ApiVersion              = "v1.24"
+	ApiVersion              = "v1.24" // docker engine 1.12 and above support this api version
 	DockerUSocket           = "unix:///var/run/docker.sock"
 	defaultSleepIntervalSec = 1
-	timeoutInSecs           = 2
-	mountLocation           = "/mnt/vmdk"
+	dockerConnTimeout       = 2 // Seconds
 
 	// consts for finding and parsing linux mount information
 	linuxMountsFile = "/proc/mounts"
@@ -166,7 +165,7 @@ func (r RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string)
 
 	log.Infof("Getting volume data from %s", DockerUSocket)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutInSecs*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeout*time.Second)
 	defer cancel()
 	info, err := c.Info(ctx)
 	if err != nil {
@@ -274,7 +273,7 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) 
 	filters.Add("status", "paused")
 	filters.Add("status", "restarting")
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutInSecs*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeout*time.Second)
 	defer cancel()
 	containers, err := c.ContainerList(ctx, types.ContainerListOptions{
 		All:    true,
@@ -287,7 +286,7 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) 
 
 	log.Debugf("Found %d running or paused containers", len(containers))
 	for _, ct := range containers {
-		ctx_inspect, cancel_inspect := context.WithTimeout(context.Background(), timeoutInSecs*time.Second)
+		ctx_inspect, cancel_inspect := context.WithTimeout(context.Background(), dockerConnTimeout*time.Second)
 		defer cancel_inspect()
 		containerJSONInfo, err := c.ContainerInspect(ctx_inspect, ct.ID)
 		if err != nil {
@@ -300,7 +299,7 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) 
 			// check if the mount location belongs to vmdk plugin
 			// managed plugin has mount source in format:
 			// '/var/lib/docker/plugins/{plugin uuid}/rootfs/mnt/vmdk/{volume name}'
-			if strings.Contains(mount.Source, mountLocation) {
+			if strings.Contains(mount.Source, mountRoot) {
 				r.Incr(mount.Name)
 				log.Debugf("  name=%v (driver=%s source=%s) (%v)",
 					mount.Name, mount.Driver, mount.Source, mount)
