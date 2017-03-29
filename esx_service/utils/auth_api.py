@@ -735,7 +735,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
 
     if len(result) == 1 or default_datastore:
         if datastore_url == auth_data_const.DEFAULT_DS_URL:
-            # Create DEFAULT privilege for DEFAULT tenant, keep default_datastore unassigned
+            # Create DEFAULT privilege for DEFAULT tenant, should not set the default_datastore in DB
             error_msg = tenant.set_default_datastore(auth_mgr.conn, "")
         else:
             error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
