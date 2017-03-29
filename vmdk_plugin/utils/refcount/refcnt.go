@@ -154,7 +154,7 @@ func newRefCount() *refCount {
 // and completed BEFORE we start accepting Mount/unmount requests.
 func (r RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string) {
 	e := os.Getenv("VDVS_DISCOVER_VOLUMES")
-	if  e == "" {
+	if e == "" {
 		log.Debug("RefCountsMap.Init: Skipping Docker volumes discovery - VDVS_DISCOVER_VOLUMES not set")
 		return
 	}

@@ -49,7 +49,7 @@ MAX_VOL_COUNT_FOR_ATTACH = 60
 # Seed for test configurations.
 config = {
     # If True, test 60+ attaches (no detach) until if fails.
-    "run_max_attach": True
+    "run_max_attach": False
     }
 
 # will do creation/deletion in this folder:

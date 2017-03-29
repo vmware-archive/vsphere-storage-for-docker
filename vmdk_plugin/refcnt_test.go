@@ -50,7 +50,7 @@ func executeScript(t *testing.T, name string) error {
 	// find script
 	for _, d := range []string{tmpLocation, "scripts", "."} {
 		fullPath = filepath.Join(d, name)
-		t.Logf("Looking for %s in '%s'\n", name, d)
+		t.Logf("%s Looking for %s in '%s'\n", time.Now().Format(time.RFC3339), name, d)
 		_, err := os.Stat(fullPath)
 		if err == nil {
 			break
