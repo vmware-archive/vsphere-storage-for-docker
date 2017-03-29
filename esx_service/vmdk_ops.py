@@ -1491,8 +1491,9 @@ def execRequestThread(client_socket, cartel, request):
             send_vmci_reply(client_socket, reply_string)
         else:
             logging.debug("execRequestThread: req=%s", req)
-            # If req from client does not include version number, set the version to "1" by default
-            client_protocol_version = int(req["version"]) if "version" in req else 1
+            # If req from client does not include version number, set the version to
+            # SERVER_PROTOCOL_VERSION by default to make backward compatible
+            client_protocol_version = int(req["version"]) if "version" in req else SERVER_PROTOCOL_VERSION
             logging.debug("execRequestThread: version=%d", client_protocol_version)
             if client_protocol_version != SERVER_PROTOCOL_VERSION:
                 if client_protocol_version < SERVER_PROTOCOL_VERSION:
