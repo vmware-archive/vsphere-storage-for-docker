@@ -409,10 +409,10 @@ def _tenant_rm(name, remove_volumes=False):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
-    # check if vms that are a part if this tenant have any volumes mounted.
+    # check if vms that are a part of this tenant have any volumes mounted.
     # If they have, can't delete the tenant.
     if tenant.vms:
-        logging.info("tenant rm. VMs in tenant are %s", tenant.vms)
+        logging.info("_tenant_rm. VMs in tenant are %s", tenant.vms)
 
         error_info = vmdk_utils.check_volumes_mounted(tenant.vms)
         if error_info:
