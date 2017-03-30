@@ -293,7 +293,7 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
    }
 
    // Alloc the recv buffer, skip retries on mem. alloc error
-   a->buf = calloc(1, b);
+   a->buf = malloc(b);
    if (!a->buf) {
       snprintf(a->errBuf, ERR_BUF_LEN, "Failed to allocate memory len : %d\n", b);
       errno = ENOMEM;
