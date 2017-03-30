@@ -79,11 +79,6 @@ function check_recovery_record {
 }
 
 function test_crash_recovery {
-    # Turning this off for PR #1047.
-    # TBD: bring it back when bringing discovery back (see PR #1050)
-    echo "Skippint crash recovery check (see #1050)... "
-    return
-
     timeout=$1
     echo "Checking recovery for VMDK plugin kill -9"
     kill -9 `pidof docker-volume-vsphere`
@@ -133,13 +128,15 @@ echo $last_line | $GREP -q refcount=$count ; if [ $? -ne 0 ] ; then
    exit 1
 fi
 
+'
+Disabling this check due to race. See issue #1112
 echo "Checking volume content"
 wait_for check_files $timeout
 if [ "$?" -ne 0 ] ; then
    echo FAILED CONTENT TEST - not enough files in /$vname/file\*
    exit 1
 fi
-
+'
 
 $GREP -q $mount /proc/mounts ; if [ $? -ne 0 ] ; then
    echo "FAILED MOUNT TEST 1"

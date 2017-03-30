@@ -54,11 +54,6 @@
       "value": "info",
       "Settable": [ "value"]
 	},
-	{"name": "VDVS_DISCOVER_VOLUMES",
-      "description": "non-empty if pre-existing volumes need to be discovered ",
-	  "value": "",
-      "Settable": [ "value"]
-	},
 	{
       "name": "VDVS_TEST_PROTOCOL_VERSION",
       "description": "Client protocol version used in test",
