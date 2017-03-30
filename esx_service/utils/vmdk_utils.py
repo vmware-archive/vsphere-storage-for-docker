@@ -29,6 +29,9 @@ import log_config
 import auth
 import auth_data_const
 
+import pyVim
+from pyVim.invt import GetVmFolder, FindChild
+
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
 datastores = None
@@ -274,8 +277,8 @@ def get_vm_uuid_by_name(vm_name):
     """ Returns vm_uuid for given vm_name, or None """
     si = vmdk_ops.get_si()
     try:
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
-        return vm[0].config.uuid
+        vm = FindChild(GetVmFolder(), vm_name)
+        return vm.config.uuid
     except:
         return None
 
@@ -283,8 +286,7 @@ def get_vm_name_by_uuid(vm_uuid):
     """ Returns vm_name for given vm_uuid, or None """
     si = vmdk_ops.get_si()
     try:
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.uuid == vm_uuid]
-        return vm[0].config.name
+        return vmdk_ops.vm_uuid2name(vm_uuid)
     except:
         return None
 
@@ -292,8 +294,8 @@ def get_vm_config_path(vm_name):
     """Returns vm_uuid for given vm_name, or None """
     si = vmdk_ops.get_si()
     try:
-        vm = [d for d in si.content.rootFolder.childEntity[0].vmFolder.childEntity if d.config.name == vm_name]
-        config_path = vm[0].summary.config.vmPathName
+        vm = FindChild(GetVmFolder(), vm_name)
+        config_path = vm.summary.config.vmPathName
     except:
         return None
 

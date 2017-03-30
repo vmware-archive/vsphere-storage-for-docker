@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
@@ -71,8 +72,8 @@ func init() {
 
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
 	flag.StringVar(&driverName, "d", "vsphere", "Driver name. We refcount volumes on this driver")
-	flag.IntVar(&parallelVolumes, "parallel_volumes", 5, "Volumes per docker daemon for create/delete concurrent tests")
-	flag.IntVar(&parallelClones, "parallel_clones", 3, "Volumes per docker daemon for clone concurrent tests")
+	flag.IntVar(&parallelVolumes, "parallel_volumes", 3, "Volumes per docker daemon for create/delete concurrent tests")
+	flag.IntVar(&parallelClones, "parallel_clones", 2, "Volumes per docker daemon for clone concurrent tests")
 	flag.Parse()
 	usingConfigFileDefaults := logInit(logLevel, logFile, configFile)
 
@@ -85,6 +86,7 @@ func init() {
 		"conf_file":                *configFile,
 		"using_conf_file_defaults": usingConfigFileDefaults,
 	}).Info("VMDK plugin tests started ")
+	log.SetFormatter(new(VmwareFormatter))
 }
 
 // returns in-container mount point for a volume
@@ -208,7 +210,8 @@ func getClients(t *testing.T) []testClient {
 // - check we see it properly from another docker VM (-H2 flag)
 func TestSanity(t *testing.T) {
 
-	fmt.Printf("Running tests on  %s (may take a while)...\n", TestInputParamsUtil.GetEndPoint1())
+	fmt.Printf("%s START: Running TestSanity on  %s (may take a while)...\n",
+		time.Now().Format(time.RFC3339), TestInputParamsUtil.GetEndPoint1())
 
 	clients := getClients(t)
 	c := clients[0].client // this is the endpoint we use as master
@@ -219,7 +222,7 @@ func TestSanity(t *testing.T) {
 			Name:   volumeName,
 			Driver: driverName,
 			DriverOpts: map[string]string{
-				"size": "1gb",
+				"size": "200MB",
 			},
 		})
 	if err != nil {
@@ -250,6 +253,9 @@ func TestSanity(t *testing.T) {
 				volumeName, elem.endPoint)
 		}
 	}
+	fmt.Printf("%s END: Running TestSanity on  %s (may take a while)...\n",
+		time.Now().Format(time.RFC3339), TestInputParamsUtil.GetEndPoint1())
+
 }
 
 // Test concurrent volume operations
@@ -261,8 +267,8 @@ func TestConcurrency(t *testing.T) {
 	clients := getClients(t)
 	volumeName := "volTestP"
 
-	fmt.Printf("Running concurrent tests on %s and %s (may take a while)...\n",
-		clients[0].endPoint, clients[1].endPoint)
+	fmt.Printf("%s Running concurrent tests on %s and %s (may take a while)...\n",
+		time.Now().Format(time.RFC3339), clients[0].endPoint, clients[1].endPoint)
 
 	// Buffered channel to read results from
 	results := make(chan error, parallelVolumes)
@@ -271,13 +277,14 @@ func TestConcurrency(t *testing.T) {
 		Name:   volumeName,
 		Driver: driverName,
 		DriverOpts: map[string]string{
-			"size": "1gb",
+			"size": "200mb",
 		},
 	}
 
 	// Only run this if testing against different clients
 	if clients[0].endPoint != clients[1].endPoint {
-		fmt.Printf("Running create/delete concurrent test...\n")
+		fmt.Printf("%s START: Running create/delete multi-host concurrent test ...\n",
+			time.Now().Format(time.RFC3339))
 		// Create/delete goroutine
 		for idx, elem := range clients {
 			go func(idx int, c *client.Client) {
@@ -301,6 +308,8 @@ func TestConcurrency(t *testing.T) {
 	} else {
 		fmt.Printf("Skipping create/delete concurrent test, same docker host. Will be tested next.\n")
 	}
+	fmt.Printf("%s END: Running create/delete multi-host concurrent test ...\n",
+		time.Now().Format(time.RFC3339))
 
 	// TODO: Temporarily disable test until #1062 is root caused & fixed.
 	// fmt.Printf("Running same docker host concurrent create/delete test on %s...\n", clients[0].endPoint)
@@ -325,7 +334,8 @@ func TestConcurrency(t *testing.T) {
 	// 	}
 	// }
 
-	fmt.Printf("Running clone concurrent test...\n")
+	fmt.Printf("%s START: Running clone concurrent test...\n",
+		time.Now().Format(time.RFC3339))
 	masterVolName := volumeName + "Clone"
 
 	// Create master volume for cloning
@@ -376,4 +386,7 @@ func TestConcurrency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Printf("%s END: Running clone concurrent test...\n",
+		time.Now().Format(time.RFC3339))
+
 }

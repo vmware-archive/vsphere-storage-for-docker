@@ -28,6 +28,8 @@ import re
 
 # regex for valid tenant name
 VALID_TENANT_NAME_REGEXP = "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
+VALID_TENANT_NAMES = 'rename of vm-groups other than _DEFAULT'
+
 global valid_tenant_name_reg
 valid_tenant_name_reg = re.compile("^" + VALID_TENANT_NAME_REGEXP + "$")
 
@@ -361,6 +363,10 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         return error_info
 
     if new_name:
+        if name == auth_data_const.DEFAULT_TENANT:
+            error_info = error_code.generate_error_info(ErrorCode.TENANT_NAME_INVALID, name, VALID_TENANT_NAMES)
+            return error_info
+
         # check whether tenant with new_name already exist or not
         error_info = check_tenant_exist(new_name)
         if error_info:

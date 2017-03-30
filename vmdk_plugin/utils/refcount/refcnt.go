@@ -154,7 +154,6 @@ func newRefCount() *refCount {
 // This functions does not sync with mount/unmount handlers and should be called
 // and completed BEFORE we start accepting Mount/unmount requests.
 func (r RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string) {
-
 	c, err := client.NewClient(DockerUSocket, ApiVersion, nil, defaultHeaders)
 	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
