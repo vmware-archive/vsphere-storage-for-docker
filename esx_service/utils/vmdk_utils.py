@@ -111,8 +111,6 @@ def get_datastores():
 
 def get_volumes(tenant_re):
     """ Return dicts of docker volumes, their datastore and their paths
-
-
     """
     # Assume we have two tenants "tenant1" and "tenant2"
     # volumes belongs to "tenant1" are under /vmfs/volumes/datastore1/dockervol/tenant1
