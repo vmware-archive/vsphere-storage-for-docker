@@ -44,7 +44,7 @@ Creates a new named vmgroup and optionally assigns VMs. Valid vmgroup name is on
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1 
 vmgroup 'vmgroup1' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
