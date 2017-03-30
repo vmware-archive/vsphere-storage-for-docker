@@ -767,7 +767,7 @@ def get_full_vol_name(vmdk_name, datastore):
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
     logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
-    
+
 def datastore_path_exist(datastore_name):
     """ Check whether path /vmfs/volumes/datastore_name" exist or not """
     ds_path = os.path.join("/vmfs/volumes/", datastore_name)
@@ -797,7 +797,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     For VM, the function gets vm_uuid, vm_name and config_path
     <opts> is a json options string blindly passed to a specific operation
 
-    Returns None (if all OK) or error string 
+    Returns None (if all OK) or error string
     """
     logging.debug("config_path=%s", config_path)
     vm_datastore_url = vmdk_utils.get_datastore_url_from_config_path(config_path)
@@ -806,21 +806,17 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
-    if tenant_name == auth_data_const.DEFAULT_TENANT:
-        # for DEFAULT tenant, set default_datastore to vm_datastore
+
+    # if default_datastore is not set for tenant,
+    # default_datastore_url will be set to None
+    error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
+    # if get_default_datastore fails or default_datastore_url is not specified,
+    # use vm_datastore_url
+    if error_info or not default_datastore_url:
         default_datastore_url = vm_datastore_url
         default_datastore = vm_datastore
     else:
-        # if default_datastore is not set for tenant,
-        # default_datastore_url will be set to None
-        error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
-        # if get_default_datastore fails or default_datastore_url is not specified,
-        # use vm_datastore_url
-        if error_info or not default_datastore_url:
-            default_datastore_url = vm_datastore_url
-            default_datastore = vm_datastore
-        else:
-             default_datastore = get_datastore_name(default_datastore_url)
+        default_datastore = get_datastore_name(default_datastore_url)
 
     logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore_url=%s",
                   vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url)

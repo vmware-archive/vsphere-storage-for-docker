@@ -276,6 +276,7 @@ class DockerVolumeTenant:
 
     def set_default_datastore(self, conn, datastore_url):
         """ Set default_datastore for this tenant."""
+        logging.debug("set_default_datastore: for tenant=%s to datastore=%s", self.id, datastore_url)
         tenant_id = self.id
         try:
             conn.execute(

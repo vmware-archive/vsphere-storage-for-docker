@@ -854,7 +854,8 @@ def tenant_create(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group create succeeded")
+        print("vm-group '{}' is created.  Do not forget to run "
+              "'vm-group vm add' and 'vm-group access add' commands to enable access control.".format(args.name))
 
 def tenant_update(args):
     """ Handle tenant update command """

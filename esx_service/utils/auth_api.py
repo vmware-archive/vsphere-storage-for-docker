@@ -734,7 +734,11 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
                   tenant.id, result)
 
     if len(result) == 1 or default_datastore:
-        error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
+        if datastore_url == auth_data_const.DEFAULT_DS_URL:
+            # Create DEFAULT privilege for DEFAULT tenant, should not set the default_datastore in DB
+            error_msg = tenant.set_default_datastore(auth_mgr.conn, "")
+        else:
+            error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
 
