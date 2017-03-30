@@ -256,9 +256,10 @@ func (r RefCountsMap) Decr(vol string) (uint, error) {
 	}
 	return rc.count, nil
 }
+
 // check if volume with source as mount_source belongs to vsphere plugin
 func matchNameforVMDK(mount_source string) bool {
-	var managedPluginMountStart string = "/var/lib/docker/plugins/"
+	managedPluginMountStart := "/var/lib/docker/plugins/"
 
 	// if plugin is used as a service
 	if strings.HasPrefix(mount_source, mountRoot) {
