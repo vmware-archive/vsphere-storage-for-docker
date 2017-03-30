@@ -411,12 +411,14 @@ def _tenant_rm(name, remove_volumes=False):
 
     # check if vms that are a part if this tenant have any volumes mounted.
     # If they have, can't delete the tenant.
-    error_info = vmdk_utils.check_volumes_mounted(tenant.vms)
+    if tenant.vms:
+        logging.info("tenant rm. VMs in tenant are %s", tenant.vms)
 
-    if error_info:
-        error_info.msg = "Cannot complete vmgroup rm. " + error_info.msg
-        logging.error(error_info.msg)
-        return error_info
+        error_info = vmdk_utils.check_volumes_mounted(tenant.vms)
+        if error_info:
+            error_info.msg = "Cannot complete vmgroup rm. " + error_info.msg
+            logging.error(error_info.msg)
+            return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
 

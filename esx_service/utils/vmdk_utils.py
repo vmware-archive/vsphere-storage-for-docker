@@ -317,20 +317,24 @@ def check_volumes_mounted(vm_list):
     """
     for vm_id in vm_list:
         vm = vmdk_ops.findVmByUuid(vm_id)
-        for d in vm.config.hardware.device:
-            # if device is not a virtual disk, skip this device
-            if type(d) != vim.vm.device.VirtualDisk:
-                continue
+        if vm:
+            for d in vm.config.hardware.device:
+                # if device is not a virtual disk, skip this device
+                if type(d) != vim.vm.device.VirtualDisk:
+                    continue
 
-            # Filename format is as follows:
-            # "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
-            # Trim the datastore name and keep disk path.
-            _, disk_path = d.backing.fileName.rsplit("]", 1)
-            logging.info("backing disk name is %s", disk_path)
-            # If disk path start with "dockvols", the disk is a docker volume
-            if disk_path.lstrip().startswith(vmdk_ops.DOCK_VOLS_DIR):
-                error_info = error_code.generate_error_info(error_code.ErrorCode.VM_WITH_MOUNTED_VOLUMES, vm.config.name)
-                return error_info
+                # Filename format is as follows:
+                # "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
+                # Trim the datastore name and keep disk path.
+                _, disk_path = d.backing.fileName.rsplit("]", 1)
+                logging.info("backing disk name is %s", disk_path)
+                # If disk path start with "dockvols", the disk is a docker volume
+                if disk_path.lstrip().startswith(vmdk_ops.DOCK_VOLS_DIR):
+                    error_info = error_code.generate_error_info(error_code.ErrorCode.VM_WITH_MOUNTED_VOLUMES, vm.config.name)
+                    return error_info
+        else:
+            error_info = error_code.generate_error_info(error_code.ErrorCode.VM_NOT_FOUND, vm_id)
+            return error_info
     return None
 
 def log_volume_lsof(vol_name):
