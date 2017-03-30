@@ -91,7 +91,7 @@ const (
 	ApiVersion              = "v1.24" // docker engine 1.12 and above support this api version
 	DockerUSocket           = "unix:///var/run/docker.sock"
 	defaultSleepIntervalSec = 1
-	dockerConnTimeout       = 2 // Seconds
+	dockerConnTimeoutSec    = 2
 
 	// consts for finding and parsing linux mount information
 	linuxMountsFile = "/proc/mounts"
@@ -165,7 +165,7 @@ func (r RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string)
 
 	log.Infof("Getting volume data from %s", DockerUSocket)
 
-	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeout*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 	defer cancel()
 	info, err := c.Info(ctx)
 	if err != nil {
@@ -257,6 +257,24 @@ func (r RefCountsMap) Decr(vol string) (uint, error) {
 	}
 	return rc.count, nil
 }
+// check if volume with source as mount_source belongs to vsphere plugin
+func matchNameforVMDK(mount_source string) bool {
+	var managedPluginMountStart string = "/var/lib/docker/plugins/"
+
+	// if plugin is used as a service
+	if strings.HasPrefix(mount_source, mountRoot) {
+		return true
+	}
+	// if plugin is used as managed plugin
+	// managed plugin has mount source in format:
+	// '/var/lib/docker/plugins/{plugin uuid}/rootfs/mnt/vmdk/{volume name}'
+	if strings.HasPrefix(mount_source, managedPluginMountStart) && strings.Contains(mount_source, mountRoot) {
+		return true
+	}
+
+	// mounted volume doesn't belong to vmdk_plugin
+	return false
+}
 
 // enumberates volumes and  builds RefCountsMap, then sync with mount info
 func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) error {
@@ -273,7 +291,7 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) 
 	filters.Add("status", "paused")
 	filters.Add("status", "restarting")
 
-	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeout*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 	defer cancel()
 	containers, err := c.ContainerList(ctx, types.ContainerListOptions{
 		All:    true,
@@ -286,20 +304,20 @@ func (r RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) 
 
 	log.Debugf("Found %d running or paused containers", len(containers))
 	for _, ct := range containers {
-		ctx_inspect, cancel_inspect := context.WithTimeout(context.Background(), dockerConnTimeout*time.Second)
+		ctx_inspect, cancel_inspect := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 		defer cancel_inspect()
 		containerJSONInfo, err := c.ContainerInspect(ctx_inspect, ct.ID)
 		if err != nil {
 			log.Errorf("ContainerInspect failed for %s (err: %v)", ct.Names, err)
-			continue
+			// We intentionally don't cleanup refMap because whatever refCounts(if any) we were able to
+			// populate are valid.
+			return err
 		}
 		log.Debugf("  Mounts for %v", ct.Names)
 
 		for _, mount := range containerJSONInfo.Mounts {
-			// check if the mount location belongs to vmdk plugin
-			// managed plugin has mount source in format:
-			// '/var/lib/docker/plugins/{plugin uuid}/rootfs/mnt/vmdk/{volume name}'
-			if strings.Contains(mount.Source, mountRoot) {
+			// check if the mount location belongs to vsphere plugin
+			if matchNameforVMDK(mount.Source) {
 				r.Incr(mount.Name)
 				log.Debugf("  name=%v (driver=%s source=%s) (%v)",
 					mount.Name, mount.Driver, mount.Source, mount)
