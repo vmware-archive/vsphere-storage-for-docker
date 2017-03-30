@@ -59,14 +59,14 @@ class ErrorCode:
 
 
 error_code_to_message = {
-    ErrorCode.VM_NOT_BELONG_TO_TENANT : "VM {0} does not belong to any vm-group",
-    ErrorCode.TENANT_NOT_EXIST : "Vm-group {0} does not exist",
-    ErrorCode.TENANT_ALREADY_EXIST : "Vm-group {0} already exists",
-    ErrorCode.TENANT_NAME_NOT_FOUND : "Cannot find vm-group name for vm-group with {0}",
-    ErrorCode.TENANT_CREATE_FAILED : "Vm-group {0} create failed with err: {1}",
-    ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED : "Vm-group {0} set access privileges on datastore {1} failed with err: {2}",
-    ErrorCode.TENANT_GET_FAILED : "Get vm-group {0} failed",
-    ErrorCode.TENANT_NAME_INVALID : "Vm-group name {0} is invalid, only {1} is allowed",
+    ErrorCode.VM_NOT_BELONG_TO_TENANT : "VM {0} does not belong to any vmgroup",
+    ErrorCode.TENANT_NOT_EXIST : "Vmgroup {0} does not exist",
+    ErrorCode.TENANT_ALREADY_EXIST : "Vmgroup {0} already exists",
+    ErrorCode.TENANT_NAME_NOT_FOUND : "Cannot find vmgroup name for vmgroup with {0}",
+    ErrorCode.TENANT_CREATE_FAILED : "Vmgroup {0} create failed with err: {1}",
+    ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED : "Vmgroup {0} set access privileges on datastore {1} failed with err: {2}",
+    ErrorCode.TENANT_GET_FAILED : "Get vmgroup {0} failed",
+    ErrorCode.TENANT_NAME_INVALID : "Vmgroup name {0} is invalid, only {1} is allowed",
 
     ErrorCode.VM_NOT_FOUND : "Cannot find vm {0}",
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
@@ -84,9 +84,9 @@ error_code_to_message = {
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
     ErrorCode.DS_NOT_EXIST : "Datastore {0} does not exist",
 
-    ErrorCode.VMODL_TENANT_NAME_EMPTY : "Vm-group name is empty",
-    ErrorCode.VMODL_TENANT_NAME_TOO_LONG : "Vm-group name exceeds 64 characters: {0}",
-    ErrorCode.VMODL_TENANT_DESC_TOO_LONG : "Vm-group description exceeds 256 characters: {0}",
+    ErrorCode.VMODL_TENANT_NAME_EMPTY : "Vmgroup name is empty",
+    ErrorCode.VMODL_TENANT_NAME_TOO_LONG : "Vmgroup name exceeds 64 characters: {0}",
+    ErrorCode.VMODL_TENANT_DESC_TOO_LONG : "Vmgroup description exceeds 256 characters: {0}",
 
     ErrorCode.INTERNAL_ERROR : "Internal Error({0})",
     ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})",

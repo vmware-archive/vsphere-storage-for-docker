@@ -44,11 +44,11 @@ Tenancy changes in release 0.10 need a manual upgrade process enumerated below.
 
 ### How to know if auth-db upgrade is needed post install?
 
-After installing the new build, type command “vm-group ls”
+After installing the new build, type command “vmgroup ls”
 Check for failure to connect to auth DB.
 
 ```
-/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Failed to connect auth DB(DB connection error /etc/vmware/vmdkops/auth-db)
 ```
 
@@ -63,9 +63,9 @@ The corresponding errors in the vmdk_ops.log file.
 
 ### How to handle the upgrade manually?
 
-#### Case 1: No vm-group configured before
+#### Case 1: No vmgroup configured before
 
-If no vm-group has been configured, user just needs to delete the auth-db file
+If no vmgroup has been configured, user just needs to delete the auth-db file
 
 Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
 
@@ -73,21 +73,21 @@ Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
 [root@localhost:/etc/vmware/vmdkops]rm /etc/vmware/vmdkops/auth-db
 ```
 
-Step 2: Verify “vm-group ls” command
+Step 2: Verify “vmgroup ls” command
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vm-group
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup
 
 ```
 
 After this point, the manually upgrade is done, and tenancy operations will succeed.
 
-#### Case2: Has vm-group configured before
+#### Case2: Has vmgroup configured before
 Step 1: Backup data manually.
 
-Example below has a vm-group ```vm-group1``` with VM ```photon-6``` assigned to this vm-group1 and one volumes: vol1@datastore1 created.
+Example below has a vmgroup ```vmgroup1``` with VM ```photon-6``` assigned to this vmgroup1 and one volumes: vol1@datastore1 created.
 
 ```
 root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
@@ -103,40 +103,38 @@ Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
 [root@localhost:/etc/vmware/vmdkops]mv /etc/vmware/vmdkops/auth-db /etc/vmware/vmdkops/auth-db.backup.v10.upgrade
 ```
 
-Step 3: Verify “vm-group ls” command, now only  ```_DEFAULT``` should be listed.
+Step 3: Verify “vmgroup ls” command, now only  ```_DEFAULT``` should be listed.
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                 Default_datastore  VM_list
 ------------------------------------  --------  --------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vm-group
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
 
 
 ```
 
-Step 4: Recreate the vm-group configuration with new name “new-vm-group1” (associate the same VM photon-6 to this new-vm-group1), see the following example:
+Step 4: Recreate the vmgroup configuration with new name “new-vmgroup1” (associate the same VM photon-6 to this new-vmgroup1), see the following example:
 
-***Note: Please DO NOT create the vm-group with the old name “vm-group1”!!!***
+***Note: Please DO NOT create the vmgroup with the old name “vmgroup1”!!!***
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create --name=new-vm-group1  --vm-list=photon-6
-vm-group create succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group access add --name=new-vm-group1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-vm-group access add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6
+vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=new-vmgroup1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
+vmgroup access add succeeded
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group vm rm --name=new-vm-group1 --vm-list=photon7
-vm-group vm rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name           Description                 Default_datastore  VM_list
 ------------------------------------  -------------  --------------------------  -----------------  --------
-11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vm-group
-5c0927fb-86b5-4034-87db-8bdfa24018d4  new-vm-group1                              datastore1         photon-6
+11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vmgroup
+5c0927fb-86b5-4034-87db-8bdfa24018d4  new-vmgroup1                              datastore1         photon-6
 
 
 
 ```
 
-Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vm-group1” which was created before will not be visible
+Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vmgroup1” which was created before will not be visible
 ```
 root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME
@@ -155,12 +153,14 @@ Volume “vol1” which was created before still exists, and can be seen from th
 
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
-Volume    Datastore   Created By VM  Created                   Attached To VM (name/uuid)  Policy  Capacity  Used  Disk Format  Filesystem Type  Access      Attach As
---------  ----------  -------------  ------------------------  --------------------------  ------  --------  ----  -----------  ---------------  ----------  ----------------------
-vol1      datastore1  photon-6       Sun Sep 11 07:30:47 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
-new-vol1  datastore1  photon-6       Sun Sep 11 08:03:56 2016  detached                    N/A     100MB     13MB  thin         ext4             read-write  independent_persistent
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
+Volume    Datastore   VMGroup       Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
+--------  ----------  ------------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
+vol1      datastore1  N/A           100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Wed Sep 14 16:20:30 2016
+new-vol1  datastore1  new-vmgroup1  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Wed Sep 14 16:22:58 2016
+
 
 ```
 
 Step6: Manually copy the data from backup to the new volume "new-vol1@datastore1".
-The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-vm-group1".
+The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-vmgroup1".

@@ -722,7 +722,7 @@ class VmdkTenantTestCase(unittest.TestCase):
 
             error_msg, tenant = auth_mgr.create_tenant(
                                            name=auth_data_const.DEFAULT_TENANT,
-                                           description="This is a default tenant",
+                                           description="This is a default vmgroup",
                                            vms=[],
                                            privileges=[])
 
@@ -1277,7 +1277,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
             error_info, tenant = auth_api._tenant_create(
                                            name=auth_data_const.DEFAULT_TENANT,
-                                           description="This is a default tenant",
+                                           description="This is a default vmgroup",
                                            vm_list=[],
                                            privileges=[])
         if error_info:
