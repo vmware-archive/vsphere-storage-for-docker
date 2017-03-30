@@ -363,7 +363,7 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
       return CONN_FAILURE;
    }
 
-   req.mlen = strnlen(json_request, MAXBUF) + 1;
+   req.mlen = strnlen(json_request, MAXBUF-1) + 1;
    req.msg = json_request;
 
    return host_request(be, &req, ans, ESX_VMCI_CID, port);
