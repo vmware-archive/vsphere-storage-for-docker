@@ -16,35 +16,35 @@ The admin cli also enables ESX admins to implement tenancy.
 The remainder of this document will describe each admin CLI command and provide examples
 of their usage.
 
-## Vm-group
+## Vmgroup
 
 ### Help
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group -h
-usage: vmdkops_admin.py vm-group [-h] {create,vm,update,access,ls,rm} ...
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup -h
+usage: vmdkops_admin.py vmgroup [-h] {create,vm,update,access,ls,rm} ...
 
 positional arguments:
   {create,vm,update,access,ls,rm}
-    create              Create a new vm-group
-    vm                  Add, removes and lists VMs in a vm-group
-    update              Update an existing vm-group
+    create              Create a new vmgroup
+    vm                  Add, removes and lists VMs in a vmgroup
+    update              Update an existing vmgroup
     access              Add or remove Datastore access and quotas for a vm-
                         group
-    ls                  List vm-groups and the VMs they are applied to
-    rm                  Delete a vm-group
+    ls                  List vmgroups and the VMs they are applied to
+    rm                  Delete a vmgroup
 
 optional arguments:
   -h, --help            show this help message and exit
 ```
 
 ### Create
-A vm-group named "_DEFAULT" will be created automatically post install.
+A vmgroup named "_DEFAULT" will be created automatically post install.
 
-Creates a new named vm-group and optionally assigns VMs. Valid vm-group name is only allowed to be "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
+Creates a new named vmgroup and optionally assigns VMs. Valid vmgroup name is only allowed to be "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group create --name=vm-group1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1
 vm-group create succeeded
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vm-group ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
@@ -53,7 +53,7 @@ Uuid                                  Name       Description                 Def
 1ddb5b46-6a9f-4649-8e48-c47039905752  vm-group1
 ```
 
-The vm-group to VM association can be done at create time.
+The vmgroup to VM association can be done at create time.
 
 Sample:
 ```

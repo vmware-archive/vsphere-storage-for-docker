@@ -134,13 +134,13 @@ def commands():
                     'args': {
                         '-c': {
                             'help': 'Display selected columns',
-                            'choices': ['volume', 'datastore', 'vm-group', 'capacity', 'used',
+                            'choices': ['volume', 'datastore', 'vmgroup', 'capacity', 'used',
                                         'fstype', 'policy', 'disk-format', 'attached-to', 'access',
                                         'attach-as', 'created-by', 'created'],
                             'metavar': 'Col1,Col2,...'
                         },
-                        '--vm-group' : {
-                            'help': 'Displays volumes for a given vm-group'
+                        '--vmgroup' : {
+                            'help': 'Displays volumes for a given vmgroup'
                         }
                     }
                 },
@@ -152,8 +152,8 @@ def commands():
                             'help': 'Volume to set options for, specified as "volume@datastore".',
                             'required': True
                         },
-                        '--vm-group': {
-                            'help': 'Name of the vm-group the volume belongs to.',
+                        '--vmgroup': {
+                            'help': 'Name of the vmgroup the volume belongs to.',
                             'required': True
                         },
                         '--options': {
@@ -214,29 +214,29 @@ def commands():
             }
         },
         #
-        # vm-group {create, update, rm , ls} - manipulates vm-group
-        # vm-group vm {add, rm, ls}  - manipulates VMs for a vm-group
-        # vm-group access {add, set, rm, ls} - manipulates datastore access right for a vm-group
+        # vmgroup {create, update, rm , ls} - manipulates vmgroup
+        # vmgroup vm {add, rm, ls}  - manipulates VMs for a vmgroup
+        # vmgroup access {add, set, rm, ls} - manipulates datastore access right for a vmgroup
         #
-        # Internally, "vm-group" is called "tenant", and we decide to keep the name of functions as "tenant_*"
+        # Internally, "vmgroup" is called "tenant", and we decide to keep the name of functions as "tenant_*"
 
-        'vm-group': {
+        'vmgroup': {
             'help': 'Administer and monitor volume access control',
             'cmds': {
                 'create': {
                     'func': tenant_create,
-                    'help': 'Create a new vm-group',
+                    'help': 'Create a new vmgroup',
                     'args': {
                         '--name': {
-                            'help': 'The name of the vm-group',
+                            'help': 'The name of the vmgroup',
                             'required': True
                         },
                         '--description': {
-                            'help': 'The description of the vm-group',
+                            'help': 'The description of the vmgroup',
                         },
-                        # a shortcut allowing to add VMs on vm-group Create
+                        # a shortcut allowing to add VMs on vmgroup Create
                         '--vm-list': {
-                            'help': 'A list of VM names to place in this vm-group',
+                            'help': 'A list of VM names to place in this vmgroup',
                             'metavar': 'vm1, vm2, ...',
                             'type': comma_separated_string
                         }
@@ -244,17 +244,17 @@ def commands():
                 },
                 'update': {
                     'func': tenant_update,
-                    'help': 'Update an existing vm-group',
+                    'help': 'Update an existing vmgroup',
                     'args': {
                         '--name': {
-                            'help': 'The name of the vm-group',
+                            'help': 'The name of the vmgroup',
                             'required': True
                         },
                         '--new-name': {
-                            'help': 'The new name of the vm-group',
+                            'help': 'The new name of the vmgroup',
                         },
                         '--description': {
-                            'help': 'The new description of the vm-group',
+                            'help': 'The new description of the vmgroup',
                         },
                         '--default-datastore': {
                             'help': 'Datastore to be used by default for volumes placement',
@@ -263,35 +263,35 @@ def commands():
                 },
                 'rm': {
                     'func': tenant_rm,
-                    'help': 'Delete a vm-group',
+                    'help': 'Delete a vmgroup',
                     'args': {
                         '--name': {
-                            'help': 'The name of the vm-group',
+                            'help': 'The name of the vmgroup',
                             'required': True
                       },
                       '--remove-volumes': {
-                        'help': 'BE CAREFUL: Removes this vm-group volumes when removing a vm-group',
+                        'help': 'BE CAREFUL: Removes this vmgroup volumes when removing a vmgroup',
                         'action': 'store_true'
                       }
                     }
                 },
                 'ls': {
                     'func': tenant_ls,
-                    'help': 'List vm-groups and the VMs they are applied to'
+                    'help': 'List vmgroups and the VMs they are applied to'
                 },
                 'vm': {
-                    'help': 'Add, removes and lists VMs in a vm-group',
+                    'help': 'Add, removes and lists VMs in a vmgroup',
                     'cmds': {
                         'add': {
-                            'help': 'Add a VM(s)  to a vm-group',
+                            'help': 'Add a VM(s)  to a vmgroup',
                             'func': tenant_vm_add,
                             'args': {
                                 '--name': {
-                                    'help': "Vm-group to add the VM to",
+                                    'help': "Vmgroup to add the VM to",
                                     'required': True
                                 },
                                 '--vm-list': {
-                                    'help': "A list of VM names to add to this vm-group",
+                                    'help': "A list of VM names to add to this vmgroup",
                                     'type': comma_separated_string,
                                     'required': True
                                 }
@@ -299,15 +299,15 @@ def commands():
                         },
 
                         'rm': {
-                            'help': 'Remove VM(s) from a vm-group',
+                            'help': 'Remove VM(s) from a vmgroup',
                             'func': tenant_vm_rm,
                             'args': {
                                 '--name': {
-                                    'help': "Vm-group to remove the VM from",
+                                    'help': "Vmgroup to remove the VM from",
                                     'required': True
                                 },
                                 '--vm-list': {
-                                    'help': "A list of VM names to rm from this vm-group",
+                                    'help': "A list of VM names to rm from this vmgroup",
                                     'type': comma_separated_string,
                                     'required': True
                                 }
@@ -315,15 +315,15 @@ def commands():
                         },
 
                         'replace': {
-                            'help': 'Replace VM(s) for a vm-group',
+                            'help': 'Replace VM(s) for a vmgroup',
                             'func': tenant_vm_replace,
                             'args': {
                                 '--name': {
-                                    'help': "Vm-group to replace the VM for",
+                                    'help': "Vmgroup to replace the VM for",
                                     'required': True
                                 },
                                 '--vm-list': {
-                                    'help': "A list of VM names to replace for this vm-group",
+                                    'help': "A list of VM names to replace for this vmgroup",
                                     'type': comma_separated_string,
                                     'required': True
                                 }
@@ -331,11 +331,11 @@ def commands():
                         },
 
                         'ls': {
-                            'help': "list VMs in a vm-group",
+                            'help': "list VMs in a vmgroup",
                             'func': tenant_vm_ls,
                             'args': {
                                 '--name': {
-                                    'help': "Vm-group to list the VMs for",
+                                    'help': "Vmgroup to list the VMs for",
                                     'required': True
                                 }
                             }
@@ -343,14 +343,14 @@ def commands():
                     }
                 },
                 'access': {
-                    'help': 'Add or remove Datastore access and quotas for a vm-group',
+                    'help': 'Add or remove Datastore access and quotas for a vmgroup',
                     'cmds': {
                         'add': {
                             'func': tenant_access_add,
-                            'help': 'Add a datastore access for a vm-group',
+                            'help': 'Add a datastore access for a vmgroup',
                             'args': {
                                 '--name': {
-                                    'help': 'The name of the vm-group',
+                                    'help': 'The name of the vmgroup',
                                     'required': True
                                 },
                                 '--datastore': {
@@ -358,7 +358,7 @@ def commands():
                                     'required': True
                                 },
                                 '--default-datastore': {
-                                    'help': "Mark datastore as a default datastore for this vm-group",
+                                    'help': "Mark datastore as a default datastore for this vmgroup",
                                     'action': 'store_true'
                                 },
                                 '--allow-create': {
@@ -371,17 +371,17 @@ def commands():
                                 },
                                 '--volume-totalsize': {
                                     'help':
-                                    'Maximum total size of all volume that can be created on the datastore for this vm-group',
+                                    'Maximum total size of all volume that can be created on the datastore for this vmgroup',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 }
                             }
                         },
                         'set': {
                             'func': tenant_access_set,
-                            'help': 'Modify datastore access for a vm-group',
+                            'help': 'Modify datastore access for a vmgroup',
                             'args': {
                                 '--name': {
-                                    'help': 'The name of the vm-group',
+                                    'help': 'The name of the vmgroup',
                                     'required': True
                                 },
                                 '--datastore': {
@@ -399,17 +399,17 @@ def commands():
                                 },
                                 '--volume-totalsize': {
                                     'help':
-                                    'Maximum total size of all volume that can be created on the datastore for this vm-group',
+                                    'Maximum total size of all volume that can be created on the datastore for this vmgroup',
                                     'metavar': 'Num{MB,GB,TB} - e.g. 2TB'
                                 }
                             }
                         },
                         'rm': {
                             'func': tenant_access_rm,
-                            'help': "Remove all access to a datastore for a vm-group",
+                            'help': "Remove all access to a datastore for a vmgroup",
                             'args': {
                                 '--name': {
-                                    'help': 'The name of the vm-group',
+                                    'help': 'The name of the vmgroup',
                                     'required': True
                                 },
                                 '--datastore': {
@@ -420,10 +420,10 @@ def commands():
                         },
                         'ls': {
                             'func': tenant_access_ls,
-                            'help': 'List all access info for a vm-group',
+                            'help': 'List all access info for a vmgroup',
                             'args': {
                                 '--name': {
-                                    'help': 'The name of the vm-group',
+                                    'help': 'The name of the vmgroup',
                                     'required': True
                                 }
                             }
@@ -512,8 +512,8 @@ def ls(args):
     If args.c is not empty only display columns given in args.c (implies -l).
     """
     tenant_reg = '*'
-    if args.vm_group:
-        tenant_reg = args.vm_group
+    if args.vmgroup:
+        tenant_reg = args.vmgroup
 
     if args.c:
         (header, rows) = ls_dash_c(args.c, tenant_reg)
@@ -542,7 +542,7 @@ def ls_dash_c(columns, tenant_reg):
 
 def all_ls_headers():
     """ Return a list of all header for ls -l """
-    return ['Volume', 'Datastore', 'VM-Group', 'Capacity', 'Used', 'Filesystem', 'Policy',
+    return ['Volume', 'Datastore', 'VMGroup', 'Capacity', 'Used', 'Filesystem', 'Policy',
             'Disk Format', 'Attached-to', 'Access', 'Attach-as', 'Created By', 'Created Date']
 
 def generate_ls_rows(tenant_reg):
@@ -745,7 +745,7 @@ def status(args):
 
 def set_vol_opts(args):
     try:
-        set_ok = vmdk_ops.set_vol_opts(args.volume, args.vm_group, args.options)
+        set_ok = vmdk_ops.set_vol_opts(args.volume, args.vmgroup, args.options)
         if set_ok:
            print('Successfully updated settings for : {0}'.format(args.volume))
         else:
@@ -854,8 +854,8 @@ def tenant_create(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group '{}' is created.  Do not forget to run "
-              "'vm-group vm add' and 'vm-group access add' commands to enable access control.".format(args.name))
+        print("vmgroup '{}' is created.  Do not forget to run "
+              "'vmgroup vm add' and 'vmgroup access add' commands to enable access control.".format(args.name))
 
 def tenant_update(args):
     """ Handle tenant update command """
@@ -867,7 +867,7 @@ def tenant_update(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group modify succeeded")
+        print("vmgroup modify succeeded")
 
 def tenant_rm(args):
     """ Handle tenant rm command """
@@ -883,7 +883,7 @@ def tenant_rm(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group rm succeeded")
+        print("vmgroup rm succeeded")
 
 def tenant_ls(args):
     """ Handle tenant ls command """
@@ -902,7 +902,7 @@ def tenant_vm_add(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group vm add succeeded")
+        print("vmgroup vm add succeeded")
 
 def tenant_vm_rm(args):
     """ Handle tenant vm rm command """
@@ -911,7 +911,7 @@ def tenant_vm_rm(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group vm rm succeeded")
+        print("vmgroup vm rm succeeded")
 
 def tenant_vm_replace(args):
     """ Handle tenant vm replace command """
@@ -920,7 +920,7 @@ def tenant_vm_replace(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group vm replace succeeded")
+        print("vmgroup vm replace succeeded")
 
 def tenant_vm_ls_headers():
     """ Return column names for tenant vm ls command """
@@ -976,7 +976,7 @@ def tenant_access_add(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group access add succeeded")
+        print("vmgroup access add succeeded")
 
 def tenant_access_set(args):
     """ Handle tenant access set command """
@@ -996,7 +996,7 @@ def tenant_access_set(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group access set succeeded")
+        print("vmgroup access set succeeded")
 
 def tenant_access_rm(args):
     """ Handle tenant access rm command """
@@ -1004,7 +1004,7 @@ def tenant_access_rm(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vm-group access rm succeeded")
+        print("vmgroup access rm succeeded")
 
 def tenant_access_ls_headers():
     """ Return column names for tenant access ls command """

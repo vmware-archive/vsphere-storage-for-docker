@@ -28,7 +28,7 @@ import re
 
 # regex for valid tenant name
 VALID_TENANT_NAME_REGEXP = "[a-zA-Z0-9_][a-zA-Z0-9_.-]*"
-VALID_TENANT_NAMES = 'rename of vm-groups other than _DEFAULT'
+VALID_TENANT_NAMES = 'rename of vmgroups other than _DEFAULT'
 
 global valid_tenant_name_reg
 valid_tenant_name_reg = re.compile("^" + VALID_TENANT_NAME_REGEXP + "$")

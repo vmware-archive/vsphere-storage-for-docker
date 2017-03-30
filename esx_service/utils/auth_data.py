@@ -15,8 +15,8 @@
 """
 VM based authorization for docker volumes and tenant management.
 
-Note that for external consumption we refer to a 'tenant' as a 'vm-group'.
-This way the code operates 'tenants' but user/admin operates 'vm-groups'
+Note that for external consumption we refer to a 'tenant' as a 'vmgroup'.
+This way the code operates 'tenants' but user/admin operates 'vmgroups'
 """
 
 import sqlite3
@@ -436,7 +436,7 @@ class AuthorizationDataManager:
         """ Create DEFAULT tenant """
         error_msg, tenant = self.create_tenant(
             name=auth_data_const.DEFAULT_TENANT,
-            description="This is a default vm-group",
+            description="This is a default vmgroup",
             vms=[],
             privileges=[])
         if error_msg:
