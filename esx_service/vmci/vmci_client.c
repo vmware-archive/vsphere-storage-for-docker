@@ -61,8 +61,9 @@ typedef struct be_request {
 #define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
 
 typedef struct be_answer {
-   char *buf;                  // response buffer
+   //char *buf;                // response buffer
    char errBuf[ERR_BUF_LEN];   // error response buffer
+   char buf[4096];             // response buffer
 } be_answer;
 
 //
@@ -155,7 +156,7 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
 {
    printf("dummy_get_reply: got request %s.\n", r->msg);
    printf("dummy_get_reply: replying empty (for now).\n");
-   a->buf = strdup("none");
+   //a->buf = strdup("none");
 
    return CONN_SUCCESS;
 }
@@ -292,6 +293,8 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
       return CONN_FAILURE;
    }
 
+   b = b > 4096 ? 4096 : b;
+/*
    // Alloc the recv buffer, skip retries on mem. alloc error
    a->buf = calloc(1, b);
    if (!a->buf) {
@@ -299,11 +302,11 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
       errno = ENOMEM;
       return CONN_FAILURE;
    }
-
+*/
    ret = recv(s->sock_id, a->buf, b, 0);
    if (ret == -1 || ret != b) {
-      free(a->buf);
-      a->buf = NULL;
+      //free(a->buf);
+      //a->buf = NULL;
       CHECK_ERRNO(ret);
       snprintf(a->errBuf, ERR_BUF_LEN, "Failed to receive message data: received %d expected %d\n",
                ret, b);
@@ -365,7 +368,7 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
 
    return host_request(be, &req, ans, ESX_VMCI_CID, port);
 }
-
+/*
 void
 Vmci_FreeBuf(be_answer *ans)
 {
@@ -374,3 +377,4 @@ Vmci_FreeBuf(be_answer *ans)
          ans->buf = NULL;
    }
 }
+*/

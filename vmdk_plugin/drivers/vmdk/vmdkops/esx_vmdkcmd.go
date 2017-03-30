@@ -140,8 +140,8 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		return nil, errors.New(msg)
 	}
 
-	response := []byte(C.GoString(ans.buf))
-	C.Vmci_FreeBuf(ans)
+	response := []byte(C.GoString(&ans.buf[0]))
+	//C.Vmci_FreeBuf(ans)
 
 	err = unmarshalError(response)
 	if err != nil && len(err.Error()) != 0 {
