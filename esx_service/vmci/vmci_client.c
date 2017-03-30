@@ -32,6 +32,7 @@
 #include "connection_types.h"
 
 #define ERR_BUF_LEN 512
+#define RESP_BUF_LEN 8192
 
 // operations status. 0 is OK
 typedef int be_sock_status;
@@ -61,8 +62,9 @@ typedef struct be_request {
 #define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
 
 typedef struct be_answer {
-   char *buf;                  // response buffer
+   char *buf;                // response buffer
    char errBuf[ERR_BUF_LEN];   // error response buffer
+   //char buf[RESP_BUF_LEN];     // response buffer
 } be_answer;
 
 //
@@ -292,8 +294,10 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
       return CONN_FAILURE;
    }
 
+   b = b > RESP_BUF_LEN ? RESP_BUF_LEN : b;
+
    // Alloc the recv buffer, skip retries on mem. alloc error
-   a->buf = calloc(1, b);
+   a->buf = malloc(b);
    if (!a->buf) {
       snprintf(a->errBuf, ERR_BUF_LEN, "Failed to allocate memory len : %d\n", b);
       errno = ENOMEM;
@@ -360,7 +364,7 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
       return CONN_FAILURE;
    }
 
-   req.mlen = strnlen(json_request, MAXBUF) + 1;
+   req.mlen = strnlen(json_request, MAXBUF-1) + 1;
    req.msg = json_request;
 
    return host_request(be, &req, ans, ESX_VMCI_CID, port);
@@ -374,3 +378,4 @@ Vmci_FreeBuf(be_answer *ans)
          ans->buf = NULL;
    }
 }
+
