@@ -145,7 +145,7 @@
                 
                     <li><a class="toctree-l4" href="#admin-cli">Admin CLI</a></li>
                 
-                    <li><a class="toctree-l4" href="#default-tenant">Default tenant</a></li>
+                    <li><a class="toctree-l4" href="#default-vmgroup">Default vmgroup</a></li>
                 
                     <li><a class="toctree-l4" href="#default-privileges">Default privileges</a></li>
                 
@@ -245,31 +245,31 @@
 <li>IMPORTANT: This is an experimental feature supported only on standalone ESX as of release 0.12. We are seeking feedback/requirements to support mult-tenancy across vSphere Cluster/Datacenter. You can drop us a note at containers@vmware.com.</li>
 </ul>
 <h1 id="tenancy">Tenancy<a class="headerlink" href="#tenancy" title="Permanent link">&para;</a></h1>
-<p>Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or &ldquo;tenants.&rdquo; Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With tenancy, you can achieve isolation of resources of one tenant from other tenants. </p>
-<p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a tenant.  A tenant can be granted access to create, delete or mount volumes on a specific datastore. VMs assigned to a tenant can then execute Docker volume APIs on an assigned datastores. Within a datastore multiple tenants can store their Docker volumes. A tenant cannot access volumes created by a different tenant i.e. tenants have their own independent namespace, even if tenants share datastores. VMs cannot be shared between tenants.</p>
+<p>Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or &ldquo;tenants.&rdquo; Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With tenancy, you can achieve isolation of resources of one tenant from other tenants.</p>
+<p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a vmgroup.  A vmgroup can be granted access to create, delete or mount volumes on a specific datastore. VMs assigned to a vmgroup can then execute Docker volume APIs on an assigned datastores. Within a datastore multiple vmgroups can store their Docker volumes. A vmgroup cannot access volumes created by a different vmgroup i.e. vmgroups have their own independent namespace, even if vmgroups share datastores. VMs cannot be shared between vmgroups.</p>
 <p>Key attributes of tenancy:</p>
 <ul>
 <li>vSphere Administrator can define group of one or more Docker Host (VM) as
-Tenant</li>
-<li>Docker Host (VM) can be a member of one and only one Tenant.</li>
-<li>vSphere Administrator can grant tenant privileges &amp; set resource consumption</li>
-<li>Tenants can share the same underlying storage but preserve volume namespace isolation. 
+vmgroup</li>
+<li>Docker Host (VM) can be a member of one and only one vmgroup.</li>
+<li>vSphere Administrator can grant vmgroup privileges &amp; set resource consumption</li>
+<li>Vmgroups can share the same underlying storage but preserve volume namespace isolation.
 limits at granularity of datastore.</li>
 </ul>
 <h2 id="admin-cli">Admin CLI<a class="headerlink" href="#admin-cli" title="Permanent link">&para;</a></h2>
-<p>Tenants can be created and managed via the <a href="../../user-guide/admin-cli/#tenant">Admin CLI</a></p>
-<h2 id="default-tenant">Default tenant<a class="headerlink" href="#default-tenant" title="Permanent link">&para;</a></h2>
-<p>When a VM which does not belong to any tenant issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT tenant, and will get privileges 
-associated with this tenant. _DEFAULT tenant will be automatically created by system post install, so by default vmdk_ops will support request from 
-any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this tenant or modify privileges, thus locking 
+<p>Vmgroups can be created and managed via the <a href="../../user-guide/admin-cli/#Vmgroup">Admin CLI</a></p>
+<h2 id="default-vmgroup">Default vmgroup<a class="headerlink" href="#default-vmgroup" title="Permanent link">&para;</a></h2>
+<p>When a VM which does not belong to any vmgroup issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT vmgroup, and will get privileges
+associated with this vmgroup. _DEFAULT vmgroup will be automatically created by system post install, so by default vmdk_ops will support request from
+any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this vmgroup or modify privileges, thus locking
 down vmdk_ops to serve only explicitly configured VMs.</p>
 <h2 id="default-privileges">Default privileges<a class="headerlink" href="#default-privileges" title="Permanent link">&para;</a></h2>
-<p>When a VM tries to manipulate volumes on a datastore which is not configured,  the system will use _DEFAULT privilege, which is created automatically 
-by system post install. This _DEFAULT privilege allows access to ANY datastore by default. An admin can edit or remove this record, thus locking down 
-the functionality to allow access only to explicitly configured datastores. </p>
+<p>When a VM tries to manipulate volumes on a datastore which is not configured,  the system will use _DEFAULT privilege, which is created automatically
+by system post install. This _DEFAULT privilege allows access to ANY datastore by default. An admin can edit or remove this record, thus locking down
+the functionality to allow access only to explicitly configured datastores.</p>
 <h2 id="default-datastore">Default datastore<a class="headerlink" href="#default-datastore" title="Permanent link">&para;</a></h2>
-<p>When a VM addresses the volume using short notation (volume_name, without @datastore), all VMs in this tenant will use default datastore to resolve short volume reference (volume_name will actually mean volume_name@default_datastore).
-If &ldquo;default_datastore&rdquo; is not set for a tenant, then datastore where the VM resides will be used as &ldquo;default_datastore&rdquo;.</p>
+<p>When a VM addresses the volume using short notation (volume_name, without @datastore), all VMs in this vmgroup will use default datastore to resolve short volume reference (volume_name will actually mean volume_name@default_datastore).
+If &ldquo;default_datastore&rdquo; is not set for a vmgroup, then datastore where the VM resides will be used as &ldquo;default_datastore&rdquo;.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md">Design Spec for tenancy</a></li>

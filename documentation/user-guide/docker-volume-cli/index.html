@@ -267,9 +267,9 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat
 <li>Thin Provision (<a href="../(https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&amp;cmd=displayKC&amp;externalId=1022242)">thin</a>)</li>
 <li>Thick Provision Eager Zeroed (<a href="../(https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&amp;cmd=displayKC&amp;externalId=1022242)">eagerzeroedthick</a>)</li>
 </ol>
-<h3 id="attach_as-vsphere-only">attach_as (vSphere only)<a class="headerlink" href="#attach_as-vsphere-only" title="Permanent link">&para;</a></h3>
-<pre><code>docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach_as=independent_persistent
-docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach_as=persistent
+<h3 id="attach-as-vsphere-only">attach-as (vSphere only)<a class="headerlink" href="#attach-as-vsphere-only" title="Permanent link">&para;</a></h3>
+<pre><code>docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=independent_persistent
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=persistent
 </code></pre>
 
 <p>Docker volumes are backed by VMDKs. VMDKs are attached to the VM in which Docker is requesting for a volume during Docker run. VMDKs can be attached in <a href="http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/">different modes.</a></p>
@@ -348,6 +348,7 @@ vsphere                redis-data@vsanDatastore
 ]
 </code></pre>
 
+<p>Note: For disk formats zeroedthick and zeroedthick, the allocated size would be total size plus the size of replicas.</p>
 <h2 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h2>
 <pre><code>cat nginx-stack-vsphere.yaml 
 version: &quot;3&quot;
