@@ -29,6 +29,7 @@ import log_config
 import logging
 import convert
 import error_code
+import auth_data_const
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 13
@@ -579,6 +580,12 @@ class TestTenant(unittest.TestCase):
                                              default_datastore=self.datastore_name)
         self.assertEqual(None, error_info)
 
+        # update default vmgroup description
+        error_info = auth_api._tenant_update(name=auth_data_const.DEFAULT_TENANT,
+                                             description="This is the default vm-group",
+                                             default_datastore=self.datastore_name)
+        self.assertEqual(None, error_info)
+
         error_info, tenant_list = auth_api._tenant_ls()
         self.assertEqual(None, error_info)
 
@@ -602,6 +609,11 @@ class TestTenant(unittest.TestCase):
                                               name=self.tenant1_name,
                                               new_name=self.tenant1_new_name)
         self.assertEqual(None, error_info)
+
+	# verify default vmgroup can't be renamed
+        error_info  = auth_api._tenant_update(name=auth_data_const.DEFAULT_TENANT,
+                                              new_name=self.tenant1_new_name)
+        self.assertNotEqual(None, error_info)
 
         error_info, tenant_list = auth_api._tenant_ls()
         self.assertEqual(None, error_info)
