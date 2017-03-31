@@ -617,8 +617,8 @@ List all VSAN storage policies.
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
 Policy Name  Policy Content                                             Active
------------  ---------------------------------------------------------  ------
-some-policy  (("proportionalCapacity" i0)("hostFailuresToTolerate" i0)  Unused
+-----------  ----------------------------------------------------------  ------
+some-policy  (("proportionalCapacity" i0)("hostFailuresToTolerate" i0))  Unused
 ```
 
 When creating a virtual disk using `docker volume create`, the policy name should be given with the `-o`
