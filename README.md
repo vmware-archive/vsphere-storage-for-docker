@@ -132,7 +132,7 @@ logging config format for content details.
 
 # Known Issues
 
--  Multi-tenancy feature is limited to single ESX #1032
+-  Multi-tenancy feature is limited to single ESX [#1032](https://github.com/vmware/docker-volume-vsphere/issues/1032)
 
 ## Contact us
 
