@@ -1,4 +1,4 @@
-[![Build Status](https://ci.vmware.run/api/badges/vmware/docker-volume-vsphere/status.svg)](https://ci.vmware.run/vmware/docker-volume-vsphere) [![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://hub.docker.com/r/vmware/docker-volume-vsphere/) [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
+[![Build Status](https://ci.vmware.run/api/badges/vmware/docker-volume-vsphere/status.svg)](https://ci.vmware.run/vmware/docker-volume-vsphere) [![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description) [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
 
 # vSphere Docker Volume Service
 
@@ -43,7 +43,7 @@ vSphere documentation.](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.v
 
 Install using localcli on an ESX node
 ```
-esxcli software vib install --no-sig-check  -v /tmp/<vib_name>.vib
+esxcli software vib install -v /tmp/<vib_name>.vib
 ```
 
 Make sure you provide the **absolute path** to the `.vib` file or the install will fail.
