@@ -409,6 +409,17 @@ def _tenant_rm(name, remove_volumes=False):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
+    # check if vms that are a part of this tenant have any volumes mounted.
+    # If they have, can't delete the tenant.
+    if tenant.vms:
+        logging.info("_tenant_rm. VMs in tenant are %s", tenant.vms)
+
+        error_info = vmdk_utils.check_volumes_mounted(tenant.vms)
+        if error_info:
+            error_info.msg = "Cannot complete vmgroup rm. " + error_info.msg
+            logging.error(error_info.msg)
+            return error_info
+
     error_info, auth_mgr = get_auth_mgr_object()
 
     if error_info:
@@ -547,6 +558,16 @@ def _tenant_vm_rm(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info
 
+    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
+
+    # check if vms to be removed have any volumes mounted.
+    error_info = vmdk_utils.check_volumes_mounted(vms_uuid_list)
+
+    if error_info:
+        error_info.msg = "Cannot complete vmgroup vm rm. " + error_info.msg
+        logging.error(error_info.msg)
+        return error_info
+
     logging.debug("_tenant_vm_rm: vms=%s", vms)
 
     error_info = vm_not_exist(name, vms)
@@ -557,7 +578,6 @@ def _tenant_vm_rm(name, vm_list):
     if error_info:
         return error_info
 
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
     error_msg = tenant.remove_vms(auth_mgr.conn, vms_uuid_list)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
@@ -609,6 +629,18 @@ def _tenant_vm_replace(name, vm_list):
 
     error_info = vm_in_any_tenant(vms)
     if error_info:
+        return error_info
+
+    # check if vms that would be replaced out have any volumes mounted
+    error_info, existing_vms = _tenant_vm_ls(name)
+    if error_info:
+        return error_info
+
+    error_info = vmdk_utils.check_volumes_mounted(existing_vms)
+
+    if error_info:
+        error_info.msg = "Cannot complete vmgroup vm replace. " + error_info.msg
+        logging.error(error_info.msg)
         return error_info
 
     logging.debug("_tenant_vm_replace: vms=%s", vms)

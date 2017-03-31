@@ -33,6 +33,7 @@ class ErrorCode:
     VM_IN_ANOTHER_TENANT = 105
     VM_LIST_EMPTY = 106
     VM_DUPLICATE = 107
+    VM_WITH_MOUNTED_VOLUMES = 108
     # VM related error code end
 
     # Privilege related error code start
@@ -75,6 +76,7 @@ error_code_to_message = {
     ErrorCode.VM_IN_ANOTHER_TENANT : "VM '{0}' has already been associated with tenant '{1}', can't add it",
     ErrorCode.VM_LIST_EMPTY : "VM list cannot be empty",
     ErrorCode.VM_DUPLICATE : "VMs {0} contain duplicates, they should be unique",
+    ErrorCode.VM_WITH_MOUNTED_VOLUMES : "VM '{0}' has volumes mounted.",
 
     ErrorCode.PRIVILEGE_NOT_FOUND : "No privilege exists for ({0}, {1})",
     ErrorCode.PRIVILEGE_ALREADY_EXIST : "Privilege for ({0}, {1}) already exists",
@@ -90,7 +92,7 @@ error_code_to_message = {
 
     ErrorCode.INTERNAL_ERROR : "Internal Error({0})",
     ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})",
-     ErrorCode.VOLUME_NAME_INVALID : "Volume name {0} is invalid, only {1} is allowed"
+    ErrorCode.VOLUME_NAME_INVALID : "Volume name {0} is invalid, only {1} is allowed"
 }
 
 class ErrorInfo:

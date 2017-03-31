@@ -805,7 +805,13 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
-        return err(error_info)
+        # For docker volume ls, docker prints a list of cached volume names in case
+        # of error(in this case, orphan VM). See Issue #990
+        # Explicity providing empty list of volumes to avoid misleading output.
+        if (cmd == "list") and (not tenant_uuid):
+            return []
+        else:
+            return err(error_info)
 
     # if default_datastore is not set for tenant,
     # default_datastore_url will be set to None
@@ -1314,7 +1320,7 @@ def err(string):
 
 
 def disk_detach(vmdk_path, vm):
-    """detach disk (by full path) from a vm amd return None or err(msg)"""
+    """detach disk (by full path) from a vm and return None or err(msg)"""
 
     device = findDeviceByPath(vmdk_path, vm)
 
