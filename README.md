@@ -49,14 +49,23 @@ esxcli software vib install -v /tmp/<vib_name>.vib
 Make sure you provide the **absolute path** to the `.vib` file or the install will fail.
 
 ### On Docker Host (VM)
+#### Managed Plugin
+Please make sure to uninstall older releases of DEB/RPM using following commands.
+```
+sudo dpkg -r docker-volume-vsphere # Ubuntu or deb based distros
+sudo rpm -e docker-volume-vsphere # Photon or rpm based distros
+```
+
 **For Docker 1.13 and above**, install managed plugin from Docker Store.
 ```
 docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
 ```
+
+#### Using DEB/RPM
 **For Docker 1.12 and earlier**, use DEB or RPM package.
 ```
--sudo dpkg -i <name>.deb # Ubuntu or deb based distros
--sudo rpm -ivh <name>.rpm # Photon or rpm based distros
+sudo dpkg -i <name>.deb # Ubuntu or deb based distros
+sudo rpm -ivh <name>.rpm # Photon or rpm based distros
 ```
 **Note**: DEB/RPM packages will be deprecated going forward and will not be available.
 
