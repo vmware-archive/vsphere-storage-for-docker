@@ -59,7 +59,7 @@
    <!-- VIB acceptance level.  Should be one of -->
    <!-- certified / accepted / partner / community -->
    <!-- Defaults to community if not specified    -->
-   <acceptance-level>partner</acceptance-level>
+   <acceptance-level>accepted</acceptance-level>
 
    <!-- Both live install and live removes must be true for a live upgrade -->
    <live-install-allowed>true</live-install-allowed>

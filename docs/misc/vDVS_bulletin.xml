@@ -1,0 +1,21 @@
+<bulletin>
+	<id>vDVS_driver</id>
+	<vendor>VMware</vendor>
+	<summary>vDVS_Driver Bulletin</summary>
+	<severity>general</severity>
+	<category>enhancement</category>
+	<urgency>important</urgency>
+	<releaseType>extension</releaseType>
+	<description>This bulletin contains details regarding the vSphere docker volume service
+		driver VIB.</description>
+	<kbUrl>https://github.com/vmware/docker-volume-vsphere/wiki</kbUrl>
+	<contact>VMware</contact>
+	<releaseDate>2017-03-30T16:47:36.688572+00:00</releaseDate>
+	<platforms>
+		<softwarePlatform locale="" version="6.*"
+			productLineID="embeddedEsx" />
+	</platforms>
+	<vibList>
+		<vibID>vmware-esx-vmdkops-0.13.d2923de</vibID>
+	</vibList>
+</bulletin>
