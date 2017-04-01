@@ -602,7 +602,7 @@ optional arguments:
 Create a VSAN storage policy.
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name some-policy --content '(("proportionalCapacity" i0)("hostFailuresToTolerate" i0)'
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name some-policy --content '(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
 Successfully created policy: some-policy
 ```
 
@@ -617,8 +617,8 @@ List all VSAN storage policies.
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
 Policy Name  Policy Content                                             Active
------------  ---------------------------------------------------------  ------
-some-policy  (("proportionalCapacity" i0)("hostFailuresToTolerate" i0)  Unused
+-----------  ----------------------------------------------------------  ------
+some-policy  (("proportionalCapacity" i0)("hostFailuresToTolerate" i0))  Unused
 ```
 
 When creating a virtual disk using `docker volume create`, the policy name should be given with the `-o`
@@ -635,7 +635,7 @@ failed to update will be shown. The names of the virtual disks that failed to up
 so that manual action can be taken.
 
 ```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name some-policy --content '(("proportionalCapacity" i1)'
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name some-policy --content '(("proportionalCapacity" i1))'
 This operation may take a while. Please be patient.
 Successfully updated policy: some-policy
 ```
