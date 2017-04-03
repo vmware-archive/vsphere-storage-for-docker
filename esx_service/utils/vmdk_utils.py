@@ -394,7 +394,7 @@ def get_datastore_name(datastore_url):
     # get_datastores() return a list of tuple
     # each tuple has format like (datastore_name, datastore_url, dockvol_path)
     res = [d[0] for d in get_datastores() if d[1] == datastore_url]
-    return res[0]
+    return res[0] if res else None
 
 def get_datastore_url_from_config_path(config_path):
     """Returns datastore url in config_path """
