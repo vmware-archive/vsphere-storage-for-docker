@@ -16,7 +16,7 @@ as well as the
 
 ## Detailed documentation
 
-Detailed documentation can be found in our [GitHub Documenation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
+Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
 
 ## Download
 
