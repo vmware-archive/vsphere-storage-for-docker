@@ -488,9 +488,28 @@ def vm_in_any_tenant(vms):
 
     return None
 
+
+def named_tenant(func):
+    """
+        decorator to check whether the function is called by a named tenant
+        return error that feature is not supported if called by _DEFAULT tenant
+    """
+    def not_supported():
+        return error_code.generate_error_info(ErrorCode.FEATURE_NOT_SUPPORTED,
+                                              auth_data_const.DEFAULT_TENANT)
+
+    def check_name(name, vm_list):
+        if name == auth_data_const.DEFAULT_TENANT:
+            return not_supported()
+        return func(name, vm_list)
+    return check_name
+
+
+@named_tenant
 def _tenant_vm_add(name, vm_list):
     """ API to add vms for a tenant """
     logging.debug("_tenant_vm_add: name=%s vm_list=%s", name, vm_list)
+
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info
@@ -533,9 +552,12 @@ def _tenant_vm_add(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
+
+@named_tenant
 def _tenant_vm_rm(name, vm_list):
     """ API to remove vms for a tenant """
     logging.debug("_tenant_vm_rm: name=%s vm_list=%s", name, vm_list)
+
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info
@@ -597,9 +619,12 @@ def _tenant_vm_ls(name):
     # tenant.vms is a list of vm_uuid of vms which belong to this tenant
     return None, tenant.vms
 
+
+@named_tenant
 def _tenant_vm_replace(name, vm_list):
     """ API to replace vms for a tenant """
     logging.debug("_tenant_vm_replace: name=%s vm_list=%s", name, vm_list)
+
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info
@@ -692,7 +717,9 @@ def check_privilege_parameters(privilege):
 
     return None
 
-def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False, volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
+
+def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False,
+                       volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
     """ API to add datastore access for a tenant """
 
     logging.debug("_tenant_access_add: name=%s datastore=%s, allow_create=%s "

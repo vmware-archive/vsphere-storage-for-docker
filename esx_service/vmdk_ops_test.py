@@ -532,7 +532,6 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
                 if x['filename'].startswith('VmdkAttachDetachTestVol')]
 
 
-    #@unittest.skip("Liping Remove")
     def testAttachDetach(self):
         logging.info("Start VMDKAttachDetachTest")
         si = vmdk_ops.get_si()
@@ -1177,7 +1176,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         """ Test vmdkops for default_datastore """
         logging.info("test_vmdkops_for_default_datastore")
         # add vm1 to tenant1, vm1 is created on self.datastore_name
-        vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
+        vm1_uuid =  vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
         error_info = auth_api._tenant_vm_add(
                                          name=self.tenant1_name,
                                          vm_list=[self.vm1_name])
@@ -1207,7 +1206,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         # create a volume with default size
         # a volume will be tried to create on the default_datastore, which is self.datastore1_name
         # create should fail since on default_datastore, it does not have "allow_create"" set to True
-        opts={u'fstype': u'ext4'}
+        opts =  {u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
         self.assertNotEqual(None, error_info)
 

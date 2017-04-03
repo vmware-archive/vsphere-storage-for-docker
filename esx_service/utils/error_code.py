@@ -57,6 +57,7 @@ class ErrorCode:
     INTERNAL_ERROR = 501
     INVALID_ARGUMENT = 502
     VOLUME_NAME_INVALID = 503
+    FEATURE_NOT_SUPPORTED = 504
 
 
 error_code_to_message = {
@@ -92,7 +93,8 @@ error_code_to_message = {
 
     ErrorCode.INTERNAL_ERROR : "Internal Error({0})",
     ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})",
-    ErrorCode.VOLUME_NAME_INVALID : "Volume name {0} is invalid, only {1} is allowed"
+    ErrorCode.VOLUME_NAME_INVALID : "Volume name {0} is invalid, only {1} is allowed",
+    ErrorCode.FEATURE_NOT_SUPPORTED : "This feature is not supported for vmgroup {}."
 }
 
 class ErrorInfo:

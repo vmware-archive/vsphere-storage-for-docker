@@ -649,6 +649,7 @@ class TestTenant(unittest.TestCase):
 
     def test_tenant_vm(self):
         """ Test AdminCLI command for tenant vm management """
+        logging.debug("test_tenant_vm")
         # create tenant1 without adding any vms and privilege
         error_info, tenant = auth_api._tenant_create(
                                                     name=self.tenant1_name,
@@ -704,13 +705,14 @@ class TestTenant(unittest.TestCase):
                                                     privileges=[])
         self.assertEqual(None, error_info)
 
-        error_info  = auth_api._tenant_vm_add(
+        error_info = auth_api._tenant_vm_add(
                                               name=tenant3.name,
                                               vm_list=[self.vm1_name])
+
         self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
 
         # Replace should fail since vm1 is already a part of tenant1
-        error_info  = auth_api._tenant_vm_replace(
+        error_info = auth_api._tenant_vm_replace(
                                               name=tenant3.name,
                                               vm_list=[self.vm1_name])
         self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
@@ -917,6 +919,24 @@ class TestTenant(unittest.TestCase):
 
         # no tenant access privilege available for this tenant
         self.assertEqual(rows, [])
+
+    def test_tenant_vm_for_default_tenant(self):
+        """ Test AdminCLI vmgroup vm management for _DEFAULT vmgroup """
+        logging.debug("Test vm add for _DEFAULT vmgroup")
+        # Test "vm add" for _DEFAULT tenant, which should fail
+        error_info = auth_api._tenant_vm_add(name=auth_data_const.DEFAULT_TENANT,
+                                             vm_list=[self.vm1_name])
+        self.assertEqual(error_code.ErrorCode.FEATURE_NOT_SUPPORTED, error_info.code)
+
+        # Test "vm rm" for _DEFAULT tenant, which should fail
+        error_info = auth_api._tenant_vm_add(name=auth_data_const.DEFAULT_TENANT,
+                                             vm_list=[self.vm1_name])
+        self.assertEqual(error_code.ErrorCode.FEATURE_NOT_SUPPORTED, error_info.code)
+
+        # Test "vm add" for _DEFAULT tenant, which should fail
+        error_info = auth_api._tenant_vm_add(name=auth_data_const.DEFAULT_TENANT,
+                                             vm_list=[self.vm1_name])
+        self.assertEqual(error_code.ErrorCode.FEATURE_NOT_SUPPORTED, error_info.code)
 
 if __name__ == '__main__':
     kv.init()
