@@ -1,17 +1,18 @@
-** vSphere Docker Volume Service - Introduction **
+# vSphere Docker Volume Service
 
-vSphere Docker Volume Service enables you to run stateful containerized applications on top of VMware vSphere. 
+## Introduction
 
-It is designed to meet the needs of Enterprise IT and application developers and offers the following benefits:
+vSphere docker volume service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. It is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.
 
-- **Provide proven persistent shared storage:** You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS, etc. 
-- **Enable Multitenancy, Security and Access Control:** vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location
-- **Operational Consistency and Simplicity:** Zero Configuration, zero credential management. It as easy to deploy and manage
-- **Self-service Operations**: Use docker APIs to manage volume lifecycle while maintaining admin control over consumption 
+
+Some of key features of the vDVS are:
+
+* **Enterprise class storage**: You can use vDVS with proven enterprise class technologies such as VMWare VSan, VMFS, NFS etc. 
+* **Security & RBAC**: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.
+* **Simple to use**: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.
+
 
 This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). It does not need credential management or configuration management. 
- 
-<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
 ** Feedback **
 
