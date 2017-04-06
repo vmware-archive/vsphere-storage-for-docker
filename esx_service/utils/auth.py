@@ -44,7 +44,7 @@ def get_auth_mgr():
         try:
             thread_local._auth_mgr = auth_data.AuthorizationDataManager()
             thread_local._auth_mgr.connect()
-        except (auth_data.DbConnectionError, auth_data.DbAccessError) as err:
+        except (auth_data.DbConnectionError, auth_data.DbAccessError, auth_data.DbUpgradeError) as err:
             return str(err), None
     return None, thread_local._auth_mgr
 

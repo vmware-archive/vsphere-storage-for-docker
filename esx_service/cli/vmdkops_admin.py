@@ -889,20 +889,18 @@ def tenant_ls_headers():
     headers = ['Uuid', 'Name', 'Description', 'Default_datastore', 'VM_list']
     return headers
 
-def generate_vm_list(vms_uuid):
-    """ Generate vm names with given list of vm uuid"""
-    # vms_uuid is a list of vm_uuid
-    # example: vms_uuid=["vm1_uuid", "vm2_uuid"]
-    # the return value is a string like this vm1,vm2
+def generate_vm_list(vm_list):
+    """ Generate vm names with given list of (vm_uuid, vm_name) from db"""
+    # vm_list is a list of (vm_uuid, vm_name) from db
+    # the return value is a comma separated string of VM names like this vm1,vm2
     res = ""
-    for vm_uuid in vms_uuid:
+    for vm_uuid, vm_name_from_db in vm_list:
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
-        # If the VM name cannot be resolved then its possible
-        # the VM has been deleted or migrated off the host,
-        # skip the VM in that case.
-        if vm_name:
-            res = res + vm_name
-            res = res + ","
+        # If the VM name cannot be resolved then use one from db
+        # If it is not available from db then mark it as NOT_AVAILABLE
+        if not vm_name:
+            vm_name = vm_name_from_db if vm_name_from_db else NOT_AVAILABLE
+        res += vm_name + ","
 
     if res:
         res = res[:-1]
@@ -1012,11 +1010,13 @@ def tenant_vm_ls_headers():
 def generate_tenant_vm_ls_rows(vms):
     """ Generate output for tenant vm ls command """
     rows = []
-    for vm in vms:
-        # vm has the format like this (vm_uuid)
-        uuid = vm
-        name = vmdk_utils.get_vm_name_by_uuid(uuid)
-        rows.append([uuid, name])
+    for vm_uuid, vm_name_from_db in vms:
+        vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
+        # If the VM name cannot be resolved then use one from db
+        # If it is not available from db then mark it as NOT_AVAILABLE
+        if not vm_name:
+            vm_name = vm_name_from_db if vm_name_from_db else NOT_AVAILABLE
+        rows.append([vm_uuid, vm_name])
 
     return rows
 
