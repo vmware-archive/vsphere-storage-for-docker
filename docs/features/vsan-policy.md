@@ -1,11 +1,55 @@
-# What is vSAN
-[vSAN](http://www.vmware.com/products/virtual-san.html) is a shared storage (all ESX nodes in a cluster can access the same vSAN store), hyper-converged (vSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.
+###...
+
+# Introduction to vSAN
+[vSAN](http://www.vmware.com/products/virtual-san.html) is a shared and hyper-converged flash optimized storage offering from VMware. All ESX nodes in a cluster can access the same vSAN store. vSAN is integrated with the vSphere and runs on the same hardware that vSphere manages.
+
 # vSAN Policy
-vSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.
+vSAN provides a framework for software defined storage. You can create policies based on different use cases and access needs and apply them to storage units. For example a simple policy shown in code snippet below describes a policy of zero failure to tolerate.
 
-# Mapping Docker volumes to vSAN objects with policy
+```
+(
+ ("proportionalCapacity" i0)
+ ("hostFailuresToTolerate" i0)
+)
+```
+## Policy Creation
 
-Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.
+### Create policy
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name some-policy --content '(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
+Successfully created policy: some-policy
+```
+
+### List Policy
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
+Policy Name  Policy Content                                             Active
+-----------  ----------------------------------------------------------  ------
+some-policy  (("proportionalCapacity" i0)("hostFailuresToTolerate" i0))  Unused
+```
+
+### Update a policy
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name some-policy --content '(("proportionalCapacity" i1))'
+This operation may take a while. Please be patient.
+Successfully updated policy: some-policy
+```
+
+### Remove a policy
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name=some-policy
+Successfully removed policy: some-policy
+```
+
+## Policy Usage
+
+### Attach policy to container
+The Docker admin can then create a volume using the policies available.
+
 ```
 ESX# vmdkops_admin.py policy create —name=myPolicy —content='(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
 Successfully created policy: myPolicy

@@ -2,29 +2,28 @@ site_name: vSphere Docker Volume Service
 pages:
     - Home: index.md
     - Setup: 
+        - Prerequsites: user-guide/prerequisite.md
         - Installation: user-guide/install.md
         - Configuration: user-guide/configuration.md
     - Usage:
         - Management of docker volumes: user-guide/docker-volume-cli.md
         - Datastores Support: user-guide/datastores.md
-        - Multi Tenancy: user-guide/empty.md
-        - Docker Swarm: user-guide/empty.md
-        - Admin CLI: user-guide/admin-cli.md
-        - Volume Layout on backend: user-guide/vsphere-overview.md        
+        - Swarm Cluster: user-guide/swarm-cluster.md
+        - Admin CLI Reference: user-guide/admin-cli.md
+        - Multi Tenancy: features/tenancy.md
+        - Using policies with docker volumes: features/vsan-policy.md
     - Operations:
-        - Use case of policies: user-guide/empty.md
-        - Using policies with docker volumes: user-guide/empty.md
-        - Integration with vCenter: user-guide/empty.md
+        - Operating at scale: user-guide/operations.md
     - Demo Applications:
-        - App with Mongo datastore: user-guide/empty.md
-        - Active/passive MySql: user-guide/empty.md
-    - Future:
-        - Integration with vCenter: user-guide/empty.md
-        - Integration with Kubernetes: user-guide/empty.md
+        - App with Mongo datastore: user-guide/demo-mongo-app.md
+        - Mongo DB with Swarm: user-guide/demo-mongo-swarm.md
+    - Future: user-guide/future.md
     - FAQ: user-guide/faq.md
     - Blog:
         - Release announcement and updates: blog/2016-9-28.md
         - 0.8.1 Release (Tenancy) and stateful containers meetup: blog/2016-10-28.md
+    - Videos:
+        - Examples: user-guide/videos.md        
 theme: flatly
 google_analytics: ['UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/']
 site_favicon: favicon.ico

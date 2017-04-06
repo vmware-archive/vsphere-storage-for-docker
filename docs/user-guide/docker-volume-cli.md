@@ -59,7 +59,7 @@ The docker volumes are backed by VMDK and there are types of VMDK. At the moment
 </table>
 
 
-#### Attach types (attach-as)
+#### Disk Modes (attach-as)
 Docker volumes used in vDVS are backed by VMDKs. VMDKs are attached to hosts on which containers are running. These VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
 
 1. Persistent mode: In persistent mode the VMDK becomes part of VM the snapshot if a snapshot of the VM is taken while VMDK was attached.
@@ -70,21 +70,34 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=persistent
 ```
 
-#### Disk Modes
+#### Volume Cloning (clone-from)
+
+When creating a new volume, you can specificy a volume to clone and create a new one. This is a complete new volume of which you can change all parameters except size and fstype.
 
 
+```
+docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume -o access=read-only
+docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume -o diskformat=thin (default)
+```
 
 ### Photon
 
+#### Flavour 
+You can specify the flavour of persistent disk available in the Photon controller. The flavour in Photon implies certain limits on the volume being created
 
-## Docker volume list
+```
+docker volume create --driver=vsphere --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
+```
+
+## Listing Volumes
+Docker volume list can be used to volume names & their DRIVER type
 ```
 docker volume ls
 DRIVER              VOLUME NAME
 vsphere                MyVolume@vsanDatastore
 vsphere                minio1@vsanDatastore
 vsphere                minio2@vsanDatastore
-vsphere                redis-data@vsanDatastore
+photon                 redis-data@vsanDatastore
 ```
 ## Docker volume inspect
 You can use `docker volume inspect` command to see vSphere attributes of a particular volume.
@@ -124,7 +137,7 @@ docker volume inspect MyVolume
     }
 ]
 ```
-Note: For disk formats zeroedthick and zeroedthick, the allocated size would be total size plus the size of replicas.
+Note: For disk formats zeroedthick and thin, the allocated size would be total size plus the size of replicas.
 
 ## Docker Compose
 ```
