@@ -21,7 +21,7 @@ every command and sub-command. e.g.
 ```
 [root@localhost:~] alias vmdkops_admin=/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py
 [root@localhost:~] vmdkops_admin --help
-usage: vmdkops_admin.py [-h] {volume,policy,status,config,vm-group} ...
+usage: vmdkops_admin.py [-h] {volume,policy,status,config,vmgroup} ...
 
 vSphere Docker Volume Service admin CLI
 
@@ -30,14 +30,14 @@ optional arguments:
 
 Manage VMDK-based Volumes for Docker:
 
-  {volume,policy,status,config,vm-group}
+  {volume,policy,status,config,vmgroup}
                         action
     volume              Manipulate volumes
     policy              Configure and display storage policy information
     status              Show the status of the vmdk_ops service
     config              Init and manage Config DB which enables quotas and
                         access control
-    vm-group            Administer and monitor volume access control
+    vmgroup            Administer and monitor volume access control
 [root@localhost:~] vmdkops_admin volume --help
 usage: vmdkops_admin.py volume [-h] {set,ls} ...
 
@@ -64,7 +64,7 @@ of their usage.
 
 ## Vmgroup
 
-vm-groups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vm-group, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastores and access privileges (`access` and `update` subcommands).
+vm-groups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vmgroup, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastores and access privileges (`access` and `update` subcommands).
 
 ### Help
 ```bash
@@ -92,7 +92,7 @@ Creates a new named vmgroup and optionally assigns VMs. Valid vmgroup name is on
 
 Sample:
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1 
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1
 vmgroup 'vmgroup1' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
@@ -706,7 +706,7 @@ Successfully removed policy: some-policy
 
 Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vm-groups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
 ```
-[root@localhost:~] vmdkops_admin vm-group create --name MY
+[root@localhost:~] vmdkops_admin vmgroup create --name MY
 Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
 ```
 
@@ -720,7 +720,7 @@ In MultiNode mode, VSphere Docker Volume Service Authorization Config DB needs t
 
 #### Init (`config init`)
 
-Initializing the config is optional. If the config is not initialized, there will be no access control and all `vm-group` commands will fail with appropriate messages.
+Initializing the config is optional. If the config is not initialized, there will be no access control and all `vmgroup` commands will fail with appropriate messages.
 
 Before configuring access control or quotas, the config needs to be inited to either SingleNode (`init --local`) or MultiNode (`init --datastore=ds_name`) mode.
 

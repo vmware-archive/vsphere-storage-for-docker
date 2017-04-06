@@ -218,13 +218,13 @@ def commands():
                 }
             }
         },
-        'vm-group': {
+        'vmgroup': {
             #
-            # vm-group {create, update, rm , ls} - manipulates vm-group
-            # vm-group vm {add, rm, ls}  - manipulates VMs for a vm-group
-            # vm-group access {add, set, rm, ls} - manipulates datastore access right for a vm-group
+            # vmgroup {create, update, rm , ls} - manipulates vmgroup
+            # vmgroup vm {add, rm, ls}  - manipulates VMs for a vmgroup
+            # vmgroup access {add, set, rm, ls} - manipulates datastore access right for a vmgroup
             #
-            # Internally, "vm-group" is called "tenant".
+            # Internally, "vmgroup" is called "tenant".
             # We decided to keep the name of functions as "tenant_*" for now
             'help': 'Administer and monitor volume access control',
             'cmds': {
