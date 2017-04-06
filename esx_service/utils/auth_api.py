@@ -54,6 +54,7 @@ def get_tenant_from_db(name):
     if error_info:
         return error_info, None
 
+    logging.debug("auth_api.get_tenant_from_db name=%s", name)
     error_msg, tenant = auth_mgr.get_tenant(name)
     if error_msg:
         error_info = error_code.generate_error_info(error_msg)
@@ -265,7 +266,15 @@ def get_default_datastore_url(name):
         --- error_info: return None on success or error info on failure
         --- default_datastore: return name of default_datastore on success or None on failure
     """
-    logging.debug("get_default_datastore: for tenant with name=%s", name)
+    logging.debug("auth_api.get_default_datastore_url: for tenant with name=%s", name)
+
+    error_info, auth_mgr = get_auth_mgr_object()
+    if error_info:
+        return error_info, None
+
+    if auth_mgr.allow_all_access():
+        return None, None  # "None" meand default_url for now
+
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info, None
@@ -274,15 +283,11 @@ def get_default_datastore_url(name):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info, None
 
-    error_info, auth_mgr = get_auth_mgr_object()
-
-    if error_info:
-        return error_info, None
-
     # if default_datastore is not set for this tenant, default_datastore will be None
     error_msg, default_datastore_url = tenant.get_default_datastore(auth_mgr.conn)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
+    logging.debug("returning url %s", default_datastore_url)
     return error_info, default_datastore_url
 
 def is_tenant_name_valid(name):

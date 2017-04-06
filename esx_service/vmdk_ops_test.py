@@ -42,9 +42,18 @@ import vmdk_utils
 import random
 import convert
 from error_code import ErrorCode
+from vmdkops_admin_sanity_test import ADMIN_CLI
+import glob
 
 # Max volumes count we can attach to a singe VM.
 MAX_VOL_COUNT_FOR_ATTACH = 60
+
+# Admin CLI to control config DB init
+ADMIN_INIT_LOCAL_AUTH_DB = ADMIN_CLI + " config init --local"
+ADMIN_RM_LOCAL_AUTH_DB = ADMIN_CLI + " config rm --local --confirm"
+
+# backups to cleanup
+CONFIG_DB_BAK_GLOB = "/etc/vmware/vmdkops/auth-db.bak_*"
 
 # Seed for test configurations.
 config = {
@@ -721,7 +730,7 @@ class VmdkTenantTestCase(unittest.TestCase):
 
             error_msg, tenant = auth_mgr.create_tenant(
                                            name=auth_data_const.DEFAULT_TENANT,
-                                           description="This is a default vmgroup",
+                                           description=auth_data_const.DEFAULT_TENANT_DESCR,
                                            vms=[],
                                            privileges=[])
 
@@ -1276,7 +1285,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
             logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
             error_info, tenant = auth_api._tenant_create(
                                            name=auth_data_const.DEFAULT_TENANT,
-                                           description="This is a default vmgroup",
+                                           description=auth_data_const.DEFAULT_TENANT_DESCR,
                                            vm_list=[],
                                            privileges=[])
         if error_info:
@@ -1440,6 +1449,22 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
                         "volumes-policy association listing failed")
 
         vsan_policy.delete(self.name)
+
+
+def setUpModule():
+    # Let's make sure we are testing a local DB
+    os.system(ADMIN_RM_LOCAL_AUTH_DB)
+    ret = os.system(ADMIN_INIT_LOCAL_AUTH_DB)
+    if ret != 0:
+        raise Exception("Failed to initialize local Config DB")
+
+def tearDownModule():
+    # clean up Config DB backups
+    for f in glob.glob(CONFIG_DB_BAK_GLOB):
+        os.remove(f)
+    ret = os.system(ADMIN_RM_LOCAL_AUTH_DB)
+    if ret != 0:
+        raise Exception("Failed to remove local Config DB")
 
 if __name__ == '__main__':
     # configure the log, find the dir and run the tests

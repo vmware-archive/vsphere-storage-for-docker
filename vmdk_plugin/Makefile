@@ -248,8 +248,9 @@ pkg-post:
 
 VM1 ?= "$(VM)"
 VM2 ?= "$(VM)"
+TEST_VM_USER ?= root
 
-TEST_VM = root@$(VM1)
+TEST_VM = $(TEST_VM_USER)@$(VM1)
 
 VM1_DOCKER = tcp://$(VM1):2375
 VM2_DOCKER = tcp://$(VM2):2375

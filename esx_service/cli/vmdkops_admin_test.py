@@ -30,6 +30,7 @@ import logging
 import convert
 import error_code
 import auth_data_const
+import auth_data
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 13
@@ -280,6 +281,29 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(args.vmgroup, 'vmgroup1')
         self.assertEqual(args.options, '"attach-as=independent_persistent"')
 
+    def test_config_parse(self):
+        '''Validate that the parser accepts the known config commands'''
+        valid_commands = [
+            'config init --datastore=store1',
+            'config init --datastore=store1 --force',
+            'config rm --local --confirm',
+            'config rm --no-backup --confirm --local',
+            'config mv --to=datastore'
+        ]
+        for cmd in valid_commands:
+            args = self.parser.parse_args(cmd.split())
+
+
+    def test_config_parse_fail(self):
+        '''Expected failures in config command parse'''
+        invalid_commands = ['status --all',
+                            'config init --confirm',
+                            'config rm --no-backup --datastore=DS1',
+                            'config mv --force']
+        for cmd in invalid_commands:
+            self.assert_parse_error(cmd)
+
+
     # Usage is always printed on a parse error. It's swallowed to prevent clutter.
     def assert_parse_error(self, command):
         with open('/dev/null', 'w') as f:
@@ -438,7 +462,8 @@ class TestSet(unittest.TestCase):
 class TestStatus(unittest.TestCase):
     """ Test status functionality """
     def test_status(self):
-        self.assertEqual(vmdkops_admin.status(None), None)
+        args = vmdkops_admin.create_parser().parse_args("status".split())
+        self.assertEqual(vmdkops_admin.status(args), None)
 
 class TestTenant(unittest.TestCase):
     """
@@ -460,15 +485,15 @@ class TestTenant(unittest.TestCase):
     # tenant access create, tenant access ls and tenant access rm
     # tenant access set command to update allow_create, volume_maxsize and volume_totalsize
     # tenant access set command to update default_datastore
-    # Test convered are mainly positive test, no negative tests are done here
+    # Test are positive, no negative testing is done here.
 
     # tenant1 info
     tenant1_name = "test_tenant1"
     random_id = random.randint(0, 65536)
-    vm1_name = 'test_vm1_'+str(random_id)
+    vm1_name = 'test_vm1_' + str(random_id)
     vm1 = None
     random_id = random.randint(0, 65536)
-    vm2_name = 'test_vm2_'+str(random_id)
+    vm2_name = 'test_vm2_' + str(random_id)
     vm2 = None
     tenant1_new_name = "new_test_tenant1"
     datastore_name = None
@@ -490,7 +515,6 @@ class TestTenant(unittest.TestCase):
                     self.datastoer1_path = datastore[2]
 
             else:
-
                 self.assertFalse(True)
 
         self.cleanup()
@@ -569,7 +593,7 @@ class TestTenant(unittest.TestCase):
                          convert_to_str(rows[1][2]),
                          convert_to_str(rows[1][3]),
                          convert_to_str(rows[1][4])
-                         ]
+                        ]
 
         self.assertEqual(expected_output, actual_output)
 
@@ -582,7 +606,7 @@ class TestTenant(unittest.TestCase):
 
         # update default vmgroup description
         error_info = auth_api._tenant_update(name=auth_data_const.DEFAULT_TENANT,
-                                             description="This is the default vm-group",
+                                             description="This is the default vmgroup",
                                              default_datastore=self.datastore_name)
         self.assertEqual(None, error_info)
 
@@ -600,14 +624,14 @@ class TestTenant(unittest.TestCase):
                          convert_to_str(rows[1][2]),
                          convert_to_str(rows[1][3]),
                          convert_to_str(rows[1][4])
-                         ]
+                        ]
 
         self.assertEqual(expected_output, actual_output)
 
         # tenant update to rename the tenant
-        error_info  = auth_api._tenant_update(
-                                              name=self.tenant1_name,
-                                              new_name=self.tenant1_new_name)
+        error_info = auth_api._tenant_update(
+            name=self.tenant1_name,
+            new_name=self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
 	# verify default vmgroup can't be renamed
@@ -937,6 +961,34 @@ class TestTenant(unittest.TestCase):
         error_info = auth_api._tenant_vm_add(name=auth_data_const.DEFAULT_TENANT,
                                              vm_list=[self.vm1_name])
         self.assertEqual(error_code.ErrorCode.FEATURE_NOT_SUPPORTED, error_info.code)
+
+
+class TestConfig(unittest.TestCase):
+    """ Test 'config' functionality """
+
+    def __init__(self, *args, **kwargs):
+        super(TestConfig, self).__init__(*args, **kwargs)
+        self.parser = vmdkops_admin.create_parser()
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_config(self):
+        '''Config testing'''
+
+        # TBD: Init config and check status - should be NotConfigured
+        args = self.parser.parse_args('config rm --local --confirm'.split())
+        self.assertEqual(vmdkops_admin.config_rm(args), None)
+
+        args = self.parser.parse_args('config init --local'.split())
+        self.assertEqual(vmdkops_admin.config_init(args), None)
+        # init
+        # check status - should be MultiNode
+        # init - should fail
+        # init -f should succeed
 
 if __name__ == '__main__':
     kv.init()
