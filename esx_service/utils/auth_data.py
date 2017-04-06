@@ -26,11 +26,10 @@ import vmdk_utils
 import vmdk_ops
 import logging
 import auth_data_const
-import error_code
 import threadutils
 import log_config
 import auth
-from error_code import ErrorCode
+from error_code import *
 
 AUTH_DB_PATH = '/etc/vmware/vmdkops/auth-db' # location of auth.db symlink
 CONFIG_DB_NAME = "vmdkops_config.db"         # name of the configuration DB file
@@ -649,7 +648,7 @@ class AuthorizationDataManager:
 
     def err_config_init_needed(self):
         """Return standard error msg for NotConfigured mode"""
-        return "Error: Please init configuration in vmdkops_admin before trying to change it"
+        return error_code_to_message[ErrorCode.INIT_NEEDED]
 
 
     def new_db(self):
@@ -834,7 +833,7 @@ class AuthorizationDataManager:
             vms=[],
             privileges=[])
         if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth_data_const.DEFAULT_TENANT, error_msg)
+            err = error_code_to_message[ErrorCode.TENANT_CREATE_FAILED].format(auth_data_const.DEFAULT_TENANT, error_msg)
             logging.warning(err)
             return err
         return None
@@ -857,20 +856,23 @@ class AuthorizationDataManager:
 
         error_msg, tenant = self.get_tenant(auth_data_const.DEFAULT_TENANT)
         if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth_data_const.DEFAULT_TENANT)
+            err = error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth_data_const.DEFAULT_TENANT)
             logging.warning(err)
             return err
 
         error_msg = tenant.set_datastore_access_privileges(self.conn, privileges)
         if error_msg:
-            err = error_code.error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS, error_msg)
+            err = error_code_to_message[ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED].format(auth_data_const.DEFAULT_TENANT, auth_data_const.DEFAULT_DS, error_msg)
             logging.warning(err)
             return err
         return None
 
 
     def get_tenant(self, tenant_name):
-        """ Return an object which match the given tenant_name """
+        """
+        Return an (err, obj) where err is None or error code,
+        and obj is an object which match the given tenant_name or None
+        """
         logging.debug("auth_data.get_tenant: tenant_name=%s", tenant_name)
 
         if self.allow_all_access():
@@ -882,7 +884,7 @@ class AuthorizationDataManager:
                                                 id=auth_data_const.DEFAULT_TENANT_UUID,
                                                 default_datastore_url=auth_data_const.DEFAULT_DS_URL)
             else:
-                return self.err_config_init_needed(), None
+                return ErrorCode.INIT_NEEDED, None
 
         tenant = None
         try:
@@ -932,8 +934,8 @@ class AuthorizationDataManager:
                                             id=id,
                                             default_datastore_url=default_datastore_url)
         except sqlite3.Error as e:
-            logging.error("Error %s when get tenant %s", e, tenant_name)
-            return str(e), tenant
+            logging.error("Error %s in get_tenant(%s)", e, tenant_name)
+            return ErrorCode.SQLITE3_ERROR, tenant
 
         return None, tenant
 
@@ -1084,10 +1086,10 @@ class AuthorizationDataManager:
     def remove_tenant(self, tenant_id, remove_volumes):
         """
         Remove a tenant with given id.
-
         A row with given tenant_id will be removed from table tenants, vms,
         and privileges.
         If remove_volumes is True -  all volumes for this tenant will be removed as well.
+        Returns None for success, error string for errors.
         """
         logging.debug("remove_tenant: tenant_id%s, remove_volumes=%d", tenant_id, remove_volumes)
 
@@ -1147,7 +1149,7 @@ class AuthorizationDataManager:
             logging.debug("get_tenant_name: tenant_uuid=%s tenant_name=%s", tenant_uuid, tenant_name)
             return None, tenant_name
         else:
-            error_msg =  error_code.error_code_to_message[ErrorCode.TENANT_NAME_NOT_FOUND].format(tenant_uuid)
+            error_msg =  error_code_to_message[ErrorCode.TENANT_NAME_NOT_FOUND].format(tenant_uuid)
             logging.debug("get_tenant_name:"+error_msg)
             return error_msg, None
 

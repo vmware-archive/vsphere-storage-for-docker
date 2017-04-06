@@ -928,7 +928,7 @@ def generate_tenant_ls_rows(tenant_list):
 
 def tenant_create(args):
     """ Handle tenant create command """
-    error_info, tenant = auth_api._tenant_create(
+    error_info, _ = auth_api._tenant_create(
         name=args.name,
         description="",
         vm_list=args.vm_list,
@@ -936,8 +936,8 @@ def tenant_create(args):
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vmgroup '{}' is created.  Do not forget to run "
-              "'vmgroup vm add' and 'vmgroup access add' commands to enable access control.".format(args.name))
+        print("vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' and "
+              "'vmgroup access add' to enable access control.".format(args.name))
 
 def tenant_update(args):
     """ Handle tenant update command """
