@@ -25,7 +25,7 @@ pages:
     - Blog:
         - Release announcement and updates: blog/2016-9-28.md
         - 0.8.1 Release (Tenancy) and stateful containers meetup: blog/2016-10-28.md
-theme: readthedocs
+theme: flatly
 google_analytics: ['UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/']
 site_favicon: favicon.ico
 site_author: containers@vmware.com

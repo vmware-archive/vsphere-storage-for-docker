@@ -1,3 +1,4 @@
+###...
 # Installation
 
 The installation has two parts – installation of the backend on ESX and installation of Docker plugin on the hosts where you plan to run containers with storage needs. You can use the [Tagged releases](https://github.com/vmware/docker-volume-vsphere/releases) in Github to get latest version or pick up a specific version. 
@@ -22,9 +23,11 @@ Installation Result
 
 The vDVS plugin can be installed on VMs like any docker plugin installation. You will need docker version 1.13/17.03 or above on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation. 
 
-The plugin is available as a docker image on the public docker registry but if you are using a private registry, you will have to point to the appropriate URL of the image. We have discontinued the DEB/RPM based installation of the vDVS plugin.
+The plugin is available as a docker image on the public docker registry but if you are using a private registry, you will have to point to the appropriate URL of the image.
 
-
+<div class="well">
+We have discontinued the DEB/RPM based installation of the vDVS plugin.
+</div>
 
 * **To install the plugin**
 ```

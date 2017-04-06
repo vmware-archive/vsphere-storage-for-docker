@@ -1,4 +1,4 @@
-
+###...
 The docker volume plugin at the moment supports vSphere and Photon platforms. All the volume provisioning and management operations are supported on both the platforms. Both the platforms can be used to provision VMDK based volumes and can be attached to containers. 
 
 The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
@@ -18,13 +18,36 @@ The configuration for vSphere docker volume driver require the driver type which
     "LogLevel": "info"
 }
 ```
-| Paramater Name  		| Description 		|
-| ---------------------:|:------------------|
-| driver 				|The name of Driver – vsphere/vmdk for vSphere driver and photon for the photon driver|
-| MaxLogAgeDays			|The max number of days for which to keep logs on the machine.|
-|MaxLogSizeMb			|The maximum size of the log file|
-|LogPath|The location at which loge file will be  created|
-|LogLevel|The verbosity of the log file can be one of INFO, DEBUG, ERROR (Please confirm log levels)|
+<table class="table table-striped table-hover ">
+  <thead>
+    <tr>
+      <th>Parameter Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>driver</td>
+      <td>The name of Driver – vsphere/vmdk for vSphere driver and photon for the photon driver</td>
+    </tr>
+    <tr>
+      <td>MaxLogAgeDays</td>
+      <td>The max number of days for which to keep logs on the machine.</td>
+    </tr>
+    <tr>
+      <td>MaxLogSizeMb</td>
+      <td>The maximum size of the log file</td>
+    </tr>
+    <tr>
+      <td>LogPath</td>
+      <td>The location at which loge file will be  created</td>
+    </tr>    
+    <tr>
+      <td>LogLevel</td>
+      <td>The verbosity of the log file can be one of INFO, DEBUG, ERROR (Please confirm log levels)</td>
+    </tr>
+</tbody>
+</table>
 
 
 * Q: Does the ESX service runs on every VM or you mean on a ESX server?
@@ -47,11 +70,28 @@ The docker photon volume driver creates and manages the volumes on a photon plat
     "Host" : "<32-digit photon VM ID "
 }
 ```
-| Paramater Name  		| Description 		|
-| ---------------------:|:------------------|
-| target 				|The endpoint of the Photon Controller with hostname and port in format: http://<photon_host>:<photon_port>|
-|project|The project ID in Photon to which this host belongs.|
-|host|The ID of docker host in Photon.|
+<table class="table table-striped table-hover ">
+  <thead>
+    <tr>
+      <th>Parameter Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>target</td>
+      <td>The endpoint of the Photon Controller with hostname and port in format: http://<photon_host>:<photon_port></td>
+    </tr>
+    <tr>
+      <td>project</td>
+      <td>The project ID in Photon to which this host belongs.</td>
+    </tr>
+    <tr>
+      <td>host</td>
+      <td>The ID of docker host in Photon.</td>
+    </tr>
+</tbody>
+</table>
 
 ## Deployment strategies
 
