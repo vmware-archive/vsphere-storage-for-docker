@@ -252,6 +252,8 @@ class TenantManagerImpl(vim.vcs.TenantManager):
         # Populate default datastore
         if tenant.default_datastore_url:
             result.default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
+            if result.default_datastore is None:
+                return None
 
         # Populate associated VMs
         if tenant.vms:
@@ -276,6 +278,9 @@ class TenantManagerImpl(vim.vcs.TenantManager):
 
         result = vim.vcs.storage.DatastoreAccessPrivilege()
         result.datastore =  vmdk_utils.get_datastore_name(privilege.datastore_url)
+        if result.datastore is None:
+            return None
+
         result.allow_create = privilege.allow_create
         result.volume_max_size = privilege.max_volume_size
         result.volume_total_size = privilege.usage_quota
