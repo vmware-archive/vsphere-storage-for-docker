@@ -58,11 +58,11 @@ def only_when_configured(ret_obj=False):
     def real_decorator(func):
         'The actual logic for decorator.'
 
-        def not_inited(*_, **__):
+        def not_inited():
             'Returns err code for not initited'
             return error_code.generate_error_info(ErrorCode.INIT_NEEDED)
 
-        def internal_error(*_, **__):
+        def internal_error():
             'Rerturns error code for internal errors'
             return error_code.generate_error_info(ErrorCode.INTERNAL_ERROR,
                                                   "@only_when_configured: %s" % func.__name__)
@@ -82,7 +82,7 @@ def only_when_configured(ret_obj=False):
                 else:
                     return not_inited()
 
-            # No error, we cat go ahead and call the function
+            # No error, we can go ahead and call the function
             return func(*args, **kwargs)
 
         # this function will actually do the checks for connection
