@@ -49,7 +49,7 @@ def get_auth_mgr_object():
 def only_when_configured(ret_obj=False):
     """
     Decorator to check if the DB was already inited.
-    Serves functions which return ErrInfo (when ret_obj=False) ,and the ones
+    Serves functions which return ErrInfo (when ret_obj=False), and the ones
     returning (ErrInfo, None) when ret_obj=True.
     Makes sure the decorated function is called only when DB is connected,
     otherwise a proper ErrInfo is returned.
@@ -59,16 +59,16 @@ def only_when_configured(ret_obj=False):
         'The actual logic for decorator.'
 
         def not_inited():
-            'Returns err code for not initited'
+            'Returns err code for not initialized'
             return error_code.generate_error_info(ErrorCode.INIT_NEEDED)
 
         def internal_error():
-            'Rerturns error code for internal errors'
+            'Returns error code for internal errors'
             return error_code.generate_error_info(ErrorCode.INTERNAL_ERROR,
                                                   "@only_when_configured: %s" % func.__name__)
 
         def check_config(*args, **kwargs):
-            'call func() if DB is configured and issue an error it not.'
+            'call func() if DB is configured and issue an error if not.'
             error_info, auth_mgr = get_auth_mgr_object()
             if error_info:
                 if ret_obj:

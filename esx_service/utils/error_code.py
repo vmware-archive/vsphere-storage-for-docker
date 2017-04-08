@@ -47,7 +47,7 @@ class ErrorCode:
     DEFAULT_DS_NOT_SET = 301
     DS_NOT_EXIST = 302
 
-    # indicates that config init needed for a requested operation
+    # Indicates that config init needed for a requested operation
     INIT_NEEDED = 303
 
     # Catch all for SQLite errors. Note that logging() will have extra  info
@@ -93,7 +93,7 @@ error_code_to_message = {
 
     ErrorCode.DEFAULT_DS_NOT_SET : "Default datastore is not set",
     ErrorCode.DS_NOT_EXIST : "Datastore {0} does not exist",
-    ErrorCode.INIT_NEEDED: "Please init configuration in vmdkops_admin before trying to change it",
+    ErrorCode.INIT_NEEDED: "Please init configuration with 'vmdkops_admin.py config init' before changing it.",
     ErrorCode.SQLITE3_ERROR: "Sqlite3 error - see log for more info",
 
     ErrorCode.VMODL_TENANT_NAME_EMPTY : "Vmgroup name is empty",
