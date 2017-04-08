@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-""" Provide APIs to tenant management """
+"""APIs for tenant management.
+Note that externally used functions are named _function() and internally are function(),
+which contradicts python module function naming. It will be fixed later (issue #1153) """
 
 import auth
 import auth_data_const
@@ -42,6 +44,53 @@ def get_auth_mgr_object():
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, err_msg)
         return error_info, None
     return None, auth_mgr
+
+
+def only_when_configured(ret_obj=False):
+    """
+    Decorator to check if the DB was already inited.
+    Serves functions which return ErrInfo (when ret_obj=False), and the ones
+    returning (ErrInfo, None) when ret_obj=True.
+    Makes sure the decorated function is called only when DB is connected,
+    otherwise a proper ErrInfo is returned.
+    """
+
+    def real_decorator(func):
+        'The actual logic for decorator.'
+
+        def not_inited():
+            'Returns err code for not initialized'
+            return error_code.generate_error_info(ErrorCode.INIT_NEEDED)
+
+        def internal_error():
+            'Returns error code for internal errors'
+            return error_code.generate_error_info(ErrorCode.INTERNAL_ERROR,
+                                                  "@only_when_configured: %s" % func.__name__)
+
+        def check_config(*args, **kwargs):
+            'call func() if DB is configured and issue an error if not.'
+            error_info, auth_mgr = get_auth_mgr_object()
+            if error_info:
+                if ret_obj:
+                    return internal_error(), None
+                else:
+                    return internal_error()
+
+            if auth_mgr.allow_all_access():
+                if ret_obj:
+                    return not_inited(), None
+                else:
+                    return not_inited()
+
+            # No error, we can go ahead and call the function
+            return func(*args, **kwargs)
+
+        # this function will actually do the checks for connection
+        return check_config
+
+    # @only_when_configured just handles the ret_obj param and returns real_decorator to be called
+    return real_decorator
+
 
 def get_tenant_from_db(name):
     """
@@ -76,6 +125,7 @@ def get_tenant_name(tenant_uuid):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info, tenant_name
 
+
 def check_tenant_exist(name):
     """ Check tenant with @param name exist or not
         Return value:
@@ -95,6 +145,7 @@ def check_tenant_exist(name):
         error_info = error_code.generate_error_info(ErrorCode.TENANT_ALREADY_EXIST, name)
         return error_info
 
+
 def create_tenant_in_db(name, description, vms, privileges):
     """
         Create a tenant object in DB
@@ -111,9 +162,9 @@ def create_tenant_in_db(name, description, vms, privileges):
         return error_info, None
 
     error_msg, tenant = auth_mgr.create_tenant(name=name,
-                                                description=description,
-                                                vms=vms,
-                                                privileges=privileges)
+                                               description=description,
+                                               vms=vms,
+                                               privileges=privileges)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
 
@@ -177,12 +228,14 @@ def default_privileges():
                     'usage_quota': 0}]
     return privileges
 
+
 def set_privileges(allow_create, privileges, value):
     """ set or unset allow_create privileges based on input param  """
     logging.debug("set_privileges: allow_create=%s, privileges=%s, value=%d", allow_create,
                   privileges, value)
     privileges[auth_data_const.COL_ALLOW_CREATE] = value
     return privileges
+
 
 def validate_string_to_bool(allow_create):
     """
@@ -273,7 +326,10 @@ def get_default_datastore_url(name):
         return error_info, None
 
     if auth_mgr.allow_all_access():
-        return None, None  # "None" meand default_url for now
+        if name == auth_data_const.DEFAULT_TENANT:
+            return None, None  # "None" means default_url for now
+        else:
+            return error_code.generate_error_info(ErrorCode.INIT_NEEDED), None
 
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
@@ -309,8 +365,9 @@ def is_vm_duplicate(vm_list):
 
     return None
 
+@only_when_configured(ret_obj=True)
 def _tenant_create(name, description="", vm_list=None, privileges=None):
-    """ API to create a tenant """
+    """ API to create a tenant . Returns (ErrInfo, Tenant) """
     logging.debug("_tenant_create: name=%s description=%s vm_list=%s privileges=%s",
                   name, description, vm_list, privileges)
     if not is_tenant_name_valid(name):
@@ -352,6 +409,8 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
 
     return None, tenant
 
+
+@only_when_configured()
 def _tenant_update(name, new_name=None, description=None, default_datastore=None):
     """ API to update a tenant """
     error_info, tenant = get_tenant_from_db(name)
@@ -363,7 +422,6 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
         return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
-
     if error_info:
         return error_info
 
@@ -396,13 +454,15 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
             return error_info
 
         datastore_url = vmdk_utils.get_datastore_url(default_datastore)
-        error_msg= tenant.set_default_datastore(auth_mgr.conn, datastore_url)
+        error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
         if error_msg:
             error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
             return error_info
 
     return None
 
+
+@only_when_configured()
 def _tenant_rm(name, remove_volumes=False):
     """ API to remove a tenant """
     logging.debug("_tenant_rm: name=%s remove_volumes=%s", name, remove_volumes)
@@ -496,8 +556,8 @@ def vm_in_any_tenant(vms):
 
 def named_tenant(func):
     """
-        decorator to check whether the function is called by a named tenant
-        return error that feature is not supported if called by _DEFAULT tenant
+    Decorator to check whether the function is called by a named tenant.
+    Return error 'feature is not supported' if called by _DEFAULT tenant
     """
     def not_supported():
         return error_code.generate_error_info(ErrorCode.FEATURE_NOT_SUPPORTED,
@@ -510,6 +570,7 @@ def named_tenant(func):
     return check_name
 
 
+@only_when_configured()
 @named_tenant
 def _tenant_vm_add(name, vm_list):
     """ API to add vms for a tenant """
@@ -558,6 +619,7 @@ def _tenant_vm_add(name, vm_list):
     return error_info
 
 
+@only_when_configured()
 @named_tenant
 def _tenant_vm_rm(name, vm_list):
     """ API to remove vms for a tenant """
@@ -625,6 +687,7 @@ def _tenant_vm_ls(name):
     return None, tenant.vms
 
 
+@only_when_configured()
 @named_tenant
 def _tenant_vm_replace(name, vm_list):
     """ API to replace vms for a tenant """
@@ -723,12 +786,13 @@ def check_privilege_parameters(privilege):
     return None
 
 
+@only_when_configured()
 def _tenant_access_add(name, datastore, allow_create=None, default_datastore=False,
                        volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
     """ API to add datastore access for a tenant """
 
     logging.debug("_tenant_access_add: name=%s datastore=%s, allow_create=%s "
-                  "volume_maxsize_in_MB=%s volume_totalsize_in_MB=%s", name, datastore, allow_create,
+                  "volume_maxsize(MB)=%s volume_totalsize(MB)=%s", name, datastore, allow_create,
                   volume_maxsize_in_MB, volume_totalsize_in_MB)
 
     error_info, tenant = get_tenant_from_db(name)
@@ -779,7 +843,6 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
         return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
-
     if error_info:
         return error_info
 
@@ -799,7 +862,7 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
 
     if len(result) == 1 or default_datastore:
         if datastore_url == auth_data_const.DEFAULT_DS_URL:
-            # Create DEFAULT privilege for DEFAULT tenant, should not set the default_datastore in DB
+            #  DEFAULT privilege for DEFAULT tenant does not need default_datastore setting
             error_msg = tenant.set_default_datastore(auth_mgr.conn, "")
         else:
             error_msg = tenant.set_default_datastore(auth_mgr.conn, datastore_url)
@@ -808,10 +871,12 @@ def _tenant_access_add(name, datastore, allow_create=None, default_datastore=Fal
 
     return error_info
 
+
+@only_when_configured()
 def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
     """ API to modify datastore access for a tenant """
     logging.debug("_tenant_access_set: name=%s datastore=%s, allow_create=%s "
-                  "volume_maxsize_in_MB=%s volume_totalsize_in_MB=%s", name, datastore, allow_create,
+                  "volume_maxsize(MB)=%s volume_totalsize(MB)=%s", name, datastore, allow_create,
                   volume_maxsize_in_MB, volume_totalsize_in_MB)
 
     error_info, tenant = get_tenant_from_db(name)
@@ -875,9 +940,10 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
 
     error_msg = tenant.set_datastore_access_privileges(auth_mgr.conn, [privileges_dict])
     if error_msg:
-            error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
+        error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
 
+@only_when_configured()
 def _tenant_access_rm(name, datastore):
     """ API to remove datastore access for a tenant """
     logging.debug("_tenant_access_rm: name=%s datastore=%s", name, datastore)
@@ -904,7 +970,6 @@ def _tenant_access_rm(name, datastore):
         return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
-
     if error_info:
         return error_info
 
@@ -914,7 +979,7 @@ def _tenant_access_rm(name, datastore):
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
         return error_info
 
-    # get dafault_datastore, if default_datastore is the same as param "datastore"
+    # get default_datastore, if default_datastore is the same as param "datastore"
     # need to set default_datastore_url to "" in tenants table
     error_info, default_datastore_url = get_default_datastore_url(name)
     if error_info:
@@ -927,15 +992,17 @@ def _tenant_access_rm(name, datastore):
 
     return error_info
 
+
+@only_when_configured(ret_obj=True)
 def _tenant_access_ls(name):
-    """ Handle tenant access ls command """
+    """ Handle tenant access ls command. Returns (ErrInfo, [list of privileges]) """
     logging.debug("_tenant_access_ls: name=%s", name)
     error_info, tenant = get_tenant_from_db(name)
     if error_info:
         return error_info, None
 
     if not tenant:
-       error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
-       return error_info, None
+        error_info = error_code.generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
+        return error_info, None
 
     return None, tenant.privileges
