@@ -151,7 +151,8 @@ def create_datastore_access_privileges(privileges):
 def create_vm_list(vms):
     """
         Return a list of (vm_uuid, vm_name) with given input
-        @Param vms: a list of sqlite3.Row tuple, each tuple has format like this (vm_uuid, tenant_id, vm_name)
+        @Param vms: a list of sqlite3.Row tuple.
+        Each tuple has format like this (vm_uuid, tenant_id, vm_name)
         Example:
         Input: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4', u'88d98e7a-8421-45c8-a2c4-7ffb6c437a4f', 'ubuntu-VM0.1'), (u'564dca08-2772-aa20-a0a0-afae6b255fee', u'88d98e7a-8421-45c8-a2c4-7ffb6c437a4f', 'ubuntu-VM1.1')]
         Output: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4', 'ubuntu-VM0.1'), (u'564dca08-2772-aa20-a0a0-afae6b255fee', 'ubuntu-VM0.1')]

@@ -420,7 +420,7 @@ class TestAuthDataModel(unittest.TestCase):
 
     def test_remove_tenants(self):
         vms = [(self.vm1_uuid, self.vm1_name)]
-        
+
         privileges = self.get_privileges()
         default_datastore = self.get_default_datastore()
         default_datastore_url = self.get_datastore_url(default_datastore)
@@ -431,7 +431,7 @@ class TestAuthDataModel(unittest.TestCase):
                                                           privileges=privileges)
 
         self.assertEqual(error_info, None)
-        self.assertTrue(uuid.UUID(tenant1.id))     
+        self.assertTrue(uuid.UUID(tenant1.id))
         vms = [(self.vm2_uuid, self.vm2_name), (self.vm3_uuid, self.vm3_name)]
         privileges = []
         error_info, tenant2 = self.auth_mgr.create_tenant(name=self.tenant_2_name,
