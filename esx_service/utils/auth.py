@@ -199,10 +199,7 @@ def get_privileges(tenant_uuid, datastore_url):
     if err_msg:
         return err_msg, None
 
-    # TBD return _auth_mgr.get_defaut_privileges_dict() when both params matchm otherwise return std err
-
     privileges = []
-    #logging.debug("get_privileges tenant_uuid=%s datastore_url=%s", tenant_uuid, datastore_url)
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT * FROM privileges WHERE tenant_id = ? and datastore_url = ?",

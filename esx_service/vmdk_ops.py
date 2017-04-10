@@ -161,7 +161,8 @@ def RunCommand(cmd):
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
-def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=None, datastore_url=None):
+def createVMDK(vmdk_path, vm_name, vol_name,
+               opts={}, vm_uuid=None, tenant_uuid=None, datastore_url=None):
     logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
 
     if os.path.isfile(vmdk_path):
@@ -214,8 +215,8 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         # Attempt to set policy to vmdk
         # set_policy_to_vmdk() deleted vmdk if couldn't set policy
         set_err = set_policy_to_vmdk(vmdk_path=vmdk_path,
-                            opts=opts,
-                            vol_name=vol_name)
+                                     opts=opts,
+                                     vol_name=vol_name)
         if set_err:
             return set_err
 
@@ -224,7 +225,7 @@ def createVMDK(vmdk_path, vm_name, vol_name, opts={}, vm_uuid=None, tenant_uuid=
         logging.warning(msg)
         error_info = err(msg)
         clean_err = cleanVMDK(vmdk_path=vmdk_path,
-                            vol_name=vol_name)
+                              vol_name=vol_name)
 
         if clean_err:
             logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
@@ -275,7 +276,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
         return err("Failed to initialize source volume path {0}: {1}".format(src_path, errMsg))
 
     src_vmdk_path = vmdk_utils.get_vmdk_path(src_path, src_volume)
-    logging.debug("cloneVMDK: src_path=%s, src_volume=%s, src_vmdk_path=%s", src_path, src_volume, src_vmdk_path)
+    logging.debug("cloneVMDK: src path=%s vol=%s vmdk_path=%s", src_path, src_volume, src_vmdk_path)
     if not os.path.isfile(src_vmdk_path):
         return err("Could not find volume for cloning %s" % opts[kv.CLONE_FROM])
 
@@ -766,7 +767,6 @@ def get_full_vol_name(vmdk_name, datastore):
     Forms full volume name from vmdk file name an datastore as volume@datastore
     """
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
-    #logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
 
 def datastore_path_exist(datastore_name):
