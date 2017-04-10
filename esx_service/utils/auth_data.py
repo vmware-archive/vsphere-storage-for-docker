@@ -901,9 +901,6 @@ class AuthorizationDataManager:
                 description = r[auth_data_const.COL_DESCRIPTION]
                 default_datastore_url = r[auth_data_const.COL_DEFAULT_DATASTORE_URL]
 
-                logging.debug("id=%s name=%s description=%s default_datastore_url=%s",
-                              id, name, description, default_datastore_url)
-
                 # search vms for this tenant
                 vms = []
                 cur = self.conn.execute(

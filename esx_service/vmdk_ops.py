@@ -766,7 +766,7 @@ def get_full_vol_name(vmdk_name, datastore):
     Forms full volume name from vmdk file name an datastore as volume@datastore
     """
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
-    logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
+    #logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
 
 def datastore_path_exist(datastore_name):
