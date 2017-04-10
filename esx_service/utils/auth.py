@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module to provide APIs for authorization checking for VMDK ops.
+""" Module to provide APIs for authorization checking for VMDK ops."""
 
-"""
+
 import logging
-import auth_data
 import sqlite3
 import convert
-import auth_data_const
-import volume_kv as kv
 import threadutils
 import log_config
+import auth_data
+import auth_data_const
 import error_code
 import vmdk_utils
+import volume_kv as kv
 
 # All supported vmdk commands that need authorization checking
 CMD_CREATE = 'create'
@@ -35,18 +35,18 @@ CMD_DETACH = 'detach'
 SIZE = 'size'
 
 # thread local storage in this module namespace
-thread_local = threadutils.get_local_storage()
+_thread_local = threadutils.get_local_storage()
 
 def get_auth_mgr():
     """ Get a connection to auth DB. """
-    global thread_local
-    if not hasattr(thread_local, '_auth_mgr'):
+
+    if not hasattr(_thread_local, '_auth_mgr'):
         try:
-            thread_local._auth_mgr = auth_data.AuthorizationDataManager()
-            thread_local._auth_mgr.connect()
+            _thread_local._auth_mgr = auth_data.AuthorizationDataManager()
+            _thread_local._auth_mgr.connect()
         except (auth_data.DbConnectionError, auth_data.DbAccessError) as err:
             return str(err), None
-    return None, thread_local._auth_mgr
+    return None, _thread_local._auth_mgr
 
 def get_default_tenant():
     """
@@ -202,7 +202,7 @@ def get_privileges(tenant_uuid, datastore_url):
     # TBD return _auth_mgr.get_defaut_privileges_dict() when both params matchm otherwise return std err
 
     privileges = []
-    logging.debug("get_privileges tenant_uuid=%s datastore_url=%s", tenant_uuid, datastore_url)
+    #logging.debug("get_privileges tenant_uuid=%s datastore_url=%s", tenant_uuid, datastore_url)
     try:
         cur = _auth_mgr.conn.execute(
             "SELECT * FROM privileges WHERE tenant_id = ? and datastore_url = ?",
@@ -415,12 +415,8 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         None
         - tenant_name: If the VM belongs to a tenant, return tenant_name, otherwise, return
         None
-
     """
-    logging.debug("Authorize: vm_uuid=%s", vm_uuid)
-    logging.debug("Authorize: datastore_url=%s", datastore_url)
-    logging.debug("Authorize: cmd=%s", cmd)
-    logging.debug("Authorize: opt=%s", opts)
+    logging.debug("Authorize: cmd=%s opts=`%s' vm_uuid=%s, datastore_url=%s", cmd, opts, vm_uuid, datastore_url)
 
     error_msg, _auth_mgr = get_auth_mgr()
     if error_msg:
@@ -452,13 +448,13 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         error_msg, privileges = get_privileges(tenant_uuid, datastore_url)
         if error_msg:
             return error_msg, None, None
-        logging.debug("authorize: tenant_uuid=%s, datastore_url=%s, privileges=%s",
-                       tenant_uuid, datastore_url, privileges)
         result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges)
+        logging.debug("authorize: vmgroup_name=%s, datastore_url=%s, privileges=%s, result %s",
+                      tenant_name, datastore_url, privileges, result)
 
-        if not result:
-            logging.info("cmd %s with opts %s on tenant_uuid %s datastore_url %s is allowed to execute",
-                         cmd, opts, tenant_uuid, datastore_url)
+        if result is None:
+            logging.info("cmd=%s opts=%s vmgroup=%s datastore_url=%s is allowed to execute",
+                         cmd, opts, tenant_name, datastore_url)
 
         return result, tenant_uuid, tenant_name
 

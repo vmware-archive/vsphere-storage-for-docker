@@ -1006,3 +1006,11 @@ def _tenant_access_ls(name):
         return error_info, None
 
     return None, tenant.privileges
+
+
+def db_cache_enable():
+    """
+    API wrapper to enable in-memory cache of on-disk auth. DB when
+    used in ReadOnly mode
+    """
+    auth_data.AuthorizationDataManager.cache_enable()

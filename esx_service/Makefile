@@ -198,7 +198,7 @@ TEST_PATTERN ?= '*'
 test-esx:
 	@echo "Copying files to $(ESX):$(TMP_LOC) and running .py unittests ..."
 	$(SSH) root@$(ESX) 'mkdir -p $(TMP_LOC)'
-	$(SCP) $(TEST_FILES) $(TO_ESX_BIN) $(TO_ESX_PY) root@$(ESX):$(TMP_LOC)
+	$(SCP) $(TEST_FILES) $(TO_ESX_BIN) $(TO_ESX_PY) $(PY_SQLITE) $(SO_SQLITE) root@$(ESX):$(TMP_LOC)
 	$(SSH) root@$(ESX) \
 		'for i in $(TMP_LOC)/$(TEST_PATTERN)_test.py ; \
 				do echo Running unit tests in $$i... ; python $$i ; \

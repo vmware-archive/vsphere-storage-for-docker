@@ -348,7 +348,7 @@ e2e-dkrVolDriver-test:
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
-	$(CLEANVM_SH) "$(VMS)" "$(TEST_VOL_NAME)"
+	-$(CLEANVM_SH) "$(VMS)" "$(TEST_VOL_NAME)"
 
 clean-esx:
 	$(CLEANESX_SH) "$(ESX)" esx-vmdkops-service

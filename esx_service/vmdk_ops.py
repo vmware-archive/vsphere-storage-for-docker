@@ -82,7 +82,6 @@ import vmdk_utils
 import vsan_policy
 import vsan_info
 import auth
-import sqlite3
 import convert
 import error_code
 import auth_data_const
@@ -282,8 +281,8 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
     # Form datastore path from vmdk_path
     dest_vol = vmdk_utils.get_datastore_path(vmdk_path)
     source_vol = vmdk_utils.get_datastore_path(src_vmdk_path)
-
-    with lockManager.get_lock(source_vol):
+    lockname = "{}.{}.{}".format(src_datastore, tenant_name, src_volume)
+    with lockManager.get_lock(lockname):
         # Verify if the source volume is in use.
         attached, uuid, attach_as = getStatusAttached(src_vmdk_path)
         if attached:
@@ -329,8 +328,8 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
         # Attempt to set policy to vmdk
         # set_policy_to_vmdk() deleted vmdk if couldn't set policy
         set_err = set_policy_to_vmdk(vmdk_path=vmdk_path,
-                            opts=opts,
-                            vol_name=vol_name)
+                                     opts=opts,
+                                     vol_name=vol_name)
 
         if set_err:
             return set_err
@@ -766,7 +765,7 @@ def get_full_vol_name(vmdk_name, datastore):
     Forms full volume name from vmdk file name an datastore as volume@datastore
     """
     vol_name = vmdk_utils.strip_vmdk_extension(vmdk_name)
-    logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
+    #logging.debug("get_full_vol_name: %s %s", vmdk_name, datastore)
     return "{0}@{1}".format(vol_name, datastore)
 
 def datastore_path_exist(datastore_name):
@@ -825,8 +824,8 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     else:
         default_datastore = get_datastore_name(default_datastore_url)
 
-    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore_url=%s",
-                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url)
+    logging.debug("executeRequest: vm uuid=%s name=%s, tenant_name=%s, default_datastore=%s",
+                  vm_uuid, vm_name, tenant_name, default_datastore)
 
     if cmd == "list":
         threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
@@ -840,9 +839,9 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
 
     if datastore and not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
-                "Known datastores: %s.\n" \
-                "Default datastore: %s" \
-                % (datastore, ", ".join(get_datastore_names_list()), default_datastore))
+                   "Known datastores: %s.\n" \
+                   "Default datastore: %s" \
+                   % (datastore, ", ".join(get_datastore_names_list()), default_datastore))
 
     if not datastore:
         datastore_url = default_datastore_url
@@ -865,8 +864,8 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
     # Set up locking for volume operations.
-    # Lock name defaults to volume "datastore path"
-    lockname = vmdk_utils.get_datastore_path(vmdk_path)
+    # Lock name defaults to combination of DS,tenant name and vol name
+    lockname = "{}.{}.{}".format(vm_datastore, tenant_name, vol_name)
     # Set thread name to vm_name-lockname
     threadutils.set_thread_name("{0}-{1}".format(vm_name, lockname))
 
@@ -879,17 +878,17 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
             response = getVMDK(vmdk_path, vol_name, datastore)
         elif cmd == "create":
             response = createVMDK(vmdk_path=vmdk_path,
-                                vm_name=vm_name,
-                                vol_name=vol_name,
-                                opts=opts,
-                                tenant_uuid=tenant_uuid,
-                                datastore_url=datastore_url)
+                                  vm_name=vm_name,
+                                  vol_name=vol_name,
+                                  opts=opts,
+                                  tenant_uuid=tenant_uuid,
+                                  datastore_url=datastore_url)
         elif cmd == "remove":
             response = removeVMDK(vmdk_path=vmdk_path,
-                                vol_name=vol_name,
-                                vm_name=vm_name,
-                                tenant_uuid=tenant_uuid,
-                                datastore_url=datastore_url)
+                                  vol_name=vol_name,
+                                  vm_name=vm_name,
+                                  tenant_uuid=tenant_uuid,
+                                  datastore_url=datastore_url)
 
         # For attach/detach reconfigure tasks, hold a per vm lock.
         elif cmd == "attach":
@@ -1625,9 +1624,9 @@ def main():
     try:
         # Load and use DLL with vsocket shim to listen for docker requests
         load_vmci()
-
         kv.init()
         connectLocalSi()
+        auth_api.db_cache_enable()
         handleVmciRequests(port)
     except Exception as e:
         logging.exception(e)

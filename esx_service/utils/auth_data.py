@@ -22,12 +22,15 @@ This way the code operates 'tenants' but user/admin operates 'vmgroups'
 import sqlite3
 import uuid
 import os
+import logging
+import threadutils
+import threading
+import cStringIO as StringIO
+
 import vmdk_utils
 import vmdk_ops
-import logging
-import auth_data_const
-import threadutils
 import log_config
+import auth_data_const
 import auth
 from error_code import *
 
@@ -417,13 +420,222 @@ class DockerVolumeTenant:
 
         return None
 
+class DBCacheManager(object):
+    """
+    Support for thread--shared in-memory RO cache.
 
-class AuthorizationDataManager:
+    - uses sqlite3 in -memory shared DB. One connection per thread is expected.
+    - keeps a connetion to in-mem DB to prevent it from cleaning up static cache
+    - on first enable, check we are not enabled, populate the DB
+    - gets NEW connection when asked: conn = cache.new_connection()
+    - on refresh, drains in flight Auth managers using the hshared cache,
+       drop  connection (that will deleted the DB when sqlite refcount drops to 0) and recreate cache
+    """
+
+    # this is in-memory shared DB URL
+    MEMDB_NAME = "file::memory:?cache=shared"
+
+    # - How often to refresh memdb from on-disk DB.  Default 15 min.
+    REFRESH_SEC = int(os.getenv("VMDKOPS_MEMDB_REFRESH_SEC", default=900))
+
+
+    def __init__(self):
+        # Init connection to in-memory DB.
+        # We keep one connection open to assure the DB is not garbage collected too early
+        # We refresh it every MEMDB_REFRESH_SEC i. When we refresh, we first drain all in-flight
+        # AuthernticatoinDataManagers to make sure nobody is using the copy.
+        #
+        # 'None' means the feature is disabled
+        self._memdb_con = None
+
+        # Init Barrier
+        # We need to avoid refresh (which could be scheduled by Timer on a different thread)
+        # from messing DB content for auth. mgrs in flight. So  we acquire a barrier,
+        # and wait until all auth.managers in flight land.
+        self._barrier = threading.Condition()
+        self._in_flight = 0
+
+        # Init timer for periodic refreshes
+        self._timer = None
+
+    def __del__(self):
+        pass
+
+    def _drain_and_close(self):
+        """
+        Drains Auth. managers in fight and closes last memdb connection.
+        *** EXPECTS to be run under _barrier lock.
+        """
+        logging.debug("_Drain and close")
+        # drain the in-flight users
+        self._memdb_con.close()
+        self._memdb_con = None
+        while self._in_flight > 0:
+            logging.debug("Wating for inflight %d", self._in_flight)
+            self._barrier.wait()
+        logging.debug("DONE")
+
+
+    def enable(self):
+        """
+        Enables in-memory ReadOnly cache DB for auth DB.
+        This includes opening on-disk DB and populating in-memory DB from it.
+        Note this will force the connection to treat the DB as read only.
+        """
+        logging.debug("memdb_enable")
+        if not self.is_enabled():
+            logging.debug("memdb_enable Starting refresh")
+            # No need to drain anything as nobody was using the cache so far
+            # Proceed to creation os a new cache
+            self._memdb_refresh_periodically(frequency_sec=self.__class__.REFRESH_SEC)
+
+    def disable(self):
+        """
+        Disables the DB cache and closes the connection. The  DB will be deleted when all
+        AuthorizationDataManagers using this cache land and close their connection.
+        """
+        logging.debug("memdb_disable")
+        with self._barrier:
+            if self.is_enabled():
+                self._timer.cancel()
+                self._drain_and_close()
+        logging.debug("Disabled")
+
+
+    def is_enabled(self):
+        'True if memdb cache is enabled'
+        with self._barrier:
+            ret = self._memdb_con is None
+        return ret
+
+    @staticmethod
+    def _make_connection_readonly(con):
+        con.executescript("PRAGMA query_only = 1; PRAGMA read_uncommitted = 1;")
+
+    @classmethod
+    def new_connection(cls):
+        'Opens a new connection to shared memdb'
+        con = sqlite3.connect(cls.MEMDB_NAME)
+        # make it readonly and allow to read uncommited (since it's readonly anyways)
+        cls._make_connection_readonly(con)
+        return con
+
+    def _memdb_refresh(self):
+        """
+        Refreshes in-memory RO cache:
+            - Drains in-flight managers if requested
+            - Opens the on-disk DB, populate in-memory DB and close on-disk.
+            - Makes sure the cache is really Read Only .
+        Returns None (success) or err_string.
+
+        We do it via sqlite "dump" API which generates full SQL to recreated the DB.
+        On a high scale it's a bad idea so we may want to replace this eventually
+        with C code using sqlite backup API, which is not supported in python bindings
+        """
+
+        logging.info("Refreshing Memory DB Cache...")
+        try:
+            # First, convert on-disk DB into "dump"-format string 'tempfile'
+            mgr = AuthorizationDataManager()
+            con = mgr.connect()
+        except (DbConnectionError, DbAccessError) as err:
+            logging.warning("DB connection refused : %s", err)
+            i = 5
+            while i > 0:
+                # TODO - try to re connect ************* TBD
+                logging.warning("TBD: retrying")
+                i -= 1
+            return str(err)
+
+        # Unless there is a DB to cache we have nothing to do
+        if mgr.mode not in [DBMode.SingleNode, DBMode.MultiNode]:
+            return None
+
+        # Read database to 'tempfile' string
+        tempfile = StringIO.StringIO()
+        for line in con.iterdump():
+            tempfile.write('%s\n' % line)
+        tempfile.seek(0)
+
+        # wait for auth.mgrs using existing cache to land. then replace the cache with new
+        with self._barrier:
+            self._drain_and_close()
+            # Re-reate a database in memory and populate from 'tempfile' string
+            memdb_con = sqlite3.connect(self.__class__.MEMDB_NAME)
+            memdb_con.cursor().executescript(tempfile.read())
+            self.__class__._make_connection_readonly(memdb_con)
+            self._memdb_con = memdb_con
+
+        # TODO - check we call commit before close() for main DB in ADmin CLI
+        return None
+
+    def _memdb_refresh_periodically(self, frequency_sec):
+        """
+        Refreshes the DB cache and then schedules next refresh in <frequency_sec>
+        """
+
+        logging.debug("Enabling cache - starting refresh at %d sec", frequency_sec)
+        # Refresh (aka "populate") the memdb
+        err = self._memdb_refresh()
+        if err:
+            logging.error(DB_REF + " _memdb_refresh: %s", err)
+
+        # Schedule the next refresh
+        self._timer = threading.Timer(frequency_sec,
+                                      self._memdb_refresh_periodically, [self, frequency_sec])
+        self._timer.start()
+
+    def manager_register(self):
+        """
+        Increment "in-flight'count.
+        No need to notify since we may wait only on decreasing counts
+        """
+        with self._barrier:
+            self._in_flight += 1
+
+    def manager_unregister(self):
+        """
+        Decrease in-flight count and notify waiting cache refresh, if any
+        """
+        with self._barrier:
+            self._in_flight -= 1
+            self._barrier.notify()
+
+
+class AuthorizationDataManager(object):
     """
     This class abstracts the creation, modification and retrieval of
     authorization data used by vmdk_ops as well as the VMODL interface for
     Docker volume management.
     """
+
+    # We   only support DB caching for the whole app (all threads)
+    # so it's class var
+    cache_mgr = DBCacheManager()
+
+    @classmethod
+    def cache_enable(cls):
+        """
+        Enable DB cacheing. It is one way street (and default is No Cacheing
+        So we do not provide disable().
+        Also, when cache is enabled, only ReadOnly queries are allowed
+        """
+        cls.cache_mgr.enable()
+
+    # a few helpers
+
+    def _cache_enabled(self):
+        'A helper to check if we use shared connection'
+        return self.__class__.cache_mgr.is_enabled()
+
+    def _cache_get_con(self):
+        'A helper to return a new cache connection. It is caller responsibility to close it'
+        self.__class__.cache_mgr.manager_register()
+        return self.__class__.cache_mgr.new_connection()
+
+    def _cache_notify_close(self):
+        'A helper to notify cache refcounting. The connection is expected to be already closed'
+        self.__class__.cache_mgr.manager_unregister()
 
     @classmethod
     def ds_to_db_path(cls, datastore):
@@ -447,6 +659,7 @@ class AuthorizationDataManager:
 
         self.db_path = db_path
         self.conn = self.__mode = None
+        self._is_cached = False
 
     def __del__(self):
         """ Destructor. For now, only closes the connection"""
@@ -462,10 +675,13 @@ class AuthorizationDataManager:
 
     def __close(self):
         """ Close the connection to the DB"""
-        if self.conn:
-            self.conn.close()
-            self.conn = None
+        if not self.conn:
+            return
 
+        self.conn.close()
+        self.conn = None
+        if self._is_cached:
+            self._cache_notify_close()
 
     def __get_db_version(self):
         """
@@ -479,7 +695,7 @@ class AuthorizationDataManager:
             cur = self.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'versions';")
             result = cur.fetchall()
         except sqlite3.Error as e:
-            logging.error("Error %s when checking whether table versions exists or not", e)
+            logging.error("Error '%s' when checking whether table versions exists or not", e)
             return str(e), major_ver, minor_ver
 
         if not result:
@@ -506,7 +722,7 @@ class AuthorizationDataManager:
         minor_ver = 0
         error_msg, major_ver, minor_ver = self.__get_db_version()
         if error_msg:
-            logging.error("__need_upgrade_db: fail to get version info of auth-db, cannot do upgrade")
+            logging.error("__need_upgrade_db: fail to get version of auth-db, cannot do upgrade")
             return False
 
         if major_ver != DB_MAJOR_VER or minor_ver != DB_MINOR_VER:
@@ -547,25 +763,34 @@ class AuthorizationDataManager:
                 self._handle_upgrade_1_0_to_1_1()
 
 
-    def __connect(self):
+    def __connect(self, use_cache=True):
         """
         Private function for connecting and setting return type for select ops.
         Raises a ConnectionFailed exception when fails to connect.
         """
         if self.conn:
-            logging.info("AuthorizationDataManagerReconnecting to %s on request", self.db_path)
-            self.__close()
-        self.conn = sqlite3.connect(self.db_path)
+            logging.info("Connect() called on on connected %s, ignoring", self.db_path)
+            return
+
+        if use_cache and self._cache_enabled():
+            logging.info("Using cached " + DB_REF)
+            self.conn = self._cache_get_con()
+            self._is_cached = True
+        else:
+            logging.info("Connecting to %s", self.db_path)
+            self.conn = sqlite3.connect(self.db_path)
+            # Use return rows as Row instances instead of tuples
+
         if not self.conn:
             raise DbConnectionError(self.db_path)
-        # Use return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
 
 
     def connect(self):
         """
         Connect to a sqlite database at `db_path`. Validates mode, checks for upgrades.
-        If the DB does not exist, simply exists leving self.__mode as NotConfigured
+        If the DB does not exist, simply exists, leaving self.__mode as NotConfigured
+        Returns sqlite connectin object
         """
 
         self.__mode = self.__discover_mode_and_connect()
@@ -575,9 +800,10 @@ class AuthorizationDataManager:
 
         if self.__mode == DBMode.NotConfigured:
             logging.info("Auth DB %s is missing, allowing all access", self.db_path)
-            return
-
+            return None
         self.__handle_upgrade()
+        return self.conn
+
 
     @property
     def mode(self):
@@ -598,7 +824,7 @@ class AuthorizationDataManager:
         logging.info("Checking DB mode for %s...", self.db_path)
         # check if the path exists (without following symlinks)
         if not os.path.lexists(self.db_path):
-            logging.info(DB_REF + "does not exist. mode NotConfigured")
+            logging.info(DB_REF + "does not exist, mode NotConfigured")
             return DBMode.NotConfigured
 
         if not os.path.exists(self.db_path):
@@ -610,7 +836,7 @@ class AuthorizationDataManager:
 
         # it's a single node config file. Check if the DB is empty so we can drop it.
         if not os.path.islink(self.db_path):
-            logging.info(DB_REF + "exists and has modifications, mode SingleNode")
+            logging.info(DB_REF + "exists, mode SingleNode, cached=%s", self._is_cached)
             return DBMode.SingleNode
 
         # let's check if the db content seems good
@@ -654,10 +880,10 @@ class AuthorizationDataManager:
     def new_db(self):
         """
         Create brand new DB content at self.db_path. Expects clean slate.
-        :returns: None for success , a string (with error) for error
+        :returns: None for success , a string (with error) for error.
         """
         if not self.conn:
-            self.__connect()
+            self.__connect(use_cache=False)
         err = self.__create_tables()
         if err:
             return err
@@ -900,9 +1126,6 @@ class AuthorizationDataManager:
                 name = r[auth_data_const.COL_NAME]
                 description = r[auth_data_const.COL_DESCRIPTION]
                 default_datastore_url = r[auth_data_const.COL_DEFAULT_DATASTORE_URL]
-
-                logging.debug("id=%s name=%s description=%s default_datastore_url=%s",
-                              id, name, description, default_datastore_url)
 
                 # search vms for this tenant
                 vms = []
