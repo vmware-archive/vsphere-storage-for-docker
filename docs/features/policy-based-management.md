@@ -1,6 +1,6 @@
 ###...
 
-# Introduction to vSAN
+# Storage Policy Based Management
 [vSAN](http://www.vmware.com/products/virtual-san.html) is a shared and hyper-converged flash optimized storage offering from VMware. All ESX nodes in a cluster can access the same vSAN store. vSAN is integrated with the vSphere and runs on the same hardware that vSphere manages.
 
 # vSAN Policy

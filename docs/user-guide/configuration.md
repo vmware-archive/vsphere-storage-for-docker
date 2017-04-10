@@ -55,44 +55,6 @@ The configuration for vSphere docker volume driver require the driver type which
 * Q: What happens if the MaxLogSize reaches before the MAxLogAgeDays? Also What happens after let’s say MaxLogSize is reached – is the old file deleted and new one created?
 
 
-## Photon Driver
-The docker photon volume driver creates and manages the volumes on a photon platform. Photon platform API is used to create and manage volumes. You need two additional configurations for photon driver in the configuration file.
-
-```
-{
-    "Driver": "<driver name - vsphere/vmdk/photon>"
-    "MaxLogAgeDays": 28,
-    "MaxLogSizeMb": 100,
-    "LogPath": "/var/log/docker-volume-vsphere.log",
-    "LogLevel": "info",
-    "Target" : "http://<photon_controller_ip>:<target port>",
-    "Project" : "<21-digit photon project ID>",
-    "Host" : "<32-digit photon VM ID "
-}
-```
-<table class="table table-striped table-hover ">
-  <thead>
-    <tr>
-      <th>Parameter Name</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>target</td>
-      <td>The endpoint of the Photon Controller with hostname and port in format: http://<photon_host>:<photon_port></td>
-    </tr>
-    <tr>
-      <td>project</td>
-      <td>The project ID in Photon to which this host belongs.</td>
-    </tr>
-    <tr>
-      <td>host</td>
-      <td>The ID of docker host in Photon.</td>
-    </tr>
-</tbody>
-</table>
-
 ## Deployment strategies
 
 As you might have noticed, the installation of plugins is fairly straightforward but the configurations for the plugin will vary from host to host and based on your topology. It is best to deploy the plugin and configuration files through a configuration management tool such as Ansible/Salt/Puppet etc. so that you can use configuration templates and produce the configurations files for each host based on knowledge of topology and architecture. 

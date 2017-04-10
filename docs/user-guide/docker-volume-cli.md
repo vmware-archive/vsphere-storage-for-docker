@@ -5,8 +5,6 @@
 The docker volume commands are supported but there is certain minor difference in what is supported in vSphere vs. what is supported in Photon. Let’s cover configurations common to both drivers and then the individual driver specific commands.
 
 
-### Common
-
 #### Size
 You can specify the size of volume while creating a volume. Supported units of sizes are mb, gb and tb. By default if you don’t specify the size, a 100MB volume is created.
 
@@ -22,8 +20,6 @@ docker volume create --driver=<vsphere/photon> --name=MyVolume -o size=10gb -o f
 docker volume create --driver=<vsphere/photon> --name=MyVolume -o size=10gb -o fstype=ext4 (default)
 
 ```
-
-### vSphere
 
 #### vsan-policy-name
 For the vSphere driver you can specify the vsan policy name. The policy itself must be created or should be present before using this in volume creation. You can use vmdkops-admin-cli for creation of policy. The syntax for passing policy name while creating volume looks like this:
@@ -80,15 +76,6 @@ docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume 
 docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume -o diskformat=thin (default)
 ```
 
-### Photon
-
-#### Flavour 
-You can specify the flavour of persistent disk available in the Photon controller. The flavour in Photon implies certain limits on the volume being created
-
-```
-docker volume create --driver=vsphere --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
-```
-
 ## Listing Volumes
 Docker volume list can be used to volume names & their DRIVER type
 ```
@@ -138,27 +125,3 @@ docker volume inspect MyVolume
 ]
 ```
 Note: For disk formats zeroedthick and thin, the allocated size would be total size plus the size of replicas.
-
-## Docker Compose
-```
-cat nginx-stack-vsphere.yaml 
-version: "3"
-services:
-  nginx:
-    image: nginx
-    ports:
-      - "5000:80"
-    volumes:
-      - log:/var/log/nginx
-    deploy:
-      replicas: 1 
-      restart_policy:
-        condition: on-failure
-
-volumes:
-   log:
-      driver: vsphere
-```
-```
-docker stack deploy -c  nginx-stack-vsphere.yaml nginx
-```

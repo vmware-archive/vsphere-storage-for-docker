@@ -19,7 +19,7 @@ vSphere docker volume service technology enables running stateful containers bac
 
 Some of key features of the vDVS are:
 
-* Enterprise class storage: You can use vDVS with proven enterprise class technologies such as VMWare VSan, VMFS, NFS etc. 
+* Enterprise class storage: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc. 
 * Security & RBAC: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.
 * Simple to use: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.
 

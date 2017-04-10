@@ -1,7 +1,7 @@
 ###...
 
 # Prerequisites
-## VMWare Environment - vSphere/Photon
+## VMWare Environment
 
 You will need an environment with VMWare vSphere or Photon capabilities. Additionally since this plugin is focused on storage, you will need one of the storage technologies mentioned in a later section.
 
@@ -16,11 +16,19 @@ VMWare uses the volume plugin mechanism to enable vSphere docker volume service 
 ## Storage 
 You will need one of the storage technologies mentioned in next section.
 
+## vDVS components
+
+### Managed Plugin
+The managed plugin on [Docker store](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)
+
+### VIB
+The VIB for ESX server [available here](https://bintray.com/vmware/vDVS)
+
 # Storage Technologies: Introduction
 
 We might refer to the terms related to storage technologies later in the documentation, but this is a good place to understand various technologies and understand more about them if you want to.
 
-VMware VSan is a enterprise class storage technology from VMWare which makes storage easy in a hyper converged infrastructure.  You can learn more about [VMWare VSan here](http://www.vmware.com/in/products/virtual-san.html)
+VMware vSAN is a enterprise class storage technology from VMWare which makes storage easy in a hyper converged infrastructure.  You can learn more about [VMWare vSAN here](http://www.vmware.com/in/products/virtual-san.html)
 
 [VMWare VMFS](https://pubs.vmware.com/vsphere-50/index.jsp?topic=%2Fcom.vmware.vsphere.storage.doc_50%2FGUID-5EE84941-366D-4D37-8B7B-767D08928888.html) (Virtual Machine File System) is a highly specialized and optimized file system format for storing virtual machine files on a storage system.
 
