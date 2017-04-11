@@ -546,7 +546,7 @@ def vm_in_any_tenant(vms):
 
     for tenant in tenant_list:
         for vm_id, vm_name in vms:
-            tenant_vm_uuids = [(vm_id) for (vm_id, _) in tenant.vms]
+            tenant_vm_uuids = [(cur_vm_id) for (cur_vm_id, _) in tenant.vms]
             if vm_id in tenant_vm_uuids:
                 error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT,
                                                             vm_name, tenant.name)
