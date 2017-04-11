@@ -525,7 +525,7 @@ def vm_not_exist(name, vms):
     if error_info:
         return error_info
 
-    existing_vm_uuids = [(vm_id) for (vm_id, _) in existing_vms]
+    existing_vm_uuids = [vm_id for (vm_id, _) in existing_vms]
 
     for vm_id, vm_name in vms:
         if not vm_id in existing_vm_uuids:
@@ -546,8 +546,7 @@ def vm_in_any_tenant(vms):
 
     for tenant in tenant_list:
         for vm_id, vm_name in vms:
-            tenant_vm_uuids = [(cur_vm_id) for (cur_vm_id, _) in tenant.vms]
-            if vm_id in tenant_vm_uuids:
+            if vm_id in dict(tenant.vms):
                 error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT,
                                                             vm_name, tenant.name)
                 logging.error(error_info.msg)

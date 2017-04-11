@@ -38,7 +38,8 @@ DB_REF = "Config DB "  # we will use it in logging
 
 # DB schema and VMODL version
 # Bump the DB_MINOR_VER to 1.2
-# in DB version 1.2, VM name is persistend along with VM uuid in the vms table
+# in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
+# in DB version 1.2, VM name is persisted along with VM uuid in the vms table
 DB_MAJOR_VER = 1
 DB_MINOR_VER = 2
 VMODL_MAJOR_VER = 1
@@ -157,11 +158,7 @@ def create_vm_list(vms):
         Input: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4', u'88d98e7a-8421-45c8-a2c4-7ffb6c437a4f', 'ubuntu-VM0.1'), (u'564dca08-2772-aa20-a0a0-afae6b255fee', u'88d98e7a-8421-45c8-a2c4-7ffb6c437a4f', 'ubuntu-VM1.1')]
         Output: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4', 'ubuntu-VM0.1'), (u'564dca08-2772-aa20-a0a0-afae6b255fee', 'ubuntu-VM0.1')]
     """
-    vm_list = []
-    for v in vms:
-        vm_list.append((v[0], v[2]))
-
-    return vm_list
+    return [(v[0], v[2]) for v in vms]
 
 class DockerVolumeTenant:
     """ This class abstracts the operations to manage a DockerVolumeTenant.
@@ -224,7 +221,7 @@ class DockerVolumeTenant:
         return None
 
     def replace_vms(self, conn, vms):
-        """ Remove vms from the vms table for this tenant. """
+        """ Update vms from the vms table which belong to this tenant. """
         tenant_id = self.id
         vms = [(vm_id, vm_name, tenant_id) for vm_id, vm_name in vms]
         try:
