@@ -380,7 +380,7 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
         description = ""
 
     # VM list can be empty during tenant create. Validate only if it exists
-    vms_uuid_list = []
+    vms = None
     if vm_list:
         error_info = is_vm_duplicate(vm_list)
         if error_info:
@@ -397,12 +397,11 @@ def _tenant_create(name, description="", vm_list=None, privileges=None):
             return error_info, None
 
         logging.debug("_tenant_create: vms=%s", vms)
-        vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
 
     error_info, tenant = create_tenant_in_db(
         name=name,
         description=description,
-        vms=vms_uuid_list,
+        vms=vms,
         privileges=privileges)
     if error_info:
         return error_info, None
@@ -526,8 +525,10 @@ def vm_not_exist(name, vms):
     if error_info:
         return error_info
 
+    existing_vm_uuids = [vm_id for (vm_id, _) in existing_vms]
+
     for vm_id, vm_name in vms:
-        if not vm_id in existing_vms:
+        if not vm_id in existing_vm_uuids:
             error_info = error_code.generate_error_info(ErrorCode.VM_NOT_IN_TENANT, vm_name, name)
             logging.error(error_info.msg)
             return error_info
@@ -545,7 +546,7 @@ def vm_in_any_tenant(vms):
 
     for tenant in tenant_list:
         for vm_id, vm_name in vms:
-            if vm_id in tenant.vms:
+            if vm_id in dict(tenant.vms):
                 error_info = error_code.generate_error_info(ErrorCode.VM_IN_ANOTHER_TENANT,
                                                             vm_name, tenant.name)
                 logging.error(error_info.msg)
@@ -612,8 +613,7 @@ def _tenant_vm_add(name, vm_list):
         return error_info
 
     logging.debug("_tenant_vm_add: vms=%s", vms)
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
-    error_msg = tenant.add_vms(auth_mgr.conn, vms_uuid_list)
+    error_msg = tenant.add_vms(auth_mgr.conn, vms)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
@@ -647,10 +647,8 @@ def _tenant_vm_rm(name, vm_list):
         error_info = error_code.generate_error_info(ErrorCode.VM_NOT_FOUND, not_found_vm_list)
         return error_info
 
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
-
     # check if vms to be removed have any volumes mounted.
-    error_info = vmdk_utils.check_volumes_mounted(vms_uuid_list)
+    error_info = vmdk_utils.check_volumes_mounted(vms)
 
     if error_info:
         error_info.msg = "Cannot complete vmgroup vm rm. " + error_info.msg
@@ -667,7 +665,7 @@ def _tenant_vm_rm(name, vm_list):
     if error_info:
         return error_info
 
-    error_msg = tenant.remove_vms(auth_mgr.conn, vms_uuid_list)
+    error_msg = tenant.remove_vms(auth_mgr.conn, vms)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info
@@ -741,8 +739,7 @@ def _tenant_vm_replace(name, vm_list):
     if error_info:
         return error_info
 
-    vms_uuid_list = [(vm_id) for (vm_id, vm_name) in vms]
-    error_msg = tenant.replace_vms(auth_mgr.conn, vms_uuid_list)
+    error_msg = tenant.replace_vms(auth_mgr.conn, vms)
     if error_msg:
         error_info = error_code.generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
     return error_info

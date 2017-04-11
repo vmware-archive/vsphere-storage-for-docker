@@ -37,10 +37,11 @@ DB_STATE_CHECK_SEC = 300 # interval to check for DB state, in seconds
 DB_REF = "Config DB "  # we will use it in logging
 
 # DB schema and VMODL version
-# Bump the DB_MINOR_VER to 1.1
+# Bump the DB_MINOR_VER to 1.2
 # in DB version 1.1, _DEFAULT_TENANT will be created using a constant UUID
+# in DB version 1.2, VM name is persisted along with VM uuid in the vms table
 DB_MAJOR_VER = 1
-DB_MINOR_VER = 1
+DB_MINOR_VER = 2
 VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
 
@@ -107,12 +108,17 @@ def get_dockvol_path_tenant_path(datastore_name, tenant_id):
 class DbConnectionError(Exception):
     """ Thrown when a client tries to establish a connection to the DB. """
     def __init__(self, path):
-        super(DbConnectionError, self).__init__("DB connection error {}".format(path))
+        super(DbConnectionError, self).__init__("DB connection error at {}".format(path))
 
 class DbAccessError(Exception):
     """ Thrown when a client fails to run a SQL using an established connection. """
     def __init__(self, db_path, msg):
         super(DbAccessError, self).__init__("DB access error at {}: {}".format(db_path, msg))
+
+class DbUpgradeError(Exception):
+    """ Thrown when a client fails to upgrade existing db"""
+    def __init__(self, db_path, msg):
+        super(DbUpgradeError, self).__init__("DB upgrade error at {}: {}".format(db_path, msg))
 
 class DatastoreAccessPrivilege:
     """
@@ -145,17 +151,14 @@ def create_datastore_access_privileges(privileges):
 
 def create_vm_list(vms):
     """
-        Return a list of vm_uuid with given input
-        @Param vms: a list of tuple, each tuple has format like this (vm_uuid,)
+        Return a list of (vm_uuid, vm_name) with given input
+        @Param vms: a list of sqlite3.Row tuple.
+        Each tuple has format like this (vm_uuid, tenant_id, vm_name)
         Example:
-        Input: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4',), (u'564dca08-2772-aa20-a0a0-afae6b255fee',)]
-        Output: [u'564d6857-375a-b048-53b5-3feb17c2cdc4', u'564dca08-2772-aa20-a0a0-afae6b255fee']
+        Input: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4', u'88d98e7a-8421-45c8-a2c4-7ffb6c437a4f', 'ubuntu-VM0.1'), (u'564dca08-2772-aa20-a0a0-afae6b255fee', u'88d98e7a-8421-45c8-a2c4-7ffb6c437a4f', 'ubuntu-VM1.1')]
+        Output: [(u'564d6857-375a-b048-53b5-3feb17c2cdc4', 'ubuntu-VM0.1'), (u'564dca08-2772-aa20-a0a0-afae6b255fee', 'ubuntu-VM0.1')]
     """
-    vm_list = []
-    for v in vms:
-        vm_list.append(v[0])
-
-    return vm_list
+    return [(v[0], v[2]) for v in vms]
 
 class DockerVolumeTenant:
     """ This class abstracts the operations to manage a DockerVolumeTenant.
@@ -183,11 +186,11 @@ class DockerVolumeTenant:
     def add_vms(self, conn, vms):
         """ Add vms in the vms table for this tenant. """
         tenant_id = self.id
-        vms = [(vm_id, tenant_id) for (vm_id) in vms]
+        vms = [(vm_id, vm_name, tenant_id) for vm_id, vm_name in vms]
         if vms:
             try:
                 conn.executemany(
-                    "INSERT INTO vms(vm_id, tenant_id) VALUES (?, ?)",
+                    "INSERT INTO vms(vm_id, vm_name, tenant_id) VALUES (?, ?, ?)",
                     vms
                 )
                 conn.commit()
@@ -203,7 +206,7 @@ class DockerVolumeTenant:
     def remove_vms(self, conn, vms):
         """ Remove vms from the vms table for this tenant. """
         tenant_id = self.id
-        vms = [(vm_id, tenant_id) for (vm_id) in vms]
+        vms = [(vm_id, tenant_id) for vm_id, _ in vms]
         try:
             conn.executemany(
                 "DELETE FROM vms WHERE vm_id = ? AND tenant_id = ?",
@@ -218,9 +221,9 @@ class DockerVolumeTenant:
         return None
 
     def replace_vms(self, conn, vms):
-        """ Remove vms from the vms table for this tenant. """
+        """ Update vms from the vms table which belong to this tenant. """
         tenant_id = self.id
-        vms = [(vm_id, tenant_id) for (vm_id) in vms]
+        vms = [(vm_id, vm_name, tenant_id) for vm_id, vm_name in vms]
         try:
             # Delete old VMs
             conn.execute(
@@ -229,7 +232,7 @@ class DockerVolumeTenant:
             )
 
             conn.executemany(
-                "INSERT INTO vms(vm_id, tenant_id) VALUES (?, ?)",
+                "INSERT INTO vms(vm_id, vm_name, tenant_id) VALUES (?, ?, ?)",
                 vms
             )
             conn.commit()
@@ -535,17 +538,54 @@ class AuthorizationDataManager:
         logging.error(error_msg)
         raise DbAccessError(self.db_path, error_msg)
 
+
+    def handle_upgrade_1_1_to_1_2(self):
+        """
+        Upgrade the db from version 1.1 to 1.2
+        In 1.1 the vms table had two columns namely vm_id and tenant_id
+        In 1.2 the vms table has three columns namely vm_id, tenant_id and vm_name
+        In the process of upgrading existing db from 1.1 to 1.2, we need to populate
+        the vm names for existing records. We try to populate them and keep None for vms
+        for which the name couldn't be found. The vmdk_ops admin code which tries to use
+        this vm names handles names which are None
+        """
+        try:
+            self.conn.create_function('name_from_uuid', 1, vmdk_utils.get_vm_name_by_uuid)
+            # Alter vms table to add a new column name vm_name to store vm name
+            # update all the existing records with the vm_name.
+            # If vm_name is not resolved, it is populated as None and handled appropriately later.
+            # Finally update the db schema version
+            script = """ALTER TABLE vms ADD COLUMN vm_name TEXT;
+                        UPDATE vms SET vm_name=name_from_uuid(vm_id);
+                        UPDATE versions SET major_ver = {}, minor_ver = {};
+                     """
+            sql_script = script.format(DB_MAJOR_VER, DB_MINOR_VER)
+            self.conn.executescript(sql_script)
+            self.conn.commit()
+            return None
+        except sqlite3.Error as e:
+            error_msg = "Error when upgrading auth DB VMs table"
+            logging.error("handle_upgrade_1_1_to_1_2. %s: %s", error_msg, str(e))
+            raise DbUpgradeError(self.db_path, error_msg)
+
     def __handle_upgrade(self):
         error_msg, major_ver, minor_ver = self.__get_db_version()
         if error_msg:
-            logging.error("__handle_upgrade: fail to get auth-db schema version, cannot upgrade")
+            error_msg = "Failed to get auth-db schema version, cannot upgrade"
+            logging.error("__handle_upgrade: %s", error_msg)
+            raise DbUpgradeError(self.db_path, error_msg)
+
+        # if db schema is latest, no need for upgrade
+        if major_ver == DB_MAJOR_VER and minor_ver == DB_MINOR_VER:
             return
 
-        if DB_MAJOR_VER == 1 and DB_MINOR_VER == 1:
-            # DB version read from auth-DB is 1.0, upgrade is needed
-            if major_ver == 1 and minor_ver == 0:
-                self._handle_upgrade_1_0_to_1_1()
-
+        if DB_MAJOR_VER == 1 and DB_MINOR_VER == 2:
+            if major_ver == 1 and minor_ver == 1:
+                self.handle_upgrade_1_1_to_1_2()
+            else:
+                error_msg = "Upgrade is not supported for auth-db schema version {}.{} to {}.{}. Refer to vDVS release versions".format(major_ver, minor_ver, DB_MAJOR_VER, DB_MINOR_VER)
+                logging.error("__handle_upgrade: %s", error_msg)
+                raise DbUpgradeError(self.db_path, error_msg)
 
     def __connect(self):
         """
@@ -560,7 +600,6 @@ class AuthorizationDataManager:
             raise DbConnectionError(self.db_path)
         # Use return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
-
 
     def connect(self):
         """
@@ -700,6 +739,8 @@ class AuthorizationDataManager:
                 vm_id TEXT PRIMARY KEY NOT NULL,
                 -- id in tenants table
                 tenant_id TEXT NOT NULL,
+                -- name of the VM being added to the tenant
+                vm_name TEXT,
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id)
                 ); ''')
 
@@ -761,7 +802,7 @@ class AuthorizationDataManager:
         """ Create a tenant in the database.
         If tenant_uuid is None, tenant id will be auto-generated and returned,
         otherwise, the uuid specified by param "tenant_uuid" will be used
-        vms are list of vm_id. Privileges are dictionaries
+        vms are list of (vm_id, vm_name). Privileges are dictionaries
         with keys matching the row names in the privileges table. Tenant id is
         filled in for both the vm and privileges tables.
         """
@@ -796,12 +837,12 @@ class AuthorizationDataManager:
                 (id, name, description, default_datastore_url)
             )
 
-            # Create the entries in the vms table
-            vms = [(vm_id, id) for (vm_id) in vms]
-
             if vms:
+                # Create the entries in the vms table
+                vms = [(vm_id, vm_name, id) for vm_id, vm_name in vms]
+
                 self.conn.executemany(
-                    "INSERT INTO vms(vm_id, tenant_id) VALUES (?, ?)",
+                    "INSERT INTO vms(vm_id, vm_name, tenant_id) VALUES (?, ?, ?)",
                     vms
                 )
 

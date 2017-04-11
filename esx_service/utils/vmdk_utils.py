@@ -335,7 +335,7 @@ def check_volumes_mounted(vm_list):
     """
     Return error_info if any vm in @param vm_list have docker volume mounted
     """
-    for vm_id in vm_list:
+    for vm_id, _ in vm_list:
         vm = vmdk_ops.findVmByUuid(vm_id)
         if vm:
             for d in vm.config.hardware.device:

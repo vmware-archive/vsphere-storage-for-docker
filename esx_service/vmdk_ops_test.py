@@ -616,7 +616,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
 
     def test_vmdkop_authorize(self):
         """ Test vmdkop authorize """
-        vms = [(self.vm_uuid)]
+        vms = [(self.vm_uuid, self.vm_name)]
         privileges = []
 
         error_info, tenant1 = self.auth_mgr.create_tenant(name='vmdk_auth_test',
