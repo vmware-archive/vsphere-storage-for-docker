@@ -1,6 +1,7 @@
 pgk/
 package/
 build/
+.DS_Store
 src/.DS_Store
 src/dvolplug/dvolplug
 *.a

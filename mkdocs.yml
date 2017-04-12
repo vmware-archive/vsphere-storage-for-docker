@@ -16,9 +16,12 @@ pages:
             - Storage policy based management for container volumes: features/policy-based-management.md
     - Operations:
         - Operating at scale: user-guide/operations.md
-    - Demo Applications:
-        - App with Mongo datastore: user-guide/demo-mongo-app.md
-        - Mongo DB with Swarm: user-guide/demo-mongo-swarm.md
+    - Demo and Examples:
+        - Docker Volume: user-guide/docker-volume.md
+        - Wordpress app with MySql: user-guide/demo-wordpress-app.md
+        - HA DB in Docker Swarm mode: user-guide/demo-ha-swarm.md
+        - Docker Service: user-guide/docker-service.md
+        - Docker Stacks: user-guide/docker-stacks.md
     - FAQ: user-guide/faq.md
     - Blog:
         - Links and updates: blog/2016-9-28.md
