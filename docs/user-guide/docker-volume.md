@@ -2,11 +2,16 @@
 
 # Docker Volume
 
+This section covers all volume related commands with example and known caveats if any. 
+
+To create a volume with vSphere driver and size specifications:
+
 ```
 # docker volume create --name=db_data --driver=vsphere -o size=1Gb
 db_data
 ```
 
+To list all volumes:
 ```
 # docker volume ls
 DRIVER              VOLUME NAME
@@ -15,7 +20,7 @@ vsphere:latest      wordpress_db_data@datastore3
 
 ```
 
-
+You can also inspect the volume:
 ```
 # docker volume inspect db_data
 [
@@ -47,14 +52,17 @@ vsphere:latest      wordpress_db_data@datastore3
 ]
 ```
 
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h3 class="panel-title">Volume Prune</h3>
+  </div>
+  <div class="panel-body">
+        Docker volume prune command is not supported at the moment
+  </div>
+</div>
 
+You can remove the volume with following command
 ```
 # docker volume rm db_data
 db_data
 ```
-
-
-![Image](images/prune_volume.png)
-
-![Image](images/detahced_volumes.png)
-
