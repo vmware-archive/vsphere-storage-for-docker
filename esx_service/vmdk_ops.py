@@ -704,7 +704,7 @@ def get_vol_path(datastore, tenant_name=None):
         return path, None
 
     if not os.path.isdir(dock_vol_path):
-        # The osfs tools are usable for DOCK_VOLS_DIR on all datastores
+        # The osfs tools are usable for DOCK_VOLS_DIR on all datastores.
         cmd = "{} '{}'".format(OSFS_MKDIR_CMD, dock_vol_path)
         logging.info("Creating %s, running '%s'", dock_vol_path, cmd)
         rc, out = RunCommand(cmd)
