@@ -438,11 +438,11 @@ def commands():
             }
         },
         'config': {
-            'help': 'Init and manage Config DB which enables quotas and access control',
+            'help': 'Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]',
             'cmds': {
                 'init': {
                     'func': config_init,
-                    'help': 'Init ' + DB_REF + ' to allows quotas and access groups (vm-groups)',
+                    'help': 'Init ' + DB_REF + ' to allows quotas and access groups, aka vmgroups',
                     'args': {
                         '--datastore': {
                             'help': DB_REF + ' will be placed on a shared datastore',
@@ -478,7 +478,7 @@ def commands():
                 },
                 'mv': {
                     'func': config_mv,
-                    'help': 'Relocate ' + DB_REF + ' from its current location [not supported yet]',
+                    'help': 'Relocate ' + DB_REF + ' from its current location [NOT SUPPORTED YET]',
                     'args': {
                         '--force': {
                             'help': 'Force operation, ignore warnings',
@@ -1222,6 +1222,7 @@ def config_init(args):
     if err:
         return err
 
+    print("Warning: this feature is EXPERIMENTAL")
     if args.datastore:
         ds_name = args.datastore
         db_path = auth_data.AuthorizationDataManager.ds_to_db_path(ds_name)
