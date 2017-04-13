@@ -1,4 +1,4 @@
-###...
+
 # Installation
 
 The installation has two parts – installation of the backend on ESX and installation of Docker plugin on the hosts where you plan to run containers with storage needs.

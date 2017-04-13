@@ -1,4 +1,4 @@
-###...
+
 # Using the Service in Docker
 
 ## Creation and management of docker volumes

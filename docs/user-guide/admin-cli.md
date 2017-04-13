@@ -1,4 +1,3 @@
-###...
 # Introduction
 
 With the vSphere Docker Volume Service, each ESXi host manages multiple VMs, with

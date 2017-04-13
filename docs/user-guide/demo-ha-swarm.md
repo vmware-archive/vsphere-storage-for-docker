@@ -1,4 +1,4 @@
-###...
+
 
 # HA Database with Docker in Swarm mode
 
@@ -104,6 +104,7 @@ A quick inspection of the docker container also shows that the volume is attache
 
 ## Store the data 
 Let's create an empty table in the database. In ideal scenario, even if container or the node fails, this data should still persist. 
+
 
 ![Image](images/table_creation.png)
 

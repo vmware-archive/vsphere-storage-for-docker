@@ -1,4 +1,4 @@
-###...
+
 The docker volume plugin at the moment supports vSphere and Photon platforms. All the volume provisioning and management operations are supported on both the platforms. Both the platforms can be used to provision VMDK based volumes and can be attached to containers. 
 
 The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
