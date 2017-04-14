@@ -364,7 +364,7 @@ def check_volumes_mounted(vm_list):
                                                      vm.config.name)
                     return error_info
         else:
-            error_info = error_code.generate_error_info(error_code.ErrorCode.VM_NOT_FOUND, vm_id)
+            error_info = generate_error_info(ErrorCode.VM_NOT_FOUND, vm_id)
             return error_info
     return None
 
