@@ -63,6 +63,9 @@ LSOF_CMD = "/bin/vmkvsitools lsof"
 VMDK_RETRY_COUNT = 5
 VMDK_RETRY_SLEEP = 1
 
+# For managing resource locks.
+lockManager = threadutils.LockManager()
+
 
 def init_datastoreCache(force=False):
     """
@@ -416,6 +419,7 @@ def get_datastore_name(datastore_url):
     # get_datastores() return a list of tuple
     # each tuple has format like (datastore_name, datastore_url, dockvol_path)
     res = [d[0] for d in get_datastores() if d[1] == datastore_url]
+    logging.debug("get_datastore_name: res=%s", res)
     return res[0] if res else None
 
 
