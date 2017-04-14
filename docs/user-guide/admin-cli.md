@@ -704,6 +704,8 @@ Successfully removed policy: some-policy
 
 ## `Config` (Authorization DB configuration)
 
+**THIS FEATURE IS EXPERIMENTAL**
+
 Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vm-groups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
 ```
 [root@localhost:~] vmdkops_admin vmgroup create --name MY
