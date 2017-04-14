@@ -1,6 +1,8 @@
+---
+title: FAQs
+---
 
-
-# General
+## General
 
 ## Where do I get the binaries ? What about the source ?
 Please look at [GitHub Releases](https://github.com/vmware/docker-volume-vsphere/releases) for binaries. Github releases allow downloading of source for a release in addition to git clone.
@@ -11,7 +13,7 @@ Please see README.md in the for the release by clicking on the tag for the relea
 ## How do I run the setup on my laptop?
 Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack)
 
-# Troubleshooting
+## Troubleshooting
 
 ## Docker Service to ESX Backend Communication.
 

@@ -42,9 +42,12 @@ The docker photon volume driver creates and manages the volumes on a photon plat
 ### Photon
 
 #### Flavour 
-You can specify the flavour of persistent disk available in the Photon controller. The flavour in Photon implies certain limits on the volume being created
+You can specify the flavour of persistent disk available in the Photon controller while creating a volume. The flavour in Photon implies certain limits on the volume being created.
+More information about flavours is available [here](https://github.com/vmware/photon-controller/wiki/Flavors).
 
 ```
-docker volume create --driver=vsphere --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
+docker volume create --driver=photon --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
 ```
 
+
+For more information about Photon plaform, please refer [Wiki page](https://github.com/vmware/photon-controller/wiki).

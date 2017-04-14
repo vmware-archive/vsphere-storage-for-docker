@@ -1,6 +1,8 @@
+---
+title: HA Database with Docker in Swarm mode
+---
 
-
-# HA Database with Docker in Swarm mode
+## HA Database with Docker in Swarm mode
 
 In this section we will run a database in Swarm cluster and will demonsrtate high availability even if one of nodes in the cluster is killed. The demo will also show how a volume is re-attached to a new node when the application container is re-scheduled on a new node.
 
@@ -99,14 +101,58 @@ A quick detailed inspection of the volumes also shows all the details of the vol
 ```
 A quick inspection of the docker container also shows that the volume is attached
 
-![Image](images/volume.png)
+```
+root@photon1 [ ~ ]# docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+d5afd6b94b99        mariadb:latest      "docker-entrypoint.sh"   3 minutes ago       Up 3 minutes        3306/tcp            db1.1.0v25jf29xmi9smul1pkw73txw
+root@photon1 [ ~ ]# docker exec -it d5afd6b94b99 bash
+root@d5afd6b94b99:/# df -h
+Filesystem                                       Size  Used Avail Use% Mounted on
+overlay                                           20G  1.1G   18G   6% /
+tmpfs                                            497M     0  497M   0% /dev
+tmpfs                                            497M     0  497M   0% /sys/fs/cgroup
+/dev/sda1                                         20G  1.1G   18G   6% /etc/hosts
+shm                                               64M     0   64M   0% /dev/shm
+/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0  976M  116M  794M  13% /var/lib/mysql
+
+```
 
 
 ## Store the data 
 Let's create an empty table in the database. In ideal scenario, even if container or the node fails, this data should still persist. 
 
+```
+root@d5afd6b94b99:/# mysql -u wordpress -p
+Enter password:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 3
+Server version: 10.1.22-MariaDB-1~jessie mariadb.org binary distribution
 
-![Image](images/table_creation.png)
+Copyright (c) 2000, 2016, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> use wordpress;
+Database changed
+MariaDB [wordpress]> show tables;
+Empty set (0.01 sec)
+
+MariaDB [wordpress]> 	
+Query OK, 0 rows affected (0.17 sec)
+
+MariaDB [wordpress]> show tables;
++---------------------+
+| Tables_in_wordpress |
++---------------------+
+| customers           |
++---------------------+
+1 row in set (0.00 sec)
+
+MariaDB [wordpress]>
+
+
+```
+
 
 ## Destructive test & verification
 
@@ -123,8 +169,52 @@ a1f07c2af9c5        mariadb:latest      "docker-entrypoint.sh"   14 seconds ago 
 ```
 Let's login and verify that the data also persists and the volume was re-attached
 
-![Image](images/new_node.png)
+```
+]# docker exec -it a1f07c2af9c5 bash
+root@a1f07c2af9c5:/# df -h
+Filesystem                                       Size  Used Avail Use% Mounted on
+overlay                                           20G  1.1G   18G   6% /
+tmpfs                                            497M     0  497M   0% /dev
+tmpfs                                            497M     0  497M   0% /sys/fs/cgroup
+/dev/sdb1                                         20G  1.1G   18G   6% /etc/hosts
+shm                                               64M     0   64M   0% /dev/shm
+/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0  976M  116M  794M  13% /var/lib/mysql
+root@a1f07c2af9c5:/# mysql -u wordpress -p
+Enter password:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 2
+Server version: 10.1.22-MariaDB-1~jessie mariadb.org binary distribution
 
-# Conclusion
+Copyright (c) 2000, 2016, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| wordpress          |
++--------------------+
+2 rows in set (0.02 sec)
+
+MariaDB [(none)]> use wordpress;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MariaDB [wordpress]> show tables;
++---------------------+
+| Tables_in_wordpress |
++---------------------+
+| customers           |
++---------------------+
+1 row in set (0.00 sec)
+
+MariaDB [wordpress]>
+
+```
+
+## Conclusion
 
 vDVS along with Swarm mode can provide a HA capability to a cluster running stateful applications. While Swarm mode takes care of re-scheduling the application containers on nodes in the cluster, vDVS plugun ensures that the volumes are managed in a similar way and data is persisted while re-scheduling of the application containers.

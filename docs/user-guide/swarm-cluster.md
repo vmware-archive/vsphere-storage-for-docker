@@ -1,6 +1,6 @@
 
 
-# Swarm Cluster
+## Swarm Cluster
 
 ## Docker Compose
 ```

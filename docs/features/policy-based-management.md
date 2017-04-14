@@ -30,25 +30,61 @@ Here's a step-by-step guide to create and use VSAN Storage Policies for Docker V
 
 - Create a "gold" and a "silver" storage policies
 
-![Image](images/vsan/create_1.png)
+
+```
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name gold --content '(("hostFailuresToTolarate" i0)("forceProvisioning" i1))'
+Successfully created policy: gold
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name silver --content '(("hostFailuresToTolarate" i1)("forceProvisioning" i1))'
+Successfully created policy: silver
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
+Policy Name  Policy Content                                           Active
+-----------  -------------------------------------------------------  ------
+gold         (("hostFailuresToTolarate" i0)("forceProvisioning" i1))  Unused
+silver       (("hostFailuresToTolarate" i1)("forceProvisioning" i1))  Unused
+```
 
 - Create 2 Docker Volume using above policies
 
-
-![Image](images/vsan/create_vol.png)
+```
+#docker volume create -d vsphere --name gold_volume@vsanDatastore -o size=1Gb -o vsan-policy-name=go
+ld
+gold_volume@vsanDatastore
+#docker volume create -d vsphere --name silver_volume@vsanDatastore -o size=1Gb -o vsan-policy-name=
+silver
+silver_volume@vsanDatastore
+#docker volume ls
+vsphere:latest      gold_volume@vsanDatastore
+vsphere:latest      silver_volume@vsanDatastore
+```
 
 - Verify if the policies are being used by the volumes
 
-![Image](images/vsan/verify.png)
+```
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
+Policy Name  Policy Content                                           Active
+-----------  -------------------------------------------------------  -------------------
+silver       (("hostFailuresToTolarate" i1)("forceProvisioning" i1))  In use by 1 volumes
+gold         (("hostFailuresToTolarate" i0)("forceProvisioning" i1))  In use by 1 volumes
+```
 
 - Update one policy content
 
-![Image](images/vsan/update_policy.png)
+```
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name silver --content '(("hostFailuresToTolarate" i2)("forceProvisioning" i1))'
+This operation may take a while. Please be patient.
+Successfully updated policy: silver
+```
 
 - Remove the volume before removing policy
 
-![Image](images/vsan/remove_volume.png)
+```
+docker volume rm gold_volume@vsanDatastore
+gold_volume@vsanDatastore
+```
 
 - Remove the policy
 
-![Image](images/vsan/remove_policy.png)
+```
+/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name gold
+Successfully removed policy: gold
+```

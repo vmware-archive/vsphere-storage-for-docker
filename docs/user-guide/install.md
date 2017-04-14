@@ -1,12 +1,12 @@
+---
+title: Installation
+---
 
-# Installation
-
-The installation has two parts – installation of the backend on ESX and installation of Docker plugin on the hosts where you plan to run containers with storage needs.
+The installation has two parts – installation of the vSphere Installation Bundle (VIB) on ESXi and installation of Docker plugin on the hosts where you plan to run containers with storage needs.
  
-# Install on ESX [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
+## Installation on ESXi 
 
-
-ESX component for vDVS is available in the form of a [VIB](https://blogs.vmware.com/vsphere/2011/09/whats-in-a-vib.html). VIB stands for vSphere Installation Bundle. At a conceptual level a VIB is somewhat similar to a tarball or ZIP archive in that it is a collection of files packaged into a single archive to facilitate distribution. 
+ESXi component for vDVS is available in the form of a [VIB](https://blogs.vmware.com/vsphere/2011/09/whats-in-a-vib.html). VIB stands for vSphere Installation Bundle. At a conceptual level a VIB is somewhat similar to a tarball or ZIP archive in that it is a collection of files packaged into a single archive to facilitate distribution. 
 
 Log into ESXi host and download the [latest release](https://bintray.com/vmware/vDVS/VIB/_latestVersion) of vDVS driver VIB on the ESXi. Assuming that you have downloaded the VIB at /tmp location you can run the below command to install it on ESXi
 
@@ -20,14 +20,14 @@ Installation Result
    VIBs Skipped:
 ```
 
-# Install on VMs
+## Installation on Docker hosts
 
-vDVS plugin can be installed on VMs like any docker plugin installation. You will need docker version **1.13/17.03 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation. 
+vDVS plugin can be installed on Docker hosts like any docker plugin installation. You will need docker version **1.13/17.03 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation. 
 
 The plugin is available as a docker image on the public docker registry but if you are using a private registry, you will have to point to the appropriate URL of the image.
 
 <div class="well">
-We have discontinued the DEB/RPM based installation of the vDVS plugin.
+**Note:** We have discontinued the DEB/RPM based installation of the Docker plugin.
 </div>
 
 * **To install the plugin**
@@ -64,8 +64,7 @@ ID                  NAME                DESCRIPTION                           EN
 831fd45343af        vsphere:latest      VMWare vSphere Docker Volume plugin   true
 ```
 
-* **And finally to remove the plugin from a given VM, you can use:
-**
+* **And finally to remove the plugin from a given Docker host:**
 
 ```
 ~# docker plugin rm vsphere

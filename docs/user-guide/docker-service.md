@@ -1,6 +1,9 @@
+---
+title: Docker Service
+---
 
 
-# Docker Service
+## Docker Service
 
 Docker service is way to define a container based application with all metadata such as scaling, volume definitions etc. In this example we will create a docker service and inspect the volumes which are auto created. This will also serve as an example of usage of docker service command with vSphere suppoted volumes.
 

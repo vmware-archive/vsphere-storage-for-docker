@@ -1,6 +1,10 @@
+---
+title: Docker Stacks
+---
 
 
-# Docker Stacks
+
+## Docker Stacks
 
 Docker stacks are a set of services which make up a complete application in a given environment. The Docker stack is written in the docker-compose format (v3). We will use a stack as an example in which one of services requires data persistence. You can checkout the original [Example App](https://github.com/docker/example-voting-app) which we are using in this demo. We have modified the volume part so that the volumes are provisioned using the vSphere driver.
 

@@ -1,4 +1,8 @@
-# Introduction
+---
+title: Introduction
+---
+
+## Introduction
 
 With the vSphere Docker Volume Service, each ESXi host manages multiple VMs, with
 each of them acting as a Docker host. The Docker engine on these hosts communicates with the Docker
