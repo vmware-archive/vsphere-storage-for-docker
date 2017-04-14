@@ -54,10 +54,7 @@ function deployvm {
     for ip in $IP_LIST
     do
         TARGET=root@$ip
-        setupVMType
-        log "Deploying $TARGET : $FILE_EXT"
-        deployVMPre
-        deployVMInstall
+        installManagedPlugin
         deployVMPost
     done
 }
@@ -85,15 +82,15 @@ function deployplugin {
             esac
 
         fi
-        $SSH $TARGET 'cd ' $PLUGIN_LOC '; make info clean plugin'
+        $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make info clean plugin"
         managedPluginSanityCheck
+        $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make push clean"
     done
 }
 
 function managedPluginSanityCheck {
     $SCP $SCRIPTS/plugin_sanity_test.sh $TARGET:$BUILD_LOC
     $SSH $TARGET 'sh '  $BUILD_LOC/plugin_sanity_test.sh
-    $SSH $TARGET 'cd ' $PLUGIN_LOC '; make clean'
 }
 
 function setupVMType {
@@ -115,22 +112,9 @@ function setupVMType {
     fi
 }
 
-function deployVMPre {
-    $SSH $TARGET $MKDIR_P $TMP_LOC
-    $SCP $SOURCE/*.$FILE_EXT $TARGET:$TMP_LOC
-}
-
-function deployVMInstall {
-    set -e
-    case $FILE_EXT in
-    deb)
-        $SSH $TARGET "$DEB_INSTALL $TMP_LOC/*.deb"
-        ;;
-    rpm)
-        $SSH $TARGET "$RPM_INSTALL $TMP_LOC/*.rpm"
-        ;;
-    esac
-    set +e
+function installManagedPlugin {
+    log "installManagedPlugin: Installing vDVS plugin [$MANAGED_PLUGIN_NAME]"
+    $SSH $TARGET "docker plugin install --grant-all-permissions --alias vsphere $MANAGED_PLUGIN_NAME"
 }
 
 function deployVMPost {
@@ -287,6 +271,7 @@ function cleanupVM {
         fi
         ;;
     esac
+    $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f"
 }
 
 function cleanupVMPost {
@@ -313,10 +298,10 @@ Usage:  deploy-tools.sh command params...
 
 Comands and params are as follows:
 deployesx "esx-ips"  "vib file"
-deployvm  "vm-ips"  "folder containig deb or rpm"
+deployvm  "vm-ips"  "managed_plugin_name"
 deployvmtest "vm-ips" "folder containing test binaries" "folder containing scripts"
 cleanesx  "esx-ips"
-cleanvm   "vm_ips"  "test-volumes-to-clean"
+cleanvm   "vm_ips" "managed_plugin_name"
 EOF
     exit 1
 }
@@ -351,11 +336,11 @@ cleanesx)
         cleanesx
         ;;
 deployvm)
-        SOURCE="$2"
-        if [ -z "$SOURCE" ]
-  then
-        usage "Missing params: folder"
-  fi
+        MANAGED_PLUGIN_NAME="$2"
+        if [ -z "$MANAGED_PLUGIN_NAME" ]
+        then
+            usage "Missing params: managed_plugin_name"
+        fi
         deployvm
         ;;
 deployvmtest)
@@ -368,10 +353,10 @@ deployvmtest)
         deployvmtest
         ;;
 cleanvm)
-        VOLUMES="$2"
-        if [ -z "$VOLUMES" ]
+        MANAGED_PLUGIN_NAME="$2"
+        if [ -z "$MANAGED_PLUGIN_NAME" ]
         then
-            usage "Missing params: volume"
+            usage "Missing params: managed_plugin_name"
         fi
         cleanvm
         ;;
@@ -379,6 +364,9 @@ deployplugin)
         PLUGIN_BIN="$2"
         MANAGED_PLUGIN_SRC="$3"
         SCRIPTS="$4"
+        DOCKER_HUB_REPO="$5"
+        VERSION_TAG="$6"
+        EXTRA_TAG="$7"
         if [ -z "$PLUGIN_BIN" -o -z "$MANAGED_PLUGIN_SRC" -o -z "$SCRIPTS" ]
         then
             usage "Missing params: plugin/binary/script folder"

@@ -30,6 +30,8 @@ PKG_VERSION ?= $(shell \
 export PKG_VERSION
 export INCLUDE_UI
 
+-include ../plugin/Makefile
+
 EPOCH := 0
 
 # Place binaries here
@@ -280,11 +282,12 @@ deploy-esx: clean-esx
 VMS= $(VM1) $(VM2)
 
 deploy-vm: clean-vm
-	$(DEPLOY_VM_SH) "$(VMS)" $(BIN)
+	$(DEPLOY_VM_SH) "$(VMS)" $(PLUGIN_NAME):$(PLUGIN_TAG)
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 deploy-vm-plugin:
-	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN) $(SCRIPTS)
+	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
 
@@ -346,9 +349,11 @@ e2e-dkrVolDriver-test:
 	$(log_target)
 	$(GO) test $(PLUGIN)/E2E_Tests -cover -v
 
+MANAGED_PLUGIN_NAME="vsphere:latest"
+
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
-	$(CLEANVM_SH) "$(VMS)" "$(TEST_VOL_NAME)"
+	$(CLEANVM_SH) "$(VMS)" "$(MANAGED_PLUGIN_NAME)"
 
 clean-esx:
 	$(CLEANESX_SH) "$(ESX)" esx-vmdkops-service

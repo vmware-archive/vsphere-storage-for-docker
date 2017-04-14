@@ -22,7 +22,7 @@ echo "Waiting for revert to complete";
 DIR=$(dirname ${BASH_SOURCE[0]})
 . $DIR/../scripts/wait_for.sh
 
-# Threshold to time out 
+# Threshold to time out
 retryCount=30
 
 echo ESX 6.5
@@ -36,8 +36,8 @@ echo "Reset complete"
 # setting environment variables pointing to ESX6.5.
 
 #This part is needed and keep it latest whenever new VMs are added to
-#ESX6.5 or removed. CI is running tests against ESX6.5 (docker host resided 
-#on vmfs) very first hence the retry mechanism added for the docker host 
+#ESX6.5 or removed. CI is running tests against ESX6.5 (docker host resided
+#on vmfs) very first hence the retry mechanism added for the docker host
 #exist on vmfs datastore.
 
 export GOVC_URL=$GOVC_URL_6_5
