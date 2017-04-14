@@ -89,7 +89,7 @@ import auth_api
 import error_code
 from error_code import ErrorCode
 from error_code import error_code_to_message
-import re
+import vm_listener
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -1684,7 +1684,12 @@ def main():
 
         kv.init()
         connectLocalSi()
+
+        # start the daemon. Do all the task to start the listener through the daemon
+        threadutils.start_new_thread(target=vm_listener.start_vm_changelistener,
+                                 daemon=True)
         handleVmciRequests(port)
+
     except Exception as e:
         logging.exception(e)
 
@@ -1717,7 +1722,6 @@ http://www.apache.org/licenses/LICENSE-2.0.html
 
 Helper module for task operations.
 """
-
 
 def wait_for_tasks(si, tasks):
     """Given the service instance si and tasks, it returns after all the
@@ -1758,7 +1762,6 @@ def wait_for_tasks(si, tasks):
             pcfilter.Destroy()
 
 #------------------------
-
 
 class ValidationError(Exception):
     """ An exception for option validation errors """
