@@ -918,6 +918,8 @@ def generate_tenant_ls_rows(tenant_list):
             default_datastore = ""
         else:
             default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
+            if default_datastore is None:
+                default_datastore = ""
 
         vm_list = generate_vm_list(tenant.vms)
         rows.append([uuid, name, description, default_datastore, vm_list])
@@ -1101,6 +1103,9 @@ def generate_tenant_access_ls_rows(privileges):
             datastore = ""
         else:
             datastore = vmdk_utils.get_datastore_name(p.datastore_url)
+            if datastore is None:
+                datastore = ""
+
         allow_create = ("False", "True")[p.allow_create]
         # p[auth_data_const.COL_MAX_VOLUME_SIZE] is max_volume_size in MB
         max_vol_size = UNSET if p.max_volume_size == 0 else human_readable(p.max_volume_size * MB)
