@@ -17,7 +17,7 @@
 # This script sets up the testbed and invokes tests.
 
 usage() {
-  echo "$0 <ESX IP> <VM1 IP> <VM2 IP> <Build id>"
+  echo "$0 <TARGET> <ESX IP> <VM1 IP> <VM2 IP> <Build id>"
   echo "root user will be used for all operations"
   echo "Advisable to setup ssh keys."
   echo "run this script from the root of the repo"
@@ -29,11 +29,12 @@ then
   exit 1
 fi
 
-BUILD_NUMBER=$4
+FUNCTION_NAME=$1
+BUILD_NUMBER=$5
 
-export ESX=$1
-export VM1=$2
-export VM2=$3
+export ESX=$2
+export VM1=$3
+export VM2=$4
 
 USER=root
 . ./misc/scripts/commands.sh
@@ -86,16 +87,26 @@ log "starting deploy and test"
 
 INCLUDE_HOSTD="false"
 
-TESTS=""
-if [ -e /tmp/$ESX ]
-then
-   TESTS="e2e-dkrVolDriver-test test-vm"
-else
-   touch /tmp/$ESX
-   TESTS="e2e-dkrVolDriver-test testasroot test-esx test-vm"
-fi
+TARGET="clean-auth-db deploy-esx"
 
-if make -s clean-auth-db deploy-esx deploy-vm-plugin deploy-vm $TESTS TEST_VOL_NAME=vol.build$BUILD_NUMBER;
+PARAMETER="TEST_VOL_NAME=vol.build$BUILD_NUMBER"
+
+case $FUNCTION_NAME in
+deployplugin)
+        TARGET+=" deploy-vm-plugin"
+        ;;
+runtests)
+        if [ -e /tmp/$ESX ]
+        then
+          TARGET+=" deploy-vm e2e-dkrVolDriver-test test-vm"
+        else
+          touch /tmp/$ESX
+          TARGET+=" deploy-vm e2e-dkrVolDriver-test testasroot test-esx test-vm"
+        fi
+        ;;
+esac
+
+if make -s $TARGET $PARAMETER;
 then
   echo "=> Build Complete" `date`
   #stop_build $VM1 $BUILD_NUMBER

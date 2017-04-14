@@ -76,7 +76,6 @@ all: info clean plugin push
 # unconditionally run those
 .PHONY: all clean info plugin
 
-
 info:
 	@echo Using the following config:
 	@echo DOCKER_HUB_REPO $(DOCKER_HUB_REPO) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)

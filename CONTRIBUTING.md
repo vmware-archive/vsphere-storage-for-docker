@@ -63,7 +63,7 @@ Manually eye ball the list to make sure Issues are relevant to the release (Some
 Head to GitHub and author a new release add the changelog for the tag created.
 
 **Note**: Some manual steps are required before publishing new release as shown below.
-1. Download deliverables from Github release page 
+1. Download deliverables from Github release page
 2. Remove VIB/DEB/RPMs from the ```Downloads``` sections
 3. Perform steps from internal Confluence page to sign the VIB. Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release
 4. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB
@@ -169,10 +169,15 @@ Environment variables:
 - You **need** to set ESX and either VM_IP (in which case we'll use 1 VM) or
 both VM1 and VM2 environment variables
 
+- The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use [managed plugin](https://github.com/vmware/docker-volume-vsphere/blob/master/plugin/Makefile#L30).
+If you want to user another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
+
+**Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/docker-volume-vsphere/pull/1163), our build/deployment script start using managed plugin approach.
+
 Examples:
 ```
 # Build and deploy the code. Also deploy (but do not run) tests
-ESX=10.20.105.54 VM_IP=10.20.105.201 make deploy-all
+DOCKER_HUB_REPO=cnastorage ESX=10.20.105.54 VM_IP=10.20.105.201 make deploy-all
 ```
 
 or
@@ -182,6 +187,7 @@ or
 export ESX=10.20.105.54
 export VM1=10.20.105.121
 export VM2=10.20.104.210
+export DOCKER_HUB_REPO=cnastorage
 
 make all
 ```

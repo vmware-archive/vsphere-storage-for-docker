@@ -40,6 +40,7 @@ default: build-all
 
 build-all: dockerized-build-ui
 	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=plugin all
 
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders
