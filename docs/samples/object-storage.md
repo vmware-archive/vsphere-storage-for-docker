@@ -2,9 +2,9 @@
 
 [Minio](https://www.minio.io/) is lightweight AWS S3 compatible object storage server built for cloud applications.
 
-vSphere Docker Volume Service enables running stateful containers backed by proven enterprise class storage. 
+vSphere Docker Volume Service (vDVS) enables running stateful containers backed by proven enterprise class storage. 
 
-With Minio’s simple object storage layer and VMware’s highly available vSphere Docker Volumes, you can reliably run any application that require object storage with vDVS for e.g. Docker Trusted Registry.
+With Minio’s simple object storage layer and VMware’s highly available vSphere Docker Volumes, you can reliably run any application that requires object storage with vDVS for e.g. Docker Trusted Registry.
 
 
 ## Launch Minio with vDVS and Docker Swarm
