@@ -37,6 +37,20 @@ It occurs if the Docker volume service cannot communicate to the ESX back end. T
 
 It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read ["What is VMCI and vSock and why is it needed?"](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed) above.
 
+### I'm not able to create volume after upgrading to vDVS managed plugin, what is the cause?
+```
+# docker volume create -d vsphere vol5
+Error response from daemon: create vol5: Post http://%2Frun%2Fdocker%2Fplugins%2Fvsphere.sock/VolumeDriver.Create: dial unix /run/docker/plugins/vsphere.sock: connect: no such file or directory
+```
+
+You are running into known [Docker Issue #32635](https://github.com/docker/docker/issues/32635). Restart docker service is required.
+
+e.g.
+```
+systemctl restart docker
+```
+
+
 ## Upgrade to version 0.10 (Dec 2016) release
 
 Tenancy changes in release 0.10 need a manual upgrade process enumerated below.

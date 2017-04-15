@@ -53,10 +53,14 @@ Make sure you provide the **absolute path** to the `.vib` file or the install wi
 
 ### On Docker Host (VM)
 #### Managed Plugin
-Please make sure to uninstall older releases of DEB/RPM using following commands.
+1. Please make sure to uninstall older releases of DEB/RPM using following commands.
 ```
 sudo dpkg -r docker-volume-vsphere # Ubuntu or deb based distros
 sudo rpm -e docker-volume-vsphere # Photon or rpm based distros
+```
+2. Docker service needs to be restarted until [Issue #32635](https://github.com/docker/docker/issues/32635) is resolved.
+```
+systemctl restart docker
 ```
 
 **For Docker 1.13 and above**, install managed plugin from Docker Store.
