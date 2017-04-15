@@ -32,7 +32,9 @@ build:
       - misc/drone-scripts/validate-and-serialize.sh
     when: &branches
       event: [push]
-      branch: [master, runci/*]
+      branches:
+        include: [ master, runci/* ]
+        exclude: [ document/*, skipci/* ]
 
   serialize_events:
     image: *build_cnt
@@ -40,6 +42,8 @@ build:
     commands: *serialize_cmd
     when: &events
       event: [pull_request, tag]
+      branches:
+        exclude: [ document/*, skipci/* ]
 
   build_branches:
     image: *build_cnt
@@ -50,7 +54,9 @@ build:
       - make -s build
       - echo $KEY | base64 -d > /drone/src/github.com/vmware/docker-volume-vsphere/key
       - chmod 0600 /drone/src/github.com/vmware/docker-volume-vsphere/key
-    when: *branches
+    when:
+      branches:
+        exclude: [ document/*, skipci/* ]
 
   build_events:
     image: *build_cnt
@@ -62,7 +68,9 @@ build:
     image: &pylint_cnt cnastorage/pylint
     commands: &pylint_cmd
        - make -s pylint
-    when: *branches
+    when:
+      branches:
+        exclude: [ document/*, skipci/* ]
 
   pylint_events:
     image: *pylint_cnt
@@ -74,7 +82,9 @@ build:
     commands: &package_cmd
       - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - make -s deb rpm
-    when: *branches
+    when:
+      branches:
+        exclude: [ document/*, skipci/* ]
 
   package_events:
     image: *package_cnt
@@ -92,7 +102,9 @@ build:
     image: *build_cnt
     environment: *setup_env
     commands: *setup_cmd
-    when: *branches
+    when:
+      branches:
+        exclude: [ document/*, skipci/* ]
 
   test_branches:
     image: *build_cnt
@@ -134,7 +146,9 @@ build:
       - #export VM1=`$GOVC_GET_IP photon.ga.vsan`
       - #export VM2=`$GOVC_GET_IP Ubuntu.1404.vsan`
       - #./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER < /dev/null
-    when: *branches
+    when:
+      branches:
+        exclude: [ document/*, skipci/* ]
 
   test_events:
     image: *build_cnt
