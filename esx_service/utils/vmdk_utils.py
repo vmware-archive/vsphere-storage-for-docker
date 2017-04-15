@@ -77,25 +77,23 @@ def init_datastoreCache(force=False):
     logging.debug("init_datastoreCache: %s", datastores)
 
     with lockManager.get_lock("init_datastoreCache"):
-        if datastores:
-            if force:
-                datastores = None
-            else:
-                return
+        if datastores and not force:
+            return
 
         si = vmdk_ops.get_si()
 
         #  We are connected to ESX so childEntity[0] is current DC/Host
         ds_objects = si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
-        datastores = []
+        tmp_ds = []
 
         for datastore in ds_objects:
             dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
             if err:
                 continue
-            datastores.append((datastore.info.name,
-                            datastore.info.url,
-                            dockvols_path))
+            tmp_ds.append((datastore.info.name,
+                           datastore.info.url,
+                           dockvols_path))
+        datastores = tmp_ds
 
 
 def validate_datastore(datastore):
