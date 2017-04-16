@@ -1,0 +1,60 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: Sidebar
+  product: Product1
+  version: 1.0
+  folders:
+
+  - title:
+    output: pdf
+    type: frontmatter
+    folderitems:
+    - title:
+      url: /titlepage
+      output: pdf
+      type: frontmatter
+    - title:
+      url: /tocpage
+      output: pdf
+      type: frontmatter
+
+  - title: Getting Started
+    output: web, pdf
+    folderitems:
+    - title: Product 1 home
+      url: /p1_landing_page.html
+      output: web
+
+    - title: Admin CLI
+      url: /admin-cli.html
+      output: web, pdf
+
+    - title: Data Storage
+      url: /datastores.html
+      output: web, pdf
+
+    - title: Docker Plugin Drivers
+      url: /docker-plugin-drivers.html
+      output: web, pdf
+
+  - title: Another heading
+    output: web, pdf
+
+    folderitems:
+    - title: Docker Volume CLI
+      url: /docker-volume-cli.html
+      output: web, pdf
+
+    - title: FAQ
+      url: /faqs.html
+      output: web, pdf
+
+    - title: install
+      url: /install.html
+      output: web, pdf
+
+    - title: Photon Overview
+      url: /photon-overview.html
+      output: web, pdf
+
