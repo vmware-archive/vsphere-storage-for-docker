@@ -11,6 +11,7 @@ With Minio’s simple object storage layer and VMware’s highly available vSphe
 ## Launch Minio with vDVS and Docker Swarm
 
 Minio Stack (vMinio.yml):
+
 ```
 version: "3"
 

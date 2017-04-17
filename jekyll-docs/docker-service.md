@@ -5,6 +5,7 @@ title: Running MongoDB (Docker Service) with vSphere volume
 Docker service is way to define a container based application with all metadata such as scaling, volume definitions etc. In this example we will create a docker service and inspect the volumes which are auto created. This will also serve as an example of usage of docker service command with vSphere suppoted volumes.
 
 Let's create a MongoDB service with replica count as 1 and vSphere based volume.
+
 ```
 # docker service create --replicas 1 --mount type=volume,source=mongodata,target=/data/db,volume-driver=vsphere,volume-opt=size=1Gb  --mount type=volume,source=mongoconfig,target=/da
 ta/configdb,volume-driver=vsphere --name mongo1 mongo:3.2 mongod

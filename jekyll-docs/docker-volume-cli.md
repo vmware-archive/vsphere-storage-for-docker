@@ -24,6 +24,7 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o fstype=ext
 
 ##### vsan-policy-name
 For the vSphere driver you can specify the vsan policy name. The policy itself must be created or should be present before using this in volume creation. You can use vmdkops-admin-cli for creation of policy. The syntax for passing policy name while creating volume looks like this:
+
 ```
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o vsan-policy-name=allflash
 
