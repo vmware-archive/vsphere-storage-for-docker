@@ -21,20 +21,20 @@ import glob
 import re
 import logging
 import fnmatch
-import vmdk_ops
-import auth
-import auth_data_const
-import auth_api
-import log_config
-import auth
-import auth_data_const
-import error_code
 
 from pyVim import vmconfig
 from pyVmomi import vim
-
 import pyVim
 from pyVim.invt import GetVmFolder, FindChild
+
+import threadutils
+import vmdk_ops
+import auth_data_const
+import auth
+import auth_api
+import log_config
+from error_code import *
+
 
 # datastores should not change during 'vmdkops_admin' run,
 # so using global to avoid multiple scans of /vmfs/volumes
@@ -63,43 +63,55 @@ LSOF_CMD = "/bin/vmkvsitools lsof"
 VMDK_RETRY_COUNT = 5
 VMDK_RETRY_SLEEP = 1
 
-def init_datastoreCache():
+# For managing resource locks.
+lockManager = threadutils.LockManager()
+
+
+def init_datastoreCache(force=False):
     """
-    Initializes the datastore cache with the list of datastores accessible from local ESX host.
+    Initializes the datastore cache with the list of datastores accessible
+    from local ESX host. force=True will force it to ignore current cache
+    and force init
     """
-    global datastores
-    logging.debug("init_datastoreCache: %s", datastores)
+    logging.debug("init_datastoreCache:  %s", datastores)
 
-    si = vmdk_ops.get_si()
+    with lockManager.get_lock("init_datastoreCache"):
+        global datastores
+        if datastores and not force:
+            return
 
-    #  We are connected to ESX so childEntity[0] is current DC/Host
-    ds_objects = \
-      si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
-    datastores = []
+        si = vmdk_ops.get_si()
 
-    for datastore in ds_objects:
-        dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
-        if err:
-            continue
-        datastores.append((datastore.info.name,
+        #  We are connected to ESX so childEntity[0] is current DC/Host
+        ds_objects = si.content.rootFolder.childEntity[0].datastoreFolder.childEntity
+        tmp_ds = []
+
+        for datastore in ds_objects:
+            dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
+            if err:
+                logging.error(" datastore %s is being ignored as the dockvol path can't be created on it")
+                continue
+            tmp_ds.append((datastore.info.name,
                            datastore.info.url,
                            dockvols_path))
+        datastores = tmp_ds
+
 
 def validate_datastore(datastore):
     """
     Checks if the datastore is part of datastoreCache.
-    If not it will update the datastore cache and checks if datastore is part of the updated cache.
+    If not it will update the datastore cache and check if datastore
+    is a part of the updated cache.
     """
-    global datastores
-    if datastores == None:
-        init_datastoreCache()
+    init_datastoreCache()
     if datastore in [i[0] for i in datastores]:
         return True
     else:
-        init_datastoreCache()
+        init_datastoreCache(force=True)
         if datastore in [i[0] for i in datastores]:
             return True
     return False
+
 
 def get_datastores():
     """
@@ -109,20 +121,20 @@ def get_datastores():
     'url' is datastore URL (e.g. '/vmfs/volumes/vsan:572904f8c031435f-3513e0db551fcc82')
     'dockvol-path; is a full path to 'dockvols' folder on datastore
     """
-    if datastores == None:
-        init_datastoreCache()
+    init_datastoreCache()
     return datastores
+
 
 def get_volumes(tenant_re):
     """ Return dicts of docker volumes, their datastore and their paths
     """
     # Assume we have two tenants "tenant1" and "tenant2"
-    # volumes belongs to "tenant1" are under /vmfs/volumes/datastore1/dockervol/tenant1
-    # volumes belongs to "tenant2" are under /vmfs/volumes/datastore1/dockervol/tenant2
+    # volumes for "tenant1" are in /vmfs/volumes/datastore1/dockervol/tenant1
+    # volumes for "tenant2" are in /vmfs/volumes/datastore1/dockervol/tenant2
     # volumes does not belongs to any tenants are under /vmfs/volumes/dockervol
-    # tenant_re = None : only return volumes which does not belong to any tenant
+    # tenant_re = None : only return volumes which do not belong to a tenant
     # tenant_re = "tenant1" : only return volumes which belongs to tenant1
-    # tenant_re = "tenant*" : return volumes which belongs to tenant1 or tenant2
+    # tenant_re = "tenant*" : return volumes which belong to tenant1 or tenant2
     # tenant_re = "*" : return all volumes under /vmfs/volumes/datastore1/dockervol
     logging.debug("get_volumes: tenant_pattern(%s)", tenant_re)
     volumes = []
@@ -152,13 +164,13 @@ def get_volumes(tenant_re):
                 error_info, tenant_name = auth_api.get_tenant_name(sub_dir_name)
                 if not error_info:
                     logging.debug("get_volumes: path=%s root=%s sub_dir_name=%s tenant_name=%s",
-                                path, root, sub_dir_name, tenant_name)
+                                  path, root, sub_dir_name, tenant_name)
                     if fnmatch.fnmatch(tenant_name, tenant_re):
                         for file_name in list_vmdks(root):
                             volumes.append({'path': root,
                                             'filename': file_name,
                                             'datastore': datastore,
-                                            'tenant' : tenant_name})
+                                            'tenant': tenant_name})
                 else:
                     # cannot find this tenant, this tenant was removed
                     # mark those volumes created by "orphan" tenant
@@ -208,12 +220,14 @@ def get_datastore_path(vmdk_path):
     datastore, path = match.groups()
     return "[{0}] {1}".format(datastore, path)
 
+
 def get_datastore_from_vmdk_path(vmdk_path):
     """Returns a string representing the datastore from a full vmdk path.
     """
     match = re.search(DATASTORE_PATH_REGEXP, vmdk_path)
     datastore, path = match.groups()
     return datastore
+
 
 def get_volname_from_vmdk_path(vmdk_path):
     """Returns the volume name from a full vmdk path.
@@ -222,6 +236,7 @@ def get_volname_from_vmdk_path(vmdk_path):
     _, path = match.groups()
     vmdk = path.split("/")[-1]
     return strip_vmdk_extension(vmdk)
+
 
 def list_vmdks(path, volname="", show_snapshots=False):
     """ Return a list of VMDKs in a given path. Filters out non-descriptor
@@ -243,7 +258,7 @@ def list_vmdks(path, volname="", show_snapshots=False):
         vmdks = [f for f in vmdks if f.startswith(volname)]
 
     if not show_snapshots:
-        expr =  re.compile(SNAP_VMDK_REGEXP)
+        expr = re.compile(SNAP_VMDK_REGEXP)
         vmdks = [f for f in vmdks if not expr.match(f)]
     logging.debug("vmdks %s", vmdks)
     return vmdks
@@ -278,6 +293,7 @@ def strip_vmdk_extension(filename):
     """ Remove the .vmdk file extension from a string """
     return filename.replace(".vmdk", "")
 
+
 def get_vm_uuid_by_name(vm_name):
     """ Returns vm_uuid for given vm_name, or None """
     si = vmdk_ops.get_si()
@@ -287,6 +303,7 @@ def get_vm_uuid_by_name(vm_name):
     except:
         return None
 
+
 def get_vm_name_by_uuid(vm_uuid):
     """ Returns vm_name for given vm_uuid, or None """
     si = vmdk_ops.get_si()
@@ -294,6 +311,7 @@ def get_vm_name_by_uuid(vm_uuid):
         return vmdk_ops.vm_uuid2name(vm_uuid)
     except:
         return None
+
 
 def get_vm_config_path(vm_name):
     """Returns vm_uuid for given vm_name, or None """
@@ -304,13 +322,14 @@ def get_vm_config_path(vm_name):
     except:
         return None
 
-     # config path has the format like this "[datastore1] test_vm1/test_vm1/test_vm1.vmx"
+    # config path has the format like this "[datastore1] test_vm1/test_vm1/test_vm1.vmx"
     datastore, path = config_path.split()
     datastore = datastore[1:-1]
     datastore_path = os.path.join("/vmfs/volumes/", datastore)
     # datastore_path has the format like this /vmfs/volumes/datastore_name
     vm_config_path = os.path.join(datastore_path, path)
     return vm_config_path
+
 
 def check_docker_volume(dev):
     """
@@ -328,8 +347,8 @@ def check_docker_volume(dev):
 
     if disk_path.lstrip().startswith(vmdk_ops.DOCK_VOLS_DIR):
         return True
-
     return False
+
 
 def check_volumes_mounted(vm_list):
     """
@@ -340,12 +359,14 @@ def check_volumes_mounted(vm_list):
         if vm:
             for d in vm.config.hardware.device:
                 if check_docker_volume(d):
-                    error_info = error_code.generate_error_info(error_code.ErrorCode.VM_WITH_MOUNTED_VOLUMES, vm.config.name)
+                    error_info = generate_error_info(ErrorCode.VM_WITH_MOUNTED_VOLUMES,
+                                                     vm.config.name)
                     return error_info
         else:
-            error_info = error_code.generate_error_info(error_code.ErrorCode.VM_NOT_FOUND, vm_id)
+            error_info = generate_error_info(ErrorCode.VM_NOT_FOUND, vm_id)
             return error_info
     return None
+
 
 def log_volume_lsof(vol_name):
     """Log volume open file descriptors"""
@@ -361,10 +382,12 @@ def log_volume_lsof(vol_name):
                 cartel, name, ftype, fd, desc)
             logging.info("Volume open descriptor: %s", msg)
 
+
 def get_datastore_objects():
     """ return all datastore objects """
     si = vmdk_ops.get_si()
     return si.content.rootFolder.childEntity[0].datastore
+
 
 def get_datastore_url(datastore_name):
     """ return datastore url for given datastore name """
@@ -383,6 +406,7 @@ def get_datastore_url(datastore_name):
     res = [d[1] for d in get_datastores() if d[0] == datastore_name]
     return res[0]
 
+
 def get_datastore_name(datastore_url):
     """ return datastore name for given datastore url """
 
@@ -394,17 +418,21 @@ def get_datastore_name(datastore_url):
     # get_datastores() return a list of tuple
     # each tuple has format like (datastore_name, datastore_url, dockvol_path)
     res = [d[0] for d in get_datastores() if d[1] == datastore_url]
+    logging.debug("get_datastore_name: res=%s", res)
     return res[0] if res else None
+
 
 def get_datastore_url_from_config_path(config_path):
     """Returns datastore url in config_path """
     # path can be /vmfs/volumes/<datastore_url_name>/...
     # or /vmfs/volumes/datastore_name/...
     # so extract datastore_url_name:
-    config_ds_url = os.path.join("/vmfs/volumes/", os.path.realpath(config_path).split("/")[3])
+    config_ds_url = os.path.join("/vmfs/volumes/",
+                                 os.path.realpath(config_path).split("/")[3])
     logging.debug("get_datastore_url_from_config_path: config_path=%s config_ds_url=%s"
                   % (config_path, config_ds_url))
     return config_ds_url
+
 
 def main():
     log_config.configure()
