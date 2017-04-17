@@ -683,6 +683,7 @@ enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issue
 #/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name=some-policy
 Successfully removed policy: some-policy
 ```
+
 ## Status
 
 Show config and run-time information about the service.

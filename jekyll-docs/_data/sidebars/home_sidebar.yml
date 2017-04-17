@@ -63,6 +63,9 @@ entries:
         - title: Running an Example App with Docker Stacks
           url: /docker-stacks.html
           output: web
+        - title: S3 Object storage with vDVS
+          url: /s3-object-storage.html
+          output: web
   - title: Miscellaneous
     output: web
     folderitems:
