@@ -125,7 +125,11 @@
                         
                         
                         
-                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM/_latestVersion" target="_blank">RPM</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_DEB/_latestVersion" target="_blank">DEB</a></li>
                         
                         
                     </ul>
@@ -320,6 +324,13 @@
             
             
             
+            
+            
+            <li><a href="s3-object-storage.html">S3 Object storage with vDVS</a></li>
+            
+            
+            
+            
         </ul>
         
         
@@ -405,7 +416,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//docker-volume-cli.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//docker-volume-cli.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -485,21 +496,23 @@ docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume 
 </div>
 
 <h2 id="list-volumes">List Volumes</h2>
-<p>Docker volume list can be used to volume names &amp; their DRIVER type
-<code class="highlighter-rouge">
-docker volume ls
+<p>Docker volume list can be used to volume names &amp; their DRIVER type</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume ls
 DRIVER              VOLUME NAME
 vsphere                MyVolume@vsanDatastore
 vsphere                minio1@vsanDatastore
 vsphere                minio2@vsanDatastore
 photon                 redis-data@vsanDatastore
-</code>
-## Inspect Volume
-You can use <code class="highlighter-rouge">docker volume inspect</code> command to see vSphere attributes of a particular volume.
-<code class="highlighter-rouge">
-docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
-</code>
-<code class="highlighter-rouge">
+</code></pre>
+</div>
+
+<h2 id="inspect-volume">Inspect Volume</h2>
+<p>You can use docker volume inspect command to see vSphere attributes of a particular volume.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+
+
 docker volume inspect MyVolume
 [
     {
@@ -531,23 +544,26 @@ docker volume inspect MyVolume
         }
     }
 ]
-</code>
-Note: For disk formats zeroedthick and thin, the allocated size would be total size plus the size of replicas.</p>
+</code></pre>
+</div>
+
+<p>Note: For disk formats zeroedthick and thin, the allocated size would be total size plus the size of replicas.</p>
 
 <h2 id="remove-volume">Remove Volume</h2>
-<p>You can remove the volume with following command
-<code class="highlighter-rouge">
-# docker volume rm db_data
+<p>You can remove the volume with following command</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker volume rm db_data
 db_data
-</code></p>
+</code></pre>
+</div>
 
 <h2 id="prune-volume">Prune Volume</h2>
 <div class="panel panel-info">
   <div class="panel-heading">
-    <h3 class="panel-title">Docker volume prune</h3>
+    <h6 class="panel-title">Docker volume prune</h6>
   </div>
   <div class="panel-body">
-    Docker volume prune is not supported
+    Docker volume prune command is not supported at the moment.
   </div>
 </div>
 
@@ -567,7 +583,7 @@ db_data
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Apr 16, 2017 <br />
+ Site last generated: Apr 17, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

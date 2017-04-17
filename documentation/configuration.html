@@ -125,7 +125,11 @@
                         
                         
                         
-                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM/_latestVersion" target="_blank">RPM</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_DEB/_latestVersion" target="_blank">DEB</a></li>
                         
                         
                     </ul>
@@ -320,6 +324,13 @@
             
             
             
+            
+            
+            <li><a href="s3-object-storage.html">S3 Object storage with vDVS</a></li>
+            
+            
+            
+            
         </ul>
         
         
@@ -405,15 +416,60 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//configuration.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//configuration.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <p>vSphere Docker Volume Service consists of two components the VIB and Docker plugin. Only the Docker plugin requires configuration which is described in this section. The docker volume plugin uses VMDK based volumes and are attached to container.</p>
+  <p>vSphere Docker Volume Service consists of two components the VIB and Docker plugin. The VIB configuration is driver configuration while the plugin configuration resides on individual VMs where plugin is installed.</p>
 
-<p>The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing –config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.</p>
+<h2 id="driver-configuration">Driver configuration</h2>
 
-<p>The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations.</p>
+<p>The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it is /etc/vmware/vmdkops/log_config.json. The configuration is largely around logging.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nt">"handlers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nt">"rotate_file"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nt">"level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INFO"</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"maxBytes"</span><span class="p">:</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"formatter"</span><span class="p">:</span><span class="w"> </span><span class="s2">"standard"</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"class"</span><span class="p">:</span><span class="w"> </span><span class="s2">"logging.handlers.RotatingFileHandler"</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"filename"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log/vmware/vmdk_ops.log"</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"backupCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"encoding"</span><span class="p">:</span><span class="w"> </span><span class="s2">"utf8"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nt">"formatters"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nt">"standard"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"%(asctime)-12s %(process)d [%(threadName)s] [%(levelname)-7s] %(message)s"</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"datefmt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"%x %X"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+    </span><span class="nt">"loggers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nt">""</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nt">"level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INFO"</span><span class="p">,</span><span class="w">
+            </span><span class="nt">"handlers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+                </span><span class="s2">"rotate_file"</span><span class="w">
+            </span><span class="p">]</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nt">"disable_existing_loggers"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nt">"info"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"Logging configuration for vmdk_opsd service, in python logging config format."</span><span class="p">,</span><span class="w">
+        </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"'level' defines verbosity and could be DEBUG, INFO, WARNING, ERROR, CRITICAL"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"'maxBytes' and 'backupCount' define max log size and number of log backup files kept"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"For more, see https://docs.python.org/2/library/logging.config.html#logging-config-dictschema"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">""</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file."</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+</div>
+
+<h2 id="plugin-configuration">Plugin Configuration</h2>
+
+<p>The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations. The default location where it looks for plugin config is at /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing –config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="w">
     </span><span class="nt">"Driver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vsphere"</span><span class="w">
@@ -471,7 +527,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Apr 16, 2017 <br />
+ Site last generated: Apr 17, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
