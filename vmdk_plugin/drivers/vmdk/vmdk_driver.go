@@ -26,14 +26,15 @@ package vmdk
 
 import (
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
-	"path/filepath"
-	"sync"
-	"time"
 )
 
 const (
@@ -78,6 +79,7 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	}
 
 	d.refCounts.Init(d, mountDir, driverName)
+
 	log.WithFields(log.Fields{
 		"version":  version,
 		"port":     vmdkops.EsxPort,
@@ -349,6 +351,9 @@ func (d *VolumeDriver) Path(r volume.Request) volume.Response {
 func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
+	// dirty the background refcounting process if any
+	d.refCounts.MarkDirty()
+
 	// If the volume is already mounted , just increase the refcount.
 	//
 	// Note: We are deliberately incrementing refcount first, before trying
@@ -418,6 +423,9 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
+	// dirty the background refcounting process if any
+	d.refCounts.MarkDirty()
+
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)
 	if err != nil {
@@ -432,6 +440,14 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Info("Still in use, skipping unmount request. ")
 		return volume.Response{Err: ""}
+	}
+
+	// defensive approach to not unmount volumes until refcounting has been successful
+	if d.refCounts.GetSuccess() != true {
+		log.WithFields(
+			log.Fields{"name": r.Name},
+		).Info("Reference count map is not initialized. Unmount is delayed")
+		return volume.Response{Err: "Refcount Error"}
 	}
 
 	// and if nobody needs it, unmount and detach

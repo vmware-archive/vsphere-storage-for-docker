@@ -515,6 +515,9 @@ func (d *VolumeDriver) Path(r volume.Request) volume.Response {
 func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
+	// dirty the background refcounting process if any
+	d.refCounts.MarkDirty()
+
 	// If the volume is already mounted , just increase the refcount.
 	//
 	// Note: We are deliberately incrementing refcount first, before trying
@@ -577,6 +580,9 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
+	// dirty the background refcounting process if any
+	d.refCounts.MarkDirty()
+
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)
 	if err != nil {
@@ -584,6 +590,14 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Error("Refcount error - still trying to unmount...")
+	}
+
+	// defensive approach to not unmount volumes until refcounting has been successful
+	if d.refCounts.GetSuccess() != true {
+		log.WithFields(
+			log.Fields{"name": r.Name},
+		).Info("Reference count map is not initialized. Unmount is delayed")
+		return volume.Response{Err: "Refcount Error"}
 	}
 
 	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
