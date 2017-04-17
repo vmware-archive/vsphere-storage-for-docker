@@ -99,17 +99,15 @@ Pages](https://vmware.github.io/docker-volume-vsphere/) using
 
 To update documentation
 ```
-make documentation # Start the mkdocs docker image
-mkdocs serve -a 0.0.0.0:8000
-# 1. Open browser on same machine and head to 127.0.0.1:8000
-# 2. Make edits and refresh browser
-# 3. Build the website
-mkdocs build
-# 4. Checkout the gh-pages
+# 1. Checkout the gh-pages
 git checkout gh-pages
-# 5. Remove the old site and copy the new one.
-rm -rvf documentation
-mv site documentation
+# 2. Go to jekyll-docs directory
+cd jekyll-docs
+# 3. Build the site
+bundle exec jekyll build
+# 4. Remove the old site and copy the new one.
+rm -rvf ../documentation
+mv _site ../documentation
 # 6. Push to GitHub
 git add documentation
 git commit
