@@ -73,10 +73,10 @@ def init_datastoreCache(force=False):
     from local ESX host. force=True will force it to ignore current cache
     and force init
     """
-    global datastores
     logging.debug("init_datastoreCache:  %s", datastores)
 
     with lockManager.get_lock("init_datastoreCache"):
+        global datastores
         if datastores and not force:
             return
 
@@ -89,6 +89,7 @@ def init_datastoreCache(force=False):
         for datastore in ds_objects:
             dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
             if err:
+                logging.error(" datastore %s is being ignored as the dockvol path can't be created on it")
                 continue
             tmp_ds.append((datastore.info.name,
                            datastore.info.url,
@@ -134,7 +135,7 @@ def get_volumes(tenant_re):
     # tenant_re = None : only return volumes which do not belong to a tenant
     # tenant_re = "tenant1" : only return volumes which belongs to tenant1
     # tenant_re = "tenant*" : return volumes which belong to tenant1 or tenant2
-    # tenant_re = "*" : return all volumes under /vmfs/volumes/datastore1/dockervol TODO: fix the comment
+    # tenant_re = "*" : return all volumes under /vmfs/volumes/datastore1/dockervol
     logging.debug("get_volumes: tenant_pattern(%s)", tenant_re)
     volumes = []
     for (datastore, url, path) in get_datastores():
