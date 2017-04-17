@@ -3,9 +3,9 @@
     <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="This is just a sample topic...">
-<meta name="keywords" content=" sample">
-<title>Sample 5 Topic | vSphere Docker Volume Service</title>
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>S3 Object Storage with vSphere Volumes | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Sample 5 Topic">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="S3 Object Storage with vSphere Volumes">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -186,19 +186,17 @@
 
 
 <ul id="mysidebar" class="nav">
-    <li class="sidebarTitle">Product2 1.0</li>
+    <li class="sidebarTitle">Menu </li>
     
     
-    
-        
     
     <li>
-        <a href="#">Introduction</a>
+        <a href="#">Get Started</a>
         <ul>
             
             
             
-            <li><a href="p2_landing_page.html">Overview</a></li>
+            <li><a href="index.html">Introduction</a></li>
             
             
             
@@ -208,40 +206,26 @@
         
     
     <li>
-        <a href="#">Simple Workflow</a>
+        <a href="#">Setup</a>
         <ul>
             
             
             
-            <li><a href="p2_sample1.html">Sample 1</a></li>
+            <li><a href="prerequisite.html">Prerequsites</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample2.html">Sample 2</a></li>
+            <li><a href="install.html">Installation</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample3.html">Sample 3</a></li>
-            
-            
-            
-            
-            
-            
-            <li><a href="p2_sample4.html">Sample 4</a></li>
-            
-            
-            
-            
-            
-            
-            <li class="active"><a href="p2_sample5.html">Sample 5</a></li>
+            <li><a href="configuration.html">Configuration</a></li>
             
             
             
@@ -251,68 +235,127 @@
         
     
     <li>
-        <a href="#">Complex Workflow</a>
+        <a href="#">User Guide</a>
         <ul>
             
             
             
-            <li><a href="p2_sample6.html">Sample 6</a></li>
+            <li><a href="docker-volume-cli.html">Docker Volume Management</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample7.html">Sample 7</a></li>
+            <li><a href="docker-compatibility.html">Docker Compatibility</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Admin Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="datastores.html">Datastores Support</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample8.html">Sample 8</a></li>
+            <li><a href="admin-cli.html">Admin CLI Reference</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample9.html">Sample 9</a></li>
+            <li><a href="tenancy.html">Multi-tenancy Support</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample10.html">Sample 10</a></li>
+            <li><a href="policy-based-management.html">Storage Policy Based Management</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="demo-wordpress-app.html">Wordpress application with MariaDB</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample11.html">Sample 11</a></li>
+            <li><a href="demo-ha-swarm.html">HA DB in Docker Swarm mode</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample12.html">Sample 12</a></li>
+            <li><a href="docker-service.html">Running MongoDB (Docker Service) with vSphere volume</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample13.html">Sample 13</a></li>
+            <li><a href="docker-stacks.html">Running an Example App with Docker Stacks</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample14.html">Sample 14</a></li>
+            <li class="active"><a href="s3-object-storage.html">S3 Object storage with vDVS</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="photon.html">Photon Platform</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="blogs.html">Blogs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
             
             
             
@@ -336,39 +379,13 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Sample 5 Topic</h1>
+   <h1 class="post-title-main">S3 Object Storage with vSphere Volumes</h1>
 </div>
-
-
-
-<script>
-    $(document).ready ( function(){
-        $('.box5').addClass('active');
-    });
-</script>
-
-
-<div id="userMap">
-<div class="content"><a href="p2_sample1.html"><div class="box box1">Connect to ADB</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample2.html"><div class="box box2">Download and Build the Starter Kit</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample3.html"><div class="box box3">Take a Tour</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample4.html"><div class="box box4">Load Your Widgets</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample5.html"><div class="box box5">Query for Something</div></a></div>
-<div class="clearfix"></div>
-
-</div>
-
 
 
 
 <div class="post-content">
 
-   
-    <div class="summary">This is just a sample topic...</div>
    
 
     
@@ -399,24 +416,85 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs/product2/p2_sample5.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//s3-object-storage.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <h2 id="sample-content">Sample Content</h2>
+  <p><a href="https://www.minio.io/">Minio</a> is lightweight AWS S3 compatible object storage server built for cloud applications.</p>
 
-<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+<p>vSphere Docker Volume Service (vDVS) enables running stateful containers backed by proven enterprise class storage.</p>
 
-<p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using ‘Content here, content here’, making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for ‘lorem ipsum’ will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
+<p>With Minio’s simple object storage layer and VMware’s highly available vSphere Docker Volumes, you can reliably run any application that requires object storage with vDVS for e.g. Docker Trusted Registry.</p>
 
-<h2 id="more-sample-content">More sample content</h2>
+<h2 id="launch-minio-with-vdvs-and-docker-swarm">Launch Minio with vDVS and Docker Swarm</h2>
 
-<p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of “de Finibus Bonorum et Malorum” (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, “Lorem ipsum dolor sit amet..”, comes from a line in section 1.10.32.</p>
+<p>Minio Stack (vMinio.yml):
+```
+version: “3”</p>
 
-<p>The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from “de Finibus Bonorum et Malorum” by Cicero are also reproduced in their exact original form, accompanied by English versions from the 1914 translation by H. Rackham.</p>
+<p>services:</p>
 
-<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don’t look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn’t anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet. It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free from repetition, injected humour, or non-characteristic words etc.</p>
+<p>minio:
+    image: minio/minio
+    ports:
+      - “9000:9000”
+    volumes:
+      - export:/export
+      - config:/root/.minio
+    environment:
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: admin123
+    command: server /export 
+    deploy:
+      restart_policy:
+        condition: on-failure</p>
 
+<p>volumes:
+   export:
+      driver: “vsphere”
+      driver_opts:
+        size : “5GB”
+        fstype : “xfs”
+   config:
+      driver: “vsphere”
+      driver_opts:
+        size: “1GB”
+        fstype : “xfs”
+```</p>
+
+<p>Deploy Minio Stack:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker stack deploy -c vMinio.yml minio
+</code></pre>
+</div>
+
+<p>Check Minio has started successfully:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker stack ps minio
+</code></pre>
+</div>
+
+<p>This will create 2 vSphere volumes:
+- minio_export: Used to store data
+- minio_config: Used to store configuration</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume ls -f driver=vsphere
+DRIVER              VOLUME NAME
+vsphere:latest      minio_config@datastore1
+vsphere:latest      minio_export@datastore1
+</code></pre>
+</div>
+
+<h2 id="accessing-minio-object-storage">Accessing Minio Object Storage:</h2>
+
+<ul>
+  <li>
+    <p>Point your browser to <a href="http://Swarm-Master-IP:9000">http://Swarm-Master-IP:9000</a> and login using credentials specified in compose file.</p>
+  </li>
+  <li>
+    <p>You can also access Minio Object Storage using <a href="http://docs.minio.io/">CLI, API</a></p>
+  </li>
+</ul>
 
   
 

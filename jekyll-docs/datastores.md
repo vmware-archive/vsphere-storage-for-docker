@@ -41,6 +41,8 @@ $esx ls /vmfs/volumes/datastore1/dockvols
 ds1volume.vmdk
 ```
 
+Finally in case of multi tenancy the logic used to resolve the datastore location is described in [Tenancy](tenancy.html#default-datastore)
+
 ## Listing Volumes
 
 When you list the volumes, you can clearly distinguish the volumes in the datastore that hosts the VM vs. the volumes in other datastores

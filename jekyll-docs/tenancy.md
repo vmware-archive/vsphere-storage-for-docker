@@ -20,7 +20,9 @@ vmgroup
 Vmgroups can be created and managed via the [Admin CLI](/user-guide/admin-cli/#Vmgroup)
 
 ## Multitenancy concepts
+
 ### Default vmgroup
+
 When a VM which does not belong to any vmgroup issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT vmgroup, and will get privileges associated with this vmgroup. \_DEFAULT vmgroup will be automatically created by system post install, so by default vmdk_ops will support request from any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this vmgroup or modify privileges, thus locking down vmdk_ops to serve only explicitly configured VMs.
 
 ```

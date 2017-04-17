@@ -42,7 +42,9 @@ dosy6twh0fug6216wj9j3pmtl    photon4   Ready   Active
 
 ```
 
-We can also verify that there is no volume that exists on the cluster at the moment:
+We can also verify that there is no volume that exists on the cluster at 
+the moment:
+
 ```
 #docker volume ls
 DRIVER              VOLUME NAME
@@ -56,22 +58,25 @@ Let's deploy a service with a single MySQL DB instance and a vSphere volume atta
 - The volume is attached at /var/lib/mysql - the location where MySQL DB stores the data
 
 ```
-# docker service create --name db1  --replicas 1 --mount type=volume,source=db_data,target=/var/lib/mysql,volume-driver=vsphere,volume-opt=size=1Gb -p 3306:3306  --env MYSQL_ROOT_PASSWORD=word --env MYSQL_DATABASE=wordpress --env MYSQL_USER=wordpress --env MYSQL_PASSWORD=wordpress MySQLdb
+#docker service create --name db1  --replicas 1 --mount type=volume,source=db_data,target=/var/lib/mysql,volume-driver=vsphere,volume-opt=size=1Gb -p 3306:3306  --env MYSQL_ROOT_PASSWORD=word --env MYSQL_DATABASE=wordpress --env MYSQL_USER=wordpress --env MYSQL_PASSWORD=wordpress MySQLdb
+
 5cu69bufuhjvgncp1t9eusdv7
 ```
 
 
 We can verify that the volume has been created:
+
 ```
 # docker volume ls
 DRIVER              VOLUME NAME
 vsphere             db_data@datastore3
 
 ```
+
 A quick detailed inspection of the volumes also shows all the details of the volume:
 
 ```
-# docker volume inspect db_data
+#docker volume inspect db_data
 [
     {
         "Name": "db_data",
@@ -97,6 +102,7 @@ A quick detailed inspection of the volumes also shows all the details of the vol
     }
 ]
 ```
+
 A quick inspection of the docker container also shows that the volume is attached
 
 ```
@@ -160,11 +166,13 @@ Now to test the availability of the database, let's completely destroy the node 
 - The volume should get attached to the container on new node (This is what vDVS plugin will provide in this case)
 
 Once we destroy the original node, we can see that the container is scheduled on a different node.
+
 ```
 # docker ps -a
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
 a1f07c2af9c5        mariadb:latest      "docker-entrypoint.sh"   14 seconds ago      Up 10 seconds       3306/tcp            db1.1.eljid7i5i8kiinm5z8f869kk1
 ```
+
 Let's login and verify that the data also persists and the volume was re-attached
 
 ```

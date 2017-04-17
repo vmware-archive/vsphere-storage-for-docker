@@ -2,11 +2,57 @@
 title: Configuration
 ---
 
-vSphere Docker Volume Service consists of two components the VIB and Docker plugin. Only the Docker plugin requires configuration which is described in this section. The docker volume plugin uses VMDK based volumes and are attached to container.
+vSphere Docker Volume Service consists of two components the VIB and Docker plugin. The VIB configuration is driver configuration while the plugin configuration resides on individual VMs where plugin is installed.
 
-The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
+## Driver configuration
 
-The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations.
+The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it is /etc/vmware/vmdkops/log_config.json. The configuration is largely around logging.
+
+
+```
+{
+    "handlers": {
+        "rotate_file": {
+            "level": "INFO",
+            "maxBytes": 1048576,
+            "formatter": "standard",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "/var/log/vmware/vmdk_ops.log",
+            "backupCount": 1,
+            "encoding": "utf8"
+        }
+    },
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)-12s %(process)d [%(threadName)s] [%(levelname)-7s] %(message)s",
+            "datefmt": "%x %X"
+        }
+    },
+    "version": 1,
+    "loggers": {
+        "": {
+            "level": "INFO",
+            "handlers": [
+                "rotate_file"
+            ]
+        }
+    },
+    "disable_existing_loggers": false,
+    "info": [
+        "Logging configuration for vmdk_opsd service, in python logging config format.",
+        "",
+        "'level' defines verbosity and could be DEBUG, INFO, WARNING, ERROR, CRITICAL",
+        "'maxBytes' and 'backupCount' define max log size and number of log backup files kept",
+        "For more, see https://docs.python.org/2/library/logging.config.html#logging-config-dictschema",
+        "",
+        "Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file."
+    ]
+}
+```
+
+## Plugin Configuration
+
+The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations. The default location where it looks for plugin config is at /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
 
 ```
 {

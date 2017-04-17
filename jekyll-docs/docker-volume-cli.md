@@ -81,6 +81,7 @@ docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume 
 
 ## List Volumes
 Docker volume list can be used to volume names & their DRIVER type
+
 ```
 docker volume ls
 DRIVER              VOLUME NAME
@@ -89,12 +90,14 @@ vsphere                minio1@vsanDatastore
 vsphere                minio2@vsanDatastore
 photon                 redis-data@vsanDatastore
 ```
+
 ## Inspect Volume
-You can use `docker volume inspect` command to see vSphere attributes of a particular volume.
+You can use docker volume inspect command to see vSphere attributes of a particular volume.
+
 ```
 docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
-```
-```
+
+
 docker volume inspect MyVolume
 [
     {
@@ -127,11 +130,13 @@ docker volume inspect MyVolume
     }
 ]
 ```
+
 Note: For disk formats zeroedthick and thin, the allocated size would be total size plus the size of replicas.
 
 
 ## Remove Volume
 You can remove the volume with following command
+
 ```
 # docker volume rm db_data
 db_data
@@ -140,9 +145,9 @@ db_data
 ## Prune Volume
 <div class="panel panel-info">
   <div class="panel-heading">
-    <h3 class="panel-title">Docker volume prune</h3>
+    <h6 class="panel-title">Docker volume prune</h6>
   </div>
   <div class="panel-body">
-    Docker volume prune is not supported
+    Docker volume prune command is not supported at the moment.
   </div>
 </div>

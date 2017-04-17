@@ -19,6 +19,7 @@ List of blogs related to vSphere Docker Volume Service
 - Virtual Blocks
     - [vSphere Docker Volume Driver Brings Benefits of vSphere Storage to Containers](https://blogs.vmware.com/virtualblocks/2016/06/20/vsphere-docker-volume-driver-brings-benefits-of-vsphere-storage-to-containers/)
     - [vSphere Docker Volume Service is now Docker Certified!](https://blogs.vmware.com/virtualblocks/2017/03/29/vsphere-docker-volume-service-now-docker-certified/)
+    - [Orchestrate Stateful Containers using Docker Swarm and vDVS](https://blogs.vmware.com/virtualblocks/2017/04/10/orchestrate-stateful-containers-using-docker-swarm-vsphere-docker-volume-service/)
 - Ryan Kelly
     - [How to use the Docker Volume Driver for vSphere with Photon OS](http://www.vmtocloud.com/how-to-use-the-docker-volume-driver-for-vsphere-with-photon-os/)
 
