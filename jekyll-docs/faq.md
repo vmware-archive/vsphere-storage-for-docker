@@ -4,10 +4,6 @@ title: FAQs
 
 ## General
 
-### Where do I get the binaries ? What about the source ?
-Please check the Downloads section for links to VIB, Docker Plugin and RPMs.
-Please look at [GitHub Releases](https://github.com/vmware/docker-volume-vsphere for the sources.
-
 ### How to install and use the driver?
 Please see README.md in the for the release by clicking on the tag for the release. Example: [README](https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2)
 

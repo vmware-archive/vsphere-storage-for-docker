@@ -8,13 +8,13 @@ Docker volumes on [Photon platform](https://vmware.github.io/photon-controller) 
 
 The docker volume plugin also supports Photon platform. The plugin supports all volume provisioning and managenment operations, defined by the Docker Volume plugin interface, on both platforms (vSphere and Photon).Creation of volumes in photon platform is done via the open Photon platform API using the Photon controller. 
 
-## Configuration: Photon Driver
+## Configuration: Photon Plugin
 
-The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file. You need following configurations for photon driver in the configuration file.
+The configurations used by a plugin while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file. You need following configurations for plugin with driver type photon in the configuration file.
 
 ```
 {
-    "Driver": "vmdk"
+    "Driver": "photon"
     "MaxLogAgeDays": 28,
     "MaxLogSizeMb": 100,
     "LogPath": "/var/log",
@@ -63,14 +63,14 @@ The configurations used by a driver while performing operations are read from a 
 The docker volume commands are completely supported by vDVS plugin. This section demonstrates use of various commands with examples.
 
 
-#### Size
+<b> Size </b>
 You can specify the size of volume while creating a volume. Supported units of sizes are mb, gb and tb. By default if you don’t specify the size, a 100MB volume is created.
 
 ```
 docker volume create --driver=photon --name=MyVolume -o size=10gb
 ```
 
-#### File System Type (fstype)
+<b> File System Type (fstype) </b>
 You can specify the filesystem which will be used it to create the volumes. The docker plugin will look for existing filesystesm in /sbin/mkfs.fstype but if the specified filesystem is not found then it will return a list for which it has found mkfs. The default filesystem if not specified is ext4.
 
 ```
@@ -79,15 +79,17 @@ docker volume create --driver=photon --name=MyVolume -o size=10gb -o fstype=ext4
 
 ```
 
-#### Flavour 
+<b> Flavour </b>
 You can specify the flavour of persistent disk available in the Photon controller while creating a volume. The flavour in Photon implies certain limits on the volume being created.
 More information about flavours is available [here](https://github.com/vmware/photon-controller/wiki/Flavors).
 
 ```
 docker volume create --driver=photon --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
 ```
-### Listing Volumes
-Docker volume list can be used to volume names & their DRIVER type
+
+### List Volumes
+Docker volume list can be used to volume names and their DRIVER type
+
 ```
 docker volume ls
 DRIVER              VOLUME NAME
@@ -96,14 +98,14 @@ vsphere                minio1@vsanDatastore
 vsphere                minio2@vsanDatastore
 photon                 redis-data@vsanDatastore
 ```
-### Docker volume inspect
+### Inspect Volumes
 You can use `docker volume inspect` command to see attributes of a particular volume.
 
 ```
-docker volume create —driver=photon —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
-```
-```
-docker volume inspect MyVolume
+#docker volume create —driver=photon —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+
+
+#docker volume inspect MyVolume
 [
     {
         "Driver": "photon",
@@ -130,8 +132,10 @@ docker volume inspect MyVolume
 ]
 ```
 
-### Remove volume
+### Remove Volumes
 You can remove the volume with following command
+
+
 ```
 # docker volume rm db_data
 db_data
