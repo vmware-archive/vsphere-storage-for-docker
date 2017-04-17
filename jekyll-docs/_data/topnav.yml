@@ -22,7 +22,9 @@ topnav_dropdowns:
         - title: VIB
           external_url: https://bintray.com/vmware/vDVS/VIB/_latestVersion
         - title: RPM
-          external_url: https://bintray.com/vmware/vDVS/vDVS_RPM
+          external_url: https://bintray.com/vmware/vDVS/vDVS_RPM/_latestVersion
+        - title: DEB
+          external_url: https://bintray.com/vmware/vDVS/vDVS_DEB/_latestVersion
 
 
 
