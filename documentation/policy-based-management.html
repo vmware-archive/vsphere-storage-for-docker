@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Storage Policy Based Management | vSphere Docker Volume Service</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/infracloudio-lavish-bootstrap.css">
+<link rel="stylesheet" href="css/vmware-customstyles.css">
+<link rel="stylesheet" href="css/infracloudio-theme-blue.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="alternate" type="application/rss+xml" title="" href="http://localhost:4000feed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: true,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> vSphere Docker Volume Service</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Home</a></li>
+                
+                
+                
+                <li><a href="faq.html">FAQs</a></li>
+                
+                
+                
+                <li><a href="contactus.html">Contact Us</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Downloads<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        
+                        
+                        <li><a href="https://store.docker.com/plugins/vsphere-docker-volume-service" target="_blank">Docker Plugin</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/VIB/_latestVersion" target="_blank">VIB</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="Storage Policy Based Management">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Menu </li>
+    
+    
+    
+    <li>
+        <a href="#">Get Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Setup</a>
+        <ul>
+            
+            
+            
+            <li><a href="prerequisite.html">Prerequsites</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="install.html">Installation</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="configuration.html">Configuration</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">User Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="docker-volume-cli.html">Docker Volume Management</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-compatibility.html">Docker Compatibility</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Admin Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="datastores.html">Datastores Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="admin-cli.html">Admin CLI Reference</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="tenancy.html">Multi-tenancy Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="policy-based-management.html">Storage Policy Based Management</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="demo-wordpress-app.html">Wordpress application with MariaDB</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="demo-ha-swarm.html">HA DB in Docker Swarm mode</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-service.html">Running MongoDB (Docker Service) with vSphere volume</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-stacks.html">Running an Example App with Docker Stacks</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="photon.html">Photon Platform</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="blogs.html">Blogs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+        <!-- if you aren't using the accordion, uncomment this block:
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+           -->
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Storage Policy Based Management</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//policy-based-management.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <h2 id="introduction">Introduction</h2>
+<p>Storage Policy Based Management(SPBM) is one of the important features of VMware vSphere which allows IT administrators to deal with challenges of provisioning. Policy based approach enables provisioning of datastore at scale and avoid per VM allocations. Lack of policies leads to over provisioning and wastage.</p>
+
+<p>Storage Policies capture storage requirements, such as performance and availability, for persistent volumes. These policies determine how the container volume storage objects are provisioned and allocated within the datastore to guarantee the requested Quality of Service. Storage policies are composed of storage capabilities, typically represented by a key-value pair. The key is a specific property that the datastore can offer and the value is a metric, or a range, that the datastore guarantees for a provisioned object, such as a container volume backed by a virtual disk.</p>
+
+<h2 id="benefits-of-storage-policy-based-management">Benefits of Storage Policy Based Management</h2>
+<ul>
+  <li>Helps in avoiding problem of overprovisioning of storage</li>
+  <li>Allows defining application specific storage requirements</li>
+  <li>Reduces wastage of storage and efficient use of storage tiers</li>
+</ul>
+
+<h2 id="vsan-overview">vSAN Overview</h2>
+<p>vSAN is a distributed layer of software that runs natively as a part of the ESXi hypervisor. vSAN aggregates local or direct-attached capacity devices of a host cluster and creates a single storage pool shared across all hosts in the vSAN cluster. While supporting VMware features that require shared storage, such as HA, vMotion, and DRS, vSAN eliminates the need for external shared storage and simplifies storage configuration and virtual machine provisioning activities. vSAN works with virtual machine storage policies to support a virtual machine-centric storage approach. When provisioning a virtual machine, if there is no explicit assignment of a storage policy to the virtual machine, a generic system defined storage policy, called the vSAN Default Storage Policy is automatically applied to the virtual machine.</p>
+
+<p>As described in <a href="https://pubs.vmware.com/vsphere-65/index.jsp?topic=%2Fcom.vmware.vsphere.virtualsan.doc%2FGUID-08911FD3-2462-4C1C-AE81-0D4DBC8F7990.html">official documentation</a>, vSAN exposes multiple storage capabilities.</p>
+
+<h2 id="using-storage-policies-in-vsphere-docker-volume-service">Using Storage Policies in vSphere Docker Volume Service</h2>
+<p>We will now illustrate how this policy based management approach can be applied to container volumes as well.</p>
+
+<p>With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom VSAN Policies that can then be specified during Docker Volume creations. When VSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the VSAN datastore in the form of virtual disks. This is why the VSAN Policies can be applied seamlessly to the volumes created by vDVS.</p>
+
+<p>To create a new VSAN Policy, you will need to specify the name of the policy and provide the set of VSAN capabilities formatted using the same syntax found in esxcli vsan policy getdefault command. For example: ((“hostFailuresToTolerate” i1) (“forceProvisioning” i1)). Here is a list of storage capabilities supported by VSAN (for more detailed information, please refer to official Virtual SAN documentation):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>VSAN Capability</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>hostFailuresToTolerate</td>
+      <td>Number of failures to tolerate</td>
+    </tr>
+    <tr>
+      <td>stripeWidth</td>
+      <td>Number of disk stripes per object</td>
+    </tr>
+    <tr>
+      <td>forceProvisioning</td>
+      <td>Force provisioning</td>
+    </tr>
+    <tr>
+      <td>proportionalCapacity</td>
+      <td>Object space reservation</td>
+    </tr>
+    <tr>
+      <td>cacheReservation</td>
+      <td>Flash read cache reservation</td>
+    </tr>
+    <tr>
+      <td>checksumDisabled</td>
+      <td>Disable object checksum</td>
+    </tr>
+    <tr>
+      <td>replicaPreference</td>
+      <td>Failure tolerance method</td>
+    </tr>
+    <tr>
+      <td>iopsLimit</td>
+      <td>IOPS limit for object</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Here’s a step-by-step guide to create and use VSAN Storage Policies for Docker Volumes:</p>
+
+<ul>
+  <li>Create a “gold” and a “silver” storage policies</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name gold --content '(("hostFailuresToTolarate" i0)("forceProvisioning" i1))'
+Successfully created policy: gold
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name silver --content '(("hostFailuresToTolarate" i1)("forceProvisioning" i1))'
+Successfully created policy: silver
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
+Policy Name  Policy Content                                           Active
+-----------  -------------------------------------------------------  ------
+gold         (("hostFailuresToTolarate" i0)("forceProvisioning" i1))  Unused
+silver       (("hostFailuresToTolarate" i1)("forceProvisioning" i1))  Unused
+</code></pre>
+</div>
+
+<ul>
+  <li>Create 2 Docker Volume using above policies</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#docker volume create -d vsphere --name gold_volume@vsanDatastore -o size=1Gb -o vsan-policy-name=go
+ld
+gold_volume@vsanDatastore
+#docker volume create -d vsphere --name silver_volume@vsanDatastore -o size=1Gb -o vsan-policy-name=
+silver
+silver_volume@vsanDatastore
+#docker volume ls
+vsphere:latest      gold_volume@vsanDatastore
+vsphere:latest      silver_volume@vsanDatastore
+</code></pre>
+</div>
+
+<ul>
+  <li>Verify if the policies are being used by the volumes</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
+Policy Name  Policy Content                                           Active
+-----------  -------------------------------------------------------  -------------------
+silver       (("hostFailuresToTolarate" i1)("forceProvisioning" i1))  In use by 1 volumes
+gold         (("hostFailuresToTolarate" i0)("forceProvisioning" i1))  In use by 1 volumes
+</code></pre>
+</div>
+
+<ul>
+  <li>Update one policy content</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name silver --content '(("hostFailuresToTolarate" i2)("forceProvisioning" i1))'
+This operation may take a while. Please be patient.
+Successfully updated policy: silver
+</code></pre>
+</div>
+
+<ul>
+  <li>Remove the volume before removing policy</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume rm gold_volume@vsanDatastore
+gold_volume@vsanDatastore
+</code></pre>
+</div>
+
+<ul>
+  <li>Remove the policy</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name gold
+Successfully removed policy: gold
+</code></pre>
+</div>
+
+  
+
+    <div class="tags">
+        
+    </div>
+
+    
+
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2017 VMWare. All rights reserved. <br />
+ Site last generated: Apr 16, 2017 <br />
+<p><img src="images/company_logo.png" alt="Company logo"/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>

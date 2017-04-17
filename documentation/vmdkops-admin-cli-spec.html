@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title> | vSphere Docker Volume Service</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/infracloudio-lavish-bootstrap.css">
+<link rel="stylesheet" href="css/vmware-customstyles.css">
+<link rel="stylesheet" href="css/infracloudio-theme-blue.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="alternate" type="application/rss+xml" title="" href="http://localhost:4000feed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: true,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> vSphere Docker Volume Service</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Home</a></li>
+                
+                
+                
+                <li><a href="faq.html">FAQs</a></li>
+                
+                
+                
+                <li><a href="contactus.html">Contact Us</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Downloads<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        
+                        
+                        <li><a href="https://store.docker.com/plugins/vsphere-docker-volume-service" target="_blank">Docker Plugin</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/VIB/_latestVersion" target="_blank">VIB</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Menu </li>
+    
+    
+    
+    <li>
+        <a href="#">Get Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Setup</a>
+        <ul>
+            
+            
+            
+            <li><a href="prerequisite.html">Prerequsites</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="install.html">Installation</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="configuration.html">Configuration</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">User Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="docker-volume-cli.html">Docker Volume Management</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-compatibility.html">Docker Compatibility</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Admin Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="datastores.html">Datastores Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="admin-cli.html">Admin CLI Reference</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="tenancy.html">Multi-tenancy Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="policy-based-management.html">Storage Policy Based Management</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="demo-wordpress-app.html">Wordpress application with MariaDB</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="demo-ha-swarm.html">HA DB in Docker Swarm mode</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-service.html">Running MongoDB (Docker Service) with vSphere volume</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-stacks.html">Running an Example App with Docker Stacks</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="photon.html">Photon Platform</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="blogs.html">Blogs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+        <!-- if you aren't using the accordion, uncomment this block:
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+           -->
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main"></h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//vmdkops-admin-cli-spec.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <p>[TOC]</p>
+
+<p>In order to manage the inventory of VMDKs created and used by multiple docker engines we must have
+an administrative CLI that lives on ESX. This administrative CLI can provide additional status such
+as access control, storage policies, and disk usage and capacity.</p>
+
+<p>The admin cli itself is non-interactive. All commands are of the form <code class="highlighter-rouge">vmdkops-admin &lt;Cmd&gt; [Arg1, Arg2,...]</code></p>
+
+<p>All output from the admin cli defaults to human readable formats. It will be made easily grepable.</p>
+
+<p>The majority of testing will be automated. We can ensure that parsing calls the right callbacks with
+the right information by generating representative input and mocking the callbacks to assert that
+the right information is parsed and delivered correctly. Additionally, and specifically for testing
+access control, we can create access control definition (vmgroups and privileges) 
+and then test that they act as expected by invoking vmdk_ops commmands on behalf of a fake VM.
+Unit
+tests for stateless logic can be fed mock input representing data from sidecar and the filesystem.
+These techniques should be sufficient enough to provide confidence in the implementation.</p>
+
+<p>The rest of this specification will detail the commands to be implemented in the admin cli. Note
+that the commands covered in this document only operate on a single ESX host.</p>
+
+<h1 id="ls">ls</h1>
+<p>List all volumes by reading the <code class="highlighter-rouge">dockvols</code> directories and metadata stored in Sidecar files.
+Volumes in all datastores will be shown with the volume name in the first column and the datastore
+in the second.</p>
+
+<p><code class="highlighter-rouge">ls</code> supports the following options:
+  * No options - List the names of all volumes
+  * <code class="highlighter-rouge">ls -l</code> - List all volumes and their corresponding metadata. Note that missing metadata will be
+    marked <code class="highlighter-rouge">N/A</code>.
+    * Created by (VM Name)
+    * Creation Time
+    * Last Attached Time
+    * Datastore
+    * Policy Name
+    * Capacity
+    * Used Space
+    * Attached To (VM Name)
+  * <code class="highlighter-rouge">ls -c [Column1, Column2, ...]</code> - List only the columns specified, implies <code class="highlighter-rouge">-l</code>
+  * <code class="highlighter-rouge">ls -f &lt;ColumnName Pattern Value&gt;</code> - Filter output by only including volumes whose columns match the
+                                         sort pattern (See below). Note that the priority is P2 on
+                                         this and it may be developed after the initial release
+                                         depending on timing/effort.</p>
+
+<p>Sort patterns are used for filtering. The argument, <code class="highlighter-rouge">X</code>, itself is of a type specific to the attribute. All dates are given in <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601 format</a></p>
+
+<ul>
+  <li><code class="highlighter-rouge">&gt; X</code> The attribute is greater than X</li>
+  <li><code class="highlighter-rouge">&lt; X</code> The attribute is equal to X</li>
+  <li><code class="highlighter-rouge">= X</code> The attribute matches a Glob X</li>
+</ul>
+
+<p>Examples:
+<code class="highlighter-rouge">
+vmdkops-admin ls -c CreatedBy,CreationTime,Datastore,PolicyName
+vmdkops-admin ls -f 'LastAttachedTime &gt; 2016-03-11'
+vmdkops-admin ls -f 'AttachedTo = Test*'
+</code></p>
+
+<h1 id="policy">policy</h1>
+<p>Create, configure and show the VSAN policy names and their corresponding VSAN policies. Also show whether or not they are in use.</p>
+
+<p>Examples:
+ * <code class="highlighter-rouge">vmdkops-admin policy create --name=myPolicy --content="string"</code> - Create a new policy
+ * <code class="highlighter-rouge">vmdkops-admin policy rm myPolicy</code> - Remove the given policy
+ * <code class="highlighter-rouge">vmdkops-admin policy ls</code> - List policies and the Volumes that are using that policy.
+ * <code class="highlighter-rouge">vmdkops-admin policy update --name=myPolicy --content="string"</code> - Update an existing VSAN policy and
+   any volumes currently using that policy</p>
+
+<p>Note that on volume creation from docker, a policy name will be passed with a <code class="highlighter-rouge">-o</code> option.</p>
+
+<h1 id="vmgroup">vmgroup</h1>
+<p>Create, delete, configure and show access control settings for a vmgroup.
+A vmgroup is defined as a collection of VMs, so access control settings are assigned via a
+VM naming convention.
+<em>** The rest of section below needs rework as it represents obsolete “role” design **</em>
+An example will help clarify
+this. Let’s say that an administrator wants to allow any <code class="highlighter-rouge">Test</code> VM to create, delete and mount
+volumes, and only allow creation of volumes of a maximum size of 2TB. The admin would first create a
+<code class="highlighter-rouge">Test</code> role specifying these permissions, as well as a glob indicating the vm naming convention that
+the role should be applied to. In this instance the permissions in the role <code class="highlighter-rouge">Test</code> will be applied to any VM with a
+name ending in <code class="highlighter-rouge">Test</code>. Since the admin creates the VMs they can control the naming convention and
+permissions in a straightforward manner.</p>
+
+<p><code class="highlighter-rouge">vmdkops-admin role create --name=Test --matches-vm=\*Test --volume-maxsize=2TB --rights=create,delete,mount</code></p>
+
+<p><code class="highlighter-rouge">role create</code> accepts the following options as shown in the prior example:
+ * <code class="highlighter-rouge">--name=&lt;Name&gt;</code> - The name of the role to be created
+ * <code class="highlighter-rouge">--matches-vm=&lt;Glob&gt;</code> - The glob that matches VM names where the role should be applied. This
+                           flag may be applied multiple times, where a VM matching any of the globs would
+                           apply.
+ * <code class="highlighter-rouge">--rights=&lt;Perm1,Perm2,...&gt;</code> - The permissions granted to matching VMs. The list of applicable rights is:
+   * <code class="highlighter-rouge">create</code> - Allow volume creation. If the <code class="highlighter-rouge">--volume-maxsize</code> parameter is given it applies to create, otherwise size is unlimited.
+   * <code class="highlighter-rouge">rm</code> - Allow volume deletion
+   * <code class="highlighter-rouge">mount</code> - Allow volume mounting</p>
+
+<p>Currently the idea is to allow volume deletion and mounting of any volume if the rights are granted.
+However it may make sense to limit these to specific volumes, perhaps via a glob match.</p>
+
+<p>Note that the <code class="highlighter-rouge">--volume-maxsize</code> parameter is human readable and given in the following format: <code class="highlighter-rouge">MB | GB | TB</code>.</p>
+
+<p>Besides <code class="highlighter-rouge">role create</code>, there are 4 other commands with regards to roles. Roles can be deleted with
+<code class="highlighter-rouge">role rm</code> and listed with <code class="highlighter-rouge">role ls</code>. Listing of roles will show all roles and the VMs they apply
+to. <code class="highlighter-rouge">role set</code> takes identical paramters to role create, except it will update an existing role
+only. Finally, there needs to be a way to check permissions. This can be performed with the <code class="highlighter-rouge">role
+get</code> command. <code class="highlighter-rouge">role get</code> takes a VM name and returns both a list of the rights granted to the VM and
+the roles that the VM matches on separate lines.</p>
+
+<p>Examples are provided below.
+<code class="highlighter-rouge">
+ vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount
+ vmdkops-admin role rm myrole
+ vmdkops-admin role ls
+ vmdkops-admin role set --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=4TB --rights=create,mount
+ vmdkops-admin role get &lt;VmName&gt;
+</code></p>
+
+<p>Role information is stored in a flat file, for lack of a better solution. The format of the file
+is JSON, but the schema is currently undefined. Permission checking will need to be performed at
+runtime by the ESX service, using the information provided by <code class="highlighter-rouge">vmdkops-admin role get &lt;VmName&gt;</code>. It
+does seem inefficient to call out to a separate command to perform the check, but this allows the
+simplest implementation and isolation of admin information inside a single script.</p>
+
+<h1 id="status">Status</h1>
+<p>Show any interesting information about the service. This includes file paths of config files, version
+information, and PID of running service. A simple example is shown here, although it’s possible
+that the exact format may be somewhat different.</p>
+
+<h1 id="set">Set</h1>
+<p>Modify attribute settings on a given volume. The volume is identified by its name and datastore, 
+for example if the volume name is <code class="highlighter-rouge">container-vol</code> then the volume is specified as “container-vol@datastore-name”.
+The attributes to set/modify are specified as a comma separated list as “<attr1>=<value>, <attr2>=<value>....". For example,
+a command line would look like this.</value></attr2></value></attr1></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ vmdkops-admin set --volume=&lt;volume@datastore&gt; --options="&lt;attr1&gt;=&lt;value&gt;, &lt;attr2&gt;=&lt;value&gt;, ..."
+</code></pre>
+</div>
+
+<p>The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
+thats currently using the volume. For the present, only the “access” attribute is supported to be modified via this command, and
+can be set to either of the allowed values “read-only” or “read-write”.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
+Version: 1.0.0-0.0.1
+Status: Running
+Pid: 73114
+Port: 1019
+LogConfigFile: /etc/vmware/vmdkops/log_config.json
+LogFile: /var/log/vmware/vmdk_ops.log
+LogLevel: INFO
+</code></pre>
+</div>
+
+<h1 id="help">help</h1>
+<p>Show help as described in this doc.</p>
+
+  
+
+    <div class="tags">
+        
+    </div>
+
+    
+
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2017 VMWare. All rights reserved. <br />
+ Site last generated: Apr 16, 2017 <br />
+<p><img src="images/company_logo.png" alt="Company logo"/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>

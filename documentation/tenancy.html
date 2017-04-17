@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Tenancy | vSphere Docker Volume Service</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/infracloudio-lavish-bootstrap.css">
+<link rel="stylesheet" href="css/vmware-customstyles.css">
+<link rel="stylesheet" href="css/infracloudio-theme-blue.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="alternate" type="application/rss+xml" title="" href="http://localhost:4000feed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: true,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> vSphere Docker Volume Service</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Home</a></li>
+                
+                
+                
+                <li><a href="faq.html">FAQs</a></li>
+                
+                
+                
+                <li><a href="contactus.html">Contact Us</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Downloads<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        
+                        
+                        <li><a href="https://store.docker.com/plugins/vsphere-docker-volume-service" target="_blank">Docker Plugin</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/VIB/_latestVersion" target="_blank">VIB</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="Tenancy">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Menu </li>
+    
+    
+    
+    <li>
+        <a href="#">Get Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Setup</a>
+        <ul>
+            
+            
+            
+            <li><a href="prerequisite.html">Prerequsites</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="install.html">Installation</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="configuration.html">Configuration</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">User Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="docker-volume-cli.html">Docker Volume Management</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-compatibility.html">Docker Compatibility</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Admin Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="datastores.html">Datastores Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="admin-cli.html">Admin CLI Reference</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="tenancy.html">Multi-tenancy Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="policy-based-management.html">Storage Policy Based Management</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="demo-wordpress-app.html">Wordpress application with MariaDB</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="demo-ha-swarm.html">HA DB in Docker Swarm mode</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-service.html">Running MongoDB (Docker Service) with vSphere volume</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-stacks.html">Running an Example App with Docker Stacks</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="photon.html">Photon Platform</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="blogs.html">Blogs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+        <!-- if you aren't using the accordion, uncomment this block:
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+           -->
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Tenancy</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//tenancy.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <p>Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or “tenants.” Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With multi tenancy, you can achieve isolation of resources of one tenant from other tenants.</p>
+
+<p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a vmgroup.  A vmgroup can be granted access to create, delete or mount volumes on a specific datastore. VMs assigned to a vmgroup can then execute Docker volume APIs on an assigned datastores. Within a datastore multiple vmgroups can store their Docker volumes. A vmgroup cannot access volumes created by a different vmgroup i.e. vmgroups have their own independent namespace, even if vmgroups share datastores. VMs cannot be shared between vmgroups.</p>
+
+<p>Key attributes of tenancy:</p>
+
+<ul>
+  <li>vSphere Administrator can define group of one or more Docker Host (VM) as
+vmgroup</li>
+  <li>Docker Host (VM) can be a member of one and only one vmgroup.</li>
+  <li>vSphere Administrator can grant vmgroup privileges &amp; set resource consumption</li>
+  <li>Vmgroups can share the same underlying storage but preserve volume namespace isolation limits at granularity of datastore.</li>
+</ul>
+
+<h2 id="admin-cli">Admin CLI</h2>
+
+<p>Vmgroups can be created and managed via the <a href="/user-guide/admin-cli/#Vmgroup">Admin CLI</a></p>
+
+<h2 id="multitenancy-concepts">Multitenancy concepts</h2>
+<p>### Default vmgroup
+When a VM which does not belong to any vmgroup issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT vmgroup, and will get privileges associated with this vmgroup. _DEFAULT vmgroup will be automatically created by system post install, so by default vmdk_ops will support request from any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this vmgroup or modify privileges, thus locking down vmdk_ops to serve only explicitly configured VMs.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Uuid                                  Name      Description                Default_datastore  VM_list
+------------------------------------  --------  -------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
+</code></pre>
+</div>
+
+<h3 id="default-privileges">Default privileges</h3>
+<p>When a VM tries to manipulate volumes on a datastore which is not configured, the system will use _DEFAULT privilege, which is created automatically by system post install. This _DEFAULT privilege allows access to ANY datastore by default. An admin can edit or remove this record, thus locking down the functionality to allow access only to explicitly configured datastores.</p>
+
+<h3 id="default-datastore">Default datastore</h3>
+<p>When a VM addresses the volume using short notation (volume_name, without @datastore), all VMs in this vmgroup will use default datastore to resolve short volume reference (volume_name will actually mean volume_name@default_datastore).</p>
+
+<p>If “default_datastore” is not set for a vmgroup, then datastore where the VM resides will be used as “default_datastore”.</p>
+
+<h2 id="example">Example</h2>
+
+<p>Lets consider a sample use case where there are 2 teams – Dev and Test working on Product1. Lets create separate vmgroups (namely Product1Dev and Product2Test) for each of the teams where we can put restriction on datastore consumption.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Dev
+vmgroup 'Product1Dev' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
+
+#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Test
+vmgroup 'Product1Test' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
+
+#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=_DEFAULT
+vmgroup rm succeeded
+
+#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Uuid                                  Name          Description  Default_datastore  VM_list
+------------------------------------  ------------  -----------  -----------------  -------
+ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev
+f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test
+</code></pre>
+</div>
+<p>Here we have removed _DEFAULT vmgroup to lock down vmdk_ops to serve only explicitly configured VMs.</p>
+
+<p>Lets add VMs (docker hosts) in respective VM groups.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add --vm-list=Photon1,Photon2,Photon3 --name=Product1Dev
+vmgroup vm add succeeded
+
+#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add --vm-list=Photon4,Photon5,Photon6 --name=Product1Test
+vmgroup vm add succeeded
+
+#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Uuid                                  Name          Description  Default_datastore  VM_list
+------------------------------------  ------------  -----------  -----------------  -----------------------
+ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev                                   Photon1,Photon2,Photon3
+f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test                                  Photon4,Photon5,Photon6
+
+</code></pre>
+</div>
+
+<p>Lets limit dev team to create volumes of total 20 Gb each not exceeding size of 1 GB. Similarly for QA team, lets put restriction of total 40 GB consumption with each volume size not exceeding 1 GB.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=Product1Dev --datastore=datastore3  --allow-create --default-datastore --volume-maxsize=1GB --volume-totalsize=20GB
+vmgroup access add succeeded
+
+#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=Product1Test --datastore=datastore3  --allow-create --default-datastore --volume-maxsize=1GB --volume-totalsize=40GB
+vmgroup access add succeeded
+</code></pre>
+</div>
+<p>Lets verify that storage restrictions has been set properly.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name Product1Dev
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore3  True          1.00GB           20.00GB
+
+#usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name Product1Test
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore3  True          1.00GB           40.00GB
+
+</code></pre>
+</div>
+<p>Lets try to create a volume from one of the QA machines with size = 2 GB</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#docker volume create --name=MyVolume --driver=vsphere -o size=2GB
+Error response from daemon: create MyVolume: VolumeDriver.Create: volume size exceeds the max volume size limit
+</code></pre>
+</div>
+<p>The vDVS has restricted user from creating a volume of size &gt; 1 GB. Lets try to create volume on datastore other than the one which is set as default</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker volume create --name=MyVolume@datastore1 --driver=vsphere -o size=2GB
+Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No create privilege
+</code></pre>
+</div>
+<p>Remember we have set default datastore as datastore3 which as “–allow-create” permissions.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md">Design Spec for tenancy</a></li>
+</ul>
+
+  
+
+    <div class="tags">
+        
+    </div>
+
+    
+
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2017 VMWare. All rights reserved. <br />
+ Site last generated: Apr 16, 2017 <br />
+<p><img src="images/company_logo.png" alt="Company logo"/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>

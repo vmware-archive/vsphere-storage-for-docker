@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>HA Database with Docker in Swarm mode | vSphere Docker Volume Service</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/infracloudio-lavish-bootstrap.css">
+<link rel="stylesheet" href="css/vmware-customstyles.css">
+<link rel="stylesheet" href="css/infracloudio-theme-blue.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="alternate" type="application/rss+xml" title="" href="http://localhost:4000feed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: true,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> vSphere Docker Volume Service</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Home</a></li>
+                
+                
+                
+                <li><a href="faq.html">FAQs</a></li>
+                
+                
+                
+                <li><a href="contactus.html">Contact Us</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Downloads<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        
+                        
+                        <li><a href="https://store.docker.com/plugins/vsphere-docker-volume-service" target="_blank">Docker Plugin</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/VIB/_latestVersion" target="_blank">VIB</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        
+                        
+                    </ul>
+                </li>
+                
+                
+                
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="HA Database with Docker in Swarm mode">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Menu </li>
+    
+    
+    
+    <li>
+        <a href="#">Get Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Setup</a>
+        <ul>
+            
+            
+            
+            <li><a href="prerequisite.html">Prerequsites</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="install.html">Installation</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="configuration.html">Configuration</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">User Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="docker-volume-cli.html">Docker Volume Management</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-compatibility.html">Docker Compatibility</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Admin Guide</a>
+        <ul>
+            
+            
+            
+            <li><a href="datastores.html">Datastores Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="admin-cli.html">Admin CLI Reference</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="tenancy.html">Multi-tenancy Support</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="policy-based-management.html">Storage Policy Based Management</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="demo-wordpress-app.html">Wordpress application with MariaDB</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="demo-ha-swarm.html">HA DB in Docker Swarm mode</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-service.html">Running MongoDB (Docker Service) with vSphere volume</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="docker-stacks.html">Running an Example App with Docker Stacks</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="photon.html">Photon Platform</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="blogs.html">Blogs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+        <!-- if you aren't using the accordion, uncomment this block:
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+           -->
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">HA Database with Docker in Swarm mode</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//demo-ha-swarm.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <p>In this section we will run a database in Swarm cluster and will demonsrtate high availability even if one of nodes in the cluster is killed. The demo will also show how a volume is re-attached to a new node when the application container is re-scheduled on a new node.</p>
+
+<h2 id="setup">Setup</h2>
+<p>We have a 3 node setup and we will create a swarm cluster with one node acting as manager and two nodes acting as workers</p>
+
+<h2 id="create-a-swarm-cluster">Create a Swarm Cluster</h2>
+
+<p>We will first create a swarm cluster between the nodes. To begin with run the following command on one of worker nodes</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker swarm init --advertise-addr 192.168.159.139
+Swarm initialized: current node (3fkhpb54el4odc9tvw4ctxn4r) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join \
+    --token SWMTKN-1-1ltdiozt1ag7sa0mp6ivy4jpivsgal5jlu7gnlf099kd3uouix-6fq7vsef5v8l7vbvuhgvu9dp8 \
+    192.168.159.139:2377
+</code></pre>
+</div>
+
+<p>Now let’s go to twh two worker nodes and run following command:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker swarm join \
+&gt;     --token SWMTKN-1-1ltdiozt1ag7sa0mp6ivy4jpivsgal5jlu7gnlf099kd3uouix-6fq7vsef5v8l7vbvuhgvu9dp8 \
+&gt;     192.168.159.139:2377
+This node joined a swarm as a worker.
+
+</code></pre>
+</div>
+<p>After the two nodes have been succesfully added to cluster we can do a quick verification and check that all nodes are listed:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker node ls
+ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
+3fkhpb54el4odc9tvw4ctxn4r *  photon1   Ready   Active        Leader
+6aimhdsw9fqdru54qk3owjnlp    photon5   Ready   Active
+dosy6twh0fug6216wj9j3pmtl    photon4   Ready   Active
+
+</code></pre>
+</div>
+
+<p>We can also verify that there is no volume that exists on the cluster at the moment:
+```
+#docker volume ls
+DRIVER              VOLUME NAME</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>
+## Deploy a Service
+Let's deploy a service with a single MySQL DB instance and a vSphere volume attached to it. Some key points to be noted here are:
+
+- We are mentioning the the volume driver type as vSphere &amp; size as 1GB
+- The volume is attached at /var/lib/mysql - the location where MySQL DB stores the data
+
+</code></pre>
+</div>
+<p># docker service create –name db1  –replicas 1 –mount type=volume,source=db_data,target=/var/lib/mysql,volume-driver=vsphere,volume-opt=size=1Gb -p 3306:3306  –env MYSQL_ROOT_PASSWORD=word –env MYSQL_DATABASE=wordpress –env MYSQL_USER=wordpress –env MYSQL_PASSWORD=wordpress MySQLdb
+5cu69bufuhjvgncp1t9eusdv7
+```</p>
+
+<p>We can verify that the volume has been created:
+```
+# docker volume ls
+DRIVER              VOLUME NAME
+vsphere             db_data@datastore3</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>A quick detailed inspection of the volumes also shows all the details of the volume:
+
+</code></pre>
+</div>
+<p># docker volume inspect db_data
+[
+    {
+        “Name”: “db_data”,
+        “Driver”: “vsphere”,
+        “Mountpoint”: “/mnt/vmdk/db_data”,
+        “Status”: {
+            “access”: “read-write”,
+            “attach-as”: “independent_persistent”,
+            “capacity”: {
+                “allocated”: “39MB”,
+                “size”: “1GB”
+            },
+            “clone-from”: “None”,
+            “created”: “Mon Apr 10 14:09:08 2017”,
+            “created by VM”: “Photon5”,
+            “datastore”: “datastore3”,
+            “diskformat”: “thin”,
+            “fstype”: “ext4”,
+            “status”: “detached”
+        },
+        “Labels”: null,
+        “Scope”: “global”
+    }
+]
+```
+A quick inspection of the docker container also shows that the volume is attached</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>root@photon1 [ ~ ]# docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+d5afd6b94b99        mariadb:latest      "docker-entrypoint.sh"   3 minutes ago       Up 3 minutes        3306/tcp            db1.1.0v25jf29xmi9smul1pkw73txw
+root@photon1 [ ~ ]# docker exec -it d5afd6b94b99 bash
+root@d5afd6b94b99:/# df -h
+Filesystem                                       Size  Used Avail Use% Mounted on
+overlay                                           20G  1.1G   18G   6% /
+tmpfs                                            497M     0  497M   0% /dev
+tmpfs                                            497M     0  497M   0% /sys/fs/cgroup
+/dev/sda1                                         20G  1.1G   18G   6% /etc/hosts
+shm                                               64M     0   64M   0% /dev/shm
+/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0  976M  116M  794M  13% /var/lib/mysql
+
+</code></pre>
+</div>
+
+<h2 id="store-the-data">Store the data</h2>
+<p>Let’s create an empty table in the database. In ideal scenario, even if container or the node fails, this data should still persist.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>root@d5afd6b94b99:/# mysql -u wordpress -p
+Enter password:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 3
+Server version: 10.1.22-MariaDB-1~jessie mariadb.org binary distribution
+
+Copyright (c) 2000, 2016, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]&gt; use wordpress;
+Database changed
+MariaDB [wordpress]&gt; show tables;
+Empty set (0.01 sec)
+
+MariaDB [wordpress]&gt; 	
+Query OK, 0 rows affected (0.17 sec)
+
+MariaDB [wordpress]&gt; show tables;
++---------------------+
+| Tables_in_wordpress |
++---------------------+
+| customers           |
++---------------------+
+1 row in set (0.00 sec)
+
+MariaDB [wordpress]&gt;
+
+
+</code></pre>
+</div>
+
+<h2 id="destructive-test--verification">Destructive test &amp; verification</h2>
+
+<p>Now to test the availability of the database, let’s completely destroy the node on which the MySQL DB is running. This should cause two things to happen:</p>
+
+<ul>
+  <li>The container should be re-scheduled on a different node (This is responsibility of Swarm)</li>
+  <li>The volume should get attached to the container on new node (This is what vDVS plugin will provide in this case)</li>
+</ul>
+
+<p>Once we destroy the original node, we can see that the container is scheduled on a different node.
+<code class="highlighter-rouge">
+# docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+a1f07c2af9c5        mariadb:latest      "docker-entrypoint.sh"   14 seconds ago      Up 10 seconds       3306/tcp            db1.1.eljid7i5i8kiinm5z8f869kk1
+</code>
+Let’s login and verify that the data also persists and the volume was re-attached</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>]# docker exec -it a1f07c2af9c5 bash
+root@a1f07c2af9c5:/# df -h
+Filesystem                                       Size  Used Avail Use% Mounted on
+overlay                                           20G  1.1G   18G   6% /
+tmpfs                                            497M     0  497M   0% /dev
+tmpfs                                            497M     0  497M   0% /sys/fs/cgroup
+/dev/sdb1                                         20G  1.1G   18G   6% /etc/hosts
+shm                                               64M     0   64M   0% /dev/shm
+/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0  976M  116M  794M  13% /var/lib/mysql
+root@a1f07c2af9c5:/# mysql -u wordpress -p
+Enter password:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 2
+Server version: 10.1.22-MariaDB-1~jessie mariadb.org binary distribution
+
+Copyright (c) 2000, 2016, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]&gt; show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| wordpress          |
++--------------------+
+2 rows in set (0.02 sec)
+
+MariaDB [(none)]&gt; use wordpress;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MariaDB [wordpress]&gt; show tables;
++---------------------+
+| Tables_in_wordpress |
++---------------------+
+| customers           |
++---------------------+
+1 row in set (0.00 sec)
+
+MariaDB [wordpress]&gt;
+
+</code></pre>
+</div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>vDVS along with Swarm mode can provide a HA capability to a cluster running stateful applications. While Swarm mode takes care of re-scheduling the application containers on nodes in the cluster, vDVS plugun ensures that the volumes are managed in a similar way and data is persisted while re-scheduling of the application containers.</p>
+
+  
+
+    <div class="tags">
+        
+    </div>
+
+    
+
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2017 VMWare. All rights reserved. <br />
+ Site last generated: Apr 16, 2017 <br />
+<p><img src="images/company_logo.png" alt="Company logo"/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>
