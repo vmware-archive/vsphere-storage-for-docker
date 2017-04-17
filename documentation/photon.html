@@ -125,7 +125,11 @@
                         
                         
                         
-                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM/_latestVersion" target="_blank">RPM</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_DEB/_latestVersion" target="_blank">DEB</a></li>
                         
                         
                     </ul>
@@ -320,6 +324,13 @@
             
             
             
+            
+            
+            <li><a href="s3-object-storage.html">S3 Object storage with vDVS</a></li>
+            
+            
+            
+            
         </ul>
         
         
@@ -405,7 +416,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//photon.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//photon.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -416,12 +427,12 @@ $('#toc').on('click', 'a', function() {
 
 <p>The docker volume plugin also supports Photon platform. The plugin supports all volume provisioning and managenment operations, defined by the Docker Volume plugin interface, on both platforms (vSphere and Photon).Creation of volumes in photon platform is done via the open Photon platform API using the Photon controller.</p>
 
-<h2 id="configuration-photon-driver">Configuration: Photon Driver</h2>
+<h2 id="configuration-photon-plugin">Configuration: Photon Plugin</h2>
 
-<p>The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing –config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file. You need following configurations for photon driver in the configuration file.</p>
+<p>The configurations used by a plugin while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing –config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file. You need following configurations for plugin with driver type photon in the configuration file.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="w">
-    </span><span class="nt">"Driver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vmdk"</span><span class="w">
+    </span><span class="nt">"Driver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"photon"</span><span class="w">
     </span><span class="s2">"MaxLogAgeDays"</span><span class="err">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">
     </span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
     </span><span class="nt">"LogPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log"</span><span class="p">,</span><span class="w">
@@ -469,15 +480,15 @@ $('#toc').on('click', 'a', function() {
 <h3 id="creation-and-management-of-docker-volumes">Creation and management of docker volumes</h3>
 <p>The docker volume commands are completely supported by vDVS plugin. This section demonstrates use of various commands with examples.</p>
 
-<h4 id="size">Size</h4>
-<p>You can specify the size of volume while creating a volume. Supported units of sizes are mb, gb and tb. By default if you don’t specify the size, a 100MB volume is created.</p>
+<p><b> Size </b>
+You can specify the size of volume while creating a volume. Supported units of sizes are mb, gb and tb. By default if you don’t specify the size, a 100MB volume is created.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>docker volume create --driver=photon --name=MyVolume -o size=10gb
 </code></pre>
 </div>
 
-<h4 id="file-system-type-fstype">File System Type (fstype)</h4>
-<p>You can specify the filesystem which will be used it to create the volumes. The docker plugin will look for existing filesystesm in /sbin/mkfs.fstype but if the specified filesystem is not found then it will return a list for which it has found mkfs. The default filesystem if not specified is ext4.</p>
+<p><b> File System Type (fstype) </b>
+You can specify the filesystem which will be used it to create the volumes. The docker plugin will look for existing filesystesm in /sbin/mkfs.fstype but if the specified filesystem is not found then it will return a list for which it has found mkfs. The default filesystem if not specified is ext4.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>docker volume create --driver=photon --name=MyVolume -o size=10gb -o fstype=xfs
 docker volume create --driver=photon --name=MyVolume -o size=10gb -o fstype=ext4 (default)
@@ -485,30 +496,32 @@ docker volume create --driver=photon --name=MyVolume -o size=10gb -o fstype=ext4
 </code></pre>
 </div>
 
-<h4 id="flavour">Flavour</h4>
-<p>You can specify the flavour of persistent disk available in the Photon controller while creating a volume. The flavour in Photon implies certain limits on the volume being created.
+<p><b> Flavour </b>
+You can specify the flavour of persistent disk available in the Photon controller while creating a volume. The flavour in Photon implies certain limits on the volume being created.
 More information about flavours is available <a href="https://github.com/vmware/photon-controller/wiki/Flavors">here</a>.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>docker volume create --driver=photon --name=CloneVolume -o flavor=&lt;Photon persistent disk flavor name&gt;
 </code></pre>
 </div>
-<p>### Listing Volumes
-Docker volume list can be used to volume names &amp; their DRIVER type
-<code class="highlighter-rouge">
-docker volume ls
+
+<h3 id="list-volumes">List Volumes</h3>
+<p>Docker volume list can be used to volume names and their DRIVER type</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume ls
 DRIVER              VOLUME NAME
 vsphere                MyVolume@vsanDatastore
 vsphere                minio1@vsanDatastore
 vsphere                minio2@vsanDatastore
 photon                 redis-data@vsanDatastore
-</code>
-### Docker volume inspect
-You can use <code class="highlighter-rouge">docker volume inspect</code> command to see attributes of a particular volume.</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>docker volume create —driver=photon —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
 </code></pre>
 </div>
-<div class="highlighter-rouge"><pre class="highlight"><code>docker volume inspect MyVolume
+<p>### Inspect Volumes
+You can use <code class="highlighter-rouge">docker volume inspect</code> command to see attributes of a particular volume.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#docker volume create —driver=photon —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+
+
+#docker volume inspect MyVolume
 [
     {
         "Driver": "photon",
@@ -536,12 +549,13 @@ You can use <code class="highlighter-rouge">docker volume inspect</code> command
 </code></pre>
 </div>
 
-<h3 id="remove-volume">Remove volume</h3>
-<p>You can remove the volume with following command
-<code class="highlighter-rouge">
-# docker volume rm db_data
+<h3 id="remove-volumes">Remove Volumes</h3>
+<p>You can remove the volume with following command</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker volume rm db_data
 db_data
-</code></p>
+</code></pre>
+</div>
 
 <p>For more information about Photon plaform, please refer <a href="https://github.com/vmware/photon-controller/wiki">Wiki page</a>.</p>
 
@@ -561,7 +575,7 @@ db_data
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Apr 16, 2017 <br />
+ Site last generated: Apr 17, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

@@ -125,7 +125,11 @@
                         
                         
                         
-                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM" target="_blank">RPM</a></li>
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_RPM/_latestVersion" target="_blank">RPM</a></li>
+                        
+                        
+                        
+                        <li><a href="https://bintray.com/vmware/vDVS/vDVS_DEB/_latestVersion" target="_blank">DEB</a></li>
                         
                         
                     </ul>
@@ -320,6 +324,13 @@
             
             
             
+            
+            
+            <li><a href="s3-object-storage.html">S3 Object storage with vDVS</a></li>
+            
+            
+            
+            
         </ul>
         
         
@@ -405,7 +416,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/infracloudio/infracloudio.github.io/blob/master/pages//demo-ha-swarm.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//demo-ha-swarm.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -449,61 +460,69 @@ dosy6twh0fug6216wj9j3pmtl    photon4   Ready   Active
 </code></pre>
 </div>
 
-<p>We can also verify that there is no volume that exists on the cluster at the moment:
-```
-#docker volume ls
-DRIVER              VOLUME NAME</p>
+<p>We can also verify that there is no volume that exists on the cluster at 
+the moment:</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-## Deploy a Service
-Let's deploy a service with a single MySQL DB instance and a vSphere volume attached to it. Some key points to be noted here are:
-
-- We are mentioning the the volume driver type as vSphere &amp; size as 1GB
-- The volume is attached at /var/lib/mysql - the location where MySQL DB stores the data
-
-</code></pre>
-</div>
-<p># docker service create –name db1  –replicas 1 –mount type=volume,source=db_data,target=/var/lib/mysql,volume-driver=vsphere,volume-opt=size=1Gb -p 3306:3306  –env MYSQL_ROOT_PASSWORD=word –env MYSQL_DATABASE=wordpress –env MYSQL_USER=wordpress –env MYSQL_PASSWORD=wordpress MySQLdb
-5cu69bufuhjvgncp1t9eusdv7
-```</p>
-
-<p>We can verify that the volume has been created:
-```
-# docker volume ls
+<div class="highlighter-rouge"><pre class="highlight"><code>#docker volume ls
 DRIVER              VOLUME NAME
-vsphere             db_data@datastore3</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>A quick detailed inspection of the volumes also shows all the details of the volume:
 
 </code></pre>
 </div>
-<p># docker volume inspect db_data
+
+<h2 id="deploy-a-service">Deploy a Service</h2>
+<p>Let’s deploy a service with a single MySQL DB instance and a vSphere volume attached to it. Some key points to be noted here are:</p>
+
+<ul>
+  <li>We are mentioning the the volume driver type as vSphere &amp; size as 1GB</li>
+  <li>The volume is attached at /var/lib/mysql - the location where MySQL DB stores the data</li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#docker service create --name db1  --replicas 1 --mount type=volume,source=db_data,target=/var/lib/mysql,volume-driver=vsphere,volume-opt=size=1Gb -p 3306:3306  --env MYSQL_ROOT_PASSWORD=word --env MYSQL_DATABASE=wordpress --env MYSQL_USER=wordpress --env MYSQL_PASSWORD=wordpress MySQLdb
+
+5cu69bufuhjvgncp1t9eusdv7
+</code></pre>
+</div>
+
+<p>We can verify that the volume has been created:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker volume ls
+DRIVER              VOLUME NAME
+vsphere             db_data@datastore3
+
+</code></pre>
+</div>
+
+<p>A quick detailed inspection of the volumes also shows all the details of the volume:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#docker volume inspect db_data
 [
     {
-        “Name”: “db_data”,
-        “Driver”: “vsphere”,
-        “Mountpoint”: “/mnt/vmdk/db_data”,
-        “Status”: {
-            “access”: “read-write”,
-            “attach-as”: “independent_persistent”,
-            “capacity”: {
-                “allocated”: “39MB”,
-                “size”: “1GB”
+        "Name": "db_data",
+        "Driver": "vsphere",
+        "Mountpoint": "/mnt/vmdk/db_data",
+        "Status": {
+            "access": "read-write",
+            "attach-as": "independent_persistent",
+            "capacity": {
+                "allocated": "39MB",
+                "size": "1GB"
             },
-            “clone-from”: “None”,
-            “created”: “Mon Apr 10 14:09:08 2017”,
-            “created by VM”: “Photon5”,
-            “datastore”: “datastore3”,
-            “diskformat”: “thin”,
-            “fstype”: “ext4”,
-            “status”: “detached”
+            "clone-from": "None",
+            "created": "Mon Apr 10 14:09:08 2017",
+            "created by VM": "Photon5",
+            "datastore": "datastore3",
+            "diskformat": "thin",
+            "fstype": "ext4",
+            "status": "detached"
         },
-        “Labels”: null,
-        “Scope”: “global”
+        "Labels": null,
+        "Scope": "global"
     }
 ]
-```
-A quick inspection of the docker container also shows that the volume is attached</p>
+</code></pre>
+</div>
+
+<p>A quick inspection of the docker container also shows that the volume is attached</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>root@photon1 [ ~ ]# docker ps -a
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
@@ -565,13 +584,15 @@ MariaDB [wordpress]&gt;
   <li>The volume should get attached to the container on new node (This is what vDVS plugin will provide in this case)</li>
 </ul>
 
-<p>Once we destroy the original node, we can see that the container is scheduled on a different node.
-<code class="highlighter-rouge">
-# docker ps -a
+<p>Once we destroy the original node, we can see that the container is scheduled on a different node.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker ps -a
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
 a1f07c2af9c5        mariadb:latest      "docker-entrypoint.sh"   14 seconds ago      Up 10 seconds       3306/tcp            db1.1.eljid7i5i8kiinm5z8f869kk1
-</code>
-Let’s login and verify that the data also persists and the volume was re-attached</p>
+</code></pre>
+</div>
+
+<p>Let’s login and verify that the data also persists and the volume was re-attached</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>]# docker exec -it a1f07c2af9c5 bash
 root@a1f07c2af9c5:/# df -h
@@ -639,7 +660,7 @@ MariaDB [wordpress]&gt;
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Apr 16, 2017 <br />
+ Site last generated: Apr 17, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
