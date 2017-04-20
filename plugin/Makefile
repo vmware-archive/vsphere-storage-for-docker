@@ -69,9 +69,11 @@ BINARY := docker-volume-vsphere
 TMP_IMAGE = $(PLUGIN_NAME):rootfs
 # Tmp container used for exporting rootfs from it
 TMP_CONTAINER := tempContainer
+# Tmp location on local FS to manipulate plugin files
+TMP_LOC := /tmp/plugin
 
 # default target
-all: info clean plugin push
+all: info plugin push
 
 # unconditionally run those
 .PHONY: all clean info plugin
@@ -81,27 +83,24 @@ info:
 	@echo DOCKER_HUB_REPO $(DOCKER_HUB_REPO) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)
 	@echo PLUGIN_NAME $(PLUGIN_NAME):$(PLUGIN_TAG)
 
-
 clean:
 	@echo "=== Cleaning work files, images and plugin(s)..."
-	rm -rf ./rootfs
+	rm -rf $(TMP_LOC)
 	rm -f $(BINARY)
 	-docker plugin rm $(PLUGIN_NAME):$(PLUGIN_TAG) -f
+	-docker rm -vf $(TMP_CONTAINER)
 	-docker rmi $(TMP_IMAGE)
 
-
-plugin:
+plugin: clean
 	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
 	cp $(BIN_LOC)/$(BINARY) .
 	docker build -q -t $(TMP_IMAGE) .
-	mkdir -p ./rootfs
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
-	docker export  $(TMP_CONTAINER)  | tar -x -C ./rootfs
-	docker rm -vf  $(TMP_CONTAINER)
-	docker rmi $(TMP_IMAGE)
+	mkdir -p $(TMP_LOC)/rootfs
+	docker export  $(TMP_CONTAINER)  | tar -x -C $(TMP_LOC)/rootfs
+	cp config.json $(BINARY) $(TMP_LOC)
 	@echo "-- Creating  plugin $(PLUGIN_NAME):$(PLUGIN_TAG) ..."
-	docker plugin create $(PLUGIN_NAME):$(PLUGIN_TAG) .
-
+	docker plugin create $(PLUGIN_NAME):$(PLUGIN_TAG) $(TMP_LOC)
 
 push:
 	@echo Pushing $(PLUGIN_NAME):$(PLUGIN_TAG)  to dockerhub.io...
