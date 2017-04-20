@@ -74,10 +74,9 @@ def init_datastoreCache(force=False):
     and force init
     """
     global datastores
-    logging.debug("init_datastoreCache:  %s", datastores)
 
     with lockManager.get_lock("init_datastoreCache"):
-
+        logging.debug("init_datastoreCache:  %s", datastores)
         if datastores and not force:
             return
 
