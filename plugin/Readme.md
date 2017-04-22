@@ -1,9 +1,9 @@
-### Support for building docker-volume-vsphere(DVV) as Docker Managed Plugin
+### Support for building docker-volume-vsphere(DVS) as Docker Managed Plugin
 
 Docker managed plugins are currently documented [here](https://docs.docker.com/engine/extend/)
 
 Running `make all` in this folder will assume that
-the DVV is pre-built and dockerhub is authenticared with `docker login`, then it will  package it
+the DVS is pre-built and dockerhub is authenticared with `docker login`, then it will  package it
 as a Managed Plugin, and push to dockerhub.
 
 **Note that this is not integrated with Build or CI, which is an upcoming change**
