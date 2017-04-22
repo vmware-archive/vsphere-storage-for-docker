@@ -102,7 +102,7 @@ DOCKER="$DEBUG docker"
 
 if [ "$1" == "rpm" ] || [ "$1" == "deb" ]
 then
-  $DOCKER run --rm  -it \
+  $DOCKER run --rm   \
     -e "PKG_VERSION=$PKG_VERSION" \
     -v $PWD/..:$dir \
     -w $dir \
@@ -110,18 +110,18 @@ then
     $MAKE $1
 elif [ "$1" == "ui" ]
 then
-  $DOCKER run --rm -it \
+  $DOCKER run --rm  \
      -e "PKG_VERSION=$PKG_VERSION" \
      -v $PWD:$dir -w $dir $plug_container $MAKE_UI $2
 elif [ "$1" == "gvt" ]
 then
-  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir --net=host $go_container bash -c "go get -u github.com/FiloSottile/gvt; bash"
+  $DOCKER run --rm  -v $PWD/..:$dir -w $dir --net=host $go_container bash -c "go get -u github.com/FiloSottile/gvt; bash"
 elif [ "$1" == "documentation" ]
 then
-  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir -p 8000:8000 $docs_container bash
+  $DOCKER run --rm  -v $PWD/..:$dir -w $dir -p 8000:8000 $docs_container bash
 elif [ "$1" == "pylint" ]
 then
-  $DOCKER run --rm -it -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
+  $DOCKER run --rm  -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
 else
   docker_socket=/var/run/docker.sock
   if [ -z $SSH_KEY_OPT ]
@@ -134,7 +134,7 @@ else
   then
     ssh_key_path=~/.ssh/id_rsa
   fi
-  $DOCKER run --privileged --rm -it \
+  $DOCKER run --privileged --rm  \
     -e "PKG_VERSION=$PKG_VERSION" \
     -e "INCLUDE_UI=$INCLUDE_UI" \
     -e "ESX=$2" \
