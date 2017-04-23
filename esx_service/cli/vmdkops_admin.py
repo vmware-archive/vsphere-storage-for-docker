@@ -40,6 +40,9 @@ import convert
 import auth_api
 import auth_data
 from auth_data import DB_REF
+from error_code import ErrorCode
+from error_code import error_code_to_message
+from error_code import generate_error_info
 
 NOT_AVAILABLE = 'N/A'
 UNSET = "Unset"
@@ -244,6 +247,10 @@ def commands():
                             'help': 'A list of VM names to place in this vmgroup',
                             'metavar': 'vm1, vm2, ...',
                             'type': comma_separated_string
+                        },
+                        '--default-datastore': {
+                            'help': 'Datastore to be used by default for volumes placement',
+                            'required': True
                         }
                     }
                 },
@@ -361,10 +368,6 @@ def commands():
                                 '--datastore': {
                                     'help': "Datastore which access is controlled",
                                     'required': True
-                                },
-                                '--default-datastore': {
-                                    'help': "Mark datastore as a default datastore for this vmgroup",
-                                    'action': 'store_true'
                                 },
                                 '--allow-create': {
                                     'help': 'Allow create and delete on datastore if set',
@@ -914,8 +917,12 @@ def generate_tenant_ls_rows(tenant_list):
         uuid = tenant.id
         name = tenant.name
         description = tenant.description
-        if not tenant.default_datastore_url or tenant.default_datastore_url == auth_data_const.DEFAULT_DS_URL:
+        # "default_datastore_url" should always be set, and cannot be empty
+        # it can only happen when DB has some corruption
+        if not tenant.default_datastore_url:
             default_datastore = ""
+            error_info = generate_error_info(ErrorCode.DS_DEFAULT_NOT_SET, name)
+            return error_info, None
         else:
             default_datastore = vmdk_utils.get_datastore_name(tenant.default_datastore_url)
             if default_datastore is None:
@@ -924,20 +931,20 @@ def generate_tenant_ls_rows(tenant_list):
         vm_list = generate_vm_list(tenant.vms)
         rows.append([uuid, name, description, default_datastore, vm_list])
 
-    return rows
+    return None, rows
 
 def tenant_create(args):
     """ Handle tenant create command """
-    error_info, _ = auth_api._tenant_create(
-        name=args.name,
-        description="",
-        vm_list=args.vm_list,
-        privileges=[])
+    error_info, tenant = auth_api._tenant_create(name=args.name,
+                                                 default_datastore=args.default_datastore,
+                                                 description="",
+                                                 vm_list=args.vm_list,
+                                                 privileges=[])
+
     if error_info:
         return operation_fail(error_info.msg)
     else:
-        print("vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' and "
-              "'vmgroup access add' to enable access control.".format(args.name))
+        print("vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.".format(args.name))
 
 def tenant_update(args):
     """ Handle tenant update command """
@@ -974,8 +981,11 @@ def tenant_ls(args):
         return operation_fail(error_info.msg)
 
     header = tenant_ls_headers()
-    rows = generate_tenant_ls_rows(tenant_list)
-    print(cli_table.create(header, rows))
+    error_info, rows = generate_tenant_ls_rows(tenant_list)
+    if error_info:
+        print(error_info.msg)
+    else:
+        print(cli_table.create(header, rows))
 
 def tenant_vm_add(args):
     """ Handle tenant vm add command """
@@ -1051,7 +1061,6 @@ def tenant_access_add(args):
 
     error_info = auth_api._tenant_access_add(name=args.name,
                                              datastore=args.datastore,
-                                             default_datastore=args.default_datastore,
                                              allow_create=args.allow_create,
                                              volume_maxsize_in_MB=volume_maxsize_in_MB,
                                              volume_totalsize_in_MB=volume_totalsize_in_MB
@@ -1095,12 +1104,14 @@ def tenant_access_ls_headers():
     headers = ['Datastore', 'Allow_create', 'Max_volume_size', 'Total_size']
     return headers
 
-def generate_tenant_access_ls_rows(privileges):
+def generate_tenant_access_ls_rows(privileges, name):
     """ Generate output for tenant access ls command """
     rows = []
     for p in privileges:
-        if not p.datastore_url or p.datastore_url == auth_data_const.DEFAULT_DS_URL:
+        if not p.datastore_url:
             datastore = ""
+            error_info = generate_error_info(ErrorCode.DS_DEFAULT_NOT_SET, name)
+            return error_info, None
         else:
             datastore = vmdk_utils.get_datastore_name(p.datastore_url)
             if datastore is None:
@@ -1113,7 +1124,7 @@ def generate_tenant_access_ls_rows(privileges):
         total_size = UNSET if p.usage_quota == 0 else human_readable(p.usage_quota * MB)
         rows.append([datastore, allow_create, max_vol_size, total_size])
 
-    return rows
+    return None, rows
 
 def tenant_access_ls(args):
     """ Handle tenant access ls command """
@@ -1123,8 +1134,11 @@ def tenant_access_ls(args):
         return operation_fail(error_info.msg)
 
     header = tenant_access_ls_headers()
-    rows = generate_tenant_access_ls_rows(privileges)
-    print(cli_table.create(header, rows))
+    error_info, rows = generate_tenant_access_ls_rows(privileges, name)
+    if error_info:
+        print(error_info.msg)
+    else:
+        print(cli_table.create(header, rows))
 
 # ==== CONFIG DB manipulation functions ====
 

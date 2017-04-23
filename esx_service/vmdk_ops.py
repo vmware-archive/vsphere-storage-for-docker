@@ -84,10 +84,11 @@ import vsan_info
 import auth
 import sqlite3
 import convert
-import error_code
 import auth_data_const
 import auth_api
+import error_code
 from error_code import ErrorCode
+from error_code import error_code_to_message
 import re
 
 # Python version 3.5.1
@@ -163,7 +164,8 @@ def RunCommand(cmd):
 # for now we care about size and (maybe) policy
 def createVMDK(vmdk_path, vm_name, vol_name,
                opts={}, vm_uuid=None, tenant_uuid=None, datastore_url=None):
-    logging.info("*** createVMDK: %s opts = %s", vmdk_path, opts)
+    logging.info("*** createVMDK: %s opts = %s vm_name=%s tenant_uuid=%s datastore_url=%s",
+                  vmdk_path, opts, vm_name, tenant_uuid, datastore_url)
 
     if os.path.isfile(vmdk_path):
         # We are mostly here due to race or Plugin VMCI retry #1076
@@ -238,7 +240,7 @@ def createVMDK(vmdk_path, vm_name, vol_name,
         vol_size_in_MB = convert.convert_to_MB(auth.get_vol_size(opts))
         auth.add_volume_to_volumes_table(tenant_uuid, datastore_url, vol_name, vol_size_in_MB)
     else:
-        logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
+        logging.debug(error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
 
 def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
@@ -614,7 +616,7 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
         error_info = auth.remove_volume_from_volumes_table(tenant_uuid, datastore_url, vol_name)
         return error_info
     elif not vm_name:
-        logging.debug(error_code.error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
+        logging.debug(error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name))
 
     return None
 
@@ -777,6 +779,7 @@ def datastore_path_exist(datastore_name):
 
 def get_datastore_name(datastore_url):
     """ Get datastore_name with given datastore_url """
+    logging.debug("get_datastore_name: datastore_url=%s", datastore_url)
     datastore_name = vmdk_utils.get_datastore_name(datastore_url)
     if datastore_name is None or not datastore_path_exist(datastore_name):
         # path /vmfs/volumes/datastore_name does not exist
@@ -787,8 +790,34 @@ def get_datastore_name(datastore_url):
                       datastore_name)
         vmdk_utils.init_datastoreCache(force=True)
         datastore_name = vmdk_utils.get_datastore_name(datastore_url)
+        logging.debug("get_datastore_name: After refresh get datastore_name=%s", datastore_name)
 
     return datastore_name
+
+def authorize_check(vm_uuid, datastore_url, cmd, opts, use_default_ds, datastore, vm_datastore):
+    """
+        Check command from vm can be executed on the datastore or not
+        Return None on success or error_info if the command cannot be executed
+    """
+    if use_default_ds:
+        # first check whether it has privilege to default_datastore
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore_url, cmd, opts)
+        if error_info:
+            return error_info
+    else:
+        # user passsed in volume with format vol@datastore
+        # check the privilege to that datastore
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore_url, cmd, opts)
+        # no privilege exist for the given datastore
+        # if the given datastore is the same as vm_datastore
+        # then we can check privilege against "_VM_DS"
+        if error_info == error_code_to_message[ErrorCode.PRIVILEGE_NO_PRIVILEGE] and datastore == vm_datastore:
+            error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, auth_data_const.VM_DS_URL, cmd, opts)
+        if error_info:
+            return error_info
+
+    return None
+
 
 # gets the requests, calculates path for volumes, and calls the relevant handler
 def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
@@ -819,17 +848,17 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         else:
             return err(error_info)
 
-    # if default_datastore is not set for tenant, default_datastore_url will be set to None
+    # default_datastore must be set for tenant
     error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
+    if error_info:
+        return err(error_info.msg)
+    elif not default_datastore_url:
+        err_msg = error_code_to_message[ErrorCode.DS_DEFAULT_NOT_SET].format(tenant_name)
+        logging.warning(err_msg)
+        return err(err_msg)
 
-    # if get_default_datastore fails or default_datastore_url is not specified,
-    # use vm_datastore. The datastore URL is retreived after the chosen datastore
-    # is validated.
-    if error_info or not default_datastore_url:
-        default_datastore = vm_datastore
-        default_datastore_url = vm_datastore_url
-    else:
-        default_datastore = get_datastore_name(default_datastore_url)
+    # default_datastore could be a real datastore name or a hard coded  one "_VM_DS"
+    default_datastore = get_datastore_name(default_datastore_url)
 
     logging.debug("executeRequest: vm uuid=%s name=%s, tenant_name=%s, default_datastore=%s",
                   vm_uuid, vm_name, tenant_name, default_datastore)
@@ -844,24 +873,35 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     except ValidationError as ex:
         return err(str(ex))
 
-    if not datastore:
-        datastore = default_datastore
-
     if datastore and not vmdk_utils.validate_datastore(datastore):
         return err("Invalid datastore '%s'.\n" \
                    "Known datastores: %s.\n" \
                    "Default datastore: %s" \
                    % (datastore, ", ".join(get_datastore_names_list()), default_datastore))
 
-    # datastore is present and validated.
-    datastore_url = vmdk_utils.get_datastore_url(datastore)
+    if not datastore:
+        datastore_url = default_datastore_url
+        datastore = default_datastore
+        use_default_ds = True
+    else:
+        datastore_url = vmdk_utils.get_datastore_url(datastore)
+        use_default_ds = False
 
-    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, default_datastore_url=%s",
-                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url)
+    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, "
+                  "default_datastore_url=%s datastore_url=%s",
+                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url, datastore_url)
 
-    error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore_url, cmd, opts)
+    error_info = authorize_check(vm_uuid, datastore_url, cmd, opts, use_default_ds, datastore, vm_datastore)
     if error_info:
         return err(error_info)
+
+    # get_vol_path() need to pass in a real datastore name
+    if datastore == auth_data_const.VM_DS:
+        datastore = vm_datastore
+        # set datastore_url to a real datastore_url
+        # createVMDK() and removeVMDK() need to pass in
+        # a real datastore_url instead of url of _VM_DS
+        datastore_url = vm_datastore_url
 
     path, errMsg = get_vol_path(datastore, tenant_name)
     logging.debug("executeRequest for tenant %s with path %s", tenant_name, path)
@@ -1398,7 +1438,7 @@ def set_vol_opts(name, tenant_name, options):
     # if tenant_name is "None", which means the function is called without multi-tenancy
         error_info = auth_api.check_tenant_exist(tenant_name)
         if not error_info:
-            logging.warning(error_code.error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(tenant_name))
+            logging.warning(error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(tenant_name))
             return False
 
     # get /vmfs/volumes/<datastore_url>/dockvols path on ESX:

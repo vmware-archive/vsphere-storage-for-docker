@@ -42,3 +42,7 @@ DEFAULT_TENANT_DESCR = "This is a default vmgroup"
 DEFAULT_DS  = '_DEFAULT'
 DEFAULT_DS_URL = DEFAULT_DS + "_URL"
 ORPHAN_TENANT = "_ORPHAN"
+VM_DS = '_VM_DS'
+VM_DS_URL = VM_DS + "://"
+ALL_DS = '_ALL_DS'
+ALL_DS_URL = ALL_DS + "://"

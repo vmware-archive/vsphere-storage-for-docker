@@ -25,6 +25,8 @@ import threadutils
 import log_config
 import error_code
 import vmdk_utils
+from error_code import ErrorCode
+from error_code import error_code_to_message
 
 # All supported vmdk commands that need authorization checking
 CMD_CREATE = 'create'
@@ -85,40 +87,37 @@ def get_default_tenant():
         return None, tenant_uuid, auth_data_const.DEFAULT_TENANT
     else:
         # cannot find DEFAULT tenant
-        err_code = error_code.ErrorCode.TENANT_NOT_EXIST
-        err_msg = error_code.error_code_to_message[err_code].format(auth_data_const.DEFAULT_TENANT)
+        err_msg = error_code_to_message[ErrorCode.TENANT_NOT_EXIST].format(auth_data_const.DEFAULT_TENANT)
         logging.debug(err_msg)
         return None, None, None
 
 
-def get_default_privileges():
-    """ Get DEFAULT privileges by querying the auth DB.
-        DEFAULT privilege will match any (tenant_uuid, datastore) pair which
-        does not have an entry in privileges table explicitly
+def get_all_ds_privileges(tenant_uuid):
+    """ Get _ALL_DS privilege from AuthDB. This privilege is 'catch-all' fallbacks for datastores not explicitly bound
+        to the given tenant_uuid'
         Return value:
         -- error_msg: return None on success or error info on failure
-        -- privilegs: return a list of privileges for DEFAULT privilege if
-           DEFAULT tenant exists,
-           return None on failure or DEFAULT does not exist
+        -- privileges: return a list of privileges on datastore "_ALL_DS"
+           return None on failure or the privilege does not exist
     """
+    logging.debug("get_all_ds_privileges")
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, None
 
     if _auth_mgr.allow_all_access():
-        return None, _auth_mgr.get_default_privileges_dict()
+        return None, _auth_mgr.get_all_ds_privileges_dict()
 
     privileges = []
-    logging.debug("get_default_privileges")
 
     try:
         cur = _auth_mgr.conn.execute(
-            "SELECT * FROM privileges WHERE datastore_url = ?",
-            (auth_data_const.DEFAULT_DS_URL,)
+            "SELECT * FROM privileges WHERE tenant_id = ? and datastore_url = ?",
+            (tenant_uuid, auth_data_const.ALL_DS_URL,)
             )
         privileges = cur.fetchone()
     except sqlite3.Error as e:
-        error_msg = "Error {0} when querying privileges table for DEFAULT privilege".format(e)
+        error_msg = "Error {} when querying privileges table for all ds privilege for tenant_uuid {}".format(e, tenant_uuid)
         logging.error(error_msg)
         return str(e), None
 
@@ -180,8 +179,10 @@ def get_tenant(vm_uuid):
             return error_msg, None, None
         if not tenant_uuid:
              vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
-             err_code = error_code.ErrorCode.VM_NOT_BELONG_TO_TENANT
-             err_msg = error_code.error_code_to_message[err_code].format(vm_name)
+             if vm_name:
+                 err_msg = error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name)
+             else:
+                 err_msg = error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_uuid)
              logging.debug(err_msg)
              return err_msg, None, None
         return None, tenant_uuid, tenant_name
@@ -213,8 +214,8 @@ def get_privileges(tenant_uuid, datastore_url):
     if privileges:
         return None, privileges
     else:
-        # check default privileges
-        error_msg, privileges = get_default_privileges()
+        # check if can get privileges on ALL_DS for this tenant
+        error_msg, privileges = get_all_ds_privileges(tenant_uuid)
         return error_msg, privileges
 
 def has_privilege(privileges, type=None):
@@ -325,22 +326,26 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileg
 
     """
     result = None
+    if not privileges:
+        result = error_code_to_message[ErrorCode.PRIVILEGE_NO_PRIVILEGE]
+        return result
+
     cmd_need_mount_privilege = [CMD_ATTACH, CMD_DETACH]
     if cmd in cmd_need_mount_privilege:
         if not has_privilege(privileges):
-            result = "No mount privilege"
+            result = error_code_to_message[ErrorCode.PRIVILEGE_NO_MOUNT_PRIVILEGE]
 
     if cmd == CMD_CREATE:
         if not has_privilege(privileges, auth_data_const.COL_ALLOW_CREATE):
-            result = "No create privilege"
+            result = error_code_to_message[ErrorCode.PRIVILEGE_NO_CREATE_PRIVILEGE]
         if not check_max_volume_size(opts, privileges):
-            result = "volume size exceeds the max volume size limit"
+            result = error_code_to_message[ErrorCode.PRIVILEGE_MAX_VOL_EXCEED]
         if not check_usage_quota(opts, tenant_uuid, datastore_url, privileges):
-            result = "The total volume size exceeds the usage quota"
+            result = error_code_to_message[ErrorCode.PRIVILEGE_USAGE_QUOTA_EXCEED]
 
     if cmd == CMD_REMOVE:
         if not has_privilege(privileges, auth_data_const.COL_ALLOW_CREATE):
-            result = "No delete privilege"
+            result = error_code_to_message[ErrorCode.PRIVILEGE_NO_DELETE_PRIVILEGE]
 
     return result
 
@@ -414,7 +419,7 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         None
     """
     logging.debug("Authorize: cmd=%s opts=`%s' vm_uuid=%s, datastore_url=%s", cmd, opts, vm_uuid, datastore_url)
-
+    # The possible value of "datastore_url" can be url of real datastore or "_VM_DS://"
     error_msg, _auth_mgr = get_auth_mgr()
     if error_msg:
         return error_msg, None, None
@@ -437,16 +442,16 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         # This VM does not associate any tenant(including DEFAULT tenant),
         # need reject the request
         vm_name = vmdk_utils.get_vm_name_by_uuid(vm_uuid)
-        err_code = error_code.ErrorCode.VM_NOT_BELONG_TO_TENANT
-        err_msg = error_code.error_code_to_message[err_code].format(vm_name)
+        err_msg = error_code_to_message[ErrorCode.VM_NOT_BELONG_TO_TENANT].format(vm_name)
         logging.debug(err_msg)
         return err_msg, None, None
     else:
         error_msg, privileges = get_privileges(tenant_uuid, datastore_url)
         if error_msg:
             return error_msg, None, None
+
         result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges)
-        logging.debug("authorize: vmgroup_name=%s, datastore_url=%s, privileges=%s, result %s",
+        logging.debug("authorize: vmgroup_name=%s, datastore_url=%s, privileges=%s, result=%s",
                       tenant_name, datastore_url, privileges, result)
 
         if result is None:

@@ -133,11 +133,8 @@ Step 4: Recreate the vmgroup configuration with new name “new-vmgroup1” (ass
 ***Note: Please DO NOT create the vmgroup with the old name “vmgroup1”!!!***
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6
-vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=new-vmgroup1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-vmgroup access add succeeded
-
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6 --default-datastore=datastore1
+vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name           Description                 Default_datastore  VM_list
 ------------------------------------  -------------  --------------------------  -----------------  --------
