@@ -472,6 +472,12 @@ def _tenant_create(name, default_datastore, description="", vm_list=None, privil
         if error_info:
             return error_info, None
 
+        error_info = vmdk_utils.check_volumes_mounted(vms)
+        if error_info:
+            error_info.msg = "Cannot add VM to vmgroup " + error_info.msg
+            logging.error(error_info.msg)
+            return error_info, None
+
         logging.debug("_tenant_create: vms=%s", vms)
 
     error_info = check_default_datastore(default_datastore)
@@ -691,6 +697,12 @@ def _tenant_vm_add(name, vm_list):
     error_info = vm_in_any_tenant(vms)
     if error_info:
         return error_info
+
+    error_info = vmdk_utils.check_volumes_mounted(vms)
+    if error_info:
+        error_info.msg = "Cannot add VM to vmgroup " + error_info.msg
+        logging.error(error_info.msg)
+        return error_info, None
 
     error_info, auth_mgr = get_auth_mgr_object()
 
