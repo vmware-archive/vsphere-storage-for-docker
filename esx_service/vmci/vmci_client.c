@@ -21,89 +21,15 @@
 // API: Exposes only Vmci_GetReply. The call is blocking.
 //
 //
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
 #include <assert.h>
 
+#include "vmci_client.h"
 #include "vmci_sockets.h"
 #include "connection_types.h"
-
-#define ERR_BUF_LEN 512
-
-// operations status. 0 is OK
-typedef int be_sock_status;
-
-//
-// Booking structure for opened VMCI / vSocket
-//
-typedef struct {
-   int sock_id; // socket id for socket APIs
-   struct sockaddr_vm addr; // held here for bookkeeping and reporting
-} be_sock_id;
-
-//
-// Protocol message structure: request and reply
-//
-
-typedef struct be_request {
-   uint32_t mlen;   // length of message (including trailing \0)
-   const char *msg; // null-terminated immutable JSON string.
-} be_request;
-
-#define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
-#define MAX_CLIENT_PORT 1023 // Last privileged port
-#define START_CLIENT_PORT 100 // Where to start client port
-
-// Retry entire range on bind failures
-#define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
-
-typedef struct be_answer {
-   char *buf;                  // response buffer
-   char errBuf[ERR_BUF_LEN];   // error response buffer
-} be_answer;
-
-//
-// Interface for communication to "command execution" server.
-//
-typedef struct be_funcs {
-   const char *shortName; // name of the interaface (key to access it)
-   const char *name;      // longer explanation (human help)
-
-   // init the channel, return status and ID
-   be_sock_status
-   (*init_sock)(be_sock_id *id, int cid, int port);
-   // release the channel - clean up
-   void
-   (*release_sock)(be_sock_id *id);
-
-   // send a request and get  reply - blocking
-   be_sock_status
-   (*get_reply)(be_sock_id *id, be_request *r, be_answer* a);
-} be_funcs;
-
-// Vsocket communication implementation forward declarations
-static be_sock_status
-vsock_init(be_sock_id *id, int cid, int port);
-static be_sock_status
-vsock_get_reply(be_sock_id *id, be_request *r, be_answer* a);
-static void
-vsock_release(be_sock_id *id);
-
-// Dummy communication declaration - dummy just prints stuff, for test
-static be_sock_status
-dummy_init(be_sock_id *id, int cid, int port);
-static be_sock_status
-dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a);
-static void
-dummy_release(be_sock_id *id);
-
-// support communication interfaces
-#define VSOCKET_BE_NAME "vsocket" // backend to communicate via vSocket
-#define ESX_VMCI_CID    2  		  // ESX host VMCI CID ("address")
-#define DUMMY_BE_NAME "dummy"     // backend which only returns OK, for unit test
 
 be_funcs backends[] =
    {
@@ -201,7 +127,7 @@ vsock_init(be_sock_id *id, int cid, int port)
 
       assert((round_robin >= START_CLIENT_PORT) && (round_robin <= MAX_CLIENT_PORT));
 
-      // Bind a port. If less than 1024 it insures the client is capable of
+      // Bind a port. If less than 1024 it ensures the client is capable of
       // binding a port lower than 1024 which is typically a root process or
       // a process given capabilities by root.
       ret = bind(sock, (const struct sockaddr *) &id->addr, sizeof id->addr);

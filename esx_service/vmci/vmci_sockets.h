@@ -22,6 +22,7 @@
  *
  *    vSockets public constants and types.
  */
+#pragma once
 
 #ifndef _VMCI_SOCKETS_H_
 #define _VMCI_SOCKETS_H_
@@ -841,4 +842,3 @@ struct uuid_2_cid {
 
 
 #endif // _VMCI_SOCKETS_H_
-
