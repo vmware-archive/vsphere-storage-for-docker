@@ -548,8 +548,15 @@ class AuthorizationDataManager:
         the vm names for existing records. We try to populate them and keep None for vms
         for which the name couldn't be found. The vmdk_ops admin code which tries to use
         this vm names handles names which are None
+        In 1.2, "default_datastore" field must be set in tenants table, so the upgrade process
+        will try to set the "default_datastore" field if needed
+        In 1.2, for each tenant in tenants table, a privilege to "default_datastore" must be
+        present, the upgrade process will try to create this privilege if needed
+        In 1.2, for "_DEFAULT" tenant, privilege to "_DEFAULT_DS" need to be removed, and privilege
+        to "__VM_DS" and "__ALL_DS" need to be inserted
         """
         try:
+            logging.info("handle_upgrade_1_1_to_1_2: Start")
             self.conn.create_function('name_from_uuid', 1, vmdk_utils.get_vm_name_by_uuid)
             # Alter vms table to add a new column name vm_name to store vm name
             # update all the existing records with the vm_name.
@@ -561,11 +568,44 @@ class AuthorizationDataManager:
                      """
             sql_script = script.format(DB_MAJOR_VER, DB_MINOR_VER)
             self.conn.executescript(sql_script)
+
+            logging.info("handle_upgrade_1_1_to_1_2: update vms table Done")
+
+            # update the tenants table to set "default_datastore" to "__VM_DS" if "default_datastore" is ""
+            self.conn.execute("UPDATE OR IGNORE tenants SET default_datastore_url = ?  where default_datastore_url = \"\"",
+                              (auth_data_const.VM_DS_URL,))
+            logging.info("handle_upgrade_1_1_to_1_2: update default_datastore in tenants table")
+
+            cur = self.conn.execute("SELECT * FROM tenants")
+            result = cur.fetchall()
+
+            self.conn.execute("""INSERT OR IGNORE INTO privileges(tenant_id, datastore_url, allow_create, max_volume_size, usage_quota)
+                                     SELECT tenants.id, tenants.default_datastore_url, 1, 0, 0 FROM tenants
+                              """)
+            logging.info("handle_upgrade_1_1_to_1_2: Insert privilege to default_datastore in privileges table")
+
+            cur = self.conn.execute("SELECT * FROM tenants WHERE id = ?",
+                                    (auth_data_const.DEFAULT_TENANT_UUID,)
+                                   )
+
+            result = cur.fetchall()
+            logging.debug("handle_upgrade_1_1_to_1_2: Check DEFAULT tenant exist")
+            if result:
+                # _DEFAULT tenant exists
+                # insert full access privilege to "__ALL_DS" for "_DEFAULT" tenant
+                all_ds_privilege = (auth_data_const.DEFAULT_TENANT_UUID, auth_data_const.ALL_DS_URL, 1, 0, 0)
+                self.conn.execute("INSERT INTO privileges(tenant_id, datastore_url, allow_create, max_volume_size, usage_quota) VALUES (?, ?, ?, ?, ?)",
+                                  all_ds_privilege)
+                logging.info("handle_upgrade_1_1_to_1_2: Insert privilege to __ALL_DS for _DEFAULT tenant in privileges table")
+                # remove access privilege to "DEFAULT_DS"
+                self.conn.execute("DELETE FROM privileges WHERE tenant_id = ? AND datastore_url = ?",
+                                [auth_data_const.DEFAULT_TENANT_UUID, auth_data_const.DEFAULT_DS_URL])
+                logging.info("handle_upgrade_1_1_to_1_2: Remove privilege to _DEFAULT_DS for _DEFAULT tenant in privileges table")
             self.conn.commit()
             return None
         except sqlite3.Error as e:
-            error_msg = "Error when upgrading auth DB VMs table"
-            logging.error("handle_upgrade_1_1_to_1_2. %s: %s", error_msg, str(e))
+            error_msg = "Error when upgrading auth DB table({})".format(str(e))
+            logging.error("handle_upgrade_1_1_to_1_2. %s", error_msg)
             raise DbUpgradeError(self.db_path, error_msg)
 
     def __handle_upgrade(self):
