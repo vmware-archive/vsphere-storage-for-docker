@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://localhost:4000feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
 
     <script>
         $(document).ready(function() {
@@ -422,12 +422,13 @@ $('#toc').on('click', 'a', function() {
 
   <p>Docker service is way to define a container based application with all metadata such as scaling, volume definitions etc. In this example we will create a docker service and inspect the volumes which are auto created. This will also serve as an example of usage of docker service command with vSphere suppoted volumes.</p>
 
-<p>Let’s create a MongoDB service with replica count as 1 and vSphere based volume.
-<code class="highlighter-rouge">
-# docker service create --replicas 1 --mount type=volume,source=mongodata,target=/data/db,volume-driver=vsphere,volume-opt=size=1Gb  --mount type=volume,source=mongoconfig,target=/da
+<p>Let’s create a MongoDB service with replica count as 1 and vSphere based volume.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># docker service create --replicas 1 --mount type=volume,source=mongodata,target=/data/db,volume-driver=vsphere,volume-opt=size=1Gb  --mount type=volume,source=mongoconfig,target=/da
 ta/configdb,volume-driver=vsphere --name mongo1 mongo:3.2 mongod
 g4ckq563yw51f2xeixgy4nzh9
-</code></p>
+</code></pre>
+</div>
 
 <p>After successful creation of the service, we can check the details of service created:</p>
 
@@ -556,7 +557,7 @@ mongo1
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Apr 17, 2017 <br />
+ Site last generated: Apr 26, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
