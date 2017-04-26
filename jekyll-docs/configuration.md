@@ -56,10 +56,10 @@ The configuration for  Docker volume plugin require the driver type which can be
 
 ```
 {
-    "Driver": "vsphere"
+    "Driver": "vsphere",
     "MaxLogAgeDays": 28,
     "MaxLogSizeMb": 100,
-    "LogPath": "/var/log",
+    "LogPath": "/var/log/docker-volume-vsphere.log",
     "LogLevel": "info"
 }
 ```
