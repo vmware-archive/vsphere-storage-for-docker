@@ -34,7 +34,7 @@ The docker volume plugin supports two drivers, namely, `photon` and `vsphere` fo
 ## Sample plugin configuration
 ```
 {
-	"Driver": "<driver name - vsphere/vmdk/photon>"
+	"Driver": "<driver name - vsphere/vmdk/photon>",
 	"MaxLogAgeDays": 28,
 	"MaxLogSizeMb": 100,
 	"LogPath": "/var/log/docker-volume-vsphere.log",
