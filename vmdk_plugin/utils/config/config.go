@@ -33,6 +33,7 @@ const (
 	// Local constants
 	defaultMaxLogSizeMb  = 100
 	defaultMaxLogAgeDays = 28
+	defaultLogLevel      = "info"
 )
 
 // Config stores the configuration for the plugin
@@ -41,6 +42,7 @@ type Config struct {
 	LogPath       string `json:",omitempty"`
 	MaxLogSizeMb  int    `json:",omitempty"`
 	MaxLogAgeDays int    `json:",omitempty"`
+	LogLevel      string `json:",omitempty"`
 	Target        string `json:",omitempty"`
 	Project       string `json:",omitempty"`
 	Host          string `json:",omitempty"`
@@ -70,5 +72,8 @@ func SetDefaults(config *Config) {
 	}
 	if config.MaxLogAgeDays == 0 {
 		config.MaxLogAgeDays = defaultMaxLogAgeDays
+	}
+	if config.LogLevel == "" {
+		config.LogLevel = defaultLogLevel
 	}
 }
