@@ -468,6 +468,10 @@ def commands():
                             'help': 'Remove only local link or local DB',
                             'action': 'store_true'
                         },
+                        '--unlink': {
+                            'help': 'Remove the local link to shared DB',
+                            'action': 'store_true'
+                        },
                         '--no-backup': {
                             'help': 'Do not create DB backup before removing',
                             'action': 'store_true'
@@ -1301,32 +1305,66 @@ def config_rm(args):
     # This asks for double confirmation, and removes the local link or DB (if any)
     # NEVER deletes the shared database - instead prints help
 
-    if not args.local:
+    if not args.local and not args.unlink:
         return err_out("""
-        Shared DB removal is not supported. For removing  local configuration, use --local flag.
-        For removing shared DB,  run 'vmdkops_admin config rm --local' on ESX hosts using this DB,
-        and manually remove the {} file from shared storage.
+        DB removal is irreversible operation. Please use '--local' flag for removing DB in SingleNode mode,
+        and use '--unlink' to unlink from DB in MultiNode mode.
+        Note that '--unlink' will not remove a shared DB, but simply configure the current ESXi host to stop using it.
+        For removing shared DB, run 'vmdkops_admin config rm --unlink' on ESXi hosts using this DB, and then manually
+        remove the actual DB file '{}' from shared storage.
         """.format(auth_data.CONFIG_DB_NAME))
+
+    if args.local and args.unlink:
+        return err_out("""
+        Cannot use '--local' and '--unlink' together. Please use '--local' flag for removing DB in SingleNode mode,
+        and use '--unlink' to unlink from DB in MultiNode mode.
+        """
+        )
 
     if not args.confirm:
         return err_out("Warning: For extra safety, removal operation requires '--confirm' flag.")
+
+    # Check the existing config mode
+    with auth_data.AuthorizationDataManager() as auth:
+        try:
+            auth.connect()
+            info = auth.get_info()
+            mode = auth.mode # for usage outside of the 'with'
+        except auth_data.DbAccessError as ex:
+            return err_out(str(ex))
+
+    # mode is NotConfigured, path does not exist
+    if mode == auth_data.DBMode.NotConfigured:
+        print("Nothing to do - Mode={}.".format(str(mode)))
 
     link_path = auth_data.AUTH_DB_PATH # local DB or link
     if not os.path.lexists(link_path):
         return None
 
-    try:
-        if not os.path.islink(link_path) and not args.no_backup:
-            print("Moved {} to backup file {}".format(link_path,
-                                                       db_move_to_backup(link_path)))
+    if mode == auth_data.DBMode.MultiNode:
+        if args.local:
+            return err_out("'rm --local' is not supported when " + DB_REF + "is in MultiNode mode."
+                           " Use 'rm --unlink' to remove the local link to shared DB.")
         else:
-            os.remove(link_path)
-            print("Removed link {}".format(link_path))
-    except Exception as ex:
-        print(" Failed to remove {}: {}".format(link_path, ex))
+            try:
+                os.remove(link_path)
+                print("Removed link {}".format(link_path))
+            except Exception as ex:
+                print(" Failed to remove {}: {}".format(link_path, ex))
+            return service_reset()
 
-    return service_reset()
+    if mode == auth_data.DBMode.SingleNode:
+        if args.unlink:
+            return err_out("'rm --unlink' is not supported when " + DB_REF + "is in SingleNode mode."
+                           " Use 'rm --local' to remove local DB configuration.")
+        else:
+            if not args.no_backup:
+                print("Moved {} to backup file {}".format(link_path,
+                                                        db_move_to_backup(link_path)))
+            return service_reset()
 
+    # All other cases
+    print("Nothing to do - Mode={}.".format(str(mode)))
 
 def config_mv(args):
     """[Not Supported Yet]
