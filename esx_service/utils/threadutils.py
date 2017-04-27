@@ -98,7 +98,7 @@ def start_new_thread(target, args=None, daemon=False):
         new_thread.daemon = True
 
     new_thread.start()
-    logging.info("Started new thread - %s with target %s and args %s",
+    logging.info("Started new thread : %s with target %s and args %s",
                   new_thread.ident, target, args)
     logging.debug("Currently active threads: %s",
                   get_active_threads())
