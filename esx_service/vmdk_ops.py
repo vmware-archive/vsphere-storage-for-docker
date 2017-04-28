@@ -524,6 +524,8 @@ def vol_info(vol_meta, vol_size_info, datastore):
             vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_NAME]
         else:
             vinfo[ATTACHED_TO_VM] = vol_meta[kv.ATTACHED_VM_UUID]
+    if kv.ATTACHED_VM_DEV in vol_meta:
+        vinfo[kv.ATTACHED_VM_DEV] = vol_meta[kv.ATTACHED_VM_DEV]
 
     if kv.VOL_OPTS in vol_meta:
        if kv.FILESYSTEM_TYPE in vol_meta[kv.VOL_OPTS]:
@@ -1077,7 +1079,7 @@ def reset_vol_meta(vmdk_path):
        logging.warning("reset_vol_meta: " + msg)
        return err(msg)
 
-def setStatusAttached(vmdk_path, vm):
+def setStatusAttached(vmdk_path, vm, vm_dev_info=None):
     '''Sets metadata for vmdk_path to (attached, attachedToVM=uuid'''
     logging.debug("Set status=attached disk=%s VM name=%s uuid=%s", vmdk_path,
                   vm.config.name, vm.config.uuid)
@@ -1087,6 +1089,8 @@ def setStatusAttached(vmdk_path, vm):
     vol_meta[kv.STATUS] = kv.ATTACHED
     vol_meta[kv.ATTACHED_VM_UUID] = vm.config.uuid
     vol_meta[kv.ATTACHED_VM_NAME] = vm.config.name
+    if vm_dev_info:
+        vol_meta[kv.ATTACHED_VM_DEV] = vm_dev_info
     if not kv.setAll(vmdk_path, vol_meta):
         logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
 
@@ -1102,6 +1106,7 @@ def setStatusDetached(vmdk_path):
     try:
         del vol_meta[kv.ATTACHED_VM_UUID]
         del vol_meta[kv.ATTACHED_VM_NAME]
+        del vol_meta[kv.ATTACHED_VM_DEV]
     except:
         pass
     if not kv.setAll(vmdk_path, vol_meta):
@@ -1358,10 +1363,13 @@ def disk_attach(vmdk_path, vm):
                 msg += "(Current VM)"
         return err(msg)
 
-    setStatusAttached(vmdk_path, vm)
+    vm_dev_info = dev_info(disk_slot, pci_slot_number)
+
+    setStatusAttached(vmdk_path, vm, vm_dev_info)
     logging.info("Disk %s successfully attached. controller pci_slot_number=%s, disk_slot=%d",
                  vmdk_path, pci_slot_number, disk_slot)
-    return dev_info(disk_slot, pci_slot_number)
+
+    return vm_dev_info
 
 
 def err(string):

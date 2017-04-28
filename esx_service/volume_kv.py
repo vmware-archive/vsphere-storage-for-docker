@@ -39,6 +39,8 @@ CREATED_BY = 'created-by'
 ATTACHED_VM_UUID = 'attachedVMUuid'
 # The name of the VM that the volume is attached to
 ATTACHED_VM_NAME = "attachedVMName"
+# The device to which the volume is attached.
+ATTACHED_VM_DEV = "attachedVMDevice"
 
 # Dictionary of options passed in by the user
 VOL_OPTS = 'volOpts'
@@ -82,7 +84,7 @@ DEFAULT_ACCESS = ACCESS_READWRITE
 ACCESS_TYPES = [ACCESS_READWRITE, ACCESS_READONLY]
 
 # Filesystem type
-# This option is handled in the volume-plugin at the docker host, and tracked in volume metadata. 
+# This option is handled in the volume-plugin at the docker host, and tracked in volume metadata.
 FILESYSTEM_TYPE = 'fstype'
 DEFAULT_FILESYSTEM_TYPE = 'ext4'
 
