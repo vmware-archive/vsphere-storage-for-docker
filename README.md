@@ -118,10 +118,16 @@ journalctl -fu docker.service # Journalctl/Systemd
  "MaxLogSizeMb": 100,
  "LogPath": "/var/log/docker-volume-vsphere.log"}
 ```
-* **Turning on debug logging**: You can change the log level by passing `VDVS_LOG_LEVEL` key to `docker plugin install`, e.g.
-```
- docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug
- ```
+* **Turning on debug logging**: 
+
+   - **Package user (DEB/RPM installation)**: Stop the service and manually run with `--log_level=debug` flag 
+
+   - **Managed plugin user**: You can change the log level by passing `VDVS_LOG_LEVEL` key to `docker plugin install`. 
+      
+      e.g. 
+      ```
+      docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug
+      ```
 
 **ESX Plugin logs**
 
