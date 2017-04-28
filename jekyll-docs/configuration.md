@@ -73,7 +73,7 @@ The configuration for  Docker volume plugin require the driver type which can be
   <tbody>
     <tr>
       <td>driver</td>
-      <td>The name of Driver – vsphere for vSphere driver</td>
+      <td>The name of Driver – vsphere for vSphere driver. Possible values are vsphere/vmdk/photon.</td>
     </tr>
     <tr>
       <td>MaxLogAgeDays</td>
@@ -86,10 +86,10 @@ The configuration for  Docker volume plugin require the driver type which can be
     <tr>
       <td>LogPath</td>
       <td>The location at which loge file will be  created</td>
-    </tr>    
+    </tr>
     <tr>
       <td>LogLevel</td>
-      <td>The verbosity of the log file can be one of INFO, DEBUG, ERROR (Please confirm log levels)</td>
+      <td>The verbosity of the log file can be one of info, debug, error, warn etc.</td>
     </tr>
 </tbody>
 </table>
