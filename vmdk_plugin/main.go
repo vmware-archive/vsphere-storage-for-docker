@@ -56,11 +56,6 @@ func fullSocketAddress(pluginName string) string {
 // init log with passed logLevel (and get config from configFile if it's present)
 // returns True if using defaults,  False if using config file
 func logInit(logLevel *string, logFile *string, configFile *string) bool {
-	level, err := log.ParseLevel(*logLevel)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse log level: %v", err))
-	}
-
 	usingConfigDefaults := false
 	c, err := config.Load(*configFile)
 	if err != nil {
@@ -84,6 +79,15 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 		MaxAge:   c.MaxLogAgeDays, // days
 	})
 
+	if *logLevel == "" {
+		*logLevel = c.LogLevel
+	}
+
+	level, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse log level: %v", err))
+	}
+
 	log.SetFormatter(new(VmwareFormatter))
 	log.SetLevel(level)
 
@@ -103,7 +107,7 @@ func main() {
 	logEnv := os.Getenv("VDVS_LOG_LEVEL")
 	logLevel := &logEnv
 	if *logLevel == "" {
-		logLevel = flag.String("log_level", "info", "Logging Level")
+		logLevel = flag.String("log_level", "", "Logging Level")
 	}
 	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
 	driverName := flag.String("driver", "", "Volume driver")
