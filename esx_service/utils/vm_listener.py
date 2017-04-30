@@ -24,34 +24,70 @@ import os
 import os.path
 import atexit
 import time
+import http.client
+
 import threadutils
 import log_config
 import vmdk_utils
 import vmdk_ops
 
 from pyVmomi import VmomiSupport, vim, vmodl
+# vim api version used - version11
 
 VM_POWERSTATE = 'runtime.powerState'
 POWERSTATE_POWEROFF = 'poweredOff'
-HOSTD_RECONNECT_INTERVAL = 20
+HOSTD_RECONNECT_INTERVAL = 5 #approx time for hostd to comeup is 10-15 seconds
+HOSTD_RECONNECT_ATTEMPT = 5
+
+
+def get_propertycollector():
+    """
+    Connect to hostd. If failed, retry.
+    Create the property collector with filter to monitor VM power state changes
+    Return the property collecter and error (if any)
+    """
+
+    si = vmdk_ops.get_si()
+
+    reconnect_interval = HOSTD_RECONNECT_INTERVAL
+    for i in range(HOSTD_RECONNECT_ATTEMPT):
+        if si:
+            break
+
+        # If hostd is not up yet, sleep for a while and try again
+        logging.warn("VMChangeListener couldn't connect to hostd.")
+        logging.warn("Retrying after %s seconds", reconnect_interval)
+        time.sleep(reconnect_interval)
+        si = vmdk_ops.get_si()
+
+        # exponential backoff for next retry
+        reconnect_interval += reconnect_interval
+
+    # Proceed further only after you get si instance
+    if not si:
+        # could not connect to hostd even after retries
+        # Something is seriously wrong
+        return None, "Hostd Down!"
+
+    pc = si.content.propertyCollector
+    err_msg = create_vm_powerstate_filter(pc, si.content.rootFolder)
+    if err_msg:
+        # Retrying connection to hostd won't make this error go away. Returning.
+        return None, err_msg
+
+    return pc, None
+
 
 def start_vm_changelistener():
     """
     Listen to power state changes of VMs running on current host
     """
-    si = vmdk_ops.get_si()
+    pc, error_msg = get_propertycollector()
 
-    while not si:
-        # If hostd is not up yet, sleep for a while and try again
-        # Proceed further only after you get si instance
-        logging.warn("VMChangeListener couldn't connect to hostd. Retrying after %s seconds", HOSTD_RECONNECT_INTERVAL)
-        time.sleep(HOSTD_RECONNECT_INTERVAL)
-        si = vmdk_ops.get_si()
+    if error_msg:
+        logging.warn("Could not start VM Listener: %s", error_msg)
+        return
 
-    pc = si.content.propertyCollector
-    err_msg = create_vm_powerstate_filter(pc, si.content.rootFolder)
-    if err_msg:
-        return err_msg
     # listen to changes
     listen_vm_propertychange(pc)
 
@@ -87,8 +123,8 @@ def listen_vm_propertychange(pc):
     logging.info("VMChangeListener thread started")
     version = ''
     while True:
-        result = pc.WaitForUpdates(version)
         try:
+            result = pc.WaitForUpdates(version)
             # process the updates result
             for filterSet in result.filterSet:
                 for objectSet in filterSet.objectSet:
@@ -109,13 +145,28 @@ def listen_vm_propertychange(pc):
                         logging.info("VM poweroff change found for %s", moref.config.name)
 
                         set_device_detached(moref)
+            version = result.version
+        # Capture hostd down exception
+        except http.client.RemoteDisconnected as e:
+            logging.error("VMChangeListener: Hostd connection error %s", str(e))
+            version = ''
+            # Need to get new SI instance, create a new property collector and property filter
+            # for it. Can't use the old one due to stale authentication error.
+            pc, error_msg = get_propertycollector()
+
+            if error_msg:
+                logging.warn("Could not start VM Listener: %s", error_msg)
+                return
+
+        # main vmdkops process exits.
+        except vmodl.fault.RequestCanceled as e:
+             # capture this and return to prevent unncessary exception logging
+            logging.info("VMChangeListener thread exiting")
+            return
+
         except Exception as e:
             # Do we need to alert the admin? how?
             logging.error("VMChangeListener: error %s", str(e))
-
-        version = result.version
-
-    logging.info("VMChangeListener thread exiting")
 
 
 def vm_folder_traversal():

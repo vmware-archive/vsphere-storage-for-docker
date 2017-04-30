@@ -952,7 +952,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     logging.debug("Released lock: %s", lockname)
     return response
 
-def connectLocalSi(force=False):
+def connectLocalSi():
     '''
 	Initialize a connection to the local SI
 	'''
@@ -971,12 +971,7 @@ def connectLocalSi(force=False):
                 version=newestVersions.Get('vim'))
         except Exception as e:
             logging.exception("Failed to create the local Service Instance as 'dcui', continuing... : ")
-    elif force:
-        logging.warning("Reconnecting to the local Service Instance")
-        _service_instance = pyVim.connect.Connect(
-            host='localhost',
-            user='dcui',
-            version=newestVersions.Get('vim'))
+            return
 
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()
@@ -988,13 +983,21 @@ def get_si():
 	Return a connection to the local SI
 	'''
     with lockManager.get_lock('siLock'):
+        global _service_instance
         try:
             _service_instance.CurrentTime()
         except:
-            connectLocalSi(force=True)
-    return _service_instance
+            # service_instance is invalid (could be stale)
+            # reset it to None and try to connect again.
+            _service_instance = None
+            connectLocalSi()
+
+        return _service_instance
 
 def is_service_available():
+    """
+    Check if connection to hostd service is available
+    """
     if not get_si():
         return False
     return True
