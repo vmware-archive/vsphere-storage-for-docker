@@ -118,7 +118,7 @@ def create_vm_powerstate_filter(pc, from_node):
 def listen_vm_propertychange(pc):
     """
     Waits for updates on powerstate of VMs. If powerstate is poweroff,
-    detach the dvs managed volumes attached to VM
+    detach the dvs managed volumes attached to VM.
     """
     logging.info("VMChangeListener thread started")
     version = ''
