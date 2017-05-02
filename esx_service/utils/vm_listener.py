@@ -36,7 +36,7 @@ from pyVmomi import VmomiSupport, vim, vmodl
 
 VM_POWERSTATE = 'runtime.powerState'
 POWERSTATE_POWEROFF = 'poweredOff'
-HOSTD_RECONNECT_INTERVAL = 5 #approx time for hostd to comeup is 10-15 seconds
+HOSTD_RECONNECT_INTERVAL = 2 #approx time for hostd to comeup is 10-15 seconds
 HOSTD_RECONNECT_ATTEMPT = 5
 
 
@@ -67,7 +67,7 @@ def get_propertycollector():
     if not si:
         # could not connect to hostd even after retries
         # Something is seriously wrong
-        return None, "Hostd Down!"
+        return None, "Unable to connect to hostd. Verify that vmware-hostd is running."
 
     pc = si.content.propertyCollector
     err_msg = create_vm_powerstate_filter(pc, si.content.rootFolder)
@@ -82,6 +82,8 @@ def start_vm_changelistener():
     """
     Listen to power state changes of VMs running on current host
     """
+    threadutils.set_thread_name("VMChangeListener")
+
     pc, error_msg = get_propertycollector()
 
     if error_msg:
@@ -89,7 +91,17 @@ def start_vm_changelistener():
         return
 
     # listen to changes
-    listen_vm_propertychange(pc)
+    ex = listen_vm_propertychange(pc)
+    # hostd is down
+    if isinstance(ex, http.client.RemoteDisconnected):
+        logging.error("VMChangeListener: Hostd connection error %s", str(ex))
+        # Need to get new SI instance, create a new property collector and property filter
+        # for it. Can't use the old one due to stale authentication error.
+        start_vm_changelistener()
+    # vmdkops process is exiting. Return.
+    elif isinstance(ex, vmodl.fault.RequestCanceled):
+        logging.info("VMChangeListener thread exiting")
+        return
 
 
 def create_vm_powerstate_filter(pc, from_node):
@@ -148,21 +160,11 @@ def listen_vm_propertychange(pc):
             version = result.version
         # Capture hostd down exception
         except http.client.RemoteDisconnected as e:
-            logging.error("VMChangeListener: Hostd connection error %s", str(e))
-            version = ''
-            # Need to get new SI instance, create a new property collector and property filter
-            # for it. Can't use the old one due to stale authentication error.
-            pc, error_msg = get_propertycollector()
-
-            if error_msg:
-                logging.warn("Could not start VM Listener: %s", error_msg)
-                return
+            return e
 
         # main vmdkops process exits.
         except vmodl.fault.RequestCanceled as e:
-             # capture this and return to prevent unncessary exception logging
-            logging.info("VMChangeListener thread exiting")
-            return
+            return e
 
         except Exception as e:
             # Do we need to alert the admin? how?
