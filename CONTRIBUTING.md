@@ -1,4 +1,4 @@
-# Contributing
+# Cointributing
 
 ## Topics
 * [Code contribution guidelines](#code-contribution-guidelines)
