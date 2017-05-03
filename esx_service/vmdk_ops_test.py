@@ -23,7 +23,6 @@ import logging
 import glob
 import os
 import os.path
-import time
 
 import vmdk_ops
 import log_config
@@ -48,7 +47,7 @@ from error_code import generate_error_info
 from vmdkops_admin_sanity_test import ADMIN_CLI
 import glob
 import vmdkops_admin
-import test_utils
+
 # Max volumes count we can attach to a singe VM.
 MAX_VOL_COUNT_FOR_ATTACH = 60
 
@@ -103,6 +102,12 @@ class VolumeNamingTestCase(unittest.TestCase):
                 self.assertFalse(expected_result, "Expected vol name parsing to succeed for '{0}'"
                                  .format(full_name))
 
+def generate_test_vm_name():
+    """ This method gets unique name for vm e.g. vm_name = test-vm_19826"""
+    random_id = random.randint(0, 65536)
+    vm_name = 'test-vm_' + str(random_id)
+    return vm_name
+
 class VmdkCreateRemoveTestCase(unittest.TestCase):
     """Unit test for VMDK Create and Remove ops"""
 
@@ -116,7 +121,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
     valid_attach_as_opt_1 = {volume_kv.ATTACH_AS: u'persistent'}
     valid_attach_as_opt_2 = {volume_kv.ATTACH_AS: u'independent_persistent'}
     name = ""
-    vm_name = test_utils.generate_test_vm_name()
+    vm_name = generate_test_vm_name()
 
     def setUp(self):
         self.name = vmdk_utils.get_vmdk_path(path, self.volName)
@@ -257,7 +262,7 @@ class VmdkCreateRemoveTestCase(unittest.TestCase):
             self.assertEqual(err, None, err)
 
 class VmdkCreateCloneRemoveTestCase(unittest.TestCase):
-    vm_name = test_utils.generate_test_vm_name()
+    vm_name = generate_test_vm_name()
     vm_uuid = str(uuid.uuid4())
     volName = "vol_CloneTest"
     volName1 = "vol_CloneTest_1"
@@ -394,12 +399,89 @@ class ValidationTestCase(unittest.TestCase):
             with self.assertRaises(vmdk_ops.ValidationError):
                 vmdk_ops.validate_opts(opts, self.path)
 
+def create_vm(si, vm_name, datastore_name):
+        """ Create a VM """
+        content = si.RetrieveContent()
+        datacenter = content.rootFolder.childEntity[0]
+        vm_folder = datacenter.vmFolder
+        hosts = datacenter.hostFolder.childEntity
+        resource_pool = hosts[0].resourcePool
+        logging.info("datacenter={0} vm_folder={1} hosts={2} resource_pool={3}".format(datacenter, vm_folder,
+                                                                                       hosts, resource_pool))
+        # bare minimum VM shell, no disks. Feel free to edit
+        vmx_file = vim.vm.FileInfo(logDirectory=None,
+                                   snapshotDirectory=None,
+                                   suspendDirectory=None,
+                                   vmPathName='[' + datastore_name + '] ')
+
+
+        config = vim.vm.ConfigSpec(
+                                name=vm_name,
+                                memoryMB=128,
+                                numCPUs=1,
+                                files=vmx_file,
+                                guestId='rhel5_64Guest',
+                                version='vmx-11'
+                              )
+
+        task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)
+        vmdk_ops.wait_for_tasks(si, [task])
+
+        logging.info("create_vm: vm_name=%s, datastore_name=%s", vm_name, datastore_name)
+        vm = task.info.result
+        if vm:
+            logging.debug("Found: VM %s", vm_name)
+            if vm.runtime.powerState == vim.VirtualMachinePowerState.poweredOff:
+                logging.debug("Attempting to power on %s", vm_name)
+                task = vm.PowerOnVM_Task()
+                vmdk_ops.wait_for_tasks(si, [task])
+        else:
+            error_info = generate_error_info(ErrorCode.VM_NOT_FOUND, vm_name)
+            logging.error("Cannot find vm %s", vm_name)
+            return error_info, None
+
+        return None, vm
+
+def remove_vm(si, vm):
+    """ Remove a VM """
+    if vm:
+        logging.debug("Found: VM %s", vm.config.name)
+        if vm.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+            logging.debug("Attempting to power off %s", vm.config.name)
+            task = vm.PowerOffVM_Task()
+            vmdk_ops.wait_for_tasks(si, [task])
+
+        logging.debug("Trying to destroy VM %s", vm.config.name)
+        task = vm.Destroy_Task()
+        vmdk_ops.wait_for_tasks(si, [task])
+
+def generate_volume_names(tenant, datastore_name, len):
+    """ Returns a list of volume names
+    e.g. volNames = ['tenant1_vol1@sharedVmfs-0', 'tenant1_vol2@sharedVmfs-0', 'tenant1_vol3@sharedVmfs-0']
+    """
+    volNames = []
+    for x in range(len):
+        volNames.append(tenant + "_vol" + str(x + 1) + "@" + datastore_name)
+    return volNames
+
+def checkIfVolumeExist(volume_names,result):
+    #checks if names of volume exists in the volumes present in result
+    if not result or not volume_names:
+       return False
+    for name in volume_names:
+        for j in range(len(result)):
+              if result[j]['Name'] == name:
+                 break
+              if j+1 == len(result):
+                 logging.error("Cannot find volume %s", result[j]['Name'])
+                 return False
+    return True
 
 class VmdkAttachDetachTestCase(unittest.TestCase):
     """ Unit test for VMDK Attach and Detach ops """
 
     volNamePre = "vol_UnitTest_Attach"
-    vm_name = test_utils.generate_test_vm_name()
+    vm_name = generate_test_vm_name()
     vm = None
     if config["run_max_attach"]:
         max_vol_count = MAX_VOL_COUNT_FOR_ATTACH
@@ -425,9 +507,9 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
                                                                  self.datastore_path)
         # get service_instance, and create a VM
         si = vmdk_ops.get_si()
-        error, self.vm = test_utils.create_vm(si=si,
-                                              vm_name=self.vm_name,
-                                              datastore_name=self.datastore_name)
+        error, self.vm = create_vm(si=si,
+                                   vm_name=self.vm_name,
+                                   datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
         # create max_vol_count+1 VMDK files
@@ -449,7 +531,7 @@ class VmdkAttachDetachTestCase(unittest.TestCase):
     def cleanup(self):
         # remove VM
         si = vmdk_ops.get_si()
-        test_utils.remove_vm(si, self.vm)
+        remove_vm(si, self.vm)
 
         for v in self.get_testvols():
             self.assertEqual(
@@ -496,7 +578,7 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
     """ Unit test for VMDK Authorization """
 
     vm_uuid = str(uuid.uuid4())
-    vm_name = test_utils.generate_test_vm_name()
+    vm_name = generate_test_vm_name()
     tenant1 = None
     datastore_name = None
     datastore_url = None
@@ -612,19 +694,19 @@ class VmdkTenantTestCase(unittest.TestCase):
 
     # tenant1 info
     tenant1_name = "test_tenant1"
-    vm1_name = test_utils.generate_test_vm_name()
+    vm1_name = generate_test_vm_name()
     vm1 = None
     tenant1_vol1_name = 'tenant1_vol1'
     tenant1_vol2_name = 'tenant1_vol2'
     tenant1_vol3_name = 'tenant1_vol3'
     vm1_config_path = None
     tenant1_new_name = "new_test_tenant1"
-    vm3_name = test_utils.generate_test_vm_name()
+    vm3_name = generate_test_vm_name()
     vm3 = None
 
     # tenant2 info
     tenant2_name = "test_tenant2"
-    vm2_name = test_utils.generate_test_vm_name()
+    vm2_name = generate_test_vm_name()
     vm2 = None
     tenant2_vol1_name = 'tenant2_vol1'
     tenant2_vol2_name = 'tenant2_vol2'
@@ -635,6 +717,51 @@ class VmdkTenantTestCase(unittest.TestCase):
     datastore_path = None
     datastore1_name = None
     datastore1_path = None
+
+    def create_default_tenant_and_privileges(self):
+        """ Create default tenant and privilege if not exist"""
+
+        # create DEFAULT tenant if needed
+        error_msg, tenant_uuid, tenant_name = auth.get_default_tenant()
+        if error_msg:
+            logging.warning(error_msg)
+        self.assertEqual(error_msg, None)
+
+        if not tenant_uuid:
+            logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
+            error_info, tenant = auth_api._tenant_create(
+                                           name=auth_data_const.DEFAULT_TENANT,
+                                           default_datastore=auth_data_const.VM_DS,
+                                           description=auth_data_const.DEFAULT_TENANT_DESCR,
+                                           vm_list=[],
+                                           privileges=[])
+
+            if error_info:
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
+
+        error_info, existing_privileges = auth_api._tenant_access_ls(auth_data_const.DEFAULT_TENANT)
+        self.assertEqual(error_info, None)
+
+        # create access privilege to datastore "_ALL_DS" for _DEFAULT tenant if needed
+        if not auth_api.privilege_exist(existing_privileges, auth_data_const.ALL_DS_URL):
+            error_info = auth_api._tenant_access_add(name=auth_data_const.DEFAULT_TENANT,
+                                                    datastore=auth_data_const.ALL_DS,
+                                                    allow_create=True)
+
+            if error_info:
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
+
+        # create access privilege to datastore "_VM_DS" for _DEFAULT tenant if needed
+        if not auth_api.privilege_exist(existing_privileges, auth_data_const.VM_DS_URL):
+            error_info = auth_api._tenant_access_add(name=auth_data_const.DEFAULT_TENANT,
+                                                    datastore=auth_data_const.VM_DS,
+                                                    allow_create=True)
+
+            if error_info:
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
 
     def setUp(self):
         """ Setup run before each test """
@@ -661,16 +788,16 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.cleanup()
         # get service_instance, and create VMs
         si = vmdk_ops.get_si()
-        error, self.vm1 = test_utils.create_vm(si=si,
-                                               vm_name=self.vm1_name,
-                                               datastore_name=self.datastore_name)
+        error, self.vm1 = create_vm(si=si,
+                                    vm_name=self.vm1_name,
+                                    datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
 
         self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
         logging.info("VmdkTenantTestCase: create vm1 name=%s Done", self.vm1_name)
 
-        error, self.vm2 = test_utils.create_vm(si=si,
+        error, self.vm2 = create_vm(si=si,
                                     vm_name=self.vm2_name,
                                     datastore_name=self.datastore_name)
         if error:
@@ -680,7 +807,7 @@ class VmdkTenantTestCase(unittest.TestCase):
 
         if self.datastore1_name:
             # create a volume from different datastore
-            error, self.vm3 = test_utils.create_vm(si=si,
+            error, self.vm3 = create_vm(si=si,
                                         vm_name=self.vm3_name,
                                         datastore_name=self.datastore1_name)
             if error:
@@ -689,8 +816,7 @@ class VmdkTenantTestCase(unittest.TestCase):
             logging.info("VmdkTenantTestCase: create vm3 name=%s Done", self.vm3_name)
 
         # create DEFAULT tenant and privilege if missing
-
-        test_utils.create_default_tenant_and_privileges(self)
+        self.create_default_tenant_and_privileges()
 
         # create tenant1 without adding any vms and privileges
         name = self.tenant1_name
@@ -752,12 +878,10 @@ class VmdkTenantTestCase(unittest.TestCase):
 
         # remove VM
         si = vmdk_ops.get_si()
-        if self.vm1:
-            test_utils.remove_vm(si, self.vm1)
-        if self.vm2:
-            test_utils.remove_vm(si, self.vm2)
+        remove_vm(si, self.vm1)
+        remove_vm(si, self.vm2)
         if self.vm3:
-            test_utils.remove_vm(si, self.vm3)
+            remove_vm(si, self.vm3)
 
     def test_vmdkops_on_default_tenant_vm(self):
         """ Test vmdk life cycle on a VM which belongs to DEFAULT tenant """
@@ -1017,8 +1141,8 @@ class VmdkTenantTestCase(unittest.TestCase):
         # VM lives in self.datastore_name
         self.assertEqual(2, len(result))
         volume_names = ["tenant1_vol2@" + self.datastore_name, "tenant1_vol3@" + self.datastore_name]
+        self.assertTrue(checkIfVolumeExist(volume_names,result))
 
-        self.assertTrue(test_utils.checkIfVolumeExist(volume_names,result))
         # rename the tenant
         error_info = auth_api._tenant_update(name=self.tenant1_name,
                                              new_name=self.tenant1_new_name)
@@ -1041,7 +1165,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         # result should have two volumes :tenant1_vol2, and  tenant1_vol3
         self.assertEqual(2, len(result))
         volume_names = ["tenant1_vol2@" + self.datastore_name, "tenant1_vol3@" + self.datastore_name]
-        self.assertTrue(test_utils.checkIfVolumeExist(volume_names,result))
+        self.assertTrue(checkIfVolumeExist(volume_names,result))
         # create a volume(tenant1_vol1_name) with default size
         opts={u'fstype': u'ext4'}
         error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_CREATE, self.tenant1_vol1_name, opts)
@@ -1166,15 +1290,15 @@ class VmdkTenantTestCase(unittest.TestCase):
         # listVMDK return vol name with the format like vol@datastore
         self.assertEqual(3, len(result))
 
-        volume_names = test_utils.generate_volume_names("tenant1", self.datastore_name, 3)
-        self.assertTrue(test_utils.checkIfVolumeExist(volume_names, result))
+        volume_names = generate_volume_names("tenant1", self.datastore_name, 3)
+        self.assertTrue(checkIfVolumeExist(volume_names, result))
         # list volumes for tenant2
         opts = {}
         result = vmdk_ops.executeRequest(vm2_uuid, self.vm2_name, self.vm2_config_path, 'list', None, opts)
         # listVMDK return vol name with the format like vol@datastore
         self.assertEqual(3, len(result))
-        volume_names = test_utils.generate_volume_names("tenant2", self.datastore_name, 3)
-        self.assertTrue(test_utils.checkIfVolumeExist(volume_names,result))
+        volume_names = generate_volume_names("tenant2", self.datastore_name, 3)
+        self.assertTrue(checkIfVolumeExist(volume_names,result))
 
 
     @unittest.skipIf(len(vmdk_utils.get_datastores()) < 2,
@@ -1372,13 +1496,53 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
 
     default_tenant_vols = [default_tenant_vol1_name, default_tenant_vol2_name]
 
-    vm1_name = test_utils.generate_test_vm_name()
+    vm1_name = generate_test_vm_name()
     vm1 = None
     vm1_config_path = None
 
     datastore_name = None
     datastore_path = None
 
+    def create_default_tenant_and_privileges(self):
+        """ Create default tenant and privilege if not exist"""
+
+        # create DEFAULT tenant if needed
+        error_info, tenant_uuid, tenant_name = auth.get_default_tenant()
+        if not tenant_uuid:
+            logging.debug("create_default_tenant_and_privileges: create DEFAULT tenant")
+            error_info, tenant = auth_api._tenant_create(
+                                            name=auth_data_const.DEFAULT_TENANT,
+                                            default_datastore=auth_data_const.VM_DS,
+                                            description=auth_data_const.DEFAULT_TENANT_DESCR,
+                                            vm_list=[],
+                                            privileges=[])
+
+            if error_info:
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
+
+        error_info, existing_privileges = auth_api._tenant_access_ls(auth_data_const.DEFAULT_TENANT)
+        self.assertEqual(error_info, None)
+
+        # create access privilege to datastore "_ALL_DS" for _DEFAULT tenant if needed
+        if not auth_api.privilege_exist(existing_privileges, auth_data_const.ALL_DS_URL):
+            error_info = auth_api._tenant_access_add(name=auth_data_const.DEFAULT_TENANT,
+                                                    datastore=auth_data_const.ALL_DS,
+                                                    allow_create=True)
+
+            if error_info:
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
+
+        # create access privilege to datastore "_VM_DS" for _DEFAULT tenant if needed
+        if not auth_api.privilege_exist(existing_privileges, auth_data_const.VM_DS_URL):
+            error_info = auth_api._tenant_access_add(name=auth_data_const.DEFAULT_TENANT,
+                                                    datastore=auth_data_const.VM_DS,
+                                                    allow_create=True)
+
+            if error_info:
+                logging.warning(error_info.msg)
+            self.assertEqual(error_info, None)
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                      "VSAN is not found - skipping policy usage tests")
@@ -1397,16 +1561,17 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         self.cleanup()
         # get service_instance, and create VMs
         si = vmdk_ops.get_si()
-        error, self.vm1 = test_utils.create_vm(si=si,
-                                               vm_name=self.vm1_name,
-                                               datastore_name=self.datastore_name)
+        error, self.vm1 = create_vm(si=si,
+                                    vm_name=self.vm1_name,
+                                    datastore_name=self.datastore_name)
         if error:
             self.assertFalse(True)
 
         self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
         logging.info("VmdkTenantPolicyUsageTestCase: create vm1 name=%s Done", self.vm1_name)
 
-        test_utils.create_default_tenant_and_privileges(self)
+        # create DEFAULT tenant and privilege if missing
+        self.create_default_tenant_and_privileges()
 
     def tearDown(self):
         """ Cleanup after each test """
@@ -1427,7 +1592,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
 
         # remove VM
         si = vmdk_ops.get_si()
-        test_utils.remove_vm(si, self.vm1)
+        remove_vm(si, self.vm1)
 
     @unittest.skipIf(not vsan_info.get_vsan_datastore(),
                     "VSAN is not found - skipping vsan_info tests")
@@ -1523,96 +1688,6 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
 
         vsan_policy.delete(self.name)
 
-class VMListenerTest(unittest.TestCase):
-    """ Unit test for VM listener. """
-    logging.info("Running VMListenerTest")
-    default_tenant_vol1_name = "stale_volume"
-
-    vm1_name = test_utils.generate_test_vm_name()
-    vm1 = None
-    vm1_config_path = None
-
-    datastore_name = None
-    datastore_path = None
-
-    def setUp(self):
-        """ Setup run before each test """
-        logging.info("VMListenerTest setUp path =%s", path)
-
-        if not self.datastore_name:
-            datastores = vmdk_utils.get_datastores()
-            # Use the first datastore out of list of datastore to
-            # create VMs and volumes
-            datastore = datastores[0]
-            if not datastore:
-                logging.error("Cannot find a valid datastore")
-                self.assertFalse(True)
-            self.datastore_name = datastore[0]
-            self.datastore_path = datastore[2]
-
-        self.cleanup()
-        # get service_instance, and create VMs
-        si = vmdk_ops.get_si()
-        error, self.vm1 = test_utils.create_vm(si=si,
-                                               vm_name=self.vm1_name,
-                                               datastore_name=self.datastore_name)
-        if error:
-            self.assertFalse(True)
-
-        self.vm1_config_path = vmdk_utils.get_vm_config_path(self.vm1_name)
-        logging.info("VMListenerTest: create vm1 name=%s Done", self.vm1_name)
-
-        # create DEFAULT tenant DEFAULT privilege if missing
-        test_utils.create_default_tenant_and_privileges(self)
-
-    def tearDown(self):
-        """ Cleanup after each test """
-        logging.info("VMListenerTest tearDown path")
-        self.cleanup()
-
-    def cleanup(self):
-        # cleanup existing volume under DEFAULT tenant
-        logging.info("VMListenerTest cleanup")
-        if self.datastore_path:
-            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT)
-            vol = self.default_tenant_vol1_name
-            vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
-            response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)
-            if not "Error" in response:
-                logging.debug("cleanup: remove volume %s", vmdk_path)
-                vmdk_ops.removeVMDK(vmdk_path)
-
-    def test_stale_volume_status_update(self):
-        """
-        This test case creates a volume and attaches it to the VM.
-        The VM is then powerd off. At the power off, the VM listener thread
-        gets the event and updates the status of the attached volume to detached
-        """
-        vm1_uuid = vmdk_utils.get_vm_uuid_by_name(self.vm1_name)
-
-        opts={}
-        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                auth.CMD_CREATE, self.default_tenant_vol1_name, opts)
-        self.assertEqual(None, error_info)
-
-        # test attach a volume
-        result = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                         auth.CMD_ATTACH, self.default_tenant_vol1_name, opts)
-        self.assertFalse("Error" in result)
-
-        si = vmdk_ops.get_si()
-        test_utils.remove_vm(si, self.vm1, False)
-
-        # VM listener thread waits for update through property collector and updates the status
-        # This happens in background so we need to give some time for this sanitization to complete
-        time.sleep(5)
-
-        # status of the volume should be updated to "detached"
-        response = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path,
-                                         auth.CMD_GET, self.default_tenant_vol1_name, opts)
-        self.assertEqual(response[volume_kv.STATUS], volume_kv.DETACHED)
-
-        test_utils.destroy_vm_object(si, self.vm1)
 
 def setUpModule():
     # Let's make sure we are testing a local DB

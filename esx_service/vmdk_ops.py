@@ -89,7 +89,7 @@ import auth_api
 import error_code
 from error_code import ErrorCode
 from error_code import error_code_to_message
-import vm_listener
+import re
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -952,7 +952,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
     logging.debug("Released lock: %s", lockname)
     return response
 
-def connectLocalSi():
+def connectLocalSi(force=False):
     '''
 	Initialize a connection to the local SI
 	'''
@@ -971,7 +971,12 @@ def connectLocalSi():
                 version=newestVersions.Get('vim'))
         except Exception as e:
             logging.exception("Failed to create the local Service Instance as 'dcui', continuing... : ")
-            return
+    elif force:
+        logging.warning("Reconnecting to the local Service Instance")
+        _service_instance = pyVim.connect.Connect(
+            host='localhost',
+            user='dcui',
+            version=newestVersions.Get('vim'))
 
     # set out ID in context to be used in request - so we'll see it in logs
     reqCtx = VmomiSupport.GetRequestContext()
@@ -983,21 +988,13 @@ def get_si():
 	Return a connection to the local SI
 	'''
     with lockManager.get_lock('siLock'):
-        global _service_instance
         try:
             _service_instance.CurrentTime()
         except:
-            # service_instance is invalid (could be stale)
-            # reset it to None and try to connect again.
-            _service_instance = None
-            connectLocalSi()
-
-        return _service_instance
+            connectLocalSi(force=True)
+    return _service_instance
 
 def is_service_available():
-    """
-    Check if connection to hostd service is available
-    """
     if not get_si():
         return False
     return True
@@ -1687,12 +1684,7 @@ def main():
 
         kv.init()
         connectLocalSi()
-
-        # start the daemon. Do all the task to start the listener through the daemon
-        threadutils.start_new_thread(target=vm_listener.start_vm_changelistener,
-                                 daemon=True)
         handleVmciRequests(port)
-
     except Exception as e:
         logging.exception(e)
 
@@ -1725,6 +1717,7 @@ http://www.apache.org/licenses/LICENSE-2.0.html
 
 Helper module for task operations.
 """
+
 
 def wait_for_tasks(si, tasks):
     """Given the service instance si and tasks, it returns after all the
@@ -1765,6 +1758,7 @@ def wait_for_tasks(si, tasks):
             pcfilter.Destroy()
 
 #------------------------
+
 
 class ValidationError(Exception):
     """ An exception for option validation errors """
