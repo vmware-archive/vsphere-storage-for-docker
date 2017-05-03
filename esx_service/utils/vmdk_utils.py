@@ -331,9 +331,9 @@ def get_vm_config_path(vm_name):
     return vm_config_path
 
 
-def find_dvs_volume(dev):
+def check_docker_volume(dev):
     """
-    If the @param dev is a dvs managed volume, return its vmdk path
+    Return true if the device is a docker volume
     """
     # if device is not a virtual disk, skip this device
     if type(dev) != vim.vm.device.VirtualDisk:
@@ -342,17 +342,13 @@ def find_dvs_volume(dev):
     # Filename format is as follows:
     # "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
     # Trim the datastore name and keep disk path.
-    datastore, disk_path = dev.backing.fileName.rsplit("]", 1)
+    _, disk_path = dev.backing.fileName.rsplit("]", 1)
     logging.info("backing disk name is %s", disk_path)
-    # name formatting to remove unwanted characters
-    datastore = datastore[1:]
-    disk_path = disk_path.lstrip()
 
-    if disk_path.startswith(vmdk_ops.DOCK_VOLS_DIR):
-        # returning the vmdk path for dvs volume
-        return os.path.join("/vmfs/volumes/", datastore, disk_path)
+    if disk_path.lstrip().startswith(vmdk_ops.DOCK_VOLS_DIR):
+        return True
+    return False
 
-    return None
 
 def check_volumes_mounted(vm_list):
     """
@@ -362,7 +358,7 @@ def check_volumes_mounted(vm_list):
         vm = vmdk_ops.findVmByUuid(vm_id)
         if vm:
             for d in vm.config.hardware.device:
-                if find_dvs_volume(d):
+                if check_docker_volume(d):
                     error_info = generate_error_info(ErrorCode.VM_WITH_MOUNTED_VOLUMES,
                                                      vm.config.name)
                     return error_info

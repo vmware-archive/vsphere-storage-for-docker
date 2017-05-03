@@ -23,6 +23,7 @@ import vmdk_utils
 import volume_kv as kv
 import vmdkops_admin
 import random
+import vmdk_ops_test
 import auth_api
 import log_config
 import logging
@@ -30,7 +31,6 @@ import convert
 import error_code
 import auth_data_const
 import auth_data
-import test_utils
 
 # Number of expected columns in ADMIN_CLI ls
 EXPECTED_COLUMN_COUNT = 13
@@ -543,7 +543,7 @@ class TestTenant(unittest.TestCase):
         self.cleanup()
         # get service_instance, and create VMs
         si = vmdk_ops.get_si()
-        error, self.vm1 = test_utils.create_vm(si=si,
+        error, self.vm1 = vmdk_ops_test.create_vm(si=si,
                                     vm_name=self.vm1_name,
                                     datastore_name=self.datastore_name)
         if error:
@@ -553,7 +553,7 @@ class TestTenant(unittest.TestCase):
 
         logging.info("TestTenant: create vm1 name=%s Done", self.vm1_name)
 
-        error, self.vm2 = test_utils.create_vm(si=si,
+        error, self.vm2 = vmdk_ops_test.create_vm(si=si,
                                     vm_name=self.vm2_name,
                                     datastore_name=self.datastore_name)
         if error:
@@ -579,8 +579,8 @@ class TestTenant(unittest.TestCase):
 
         # remove VM
         si = vmdk_ops.get_si()
-        test_utils.remove_vm(si, self.vm1)
-        test_utils.remove_vm(si, self.vm2)
+        vmdk_ops_test.remove_vm(si, self.vm1)
+        vmdk_ops_test.remove_vm(si, self.vm2)
 
     def test_tenant(self):
         """ Test AdminCLI command for tenant management """
