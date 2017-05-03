@@ -630,14 +630,18 @@ class AuthorizationDataManager:
     def __connect(self):
         """
         Private function for connecting and setting return type for select ops.
-        Raises a ConnectionFailed exception when fails to connect.
+        Raises a DbConnectionError when fails to connect.
         """
         if self.conn:
-            logging.info("AuthorizationDataManagerReconnecting to %s on request", self.db_path)
+            logging.info("AuthorizationDataManager: Reconnecting to %s on request", self.db_path)
             self.__close()
-        self.conn = sqlite3.connect(self.db_path)
-        if not self.conn:
+
+        try:
+            self.conn = sqlite3.connect(self.db_path)
+        except sqlite3.Error as e:
+            logging.error("Failed to connect to DB (%s): %s", self.db_path, e)
             raise DbConnectionError(self.db_path)
+
         # Use return rows as Row instances instead of tuples
         self.conn.row_factory = sqlite3.Row
 
