@@ -24,6 +24,7 @@ import os
 import os.path
 import atexit
 import time
+import sys
 
 import threadutils
 import log_config
@@ -34,14 +35,15 @@ from pyVmomi import VmomiSupport, vim, vmodl
 # vim api version used - version11
 
 # Capture hostd connection exception.
-try:
-    # python 3.x
-    import http.client
-    RemoteDisconnected = http.client.RemoteDisconnected
-except:
+if sys.version_info.major < 3:
     # python 2.x
     import httplib
     RemoteDisconnected = httplib.HTTPException
+else:
+    # python 3.x
+    import http.client
+    RemoteDisconnected = http.client.RemoteDisconnected
+
 
 VM_POWERSTATE = 'runtime.powerState'
 POWERSTATE_POWEROFF = 'poweredOff'
