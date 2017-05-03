@@ -33,7 +33,7 @@ import vmdk_ops
 from pyVmomi import VmomiSupport, vim, vmodl
 # vim api version used - version11
 
-# Need this to capture hostd down exception.
+# Capture hostd connection exception.
 try:
     # python 3.x
     import http.client
