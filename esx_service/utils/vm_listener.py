@@ -24,7 +24,6 @@ import os
 import os.path
 import atexit
 import time
-import http.client
 
 import threadutils
 import log_config
@@ -33,6 +32,16 @@ import vmdk_ops
 
 from pyVmomi import VmomiSupport, vim, vmodl
 # vim api version used - version11
+
+# Need this to capture hostd down exception.
+try:
+    # python 3.x
+    import http.client
+    RemoteDisconnected = http.client.RemoteDisconnected
+except:
+    # python 2.x
+    import httplib
+    RemoteDisconnected = httplib.HTTPException
 
 VM_POWERSTATE = 'runtime.powerState'
 POWERSTATE_POWEROFF = 'poweredOff'
@@ -93,11 +102,13 @@ def start_vm_changelistener():
     # listen to changes
     ex = listen_vm_propertychange(pc)
     # hostd is down
-    if isinstance(ex, http.client.RemoteDisconnected):
+
+    if isinstance(ex, RemoteDisconnected):
         logging.error("VMChangeListener: Hostd connection error %s", str(ex))
         # Need to get new SI instance, create a new property collector and property filter
         # for it. Can't use the old one due to stale authentication error.
         start_vm_changelistener()
+
     # vmdkops process is exiting. Return.
     elif isinstance(ex, vmodl.fault.RequestCanceled):
         logging.info("VMChangeListener thread exiting")
@@ -159,7 +170,7 @@ def listen_vm_propertychange(pc):
                         set_device_detached(moref)
             version = result.version
         # Capture hostd down exception
-        except http.client.RemoteDisconnected as e:
+        except RemoteDisconnected as e:
             return e
 
         # main vmdkops process exits.
