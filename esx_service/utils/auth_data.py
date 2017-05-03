@@ -639,7 +639,7 @@ class AuthorizationDataManager:
         try:
             self.conn = sqlite3.connect(self.db_path)
         except sqlite3.Error as e:
-            logging.error("Failed to connect to DB: %s", self.db_path)
+            logging.error("Failed to connect to DB (%s): %s", self.db_path, e)
             raise DbConnectionError(self.db_path)
 
         # Use return rows as Row instances instead of tuples
