@@ -12,6 +12,7 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * Create a fork or branch (if you can) and make your changes
    * Branch should be suffixed with github user id: (branch name).(github user id) Example: mydevbranch.kerneltime
    * If you want to trigger CI test runs for pushing into a branch prefix the branch with runci/ Example: runci/mylatestchange.kerneltime
+   * If you want to skip running CI test e.g. *Documentation change/Inline comment change* or when the change is in `WIP` or `PREVIEW` phase, add `[CI SKIP]` or `[SKIP CI]` to the PR title.
 * Each PR must be accompanied with unit/integration tests
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
@@ -19,6 +20,7 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * Squash your commits before you publish pull request.
 * If there are any documentation changes then they must be in the same PR.
 * We don't have formal coding conventions at this point.
+* Add `[WIP]` or `[PREVIEW]` to the PR title to let reviewers know that the PR is not ready to be merged.
 Make sure your code follows same style and convention as existing code.
 
 See  [Typical Developer Workflow](#typical-developer-workflow) to get started.
@@ -301,6 +303,7 @@ A typical workflow for a developer should be.
   the tests pass and the review is complete the PR will be merged in. If the PR
   depends on new code checked into master, merge in the changes as a rebase and
   push the changes to the branch.
+- When there is a failure unrelated to your PR, you may want to *Restart* the failed CI run instead of pushing dummy commit to trigger CI run.
 - When the PR is merged in the CI system will re-run the tests against the master.
   On success a new Docker image will be ready for customers to deploy (This is only
   for the docker plugin, the ESX code needs to be shipped separately).
