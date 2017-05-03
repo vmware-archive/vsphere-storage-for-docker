@@ -118,15 +118,13 @@ type refCount struct {
 
 // RefCountsMap struct
 type RefCountsMap struct {
-	// does this need to be atomic?
-	// this is just one time state transition
-	refcntSuccess bool
-
 	refMap map[string]*refCount // Map of refCounts
 	mtx    *sync.RWMutex        // Synchronizes RefCountsMap ops
 
-	isDirty  bool        // flag to check reconciling has been interrupted
-	dirtyMtx *sync.Mutex // Synchronizes access to isDirty flag
+	refcntSuccess bool // save refcounting success
+	isDirty       bool // flag to check reconciling has been interrupted
+
+	StateMtx *sync.Mutex // (Exported) Synchronizes refcounting between mount/unmount and refcounting thread
 }
 
 var (
@@ -149,13 +147,12 @@ func init() {
 // NewRefCountsMap - creates a new RefCountsMap
 func NewRefCountsMap() *RefCountsMap {
 	return &RefCountsMap{
-		refcntSuccess: false,
-
 		refMap: make(map[string]*refCount),
 		mtx:    &sync.RWMutex{},
 
-		dirtyMtx: &sync.Mutex{},
-		isDirty:  false,
+		StateMtx:      &sync.Mutex{},
+		isDirty:       false,
+		refcntSuccess: false,
 	}
 }
 
@@ -172,10 +169,10 @@ func (r *RefCountsMap) GetSuccess() bool {
 }
 
 // dirty the background refcount process
+// this flag is marked dirty from the driver
+// caller acquires lock on state as appropriate
 func (r *RefCountsMap) MarkDirty() {
-	r.dirtyMtx.Lock()
 	r.isDirty = true
-	r.dirtyMtx.Unlock()
 }
 
 // tries to calculate refCounts for dvs volumes. If failed, triggers a timer
@@ -185,28 +182,35 @@ func (r *RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string
 	// If refcounting wasn't successful, schedule one again
 	if err != nil {
 		log.Infof("Refcounting failed: (%v).", err)
-		r.retryCalculate(d, mountDir, name, refCountRetryAttempts-1)
+		go func() {
+			r.retryCalculate(d, mountDir, name)
+		}()
 	}
 }
 
 // create a timer to calculate refcount after a delay. If failed, retry again
 // until retry attempt limit reached
-func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, name string, attemptLeft int) {
+func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, name string) {
 	// create a random delay between max and min delay
-	delay := rand.Intn(refCountDelayMaxSec-refCountDelayMinSec+1) + refCountDelayMinSec
-	log.Infof("Scheduling again after %s seconds", delay)
-	timer := time.NewTimer(time.Duration(delay) * time.Second)
+	attemptLeft := refCountRetryAttempts
 
-	go func() {
+	for attemptLeft > 0 {
+		// generate a random delay everytime
+		delay := rand.Intn(refCountDelayMaxSec-refCountDelayMinSec+1) + refCountDelayMinSec
+		log.Infof("Scheduling again after %s seconds", delay)
+		timer := time.NewTimer(time.Duration(delay) * time.Second)
+
 		<-timer.C
 		err := r.calculate(d, mountDir, driverName)
-		if err != nil && attemptLeft > 0 {
+		if err != nil {
 			log.Infof("Refcounting failed: (%v).", err)
-			r.retryCalculate(d, mountDir, name, attemptLeft-1)
-		} else if attemptLeft <= 0 {
-			panic(fmt.Sprintf("Failed to talk to docker to calculate volumes usage. Please restart docker"))
+			attemptLeft--
+		} else {
+			return // all good
 		}
-	}()
+	}
+	// couldn't complete refcounting even after retries.
+	panic(fmt.Sprintf("Failed to talk to docker to calculate volumes usage. Please restart docker"))
 }
 
 // calculate Refcounts. Discover volume usage refcounts from Docker.
@@ -333,20 +337,29 @@ func matchNameforVMDK(mount_source string) bool {
 	return false
 }
 
-// enumberates volumes and  builds RefCountsMap, then sync with mount info
+// check if refcounting has been made dirty by mounts/unmounts
+func (r *RefCountsMap) checkDirty() bool {
+	r.StateMtx.Lock()
+	defer r.StateMtx.Unlock()
+	return r.isDirty
+}
+
+// enumerates volumes and  builds RefCountsMap, then sync with mount info
 func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver) error {
 	// we assume to  have empty refcounts. Let's enforce
 
-	r.dirtyMtx.Lock()
+	r.StateMtx.Lock()
 	r.isDirty = false
-	r.dirtyMtx.Unlock()
-
-	auxRefMap := make(map[string]*refCount)
+	r.StateMtx.Unlock()
 
 	filters := filters.NewArgs()
 	filters.Add("status", "running")
 	filters.Add("status", "paused")
 	filters.Add("status", "restarting")
+
+	if r.checkDirty() {
+		return fmt.Errorf("refcounting wasn't clean.")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 	defer cancel()
@@ -361,6 +374,11 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 
 	log.Infof("Found %d running or paused containers", len(containers))
 	for _, ct := range containers {
+
+		if r.checkDirty() {
+			return fmt.Errorf("refcounting wasn't clean.")
+		}
+
 		ctx_inspect, cancel_inspect := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 		defer cancel_inspect()
 		containerJSONInfo, err := c.ContainerInspect(ctx_inspect, ct.ID)
@@ -376,13 +394,7 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 			// check if the mount location belongs to vsphere plugin
 			if matchNameforVMDK(mount.Source) {
 				// populate temp map
-				rc := auxRefMap[mount.Name]
-				if rc == nil {
-					rc = newRefCount()
-					auxRefMap[mount.Name] = rc
-				}
-				rc.count++
-
+				r.Incr(mount.Name)
 				log.Infof("  name=%v (driver=%s source=%s) (%v)",
 					mount.Name, mount.Driver, mount.Source, mount)
 			}
@@ -390,29 +402,20 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 	}
 
 	// check if the background refcount was dirtied
-	r.dirtyMtx.Lock()
-	if r.isDirty == false {
-		// if not, copy auxRefMap into refMap and unmount unwanted volumes
-		for k, v := range auxRefMap {
-			r.refMap[k] = v
-		}
-
-		// Check that refcounts and actual mount info from Linux match
-		// If they don't, unmount unneeded stuff, or yell if something is
-		// not mounted but should be (it's error. we should not get there)
-		r.getMountInfo()
-		r.syncMountsWithRefCounters(d)
-		// mark reconciling success so that further unmounts can instantly be processed
-		r.refcntSuccess = true
-
-		r.dirtyMtx.Unlock()
-	} else {
-		r.dirtyMtx.Unlock()
-
+	r.StateMtx.Lock()
+	defer r.StateMtx.Unlock()
+	if r.isDirty == true {
 		// refcounting was dirtied by parallel mount/unmount.
 		return fmt.Errorf("refcounting wasn't clean.")
 	}
 
+	// Check that refcounts and actual mount info from Linux match
+	// If they don't, unmount unneeded stuff, or yell if something is
+	// not mounted but should be (it's error. we should not get there)
+	r.getMountInfo()
+	r.syncMountsWithRefCounters(d)
+	// mark reconciling success so that further unmounts can instantly be processed
+	r.refcntSuccess = true
 	return nil
 }
 
