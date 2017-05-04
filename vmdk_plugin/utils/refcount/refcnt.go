@@ -197,7 +197,7 @@ func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, n
 	for attemptLeft > 0 {
 		// generate a random delay everytime
 		delay := rand.Intn(refCountDelayMaxSec-refCountDelayMinSec+1) + refCountDelayMinSec
-		log.Infof("Scheduling again after %s seconds", delay)
+		log.Infof("Scheduling again after %d seconds", delay)
 		timer := time.NewTimer(time.Duration(delay) * time.Second)
 
 		<-timer.C

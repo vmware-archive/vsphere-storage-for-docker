@@ -427,7 +427,7 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 
 	// lock the state
 	d.refCounts.StateMtx.Lock()
-
+	defer d.refCounts.StateMtx.Unlock()
 	if d.refCounts.GetSuccess() != true {
 		// complete the mount process under the lock to avoid races
 		// dont do refcounting. Just mount
@@ -435,13 +435,12 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 		d.refCounts.MarkDirty()
 
 		// then unlock the state
-		d.refCounts.StateMtx.Unlock()
 		return reponse
 	}
 
 	// if refcount has been succcessful,
 	// unlock and do usual normal mounting with refcounting as well
-	d.refCounts.StateMtx.Unlock()
+
 	return d.processMount(r, true)
 }
 
@@ -452,19 +451,17 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 
 	// lock the state
 	d.refCounts.StateMtx.Lock()
+	defer d.refCounts.StateMtx.Unlock()
 
 	if d.refCounts.GetSuccess() != true {
 		// if refcounting hasn't been succesful,
 		// no refcounting, no unmount. All unmounts are delayed
 		// until we succesfully populate the refcount map
 		d.refCounts.MarkDirty()
-		d.refCounts.StateMtx.Unlock()
 		return volume.Response{Err: ""}
 	}
 
-	// if refcount has been succcessful, unlock the state. Normal flow
-	d.refCounts.StateMtx.Unlock()
-
+	// if refcount has been succcessful, Normal flow
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)
 	if err != nil {
