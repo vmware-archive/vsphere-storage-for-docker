@@ -74,7 +74,6 @@ package refcount
 import (
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -93,8 +92,7 @@ const (
 	DockerUSocket           = "unix:///var/run/docker.sock"
 	defaultSleepIntervalSec = 1
 	dockerConnTimeoutSec    = 2
-	refCountDelayMinSec     = 2
-	refCountDelayMaxSec     = 10
+	refCountDelayStartSec   = 2
 	refCountRetryAttempts   = 20
 
 	// consts for finding and parsing linux mount information
@@ -121,8 +119,8 @@ type RefCountsMap struct {
 	refMap map[string]*refCount // Map of refCounts
 	mtx    *sync.RWMutex        // Synchronizes RefCountsMap ops
 
-	refcntSuccess bool // save refcounting success
-	isDirty       bool // flag to check reconciling has been interrupted
+	refcntInitSuccess bool // save refcounting success
+	isDirty       bool     // flag to check reconciling has been interrupted
 
 	StateMtx *sync.Mutex // (Exported) Synchronizes refcounting between mount/unmount and refcounting thread
 }
@@ -163,9 +161,9 @@ func newRefCount() *refCount {
 	}
 }
 
-// return if refcounting has been successful
-func (r *RefCountsMap) GetSuccess() bool {
-	return r.refcntSuccess
+// return if refcount initialization has been successful
+func (r *RefCountsMap) GetInitSuccess() bool {
+	return r.refcntInitSuccess
 }
 
 // dirty the background refcount process
@@ -191,12 +189,10 @@ func (r *RefCountsMap) Init(d drivers.VolumeDriver, mountDir string, name string
 // create a timer to calculate refcount after a delay. If failed, retry again
 // until retry attempt limit reached
 func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, name string) {
-	// create a random delay between max and min delay
 	attemptLeft := refCountRetryAttempts
-
+	delay := refCountDelayStartSec
 	for attemptLeft > 0 {
 		// generate a random delay everytime
-		delay := rand.Intn(refCountDelayMaxSec-refCountDelayMinSec+1) + refCountDelayMinSec
 		log.Infof("Scheduling again after %d seconds", delay)
 		timer := time.NewTimer(time.Duration(delay) * time.Second)
 
@@ -205,6 +201,8 @@ func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, n
 		if err != nil {
 			log.Infof("Refcounting failed: (%v).", err)
 			attemptLeft--
+			// exponential backoff
+			delay += delay
 		} else {
 			return // all good
 		}

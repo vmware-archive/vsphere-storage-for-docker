@@ -105,9 +105,36 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 
 	return d
 }
-func (d *VolumeDriver) getRefCount(vol string) uint           { return d.refCounts.GetCount(vol) }
-func (d *VolumeDriver) incrRefCount(vol string) uint          { return d.refCounts.Incr(vol) }
-func (d *VolumeDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.Decr(vol) }
+
+// In following three operations on refcount, if refcount
+// map hasn't been initialized, return 1 to be safe.
+
+// Return the number of references for the given volume
+func (d *VolumeDriver) getRefCount(vol string) uint {
+	if d.refCounts.GetInitSuccess() != true {
+		return 1
+	}
+
+	return d.refCounts.GetCount(vol)
+}
+
+// Increment the reference count for the given volume
+func (d *VolumeDriver) incrRefCount(vol string) uint {
+	if d.refCounts.GetInitSuccess() != true {
+		return 1
+	}
+
+	return d.refCounts.Incr(vol)
+}
+
+// Decrement the reference count for the given volume
+func (d *VolumeDriver) decrRefCount(vol string) (uint, error) {
+	if d.refCounts.GetInitSuccess() != true {
+		return 1, nil
+	}
+
+	return d.refCounts.Decr(vol)
+}
 
 func (d *VolumeDriver) getMountPoint(volName string) string {
 	return filepath.Join(d.mountRoot, volName)
@@ -337,38 +364,23 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 }
 
 // private function that does the job of mounting volume in conjunction with refcounting
-// Called under a lock if refcounting hasn't been successful, else without a lock
-// Don't do refcounting, just the mount if refcounting hasn't been successful.
-func (d *VolumeDriver) processMount(r volume.MountRequest, doRefcnt bool) volume.Response {
+func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	// If the volume is already mounted , just increase the refcount.
-	//
-	// Note: We are deliberately incrementing refcount first, before trying
-	// to do anything else. If Mount fails, Docker will send Unmount request,
-	// and we will happily decrement the refcount there, and will fail the unmount
-	// since the volume will have been never mounted.
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
-
-	if doRefcnt {
-		refcnt := d.incrRefCount(r.Name) // save map traversal
-		log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
-		if refcnt > 1 {
-			log.WithFields(
-				log.Fields{"name": r.Name, "refcount": refcnt},
-			).Info("Already mounted, skipping mount. ")
-			return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
-		}
+	refcnt := d.incrRefCount(r.Name) // save map traversal
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
+	if refcnt > 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
 	}
 
-	// This is the first time we are asked to mount the volume. The disk
-	// ID isn't always cached by the plugin on a host, the disk could have
-	// been created on a different host and getting mounted on another host.
-	// So on the first mount fetch the disk from Photon and add it's ID to
-	// the ref count map.
+	// There can be redundant mounts till refcounts are properly initialized
+	// TODO: #1220
 	status, err := d.GetVolume(r.Name)
 	if err != nil {
-		if doRefcnt {
-			d.decrRefCount(r.Name)
-		}
+		d.decrRefCount(r.Name)
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -395,9 +407,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest, doRefcnt bool) volume
 			log.Fields{"name": r.Name, "error": err.Error()},
 		).Error("Failed to mount ")
 
-		if doRefcnt {
-			d.decrRefCount(r.Name)
-		}
+		d.decrRefCount(r.Name)
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -587,18 +597,11 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	d.refCounts.StateMtx.Lock()
 	defer d.refCounts.StateMtx.Unlock()
 
-	if d.refCounts.GetSuccess() != true {
-		d.refCounts.MarkDirty()
+	// checked by refcounting thread until refmap initialized
+	// useless after that
+	d.refCounts.MarkDirty()
 
-		// complete the mount process under the lock to avoid races
-		// dont do refcounting. Just mount
-		reponse := d.processMount(r, false)
-		return reponse
-	}
-
-	// if refcount has been succcessful,
-	// unlock and do usual normal mounting with refcounting as well
-	return d.processMount(r, true)
+	return d.processMount(r)
 }
 
 // Unmount request from Docker. If mount refcount is drop to 0,
@@ -610,7 +613,7 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	d.refCounts.StateMtx.Lock()
 	defer d.refCounts.StateMtx.Unlock()
 
-	if d.refCounts.GetSuccess() != true {
+	if d.refCounts.GetInitSuccess() != true {
 		// if refcounting hasn't been succesful,
 		// no refcounting, no unmount. All unmounts are delayed
 		// until we succesfully populate the refcount map
