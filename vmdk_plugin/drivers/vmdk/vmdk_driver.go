@@ -429,12 +429,11 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	d.refCounts.StateMtx.Lock()
 	defer d.refCounts.StateMtx.Unlock()
 	if d.refCounts.GetSuccess() != true {
+		d.refCounts.MarkDirty()
+
 		// complete the mount process under the lock to avoid races
 		// dont do refcounting. Just mount
 		reponse := d.processMount(r, false)
-		d.refCounts.MarkDirty()
-
-		// then unlock the state
 		return reponse
 	}
 

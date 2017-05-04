@@ -357,10 +357,6 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 	filters.Add("status", "paused")
 	filters.Add("status", "restarting")
 
-	if r.checkDirty() {
-		return fmt.Errorf("refcounting wasn't clean.")
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 	defer cancel()
 	containers, err := c.ContainerList(ctx, types.ContainerListOptions{
