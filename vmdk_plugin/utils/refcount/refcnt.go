@@ -120,7 +120,7 @@ type RefCountsMap struct {
 	mtx    *sync.RWMutex        // Synchronizes RefCountsMap ops
 
 	refcntInitSuccess bool // save refcounting success
-	isDirty       bool     // flag to check reconciling has been interrupted
+	isDirty           bool // flag to check reconciling has been interrupted
 
 	StateMtx *sync.Mutex // (Exported) Synchronizes refcounting between mount/unmount and refcounting thread
 }
@@ -148,9 +148,9 @@ func NewRefCountsMap() *RefCountsMap {
 		refMap: make(map[string]*refCount),
 		mtx:    &sync.RWMutex{},
 
-		StateMtx:      &sync.Mutex{},
-		isDirty:       false,
-		refcntSuccess: false,
+		StateMtx:          &sync.Mutex{},
+		isDirty:           false,
+		refcntInitSuccess: false,
 	}
 }
 
@@ -409,7 +409,7 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 	r.getMountInfo()
 	r.syncMountsWithRefCounters(d)
 	// mark reconciling success so that further unmounts can instantly be processed
-	r.refcntSuccess = true
+	r.refcntInitSuccess = true
 	return nil
 }
 
