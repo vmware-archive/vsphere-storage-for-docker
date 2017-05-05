@@ -420,7 +420,9 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>This section lists the major known issues with vSphere Docker Volume Service. For complete list of issues please check our Github issues(https://github.com/vmware/docker-volume-vsphere/issues) page. If you notice an issue not listed in Github issues page, please do file a bug on the <a href="https://github.com/vmware/docker-volume-vsphere/issues">Github repo</a></p>
+  <p><span style="color:red"><strong>Note for Photon OS user</strong>:  Managed plugin installation is not supported due to known Photon OS <a href="https://github.com/vmware/photon/issues/640">Issue</a>.</span> In the meantime, you can try one of alternative proposed in <a href="https://github.com/vmware/docker-volume-vsphere/issues/1215#issuecomment-298841769">#1215</a>  (manually upgrade to latest Docker release or use RPM)</p>
+
+<p>This section lists the major known issues with vSphere Docker Volume Service. For complete list of issues please check our Github issues(https://github.com/vmware/docker-volume-vsphere/issues) page. If you notice an issue not listed in Github issues page, please do file a bug on the <a href="https://github.com/vmware/docker-volume-vsphere/issues">Github repo</a></p>
 
 <ul>
   <li>Multi-tenancy feature is limited to single ESX <a href="https://github.com/vmware/docker-volume-vsphere/issues/1032">#1032</a></li>
@@ -443,7 +445,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Apr 26, 2017 <br />
+ Site last generated: May 4, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
