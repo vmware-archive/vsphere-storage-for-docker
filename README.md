@@ -1,4 +1,4 @@
-**Warning**: Docker managed plugin installation support on Photon OS is broken due to known [Photon OS Issue](https://github.com/vmware/photon/issues/640)
+**Warning for Photon OS user**: Docker managed plugin installation support on Photon OS is broken due to known [Photon OS Issue](https://github.com/vmware/photon/issues/640)
 
 [![Build Status](https://ci.vmware.run/api/badges/vmware/docker-volume-vsphere/status.svg)](https://ci.vmware.run/vmware/docker-volume-vsphere)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vmware/docker-volume-vsphere)](https://goreportcard.com/report/github.com/vmware/docker-volume-vsphere)
