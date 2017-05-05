@@ -1,3 +1,5 @@
+**Warning for Photon OS user**: Docker managed plugin installation support on Photon OS is broken due to known [Photon OS Issue](https://github.com/vmware/photon/issues/640)
+
 [![Build Status](https://ci.vmware.run/api/badges/vmware/docker-volume-vsphere/status.svg)](https://ci.vmware.run/vmware/docker-volume-vsphere)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vmware/docker-volume-vsphere)](https://goreportcard.com/report/github.com/vmware/docker-volume-vsphere)
 [![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description) [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
@@ -148,7 +150,7 @@ logging config format for content details.
    - Needs Upstart or systemctl to start and stop the service
    - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340) ```sudo apt-get install open-vm-tools```
 - RedHat and CentOS
-- [Photon 1.0, Revision 2](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-10-revision-2-binaries) (v4.4.51 or later)
+- [Photon 1.0, Revision 2](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-10-revision-2-binaries) (v4.4.51 or later) => **Note**: Managed plugin installation is not supported due to known [Photon OS Issue](https://github.com/vmware/photon/issues/640). In the meantime, you can try one of alternative proposed in [#1215](https://github.com/vmware/docker-volume-vsphere/issues/1215#issuecomment-298841769)  (manually upgrade to latest Docker release or use RPM)
 
 **Docker**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
 
