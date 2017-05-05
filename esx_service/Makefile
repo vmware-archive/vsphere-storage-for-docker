@@ -53,7 +53,7 @@ PY_VMODL := $(filter-out %_test.py, $(wildcard vmodl/*.py))
 PY_CLI   := $(filter-out %_test.py, $(wildcard cli/[a-z]*.py))
 PY_UTILS := $(filter-out %_test.py, $(wildcard utils/*.py))
 
-C_SRC  := vmci/vmci_server.c
+C_SRC  := ../vmci/vmci_server.c
 
 # Build both a 32-bit and a 64-bit library for vmci.
 CFLAGS  := -fPIC -m32 -shared

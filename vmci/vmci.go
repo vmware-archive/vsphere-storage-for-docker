@@ -15,9 +15,10 @@
 // +build linux
 
 // The default (ESX) implementation of the VmdkCmdRunner interface.
-// This implementation sends synchronous commands to and receives responses from ESX.
+// This implementation sends synchronous commands to and receives responses
+// from ESX.
 
-package vmdkops
+package vmci
 
 import (
 	"encoding/json"
@@ -33,12 +34,12 @@ import (
 )
 
 /*
-#cgo CFLAGS: -I ../../../../esx_service/vmci
-#include "vmci_client.c"
+#include "vmci_client.h"
 */
 import "C"
 
-// EsxVmdkCmd struct - empty , we use it only to implement VmdkCmdRunner interface
+// EsxVmdkCmd struct - empty , we use it only to implement the VmdkCmdRunner
+// interface.
 type EsxVmdkCmd struct {
 	Mtx *sync.Mutex // For serialization of Run comand/response
 }
@@ -46,8 +47,9 @@ type EsxVmdkCmd struct {
 const (
 	commBackendName string = "vsocket"
 	maxRetryCount          = 5
-	// Server side understand protocol version. If you are changing client/server protocol we use
-	// over VMCI, PLEASE DO NOT FORGET TO CHANGE IT FOR SERVER in file <vmdk_ops.py> !
+	// Server side understand protocol version. If you are changing
+	// client/server protocol we use over VMCI, PLEASE DO NOT FORGET TO CHANGE
+	// IT FOR SERVER in file <vmdk_ops.py> !
 	clientProtocolVersion = "2"
 )
 
@@ -69,15 +71,18 @@ type vmciError struct {
 }
 
 // EsxPort used to connect to ESX, passed in as command line param
-var EsxPort int
+var EsxPort = 1019
 
-// Run command Guest VM requests on ESX via vmdkops_serv.py listening on vSocket
-// *
-// * For each request:
-// *   - Establishes a vSocket connection
-// *   - Sends json string up to ESX
-// *   - waits for reply and returns resulting JSON or an error
-func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
+// Run command Guest VM requests on ESX via vmdkops_serv.py listening on
+// vSocket.
+//
+// For each request:
+//    - Establishes a vSocket connection
+//    - Sends json string up to ESX
+//    - waits for reply and returns resulting JSON or an error
+func (vmdkCmd EsxVmdkCmd) Run(
+	cmd string, name string, opts map[string]string) ([]byte, error) {
+
 	vmdkCmd.Mtx.Lock()
 	defer vmdkCmd.Mtx.Unlock()
 	protocolVersion := os.Getenv("VDVS_TEST_PROTOCOL_VERSION")
@@ -111,8 +116,8 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 			// C.Vmci_GetReply indicates success/faulure by <ret> value.
 			// Cgo  interface adds <err> based on errno. We do not explicitly
 			// reset errno in our code. Still, we do not want a stale errno
-			// to confuse this code into thinking there was an error even when ret==0,
-			// so explicitly declare success on <ret> value only, and
+			// to confuse this code into thinking there was an error even when
+			// ret==0, so explicitly declare success on <ret> value only, and
 			break
 		}
 
@@ -120,17 +125,21 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 		if err != nil {
 			var errno syscall.Errno
 			errno = err.(syscall.Errno)
-			msg = fmt.Sprintf("Run '%s' failed: %v (errno=%d) - %s", cmd, err, int(errno), C.GoString(&ans.errBuf[0]))
+			msg = fmt.Sprintf("Run '%s' failed: %v (errno=%d) - %s",
+				cmd, err, int(errno), C.GoString(&ans.errBuf[0]))
 			if i < maxRetryCount {
 				log.Warnf(msg + " Retrying...")
 				time.Sleep(time.Second * 1)
 				continue
 			}
 			if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
-				msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
+				msg += " Cannot communicate with ESX, please refer to the " +
+					"FAQ " +
+					"https://github.com/vmware/docker-volume-vsphere/wiki#faq"
 			}
 		} else {
-			msg = fmt.Sprintf("Internal issue: ret != 0 but errno is not set. Cancelling operation - %s ", C.GoString(&ans.errBuf[0]))
+			msg = fmt.Sprintf("Internal issue: ret != 0 but errno is not "+
+				"set. Cancelling operation - %s ", C.GoString(&ans.errBuf[0]))
 		}
 
 		log.Warnf(msg)

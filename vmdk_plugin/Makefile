@@ -69,7 +69,8 @@ UPSTART_INIT := $(PACKAGE)/etc/init/
 
 # esx service for docker volume ops
 ESX_SRC     := ../esx_service
-VMCI_SRC    := $(ESX_SRC)/vmci/*.h $(ESX_SRC)/vmci/vmci_client.c
+VMCI_SRC    := ../vmci/vmci_client.c $(wildcard ../vmci/*.h)
+VMCI_SRC    := $(filter-out vmci_server.h,$(VMCI_SRC))
 
 #  binaries location
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
@@ -86,10 +87,11 @@ PLUGIN := github.com/$(GOPATH_ORG)/$(GOPATH_PLUGNAME)
 GO := GO15VENDOREXPERIMENT=1 go
 FPM := fpm
 
-# make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
+# make sure we rebuild of vmkdops or Dockerfile change (since we develop
+# them together)
 VMDKOPS_MODULE := drivers/vmdk/vmdkops
 VMDKOPS_TEST_MODULE := vmdkops
-VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
+VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC) ../vmci/vmci.go
 
 # All sources. We rebuild if anything changes here
 SRC = main.go log_formatter.go utils/refcount/refcnt.go \
