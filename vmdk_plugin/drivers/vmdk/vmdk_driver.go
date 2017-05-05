@@ -26,14 +26,15 @@ package vmdk
 
 import (
 	"fmt"
+	"path/filepath"
+	"sync"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
-	"path/filepath"
-	"sync"
-	"time"
 )
 
 const (
@@ -78,6 +79,7 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	}
 
 	d.refCounts.Init(d, mountDir, driverName)
+
 	log.WithFields(log.Fields{
 		"version":  version,
 		"port":     vmdkops.EsxPort,
@@ -87,14 +89,32 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	return d
 }
 
+// In following three operations on refcount, if refcount
+// map hasn't been initialized, return 1 to prevent detach and remove.
+
 // Return the number of references for the given volume
-func (d *VolumeDriver) getRefCount(vol string) uint { return d.refCounts.GetCount(vol) }
+func (d *VolumeDriver) getRefCount(vol string) uint {
+	if d.refCounts.GetInitSuccess() != true {
+		return 1
+	}
+	return d.refCounts.GetCount(vol)
+}
 
 // Increment the reference count for the given volume
-func (d *VolumeDriver) incrRefCount(vol string) uint { return d.refCounts.Incr(vol) }
+func (d *VolumeDriver) incrRefCount(vol string) uint {
+	if d.refCounts.GetInitSuccess() != true {
+		return 1
+	}
+	return d.refCounts.Incr(vol)
+}
 
 // Decrement the reference count for the given volume
-func (d *VolumeDriver) decrRefCount(vol string) (uint, error) { return d.refCounts.Decr(vol) }
+func (d *VolumeDriver) decrRefCount(vol string) (uint, error) {
+	if d.refCounts.GetInitSuccess() != true {
+		return 1, nil
+	}
+	return d.refCounts.Decr(vol)
+}
 
 // Returns the given volume mountpoint
 func getMountPoint(volName string) string {
@@ -188,6 +208,67 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 		// Do not return error. Continue with detach.
 	}
 	return d.ops.Detach(name, nil)
+}
+
+// private function that does the job of mounting volume in conjunction with refcounting
+func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
+	// If the volume is already mounted , just increase the refcount.
+	// Note: for new keys, GO maps return zero value, so no need for if_exists.
+	refcnt := d.incrRefCount(r.Name) // save map traversal
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
+	if refcnt > 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: getMountPoint(r.Name)}
+	}
+
+	// There can be redundant mounts till refcounts are properly initialized
+	// TODO: #1220
+	status, err := d.ops.Get(r.Name)
+
+	fstype := fs.FstypeDefault
+	isReadOnly := false
+	if err != nil {
+		d.decrRefCount(r.Name)
+		return volume.Response{Err: err.Error()}
+	}
+	// Check access type.
+	value, exists := status["access"].(string)
+	if !exists {
+		msg := fmt.Sprintf("Invalid access type for %s, assuming read-write access.", r.Name)
+		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
+		isReadOnly = false
+	} else if value == "read-only" {
+		isReadOnly = true
+	}
+
+	// Check file system type.
+	value, exists = status["fstype"].(string)
+	if !exists {
+		msg := fmt.Sprintf("Invalid filesystem type for %s, assuming type as %s.",
+			r.Name, fstype)
+		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
+		// Fail back to a default version that we can try with.
+		value = fs.FstypeDefault
+	}
+	fstype = value
+
+	mountpoint, err := d.MountVolume(r.Name, fstype, "", isReadOnly, false)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": r.Name, "error": err.Error()},
+		).Error("Failed to mount ")
+
+		refcnt, _ := d.decrRefCount(r.Name)
+		if refcnt == 0 {
+			log.Infof("Detaching %s - it is not used anymore", r.Name)
+			d.ops.Detach(r.Name, nil) // try to detach before failing the request for volume
+		}
+		return volume.Response{Err: err.Error()}
+	}
+
+	return volume.Response{Mountpoint: mountpoint}
 }
 
 // No need to actually manifest the volume on the filesystem yet
@@ -349,68 +430,15 @@ func (d *VolumeDriver) Path(r volume.Request) volume.Response {
 func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
-	// If the volume is already mounted , just increase the refcount.
-	//
-	// Note: We are deliberately incrementing refcount first, before trying
-	// to do anything else. If Mount fails, Docker will send Unmount request,
-	// and we will happily decrement the refcount there, and will fail the unmount
-	// since the volume will have been never mounted.
-	// Note: for new keys, GO maps return zero value, so no need for if_exists.
+	// lock the state
+	d.refCounts.StateMtx.Lock()
+	defer d.refCounts.StateMtx.Unlock()
 
-	refcnt := d.incrRefCount(r.Name) // save map traversal
-	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
-	if refcnt > 1 {
-		log.WithFields(
-			log.Fields{"name": r.Name, "refcount": refcnt},
-		).Info("Already mounted, skipping mount. ")
-		return volume.Response{Mountpoint: getMountPoint(r.Name)}
-	}
+	// checked by refcounting thread until refmap initialized
+	// useless after that
+	d.refCounts.MarkDirty()
 
-	// This is the first time we are asked to mount the volume, so comply
-	status, err := d.ops.Get(r.Name)
-
-	fstype := fs.FstypeDefault
-	isReadOnly := false
-	if err != nil {
-		d.decrRefCount(r.Name)
-		return volume.Response{Err: err.Error()}
-	}
-	// Check access type.
-	value, exists := status["access"].(string)
-	if !exists {
-		msg := fmt.Sprintf("Invalid access type for %s, assuming read-write access.", r.Name)
-		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
-		isReadOnly = false
-	} else if value == "read-only" {
-		isReadOnly = true
-	}
-
-	// Check file system type.
-	value, exists = status["fstype"].(string)
-	if !exists {
-		msg := fmt.Sprintf("Invalid filesystem type for %s, assuming type as %s.",
-			r.Name, fstype)
-		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
-		// Fail back to a default version that we can try with.
-		value = fs.FstypeDefault
-	}
-	fstype = value
-
-	mountpoint, err := d.MountVolume(r.Name, fstype, "", isReadOnly, false)
-	if err != nil {
-		log.WithFields(
-			log.Fields{"name": r.Name, "error": err.Error()},
-		).Error("Failed to mount ")
-
-		refcnt, _ := d.decrRefCount(r.Name)
-		if refcnt == 0 {
-			log.Infof("Detaching %s - it is not used anymore", r.Name)
-			d.ops.Detach(r.Name, nil) // try to detach before failing the request for volume
-		}
-		return volume.Response{Err: err.Error()}
-	}
-
-	return volume.Response{Mountpoint: mountpoint}
+	return d.processMount(r)
 }
 
 // Unmount request from Docker. If mount refcount is drop to 0.
@@ -418,6 +446,19 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
+	// lock the state
+	d.refCounts.StateMtx.Lock()
+	defer d.refCounts.StateMtx.Unlock()
+
+	if d.refCounts.GetInitSuccess() != true {
+		// if refcounting hasn't been succesful,
+		// no refcounting, no unmount. All unmounts are delayed
+		// until we succesfully populate the refcount map
+		d.refCounts.MarkDirty()
+		return volume.Response{Err: ""}
+	}
+
+	// if refcount has been succcessful, Normal flow
 	// if the volume is still used by other containers, just return OK
 	refcnt, err := d.decrRefCount(r.Name)
 	if err != nil {
