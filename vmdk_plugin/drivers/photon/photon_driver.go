@@ -107,14 +107,13 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 }
 
 // In following three operations on refcount, if refcount
-// map hasn't been initialized, return 1 to be safe.
+// map hasn't been initialized, return 1 prevent detach and remove.
 
 // Return the number of references for the given volume
 func (d *VolumeDriver) getRefCount(vol string) uint {
 	if d.refCounts.GetInitSuccess() != true {
 		return 1
 	}
-
 	return d.refCounts.GetCount(vol)
 }
 
@@ -123,7 +122,6 @@ func (d *VolumeDriver) incrRefCount(vol string) uint {
 	if d.refCounts.GetInitSuccess() != true {
 		return 1
 	}
-
 	return d.refCounts.Incr(vol)
 }
 
@@ -132,7 +130,6 @@ func (d *VolumeDriver) decrRefCount(vol string) (uint, error) {
 	if d.refCounts.GetInitSuccess() != true {
 		return 1, nil
 	}
-
 	return d.refCounts.Decr(vol)
 }
 

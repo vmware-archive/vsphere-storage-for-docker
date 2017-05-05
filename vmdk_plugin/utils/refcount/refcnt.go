@@ -121,8 +121,7 @@ type RefCountsMap struct {
 
 	refcntInitSuccess bool // save refcounting success
 	isDirty           bool // flag to check reconciling has been interrupted
-
-	StateMtx *sync.Mutex // (Exported) Synchronizes refcounting between mount/unmount and refcounting thread
+	StateMtx *sync.Mutex   // (Exported) Synchronizes refcounting between mount/unmount and refcounting thread
 }
 
 var (
@@ -199,7 +198,7 @@ func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, n
 		<-timer.C
 		err := r.calculate(d, mountDir, driverName)
 		if err != nil {
-			log.Infof("Refcounting failed: (%v).", err)
+			log.Infof("Refcounting failed: (%v). Attempts left: %d ", err, attemptLeft)
 			attemptLeft--
 			// exponential backoff
 			delay += delay
@@ -208,6 +207,7 @@ func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, n
 		}
 	}
 	// couldn't complete refcounting even after retries.
+	// docker logs artifical panic and restarts the plugin.
 	panic(fmt.Sprintf("Failed to talk to docker to calculate volumes usage. Please restart docker"))
 }
 
@@ -387,7 +387,6 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 		for _, mount := range containerJSONInfo.Mounts {
 			// check if the mount location belongs to vsphere plugin
 			if matchNameforVMDK(mount.Source) {
-				// populate temp map
 				r.Incr(mount.Name)
 				log.Infof("  name=%v (driver=%s source=%s) (%v)",
 					mount.Name, mount.Driver, mount.Source, mount)
@@ -395,7 +394,9 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 		}
 	}
 
-	// check if the background refcount was dirtied
+	// lock and check if the background refcount was dirtied.
+	// get mounts, remove unncessary mounts and set refcntInitSuccess
+	// under same lock to avoid races with parallel mount/unmount
 	r.StateMtx.Lock()
 	defer r.StateMtx.Unlock()
 	if r.isDirty == true {
