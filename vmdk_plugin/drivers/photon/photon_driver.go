@@ -38,6 +38,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"github.com/vmware/photon-controller-go-sdk/photon"
 )
@@ -56,12 +57,13 @@ const (
 
 // VolumeDriver - Photon volume driver struct
 type VolumeDriver struct {
-	client    *photon.Client
-	hostID    string
-	mountRoot string
-	project   string
-	refCounts *refcount.RefCountsMap
-	target    string
+	client        *photon.Client
+	hostID        string
+	mountRoot     string
+	project       string
+	refCounts     *refcount.RefCountsMap
+	target        string
+	mountIDtoName map[string]string // map of mountID -> full volume name
 }
 
 func (d *VolumeDriver) verifyTarget() error {
@@ -95,6 +97,7 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 	d.mountRoot = mountDir
 	d.refCounts = refcount.NewRefCountsMap()
 	d.refCounts.Init(d, mountDir, driverName)
+	d.mountIDtoName = make(map[string]string)
 
 	log.WithFields(log.Fields{
 		"version": version,
@@ -360,8 +363,22 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	return mountpoint, fs.MountWithID(mountpoint, fstype, id, isReadOnly)
 }
 
+// VolumesInRefMap - get list of volumes names from refmap
+// names are in format volume@datastore
+func (d *VolumeDriver) VolumesInRefMap() []string {
+	return d.refCounts.GetVolumeNames()
+}
+
 // private function that does the job of mounting volume in conjunction with refcounting
 func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
+	volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
+	if err != nil {
+		log.Errorf("Unable to get volume info for volume %s. err:%v", r.Name, err)
+		return volume.Response{Err: err.Error()}
+	}
+	r.Name = volumeInfo.VolumeName
+	d.mountIDtoName[r.ID] = r.Name
+
 	// If the volume is already mounted , just increase the refcount.
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
 	refcnt := d.incrRefCount(r.Name) // save map traversal
@@ -373,22 +390,28 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
 	}
 
-	// There can be redundant mounts till refcounts are properly initialized
-	// TODO: #1220
-	status, err := d.GetVolume(r.Name)
-	if err != nil {
-		d.decrRefCount(r.Name)
-		return volume.Response{Err: err.Error()}
+	if plugin_utils.AlreadyMounted(r.Name, d.mountRoot) {
+		log.WithFields(log.Fields{"name": r.Name}).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
 	}
 
-	fstype, exists := status[fsTypeTag]
+	// get volume metadata if required
+	volumeMeta := volumeInfo.VolumeMeta
+	if volumeMeta == nil {
+		if volumeMeta, err = d.GetVolume(r.Name); err != nil {
+			d.decrRefCount(r.Name)
+			return volume.Response{Err: err.Error()}
+		}
+	}
+
+	fstype, exists := volumeMeta[fsTypeTag]
 	if !exists {
 		fstype = fs.FstypeDefault
 	}
 
 	skipAttach := false
 	// If the volume is already attached to the VM, skip the attach.
-	if state, stateExists := status["State"]; stateExists {
+	if state, stateExists := volumeMeta["State"]; stateExists {
 		if strings.Compare(state.(string), "DETACHED") != 0 {
 			skipAttach = true
 		}
@@ -398,7 +421,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	}
 
 	// Mount the volume and for now its always read-write.
-	mountpoint, err := d.MountVolume(r.Name, fstype.(string), status["ID"].(string), false, skipAttach)
+	mountpoint, err := d.MountVolume(r.Name, fstype.(string), volumeMeta["ID"].(string), false, skipAttach)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": r.Name, "error": err.Error()},
@@ -616,6 +639,18 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 		// until we succesfully populate the refcount map
 		d.refCounts.MarkDirty()
 		return volume.Response{Err: ""}
+	}
+
+	if fullVolName, exist := d.mountIDtoName[r.ID]; exist {
+		r.Name = fullVolName
+		delete(d.mountIDtoName, r.ID) //cleanup the map
+	} else {
+		volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
+		if err != nil {
+			log.Errorf("Unable to get volume info for volume %s. err:%v", r.Name, err)
+			return volume.Response{Err: err.Error()}
+		}
+		r.Name = volumeInfo.VolumeName
 	}
 
 	// if refcount has been succcessful, Normal flow.

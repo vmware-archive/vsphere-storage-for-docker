@@ -34,6 +34,7 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 )
 
@@ -46,9 +47,10 @@ const (
 
 // VolumeDriver - VMDK driver struct
 type VolumeDriver struct {
-	useMockEsx bool
-	ops        vmdkops.VmdkOps
-	refCounts  *refcount.RefCountsMap
+	useMockEsx    bool
+	ops           vmdkops.VmdkOps
+	refCounts     *refcount.RefCountsMap
+	mountIDtoName map[string]string // map of mountID -> full volume name
 }
 
 var mountRoot string
@@ -78,6 +80,7 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 		}
 	}
 
+	d.mountIDtoName = make(map[string]string)
 	d.refCounts.Init(d, mountDir, driverName)
 
 	log.WithFields(log.Fields{
@@ -87,6 +90,12 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	}).Info("Docker VMDK plugin started ")
 
 	return d
+}
+
+// VolumesInRefMap - get list of volumes names from refmap
+// names are in format volume@datastore
+func (d *VolumeDriver) VolumesInRefMap() []string {
+	return d.refCounts.GetVolumeNames()
 }
 
 // In following three operations on refcount, if refcount
@@ -212,6 +221,14 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 
 // private function that does the job of mounting volume in conjunction with refcounting
 func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
+	volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
+	if err != nil {
+		log.Errorf("Unable to get volume info for volume %s. err:%v", r.Name, err)
+		return volume.Response{Err: err.Error()}
+	}
+	r.Name = volumeInfo.VolumeName
+	d.mountIDtoName[r.ID] = r.Name
+
 	// If the volume is already mounted , just increase the refcount.
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
 	refcnt := d.incrRefCount(r.Name) // save map traversal
@@ -223,9 +240,19 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 		return volume.Response{Mountpoint: getMountPoint(r.Name)}
 	}
 
-	// There can be redundant mounts till refcounts are properly initialized
-	// TODO: #1220
-	status, err := d.ops.Get(r.Name)
+	if plugin_utils.AlreadyMounted(r.Name, mountRoot) {
+		log.WithFields(log.Fields{"name": r.Name}).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: getMountPoint(r.Name)}
+	}
+
+	// get volume metadata if required
+	volumeMeta := volumeInfo.VolumeMeta
+	if volumeMeta == nil {
+		if volumeMeta, err = d.ops.Get(r.Name); err != nil {
+			d.decrRefCount(r.Name)
+			return volume.Response{Err: err.Error()}
+		}
+	}
 
 	fstype := fs.FstypeDefault
 	isReadOnly := false
@@ -234,7 +261,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 		return volume.Response{Err: err.Error()}
 	}
 	// Check access type.
-	value, exists := status["access"].(string)
+	value, exists := volumeMeta["access"].(string)
 	if !exists {
 		msg := fmt.Sprintf("Invalid access type for %s, assuming read-write access.", r.Name)
 		log.WithFields(log.Fields{"name": r.Name, "error": msg}).Error("")
@@ -244,7 +271,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	}
 
 	// Check file system type.
-	value, exists = status["fstype"].(string)
+	value, exists = volumeMeta["fstype"].(string)
 	if !exists {
 		msg := fmt.Sprintf("Invalid filesystem type for %s, assuming type as %s.",
 			r.Name, fstype)
@@ -456,6 +483,18 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 		// until we succesfully populate the refcount map
 		d.refCounts.MarkDirty()
 		return volume.Response{Err: ""}
+	}
+
+	if fullVolName, exist := d.mountIDtoName[r.ID]; exist {
+		r.Name = fullVolName
+		delete(d.mountIDtoName, r.ID) //cleanup the map
+	} else {
+		volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
+		if err != nil {
+			log.Errorf("Unable to get volume info for volume %s. err:%v", r.Name, err)
+			return volume.Response{Err: err.Error()}
+		}
+		r.Name = volumeInfo.VolumeName
 	}
 
 	// if refcount has been succcessful, Normal flow

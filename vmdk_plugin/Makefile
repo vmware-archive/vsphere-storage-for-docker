@@ -93,7 +93,7 @@ VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
 SRC = main.go log_formatter.go utils/refcount/refcnt.go \
-	utils/fs/fs.go utils/config/config.go utils/TestInputParamsUtil.go \
+	utils/fs/fs.go utils/config/config.go utils/TestInputParamsUtil.go utils/plugin_utils/plugin_utils.go\
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 
 # Canned recipe
