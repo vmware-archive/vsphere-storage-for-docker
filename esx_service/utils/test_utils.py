@@ -163,3 +163,11 @@ def create_default_tenant_and_privileges(test_obj):
             logging.warning(error_info.msg)
         test_obj.assertEqual(error_info, None)
 
+def cleanup_tenant(name):
+    error_info, vms = auth_api._tenant_vm_ls(name)
+    if vms:
+        vm_names = [vm_name for (_, vm_name) in vms]
+        auth_api._tenant_vm_rm(name=name,
+                               vm_list=vm_names)
+    auth_api._tenant_rm(name=name,
+                        remove_volumes=True)

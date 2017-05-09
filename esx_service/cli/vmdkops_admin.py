@@ -1237,7 +1237,7 @@ def check_ds_local_args(args):
 
 def config_init(args):
     """
-    Init Config DB to allows quotas and access groups (vm-groups)
+    Init Config DB to allows quotas and access groups (vmgroups)
     :return: None for success, string for error
     """
 
