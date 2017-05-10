@@ -64,7 +64,7 @@ of their usage.
 
 ## Vmgroup
 
-vm-groups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vmgroup, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastores and access privileges (`access` and `update` subcommands).
+vmgroups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vmgroup, place a set of VMs in it (`create` and ``vm add`` subcommands, and then associate this group with a specific set of Datastores and access privileges (`access` and `update` subcommands).
 
 ### Help
 ```bash
@@ -283,6 +283,11 @@ Uuid                                  Name      Description                 Defa
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
 ```
 
+In MultiNode mode, VMs from different hosts can be a part of a vmgroup.
+When in this mode, vmgroup which has member VMs in it cannot be directly deleted.
+First remove the VMs individually from the vmgroup using admin cli
+on the same host on which the VM resides.
+Then remove the vmgroup.
 #### Help
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm -h
@@ -350,6 +355,13 @@ Uuid                                  Name
 ------------------------------------  --------
 564d99a2-4097-9966-579f-3dc4082b10c9  photon7
 ```
+
+Note: If the VMs have volumes attached (containers running), their membership change i.e. changing the vmgroup to which
+they belong is not permitted. Make sure no volumes are attached.
+To do so:
+1. Get the list of containers running. (docker ps)
+2. If the container has any vDVS volume mounted (docker inspect container_name), stop the container.
+3. Ensure that the dvs volumes have status detached (docker volume inspect)
 
 #### Help
 ```
@@ -460,7 +472,7 @@ _ALL_DS    True          500.00MB         Unset
 ```
 
 
-##### Help 
+##### Help
 ```bash
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add -h
 usage: vmdkops_admin.py vmgroup access add [-h]
@@ -812,7 +824,7 @@ Successfully removed policy: some-policy
 
 **THIS FEATURE IS EXPERIMENTAL**
 
-Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vm-groups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
+Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
 ```
 [root@localhost:~] vmdkops_admin vmgroup create --name MY
 Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
@@ -822,7 +834,7 @@ If the Config DB is not initialized, Docker Volume Service will use  "Config DB 
 
 After initialization the service can use SingleNode mode - when the DB itself is located on the local ESXi node in `/etc/vmware/vmdkps/auth-db` file, or MultiNode mode - when the above location is a symlin to a shared datastore location.
 
-In SingleNode mode all vm-groups and authorization control is local for each ESXi node, and node do not share this information.
+In SingleNode mode all vmgroups and authorization control is local for each ESXi node, and node do not share this information.
 
 In MultiNode mode, VSphere Docker Volume Service Authorization Config DB needs to be initialized on each ESXi host (`config init --datastore=<ds>`, and the nodes will share the authoration control.
 

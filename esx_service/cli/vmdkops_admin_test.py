@@ -568,14 +568,9 @@ class TestTenant(unittest.TestCase):
         self.cleanup()
 
     def cleanup(self):
-        # cleanup existing tenant
-        error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_name,
-                                         remove_volumes=True)
-
-        error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_new_name,
-                                         remove_volumes=True)
+        # cleanup existing tenants
+        test_utils.cleanup_tenant(self.tenant1_name)
+        test_utils.cleanup_tenant(self.tenant1_new_name)
 
         # remove VM
         si = vmdk_ops.get_si()
@@ -685,7 +680,7 @@ class TestTenant(unittest.TestCase):
 
         self.assertEqual(expected_output, actual_output)
 
-        # remove access privileg to "_VM_DS"
+        # remove access privilege to "_VM_DS"
         error_info = auth_api._tenant_access_rm(name=self.tenant1_name,
                                                 datastore=auth_data_const.VM_DS)
         self.assertEqual(None, error_info)
@@ -730,7 +725,7 @@ class TestTenant(unittest.TestCase):
             new_name=self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
-	# verify default vmgroup can't be renamed
+        # verify default vmgroup can't be renamed
         error_info  = auth_api._tenant_update(name=auth_data_const.DEFAULT_TENANT,
                                               new_name=self.tenant1_new_name)
         self.assertNotEqual(None, error_info)
@@ -753,9 +748,11 @@ class TestTenant(unittest.TestCase):
 
 
         # tenant rm to remove the tenant
-        error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_new_name,
-                                         remove_volumes=True)
+        error_info = auth_api._tenant_vm_rm(name=self.tenant1_new_name,
+                                            vm_list=vm_list)
+        self.assertEqual(None, error_info)
+
+        error_info = test_utils.cleanup_tenant(self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
         error_info, tenant_list = auth_api._tenant_ls()
@@ -842,7 +839,7 @@ class TestTenant(unittest.TestCase):
         self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
 
         # remove the tenant3
-        error_info = auth_api._tenant_rm(name=tenant3.name)
+        error_info = test_utils.cleanup_tenant(name=tenant3.name)
         self.assertEqual(None, error_info)
 
         # There are 2 columns for each row, the name of the columns are

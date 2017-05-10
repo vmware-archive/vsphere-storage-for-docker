@@ -23,6 +23,7 @@ class ErrorCode:
     TENANT_SET_ACCESS_PRIVILEGES_FAILED = 6
     TENANT_GET_FAILED = 7
     TENANT_NAME_INVALID = 8
+    TENANT_NOT_EMPTY = 9
     # Tenant related error code end
 
     # VM related error code start
@@ -87,6 +88,7 @@ error_code_to_message = {
     ErrorCode.TENANT_SET_ACCESS_PRIVILEGES_FAILED : "Vmgroup {0} set access privileges on datastore {1} failed with err: {2}",
     ErrorCode.TENANT_GET_FAILED : "Get vmgroup {0} failed",
     ErrorCode.TENANT_NAME_INVALID : "Vmgroup name {0} is invalid, only {1} is allowed",
+    ErrorCode.TENANT_NOT_EMPTY : "Cannot delete non-empty vmgroup {0}. Remove VMs from the vmgroup before deleting it.",
 
     ErrorCode.VM_NOT_FOUND : "Cannot find vm {0}",
     ErrorCode.REPLACE_VM_EMPTY : "Replace VM cannot be empty",
