@@ -752,9 +752,7 @@ class TestTenant(unittest.TestCase):
                                             vm_list=vm_list)
         self.assertEqual(None, error_info)
 
-        error_info = auth_api._tenant_rm(
-                                         name=self.tenant1_new_name,
-                                         remove_volumes=True)
+        error_info = test_utils.cleanup_tenant(self.tenant1_new_name)
         self.assertEqual(None, error_info)
 
         error_info, tenant_list = auth_api._tenant_ls()
@@ -841,7 +839,7 @@ class TestTenant(unittest.TestCase):
         self.assertEqual(error_code.ErrorCode.VM_IN_ANOTHER_TENANT, error_info.code)
 
         # remove the tenant3
-        error_info = auth_api._tenant_rm(name=tenant3.name)
+        error_info = test_utils.cleanup_tenant(name=tenant3.name)
         self.assertEqual(None, error_info)
 
         # There are 2 columns for each row, the name of the columns are
