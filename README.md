@@ -154,8 +154,7 @@ logging config format for content details.
 
 # Known Issues
 
--  Multi-tenancy feature is limited to single ESX [#1032](https://github.com/vmware/docker-volume-vsphere/issues/1032)
--  In some use cases (e.g. force power off) vmdk remains attached to a VM but not used by Docker. [#369](https://github.com/vmware/docker-volume-vsphere/issues/369)
+-  Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) [#1191](https://github.com/vmware/docker-volume-vsphere/issues/1191). It's an ESX issue and will be available in the next vSphere release.
 
 ## Contact us
 
