@@ -99,9 +99,9 @@ networks:
     voteapp:
 
 volumes:
-  db-data:
-    driver: vsphere
-       driver_opts:
+   db-data:
+      driver: vsphere
+      driver_opts:
          size: 1Gb
 ```
 
