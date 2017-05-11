@@ -48,6 +48,7 @@ Note: We have discontinued the DEB/RPM based installation of the Docker plugin.
 </div>
 
 * **To install the plugin**
+
 ```
 ~# docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
 latest: Pulling from vmware/docker-volume-vsphere

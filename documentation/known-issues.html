@@ -423,8 +423,7 @@ $('#toc').on('click', 'a', function() {
   <p>This section lists the major known issues with vSphere Docker Volume Service. For complete list of issues please check our Github issues(https://github.com/vmware/docker-volume-vsphere/issues) page. If you notice an issue not listed in Github issues page, please do file a bug on the <a href="https://github.com/vmware/docker-volume-vsphere/issues">Github repo</a></p>
 
 <ul>
-  <li>Multi-tenancy feature is limited to single ESX <a href="https://github.com/vmware/docker-volume-vsphere/issues/1032">#1032</a></li>
-  <li>In some use cases (e.g. force power off) vmdk remains attached to a VM but not used by Docker. <a href="https://github.com/vmware/docker-volume-vsphere/issues/369">#369</a></li>
+  <li>Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) <a href="https://github.com/vmware/docker-volume-vsphere/issues/1191">#1191</a>. It’s an ESX issue and will be available in the next vSphere release.</li>
 </ul>
 
   
