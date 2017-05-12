@@ -6,7 +6,7 @@ vSphere Docker Volume Service consists of two components the VIB and Docker plug
 
 ## Driver configuration
 
-The configurations used by a driver while performing operations are read from a JSON file and the default location where it looks for it is /etc/vmware/vmdkops/log_config.json. The configuration is largely around logging.
+The configurations used by a driver while performing operations are read from a JSON file that by default is located at /etc/vmware/vmdkops/log_config.json. The configuration is largely around logging.
 
 
 ```
