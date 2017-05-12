@@ -26,7 +26,7 @@ defaultDsVolume.vmdk
 
 ## Custom datastore
 
-To choose a datastore other than one in which VM is hosted, you have to specify name and append the datastore name with a ```@``` symbol.
+To choose a datastore other than one in which VM is hosted, you have to specify name and append the datastore name with ```@``` symbol.
 
 ```
 $docker volume create --driver=vsphere --name=ds1volume@datastore1 -o size=10gb
@@ -36,7 +36,7 @@ ds1volume@datastore1
 We can check that volume is created in the datastore1
 
 ```
-$esx ls /vmfs/volumes/datastore1/dockvols
+$esx ls /vmfs/volumes/datastore1/ds1volume
 
 ds1volume.vmdk
 ```
@@ -54,3 +54,11 @@ vsphere			defaultDsVolume
 vsphere			ds1volume@datastore1
 photon			ds2volume@datastore2
 ```
+
+Datastore decision is taking place as shown below (preference from top to bottom)
+
+1. Using volume long/fully qualified name (with @<datastore_name>): volume is created on custom datastore
+2. Using short name (not passed @<datastore_name>)
+   2.1 vmgroup's default_datastore is chosen if set
+   2.2 docker_host vm's datastore is chosen as default if none of above condition met.
+
