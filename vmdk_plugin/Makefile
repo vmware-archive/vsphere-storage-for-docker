@@ -83,6 +83,9 @@ VIB_BIN := $(BIN)/$(VIBFILE)
 # plugin name, for go build
 PLUGIN := github.com/$(GOPATH_ORG)/$(GOPATH_PLUGNAME)
 
+# test location, picking up E2E tests
+E2E_Tests := github.com/$(GOPATH_ORG)/$(PLUGNAME)/tests/e2e
+
 GO := GO15VENDOREXPERIMENT=1 go
 FPM := fpm
 
@@ -93,8 +96,12 @@ VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
 SRC = main.go log_formatter.go utils/refcount/refcnt.go \
-	utils/fs/fs.go utils/config/config.go utils/TestInputParamsUtil.go utils/plugin_utils/plugin_utils.go\
+	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go\
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
+
+TEST_SRC = ../tests/utils/inputparams/TestInputParamsUtil.go \
+	../tests/utils/dockercli/VolumeCreationTestUtil.go \
+	../tests/utils/verification/VolumePropertiesVerificationUtil.go
 
 # Canned recipe
 define log_target
@@ -136,10 +143,10 @@ $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
 
-$(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(VMDKOPS_MODULE)/*_test.go
+$(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(TEST_SRC) $(VMDKOPS_MODULE)/*_test.go
 	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
-$(BIN)/$(PLUGNAME).test: $(SRC) *_test.go
+$(BIN)/$(PLUGNAME).test: $(SRC) $(TEST_SRC) *_test.go
 	$(GO) test -c -o $@ $(PLUGIN) -cover
 
 .PHONY: clean
@@ -347,7 +354,7 @@ e2e-test:
 .PHONY: e2e-dkrVolDriver-test
 e2e-dkrVolDriver-test:
 	$(log_target)
-	$(GO) test $(PLUGIN)/E2E_Tests -cover -v
+	$(GO) test $(E2E_Tests) -v
 
 MANAGED_PLUGIN_NAME="vsphere:latest"
 

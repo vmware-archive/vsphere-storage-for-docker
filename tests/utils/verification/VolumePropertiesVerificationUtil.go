@@ -16,11 +16,12 @@
 // fetch information like capacity, disk-format and attched-to-vm fields
 // for volume using docker cli or admin cli.
 
-package e2e
+package utils
 
 import (
 	"log"
 	"strings"
+	sshutil "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 )
 
 var ADMIN_CLI_LS = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls "
@@ -99,7 +100,7 @@ func GetDockerVersion(hostname string) string {
 //method takes command and host and calls InvokeCommand
 //and then returns the output after converting to string
 func ExecCmd(hostname string, cmd string) string {
-	out, err := InvokeCommand(hostname, cmd)
+	out, err := sshutil.InvokeCommand(hostname, cmd)
 	if err != nil {
 		log.Fatal(err)
 	}

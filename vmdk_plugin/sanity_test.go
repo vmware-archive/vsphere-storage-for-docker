@@ -31,7 +31,7 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
+	testutil "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/net/context"
@@ -189,8 +189,8 @@ func volumeVmdkExists(t *testing.T, c *client.Client, vol string) *types.Volume 
 func getClients(t *testing.T) []testClient {
 
 	clients := []testClient{
-		{TestInputParamsUtil.GetEndPoint1(), new(client.Client)},
-		{TestInputParamsUtil.GetEndPoint2(), new(client.Client)},
+		{testutil.GetEndPoint1(), new(client.Client)},
+		{testutil.GetEndPoint2(), new(client.Client)},
 	}
 
 	for idx, elem := range clients {
@@ -211,11 +211,11 @@ func getClients(t *testing.T) []testClient {
 func TestSanity(t *testing.T) {
 
 	fmt.Printf("%s START: Running TestSanity on  %s (may take a while)...\n",
-		time.Now().Format(time.RFC3339), TestInputParamsUtil.GetEndPoint1())
+		time.Now().Format(time.RFC3339), testutil.GetEndPoint1())
 
 	clients := getClients(t)
 	c := clients[0].client // this is the endpoint we use as master
-	volumeName := TestInputParamsUtil.GetVolumeName()
+	volumeName := testutil.GetVolumeName()
 	t.Logf("Creating vol=%s on client %s.", volumeName, clients[0].endPoint)
 	_, err := c.VolumeCreate(context.Background(),
 		types.VolumeCreateRequest{
@@ -254,7 +254,7 @@ func TestSanity(t *testing.T) {
 		}
 	}
 	fmt.Printf("%s END: Running TestSanity on  %s (may take a while)...\n",
-		time.Now().Format(time.RFC3339), TestInputParamsUtil.GetEndPoint1())
+		time.Now().Format(time.RFC3339), testutil.GetEndPoint1())
 
 }
 

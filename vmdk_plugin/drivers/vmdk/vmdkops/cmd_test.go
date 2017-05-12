@@ -19,14 +19,14 @@ package vmdkops_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	testparams "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
 	"testing"
 )
 
 func TestCommands(t *testing.T) {
 	ops := vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}}
-	name := TestInputParamsUtil.GetVolumeName()
+	name := testparams.GetVolumeName()
 	t.Logf("\nCreating Test Volume with name = [%s]...\n", name)
 	opts := map[string]string{"size": "2gb"}
 	if assert.Nil(t, ops.Create(name, opts)) {
