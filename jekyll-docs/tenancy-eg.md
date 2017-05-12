@@ -79,7 +79,7 @@ root@photon4 [ ~ ]# docker volume create --name=MyVolume --driver=vsphere -o siz
 Error response from daemon: create MyVolume: VolumeDriver.Create: volume size exceeds the max volume size limit
 ```
 
-The vDVS has restricted user from creating a volume of size > 1 GB.
+vDVS has restricted user from creating a volume of size > 1 GB.
 
 7.	Try to create volume on datastore other than the one which is set as default
 

@@ -22,7 +22,7 @@ Although it is relatively easy to run stateless Microservices using container te
 
 vSphere Docker Volume Service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. vDVS which works with proven storage technologies from VMWare and is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.
 
-Some of key features of the vDVS are:
+Some of key features of vDVS are:
 
 * **Enterprise class storage**: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc. 
 * **Security & RBAC**: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.

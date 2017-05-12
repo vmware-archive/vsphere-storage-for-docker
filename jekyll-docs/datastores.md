@@ -6,7 +6,7 @@ Docker volumes in vSphere are backed by VMDK files. These VMDKs could be backed 
 
 ## Multiple datastores Support
 
-By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. The vDVS allows you to create a volume on any of the datastores available.
+By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. vDVS allows you to create a volume on any of the datastores available.
 
 ## Default datastore
 By default when you just specify name of volume - it is created in the datastore that hosts the VM. 
