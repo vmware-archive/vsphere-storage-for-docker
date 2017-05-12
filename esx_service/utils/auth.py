@@ -456,8 +456,8 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
                       tenant_name, datastore_url, privileges, result)
 
         if result is None:
-            logging.info("cmd=%s opts=%s vmgroup=%s datastore_url=%s is allowed to execute",
-                         cmd, opts, tenant_name, datastore_url)
+            logging.info("db_mode='%s' cmd=%s opts=%s vmgroup=%s datastore_url=%s is allowed to execute",
+                         _auth_mgr.mode, cmd, opts, tenant_name, datastore_url)
 
         return result, tenant_uuid, tenant_name
 

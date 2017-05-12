@@ -678,10 +678,10 @@ class AuthorizationDataManager:
         """
 
 
-        logging.info("Checking DB mode for %s...", self.db_path)
+        logging.debug("Checking DB mode for %s...", self.db_path)
         # check if the path exists (without following symlinks)
         if not os.path.lexists(self.db_path):
-            logging.info(DB_REF + "does not exist. mode NotConfigured")
+            logging.debug(DB_REF + "does not exist. mode NotConfigured")
             return DBMode.NotConfigured
 
         if not os.path.exists(self.db_path):
@@ -693,7 +693,7 @@ class AuthorizationDataManager:
 
         # it's a single node config file. Check if the DB is empty so we can drop it.
         if not os.path.islink(self.db_path):
-            logging.info(DB_REF + "exists and has modifications, mode SingleNode")
+            logging.debug(DB_REF + "exists and has modifications, mode SingleNode")
             return DBMode.SingleNode
 
         # let's check if the db content seems good
@@ -702,7 +702,7 @@ class AuthorizationDataManager:
             logging.error(DB_REF + "Location {}, error: {}".format(self.db_path, err))
             return DBMode.BrokenLink
 
-        logging.info(DB_REF + "found. maj_ver={} min_ver={} mode MultiNode".format(major, minor))
+        logging.debug(DB_REF + "found. maj_ver={} min_ver={} mode MultiNode".format(major, minor))
         return DBMode.MultiNode
 
     def allow_all_access(self):
