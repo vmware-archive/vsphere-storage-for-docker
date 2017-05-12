@@ -523,7 +523,7 @@ vol1    datastore1  vmgroup1  100MB     13MB  ext4        N/A     thin         d
 vol2    datastore1  vmgroup1  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
 ```
 
-Note that the `Policy` column shows the named VSAN storage policy created with the same tool
+Note that the `Policy` column shows the named vSAN storage policy created with the same tool
 (vmdkops_admin.py).  Since these example virtual disks live on a VMFS datastore they do not have a storage
 policy and show up as `N/A'.
 
@@ -608,7 +608,7 @@ vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         d
 
 ## Policy
 
-Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.
+Create, configure and show the vSAN policy names and their corresponding vSAN policy strings. Also show whether or not they are in use.
 
 
 ```
@@ -620,7 +620,7 @@ positional arguments:
     rm                  Remove a storage policy
     create              Create a storage policy
     ls                  List storage policies and volumes using those policies
-    update              Update the definition of a storage policy and all VSAN
+    update              Update the definition of a storage policy and all vSAN
                         objects using that policy
 
 optional arguments:
@@ -629,20 +629,20 @@ optional arguments:
 
 <b>Create</b>
 
-Create a VSAN storage policy.
+Create a vSAN storage policy.
 
 ```
 #/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name some-policy --content '(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
 Successfully created policy: some-policy
 ```
 
-Note that the VSAN storage policy string given with `--content` is a standard VSAN storage policy
-string.  Please refer to the [VSAN documentation](https://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.vcli.ref.doc%2Fesxcli_vsan.html)
+Note that the vSAN storage policy string given with `--content` is a standard vSAN storage policy
+string.  Please refer to the [vSAN documentation](https://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.vcli.ref.doc%2Fesxcli_vsan.html)
 for storage policy options.
 
 <b>List</b>
 
-List all VSAN storage policies.
+List all vSAN storage policies.
 
 ```
 #/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
@@ -657,9 +657,9 @@ The number of virtual disks using the policy will then show up in the `Active` c
 
 <b>Update</b>
 
-Update a VSAN storage policy.
+Update a vSAN storage policy.
 
-This command will update a VSAN storage policy for all virtual disks currently using this policy. If
+This command will update a vSAN storage policy for all virtual disks currently using this policy. If
 the command fails, the number of virtual disks that were successfully updated and the number that
 failed to update will be shown. The names of the virtual disks that failed to update will be logged
 so that manual action can be taken.
@@ -672,7 +672,7 @@ Successfully updated policy: some-policy
 
 <b>Remove</b>
 
-Remove a VSAN storage policy. Note that a storage policy cannot be removed if it is currently in use
+Remove a vSAN storage policy. Note that a storage policy cannot be removed if it is currently in use
 by one or more virtual disks.
 
 The ability to list which virtual disks are using a specific storage policy, change storage policies
