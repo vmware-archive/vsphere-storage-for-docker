@@ -18,11 +18,12 @@
 
 // Test assumes that SSH cert has been setup to enable password-less login to VM and ESX.
 
-package e2e_test
+package e2e
 
 import (
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
-	TestUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/test_util"
+	dkrcli "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	testparams "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+	verifier "github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 	"log"
 	"os"
 	"strconv"
@@ -50,7 +51,7 @@ func TestMain(m *testing.M) {
 
 // clean-up function
 func teardownFunction() {
-	TestUtil.ExecCmd(vmIp, dockerVolmRmvCmd)
+	verifier.ExecCmd(vmIp, dockerVolmRmvCmd)
 	log.Println("-----Clean-up finished - current time: ", time.Now())
 }
 
@@ -70,13 +71,13 @@ func TestVolumeProperties(t *testing.T) {
 		log.Println("running end_to_end tests - current time: ", time.Now())
 		vmIp = vms[vmIndx]
 		log.Println("Running test on VM - ", vmIp)
-		dockerCliCheck = TestUtil.IsDockerCliCheckNeeded(vms[vmIndx])
+		dockerCliCheck = verifier.IsDockerCliCheckNeeded(vms[vmIndx])
 		for i := 0; i < len(volSizes); i++ {
 			for k := 0; k < len(formatTypes); k++ {
 				containerName = "busybox_" + strconv.FormatInt(time.Now().Unix(), 20)
 				log.Println("Creating a volume of Format Type - ", formatTypes[k])
-				volName := TestInputParamsUtil.GetVolumeNameWithTimeStamp("dockerVol")
-				_, err := TestUtil.InvokeCommand(vms[vmIndx], "docker volume create --driver=vsphere --name="+
+				volName := testparams.GetVolumeNameWithTimeStamp("dockerVol")
+				_, err := dkrcli.InvokeCommand(vms[vmIndx], "docker volume create --driver=vsphere --name="+
 					volName+" -o size="+volSizes[i]+" -o diskformat="+formatTypes[k])
 				if err != nil {
 					log.Fatalf("Failed to create a volume named: %s. Error - %v ", volName, err)
@@ -86,43 +87,43 @@ func TestVolumeProperties(t *testing.T) {
 				}
 				log.Println("Verifying volume properties like size, disk-format and attached-to-vm fields "+
 					"at vm and esx for volume - ", volName)
-				volmPropertiesAdminCli := TestUtil.GetVolumePropertiesAdminCli(volName, esx)
+				volmPropertiesAdminCli := verifier.GetVolumePropertiesAdminCli(volName, esx)
 				expctdPropsAdmin := []string{"100MB", formatTypes[k], "detached"}
 				if !hasElement(expctdPropsAdmin, volmPropertiesAdminCli) {
 					log.Fatal("Volume properties on ESX fetched using admin cli does not matches with the expected values")
 				}
 
 				if dockerCliCheck {
-					volmPropertiesDkrCli := TestUtil.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
+					volmPropertiesDkrCli := verifier.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
 					expctdPropsDkr := []string{"100MB", formatTypes[k], "<no value>"}
 					if !hasElement(expctdPropsDkr, volmPropertiesDkrCli) {
 						log.Fatal("Volume properties fetched using docker cli do not matches with the expected values")
 					}
 				}
-				TestUtil.InvokeCommand(vms[vmIndx], "docker run -d -v "+volName+":/vol --name "+containerName+" busybox tail -f /dev/null")
+				dkrcli.InvokeCommand(vms[vmIndx], "docker run -d -v "+volName+":/vol --name "+containerName+" busybox tail -f /dev/null")
 				// Verifying attached to the vm field for volume
-				vmNameFrmAdminCli := TestUtil.GetVmAttachedToVolUsingAdminCli(volName, esx)
+				vmNameFrmAdminCli := verifier.GetVmAttachedToVolUsingAdminCli(volName, esx)
 				if dockerCliCheck {
-					vmNameFrmDockerCli := TestUtil.GetVmAttachedToVolUsingDockerCli(volName, vms[vmIndx])
+					vmNameFrmDockerCli := verifier.GetVmAttachedToVolUsingDockerCli(volName, vms[vmIndx])
 					// TODO: get vm name based on ip and compare ith with the docker cli and admin cli
 					if vmNameFrmDockerCli != vmNameFrmAdminCli {
 						log.Fatalf("Information mis-match - Attached-to-VM field for volume from docker cli is [%s]"+
 							"and attched-to-vm field from admin cli is [%s]", vmNameFrmDockerCli, vmNameFrmAdminCli)
 					}
-					volmPropertiesDkrCli := TestUtil.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
+					volmPropertiesDkrCli := verifier.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
 					expctdPropsDkr := []string{"100MB", formatTypes[k]}
 					if !hasElement(expctdPropsDkr, volmPropertiesDkrCli) {
 						log.Fatal("Volume properties on ESX fetched using docker cli do not matches with the expected values")
 					}
 				}
-				volmPropertiesAdminCli = TestUtil.GetVolumePropertiesAdminCli(volName, esx)
+				volmPropertiesAdminCli = verifier.GetVolumePropertiesAdminCli(volName, esx)
 				expctdPropsAdmin = []string{"100MB", formatTypes[k]}
 				if !hasElement(expctdPropsAdmin, volmPropertiesAdminCli) {
 					log.Fatal("Volume properties on admin cli do not matches with the expected values")
 				}
 				log.Println("Finished verifying volume properties like size, disk-format and attached-to-vm fields"+
 					" at vm and esx for volume - ", volName)
-				TestUtil.ExecCmd(vms[vmIndx], "docker stop "+containerName+" ; docker rm "+containerName)
+				verifier.ExecCmd(vms[vmIndx], "docker stop "+containerName+" ; docker rm "+containerName)
 			}
 		}
 	}

@@ -20,11 +20,11 @@
 // TODO: as of now we are running the test against photon vm it should be run
 // against various/applicable linux distros.
 
-package e2e_test
+package e2e
 
 import (
-	volumeNameUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils"
-	TestUtil "github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/test_util"
+	testparams "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+	dockercli "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"os"
 	"testing"
 )
@@ -52,17 +52,17 @@ func TestVolumeCreationFirstTime(t *testing.T) {
 	var err error
 	var out []byte
 	for _, host := range dockerHosts {
-		volumeName := volumeNameUtil.GetVolumeNameWithTimeStamp("abc")
+		volumeName := testparams.GetVolumeNameWithTimeStamp("abc")
 
 		// create volume
-		out, err = TestUtil.CreateDefaultVolume(host, volumeName)
+		out, err = dockercli.CreateDefaultVolume(host, volumeName)
 
 		if err != nil {
 			t.Errorf("\nError has occurred [%s] \n\twhile creating volume [%s] very first time: err -> %v", out, volumeName, err)
 		} else {
 			t.Logf("\nTestcase passed: successfully able to create volume [%s]\n", out)
 			// delete volume
-			TestUtil.DeleteVolume(volumeName, host)
+			dockercli.DeleteVolume(volumeName, host)
 		}
 	}
 }
