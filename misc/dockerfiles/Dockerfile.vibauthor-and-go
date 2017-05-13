@@ -20,7 +20,7 @@
 ## - Controlling VMs under ESX   => may need govc command line
 ##
 
-# Current tag: 0.10 (used in drone.yml).
+# Current tag: 0.11 (used in drone.yml).
 # Build the image manually (docker image build -t cnastorage/vibauthor-and-go:<tag> -f <this file> .)
 
 FROM centos:6.6
@@ -47,7 +47,8 @@ ENV PATH=$PATH:/usr/local/go/bin:/go/bin \
     GO15VENDOREXPERIMENT=1
 
 RUN go get -u github.com/FiloSottile/gvt && \
-    go get -u github.com/golang/lint/golint
+    go get -u github.com/golang/lint/golint && \
+    go get -u gopkg.in/check.v1
 
 RUN curl --silent --location https://rpm.nodesource.com/setup_4.x | bash - && \
     yum -y install nodejs && \
