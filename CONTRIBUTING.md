@@ -101,12 +101,12 @@ Pages](https://vmware.github.io/docker-volume-vsphere/) using
 
 To update documentation
 ```
-# 1. Checkout the gh-pages
+# 1. Checkout the gh-pages branch
 git checkout gh-pages
 # 2. Go to jekyll-docs directory
-cd jekyll-docs
-# 3. Build the site
-bundle exec jekyll build
+cd jekyll-docs 
+# 3. Build the jekyll site
+docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
 # 4. Remove the old site and copy the new one.
 rm -rvf ../documentation
 mv _site ../documentation
