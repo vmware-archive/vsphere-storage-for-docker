@@ -5,7 +5,7 @@ clone:
 build:
 
   serialize_branches:
-    image: &build_cnt cnastorage/vibauthor-and-go:0.10
+    image: &build_cnt cnastorage/vibauthor-and-go:0.11
     environment: &setup_env
       - DRONE_TOKEN=$$DRONE_TOKEN
       - DRONE_SERVER=$$DRONE_SERVER
@@ -47,6 +47,7 @@ build:
     commands: &build_cmd
       - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - go get github.com/golang/lint/golint
+      - go get -u gopkg.in/check.v1
       - make -s build
       - echo $KEY | base64 -d > /drone/src/github.com/vmware/docker-volume-vsphere/key
       - chmod 0600 /drone/src/github.com/vmware/docker-volume-vsphere/key
