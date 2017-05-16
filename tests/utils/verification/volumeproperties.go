@@ -16,7 +16,7 @@
 // fetch information like capacity, disk-format and attched-to-vm fields
 // for volume using docker cli or admin cli.
 
-package utils
+package verification
 
 import (
 	"log"

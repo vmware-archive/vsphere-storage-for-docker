@@ -15,7 +15,7 @@
 // This util is going to hold various helper methods to be consumed by testcase.
 // Volume creation, deletion is supported as of now.
 
-package utils
+package dockercli
 
 import (
 	"fmt"
