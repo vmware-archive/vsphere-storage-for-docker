@@ -36,18 +36,22 @@ func init() {
 	flag.Parse()
 }
 
+// GetVolumeName returns the default volume name (set as environment variable or supplied through cli)
 func GetVolumeName() string {
 	return volumeName
 }
 
+// GetVolumeNameWithTimeStamp prepares unique volume name by appending current time-stamp value
 func GetVolumeNameWithTimeStamp(volName string) string {
 	return volName + "_" + strconv.FormatInt(time.Now().Unix(), 10)
 }
 
+// GetEndPoint1 returns first VM endpoint supplied through CLI
 func GetEndPoint1() string {
 	return endPoint1
 }
 
+// GetEndPoint2 returns second VM endpoint supplied through CLI
 func GetEndPoint2() string {
 	return endPoint2
 }

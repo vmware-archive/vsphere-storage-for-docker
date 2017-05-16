@@ -33,14 +33,14 @@ import (
 )
 
 var (
-	esx              string = os.Getenv("ESX")
+	esx               = os.Getenv("ESX")
 	volSizes                = []string{"100MB"}
 	vms                     = []string{os.Getenv("VM1")}
 	formatTypes             = []string{"thin", "zeroedthick", "eagerzeroedthick"}
-	vmIp             string = ""
-	dockerVolmRmvCmd string = "docker volume rm "
+	vmIP             string
+	dockerVolmRmvCmd  = "docker volume rm "
 	dockerCliCheck   bool
-	containerName    string = ""
+	containerName    string
 )
 
 func TestMain(m *testing.M) {
@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 
 // clean-up function
 func teardownFunction() {
-	verification.ExecCmd(vmIp, dockerVolmRmvCmd)
+	verification.ExecCmd(vmIP, dockerVolmRmvCmd)
 	log.Println("-----Clean-up finished - current time: ", time.Now())
 }
 
@@ -69,8 +69,8 @@ Test steps:
 func TestVolumeProperties(t *testing.T) {
 	for vmIndx := 0; vmIndx < len(vms); vmIndx++ {
 		log.Println("running end_to_end tests - current time: ", time.Now())
-		vmIp = vms[vmIndx]
-		log.Println("Running test on VM - ", vmIp)
+		vmIP = vms[vmIndx]
+		log.Println("Running test on VM - ", vmIP)
 		dockerCliCheck = verification.IsDockerCliCheckNeeded(vms[vmIndx])
 		for i := 0; i < len(volSizes); i++ {
 			for k := 0; k < len(formatTypes); k++ {
@@ -102,9 +102,9 @@ func TestVolumeProperties(t *testing.T) {
 				}
 				dockercli.InvokeCommand(vms[vmIndx], "docker run -d -v "+volName+":/vol --name "+containerName+" busybox tail -f /dev/null")
 				// Verifying attached to the vm field for volume
-				vmNameFrmAdminCli := verification.GetVmAttachedToVolUsingAdminCli(volName, esx)
+				vmNameFrmAdminCli := verification.GetVMAttachedToVolUsingAdminCli(volName, esx)
 				if dockerCliCheck {
-					vmNameFrmDockerCli := verification.GetVmAttachedToVolUsingDockerCli(volName, vms[vmIndx])
+					vmNameFrmDockerCli := verification.GetVMAttachedToVolUsingDockerCli(volName, vms[vmIndx])
 					// TODO: get vm name based on ip and compare ith with the docker cli and admin cli
 					if vmNameFrmDockerCli != vmNameFrmAdminCli {
 						log.Fatalf("Information mis-match - Attached-to-VM field for volume from docker cli is [%s]"+
