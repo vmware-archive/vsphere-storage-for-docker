@@ -94,9 +94,9 @@ func TestVolumeProperties(t *testing.T) {
 				}
 
 				if dockerCliCheck {
-					volmPropertiesdockercli := verification.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
+					volumePropertiesDockerCli := verification.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
 					expctdPropsDkr := []string{"100MB", formatTypes[k], "<no value>"}
-					if !hasElement(expctdPropsDkr, volmPropertiesdockercli) {
+					if !hasElement(expctdPropsDkr, volumePropertiesDockerCli) {
 						log.Fatal("Volume properties fetched using docker cli do not matches with the expected values")
 					}
 				}
@@ -110,9 +110,9 @@ func TestVolumeProperties(t *testing.T) {
 						log.Fatalf("Information mis-match - Attached-to-VM field for volume from docker cli is [%s]"+
 							"and attched-to-vm field from admin cli is [%s]", vmNameFrmDockerCli, vmNameFrmAdminCli)
 					}
-					volmPropertiesdockercli := verification.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
+					volumePropertiesDockerCli := verification.GetVolumePropertiesDockerCli(volName, vms[vmIndx])
 					expctdPropsDkr := []string{"100MB", formatTypes[k]}
-					if !hasElement(expctdPropsDkr, volmPropertiesdockercli) {
+					if !hasElement(expctdPropsDkr, volumePropertiesDockerCli) {
 						log.Fatal("Volume properties on ESX fetched using docker cli do not matches with the expected values")
 					}
 				}
