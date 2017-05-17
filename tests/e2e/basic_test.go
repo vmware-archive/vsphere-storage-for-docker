@@ -72,10 +72,11 @@ var _ = Suite(&BasicTestSuite{})
 // 2. Verify the volume is available
 // 3. Attach the volume
 // 4. Verify volume status is attached
-// 5. Remove the container
-// 6. Verify volume status is detached
-// 7. Remove the volume
-// 8. Verify the volume is unavailable
+// 5. Remove the volume (expect fail)
+// 6. Remove the container
+// 7. Verify volume status is detached
+// 8. Remove the volume
+// 9. Verify the volume is unavailable
 func (s *BasicTestSuite) TestVolumeLifecycle(c *C) {
 	misc.LogTestStart(c.TestName())
 
@@ -91,6 +92,9 @@ func (s *BasicTestSuite) TestVolumeLifecycle(c *C) {
 
 		status := verification.VerifyAttachedStatus(s.volName1, host, s.esx)
 		c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volName1))
+
+		out, err = dockercli.DeleteVolume(host, s.volName1)
+		c.Assert(err, Not(IsNil), Commentf(out))
 
 		out, err = dockercli.RemoveContainer(host, s.containerName)
 		c.Assert(err, IsNil, Commentf(out))
