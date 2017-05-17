@@ -161,7 +161,9 @@ clean-as-root: pkg-post
 # GO Code quality checks.
 
 DIRS_TO_VERIFY := . utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
-	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification
+	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification ../tests/constants/admincli \
+	../tests/constants/dockercli
+
 FILES_TO_VERIFY := $(foreach dir, $(DIRS_TO_VERIFY), $(dir)/*.go)
 .code_verify: $(FILES_TO_VERIFY)
 	@for i in $(DIRS_TO_VERIFY) ; do ${GOPATH}/bin/golint $$i ; done
