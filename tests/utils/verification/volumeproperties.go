@@ -16,7 +16,7 @@
 // fetch information like capacity, disk-format and attched-to-vm fields
 // for volume using docker cli or admin cli.
 
-package utils
+package verification
 
 import (
 	"log"
@@ -24,12 +24,12 @@ import (
 	sshutil "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 )
 
-var ADMIN_CLI_LS = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls "
-var DOCKER_CLI_INSPC = "docker volume inspect "
+var adminCliLs = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls "
+var dockerCliInspect = "docker volume inspect "
 
-// returns attached to vm field of volume using docker cli
-func GetVmAttachedToVolUsingDockerCli(volName string, hostname string) string {
-	cmd := DOCKER_CLI_INSPC + " --format '{{index .Status \"attached to VM\"}}' " + volName
+// GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
+func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
+	cmd := dockerCliInspect + " --format '{{index .Status \"attached to VM\"}}' " + volName
 	op := ExecCmd(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by docker cli when looking for attached to vm field for volume. Output: ", op)
@@ -37,9 +37,9 @@ func GetVmAttachedToVolUsingDockerCli(volName string, hostname string) string {
 	return strings.TrimSpace(op)
 }
 
-// returns attached to vm field of volume using admin cli
-func GetVmAttachedToVolUsingAdminCli(volName string, hostname string) string {
-	cmd := ADMIN_CLI_LS + "-c volume,attached-to 2>/dev/null | grep " + volName
+// GetVMAttachedToVolUsingAdminCli returns attached to vm field of volume using admin cli
+func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
+	cmd := adminCliLs + "-c volume,attached-to 2>/dev/null | grep " + volName
 	op := ExecCmd(hostname, cmd)
 	volProps := strings.Fields(op)
 	if op == "" {
@@ -52,10 +52,10 @@ func GetVmAttachedToVolUsingAdminCli(volName string, hostname string) string {
 	return volProps[1]
 }
 
-// returns capacity, attached-to-vm and disk-format field
+// GetVolumePropertiesAdminCli returns capacity, attached-to-vm and disk-format field
 // for volume using Admin cli
 func GetVolumePropertiesAdminCli(volName string, hostname string) string {
-	cmd := ADMIN_CLI_LS + "-c volume,attached-to,capacity,disk-format 2>/dev/null | grep " + volName
+	cmd := adminCliLs + "-c volume,attached-to,capacity,disk-format 2>/dev/null | grep " + volName
 	op := ExecCmd(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by admin cli when looking for, size, disk-format and attached to vm. Output: ", op)
@@ -67,10 +67,10 @@ func GetVolumePropertiesAdminCli(volName string, hostname string) string {
 	return op
 }
 
-// returns capacity,  attached-to-vm and disk-format field
+// GetVolumePropertiesDockerCli returns capacity,  attached-to-vm and disk-format field
 // for volume using Docker cli
 func GetVolumePropertiesDockerCli(volName string, hostname string) string {
-	cmd := DOCKER_CLI_INSPC + " --format '{{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' " + volName
+	cmd := dockerCliInspect + " --format '{{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' " + volName
 	op := ExecCmd(hostname, cmd)
 	expctedLen := 0
 	if op == "" {
@@ -90,14 +90,14 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 	return op
 }
 
-// returns docker version
+// GetDockerVersion returns docker version
 func GetDockerVersion(hostname string) string {
 	cmd := "docker -v"
 	out := ExecCmd(hostname, cmd)
 	return out
 }
 
-//method takes command and host and calls InvokeCommand
+//ExecCmd method takes command and host and calls InvokeCommand
 //and then returns the output after converting to string
 func ExecCmd(hostname string, cmd string) string {
 	out, err := sshutil.InvokeCommand(hostname, cmd)
@@ -107,9 +107,7 @@ func ExecCmd(hostname string, cmd string) string {
 	return string(out[:])
 }
 
-// docker volume inspect on docker 1.11
-// returns less fields as compared to 1.11.
-// So this method can be useful if we
+// IsDockerCliCheckNeeded method can be useful if we
 // do not want to run certain verifications
 // on docker 1.11
 func IsDockerCliCheckNeeded(ipAddr string) bool {

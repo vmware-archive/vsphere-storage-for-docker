@@ -23,8 +23,8 @@
 package e2e
 
 import (
-	testparams "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	dockercli "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"os"
 	"testing"
 )
@@ -52,9 +52,7 @@ func TestVolumeCreationFirstTime(t *testing.T) {
 	var err error
 	var out []byte
 	for _, host := range dockerHosts {
-		volumeName := testparams.GetVolumeNameWithTimeStamp("abc")
-
-		// create volume
+		volumeName := inputparams.GetVolumeNameWithTimeStamp("abc")
 		out, err = dockercli.CreateDefaultVolume(host, volumeName)
 
 		if err != nil {

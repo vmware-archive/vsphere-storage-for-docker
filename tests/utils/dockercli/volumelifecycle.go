@@ -15,7 +15,7 @@
 // This util is going to hold various helper methods to be consumed by testcase.
 // Volume creation, deletion is supported as of now.
 
-package utils
+package dockercli
 
 import (
 	"fmt"
@@ -24,22 +24,23 @@ import (
 	"strings"
 )
 
-var SSH_OPTS []string = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
+// sshIdentity an array variable to prepare ssh input parameter to pass identify value
+var sshIdentity = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
 
-// This util method is going to create vsphere docker volume with
+// CreateDefaultVolume is going to create vsphere docker volume with
 // defaults.
 func CreateDefaultVolume(ip string, name string) ([]byte, error) {
 	fmt.Printf("\ncreating volume [%s] on VM[%s]", name, ip)
 	return InvokeCommand(ip, "docker volume create --driver=vsphere --name="+name)
 }
 
-// This helper deletes the created volume as per passed volume name.
+// DeleteVolume helper deletes the created volume as per passed volume name.
 func DeleteVolume(name string, ip string) ([]byte, error) {
 	fmt.Printf("\ndestroying volume [%s]", name)
 	return InvokeCommand(ip, "docker volume rm "+name)
 }
 
-// This helper method can be consumed by test directly to invoke
+// InvokeCommand helper method can be consumed by test directly to invoke
 // any command on the remote host.
 // remoteHostIP:
 // 	remote machine address to execute on the machine
@@ -47,5 +48,5 @@ func DeleteVolume(name string, ip string) ([]byte, error) {
 //	A command string to be executed on the remote host as per
 //	remoteHostIP value
 func InvokeCommand(remoteHostIP string, cmd string) ([]byte, error) {
-	return exec.Command("/usr/bin/ssh", append(SSH_OPTS, "root@"+remoteHostIP, cmd)...).CombinedOutput()
+	return exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+remoteHostIP, cmd)...).CombinedOutput()
 }
