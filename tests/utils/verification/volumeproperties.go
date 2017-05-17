@@ -21,10 +21,16 @@ package verification
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
-	sshutil "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+)
+
+const (
+	pollTimeout = 64
 )
 
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
@@ -90,17 +96,56 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 	return op
 }
 
+// VerifyAttachedStatus - verify volume is attached and name of the VM attached
+// is consistent on both docker host and ESX
+func VerifyAttachedStatus(name, hostName, esxName string) bool {
+	log.Printf("Confirming attached status for volume [%s]\n", name)
+
+	vmAttachedHost := GetVMAttachedToVolUsingDockerCli(name, hostName)
+	vmAttachedESX := GetVMAttachedToVolUsingAdminCli(name, esxName)
+
+	// TODO add additional check to compare these names with the expected vmname
+	// need govmomi integration to get name from ip
+	return (vmAttachedHost == vmAttachedESX)
+}
+
+//GetVolumeStatusHost - get the volume status on a given host
+func GetVolumeStatusHost(name, hostName string) string {
+	cmd := dockercli.InspectVolume + " --format '{{index .Status.status}}' " + name
+	op := ExecCmd(hostName, cmd)
+	return strings.TrimSpace(op)
+}
+
+// VerifyDetachedStatus - check if the status gets detached within the timeout
+func VerifyDetachedStatus(name, hostName, esxName string) bool {
+	log.Printf("Confirming detached status for volume [%s]\n", name)
+	for attempt := 0; attempt < pollTimeout; attempt++ {
+		time.Sleep(1 * time.Second)
+		status := GetVolumeStatusHost(name, hostName)
+		if status != properties.DetachedStatus {
+			continue
+		}
+		// this api returnes "detached" in when volume is detached
+		status = GetVMAttachedToVolUsingAdminCli(name, esxName)
+		if status == properties.DetachedStatus {
+			return true
+		}
+	}
+	log.Fatalf("Timed out to poll status\n")
+	return false
+}
+
 // GetDockerVersion returns docker version
-func GetDockerVersion(hostname string) string {
+func GetDockerVersion(hostName string) string {
 	cmd := "docker -v"
-	out := ExecCmd(hostname, cmd)
+	out := ExecCmd(hostName, cmd)
 	return out
 }
 
 //ExecCmd method takes command and host and calls InvokeCommand
 //and then returns the output after converting to string
-func ExecCmd(hostname string, cmd string) string {
-	out, err := sshutil.InvokeCommand(hostname, cmd)
+func ExecCmd(hostName string, cmd string) string {
+	out, err := ssh.InvokeCommand(hostName, cmd)
 	if err != nil {
 		log.Fatal(err)
 	}

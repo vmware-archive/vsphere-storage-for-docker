@@ -21,24 +21,25 @@
 package e2e
 
 import (
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
 var (
-	esx               = os.Getenv("ESX")
-	volSizes                = []string{"100MB"}
-	vms                     = []string{os.Getenv("VM1")}
-	formatTypes             = []string{"thin", "zeroedthick", "eagerzeroedthick"}
+	esx              = os.Getenv("ESX")
+	volSizes         = []string{"100MB"}
+	vms              = []string{os.Getenv("VM1")}
+	formatTypes      = []string{"thin", "zeroedthick", "eagerzeroedthick"}
 	vmIP             string
-	dockerVolmRmvCmd  = "docker volume rm "
+	dockerVolmRmvCmd = "docker volume rm "
 	dockerCliCheck   bool
 	containerName    string
 )
@@ -77,7 +78,7 @@ func TestVolumeProperties(t *testing.T) {
 				containerName = "busybox_" + strconv.FormatInt(time.Now().Unix(), 20)
 				log.Println("Creating a volume of Format Type - ", formatTypes[k])
 				volName := inputparams.GetVolumeNameWithTimeStamp("dockerVol")
-				_, err := dockercli.InvokeCommand(vms[vmIndx], "docker volume create --driver=vsphere --name="+
+				_, err := ssh.InvokeCommand(vms[vmIndx], "docker volume create --driver=vsphere --name="+
 					volName+" -o size="+volSizes[i]+" -o diskformat="+formatTypes[k])
 				if err != nil {
 					log.Fatalf("Failed to create a volume named: %s. Error - %v ", volName, err)
@@ -100,7 +101,7 @@ func TestVolumeProperties(t *testing.T) {
 						log.Fatal("Volume properties fetched using docker cli do not matches with the expected values")
 					}
 				}
-				dockercli.InvokeCommand(vms[vmIndx], "docker run -d -v "+volName+":/vol --name "+containerName+" busybox tail -f /dev/null")
+				ssh.InvokeCommand(vms[vmIndx], "docker run -d -v "+volName+":/vol --name "+containerName+" busybox tail -f /dev/null")
 				// Verifying attached to the vm field for volume
 				vmNameFrmAdminCli := verification.GetVMAttachedToVolUsingAdminCli(volName, esx)
 				if dockerCliCheck {

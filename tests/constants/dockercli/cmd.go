@@ -26,6 +26,18 @@ const (
 	// InspectVolume to grab volume properties
 	InspectVolume = dockerVol + "inspect "
 
+	// CreateVolume create a volume with vsphere driver
+	CreateVolume = dockerVol + " create --driver=vsphere "
+
 	// RemoveVolume constant refers delete volume command
 	RemoveVolume = dockerVol + "rm "
+
+	// KillDocker kill docker
+	KillDocker = "pkill -9 dockerd "
+
+	// RunContainer create and run a container
+	RunContainer = docker + "run "
+
+	// RemoveContainer remove the container
+	RemoveContainer = docker + "rm -f "
 )
