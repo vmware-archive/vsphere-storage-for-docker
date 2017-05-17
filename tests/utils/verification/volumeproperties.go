@@ -21,15 +21,15 @@ package verification
 import (
 	"log"
 	"strings"
+
+	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
+	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	sshutil "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 )
 
-var adminCliLs = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls "
-var dockerCliInspect = "docker volume inspect "
-
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
 func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
-	cmd := dockerCliInspect + " --format '{{index .Status \"attached to VM\"}}' " + volName
+	cmd := dockercli.InspectVolume + " --format '{{index .Status \"attached to VM\"}}' " + volName
 	op := ExecCmd(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by docker cli when looking for attached to vm field for volume. Output: ", op)
@@ -39,7 +39,7 @@ func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
 
 // GetVMAttachedToVolUsingAdminCli returns attached to vm field of volume using admin cli
 func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
-	cmd := adminCliLs + "-c volume,attached-to 2>/dev/null | grep " + volName
+	cmd := admincli.ListVolumes + "-c volume,attached-to 2>/dev/null | grep " + volName
 	op := ExecCmd(hostname, cmd)
 	volProps := strings.Fields(op)
 	if op == "" {
@@ -55,7 +55,7 @@ func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
 // GetVolumePropertiesAdminCli returns capacity, attached-to-vm and disk-format field
 // for volume using Admin cli
 func GetVolumePropertiesAdminCli(volName string, hostname string) string {
-	cmd := adminCliLs + "-c volume,attached-to,capacity,disk-format 2>/dev/null | grep " + volName
+	cmd := admincli.ListVolumes + "-c volume,attached-to,capacity,disk-format 2>/dev/null | grep " + volName
 	op := ExecCmd(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by admin cli when looking for, size, disk-format and attached to vm. Output: ", op)
@@ -70,7 +70,7 @@ func GetVolumePropertiesAdminCli(volName string, hostname string) string {
 // GetVolumePropertiesDockerCli returns capacity,  attached-to-vm and disk-format field
 // for volume using Docker cli
 func GetVolumePropertiesDockerCli(volName string, hostname string) string {
-	cmd := dockerCliInspect + " --format '{{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' " + volName
+	cmd := dockercli.InspectVolume + " --format '{{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' " + volName
 	op := ExecCmd(hostname, cmd)
 	expctedLen := 0
 	if op == "" {
@@ -111,9 +111,9 @@ func ExecCmd(hostname string, cmd string) string {
 // do not want to run certain verifications
 // on docker 1.11
 func IsDockerCliCheckNeeded(ipAddr string) bool {
-	dkrVrsn := GetDockerVersion(ipAddr)
-	log.Println("Docker version:  ", dkrVrsn)
-	if strings.Contains(dkrVrsn, "Docker version 1.11.") {
+	dockerVer := GetDockerVersion(ipAddr)
+	log.Println("Docker version:  ", dockerVer)
+	if strings.Contains(dockerVer, "Docker version 1.11.") {
 		return false
 	}
 	return true
