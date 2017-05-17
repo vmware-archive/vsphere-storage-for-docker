@@ -321,7 +321,7 @@ def get_info(volpath):
     dhandle = vol_open_path(volpath, VMDK_OPEN_DISKCHAIN_NOIO)
 
     if not disk_is_valid(dhandle):
-        logging.warning("Failed to open disk - %x", volpath)
+        logging.warning("Failed to open disk - %s", volpath)
         return None
 
     sinfo = disk_info()
