@@ -99,9 +99,7 @@ SRC = main.go log_formatter.go utils/refcount/refcnt.go \
 	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go\
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 
-TEST_SRC = ../tests/utils/inputparams/testparams.go \
-	../tests/utils/dockercli/volumelifecycle.go \
-	../tests/utils/verification/volumeproperties.go
+TEST_SRC = ../tests/utils/inputparams/testparams.go
 
 # Canned recipe
 define log_target
@@ -162,7 +160,7 @@ clean-as-root: pkg-post
 
 DIRS_TO_VERIFY := . utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
 	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification ../tests/constants/admincli \
-	../tests/constants/dockercli
+	../tests/constants/dockercli ../tests/utils/ssh ../tests/utils/misc
 
 FILES_TO_VERIFY := $(foreach dir, $(DIRS_TO_VERIFY), $(dir)/*.go)
 .code_verify: $(FILES_TO_VERIFY)

@@ -23,10 +23,11 @@
 package e2e
 
 import (
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"os"
 	"testing"
+
+	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 )
 
 // Test objective: create volume on fresh setup very first time and verifies the volume
@@ -60,7 +61,7 @@ func TestVolumeCreationFirstTime(t *testing.T) {
 		} else {
 			t.Logf("\nTestcase passed: successfully able to create volume [%s]\n", out)
 			// delete volume
-			dockercli.DeleteVolume(volumeName, host)
+			dockercli.DeleteVolume(host, volumeName)
 		}
 	}
 }

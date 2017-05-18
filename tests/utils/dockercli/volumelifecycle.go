@@ -18,35 +18,43 @@
 package dockercli
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-)
+	"log"
+	"time"
 
-// sshIdentity an array variable to prepare ssh input parameter to pass identify value
-var sshIdentity = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
+	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+)
 
 // CreateDefaultVolume is going to create vsphere docker volume with
 // defaults.
-func CreateDefaultVolume(ip string, name string) ([]byte, error) {
-	fmt.Printf("\ncreating volume [%s] on VM[%s]", name, ip)
-	return InvokeCommand(ip, "docker volume create --driver=vsphere --name="+name)
+func CreateDefaultVolume(ip, name string) ([]byte, error) {
+	log.Printf("Creating volume [%s] on VM [%s]\n", name, ip)
+	return ssh.InvokeCommand(ip, dockercli.CreateVolume+"--name="+name)
+}
+
+// AttachVolume - attach volume to container on given host
+func AttachVolume(ip, volName, containerName string) ([]byte, error) {
+	log.Printf("Attaching volume [%s] on VM[%s]\n", volName, ip)
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+"-d -v "+volName+
+		":/vol1 --name "+containerName+
+		" busybox tail -f /dev/null")
 }
 
 // DeleteVolume helper deletes the created volume as per passed volume name.
-func DeleteVolume(name string, ip string) ([]byte, error) {
-	fmt.Printf("\ndestroying volume [%s]", name)
-	return InvokeCommand(ip, "docker volume rm "+name)
+func DeleteVolume(ip, name string) ([]byte, error) {
+	log.Printf("Destroying volume [%s]\n", name)
+	return ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
 }
 
-// InvokeCommand helper method can be consumed by test directly to invoke
-// any command on the remote host.
-// remoteHostIP:
-// 	remote machine address to execute on the machine
-// cmd:
-//	A command string to be executed on the remote host as per
-//	remoteHostIP value
-func InvokeCommand(remoteHostIP string, cmd string) ([]byte, error) {
-	return exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+remoteHostIP, cmd)...).CombinedOutput()
+// KillDocker - kill docker daemon. It is restarted automatically
+func KillDocker(ip string) ([]byte, error) {
+	log.Printf("Killing docker on VM [%s]\n", ip)
+	out, err := ssh.InvokeCommand(ip, dockercli.KillDocker)
+	time.Sleep(2 * time.Second)
+	return out, err
+}
+
+// RemoveContainer - remove the container forcefully (stops and removes it)
+func RemoveContainer(ip, containerName string) ([]byte, error) {
+	return ssh.InvokeCommand(ip, dockercli.RemoveContainer+containerName)
 }
