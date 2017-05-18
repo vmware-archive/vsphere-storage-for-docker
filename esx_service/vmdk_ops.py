@@ -288,7 +288,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
     lockname = "{}.{}.{}".format(src_datastore, tenant_name, src_volume)
     with lockManager.get_lock(lockname):
         # Verify if the source volume is in use.
-        attached, uuid, attach_as = getStatusAttached(src_vmdk_path)
+        attached, uuid, attach_as, _ = getStatusAttached(src_vmdk_path)
         if attached:
             if handle_stale_attach(vmdk_path, uuid):
                 return err("Source volume cannot be in use when cloning")
@@ -598,13 +598,15 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
     logging.info("*** removeVMDK: %s", vmdk_path)
 
     # Check the current volume status
-    kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
+    kv_status_attached, kv_uuid, attach_mode, attached_vm_name = getStatusAttached(vmdk_path)
     if kv_status_attached:
         ret = handle_stale_attach(vmdk_path, kv_uuid)
         if ret:
-            logging.info("*** removeVMDK: %s is in use, VM uuid = %s (%s)", vmdk_path, kv_uuid, ret)
-            return err("Failed to remove volume {0}, in use by VM uuid = {1}.".format(
-                vmdk_path, kv_uuid))
+            if vol_name is None:
+                vol_name = vmdk_utils.get_volname_from_vmdk_path(vmdk_path)
+            logging.info("*** removeVMDK: %s is in use, volume = %s VM = %s VM-uuid = %s (%s)",
+                vmdk_path, vol_name, attached_vm_name, kv_uuid, ret)
+            return err("Failed to remove volume {0}, in use by VM = {1}.".format(vol_name, attached_vm_name))
 
     # Cleaning .vmdk file
     clean_err = cleanVMDK(vmdk_path, vol_name)
@@ -1117,7 +1119,10 @@ def setStatusDetached(vmdk_path):
 
 
 def getStatusAttached(vmdk_path):
-    '''Returns (attached, uuid, attach_as) tuple. For 'detached' status uuid is None'''
+    '''
+    Returns (attached, uuid, attach_as, vm_name) tuple. For 'detached' status
+    uuid and vm_name are None.
+    '''
 
     vol_meta = kv.getAll(vmdk_path)
     try:
@@ -1126,14 +1131,20 @@ def getStatusAttached(vmdk_path):
         attach_as = kv.DEFAULT_ATTACH_AS
 
     if not vol_meta or kv.STATUS not in vol_meta:
-        return False, None, attach_as
+        return False, None, attach_as, None
 
     attached = (vol_meta[kv.STATUS] == kv.ATTACHED)
     try:
         uuid = vol_meta[kv.ATTACHED_VM_UUID]
     except:
         uuid = None
-    return attached, uuid, attach_as
+
+    try:
+        vm_name = vol_meta[kv.ATTACHED_VM_NAME]
+    except:
+        vm_name = None
+
+    return attached, uuid, attach_as, vm_name
 
 def handle_stale_attach(vmdk_path, kv_uuid):
        '''
@@ -1250,7 +1261,7 @@ def disk_attach(vmdk_path, vm):
     return error or unit:bus numbers of newly attached disk.
     '''
 
-    kv_status_attached, kv_uuid, attach_mode = getStatusAttached(vmdk_path)
+    kv_status_attached, kv_uuid, attach_mode, _ = getStatusAttached(vmdk_path)
     logging.info("Attaching {0} as {1}".format(vmdk_path, attach_mode))
 
     # If the volume is attached then check if the attach is stale (VM is powered off).
