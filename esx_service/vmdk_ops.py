@@ -288,10 +288,11 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
     lockname = "{}.{}.{}".format(src_datastore, tenant_name, src_volume)
     with lockManager.get_lock(lockname):
         # Verify if the source volume is in use.
-        attached, uuid, attach_as, _ = getStatusAttached(src_vmdk_path)
+        attached, uuid, attach_as, attached_vm_name = getStatusAttached(src_vmdk_path)
         if attached:
             if handle_stale_attach(vmdk_path, uuid):
-                return err("Source volume cannot be in use when cloning")
+                return err("Source volume {0} is in use by VM {1} and can't be cloned.".format(src_volume,
+                    attached_vm_name))
 
         # Reauthorize with size info of the volume being cloned
         src_vol_info = kv.get_vol_info(src_vmdk_path)
