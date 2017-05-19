@@ -20,7 +20,7 @@
 ## - Controlling VMs under ESX   => may need govc command line
 ##
 
-# Current tag: 0.11 (used in drone.yml).
+# Current tag: 0.12 (used in drone.yml).
 # Build the image manually (docker image build -t cnastorage/vibauthor-and-go:<tag> -f <this file> .)
 
 FROM centos:6.6
@@ -31,14 +31,15 @@ MAINTAINER cna-storage@vmware.com
 WORKDIR /root
 
 RUN yum update -y && \
-    yum -y install tar openssl python-lxml glibc.i686 git file e2fsprogs gcc  glibc-devel.x86_64 glibc-devel.i686 libgcc.i686 glibc-static  && \
+    yum -y install tar wget openssl python-lxml glibc.i686 git file e2fsprogs gcc  glibc-devel.x86_64 glibc-devel.i686 libgcc.i686 glibc-static  && \
     curl https://storage.googleapis.com/golang/go1.7.1.linux-amd64.tar.gz | tar -C /usr/local -xzf - && \
     rm -rf ~/*.rpm ~/*.tar.gz && \
     yum clean all && \
     curl -L https://github.com/vmware/govmomi/releases/download/v0.13.0/govc_linux_amd64.gz | gzip -d > /usr/local/bin/govc && \
     chmod +x /usr/local/bin/govc && \
     curl -O http://download3.vmware.com/software/vmw-tools/vibauthor/vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm && \
-    rpm -ivh vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm
+    rpm -ivh vmware-esx-vib-author-5.0.0-0.0.847598.i386.rpm && \
+    wget -O jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 && chmod +x jq && cp jq /usr/local/bin
 
 
 ENV PATH=$PATH:/usr/local/go/bin:/go/bin \
