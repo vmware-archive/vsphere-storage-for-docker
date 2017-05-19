@@ -26,6 +26,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
@@ -103,10 +104,17 @@ func VerifyAttachedStatus(name, hostName, esxName string) bool {
 
 	vmAttachedHost := GetVMAttachedToVolUsingDockerCli(name, hostName)
 	vmAttachedESX := GetVMAttachedToVolUsingAdminCli(name, esxName)
+	expectedVMName := govc.RetrieveVMNameFromIP(hostName)
 
-	// TODO add additional check to compare these names with the expected vmname
-	// need govmomi integration to get name from ip
-	return (vmAttachedHost == vmAttachedESX)
+	isMatching := ((vmAttachedHost == expectedVMName) && (vmAttachedHost == vmAttachedESX))
+
+	if !isMatching {
+		log.Printf("Expected Attached VM name is [%s]", expectedVMName)
+		log.Printf("Attached VM name from Docker CLI is [%s]", vmAttachedHost)
+		log.Printf("Attached VM name from Admin CLI is [%s]", vmAttachedESX)
+	}
+
+	return isMatching
 }
 
 //GetVolumeStatusHost - get the volume status on a given host

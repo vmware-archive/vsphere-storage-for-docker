@@ -5,7 +5,7 @@ clone:
 build:
 
   serialize_branches:
-    image: &build_cnt cnastorage/vibauthor-and-go:0.11
+    image: &build_cnt cnastorage/vibauthor-and-go:0.12
     environment: &setup_env
       - DRONE_TOKEN=$$DRONE_TOKEN
       - DRONE_SERVER=$$DRONE_SERVER

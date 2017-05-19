@@ -71,7 +71,7 @@ fi
 # Docker container images used in the build
 
 #  GO and Vibauthoring
-plugin_container_version=0.11
+plugin_container_version=0.12
 
 plug_container=cnastorage/vibauthor-and-go:$plugin_container_version
 #dockerfile=Dockerfile.vibauthor-and-go
@@ -140,6 +140,10 @@ else
     -e "ESX=$2" \
     -e "VM1=$3" \
     -e "VM2=$4" \
+    -e "GOVC_INSECURE=$GOVC_INSECURE" \
+    -e "GOVC_URL=$GOVC_URL" \
+    -e "GOVC_USERNAME=$GOVC_USERNAME" \
+    -e "GOVC_PASSWORD=$GOVC_PASSWORD" \
     -e "SSH_KEY_OPT=$SSH_KEY_OPT" \
     -v $docker_socket:$docker_socket  \
     -v $ssh_key_path:$ssh_key_opt_container:ro \
