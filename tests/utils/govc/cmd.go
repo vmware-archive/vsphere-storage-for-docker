@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /*
-govc util is going to hold various helper methods to be consumed by testcase.
+govc util holds various helper methods to be consumed by testcase.
 It levereges govc CLI, parses json response and serves testcase/verification
 util need.
 */
@@ -27,10 +27,10 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
-// RetrieveVMnameFromIP util retrieves VM  name from passed VM IP
+// RetrieveVMNameFromIP util retrieves VM  name from passed VM IP
 //govc vm.info -vm.ip=10.20.104.62 -json | jq -r .VirtualMachines[].Name
-func RetrieveVMnameFromIP(ip string) string {
-	cmd := govc.VMInfoByIP + ip + govc.JSONTypeOutput + "| " + govc.JSONParser + govc.VirtualMachineName
+func RetrieveVMNameFromIP(ip string) string {
 	log.Printf("Finding VM name from IP Address [%s]\n", ip)
+	cmd := govc.VMInfoByIP + ip + govc.JSONTypeOutput + "| " + govc.JSONParser + govc.VirtualMachineName
 	return ssh.InvokeCommandLocally(cmd)
 }

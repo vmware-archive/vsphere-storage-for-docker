@@ -45,7 +45,7 @@ func InvokeCommand(ip, cmd string) ([]byte, error) {
 func InvokeCommandLocally(cmd string) string {
 	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 	if err != nil {
-		log.Fatalf("error => %v", err)
+		log.Fatalf("Failed to invoke command [%s]: %v", cmd, err)
 	}
 	return strings.TrimSpace(misc.FormatOutput(out[:]))
 }
