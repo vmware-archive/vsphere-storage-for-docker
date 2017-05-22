@@ -6,7 +6,7 @@ Docker volumes in vSphere are backed by VMDK files. These VMDKs could be backed 
 
 ## Multiple datastores Support
 
-By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. The vDVS allows you to create a volume on any of the datastores available.
+By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. vDVS allows you to create a volume on any of the datastores available.
 
 ## Default datastore
 By default when you just specify name of volume - it is created in the datastore that hosts the VM. 
@@ -26,7 +26,7 @@ defaultDsVolume.vmdk
 
 ## Custom datastore
 
-To choose a datastore other than one in which VM is hosted, you have to specify name and append the datastore name with a ```@``` symbol.
+To choose a datastore other than one in which VM is hosted, you have to specify name and append the datastore name with ```@``` symbol.
 
 ```
 $docker volume create --driver=vsphere --name=ds1volume@datastore1 -o size=10gb
@@ -36,7 +36,7 @@ ds1volume@datastore1
 We can check that volume is created in the datastore1
 
 ```
-$esx ls /vmfs/volumes/datastore1/dockvols
+$esx ls /vmfs/volumes/datastore1/dockvols/<VMGROUP_NAME>/ds1volume
 
 ds1volume.vmdk
 ```
@@ -54,3 +54,8 @@ vsphere			defaultDsVolume
 vsphere			ds1volume@datastore1
 photon			ds2volume@datastore2
 ```
+
+Datastore for a volume is decided as shown below (preference from top to bottom)
+
+1. Using volume long/fully qualified name (with @<datastore_name>): volume is created on custom datastore
+2. Using short name (not passed @<datastore_name>): volume is created on the vmgroup's default_datastore.
