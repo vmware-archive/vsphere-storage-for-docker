@@ -172,10 +172,10 @@ both VM1 and VM2 environment variables
 - The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use [managed plugin](https://github.com/vmware/docker-volume-vsphere/blob/master/plugin/Makefile#L30).
 If you want to user another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
 
-- Test verification is extended using gvmomi integration and `govc` cli is **required to set** following environment variable.
+- Test verification is extended using gvmomi integration and `govc` cli is **required to set** following environment variables.
   - `GOVC_INSECURE` as `1`
   - `GOVC_URL` same as `ESX IP`
-  - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials login to `ESX IP`
+  - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials logging in to `ESX IP`
 
 **Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/docker-volume-vsphere/pull/1163), our build/deployment script start using managed plugin approach.
 
