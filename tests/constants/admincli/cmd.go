@@ -25,4 +25,34 @@ const (
 
 	// ListVolumes referring to vmdkops_admin volume ls
 	ListVolumes = vmdkopsAdminVolume + "ls "
+
+	// CreateVMgroup referring to create vmgroup
+	CreateVMgroup = vmdkopsAdmin + "vmgroup create "
+
+	// RemoveVMgroup referring to remove vmgroup
+	RemoveVMgroup = vmdkopsAdmin + "vmgroup rm "
+
+	// AddVMToVMgroup referring to add vm to a vmgroup
+	AddVMToVMgroup = vmdkopsAdmin + "vmgroup vm add "
+
+	// RemoveVMFromVMgroup referring to remove a vm from vmgroup
+	RemoveVMFromVMgroup = vmdkopsAdmin + "vmgroup vm rm "
+
+	// ReplaceVMFromVmgroup referring replace a vm from vmgroup
+	ReplaceVMFromVMgroup = vmdkopsAdmin + "vmgroup vm replace "
+
+	// DefaultVMgroup referring name of default vmgroup
+	DefaultVMgroup = "_DEFAULT "
+
+	// InitLocalConfigDb referring to Initialize (local) Single Node Config DB
+	InitLocalConfigDb = vmdkopsAdmin + "config init --local"
+
+	// RemoveLocalConfigDb referring to Remove (local) Single Node Config DB
+	RemoveLocalConfigDb = vmdkopsAdmin + "config rm --local --confirm"
+
+	// ListVMgroups referring to vmdkops_admin vmgroups ls
+	ListVMgroups = vmdkopsAdmin + "vmgroup ls "
+
+	// UpdateVMgroup referring to updating a vmgroup
+	UpdateVMgroup = vmdkopsAdmin + "vmgroup update "
 )
