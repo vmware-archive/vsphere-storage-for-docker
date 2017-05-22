@@ -104,7 +104,7 @@ To update documentation
 # 1. Checkout the gh-pages branch
 git checkout gh-pages
 # 2. Go to jekyll-docs directory
-cd jekyll-docs 
+cd jekyll-docs
 # 3. Build the jekyll site
 docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
 # 4. Remove the old site and copy the new one.
@@ -172,6 +172,11 @@ both VM1 and VM2 environment variables
 - The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use [managed plugin](https://github.com/vmware/docker-volume-vsphere/blob/master/plugin/Makefile#L30).
 If you want to user another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
 
+- Test verification is extended using gvmomi integration and `govc` cli is **required to set** following environment variables.
+  - `GOVC_INSECURE` as `1`
+  - `GOVC_URL` same as `ESX IP`
+  - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials logging in to `ESX IP`
+
 **Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/docker-volume-vsphere/pull/1163), our build/deployment script start using managed plugin approach.
 
 Examples:
@@ -188,6 +193,10 @@ export ESX=10.20.105.54
 export VM1=10.20.105.121
 export VM2=10.20.104.210
 export DOCKER_HUB_REPO=cnastorage
+export GOVC_INSECURE=1
+export GOVC_URL=10.20.105.54
+export GOVC_USERNAME=root
+export GOVC_PASSWORD=<ESX login passwd>
 
 make all
 ```
