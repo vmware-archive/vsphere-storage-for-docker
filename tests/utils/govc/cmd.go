@@ -34,3 +34,19 @@ func RetrieveVMNameFromIP(ip string) string {
 	cmd := govc.VMInfoByIP + ip + govc.JSONTypeOutput + "| " + govc.JSONParser + govc.VirtualMachineName
 	return ssh.InvokeCommandLocally(cmd)
 }
+
+// GetVMPowerState util retrieves VM's current power state
+// govc vm.info -json photon1 | jq -r .VirtualMachines[].Runtime.PowerState
+func GetVMPowerState(vmName string) string {
+	log.Printf("Retrieving VM power state for [%s]\n", vmName)
+	cmd := govc.VMInfo + govc.JSONTypeOutput + vmName + " | " + govc.JSONParser + govc.VirtualMachinePowerState
+	return ssh.InvokeCommandLocally(cmd)
+}
+
+// PowerOnVM util retrieves VM's current power state
+// govc vm.power -on=true photon
+func PowerOnVM(vmName string) string {
+	log.Printf("Powering on VM [%s]\n", vmName)
+	cmd := govc.PowerOnVM + vmName
+	return ssh.InvokeCommandLocally(cmd)
+}

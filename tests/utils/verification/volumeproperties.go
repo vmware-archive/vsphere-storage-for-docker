@@ -154,7 +154,7 @@ func VerifyDetachedStatus(name, hostName, esxName string) bool {
 			return true
 		}
 	}
-	log.Fatalf("Timed out to poll status\n")
+	log.Printf("Timed out to poll status\n")
 	return false
 }
 
