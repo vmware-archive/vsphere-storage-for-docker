@@ -18,6 +18,7 @@
 package dockercli
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -65,29 +66,54 @@ func KillDocker(ip string) ([]byte, error) {
 	return out, err
 }
 
-// KillVDVSPlugin - kill vDVS plugin. It is restarted automatically
-func KillVDVSPlugin(ip string) ([]byte, error) {
-	log.Printf("Killing vDVS plugin on VM [%s]\n", ip)
+// GetVDVSPlugin - get vDVS plugin id
+func GetVDVSPlugin(ip string) (string, error) {
 	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
-	if err != nil {
-		return out, err
+	if misc.FormatOutput(out) == "" {
+		return "", fmt.Errorf("vDVS plugin unavailable")
 	}
+	return strings.Fields(misc.FormatOutput(out))[0], err
+}
 
-	pluginID := strings.Fields(misc.FormatOutput(out))[0]
-	out, err = ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
-
-	time.Sleep(2 * time.Second)
-
-	out, err = ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
-	// plugin autorestart succeeded i.e. there is an entry for vDVS plugin
-	if misc.FormatOutput(out) != "" {
-		return out, err
-	}
-
+// StartVDVSPlugin - manually start vDVS plugin
+func StartVDVSPlugin(ip string) ([]byte, error) {
 	log.Printf("Manually starting vDVS plugin on VM [%s]\n", ip)
-	// manually start the plugin
-	out, err = ssh.InvokeCommand(ip, dockercli.StartVDVSPlugin)
+	out, err := ssh.InvokeCommand(ip, dockercli.StartVDVSPlugin)
 	return out, err
+}
+
+// KillVDVSPlugin - kill vDVS plugin. It is restarted automatically
+func KillVDVSPlugin(ip, pluginID string) ([]byte, error) {
+	out, err := ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
+	time.Sleep(2 * time.Second)
+	return out, err
+}
+
+// RestartVDVSPlugin - kill vDVS plugin. It is restarted automatically
+// if autorestart failed, start it manually
+func RestartVDVSPlugin(ip string) ([]byte, error) {
+	log.Printf("Restarting vDVS plugin on VM [%s]\n", ip)
+
+	pluginID, err := GetVDVSPlugin(ip)
+	if err != nil {
+		log.Printf("vDVS plugin unavailable")
+		return nil, err
+	}
+
+	out, err := KillVDVSPlugin(ip, pluginID)
+	if err != nil {
+		log.Printf("Killing vDVS plugin failed")
+		return out, err
+	}
+
+	pluginID, err = GetVDVSPlugin(ip)
+	// plugin autorestart succeeded i.e. there is an entry for vDVS plugin
+	if pluginID != "" {
+		return out, err
+	}
+
+	// manually restart plugin if autorestart wasn't successful
+	return StartVDVSPlugin(ip)
 }
 
 // RemoveContainer - remove the container forcefully (stops and removes it)

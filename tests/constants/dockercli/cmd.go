@@ -35,14 +35,17 @@ const (
 	// KillDocker kill docker
 	KillDocker = "pkill -9 dockerd "
 
+	// vDVSPluginName name of vDVS plugin
+	vDVSPluginName = "vsphere "
+
 	// GetVDVSPlugin gets vDVS plugin info
-	GetVDVSPlugin = docker + "plugin list --no-trunc | grep vsphere"
+	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + vDVSPluginName
 
 	// KillVDVSPlugin kills vDVS plugin
 	KillVDVSPlugin = "docker-runc kill "
 
 	// StartVDVSPlugin starts the vDVS plugin
-	StartVDVSPlugin = docker + " plugin enable vsphere"
+	StartVDVSPlugin = docker + " plugin enable " + vDVSPluginName
 
 	// RunContainer create and run a container
 	RunContainer = docker + "run "
