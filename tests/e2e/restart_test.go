@@ -20,8 +20,6 @@ package e2e
 import (
 	"log"
 	"os"
-	"strconv"
-	"time"
 
 	. "gopkg.in/check.v1"
 
@@ -39,10 +37,10 @@ type PluginSuite struct {
 }
 
 func (s *PluginSuite) SetUpTest(c *C) {
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("abc")
 	s.hostName = os.Getenv("VM2")
 	s.esxName = os.Getenv("ESX")
-	s.containerName = "busybox_" + strconv.FormatInt(time.Now().Unix(), 20)
+	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("restart_test")
+	s.containerName = inputparams.GetContainerNameWithTimeStamp("restart_test")
 }
 
 func (s *PluginSuite) TearDownTest(c *C) {
@@ -62,7 +60,7 @@ var _ = Suite(&PluginSuite{})
 func (s *PluginSuite) TestVolumeStaleMount(c *C) {
 	log.Printf("START: Stale mount test")
 
-	out, err := dockercli.CreateDefaultVolume(s.hostName, s.volumeName)
+	out, err := dockercli.CreateVolume(s.hostName, s.volumeName)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 
 	out, err = dockercli.AttachVolume(s.hostName, s.volumeName, s.containerName)

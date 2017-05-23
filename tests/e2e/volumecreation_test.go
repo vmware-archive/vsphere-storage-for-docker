@@ -53,8 +53,8 @@ func TestVolumeCreationFirstTime(t *testing.T) {
 	var err error
 	var out []byte
 	for _, host := range dockerHosts {
-		volumeName := inputparams.GetVolumeNameWithTimeStamp("abc")
-		out, err = dockercli.CreateDefaultVolume(host, volumeName)
+		volumeName := inputparams.GetVolumeNameWithTimeStamp("volumecreation_test")
+		out, err = dockercli.CreateVolume(host, volumeName)
 
 		if err != nil {
 			t.Errorf("\nError has occurred [%s] \n\twhile creating volume [%s] very first time: err -> %v", out, volumeName, err)

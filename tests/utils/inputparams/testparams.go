@@ -30,9 +30,10 @@ var (
 )
 
 func init() {
-	flag.StringVar(&volumeName, "v", "DockerTestVol", "Volume name to use in tests")
+
 	flag.StringVar(&endPoint1, "H1", "unix:///var/run/docker.sock", "Endpoint (Host1) to connect to")
 	flag.StringVar(&endPoint2, "H2", "unix:///var/run/docker.sock", "Endpoint (Host2) to connect to")
+	flag.StringVar(&volumeName, "v", "TestVol", "Volume name to use in tests")
 	flag.Parse()
 }
 
@@ -42,8 +43,13 @@ func GetVolumeName() string {
 }
 
 // GetVolumeNameWithTimeStamp prepares unique volume name by appending current time-stamp value
-func GetVolumeNameWithTimeStamp(volName string) string {
-	return volName + "_" + strconv.FormatInt(time.Now().Unix(), 10)
+func GetVolumeNameWithTimeStamp(volumeName string) string {
+	return volumeName + "_volume_" + strconv.FormatInt(time.Now().Unix(), 10)
+}
+
+// GetContainerNameWithTimeStamp prepares unique container name by appending current time-stamp value
+func GetContainerNameWithTimeStamp(containerName string) string {
+	return containerName + "_container_" + strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 // GetEndPoint1 returns first VM endpoint supplied through CLI
