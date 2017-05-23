@@ -350,7 +350,7 @@ test-all:  test e2e-test testremote
 # An end-to-end test target for vSphere Docker Volume Driver
 e2e-test:
 	$(log_target)
-	$(SCRIPTS)/build.sh e2e-dkrVolDriver-test "$(ESX)" "$(VM1)" "$(VM2)"
+	$(SCRIPTS)/build.sh e2e-dkrVolDriver-test "$(ESX)" "$(VM1)" "$(VM2)" "$(DS1)" "$(DS2)" "$(CNAME)" "$(T1)"
 
 .PHONY: e2e-dkrVolDriver-test
 e2e-dkrVolDriver-test:

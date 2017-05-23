@@ -52,6 +52,9 @@ const (
 	// where --name will be name of the vmgroup
 	ReplaceVMFromVMgroup = vmdkopsAdmin + "vmgroup vm replace --name="
 
+	// ModifyAccessForVolumeGroup Modify access perms on volume group
+	ModifyAccessForVolumeGroup = vmdkopsCLIVolumegroup + "access set --name "
+
 	// DefaultVMgroup referring name of default vmgroup
 	DefaultVMgroup = "_DEFAULT "
 
