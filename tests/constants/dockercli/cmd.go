@@ -41,6 +41,9 @@ const (
 	// KillVDVSPlugin kills vDVS plugin
 	KillVDVSPlugin = "docker-runc kill "
 
+	// StartVDVSPlugin starts the vDVS plugin
+	StartVDVSPlugin = docker + " plugin enable vsphere"
+
 	// RunContainer create and run a container
 	RunContainer = docker + "run "
 
@@ -52,4 +55,7 @@ const (
 
 	// RemoveContainer remove the container
 	RemoveContainer = docker + "rm -f "
+
+	// TestContainer test busybox container that keeps running
+	TestContainer = " busybox tail -f /dev/null "
 )

@@ -38,7 +38,7 @@ func AttachVolume(ip, volName, containerName string) ([]byte, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+"-d -v "+volName+
 		":/vol1 --name "+containerName+
-		" busybox tail -f /dev/null")
+		dockercli.TestContainer)
 }
 
 // AttachVolumeWithRestart - attach volume to container on given host
@@ -48,7 +48,7 @@ func AttachVolumeWithRestart(ip, volName, containerName string) ([]byte, error) 
 	log.Printf("Attaching volume [%s] on VM[%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always -d -v "+volName+
 		":/vol1 --name "+containerName+
-		" busybox tail -f /dev/null")
+		dockercli.TestContainer)
 }
 
 // DeleteVolume helper deletes the created volume as per passed volume name.
@@ -65,7 +65,7 @@ func KillDocker(ip string) ([]byte, error) {
 	return out, err
 }
 
-// KillVDVSPlugin - kill docker daemon. It is restarted automatically
+// KillVDVSPlugin - kill vDVS plugin. It is restarted automatically
 func KillVDVSPlugin(ip string) ([]byte, error) {
 	log.Printf("Killing vDVS plugin on VM [%s]\n", ip)
 	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
@@ -77,6 +77,16 @@ func KillVDVSPlugin(ip string) ([]byte, error) {
 	out, err = ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
 
 	time.Sleep(2 * time.Second)
+
+	out, err = ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
+	// plugin autorestart succeeded i.e. there is an entry for vDVS plugin
+	if misc.FormatOutput(out) != "" {
+		return out, err
+	}
+
+	log.Printf("Manually starting vDVS plugin on VM [%s]\n", ip)
+	// manually start the plugin
+	out, err = ssh.InvokeCommand(ip, dockercli.StartVDVSPlugin)
 	return out, err
 }
 
