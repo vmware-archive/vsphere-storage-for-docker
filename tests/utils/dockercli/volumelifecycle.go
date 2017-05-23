@@ -19,9 +19,11 @@ package dockercli
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
@@ -35,6 +37,16 @@ func CreateVolume(ip, name string) ([]byte, error) {
 func AttachVolume(ip, volName, containerName string) ([]byte, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+"-d -v "+volName+
+		":/vol1 --name "+containerName+
+		" busybox tail -f /dev/null")
+}
+
+// AttachVolumeWithRestart - attach volume to container on given host
+// this util starts the container with restart=always flag so that container
+// automatically restarts if killed
+func AttachVolumeWithRestart(ip, volName, containerName string) ([]byte, error) {
+	log.Printf("Attaching volume [%s] on VM[%s]\n", volName, ip)
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always -d -v "+volName+
 		":/vol1 --name "+containerName+
 		" busybox tail -f /dev/null")
 }
@@ -53,8 +65,35 @@ func KillDocker(ip string) ([]byte, error) {
 	return out, err
 }
 
+// KillVDVSPlugin - kill docker daemon. It is restarted automatically
+func KillVDVSPlugin(ip string) ([]byte, error) {
+	log.Printf("Killing vDVS plugin on VM [%s]\n", ip)
+	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
+	if err != nil {
+		return out, err
+	}
+
+	pluginID := strings.Fields(misc.FormatOutput(out))[0]
+	out, err = ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
+
+	time.Sleep(2 * time.Second)
+	return out, err
+}
+
 // RemoveContainer - remove the container forcefully (stops and removes it)
 func RemoveContainer(ip, containerName string) ([]byte, error) {
 	log.Printf("Removing container [%s] on VM [%s]\n", containerName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RemoveContainer+containerName)
+}
+
+// StartContainer - starts an already created the container
+func StartContainer(ip, containerName string) ([]byte, error) {
+	log.Printf("Starting container [%s] on VM [%s]", containerName, ip)
+	return ssh.InvokeCommand(ip, dockercli.StartContainer+containerName)
+}
+
+// StopContainer - stops the container
+func StopContainer(ip, containerName string) ([]byte, error) {
+	log.Printf("Stopping container [%s] on VM [%s]", containerName, ip)
+	return ssh.InvokeCommand(ip, dockercli.StopContainer+containerName)
 }

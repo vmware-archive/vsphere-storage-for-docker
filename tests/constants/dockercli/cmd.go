@@ -35,8 +35,20 @@ const (
 	// KillDocker kill docker
 	KillDocker = "pkill -9 dockerd "
 
+	// GetVDVSPlugin gets vDVS plugin info
+	GetVDVSPlugin = docker + "plugin list --no-trunc | grep vsphere"
+
+	// KillVDVSPlugin kills vDVS plugin
+	KillVDVSPlugin = "docker-runc kill "
+
 	// RunContainer create and run a container
 	RunContainer = docker + "run "
+
+	// StartContainer starts a container
+	StartContainer = docker + "start "
+
+	// StopContainer stops a container
+	StopContainer = docker + "stop "
 
 	// RemoveContainer remove the container
 	RemoveContainer = docker + "rm -f "
