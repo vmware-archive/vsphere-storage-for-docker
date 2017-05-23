@@ -31,12 +31,10 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "vmci_server.h"
 #include "vmci_sockets.h"
 #include "connection_types.h"
 
-
-// SO_QSIZE maximum number of connections (requests) in socket queue.
-int SO_QSIZE = 128;
 
 // Returns vSocket to listen on, or -1.
 // errno indicates the reason for a failure, if any.

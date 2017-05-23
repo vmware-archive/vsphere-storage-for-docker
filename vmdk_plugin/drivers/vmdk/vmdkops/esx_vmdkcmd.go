@@ -69,7 +69,7 @@ type vmciError struct {
 }
 
 // EsxPort used to connect to ESX, passed in as command line param
-var EsxPort int
+var EsxPort = 1019
 
 // Run command Guest VM requests on ESX via vmdkops_serv.py listening on vSocket
 // *

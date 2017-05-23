@@ -13,6 +13,7 @@
 // limitations under the License.
 
 // Shared info (magic, err. codes, etc) on vSocket command channel
+#pragma once
 
 #ifndef _CONNECTION_TYPES_H_
 #define _CONNECTION_TYPES_H_
@@ -61,4 +62,3 @@ vsock_get_family(void)
 }
 
 #endif // _CONNECTION_TYPES_H_
-
