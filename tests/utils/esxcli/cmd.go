@@ -18,10 +18,8 @@ package esxcli
 
 import (
 	"log"
-	"strings"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esxcli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
@@ -34,7 +32,7 @@ func GetVMProcessID(esxHostIP, vmName string) string {
 	if err != nil {
 		log.Fatalf("Failed to invoke command [%s]: %v", cmd, err)
 	}
-	return strings.TrimSpace(misc.FormatOutput(out[:]))
+	return out
 }
 
 // KillVM - kills VM using esxcli command

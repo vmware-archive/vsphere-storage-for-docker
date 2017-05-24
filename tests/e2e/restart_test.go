@@ -25,7 +25,6 @@ import (
 
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
@@ -44,14 +43,14 @@ func (s *PluginSuite) SetUpTest(c *C) {
 
 	// Create a volume
 	out, err := dockercli.CreateVolume(s.hostIP, s.volumeName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 }
 
 func (s *PluginSuite) TearDownTest(c *C) {
 	out, err := dockercli.RemoveContainer(s.hostIP, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 	out, err = dockercli.DeleteVolume(s.hostIP, s.volumeName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 }
 
 var _ = Suite(&PluginSuite{})
@@ -65,13 +64,13 @@ func (s *PluginSuite) TestVolumeStaleMount(c *C) {
 	log.Printf("START: restart_test.TestVolumeStaleMount")
 
 	out, err := dockercli.AttachVolume(s.hostIP, s.volumeName, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	out, err = dockercli.KillDocker(s.hostIP)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	status = verification.VerifyDetachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
@@ -91,22 +90,22 @@ func (s *PluginSuite) TestPluginKill(c *C) {
 	log.Printf("START: restart_test.TestPluginKill")
 
 	out, err := dockercli.AttachVolumeWithRestart(s.hostIP, s.volumeName, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	out, err = dockercli.KillVDVSPlugin(s.hostIP)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	out, err = dockercli.StopContainer(s.hostIP, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	out, err = dockercli.StartContainer(s.hostIP, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	out, err = dockercli.StopContainer(s.hostIP, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	status = verification.VerifyDetachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))

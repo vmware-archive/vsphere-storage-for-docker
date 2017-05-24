@@ -25,7 +25,7 @@ import (
 )
 
 // RestartVmdkopsService - restarts vmdkops service
-func RestartVmdkopsService(ip string) ([]byte, error) {
+func RestartVmdkopsService(ip string) (string, error) {
 	log.Printf("Restarting vmdkops service on ESX host [%s]\n", ip)
 	return ssh.InvokeCommand(ip, admincli.RestartService)
 }
