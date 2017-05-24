@@ -19,6 +19,7 @@ package inputparams
 
 import (
 	"flag"
+	"os"
 	"strconv"
 	"time"
 )
@@ -60,4 +61,19 @@ func GetEndPoint1() string {
 // GetEndPoint2 returns second VM endpoint supplied through CLI
 func GetEndPoint2() string {
 	return endPoint2
+}
+
+// GetSwarmManager1 returns swarm manager node IP from the configured swarm cluster
+func GetSwarmManager1() string {
+	return os.Getenv("MANAGER1")
+}
+
+// GetSwarmWorker1 returns 1st swarm worker node IP from the configured swarm cluster
+func GetSwarmWorker1() string {
+	return os.Getenv("WORKER1")
+}
+
+// GetSwarmWorker2 returns 2nd swarm worker node IP from the configured swarm cluster
+func GetSwarmWorker2() string {
+	return os.Getenv("WORKER2")
 }

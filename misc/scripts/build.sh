@@ -144,6 +144,9 @@ else
     -e "GOVC_URL=$GOVC_URL" \
     -e "GOVC_USERNAME=$GOVC_USERNAME" \
     -e "GOVC_PASSWORD=$GOVC_PASSWORD" \
+    -e "MANAGER1=$MANAGER1" \
+    -e "WORKER1=$WORKER1" \
+    -e "WORKER2=$WORKER2" \
     -e "SSH_KEY_OPT=$SSH_KEY_OPT" \
     -v $docker_socket:$docker_socket  \
     -v $ssh_key_path:$ssh_key_opt_container:ro \

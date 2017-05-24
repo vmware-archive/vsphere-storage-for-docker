@@ -177,6 +177,10 @@ If you want to user another DockerHub repository you need to set `DOCKER_HUB_REP
   - `GOVC_URL` same as `ESX IP`
   - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials logging in to `ESX IP`
 
+- You **need** to set following environment variables to run swarm cluster related tests.
+  - `MANAGER1` - swarm cluster manager node IP
+  - `WORKER1` & `WORKER2` - swarm cluster worker node IP
+
 **Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/docker-volume-vsphere/pull/1163), our build/deployment script start using managed plugin approach.
 
 Examples:
@@ -197,6 +201,9 @@ export GOVC_INSECURE=1
 export GOVC_URL=10.20.105.54
 export GOVC_USERNAME=root
 export GOVC_PASSWORD=<ESX login passwd>
+export MANAGER1=10.20.105.122
+export WORKER1=10.20.105.123
+export WORKER2=10.20.105.124
 
 make all
 ```
