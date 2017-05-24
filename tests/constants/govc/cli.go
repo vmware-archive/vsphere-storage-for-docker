@@ -19,10 +19,11 @@ package govc
 const (
 	govcCmd = "govc "
 
-	vmInfo = govcCmd + "vm.info "
+	// VmInfo refers to govc query to retrieve vm information
+	VMInfo = govcCmd + "vm.info "
 
 	// VMInfoByIP refers to govc query to grab VM IP from VM info object
-	VMInfoByIP = vmInfo + "-vm.ip="
+	VMInfoByIP = VMInfo + "-vm.ip="
 
 	// JSONTypeOutput sets govc response type
 	JSONTypeOutput = " -json "
@@ -32,6 +33,12 @@ const (
 
 	govcResponseRoot = ".VirtualMachines[]"
 
-	// VirtualMachineName JSON object key refers VM name
-	VirtualMachineName = govcResponseRoot + ".Name"
+	// VMName JSON object key refers VM name
+	VMName = govcResponseRoot + ".Name"
+
+	// VMPowerState JSON object key refers VM power state
+	VMPowerState = govcResponseRoot + ".Runtime.PowerState"
+
+	// PowerOnVM refers to govc cli (power on vm)
+	PowerOnVM = govcCmd + "vm.power -on=true "
 )
