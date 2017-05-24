@@ -21,9 +21,9 @@ const (
 
 	esxcliVMProcess = esxcli + "vm process "
 
-	// VMProcessList - Retrive vm process list using esxcli
-	VMProcessList = esxcliVMProcess + "list"
+	// ListVMProcess - Retrive vm process list using esxcli
+	ListVMProcess = esxcliVMProcess + "list"
 
-	// VMProcessKill refers a const to kill vm using esxcli
-	VMProcessKill = esxcliVMProcess + "kill --type=force --world-id="
+	// KillVMProcess refers a const to kill vm using esxcli
+	KillVMProcess = esxcliVMProcess + "kill --type=force --world-id="
 )

@@ -29,7 +29,7 @@ import (
 // esxcli vm process list | grep -e "photon1" -C 1 | grep "World ID:" | awk '{print $3}'
 func GetVMProcessID(esxHostIP, vmName string) string {
 	log.Printf("Retrieving World ID for VM [%s] from ESX [%s]\n", vmName, esxHostIP)
-	cmd := esxcli.VMProcessList + "| grep -e  " + vmName + " -C 1 | grep 'World ID:' | awk '{print $3}'"
+	cmd := esxcli.ListVMProcess + "| grep -e  " + vmName + " -C 1 | grep 'World ID:' | awk '{print $3}'"
 	out, err := ssh.InvokeCommand(esxHostIP, cmd)
 	if err != nil {
 		log.Fatalf("Failed to invoke command [%s]: %v", cmd, err)
@@ -41,7 +41,7 @@ func GetVMProcessID(esxHostIP, vmName string) string {
 // e.g. esxcli vm process kill --type=force --world-id=35713
 func KillVM(esxHostIP, worldID string) bool {
 	log.Printf("Killing VM from ESX [%s]\n", esxHostIP)
-	cmd := esxcli.VMProcessKill + worldID
+	cmd := esxcli.KillVMProcess + worldID
 	_, err := ssh.InvokeCommand(esxHostIP, cmd)
 	if err != nil {
 		log.Printf("Failed to invoke command [%s]: %v", cmd, err)

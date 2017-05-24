@@ -18,17 +18,17 @@ package admincli
 
 const (
 	// location of the vmdkops binary
-	vmdkops = "/etc/init.d/vmdk-opsd "
+	vmdkopsd = "/etc/init.d/vmdk-opsd "
 
 	// VmdkopsStatus gives vmdkops service status
-	VmdkopsStatus = vmdkops + "status"
+	VmdkopsStatus = vmdkopsd + "status"
 
 	// VmdkopsServiceRestart restarts vmdkops service
-	VmdkopsServiceRestart = vmdkops + "restart"
+	VmdkopsServiceRestart = vmdkopsd + "restart"
 
 	// VmdkopsServiceStop stops vmdkops service
-	VmdkopsServiceStop = vmdkops + "stop"
+	VmdkopsServiceStop = vmdkopsd + "stop"
 
 	// VmdkopsServiceStart starts vmdkops service
-	VmdkopsServiceStart = vmdkops + "start"
+	VmdkopsServiceStart = vmdkopsd + "start"
 )

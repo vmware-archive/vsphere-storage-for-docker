@@ -33,11 +33,11 @@ const (
 
 	govcResponseRoot = ".VirtualMachines[]"
 
-	// VirtualMachineName JSON object key refers VM name
-	VirtualMachineName = govcResponseRoot + ".Name"
+	// VMName JSON object key refers VM name
+	VMName = govcResponseRoot + ".Name"
 
-	// VirtualMachinePowerState JSON object key refers VM power state
-	VirtualMachinePowerState = govcResponseRoot + ".Runtime.PowerState"
+	// VMPowerState JSON object key refers VM power state
+	VMPowerState = govcResponseRoot + ".Runtime.PowerState"
 
 	// PowerOnVM refers to govc cli (power on vm)
 	PowerOnVM = govcCmd + "vm.power -on=true "

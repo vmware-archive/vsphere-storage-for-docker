@@ -34,6 +34,11 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
+const (
+	powerOnState  = "poweredOn"
+	powerOffState = "poweredOff"
+)
+
 type VMListenerTestParams struct {
 	volumeName     string
 	dockerHostIP   string
@@ -49,8 +54,8 @@ func (s *VMListenerTestParams) SetUpSuite(c *C) {
 }
 
 func (s *VMListenerTestParams) SetUpTest(c *C) {
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("vmListenerTest")
-	s.containerName = inputparams.GetContainerNameWithTimeStamp("vmListenerTest")
+	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("vmlistener_test")
+	s.containerName = inputparams.GetContainerNameWithTimeStamp("vmlistener_test")
 }
 
 func (s *VMListenerTestParams) TearDownTest(c *C) {
@@ -86,13 +91,14 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	out, err = admincli.RestartVmdkopsService(s.esxIP)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 
-	// make sure volume stays attached
+	// make sure volume stays attached after vmdkopsd restart
 	status = verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// make sure vm was powered on
 	powerState := govc.GetVMPowerState(s.dockerHostName)
 	log.Printf("VM[%s]'s current power state is [%s]", s.dockerHostName, powerState)
+	c.Assert(powerState, Equals, powerOnState, Commentf("VM [%s] should be powerred on state", s.dockerHostName))
 
 	// grab worldID/vmProcessID
 	processID := esxcli.GetVMProcessID(s.esxIP, s.dockerHostName)
@@ -106,6 +112,7 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	// verifies through govc that vm is poweroff
 	powerState = govc.GetVMPowerState(s.dockerHostName)
 	log.Printf("VM[%s]'s current power state is [%s]", s.dockerHostName, powerState)
+	c.Assert(powerState, Equals, powerOffState, Commentf("VM [%s] should be powerred off state", s.dockerHostName))
 
 	// power on vm
 	govc.PowerOnVM(s.dockerHostName)
@@ -114,6 +121,7 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	// make sure vm is powerred on
 	powerState = govc.GetVMPowerState(s.dockerHostName)
 	log.Printf("VM[%s]'s current power state is [%s]", s.dockerHostName, powerState)
+	c.Assert(powerState, Equals, powerOnState, Commentf("VM [%s] should be powerred on state", s.dockerHostName))
 
 	// status should be detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
