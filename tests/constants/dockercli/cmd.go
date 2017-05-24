@@ -38,14 +38,14 @@ const (
 	// vDVSPluginName name of vDVS plugin
 	vDVSPluginName = "vsphere "
 
-	// Full name of process of vDVS plugin
-	vDVSFullName = "docker-volume-vsphere"
+	// vDVS service name
+	vDVSName = "docker-volume-vsphere"
 
 	// GetVDVSPlugin gets vDVS plugin info
 	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + vDVSPluginName
 
 	// GetVDVSPID Get the process id of vDVS plugin
-	GetVDVSPID = "pidof " + vDVSFullName
+	GetVDVSPID = "pidof " + vDVSName
 
 	// KillVDVSPlugin kills vDVS plugin
 	KillVDVSPlugin = "docker-runc kill "
