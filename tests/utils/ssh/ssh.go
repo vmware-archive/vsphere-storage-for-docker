@@ -47,18 +47,5 @@ func InvokeCommandLocally(cmd string) string {
 		log.Fatalf("Failed to invoke command [%s]: %v", cmd, err)
 	}
 	return strings.TrimSpace(string(out[:]))
-<<<<<<< HEAD
-=======
-}
-
-//ExecCmd method takes command and host and calls InvokeCommand
-//and then returns the output after converting to string
-func ExecCmd(hostName string, cmd string) (string, err) {
-	out, err := InvokeCommand(hostName, cmd)
-	if err != nil {
-		return "", err
-	}
-	return string(out[:]), nil
->>>>>>> Tests for vmgroups.
 }
 

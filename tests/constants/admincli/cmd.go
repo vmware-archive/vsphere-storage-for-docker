@@ -52,8 +52,14 @@ const (
 	// where --name will be name of the vmgroup
 	ReplaceVMFromVMgroup = vmdkopsAdmin + "vmgroup vm replace --name="
 
-	// ModifyAccessForVolumeGroup Modify access perms on volume group
-	ModifyAccessForVolumeGroup = vmdkopsCLIVolumegroup + "access set --name "
+	// AccessSetVMgroup  Modify access perms on vmgroup
+	SetAccessForVMgroup = vmdkopsAdmin + "vmgroup access set --name "
+
+	// AccessGetVMgroup  Modify access perms on vmgroup
+	GetAccessForVMgroup = vmdkopsAdmin + "vmgroup access ls --name "
+
+	// ListVMgroups list vm groups
+	ListVMgroups = vmdkopsAdmin + "vmgroup ls"
 
 	// DefaultVMgroup referring name of default vmgroup
 	DefaultVMgroup = "_DEFAULT "
@@ -66,9 +72,6 @@ const (
 
 	// RemoveLocalConfigDb referring to Remove (local) Single Node Config DB
 	RemoveLocalConfigDb = vmdkopsAdmin + "config rm --local --confirm"
-
-	// ListVMgroups referring to vmdkops_admin vmgroups ls
-	ListVMgroups = vmdkopsAdmin + "vmgroup ls "
 
 	// UpdateVMgroup referring to updating a vmgroup
 	// where --name will be name of the vmgroup

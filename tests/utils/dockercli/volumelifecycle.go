@@ -30,7 +30,7 @@ import (
 // CreateVolume is going to create vsphere docker volume with given name.
 func CreateVolume(ip, name string) (string, error) {
 	log.Printf("Creating volume [%s] on VM [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, dockercli.CreateVolume + " --name= " + name + " " + opts)
+	return ssh.InvokeCommand(ip, dockercli.CreateVolume + " --name= " + name) 
 }
 
 // CreateVolumeWithOptions is going to create vsphere docker volume with given name.
@@ -42,9 +42,14 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 // AttachVolume - attach volume to container on given host
 func AttachVolume(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
-	return ssh.InvokeCommand(ip, dockercli.RunContainer+"-d -rm -v "+volName+
-		":/vol1 --name "+containerName+
-		dockercli.TestContainer)
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -d -v "+volName+
+		":/vol1 --name "+containerName+ dockercli.TestContainer)
+}
+
+// InspectVolume - fetch the named volume's properties
+func InspectVolume(ip, volName string) (string, error) {
+	log.Printf("Inspecting volume [%s] on VM [%s]\n", volName, ip)
+	return ssh.InvokeCommand(ip, dockercli.InspectVolume + volName)
 }
 
 // AttachVolumeWithRestart - attach volume to container on given host
@@ -85,7 +90,7 @@ func DeleteVolume(ip, name string) (string, error) {
 
 // ListVolumes - runs the docker list volumes command and returns the
 // list
-func ListVolumes(ip string) []byte {
+func ListVolumes(ip string) (string, error) {
 	log.Printf("Listing volumes.")
 	return ssh.InvokeCommand(ip, dockercli.ListVolumes)
 }
@@ -176,6 +181,17 @@ func StartContainer(ip, containerName string) (string, error) {
 func StopContainer(ip, containerName string) (string, error) {
 	log.Printf("Stopping container [%s] on VM [%s]", containerName, ip)
 	return ssh.InvokeCommand(ip, dockercli.StopContainer+containerName)
+}
+
+// AttachVolume - attach volume to container on given host
+func ExecContainer(ip, volName, containerName string) (string, error) {
+	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
+	out, err := ssh.InvokeCommand(ip, dockercli.RunContainer+" -d --rm -v "+volName+
+			":/vol1 --name "+containerName+ dockercli.TestContainer)
+	if err != nil {
+		return out, err
+	}
+	return ssh.InvokeCommand(ip, dockercli.RemoveContainer + containerName)
 }
 
 // IsContainerExist - return true if container exists otherwise false

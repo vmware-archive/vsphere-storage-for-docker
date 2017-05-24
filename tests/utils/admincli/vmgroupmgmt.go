@@ -54,6 +54,25 @@ func ReplaceVMFromVMgroup(ip, name, vmName string) (string, error) {
 	return ssh.InvokeCommand(ip, admincli.ReplaceVMFromVMgroup+name+" --vm-list="+vmName)
 }
 
+// AddCreateAccessForVMgroup - set allow-create access on the vmgroup
+func AddCreateAccessForVMgroup(ip, name, datastore string) (string, error) {
+	log.Printf("Enabling create access for vmgroup %s, datastore %s on esx [%s] \n", name, datastore, ip)
+	return ssh.InvokeCommand(ip, admincli.SetAccessForVMgroup + name + " --allow-create True --datastore " + datastore)
+}
+
+// RemoveCreateAccessForVMgroup - set allow-create access on the vmgroup
+func RemoveCreateAccessForVMgroup(ip, name, datastore string) (string, error) {
+	log.Printf("Removing create access for vmgroup %s, datastore %s on esx [%s] \n", name, datastore, ip)
+	return ssh.InvokeCommand(ip, admincli.SetAccessForVMgroup + name + " --allow-create False --datastore " + datastore)
+}
+
+// SetVolumeSizeForVMgroup - set max and total volume size for vmgroup
+func SetVolumeSizeForVMgroup(ip, name, ds, msize, tsize string) (string, error) {
+	log.Printf("Setting max %s and total %s for vmgroup %s, datastore %s on esx [%s] \n", msize, tsize, name, ds, ip)
+	cmd := admincli.SetAccessForVMgroup + name + " --datastore " + ds + " --volume-maxsize=" + msize + " --volume-totalsize=" + tsize + " --allow-create True"
+	return ssh.InvokeCommand(ip, cmd)
+}
+
 // ConfigInit - Initialize the (local) Single Node Config DB
 func ConfigInit(ip string) (string, error) {
 	log.Printf("Initializing the SingleNode Config DB on esx [%s] \n", ip)

@@ -23,7 +23,16 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
 )
+
+// TestConfig - struct for common test configuration params
+type TestConfig struct {
+	EsxHost string
+	DockerHosts []string
+	DockerHostNames []string
+	Datastores []string
+}
 
 var (
 	endPoint1  string
@@ -43,10 +52,14 @@ func init() {
 func GetVolumeName() string {
 	return volumeName
 }
-
 // GetVolumeNameWithTimeStamp prepares unique volume name by appending current time-stamp value
-func GetVolumeNameWithTimeStamp(volumeName string) string {
-	return volumeName + "_volume_" + strconv.FormatInt(time.Now().Unix(), 10)
+func GetVolumeNameWithTimeStamp(volName string) string {
+	return volName + "_volume_" + strconv.FormatInt(time.Now().Unix(), 10)
+}
+
+// GetUniqueVolumeName prepares unique volume name with a random generated number
+func GetUniqueVolumeName(volName string) string {
+	return volName + "_volume_" + strconv.FormatInt(rand.Int63(), 10)
 }
 
 // GetContainerNameWithTimeStamp prepares unique container name by appending current time-stamp value
@@ -107,4 +120,25 @@ func GetDockerHostIP(vm string) string {
 // GetEsxIP returns the ip of the esx
 func GetEsxIP() string {
 	return os.Getenv("ESX")
+}
+
+// GetTestConfig - returns the configuration of IPs for the
+// ESX host, docker hosts and the datastores on the host
+func GetTestConfig() *TestConfig {
+	var config *TestConfig
+
+	config = new(TestConfig)
+	config.EsxHost = os.Getenv("ESX")
+	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
+	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
+	config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[0]))
+	config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[1]))
+	config.Datastores = govc.GetDatastoreList()
+
+	if config.DockerHostNames[0] == "" || config.DockerHostNames[1] == "" ||
+		len(config.Datastores) <= 1 {
+		return nil
+	}
+
+	return config
 }
