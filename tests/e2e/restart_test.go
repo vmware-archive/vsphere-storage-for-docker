@@ -96,7 +96,7 @@ func (s *PluginSuite) TestPluginKill(c *C) {
 	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	out, err = dockercli.RestartVDVSPlugin(s.hostIP)
+	out, err = dockercli.KillVDVSPlugin(s.hostIP)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 
 	out, err = dockercli.StopContainer(s.hostIP, s.containerName)

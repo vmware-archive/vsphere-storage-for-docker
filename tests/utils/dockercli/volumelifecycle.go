@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
@@ -62,7 +61,7 @@ func DeleteVolume(ip, name string) ([]byte, error) {
 func KillDocker(ip string) ([]byte, error) {
 	log.Printf("Killing docker on VM [%s]\n", ip)
 	out, err := ssh.InvokeCommand(ip, dockercli.KillDocker)
-	time.Sleep(2 * time.Second)
+	misc.SleepForSec(2)
 	return out, err
 }
 
@@ -75,45 +74,48 @@ func GetVDVSPlugin(ip string) (string, error) {
 	return strings.Fields(misc.FormatOutput(out))[0], err
 }
 
-// StartVDVSPlugin - manually start vDVS plugin
-func StartVDVSPlugin(ip string) ([]byte, error) {
-	log.Printf("Manually starting vDVS plugin on VM [%s]\n", ip)
-	out, err := ssh.InvokeCommand(ip, dockercli.StartVDVSPlugin)
-	return out, err
+// GetVDVSPID - gets vDVS process id
+func GetVDVSPID(ip string) (string, error) {
+	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPID)
+	if err != nil {
+		log.Printf("Unable to get docker-volume-vsphere pid")
+		return "", err
+	}
+	return strings.TrimSpace(misc.FormatOutput(out)), nil
 }
 
 // KillVDVSPlugin - kill vDVS plugin. It is restarted automatically
-func KillVDVSPlugin(ip, pluginID string) ([]byte, error) {
-	out, err := ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
-	time.Sleep(2 * time.Second)
-	return out, err
-}
-
-// RestartVDVSPlugin - kill vDVS plugin. It is restarted automatically
-// if autorestart failed, start it manually
-func RestartVDVSPlugin(ip string) ([]byte, error) {
-	log.Printf("Restarting vDVS plugin on VM [%s]\n", ip)
+func KillVDVSPlugin(ip string) ([]byte, error) {
+	log.Printf("Killing vDVS plugin on VM [%s]\n", ip)
 
 	pluginID, err := GetVDVSPlugin(ip)
 	if err != nil {
-		log.Printf("vDVS plugin unavailable")
 		return nil, err
 	}
 
-	out, err := KillVDVSPlugin(ip, pluginID)
+	oldPID, err := GetVDVSPID(ip)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
 	if err != nil {
 		log.Printf("Killing vDVS plugin failed")
-		return out, err
+		return nil, err
+	}
+	misc.SleepForSec(2)
+
+	newPID, err := GetVDVSPID(ip)
+	if err != nil {
+		return nil, err
 	}
 
-	pluginID, err = GetVDVSPlugin(ip)
-	// plugin autorestart succeeded i.e. there is an entry for vDVS plugin
-	if pluginID != "" {
-		return out, err
+	// unsuccessful restart
+	if oldPID == newPID {
+		return nil, fmt.Errorf("vDVS plugin autorestart failed")
 	}
 
-	// manually restart plugin if autorestart wasn't successful
-	return StartVDVSPlugin(ip)
+	return out, nil
 }
 
 // RemoveContainer - remove the container forcefully (stops and removes it)
