@@ -21,7 +21,6 @@ package e2e
 import (
 	"log"
 	"os"
-	"time"
 
 	. "gopkg.in/check.v1"
 
@@ -108,7 +107,7 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	// kill VM
 	isVMKilled := esxcli.KillVM(s.esxIP, processID)
 	c.Assert(isVMKilled, Equals, true, Commentf("Unable to kill VM %s ...", s.dockerHostName))
-	time.Sleep(10 * time.Second)
+	misc.SleepForSec(10)
 
 	// verifies through govc that vm is poweroff
 	powerState = govc.GetVMPowerState(s.dockerHostName)
@@ -121,7 +120,7 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 
 	// power on vm
 	govc.PowerOnVM(s.dockerHostName)
-	time.Sleep(35 * time.Second)
+	misc.SleepForSec(35)
 
 	// make sure vm is powered on
 	powerState = govc.GetVMPowerState(s.dockerHostName)

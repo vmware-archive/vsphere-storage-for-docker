@@ -20,15 +20,15 @@ const (
 	// location of the vmdkops binary
 	vmdkopsd = "/etc/init.d/vmdk-opsd "
 
-	// VmdkopsStatus gives vmdkops service status
-	VmdkopsStatus = vmdkopsd + "status"
+	// ServiceStatus gives vmdkops service status
+	ServiceStatus = vmdkopsd + "status"
 
-	// VmdkopsServiceRestart restarts vmdkops service
-	VmdkopsServiceRestart = vmdkopsd + "restart"
+	// RestartService restarts vmdkops service
+	RestartService = vmdkopsd + "restart"
 
-	// VmdkopsServiceStop stops vmdkops service
-	VmdkopsServiceStop = vmdkopsd + "stop"
+	// StopService stops vmdkops service
+	StopService = vmdkopsd + "stop"
 
-	// VmdkopsServiceStart starts vmdkops service
-	VmdkopsServiceStart = vmdkopsd + "start"
+	// StartService starts vmdkops service
+	StartService = vmdkopsd + "start"
 )
