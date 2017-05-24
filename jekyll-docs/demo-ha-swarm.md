@@ -22,7 +22,7 @@ To add a worker to this swarm, run the following command:
     192.168.159.139:2377
 ```
 
-Now let's go to twh two worker nodes and run following command:
+Now let's go to the two worker nodes and run following command:
 
 ```
 # docker swarm join \

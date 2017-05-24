@@ -22,12 +22,12 @@ As described in [official documentation](https://pubs.vmware.com/vsphere-65/inde
 ## Using Storage Policies in vSphere Docker Volume Service
 We will now illustrate how this policy based management approach can be applied to container volumes as well.
 
-With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom VSAN Policies that can then be specified during Docker Volume creations. When VSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the VSAN datastore in the form of virtual disks. This is why the VSAN Policies can be applied seamlessly to the volumes created by vDVS.
+With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom vSAN Policies that can then be specified during Docker Volume creations. When vSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the vSAN datastore in the form of virtual disks. This is why the vSAN Policies can be applied seamlessly to the volumes created by vDVS.
 
-To create a new VSAN Policy, you will need to specify the name of the policy and provide the set of VSAN capabilities formatted using the same syntax found in esxcli vsan policy getdefault command. For example: (("hostFailuresToTolerate" i1) ("forceProvisioning" i1)). Here is a list of storage capabilities supported by VSAN (for more detailed information, please refer to official Virtual SAN documentation):
+To create a new vSAN Policy, you will need to specify the name of the policy and provide the set of vSAN capabilities formatted using the same syntax found in esxcli vsan policy getdefault command. For example: (("hostFailuresToTolerate" i1) ("forceProvisioning" i1)). Here is a list of storage capabilities supported by vSAN (for more detailed information, please refer to official Virtual SAN documentation):
 
 
-|VSAN Capability|Description|
+|vSAN Capability|Description|
 |------|------|
 |hostFailuresToTolerate|Number of failures to tolerate|
 |stripeWidth|Number of disk stripes per object|
@@ -38,7 +38,7 @@ To create a new VSAN Policy, you will need to specify the name of the policy and
 |replicaPreference|Failure tolerance method|
 |iopsLimit|IOPS limit for object|
 
-Here's a step-by-step guide to create and use VSAN Storage Policies for Docker Volumes:
+Here's a step-by-step guide to create and use vSAN Storage Policies for Docker Volumes:
 
 - Create a "gold" and a "silver" storage policies
 
