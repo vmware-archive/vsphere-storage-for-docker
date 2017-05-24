@@ -16,7 +16,18 @@
 
 package misc
 
+import (
+	"log"
+	"time"
+)
+
 // FormatOutput - convert output of a command to a string
 func FormatOutput(out []byte) string {
 	return string(out[:])
+}
+
+// SleepForSec sleep for a given number of seconds
+func SleepForSec(sec int) {
+	log.Printf("Sleep for %d seconds", sec)
+	time.Sleep(time.Duration(sec) * time.Second)
 }

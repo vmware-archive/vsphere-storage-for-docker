@@ -35,9 +35,36 @@ const (
 	// KillDocker kill docker
 	KillDocker = "pkill -9 dockerd "
 
+	// vDVSPluginName name of vDVS plugin
+	vDVSPluginName = "vsphere "
+
+	// vDVS service name
+	vDVSName = "docker-volume-vsphere"
+
+	// GetVDVSPlugin gets vDVS plugin info
+	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + vDVSPluginName
+
+	// GetVDVSPID Get the process id of vDVS plugin
+	GetVDVSPID = "pidof " + vDVSName
+
+	// KillVDVSPlugin kills vDVS plugin
+	KillVDVSPlugin = "docker-runc kill "
+
+	// StartVDVSPlugin starts the vDVS plugin
+	StartVDVSPlugin = docker + " plugin enable " + vDVSPluginName
+
 	// RunContainer create and run a container
 	RunContainer = docker + "run "
 
+	// StartContainer starts a container
+	StartContainer = docker + "start "
+
+	// StopContainer stops a container
+	StopContainer = docker + "stop "
+
 	// RemoveContainer remove the container
 	RemoveContainer = docker + "rm -f "
+
+	// TestContainer test busybox container that keeps running
+	TestContainer = " busybox tail -f /dev/null "
 )

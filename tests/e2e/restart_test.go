@@ -31,49 +31,85 @@ import (
 
 type PluginSuite struct {
 	volumeName    string
-	hostName      string
+	hostIP        string
 	containerName string
-	esxName       string
+	esxIP         string
 }
 
 func (s *PluginSuite) SetUpTest(c *C) {
-	s.hostName = os.Getenv("VM2")
-	s.esxName = os.Getenv("ESX")
+	s.hostIP = os.Getenv("VM2")
+	s.esxIP = os.Getenv("ESX")
 	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("restart_test")
 	s.containerName = inputparams.GetContainerNameWithTimeStamp("restart_test")
+
+	// Create a volume
+	out, err := dockercli.CreateVolume(s.hostIP, s.volumeName)
+	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 }
 
 func (s *PluginSuite) TearDownTest(c *C) {
-	out, err := dockercli.RemoveContainer(s.hostName, s.containerName)
+	out, err := dockercli.RemoveContainer(s.hostIP, s.containerName)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
-	out, err = dockercli.DeleteVolume(s.hostName, s.volumeName)
+	out, err = dockercli.DeleteVolume(s.hostIP, s.volumeName)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 }
 
 var _ = Suite(&PluginSuite{})
 
 // Test Stale mount
-// 1. Create a volume
-// 2. Attach it to a container
+// 1. Attach a volume to a container
+// 2. Verify attached status
 // 3. Restart docker
-// 4. Volume should be detached (within the timeout)
+// 4. Verify detached status. Volume should be detached (within the timeout)
 func (s *PluginSuite) TestVolumeStaleMount(c *C) {
-	log.Printf("START: Stale mount test")
+	log.Printf("START: restart_test.TestVolumeStaleMount")
 
-	out, err := dockercli.CreateVolume(s.hostName, s.volumeName)
+	out, err := dockercli.AttachVolume(s.hostIP, s.volumeName, s.containerName)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 
-	out, err = dockercli.AttachVolume(s.hostName, s.volumeName, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
-
-	status := verification.VerifyAttachedStatus(s.volumeName, s.hostName, s.esxName)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	out, err = dockercli.KillDocker(s.hostName)
+	out, err = dockercli.KillDocker(s.hostIP)
 	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
 
-	status = verification.VerifyDetachedStatus(s.volumeName, s.hostName, s.esxName)
+	status = verification.VerifyDetachedStatus(s.volumeName, s.hostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
-	log.Printf("END: Stale mount test")
+	log.Printf("END: restart_test.TestVolumeStaleMount")
+}
+
+// Test vDVS plugin restart
+// 1. Attach a volume with restart=always flag
+// 2. Verify volume attached status
+// 3. Kill vDVS plugin
+// 4. Stop the container
+// 5. Start the same container
+// 6. Stop the container
+// 7. Verify volume detached status
+func (s *PluginSuite) TestPluginKill(c *C) {
+	log.Printf("START: restart_test.TestPluginKill")
+
+	out, err := dockercli.AttachVolumeWithRestart(s.hostIP, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+
+	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	out, err = dockercli.KillVDVSPlugin(s.hostIP)
+	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+
+	out, err = dockercli.StopContainer(s.hostIP, s.containerName)
+	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+
+	out, err = dockercli.StartContainer(s.hostIP, s.containerName)
+	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+
+	out, err = dockercli.StopContainer(s.hostIP, s.containerName)
+	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+
+	status = verification.VerifyDetachedStatus(s.volumeName, s.hostIP, s.esxIP)
+	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
+
+	log.Printf("END: restart_test.TestPluginKill")
 }
