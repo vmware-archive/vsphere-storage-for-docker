@@ -36,7 +36,7 @@ func InvokeCommand(ip, cmd string) (string, error) {
 }
 
 // InvokeCommandLocally - can be consumed by test directly to invoke
-// any command locally
+// any command locally.
 // cmd: A command string to be executed on the remote host as per
 func InvokeCommandLocally(cmd string) string {
 	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
