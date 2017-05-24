@@ -62,6 +62,15 @@ func KillDocker(ip string) (string, error) {
 	log.Printf("Killing docker on VM [%s]\n", ip)
 	out, err := ssh.InvokeCommand(ip, dockercli.KillDocker)
 	misc.SleepForSec(2)
+
+	dockerPID, err := ssh.InvokeCommand(ip, dockercli.GetDockerPID)
+	if dockerPID != "" {
+		return out, err
+	}
+
+	// docker needs manual start using systemctl
+	out, err = ssh.InvokeCommand(ip, dockercli.StartDocker)
+	misc.SleepForSec(2)
 	return out, err
 }
 
