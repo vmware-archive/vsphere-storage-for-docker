@@ -25,7 +25,6 @@ import (
 
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
@@ -68,25 +67,25 @@ func (s *BasicTestSuite) TestVolumeLifecycle(c *C) {
 		}
 
 		out, err := dockercli.CreateVolume(host, s.volumeName)
-		c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+		c.Assert(err, IsNil, Commentf(out))
 
 		accessible := verification.CheckVolumeAvailability(host, s.volumeName)
 		c.Assert(accessible, Equals, true, Commentf("Volume %s is not available", s.volumeName))
 
 		out, err = dockercli.AttachVolume(host, s.volumeName, s.containerName)
-		c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+		c.Assert(err, IsNil, Commentf(out))
 
 		status := verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
 		c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 		out, err = dockercli.RemoveContainer(host, s.containerName)
-		c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+		c.Assert(err, IsNil, Commentf(out))
 
 		status = verification.VerifyDetachedStatus(s.volumeName, host, s.esxName)
 		c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
 		out, err = dockercli.DeleteVolume(host, s.volumeName)
-		c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+		c.Assert(err, IsNil, Commentf(out))
 
 		accessible = verification.CheckVolumeAvailability(host, s.volumeName)
 		c.Assert(accessible, Equals, false, Commentf("Volume %s is still available", s.volumeName))
@@ -111,7 +110,7 @@ func (s *BasicTestSuite) TestVolumeIsolation(c *C) {
 	vm1, vm2 := os.Getenv("VM1"), os.Getenv("VM2")
 
 	out, err := dockercli.CreateVolume(vm1, s.volumeName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	accessible := verification.CheckVolumeAvailability(vm1, s.volumeName)
 	c.Assert(accessible, Equals, true, Commentf("Volume %s is not available", s.volumeName))
@@ -121,7 +120,7 @@ func (s *BasicTestSuite) TestVolumeIsolation(c *C) {
 	//c.Assert(accessible, Equals, false, Commentf("Volume %s is still available", s.volumeName))
 
 	out, err = dockercli.DeleteVolume(vm1, s.volumeName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	log.Printf("END: basic-test.TestVolumeIsolation")
 }

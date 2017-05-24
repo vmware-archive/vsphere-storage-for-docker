@@ -62,7 +62,7 @@ func (s *VMListenerTestParams) TearDownTest(c *C) {
 	// Note: no need to remove container, it is already removed as
 	// vm got killed and `--restart=always` flag is not added
 	out, err := dockercli.DeleteVolume(s.dockerHostIP, s.volumeName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 }
 
 var _ = Suite(&VMListenerTestParams{})
@@ -79,17 +79,17 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	log.Printf("START: Test vmdkops service restart + kill vm process")
 
 	out, err := dockercli.CreateVolume(s.dockerHostIP, s.volumeName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	out, err = dockercli.AttachVolume(s.dockerHostIP, s.volumeName, s.containerName)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	status := verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// restart vmdkops service
 	out, err = admincli.RestartVmdkopsService(s.esxIP)
-	c.Assert(err, IsNil, Commentf(misc.FormatOutput(out)))
+	c.Assert(err, IsNil, Commentf(out))
 
 	// make sure volume stays attached after vmdkopsd restart
 	status = verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)

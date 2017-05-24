@@ -21,8 +21,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 )
 
 // sshIdentity an array variable to prepare ssh input parameter to pass identify value
@@ -30,22 +28,20 @@ var sshIdentity = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], stri
 
 // InvokeCommand - can be consumed by test directly to invoke
 // any command on the remote host.
-// remoteHostIP: remote machine address to execute on the machine
+// ip: remote machine address to execute on the machine
 // cmd: A command string to be executed on the remote host as per
-// remoteHostIP value
-func InvokeCommand(ip, cmd string) ([]byte, error) {
-	return exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
+func InvokeCommand(ip, cmd string) (string, error) {
+	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
+	return strings.TrimSpace(string(out[:])), err
 }
 
 // InvokeCommandLocally - can be consumed by test directly to invoke
-// any command on the remote host.
-// remoteHostIP: remote machine address to execute on the machine
+// any command locally.
 // cmd: A command string to be executed on the remote host as per
-// remoteHostIP value
 func InvokeCommandLocally(cmd string) string {
 	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 	if err != nil {
 		log.Fatalf("Failed to invoke command [%s]: %v", cmd, err)
 	}
-	return strings.TrimSpace(misc.FormatOutput(out[:]))
+	return strings.TrimSpace(string(out[:]))
 }
