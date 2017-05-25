@@ -144,3 +144,14 @@ func StopContainer(ip, containerName string) (string, error) {
 	log.Printf("Stopping container [%s] on VM [%s]", containerName, ip)
 	return ssh.InvokeCommand(ip, dockercli.StopContainer+containerName)
 }
+
+// IsContainerExist - return true if container exists otherwise false
+func IsContainerExist(ip, containerName string) bool {
+	log.Printf("Checking container [%s] presence on VM [%s]", containerName, ip)
+	out, _ := ssh.InvokeCommand(ip, dockercli.QueryContainer+containerName)
+	if out != "" {
+		log.Printf("container [%s] is present", containerName)
+		return true
+	}
+	return false
+}

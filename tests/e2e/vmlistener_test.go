@@ -61,6 +61,10 @@ func (s *VMListenerTestParams) SetUpTest(c *C) {
 func (s *VMListenerTestParams) TearDownTest(c *C) {
 	// Note: no need to remove container, it is already removed as
 	// vm got killed and `--restart=always` flag is not added
+	if dockercli.IsContainerExist(s.dockerHostIP, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.dockerHostIP, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
 	out, err := dockercli.DeleteVolume(s.dockerHostIP, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 }
@@ -120,7 +124,7 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 
 	// power on vm
 	govc.PowerOnVM(s.dockerHostName)
-	misc.SleepForSec(35)
+	misc.SleepForSec(45)
 
 	// make sure vm is powered on
 	powerState = govc.GetVMPowerState(s.dockerHostName)
