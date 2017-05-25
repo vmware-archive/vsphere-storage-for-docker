@@ -35,6 +35,9 @@ const (
 	// KillDocker kill docker
 	KillDocker = "pkill -9 dockerd "
 
+	// StartDocker - manually start docker
+	StartDocker = "systemctl start docker"
+
 	// vDVSPluginName name of vDVS plugin
 	vDVSPluginName = "vsphere "
 
@@ -46,6 +49,9 @@ const (
 
 	// GetVDVSPID Get the process id of vDVS plugin
 	GetVDVSPID = "pidof " + vDVSName
+
+	// GetDockerPID get docker pid
+	GetDockerPID = "pidof dockerd"
 
 	// KillVDVSPlugin kills vDVS plugin
 	KillVDVSPlugin = "docker-runc kill "
