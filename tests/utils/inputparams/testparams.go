@@ -77,3 +77,13 @@ func GetSwarmWorker1() string {
 func GetSwarmWorker2() string {
 	return os.Getenv("WORKER2")
 }
+
+// GetDockerHostIP - returns ip of the VM where vm can be first vm (VM1) or second vm (VM2)
+func GetDockerHostIP(vm string) string {
+	return os.Getenv(vm)
+}
+
+// GetEsxIP returns the ip of the esx
+func GetEsxIP() string {
+	return os.Getenv("ESX")
+}

@@ -25,6 +25,7 @@ import (
 	con "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	. "gopkg.in/check.v1"
 )
 
@@ -39,8 +40,8 @@ type DefaultVMGroupTestSuite struct {
 
 func (s *DefaultVMGroupTestSuite) SetUpSuite(c *C) {
 	s.hostName = govc.RetrieveVMNameFromIP(os.Getenv("VM2"))
-	s.esxIP = os.Getenv("ESX")
-	out, err := admincli.ConfigInit(os.Getenv("ESX"))
+	s.esxIP = inputparams.GetEsxIP()
+	out, err := admincli.ConfigInit(s.esxIP)
 	c.Assert(err, IsNil, Commentf(out))
 }
 

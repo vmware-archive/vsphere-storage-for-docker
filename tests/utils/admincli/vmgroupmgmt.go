@@ -18,48 +18,49 @@
 package admincli
 
 import (
+	"log"
+
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
-	"log"
 )
 
 // CreateVMgroup method is going to create a vmgroup and adds vm to it.
 func CreateVMgroup(ip, name, vmName string) (string, error) {
 	log.Printf("Creating a vmgroup [%s] on esx [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, admincli.CreateVMgroup+"--name="+name+" --default-datastore=\"_VM_DS\" --vm-list="+vmName)
+	return ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+admincli.VMHomeDatastore+" --vm-list="+vmName)
 }
 
 // DeleteVMgroup method deletes a vmgroup and removes its volumes as well
 func DeleteVMgroup(ip, name string) (string, error) {
 	log.Printf("Deleting a vmgroup [%s] on esx [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+"--name="+name+" --remove-volumes")
+	return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name+admincli.RemoveVolumes)
 }
 
-// Adds vm to vmgroup
+// AddVMToVMgroup - Adds vm to vmgroup
 func AddVMToVMgroup(ip, name, vmName string) (string, error) {
 	log.Printf("Adding VM [%s] to a vmgroup [%s] on esx [%s] \n", vmName, name, ip)
-	return ssh.InvokeCommand(ip, admincli.AddVMToVMgroup+"--name="+name+" --vm-list="+vmName)
+	return ssh.InvokeCommand(ip, admincli.AddVMToVMgroup+name+" --vm-list="+vmName)
 }
 
-// Removes a vm from vmgroup
+// RemoveVMFromVMgroup - Removes a vm from vmgroup
 func RemoveVMFromVMgroup(ip, name, vmName string) (string, error) {
 	log.Printf("Removing VM [%s] from a vmgroup [%s] on esx [%s] \n", vmName, name, ip)
-	return ssh.InvokeCommand(ip, admincli.RemoveVMFromVMgroup+"--name="+name+" --vm-list="+vmName)
+	return ssh.InvokeCommand(ip, admincli.RemoveVMFromVMgroup+name+" --vm-list="+vmName)
 }
 
-// Replaces a vm from vmgroup
+// ReplaceVMFromVMgroup - Replaces a vm from vmgroup
 func ReplaceVMFromVMgroup(ip, name, vmName string) (string, error) {
 	log.Printf("Replacing VM [%s] from a vmgroup [%s] on esx [%s] \n", vmName, name, ip)
-	return ssh.InvokeCommand(ip, admincli.ReplaceVMFromVMgroup+"--name="+name+" --vm-list="+vmName)
+	return ssh.InvokeCommand(ip, admincli.ReplaceVMFromVMgroup+name+" --vm-list="+vmName)
 }
 
-// Initialize the (local) Single Node Config DB
+// ConfigInit - Initialize the (local) Single Node Config DB
 func ConfigInit(ip string) (string, error) {
 	log.Printf("Initializing the SingleNode Config DB on esx [%s] \n", ip)
 	return ssh.InvokeCommand(ip, admincli.InitLocalConfigDb)
 }
 
-// Remove the (local) Single Node Config DB
+// ConfigRemove - Remove the (local) Single Node Config DB
 func ConfigRemove(ip string) (string, error) {
 	log.Printf("Removing the SingleNode Config DB on esx [%s] \n", ip)
 	return ssh.InvokeCommand(ip, admincli.RemoveLocalConfigDb)
