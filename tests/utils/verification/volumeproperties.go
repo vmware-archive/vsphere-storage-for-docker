@@ -21,32 +21,33 @@ package verification
 import (
 	"log"
 	"strings"
-	"time"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
 const (
-	pollTimeout = 64
+	maxAttempt = 30
 )
 
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
+// TODO: make this private member after finishing refactoring of volmprop_test.go and remove this TODO
 func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
 	cmd := dockercli.InspectVolume + " --format '{{index .Status \"attached to VM\"}}' " + volName
-	op := ExecCmd(hostname, cmd)
+	op, _ := ssh.InvokeCommand(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by docker cli when looking for attached to vm field for volume. Output: ", op)
 	}
-	return strings.TrimSpace(op)
+	return op
 }
 
 // GetVMAttachedToVolUsingAdminCli returns attached to vm field of volume using admin cli
 func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
 	cmd := admincli.ListVolumes + "-c volume,attached-to 2>/dev/null | grep " + volName
-	op := ExecCmd(hostname, cmd)
+	op, _ := ssh.InvokeCommand(hostname, cmd)
 	volProps := strings.Fields(op)
 	if op == "" {
 		log.Fatal("Null value is returned by admin cli when looking for attached to vm field for volume. Output: ", op)
@@ -62,7 +63,7 @@ func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
 // for volume using Admin cli
 func GetVolumePropertiesAdminCli(volName string, hostname string) string {
 	cmd := admincli.ListVolumes + "-c volume,attached-to,capacity,disk-format 2>/dev/null | grep " + volName
-	op := ExecCmd(hostname, cmd)
+	op, _ := ssh.InvokeCommand(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by admin cli when looking for, size, disk-format and attached to vm. Output: ", op)
 	}
@@ -77,7 +78,7 @@ func GetVolumePropertiesAdminCli(volName string, hostname string) string {
 // for volume using Docker cli
 func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 	cmd := dockercli.InspectVolume + " --format '{{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' " + volName
-	op := ExecCmd(hostname, cmd)
+	op, _ := ssh.InvokeCommand(hostname, cmd)
 	expctedLen := 0
 	if op == "" {
 		log.Fatal("Null value is returned by docker cli when looking for, size, disk-format and attached to vm. Output: ", op)
@@ -101,14 +102,12 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 func CheckVolumeAvailability(hostName string, volumeName string) bool {
 	log.Printf("Checking volume [%s] availability from VM [%s]\n", volumeName, hostName)
 
-	volumes := GetDockerVolumes(hostName)
+	volumes, err := ssh.InvokeCommand(hostName, dockercli.ListVolumes)
+	if err != nil {
+		return false
+	}
 	//TODO: add more detailed verification here, e.g. checking volume driver name
 	return strings.Contains(volumes, volumeName)
-}
-
-// GetDockerVolumes returns all docker volumes available from the given host
-func GetDockerVolumes(hostName string) string {
-	return ExecCmd(hostName, dockercli.ListVolumes)
 }
 
 // VerifyAttachedStatus - verify volume is attached and name of the VM attached
@@ -132,19 +131,22 @@ func VerifyAttachedStatus(name, hostName, esxName string) bool {
 	return isMatching
 }
 
-// GetVolumeStatusHost - get the volume status on a given host
-func GetVolumeStatusHost(name, hostName string) string {
+// getVolumeStatusHost - get the volume status on a given host
+func getVolumeStatusHost(name, hostName string) string {
 	cmd := dockercli.InspectVolume + " --format '{{index .Status.status}}' " + name
-	op := ExecCmd(hostName, cmd)
-	return strings.TrimSpace(op)
+	// ignoring the error here, helper is part of polling util
+	// error most likely to be "unable to reach host [ssh:255 error]"
+	// VerifyDetachedStatus takes care of retry mechanism
+	out, _ := ssh.InvokeCommand(hostName, cmd)
+	return out
 }
 
 // VerifyDetachedStatus - check if the status gets detached within the timeout
 func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
-	for attempt := 0; attempt < pollTimeout; attempt++ {
-		time.Sleep(1 * time.Second)
-		status := GetVolumeStatusHost(name, hostName)
+	for attempt := 0; attempt < maxAttempt; attempt++ {
+		misc.SleepForSec(2)
+		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {
 			continue
 		}
@@ -156,33 +158,4 @@ func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	}
 	log.Printf("Timed out to poll status\n")
 	return false
-}
-
-// GetDockerVersion returns docker version
-func GetDockerVersion(hostName string) string {
-	cmd := "docker -v"
-	out := ExecCmd(hostName, cmd)
-	return out
-}
-
-//ExecCmd method takes command and host and calls InvokeCommand
-//and then returns the output after converting to string
-func ExecCmd(hostName string, cmd string) string {
-	out, err := ssh.InvokeCommand(hostName, cmd)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(out[:])
-}
-
-// IsDockerCliCheckNeeded method can be useful if we
-// do not want to run certain verifications
-// on docker 1.11
-func IsDockerCliCheckNeeded(ipAddr string) bool {
-	dockerVer := GetDockerVersion(ipAddr)
-	log.Println("Docker version:  ", dockerVer)
-	if strings.Contains(dockerVer, "Docker version 1.11.") {
-		return false
-	}
-	return true
 }

@@ -59,8 +59,10 @@ func (s *VMListenerTestParams) SetUpTest(c *C) {
 }
 
 func (s *VMListenerTestParams) TearDownTest(c *C) {
-	// Note: no need to remove container, it is already removed as
-	// vm got killed and `--restart=always` flag is not added
+	if dockercli.IsContainerExist(s.dockerHostIP, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.dockerHostIP, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
 	out, err := dockercli.DeleteVolume(s.dockerHostIP, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 }
@@ -107,12 +109,9 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	// kill VM
 	isVMKilled := esxcli.KillVM(s.esxIP, processID)
 	c.Assert(isVMKilled, Equals, true, Commentf("Unable to kill VM %s ...", s.dockerHostName))
-	misc.SleepForSec(10)
 
-	// verifies through govc that vm is poweroff
-	powerState = govc.GetVMPowerState(s.dockerHostName)
-	log.Printf("VM[%s]'s current power state is [%s]", s.dockerHostName, powerState)
-	c.Assert(powerState, Equals, powerOffState, Commentf("VM [%s] should be powered off state", s.dockerHostName))
+	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, s.dockerHostName, powerOffState)
+	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered off state", s.dockerHostName))
 
 	// status should be detached
 	volAttachStatus := verification.GetVMAttachedToVolUsingAdminCli(s.volumeName, s.esxIP)
@@ -120,12 +119,8 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 
 	// power on vm
 	govc.PowerOnVM(s.dockerHostName)
-	misc.SleepForSec(35)
-
-	// make sure vm is powered on
-	powerState = govc.GetVMPowerState(s.dockerHostName)
-	log.Printf("VM[%s]'s current power state is [%s]", s.dockerHostName, powerState)
-	c.Assert(powerState, Equals, powerOnState, Commentf("VM [%s] should be powered on state", s.dockerHostName))
+	isStatusChanged = misc.WaitForExpectedState(govc.GetVMPowerState, s.dockerHostName, powerOnState)
+	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.dockerHostName))
 
 	// status should be detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)

@@ -73,4 +73,7 @@ const (
 
 	// TestContainer test busybox container that keeps running
 	TestContainer = " busybox tail -f /dev/null "
+
+	// QueryContainer checks whether container exists or not
+	QueryContainer = docker + "ps -aq --filter name="
 )
