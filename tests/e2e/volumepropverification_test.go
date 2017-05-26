@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 
 // clean-up function
 func teardownFunction() {
-	verification.ExecCmd(vmIP, dockerVolmRmvCmd)
+	ssh.InvokeCommand(vmIP, dockerVolmRmvCmd)
 	log.Println("-----Clean-up finished - current time: ", time.Now())
 }
 
@@ -71,7 +71,7 @@ func TestVolumeProperties(t *testing.T) {
 		log.Println("running end_to_end tests - current time: ", time.Now())
 		vmIP = vms[vmIndx]
 		log.Println("Running test on VM - ", vmIP)
-		dockerCliCheck = verification.IsDockerCliCheckNeeded(vms[vmIndx])
+		dockerCliCheck = true
 		for i := 0; i < len(volSizes); i++ {
 			for k := 0; k < len(formatTypes); k++ {
 				containerName = inputparams.GetContainerNameWithTimeStamp("volumeprop_test")
@@ -123,7 +123,7 @@ func TestVolumeProperties(t *testing.T) {
 				}
 				log.Println("Finished verifying volume properties like size, disk-format and attached-to-vm fields"+
 					" at vm and esx for volume - ", volName)
-				verification.ExecCmd(vms[vmIndx], "docker stop "+containerName+" ; docker rm "+containerName)
+				ssh.InvokeCommand(vms[vmIndx], "docker stop "+containerName+" ; docker rm "+containerName)
 			}
 		}
 	}

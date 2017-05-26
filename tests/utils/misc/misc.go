@@ -21,8 +21,29 @@ import (
 	"time"
 )
 
+type vmstatus func(string) string
+
+const (
+	maxAttempt = 60
+)
+
 // SleepForSec sleep for a given number of seconds
 func SleepForSec(sec int) {
 	log.Printf("Sleep for %d seconds", sec)
 	time.Sleep(time.Duration(sec) * time.Second)
+}
+
+// WaitForExpectedState test
+func WaitForExpectedState(f vmstatus, vmName, expectedState string) bool {
+
+	log.Printf("Confirming [%s] power status for vm [%s]\n", expectedState, vmName)
+	for attempt := 0; attempt < maxAttempt; attempt++ {
+		SleepForSec(1)
+		status := f(vmName)
+		if status == expectedState {
+			return true
+		}
+	}
+	log.Printf("Timed out to poll status\n")
+	return false
 }
