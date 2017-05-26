@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	pollTimeout = 60
+	maxAttempt = 30
 )
 
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
@@ -102,17 +102,12 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 func CheckVolumeAvailability(hostName string, volumeName string) bool {
 	log.Printf("Checking volume [%s] availability from VM [%s]\n", volumeName, hostName)
 
-	volumes, err := getDockerVolumes(hostName)
+	volumes, err := ssh.InvokeCommand(hostName, dockercli.ListVolumes)
 	if err != nil {
 		return false
 	}
 	//TODO: add more detailed verification here, e.g. checking volume driver name
 	return strings.Contains(volumes, volumeName)
-}
-
-// getDockerVolumes returns all docker volumes available from the given host
-func getDockerVolumes(hostName string) (string, error) {
-	return ssh.InvokeCommand(hostName, dockercli.ListVolumes)
 }
 
 // VerifyAttachedStatus - verify volume is attached and name of the VM attached
@@ -149,8 +144,8 @@ func getVolumeStatusHost(name, hostName string) string {
 // VerifyDetachedStatus - check if the status gets detached within the timeout
 func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
-	for attempt := 0; attempt < pollTimeout; attempt++ {
-		misc.SleepForSec(1)
+	for attempt := 0; attempt < maxAttempt; attempt++ {
+		misc.SleepForSec(2)
 		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {
 			continue

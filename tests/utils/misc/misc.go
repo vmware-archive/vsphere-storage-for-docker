@@ -21,10 +21,10 @@ import (
 	"time"
 )
 
-type vmstatus func(string) string
+type getVMPowerStatus func(string) string
 
 const (
-	maxAttempt = 60
+	maxAttempt = 20
 )
 
 // SleepForSec sleep for a given number of seconds
@@ -34,12 +34,12 @@ func SleepForSec(sec int) {
 }
 
 // WaitForExpectedState test
-func WaitForExpectedState(f vmstatus, vmName, expectedState string) bool {
+func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) bool {
 
 	log.Printf("Confirming [%s] power status for vm [%s]\n", expectedState, vmName)
 	for attempt := 0; attempt < maxAttempt; attempt++ {
-		SleepForSec(1)
-		status := f(vmName)
+		SleepForSec(3)
+		status := fn(vmName)
 		if status == expectedState {
 			return true
 		}
