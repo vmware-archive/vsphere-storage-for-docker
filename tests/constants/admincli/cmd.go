@@ -25,4 +25,46 @@ const (
 
 	// ListVolumes referring to vmdkops_admin volume ls
 	ListVolumes = vmdkopsAdminVolume + "ls "
+
+	// CreateVMgroup referring to create vmgroup
+	// where --name will be name of the vmgroup
+	CreateVMgroup = vmdkopsAdmin + "vmgroup create --name="
+
+	// RemoveVMgroup referring to remove vmgroup
+	// where --name will be name of the vmgroup
+	RemoveVMgroup = vmdkopsAdmin + "vmgroup rm --name="
+
+	// AddVMToVMgroup referring to add vm to a vmgroup
+	// where --name will be name of the vmgroup
+	AddVMToVMgroup = vmdkopsAdmin + "vmgroup vm add --name="
+
+	// RemoveVMFromVMgroup referring to remove a vm from vmgroup
+	// where --name will be name of the vmgroup
+	RemoveVMFromVMgroup = vmdkopsAdmin + "vmgroup vm rm --name="
+
+	// ReplaceVMFromVMgroup referring replace a vm from vmgroup
+	// where --name will be name of the vmgroup
+	ReplaceVMFromVMgroup = vmdkopsAdmin + "vmgroup vm replace --name="
+
+	// DefaultVMgroup referring name of default vmgroup
+	DefaultVMgroup = "_DEFAULT "
+
+	// VMHomeDatastore referring datastore where the docker host vm is created
+	VMHomeDatastore = "_VM_DS"
+
+	// InitLocalConfigDb referring to Initialize (local) Single Node Config DB
+	InitLocalConfigDb = vmdkopsAdmin + "config init --local"
+
+	// RemoveLocalConfigDb referring to Remove (local) Single Node Config DB
+	RemoveLocalConfigDb = vmdkopsAdmin + "config rm --local --confirm"
+
+	// ListVMgroups referring to vmdkops_admin vmgroups ls
+	ListVMgroups = vmdkopsAdmin + "vmgroup ls "
+
+	// UpdateVMgroup referring to updating a vmgroup
+	// where --name will be name of the vmgroup
+	UpdateVMgroup = vmdkopsAdmin + "vmgroup update --name="
+
+	//RemoveVolumes option refers to removing all volumes from a vmgroup
+	RemoveVolumes = " --remove-volumes"
 )
