@@ -32,6 +32,9 @@ var sshIdentity = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], stri
 // cmd: A command string to be executed on the remote host as per
 func InvokeCommand(ip, cmd string) (string, error) {
 	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
+	if err != nil {
+		log.Printf("Failed to invoke command [%s]: %v", cmd, err)
+	}
 	return strings.TrimSpace(string(out[:])), err
 }
 

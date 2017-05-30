@@ -17,8 +17,10 @@
 package dockercli
 
 const (
-	docker    = "docker "
-	dockerVol = docker + "volume "
+	docker        = "docker "
+	dockerVol     = docker + "volume "
+	dockerNode    = docker + "node "
+	dockerService = docker + "service "
 
 	// ListVolumes to list down docker volumes
 	ListVolumes = dockerVol + "ls "
@@ -79,4 +81,22 @@ const (
 
 	// QueryContainer checks whether container exists or not
 	QueryContainer = docker + "ps -aq --filter name="
+
+	// ListContainers list all running docker containers
+	ListContainers = docker + "ps "
+
+	// ListNodes list all docker swarm nodes
+	ListNodes = dockerNode + "ls "
+
+	// CreateService create a docker service
+	CreateService = dockerService + "create "
+
+	// ScaleService scale a docker service
+	ScaleService = dockerService + "scale "
+
+	// ListService list running docker services
+	ListService = dockerService + "ps "
+
+	// RemoveService remove docker services
+	RemoveService = dockerService + "rm "
 )
