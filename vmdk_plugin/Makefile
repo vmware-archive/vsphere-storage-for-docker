@@ -287,7 +287,7 @@ CLEANESX_SH   := $(DEPLOY_TOOLS) cleanesx
 deploy-esx: clean-esx
 	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
 
-VMS= $(VM1) $(VM2)
+VMS= $(VM1) $(VM2) $(WORKER2)
 
 deploy-vm: clean-vm
 	$(DEPLOY_VM_SH) "$(VMS)" $(PLUGIN_NAME):$(PLUGIN_TAG)
