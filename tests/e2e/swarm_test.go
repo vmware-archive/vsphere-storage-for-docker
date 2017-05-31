@@ -88,7 +88,8 @@ var _ = Suite(&SwarmTestSuite{})
 func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	log.Printf("START: swarm_test.TestDockerSwarm")
 
-	opts := "--replicas 1 --mount type=volume,source=" + s.volumeName + ",target=/vol,volume-driver=vsphere busybox tail -f /dev/null"
+	fullVolumeName := verification.GetFullVolumeName(s.master, s.volumeName)
+	opts := "--replicas 1 --mount type=volume,source=" + fullVolumeName + ",target=/vol,volume-driver=vsphere busybox tail -f /dev/null"
 	out, err := dockercli.CreateService(s.master, s.serviceName, opts)
 	c.Assert(err, IsNil, Commentf(out))
 
