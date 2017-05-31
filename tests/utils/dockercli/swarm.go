@@ -39,7 +39,7 @@ func ListNodes(ip string) (string, error) {
 
 // CreateService creates a docker service
 func CreateService(ip, name, opts string) (string, error) {
-	log.Printf("Creating a docker service %s on VM [%s]\n", name, ip)
+	log.Printf("Creating a docker service [%s] on VM [%s]\n", name, ip)
 	return ssh.InvokeCommand(ip, dockercli.CreateService+"--name "+name+" "+opts)
 }
 
@@ -51,18 +51,18 @@ func ListService(ip, name string) (string, error) {
 
 // ScaleService scales one or multiple replicated services
 func ScaleService(ip, name string, replicas int) (string, error) {
-	log.Printf("Scaling %d replicated services for %s on VM [%s]\n", replicas, name, ip)
+	log.Printf("Scaling %d replicated services for [%s] on VM [%s]\n", replicas, name, ip)
 	return ssh.InvokeCommand(ip, dockercli.ScaleService+name+"="+strconv.Itoa(replicas))
 }
 
 // StopService stops a docker service
 func StopService(ip, name string) (string, error) {
-	log.Printf("Stopping docker service %s on VM [%s]\n", name, ip)
+	log.Printf("Stopping docker service [%s] on VM [%s]\n", name, ip)
 	return ssh.InvokeCommand(ip, dockercli.StopContainer+name)
 }
 
 // RemoveService remove a docker service
 func RemoveService(ip, name string) (string, error) {
-	log.Printf("Removing docker service %s on VM [%s]\n", name, ip)
+	log.Printf("Removing docker service [%s] on VM [%s]\n", name, ip)
 	return ssh.InvokeCommand(ip, dockercli.RemoveService+name)
 }

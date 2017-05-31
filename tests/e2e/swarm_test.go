@@ -112,7 +112,7 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	containerName, err = verification.GetContainerName(s.master, s.serviceName+".1")
-	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 	out, err = dockercli.StopService(s.master, containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
