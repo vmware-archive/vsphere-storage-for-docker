@@ -96,7 +96,7 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	status := verification.VerifyDockerService(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 1)
+	status, _ = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
@@ -108,18 +108,18 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	status = verification.VerifyDockerService(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 2)
-	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
+	status, host := verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 2)
+	c.Assert(status, Equals, true, Commentf("Container %s is not running on any hosts", s.serviceName))
 
-	containerName, err = verification.GetContainerName(s.master, s.serviceName+".1")
+	containerName, err = verification.GetContainerName(host, s.serviceName+".1")
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
-	out, err = dockercli.StopService(s.master, containerName)
+	out, err = dockercli.StopService(host, containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
 	status = verification.VerifyDockerService(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 2)
+	status, _ = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)

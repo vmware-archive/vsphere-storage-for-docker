@@ -130,23 +130,24 @@ func VerifyDockerService(hostName, serviceName string, replicas int) bool {
 	return true
 }
 
-// VerifyDockerContainer returns true if the containers are running on one of
-// the given docker hosts with specified replicas; false otherwise.
-func VerifyDockerContainer(dockerHosts []string, serviceName string, replicas int) bool {
+// VerifyDockerContainer returns true and the host IP if the containers are running on one of
+// the given docker hosts with specified replicas; otherwise returns false and empty string.
+func VerifyDockerContainer(dockerHosts []string, serviceName string, replicas int) (bool, string) {
 	log.Printf("Checking running containers for docker service [%s] on docker hosts: %v\n", serviceName, dockerHosts)
 
 	//TODO: Need to implement generic polling logic for better reuse
 	for attempt := 0; attempt < maxAttempt; attempt++ {
-		if allContainersRunning(dockerHosts, serviceName, replicas) {
-			return true
+		status, host := allContainersRunning(dockerHosts, serviceName, replicas)
+		if status {
+			return status, host
 		}
 		misc.SleepForSec(5)
 	}
-	return false
+	return false, ""
 }
 
 // allContainersRunning returns true if all replicated containers are up and running; false otherwise.
-func allContainersRunning(dockerHosts []string, serviceName string, replicas int) bool {
+func allContainersRunning(dockerHosts []string, serviceName string, replicas int) (bool, string) {
 	//TODO: It looks like all containers will always be spawned on one node. If this assumption
 	//turns out to be false, then the logic below needs to be changed
 	for _, host := range dockerHosts {
@@ -159,13 +160,13 @@ func allContainersRunning(dockerHosts []string, serviceName string, replicas int
 			log.Printf("Containers running on docker host [%s]: %s\n", host, out)
 			for i := 1; i <= replicas; i++ {
 				if !strings.Contains(out, serviceName+"."+strconv.Itoa(i)) {
-					return false
+					return false, ""
 				}
 			}
-			return true
+			return true, host
 		}
 	}
-	return false
+	return false, ""
 }
 
 // CheckVolumeAvailability returns true if the given volume is available
