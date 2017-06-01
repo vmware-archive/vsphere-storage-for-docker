@@ -18,7 +18,6 @@ package dockercli
 
 import (
 	"log"
-
 	"strconv"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
@@ -45,7 +44,7 @@ func CreateService(ip, name, opts string) (string, error) {
 
 // ListService lists the tasks of a docker service
 func ListService(ip, name string) (string, error) {
-	log.Printf("Listing docker services running on VM [%s]\n", ip)
+	log.Printf("Listing docker service [%s] running on VM [%s]\n", name, ip)
 	return ssh.InvokeCommand(ip, dockercli.ListService+name)
 }
 

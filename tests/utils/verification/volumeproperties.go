@@ -22,18 +22,11 @@ import (
 	"log"
 	"strings"
 
-	"strconv"
-
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
-	util "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
-)
-
-const (
-	maxAttempt = 30
 )
 
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
@@ -100,75 +93,6 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 	return op
 }
 
-// GetContainerName returns full container name based on given short name
-func GetContainerName(hostName, shortName string) (string, error) {
-	cmd := dockercli.ListContainers + "--filter name='" + shortName + "' --format '{{.Names}}'"
-	return ssh.InvokeCommand(hostName, cmd)
-}
-
-// GetAllContainers returns all running containers on the give host based on the filtering criteria
-func GetAllContainers(hostName, filter string) (string, error) {
-	cmd := dockercli.ListContainers + "--filter name='" + filter + "' --format '{{.Names}}'"
-	return ssh.InvokeCommand(hostName, cmd)
-}
-
-// VerifyDockerService returns true if the given service is running on
-// the specified VM with specified replicas; false otherwise.
-func VerifyDockerService(hostName, serviceName string, replicas int) bool {
-	log.Printf("Checking docker service [%s] status on VM [%s]\n", serviceName, hostName)
-	out, err := util.ListService(hostName, serviceName)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-
-	for i := 1; i <= replicas; i++ {
-		if !strings.Contains(out, serviceName+"."+strconv.Itoa(i)) {
-			return false
-		}
-	}
-	return true
-}
-
-// VerifyDockerContainer returns true and the host IP if the containers are running on one of
-// the given docker hosts with specified replicas; otherwise returns false and empty string.
-func VerifyDockerContainer(dockerHosts []string, serviceName string, replicas int) (bool, string) {
-	log.Printf("Checking running containers for docker service [%s] on docker hosts: %v\n", serviceName, dockerHosts)
-
-	//TODO: Need to implement generic polling logic for better reuse
-	for attempt := 0; attempt < maxAttempt; attempt++ {
-		status, host := allContainersRunning(dockerHosts, serviceName, replicas)
-		if status {
-			return status, host
-		}
-		misc.SleepForSec(5)
-	}
-	return false, ""
-}
-
-// allContainersRunning returns true if all replicated containers are up and running; false otherwise.
-func allContainersRunning(dockerHosts []string, serviceName string, replicas int) (bool, string) {
-	//TODO: It looks like all containers will always be spawned on one node. If this assumption
-	//turns out to be false, then the logic below needs to be changed
-	for _, host := range dockerHosts {
-		out, err := GetAllContainers(host, serviceName)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if out != "" {
-			log.Printf("Containers running on docker host [%s]: %s\n", host, out)
-			for i := 1; i <= replicas; i++ {
-				if !strings.Contains(out, serviceName+"."+strconv.Itoa(i)) {
-					return false, ""
-				}
-			}
-			return true, host
-		}
-	}
-	return false, ""
-}
-
 // CheckVolumeAvailability returns true if the given volume is available
 // from the specified VM; false otherwise.
 func CheckVolumeAvailability(hostName string, volumeName string) bool {
@@ -190,7 +114,6 @@ func GetFullVolumeName(hostName string, volumeName string) string {
 	cmd := dockercli.ListVolumes + "--filter name='" + volumeName + "' --format '{{.Name}}'"
 	fullName, err := ssh.InvokeCommand(hostName, cmd)
 	if err != nil {
-		log.Println(err)
 		return volumeName
 	}
 
@@ -233,7 +156,8 @@ func getVolumeStatusHost(name, hostName string) string {
 func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
 
-	for attempt := 0; attempt < maxAttempt; attempt++ {
+	//TODO: Need to implement generic polling logic for better reuse
+	for attempt := 0; attempt < 30; attempt++ {
 		misc.SleepForSec(2)
 		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {

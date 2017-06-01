@@ -22,6 +22,7 @@ import (
 
 	. "gopkg.in/check.v1"
 
+	constant "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
@@ -37,7 +38,7 @@ type SwarmTestSuite struct {
 	serviceName string
 }
 
-func (s *SwarmTestSuite) SetUpTest(c *C) {
+func (s *SwarmTestSuite) SetUpSuite(c *C) {
 	s.esxName = inputparams.GetEsxIP()
 	s.master = inputparams.GetSwarmManager1()
 	s.worker1 = inputparams.GetSwarmWorker1()
@@ -59,7 +60,7 @@ func (s *SwarmTestSuite) SetUpTest(c *C) {
 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
 }
 
-func (s *SwarmTestSuite) TearDownTest(c *C) {
+func (s *SwarmTestSuite) TearDownSuite(c *C) {
 	// Clean up the volume
 	out, err := dockercli.DeleteVolume(s.master, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -89,14 +90,14 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	log.Printf("START: swarm_test.TestDockerSwarm")
 
 	fullVolumeName := verification.GetFullVolumeName(s.master, s.volumeName)
-	opts := "--replicas 1 --mount type=volume,source=" + fullVolumeName + ",target=/vol,volume-driver=vsphere busybox tail -f /dev/null"
+	opts := "--replicas 1 --mount type=volume,source=" + fullVolumeName + ",target=/vol,volume-driver=" + constant.VDVSPluginName + constant.TestContainer
 	out, err := dockercli.CreateService(s.master, s.serviceName, opts)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status := verification.VerifyDockerService(s.master, s.serviceName, 1)
+	status := verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, _ = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 1)
+	status, _ = verification.IsDockerContainerRunning(s.dockerHosts, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
@@ -105,10 +106,10 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	out, err = dockercli.ScaleService(s.master, s.serviceName, 2)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyDockerService(s.master, s.serviceName, 2)
+	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, host := verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 2)
+	status, host := verification.IsDockerContainerRunning(s.dockerHosts, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running on any hosts", s.serviceName))
 
 	containerName, err = verification.GetContainerName(host, s.serviceName+".1")
@@ -116,10 +117,10 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	out, err = dockercli.StopService(host, containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyDockerService(s.master, s.serviceName, 2)
+	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, _ = verification.VerifyDockerContainer(s.dockerHosts, s.serviceName, 2)
+	status, _ = verification.IsDockerContainerRunning(s.dockerHosts, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
