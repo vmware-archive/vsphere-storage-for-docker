@@ -19,6 +19,7 @@ package inputparams
 
 import (
 	"flag"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -51,6 +52,16 @@ func GetVolumeNameWithTimeStamp(volumeName string) string {
 // GetContainerNameWithTimeStamp prepares unique container name by appending current time-stamp value
 func GetContainerNameWithTimeStamp(containerName string) string {
 	return containerName + "_container_" + strconv.FormatInt(time.Now().Unix(), 10)
+}
+
+// GetVolumeNameOfSize returns a random volume name of required length
+func GetVolumeNameOfSize(size int) string {
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	result := make([]byte, size)
+	for i := range result {
+		result[i] = chars[rand.Intn(len(chars))]
+	}
+	return string(result)
 }
 
 // GetEndPoint1 returns first VM endpoint supplied through CLI

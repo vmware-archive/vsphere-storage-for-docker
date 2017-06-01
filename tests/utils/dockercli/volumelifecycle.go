@@ -33,6 +33,12 @@ func CreateVolume(ip, name string) (string, error) {
 	return ssh.InvokeCommand(ip, dockercli.CreateVolume+"--name="+name)
 }
 
+// CreateVolumeWithOptions is going to create vsphere docker volume with given name.
+func CreateVolumeWithOptions(ip, name, options string) (string, error) {
+	log.Printf("Creating volume [%s] with options [%s] on VM [%s]\n", name, options, ip)
+	return ssh.InvokeCommand(ip, dockercli.CreateVolume+"--name="+name+" "+options)
+}
+
 // AttachVolume - attach volume to container on given host
 func AttachVolume(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
@@ -49,6 +55,26 @@ func AttachVolumeWithRestart(ip, volName, containerName string) (string, error) 
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always -d -v "+volName+
 		":/vol1 --name "+containerName+
 		dockercli.TestContainer)
+}
+
+// WriteToVolume write data to a given file on given volume
+func WriteToVolume(ip, volName, containerName, fileName, data string) (string, error) {
+	log.Printf("Writing %s to file %s on volume [%s] from VM[%s]\n", data, fileName, volName, ip)
+
+	writeCmd := " /bin/sh -c 'echo \"" + data + "\" > /vol1/test.txt'"
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -v "+volName+
+		":/vol1 --name "+containerName+dockercli.ContainerImage+
+		writeCmd)
+}
+
+// ReadFromVolume read content of given file on a given volume
+func ReadFromVolume(ip, volName, containerName, fileName string) (string, error) {
+	log.Printf("Reading from file %s on volume [%s] from VM[%s]\n", fileName, volName, ip)
+
+	readCmd := " /bin/sh -c 'cat /vol1/" + fileName + "'"
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -v "+volName+
+		":/vol1 --name "+containerName+dockercli.ContainerImage+
+		readCmd)
 }
 
 // DeleteVolume helper deletes the created volume as per passed volume name.

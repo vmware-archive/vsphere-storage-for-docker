@@ -22,6 +22,7 @@ package govc
 
 import (
 	"log"
+	"strings"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/govc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
@@ -48,5 +49,19 @@ func GetVMPowerState(vmName string) string {
 func PowerOnVM(vmName string) string {
 	log.Printf("Powering on VM [%s]\n", vmName)
 	cmd := govc.PowerOnVM + vmName
+	return ssh.InvokeCommandLocally(cmd)
+}
+
+// GetDatastoreList returns a list of datastore names available
+func GetDatastoreList() []string {
+	log.Printf("Finding Datastores available on ESX")
+	cmd := govc.DatastoreInfo + govc.JSONTypeOutput + "| " + govc.JSONParser + govc.DatastoreList
+	out := ssh.InvokeCommandLocally(cmd)
+	return strings.Fields(out)
+}
+
+// GetDatastoreByType returns the datastore name of type specified
+func GetDatastoreByType(typeName string) string {
+	cmd := govc.DatastoreInfo + govc.JSONTypeOutput + "| " + govc.JSONParser + " '.Datastores[].Summary | select(.Type==\"" + typeName + "\") | .Name'"
 	return ssh.InvokeCommandLocally(cmd)
 }

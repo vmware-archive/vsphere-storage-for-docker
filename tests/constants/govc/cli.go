@@ -25,6 +25,12 @@ const (
 	// VMInfoByIP refers to govc query to grab VM IP from VM info object
 	VMInfoByIP = VMInfo + "-vm.ip="
 
+	// DatastoreInfo get datastore info from govc
+	DatastoreInfo = govcCmd + "datastore.info "
+
+	// DatastoreList get the list of datastore names from govc output
+	DatastoreList = ".Datastores[].Name "
+
 	// JSONTypeOutput sets govc response type
 	JSONTypeOutput = " -json "
 
