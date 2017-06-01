@@ -19,33 +19,18 @@ package verification
 
 import (
 	"log"
+	"strconv"
 	"strings"
 
-	"strconv"
-
-	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
-	util "github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
-
-// GetContainerName returns full container name based on given short name
-func GetContainerName(hostName, shortName string) (string, error) {
-	cmd := dockercli.ListContainers + "--filter name='" + shortName + "' --format '{{.Names}}'"
-	return ssh.InvokeCommand(hostName, cmd)
-}
-
-// GetAllContainers returns all running containers on the give host based on the filtering criteria
-func GetAllContainers(hostName, filter string) (string, error) {
-	cmd := dockercli.ListContainers + "--filter name='" + filter + "' --format '{{.Names}}'"
-	return ssh.InvokeCommand(hostName, cmd)
-}
 
 // IsDockerServiceRunning returns true if the given service is running on
 // the specified VM with specified replicas; false otherwise.
 func IsDockerServiceRunning(hostName, serviceName string, replicas int) bool {
 	log.Printf("Checking docker service [%s] status on VM [%s]\n", serviceName, hostName)
-	out, err := util.ListService(hostName, serviceName)
+	out, err := dockercli.ListService(hostName, serviceName)
 	if err != nil {
 		log.Println(err)
 		return false
@@ -78,7 +63,7 @@ func IsDockerContainerRunning(dockerHosts []string, serviceName string, replicas
 // isContainerRunning returns true if all replicated containers are up and running; false otherwise.
 func isContainerRunning(dockerHosts []string, serviceName string, replicas int) (bool, string) {
 	for _, host := range dockerHosts {
-		out, err := GetAllContainers(host, serviceName)
+		out, err := dockercli.GetAllContainers(host, serviceName)
 		if err != nil || out == "" {
 			continue
 		}

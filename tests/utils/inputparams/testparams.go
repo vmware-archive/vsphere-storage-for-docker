@@ -94,6 +94,11 @@ func GetSwarmWorker2() string {
 	return os.Getenv("WORKER2")
 }
 
+// GetSwarmNodes returns all nodes in the configured swarm cluster
+func GetSwarmNodes() []string {
+	return []string{GetSwarmManager1(), GetSwarmWorker1(), GetSwarmWorker2()}
+}
+
 // GetDockerHostIP - returns ip of the VM where vm can be first vm (VM1) or second vm (VM2)
 func GetDockerHostIP(vm string) string {
 	return os.Getenv(vm)

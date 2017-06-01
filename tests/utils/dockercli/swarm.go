@@ -65,3 +65,15 @@ func RemoveService(ip, name string) (string, error) {
 	log.Printf("Removing docker service [%s] on VM [%s]\n", name, ip)
 	return ssh.InvokeCommand(ip, dockercli.RemoveService+name)
 }
+
+// GetContainerName returns full container name based on given short name
+func GetContainerName(hostName, shortName string) (string, error) {
+	cmd := dockercli.ListContainers + "--filter name='" + shortName + "' --format '{{.Names}}'"
+	return ssh.InvokeCommand(hostName, cmd)
+}
+
+// GetAllContainers returns all running containers on the give host based on the filtering criteria
+func GetAllContainers(hostName, filter string) (string, error) {
+	cmd := dockercli.ListContainers + "--filter name='" + filter + "' --format '{{.Names}}'"
+	return ssh.InvokeCommand(hostName, cmd)
+}

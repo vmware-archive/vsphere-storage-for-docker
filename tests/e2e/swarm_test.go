@@ -33,7 +33,7 @@ type SwarmTestSuite struct {
 	master      string
 	worker1     string
 	worker2     string
-	dockerHosts []string
+	swarmNodes  []string
 	volumeName  string
 	serviceName string
 }
@@ -43,7 +43,7 @@ func (s *SwarmTestSuite) SetUpSuite(c *C) {
 	s.master = inputparams.GetSwarmManager1()
 	s.worker1 = inputparams.GetSwarmWorker1()
 	s.worker2 = inputparams.GetSwarmWorker2()
-	s.dockerHosts = []string{s.master, s.worker1, s.worker2}
+	s.swarmNodes = inputparams.GetSwarmNodes()
 
 	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("swarm_test")
 	s.serviceName = inputparams.GetServiceNameWithTimeStamp("swarm_test")
@@ -97,7 +97,7 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	status := verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, _ = verification.IsDockerContainerRunning(s.dockerHosts, s.serviceName, 1)
+	status, _ = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
@@ -109,10 +109,10 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, host := verification.IsDockerContainerRunning(s.dockerHosts, s.serviceName, 2)
+	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running on any hosts", s.serviceName))
 
-	containerName, err = verification.GetContainerName(host, s.serviceName+".1")
+	containerName, err = dockercli.GetContainerName(host, s.serviceName+".1")
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 	out, err = dockercli.StopService(host, containerName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -120,7 +120,7 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, _ = verification.IsDockerContainerRunning(s.dockerHosts, s.serviceName, 2)
+	status, _ = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
 	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
