@@ -1,8 +1,20 @@
-* IMPORTANT: This is an experimental feature supported only on standalone ESX as of release 0.12. We are seeking feedback/requirements to support mult-tenancy across vSphere Cluster/Datacenter. You can drop us a note at containers@vmware.com.
+---
+title: Tenancy
+---
 
-# Tenancy
 
-Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or "tenants." Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With tenancy, you can achieve isolation of resources of one tenant from other tenants.
+<div class="panel panel-danger">
+  <div class="panel-heading">
+    <h3 class="panel-title">Important</h3>
+  </div>
+  <div class="panel-body">
+        This is an experimental feature supported only on standalone ESX as of release 0.12. We are seeking feedback/requirements to support mult-tenancy across vSphere Cluster/Datacenter. You can drop us a note at containers@vmware.com.
+  </div>
+</div>
+
+## Tenancy
+
+Multi-tenancy is an architecture in which a single instance of a software application serves multiple customers or "tenants." Tenants can be used to provide isolation between independent groups in shared environments, where multiple groups are using some common infrastructure i.e. compute, storage, network, etc. With multi tenancy, you can achieve isolation of resources of one tenant from other tenants.
 
 For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a vmgroup.  A vmgroup can be granted access to create, delete or mount volumes on a specific datastore. VMs assigned to a vmgroup can then execute Docker volume APIs on an assigned datastores. Within a datastore multiple vmgroups can store their Docker volumes. A vmgroup cannot access volumes created by a different vmgroup i.e. vmgroups have their own independent namespace, even if vmgroups share datastores. VMs cannot be shared between vmgroups.
 
@@ -12,8 +24,7 @@ Key attributes of tenancy:
 vmgroup
 - Docker Host (VM) can be a member of one and only one vmgroup.
 - vSphere Administrator can grant vmgroup privileges & set resource consumption
-- Vmgroups can share the same underlying storage but preserve volume namespace isolation.
-limits at granularity of datastore.
+- Vmgroups can share the same underlying storage but preserve volume namespace isolation limits at granularity of datastore.
 
 ## Admin CLI
 
