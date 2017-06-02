@@ -29,10 +29,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
-const (
-	maxAttempt = 30
-)
-
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
 // TODO: make this private member after finishing refactoring of volmprop_test.go and remove this TODO
 func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
@@ -110,6 +106,21 @@ func CheckVolumeAvailability(hostName string, volumeName string) bool {
 	return strings.Contains(volumes, volumeName)
 }
 
+// GetFullVolumeName returns full volume name from the specified VM; return
+// original short name if any error happens
+func GetFullVolumeName(hostName string, volumeName string) string {
+	log.Printf("Fetching full name for volume [%s] from VM [%s]\n", volumeName, hostName)
+
+	cmd := dockercli.ListVolumes + "--filter name='" + volumeName + "' --format '{{.Name}}'"
+	fullName, err := ssh.InvokeCommand(hostName, cmd)
+	if err != nil {
+		return volumeName
+	}
+
+	log.Printf("Full volume name: [%s]\n", fullName)
+	return fullName
+}
+
 // VerifyAttachedStatus - verify volume is attached and name of the VM attached
 // is consistent on both docker host and ESX
 func VerifyAttachedStatus(name, hostName, esxName string) bool {
@@ -144,7 +155,9 @@ func getVolumeStatusHost(name, hostName string) string {
 // VerifyDetachedStatus - check if the status gets detached within the timeout
 func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
-	for attempt := 0; attempt < maxAttempt; attempt++ {
+
+	//TODO: Need to implement generic polling logic for better reuse
+	for attempt := 0; attempt < 30; attempt++ {
 		misc.SleepForSec(2)
 		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {

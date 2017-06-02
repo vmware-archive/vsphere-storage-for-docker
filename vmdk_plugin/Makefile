@@ -355,7 +355,7 @@ e2e-test:
 .PHONY: e2e-dkrVolDriver-test
 e2e-dkrVolDriver-test:
 	$(log_target)
-	$(GO) test $(E2E_Tests) -v
+	$(GO) test $(E2E_Tests) -v -timeout 30m
 
 MANAGED_PLUGIN_NAME="vsphere:latest"
 

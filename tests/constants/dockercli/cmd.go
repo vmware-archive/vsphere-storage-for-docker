@@ -17,8 +17,10 @@
 package dockercli
 
 const (
-	docker    = "docker "
-	dockerVol = docker + "volume "
+	docker        = "docker "
+	dockerVol     = docker + "volume "
+	dockerNode    = docker + "node "
+	dockerService = docker + "service "
 
 	// ListVolumes to list down docker volumes
 	ListVolumes = dockerVol + "ls "
@@ -38,17 +40,17 @@ const (
 	// StartDocker - manually start docker
 	StartDocker = "systemctl start docker"
 
-	// vDVSPluginName name of vDVS plugin
-	vDVSPluginName = "vsphere "
+	// VDVSPluginName name of vDVS plugin
+	VDVSPluginName = "vsphere "
 
-	// vDVS service name
-	vDVSName = "docker-volume-vsphere"
+	// VDVSName name of the vDVS service
+	VDVSName = "docker-volume-vsphere"
 
 	// GetVDVSPlugin gets vDVS plugin info
-	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + vDVSPluginName
+	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + VDVSPluginName
 
-	// GetVDVSPID Get the process id of vDVS plugin
-	GetVDVSPID = "pidof " + vDVSName
+	// GetVDVSPID get the process id of vDVS plugin
+	GetVDVSPID = "pidof " + VDVSName
 
 	// GetDockerPID get docker pid
 	GetDockerPID = "pidof dockerd"
@@ -57,7 +59,7 @@ const (
 	KillVDVSPlugin = "docker-runc kill "
 
 	// StartVDVSPlugin starts the vDVS plugin
-	StartVDVSPlugin = docker + " plugin enable " + vDVSPluginName
+	StartVDVSPlugin = docker + " plugin enable " + VDVSPluginName
 
 	// RunContainer create and run a container
 	RunContainer = docker + "run "
@@ -79,4 +81,22 @@ const (
 
 	// QueryContainer checks whether container exists or not
 	QueryContainer = docker + "ps -aq --filter name="
+
+	// ListContainers list all running docker containers
+	ListContainers = docker + "ps "
+
+	// ListNodes list all docker swarm nodes
+	ListNodes = dockerNode + "ls "
+
+	// CreateService create a docker service
+	CreateService = dockerService + "create "
+
+	// ScaleService scale a docker service
+	ScaleService = dockerService + "scale "
+
+	// ListService list running docker services
+	ListService = dockerService + "ps "
+
+	// RemoveService remove docker services
+	RemoveService = dockerService + "rm "
 )

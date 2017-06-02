@@ -54,6 +54,11 @@ func GetContainerNameWithTimeStamp(containerName string) string {
 	return containerName + "_container_" + strconv.FormatInt(time.Now().Unix(), 10)
 }
 
+// GetServiceNameWithTimeStamp prepares unique service name by appending current time-stamp value
+func GetServiceNameWithTimeStamp(serviceName string) string {
+	return serviceName + "_service_" + strconv.FormatInt(time.Now().Unix(), 10)
+}
+
 // GetVolumeNameOfSize returns a random volume name of required length
 func GetVolumeNameOfSize(size int) string {
 	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -87,6 +92,11 @@ func GetSwarmWorker1() string {
 // GetSwarmWorker2 returns 2nd swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker2() string {
 	return os.Getenv("WORKER2")
+}
+
+// GetSwarmNodes returns all nodes in the configured swarm cluster
+func GetSwarmNodes() []string {
+	return []string{GetSwarmManager1(), GetSwarmWorker1(), GetSwarmWorker2()}
 }
 
 // GetDockerHostIP - returns ip of the VM where vm can be first vm (VM1) or second vm (VM2)
