@@ -271,7 +271,7 @@ function cleanupVM {
         fi
         ;;
     esac
-    $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f"
+    $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f > /dev/null"
 }
 
 function cleanupVMPost {
