@@ -17,7 +17,7 @@
 # This script sets up the testbed and invokes tests.
 
 usage() {
-  echo "$0 <TARGET> <ESX IP> <VM1 IP> <VM2 IP> <Build id>"
+  echo "$0 <TARGET> <ESX IP> <VM1 IP> <VM2 IP> <Build id> <Installation flag>"
   echo "root user will be used for all operations"
   echo "Advisable to setup ssh keys."
   echo "run this script from the root of the repo"
@@ -31,6 +31,7 @@ fi
 
 FUNCTION_NAME=$1
 BUILD_NUMBER=$5
+NEED_INSTALLATION=$6
 
 export ESX=$2
 export VM1=$3
@@ -87,18 +88,24 @@ log "starting deploy and test"
 
 INCLUDE_HOSTD="false"
 
-TARGET="clean-auth-db deploy-esx"
+
+INSTALL_VIB="clean-auth-db deploy-esx"
+
+if [ "$NEED_INSTALLATION" ]
+then
+  TARGET+=$INSTALL_VIB
+fi
 
 PARAMETER="TEST_VOL_NAME=vol.build$BUILD_NUMBER"
 
 case $FUNCTION_NAME in
-deployplugin)
+pluginSanityCheck)
         TARGET+=" deploy-vm-plugin"
         ;;
 runtests)
         if [ -e /tmp/$ESX ]
         then
-          TARGET+=" deploy-vm e2e-dkrVolDriver-test test-vm"
+          TARGET+=" e2e-dkrVolDriver-test test-vm"
         else
           touch /tmp/$ESX
           TARGET+=" deploy-vm e2e-dkrVolDriver-test testasroot test-esx test-vm"
@@ -108,12 +115,12 @@ esac
 
 if make -s $TARGET $PARAMETER;
 then
-  echo "=> Build Complete" `date`
+ echo "=> Build Complete" `date`
   #stop_build $VM1 $BUILD_NUMBER
 else
-  log "Build + Test not successful"
-  INCLUDE_HOSTD="true"
-  dump_logs
-  stop_build $VM1 $BUILD_NUMBER
-  exit 1
+ log "Build + Test not successful"
+ INCLUDE_HOSTD="true"
+ dump_logs
+ stop_build $VM1 $BUILD_NUMBER
+ exit 1
 fi
