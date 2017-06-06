@@ -69,11 +69,16 @@ def set_policy(vmdk_path, policy_string):
     Returns None on success else return the output error. This can be
     displayed at the client
     """
+    readable_vmdk_path = vmdk_ops.gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
+
     uuid = vmdk_ops.get_vsan_uuid(vmdk_path)
     rc, out = vmdk_ops.RunCommand(OBJTOOL_SET_POLICY.format(uuid,
                                                             policy_string))
     if rc != 0:
-        logging.warning("Failed to set policy for %s : %s", vmdk_path, out)
+        logging.warning("Failed to set policy for %s : %s", readable_vmdk_path, out)
         return out
     return None
 
