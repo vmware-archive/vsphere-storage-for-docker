@@ -15,6 +15,8 @@
 // This test suite includes test cases to verify basic functionality
 // in most common configurations
 
+// +build runalways
+
 package e2e
 
 import (

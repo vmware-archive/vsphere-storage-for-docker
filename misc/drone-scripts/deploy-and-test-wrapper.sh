@@ -105,10 +105,10 @@ pluginSanityCheck)
 runtests)
         if [ -e /tmp/$ESX ]
         then
-          TARGET+=" e2e-dkrVolDriver-test test-vm"
+          TARGET+=" e2e-runalways-test test-vm"
         else
           touch /tmp/$ESX
-          TARGET+=" deploy-vm e2e-dkrVolDriver-test testasroot test-esx test-vm"
+          TARGET+=" deploy-vm e2e-runalways-test e2e-runonce-test testasroot test-esx test-vm"
         fi
         ;;
 esac

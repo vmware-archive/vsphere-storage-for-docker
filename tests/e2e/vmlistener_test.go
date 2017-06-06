@@ -16,6 +16,8 @@
 // In case of vm/esx host restart vDVS cleans up stale attachment details
 // the volume.
 
+// +build runonce
+
 package e2e
 
 import (

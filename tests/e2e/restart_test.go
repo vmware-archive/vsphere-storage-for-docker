@@ -15,6 +15,8 @@
 // This test suite includes test cases involving restart docker and plugin. #1252
 // End goal is to make sure volumes get detached smoothly in different scenarios
 
+// +build runonce
+
 package e2e
 
 import (

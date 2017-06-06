@@ -15,6 +15,8 @@
 // This test suite tries to add, remove and replace vm to the _DEFAULT vmgroup
 // Expected behavior is that add/rm/replace vm for _DEFAULT vmgroup should fail
 
+// +build runonce
+
 package e2e
 
 import (
