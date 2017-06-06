@@ -32,7 +32,6 @@ const (
 // ip: remote machine address to execute on the machine
 // cmd: A command string to be executed on the remote host as per
 func InvokeCommand(ip, cmd string) (string, error) {
-	// sshIdentity an array variable to prepare ssh input parameter to pass identify value
 	sshKeyOpt := strings.Split(os.Getenv("SSH_KEY_OPT"), " ")
 	if sshKeyOpt == nil {
 		sshKeyOpt = strings.Split(sshKeyOptPath, " ")
