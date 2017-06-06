@@ -48,3 +48,18 @@ func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) boo
 	log.Printf("Timed out to poll status\n")
 	return false
 }
+// LogTestStart - Print a start log with given test name and
+// current time stamp
+func LogTestStart(testGroup string, testName string) {
+	log.Printf("START:%s %s %s", testGroup, testName, curTime())
+}
+
+// LogTestEnd - Print a stop log with given test name and
+// current time stamp
+func LogTestEnd(testGroup string, testName string) {
+	log.Printf("END:%s %s %s", testGroup, testName, curTime())
+}
+
+func curTime() string {
+	return time.Now().Format(time.UnixDate)
+}
