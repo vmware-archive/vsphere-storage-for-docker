@@ -30,7 +30,7 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/photon"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vsphere"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 )
 
@@ -178,7 +178,11 @@ func main() {
 		}
 		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
 
-		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName)
+		driver = vsphere.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName, *configFile)
+		if driver == nil {
+			log.Warning("Failed to initialize driver, exiting - ", *driverName)
+			os.Exit(1)
+		}
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)

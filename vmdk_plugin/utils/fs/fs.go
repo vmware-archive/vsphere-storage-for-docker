@@ -43,6 +43,7 @@ const (
 	bdevPath        = "/sys/block/"
 	deleteFile      = "/device/delete"
 	watchPath       = "/dev/disk/by-id"
+	mountPrefix     = "/sbin/mount."
 )
 
 // FstypeDefault contains the default FS when not specified by the user
@@ -308,4 +309,12 @@ func GetDevicePath(str []byte) (string, error) {
 	}
 	return fmt.Sprintf("/dev/disk/by-path/pci-%s.0-scsi-0:0:%s:0", string(buf), volDev.Unit), nil
 
+}
+
+// DoNFSMount - Run a mount command to mount a remote dir via nfs/nfs4, syscall Mount()
+// can't be used for nfs mounts owing to the mount protocol involved
+func DoNFSMountCmd(mountPath string, fstype string, remotePath string, args string) error {
+	mountCmd := mountPrefix + fstype
+	_, err := exec.Command(mountCmd, remotePath, mountPath, args).CombinedOutput()
+	return err
 }

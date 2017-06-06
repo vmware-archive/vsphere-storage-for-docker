@@ -112,8 +112,8 @@ func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir
 // In following three operations on refcount, if refcount
 // map hasn't been initialized, return 1 prevent detach and remove.
 
-// Return the number of references for the given volume
-func (d *VolumeDriver) getRefCount(vol string) uint {
+// GetRefCount - Return the number of references for the given volume
+func (d *VolumeDriver) GetRefCount(vol string) uint {
 	if d.refCounts.GetInitSuccess() != true {
 		return 1
 	}
@@ -363,12 +363,6 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	return mountpoint, fs.MountWithID(mountpoint, fstype, id, isReadOnly)
 }
 
-// VolumesInRefMap - get list of volumes names from refmap
-// names are in format volume@datastore
-func (d *VolumeDriver) VolumesInRefMap() []string {
-	return d.refCounts.GetVolumeNames()
-}
-
 // private function that does the job of mounting volume in conjunction with refcounting
 func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
@@ -390,7 +384,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
 	}
 
-	if plugin_utils.AlreadyMounted(r.Name, d.mountRoot) {
+	if plugin_utils.IsMounted(r.Name, d.mountRoot) {
 		log.WithFields(log.Fields{"name": r.Name}).Info("Already mounted, skipping mount. ")
 		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
 	}
@@ -561,9 +555,9 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
 
 	// Docker is supposed to block 'remove' command if the volume is used. Verify.
-	if d.getRefCount(r.Name) != 0 {
+	if d.GetRefCount(r.Name) != 0 {
 		msg := fmt.Sprintf("Remove failure - volume is still mounted. "+
-			" volume=%s, refcount=%d", r.Name, d.getRefCount(r.Name))
+			" volume=%s, refcount=%d", r.Name, d.GetRefCount(r.Name))
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
@@ -619,7 +613,7 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 
 	// checked by refcounting thread until refmap initialized
 	// useless after that
-	d.refCounts.MarkDirty()
+	d.refCounts.SetDirty()
 
 	return d.processMount(r)
 }
@@ -637,7 +631,7 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 		// if refcounting hasn't been succesful,
 		// no refcounting, no unmount. All unmounts are delayed
 		// until we succesfully populate the refcount map
-		d.refCounts.MarkDirty()
+		d.refCounts.SetDirty()
 		return volume.Response{Err: ""}
 	}
 

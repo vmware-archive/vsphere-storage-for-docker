@@ -109,6 +109,9 @@ type refCount struct {
 	// Volume is mounted from this device. Used on recovery only , for info
 	// purposes. Value is empty during normal operation
 	dev string
+
+	// Type of backend for this volume
+	volType string
 }
 
 // RefCountsMap struct
@@ -162,11 +165,19 @@ func (r *RefCountsMap) GetInitSuccess() bool {
 	return r.refcntInitSuccess
 }
 
-// dirty the background refcount process
-// this flag is marked dirty from the driver
-// caller acquires lock on state as appropriate
-func (r *RefCountsMap) MarkDirty() {
+// SetDirty sets the refMap dirty flag to notify
+// a mount or unmount had happened in parallel to
+// a rescan process.
+func (r *RefCountsMap) SetDirty() {
 	r.isDirty = true
+}
+
+// ClearDirty resets the refMap dirty flag to notify
+// a mount or unmount had happened in parallel to
+// a rescan process but failed hence leaving the
+// refMap unchanged.
+func (r *RefCountsMap) ClearDirty() {
+	r.isDirty = false
 }
 
 // tries to calculate refCounts for dvs volumes. If failed, triggers a timer
@@ -347,6 +358,16 @@ func isVMDKMount(mount_source string) bool {
 	return false
 }
 
+//LockStateLock - accquire the state lock of the refcounter
+func (r *RefCountsMap) LockStateLock() {
+	r.StateMtx.Lock()
+}
+
+//UnlockStateLock - accquire the state lock of the refcounter
+func (r *RefCountsMap) UnlockStateLock() {
+	r.StateMtx.Unlock()
+}
+
 // check if refcounting has been made dirty by mounts/unmounts
 func (r *RefCountsMap) checkDirty() bool {
 	r.StateMtx.Lock()
@@ -407,7 +428,8 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 			volumeInfo, err := plugin_utils.GetVolumeInfo(mount.Name, datastoreName, d)
 			if err != nil {
 				log.Errorf("Unable to get volume info for volume %s. err:%v", mount.Name, err)
-				return err
+				// Process the remaining volumes
+				continue
 			}
 			datastoreName = volumeInfo.DatastoreName
 			r.Incr(volumeInfo.VolumeName)

@@ -9,7 +9,7 @@
 
 FROM alpine:3.5
 
-RUN apk update ; apk add e2fsprogs xfsprogs
+RUN apk update ; apk add e2fsprogs xfsprogs; apk add nfs-utils
 RUN mkdir -p /mnt/vmdk
 COPY docker-volume-vsphere /usr/bin
 CMD ["/usr/bin/docker-volume-vsphere"]
