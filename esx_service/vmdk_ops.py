@@ -159,17 +159,70 @@ def RunCommand(cmd):
 
     return (s, o)
 
+
+# Translates the vmdk_path into a readable path by
+# removing the UUID string and using tenant_name
+def gets_readable_path(vmdk_path):
+    idx = 0
+    t_name = ''
+    t_uuid = ''
+    words = vmdk_path.split('/')
+    for word in words:
+        if word == DOCK_VOLS_DIR:
+            break
+        idx += 1
+
+    t_uuid = words[idx + 1]
+    searchObj = re.search(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
+                        t_uuid,
+                        re.M|re.I)
+    if searchObj is None:
+        logging.warning("vmdk_path format changed")
+        return ''
+
+    # iterate over the directory and figure out
+    # which symlink's data matches the t_uuid
+    dvpath = ''
+    for i in range(1, idx + 1):
+        dvpath += '/'
+        dvpath += words[i]
+    dvcontents = os.listdir(dvpath)
+    for k in dvcontents:
+        if os.path.islink(dvpath + '/' + k):
+            if t_uuid in os.readlink(dvpath + '/' + k):
+                t_name = k
+
+    if t_name == '':
+        logging.warning("Failed to find tenant name in vmdk_path")
+        return ''
+    dvpath += '/'
+    dvpath += t_name
+    for i in range (idx + 2, len(words)):
+        dvpath += '/'
+        dvpath += words[i]
+    return dvpath
+
+
 # returns error, or None for OK
 # opts is  dictionary of {option: value}.
 # for now we care about size and (maybe) policy
 def createVMDK(vmdk_path, vm_name, vol_name,
                opts={}, vm_uuid=None, tenant_uuid=None, datastore_url=None):
-    logging.info("*** createVMDK: %s opts = %s vm_name=%s tenant_uuid=%s datastore_url=%s",
-                  vmdk_path, opts, vm_name, tenant_uuid, datastore_url)
+
+    e_info, t_uuid, tenant_name = auth.get_tenant(vm_uuid)
+    if e_info:
+        return err(e_info)
+
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
+    logging.info("*** createVMDK: %s opts = %s vm_name=%s tenant_name=%s datastore_url=%s",
+                  readable_vmdk_path, opts, vm_name, tenant_name, datastore_url)    
 
     if os.path.isfile(vmdk_path):
         # We are mostly here due to race or Plugin VMCI retry #1076
-        logging.warning("File %s already exists", vmdk_path)
+        logging.warning("File %s already exists", readable_vmdk_path)
         return None
 
     try:
@@ -210,7 +263,7 @@ def createVMDK(vmdk_path, vm_name, vol_name,
     except vim.fault.VimFault as ex:
         return err("Failed to create volume: {0}".format(ex.msg))
 
-    logging.debug("Successfully created %s volume", vmdk_path)
+    logging.debug("Successfully created %s volume", readable_vmdk_path)
 
     # Handle vsan policy
     if kv.VSAN_POLICY_NAME in opts:
@@ -223,14 +276,14 @@ def createVMDK(vmdk_path, vm_name, vol_name,
             return set_err
 
     if not create_kv_store(vm_name, vmdk_path, opts):
-        msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
+        msg = "Failed to create metadata kv store for {0}".format(readable_vmdk_path)
         logging.warning(msg)
         error_info = err(msg)
         clean_err = cleanVMDK(vmdk_path=vmdk_path,
                               vol_name=vol_name)
 
         if clean_err:
-            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+            logging.warning("Failed to clean %s file: %s", readable_vmdk_path, clean_err)
             error_info = error_info + clean_err
 
         return error_info
@@ -244,12 +297,17 @@ def createVMDK(vmdk_path, vm_name, vol_name,
 
 
 def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
-    logging.info("*** cloneVMDK: %s opts = %s vm_uuid=%s datastore_url=%s", vmdk_path, opts, vm_uuid, datastore_url)
-
     # Get source volume path for cloning
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     if error_info:
         return err(error_info)
+
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
+    logging.info("*** cloneVMDK: %s opts = %s vm_name=%s tenant_name=%s datastore_url=%s",
+                  readable_vmdk_path, opts, vm_name, tenant_name, datastore_url) 
 
     try:
         src_volume, src_datastore = parse_vol_name(opts[kv.CLONE_FROM])
@@ -351,7 +409,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
         vol_meta[kv.VOL_OPTS][kv.ATTACH_AS] = opts[kv.ATTACH_AS]
 
     if not kv.setAll(vmdk_path, vol_meta):
-        msg = "Failed to create metadata kv store for {0}".format(vmdk_path)
+        msg = "Failed to create metadata kv store for {0}".format(readable_vmdk_path)
         logging.warning(msg)
         removeVMDK(vmdk_path)
         return err(msg)
@@ -450,8 +508,11 @@ def set_policy_to_vmdk(vmdk_path, opts, vol_name=None):
         clean_err = cleanVMDK(vmdk_path=vmdk_path,
                             vol_name=vol_name)
 
+        readable_vmdk_path = gets_readable_path(vmdk_path)
+        if readable_vmdk_path == '':
+            logging.warning("Failed to fetch readable vmdk path")
         if clean_err:
-            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+            logging.warning("Failed to clean %s file: %s", readable_vmdk_path, clean_err)
             error_info = error_info + clean_err
 
         return error_info
@@ -562,7 +623,11 @@ def cleanVMDK(vmdk_path, vol_name=None):
     eg: Unsuccesful attempt to apply vsan policy and when failed
     to create metadata for vmdk_path
     """
-    logging.info("*** cleanVMDK: %s", vmdk_path)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
+    logging.info("*** cleanVMDK: %s", readable_vmdk_path)
 
     # Form datastore path from vmdk_path
     volume_datastore_path = vmdk_utils.get_datastore_path(vmdk_path)
@@ -596,7 +661,10 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
     If it is not attached, then cleans(deletes) the vmdk file.
     If clean is successful, delete the volume from volume table
     """
-    logging.info("*** removeVMDK: %s", vmdk_path)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+    logging.info("*** removeVMDK: %s", readable_vmdk_path)
 
     # Check the current volume status
     kv_status_attached, kv_uuid, attach_mode, attached_vm_name = getStatusAttached(vmdk_path)
@@ -606,14 +674,14 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
             if vol_name is None:
                 vol_name = vmdk_utils.get_volname_from_vmdk_path(vmdk_path)
             logging.info("*** removeVMDK: %s is in use, volume = %s VM = %s VM-uuid = %s (%s)",
-                vmdk_path, vol_name, attached_vm_name, kv_uuid, ret)
+                readable_vmdk_path, vol_name, attached_vm_name, kv_uuid, ret)
             return err("Failed to remove volume {0}, in use by VM = {1}.".format(vol_name, attached_vm_name))
 
     # Cleaning .vmdk file
     clean_err = cleanVMDK(vmdk_path, vol_name)
 
     if clean_err:
-        logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+        logging.warning("Failed to clean %s file: %s", readable_vmdk_path, clean_err)
         return clean_err
 
     # clean succeeded, remove infomation of this volume from volumes table
@@ -629,7 +697,11 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
 def getVMDK(vmdk_path, vol_name, datastore):
     """Checks if the volume exists, and returns error if it does not"""
     # Note: will return more Volume info here, when Docker API actually accepts it
-    logging.debug("getVMDK: vmdk_path=%s vol_name=%s, datastore=%s", vmdk_path, vol_name, datastore)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
+    logging.debug("getVMDK: vmdk_path=%s vol_name=%s, datastore=%s", readable_vmdk_path, vol_name, datastore)
     file_exist = os.path.isfile(vmdk_path)
     logging.debug("getVMDK: file_exist=%d", file_exist)
     if not os.path.isfile(vmdk_path):
@@ -641,7 +713,7 @@ def getVMDK(vmdk_path, vol_name, datastore):
                           kv.get_vol_info(vmdk_path),
                           datastore)
     except Exception as ex:
-        logging.error("Failed to get disk details for %s (%s)" % (vmdk_path, ex))
+        logging.error("Failed to get disk details for %s (%s)" % (readable_vmdk_path, ex))
         return None
 
     return result
@@ -675,16 +747,22 @@ def vm_uuid2name(vm_uuid):
 # Return error, or None for OK.
 def attachVMDK(vmdk_path, vm_uuid):
     vm = findVmByUuid(vm_uuid)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
     logging.info("*** attachVMDK: %s to %s VM uuid = %s",
-                 vmdk_path, vm.config.name, vm_uuid)
+                 readable_vmdk_path, vm.config.name, vm_uuid)
     return disk_attach(vmdk_path, vm)
 
 
 # Return error, or None for OK.
 def detachVMDK(vmdk_path, vm_uuid):
     vm = findVmByUuid(vm_uuid)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
     logging.info("*** detachVMDK: %s from %s VM uuid = %s",
-                 vmdk_path, vm.config.name, vm_uuid)
+                 readable_vmdk_path, vm.config.name, vm_uuid)
     return disk_detach(vmdk_path, vm)
 
 
@@ -1087,7 +1165,10 @@ def reset_vol_meta(vmdk_path):
 
 def setStatusAttached(vmdk_path, vm, vm_dev_info=None):
     '''Sets metadata for vmdk_path to (attached, attachedToVM=uuid'''
-    logging.debug("Set status=attached disk=%s VM name=%s uuid=%s", vmdk_path,
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+    logging.debug("Set status=attached disk=%s VM name=%s uuid=%s", readable_vmdk_path,
                   vm.config.name, vm.config.uuid)
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
@@ -1098,12 +1179,15 @@ def setStatusAttached(vmdk_path, vm, vm_dev_info=None):
     if vm_dev_info:
         vol_meta[kv.ATTACHED_VM_DEV] = vm_dev_info
     if not kv.setAll(vmdk_path, vol_meta):
-        logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
+        logging.warning("Attach: Failed to save Disk metadata for %s", readable_vmdk_path)
 
 
 def setStatusDetached(vmdk_path):
     '''Sets metadata for vmdk_path to "detached"'''
-    logging.debug("Set status=detached disk=%s", vmdk_path)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+    logging.debug("Set status=detached disk=%s", readable_vmdk_path)
     vol_meta = kv.getAll(vmdk_path)
     if not vol_meta:
         vol_meta = {}
@@ -1116,7 +1200,7 @@ def setStatusDetached(vmdk_path):
     except:
         pass
     if not kv.setAll(vmdk_path, vol_meta):
-        logging.warning("Detach: Failed to save Disk metadata for %s", vmdk_path)
+        logging.warning("Detach: Failed to save Disk metadata for %s", readable_vmdk_path)
 
 
 def getStatusAttached(vmdk_path):
@@ -1154,12 +1238,15 @@ def handle_stale_attach(vmdk_path, kv_uuid):
        if it's powered off.
        '''
        cur_vm = findVmByUuid(kv_uuid)
+       readable_vmdk_path = gets_readable_path(vmdk_path)
+       if readable_vmdk_path == '':
+            logging.warning("Failed to fetch readable vmdk path")
 
        if cur_vm:
           # Detach the disk only if VM is powered off
           if cur_vm.runtime.powerState == VM_POWERED_OFF:
              logging.info("Detaching disk %s from VM(powered off) - %s\n",
-                             vmdk_path, cur_vm.config.name)
+                             readable_vmdk_path, cur_vm.config.name)
              device = findDeviceByPath(vmdk_path, cur_vm)
              if device:
                 msg = disk_detach_int(vmdk_path, cur_vm, device)
@@ -1170,7 +1257,7 @@ def handle_stale_attach(vmdk_path, kv_uuid):
                    return err(msg)
              else:
                 logging.warning("Failed to find disk %s in powered off VM - %s, resetting volume metadata\n",
-                                vmdk_path, cur_vm.config.name)
+                                readable_vmdk_path, cur_vm.config.name)
                 ret = reset_vol_meta(vmdk_path)
                 if ret:
                    return ret
@@ -1181,7 +1268,7 @@ def handle_stale_attach(vmdk_path, kv_uuid):
              return err(msg)
        else:
           logging.warning("Failed to find VM (id %s) attaching the disk %s, resetting volume metadata",
-                          kv_uuid, vmdk_path)
+                          kv_uuid, readable_vmdk_path)
           ret = reset_vol_meta(vmdk_path)
           if ret:
              return ret
@@ -1261,9 +1348,12 @@ def disk_attach(vmdk_path, vm):
     (we need PVSCSI to avoid SCSI rescans in the guest)
     return error or unit:bus numbers of newly attached disk.
     '''
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
 
     kv_status_attached, kv_uuid, attach_mode, _ = getStatusAttached(vmdk_path)
-    logging.info("Attaching {0} as {1}".format(vmdk_path, attach_mode))
+    logging.info("Attaching {0} as {1}".format(readable_vmdk_path, attach_mode))
 
     # If the volume is attached then check if the attach is stale (VM is powered off).
     # Otherwise, detach the disk from the VM it's attached to.
@@ -1294,7 +1384,7 @@ def disk_attach(vmdk_path, vm):
     if device:
         # Disk is already attached.
         logging.warning("Disk %s already attached. VM=%s",
-                        vmdk_path, vm.config.uuid)
+                        readable_vmdk_path, vm.config.uuid)
         setStatusAttached(vmdk_path, vm)
         # Get that controller to which the device is configured for
         pvsci = [d for d in controllers
@@ -1382,7 +1472,7 @@ def disk_attach(vmdk_path, vm):
 
     setStatusAttached(vmdk_path, vm, vm_dev_info)
     logging.info("Disk %s successfully attached. controller pci_slot_number=%s, disk_slot=%d",
-                 vmdk_path, pci_slot_number, disk_slot)
+                 readable_vmdk_path, pci_slot_number, disk_slot)
 
     return vm_dev_info
 
@@ -1393,6 +1483,9 @@ def err(string):
 
 def disk_detach(vmdk_path, vm):
     """detach disk (by full path) from a vm and return None or err(msg)"""
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
 
     device = findDeviceByPath(vmdk_path, vm)
 
@@ -1402,12 +1495,16 @@ def disk_detach(vmdk_path, vm):
        # Or Plugin retrying operation due to socket errors #1076
        # Return success since disk is anyway not attached
        logging.warning("*** Detach disk={0} not found. VM={1}".format(
-                       vmdk_path, vm.config.uuid))
+                       readable_vmdk_path, vm.config.uuid))
        return None
 
     return disk_detach_int(vmdk_path, vm, device)
 
 def disk_detach_int(vmdk_path, vm, device):
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
     si = get_si()
     spec = vim.vm.ConfigSpec()
     dev_changes = []
@@ -1427,7 +1524,7 @@ def disk_detach_int(vmdk_path, vm, device):
         return err(msg)
 
     setStatusDetached(vmdk_path)
-    logging.info("Disk detached %s", vmdk_path)
+    logging.info("Disk detached %s", readable_vmdk_path)
     return None
 
 
@@ -1473,8 +1570,10 @@ def set_vol_opts(name, tenant_name, options):
        return False
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
-
-    logging.debug("set_vol_opts: path=%s vmdk_path=%s", path, vmdk_path)
+    readable_vmdk_path = gets_readable_path(vmdk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+    logging.debug("set_vol_opts: path=%s vmdk_path=%s", path, readable_vmdk_path)
 
     if not os.path.isfile(vmdk_path):
        msg = 'Volume {0} not found.'.format(vol_name)
