@@ -183,7 +183,7 @@ func StopContainer(ip, containerName string) (string, error) {
 	return ssh.InvokeCommand(ip, dockercli.StopContainer+containerName)
 }
 
-// AttachVolume - attach volume to container on given host
+// ExecContainer - run a container and then remove it
 func ExecContainer(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
 	out, err := ssh.InvokeCommand(ip, dockercli.RunContainer+" -d --rm -v "+volName+

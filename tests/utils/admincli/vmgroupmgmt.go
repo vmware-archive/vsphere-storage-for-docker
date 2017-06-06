@@ -60,7 +60,7 @@ func AddCreateAccessForVMgroup(ip, name, datastore string) (string, error) {
 	return ssh.InvokeCommand(ip, admincli.SetAccessForVMgroup + name + " --allow-create True --datastore " + datastore)
 }
 
-// RemoveCreateAccessForVMgroup - set allow-create access on the vmgroup
+// RemoveCreateAccessForVMgroup - remove ellow-create access on the vmgroup
 func RemoveCreateAccessForVMgroup(ip, name, datastore string) (string, error) {
 	log.Printf("Removing create access for vmgroup %s, datastore %s on esx [%s] \n", name, datastore, ip)
 	return ssh.InvokeCommand(ip, admincli.SetAccessForVMgroup + name + " --allow-create False --datastore " + datastore)

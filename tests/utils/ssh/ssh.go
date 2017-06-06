@@ -23,14 +23,22 @@ import (
 	"strings"
 )
 
-// sshIdentity an array variable to prepare ssh input parameter to pass identify value
-var sshIdentity = []string{strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[0], strings.Split(os.Getenv("SSH_KEY_OPT"), " ")[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
+const (
+	sshKeyOptPath = "-i /root/.ssh/id_rsa"
+)
 
 // InvokeCommand - can be consumed by test directly to invoke
 // any command on the remote host.
 // ip: remote machine address to execute on the machine
 // cmd: A command string to be executed on the remote host as per
 func InvokeCommand(ip, cmd string) (string, error) {
+	// sshIdentity an array variable to prepare ssh input parameter to pass identify value
+	sshKeyOpt := strings.Split(os.Getenv("SSH_KEY_OPT"), " ")
+	if sshKeyOpt == nil {
+		sshKeyOpt = strings.Split(sshKeyOptPath, " ")
+	}
+	sshIdentity := []string{sshKeyOpt[0], sshKeyOpt[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
+
 	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
 	if err != nil {
 		log.Printf("Failed to invoke command [%s]: %v", cmd, err)
@@ -48,4 +56,3 @@ func InvokeCommandLocally(cmd string) string {
 	}
 	return strings.TrimSpace(string(out[:]))
 }
-

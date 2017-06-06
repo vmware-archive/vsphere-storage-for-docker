@@ -52,10 +52,10 @@ const (
 	// where --name will be name of the vmgroup
 	ReplaceVMFromVMgroup = vmdkopsAdmin + "vmgroup vm replace --name="
 
-	// AccessSetVMgroup  Modify access perms on vmgroup
+	// SetAccessForVMgroup modify access perms on vmgroup
 	SetAccessForVMgroup = vmdkopsAdmin + "vmgroup access set --name "
 
-	// AccessGetVMgroup  Modify access perms on vmgroup
+	// GetAccessForVMgroup get access perms for a vmgroup
 	GetAccessForVMgroup = vmdkopsAdmin + "vmgroup access ls --name "
 
 	// ListVMgroups list vm groups
