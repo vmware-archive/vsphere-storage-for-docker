@@ -309,7 +309,7 @@ deploy: deploy-all
 .PHONY: test
 test:
 	$(log_target)
-	$(SCRIPTS)/build.sh testasroot
+	$(BUILD) testasroot
 
 .PHONY: testasroot
 testasroot:
@@ -350,12 +350,23 @@ test-all:  test e2e-test testremote
 # An end-to-end test target for vSphere Docker Volume Driver
 e2e-test:
 	$(log_target)
-	$(SCRIPTS)/build.sh e2e-dkrVolDriver-test "$(ESX)" "$(VM1)" "$(VM2)"
+	$(BUILD) e2e-test-runalways
+	$(BUILD) e2e-test-runonce
 
-.PHONY: e2e-dkrVolDriver-test
-e2e-dkrVolDriver-test:
+#
+# E2E test target to control test run on CI.
+# We have 2 ESXs on CI testbed and 2 datastore type each (VMFS/VSAN).
+# e2e-test-runalways: makes sure to run test always
+# e2e-test-runonce: makes sure to run test *once per ESX*
+#
+.PHONY: e2e-test-runalways e2e-test-runonce
+e2e-test-runalways:
 	$(log_target)
-	$(GO) test $(E2E_Tests) -v -timeout 30m
+	$(GO) test -v -timeout 30m -tags runalways $(E2E_Tests)
+
+e2e-test-runonce:
+	$(log_target)
+	$(GO) test -v -timeout 30m -tags runonce $(E2E_Tests)
 
 MANAGED_PLUGIN_NAME="vsphere:latest"
 

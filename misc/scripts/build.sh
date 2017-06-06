@@ -136,9 +136,9 @@ else
   $DOCKER run --privileged --rm  \
     -e "PKG_VERSION=$PKG_VERSION" \
     -e "INCLUDE_UI=$INCLUDE_UI" \
-    -e "ESX=$2" \
-    -e "VM1=$3" \
-    -e "VM2=$4" \
+    -e "ESX=$ESX" \
+    -e "VM1=$VM1" \
+    -e "VM2=$VM2" \
     -e "GOVC_INSECURE=$GOVC_INSECURE" \
     -e "GOVC_URL=$GOVC_URL" \
     -e "GOVC_USERNAME=$GOVC_USERNAME" \

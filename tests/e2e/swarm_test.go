@@ -15,6 +15,8 @@
 // This test suite includes test cases to verify basic vDVS functionality
 // in docker swarm mode.
 
+// +build runonce
+
 package e2e
 
 import (
@@ -112,7 +114,7 @@ func (s *SwarmTestSuite) TestDockerSwarm(c *C) {
 	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running on any hosts", s.serviceName))
 
-	containerName, err = dockercli.GetContainerName(host, s.serviceName+".1")
+	containerName, err := dockercli.GetContainerName(host, s.serviceName+".1")
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 	out, err = dockercli.StopService(host, containerName)
 	c.Assert(err, IsNil, Commentf(out))

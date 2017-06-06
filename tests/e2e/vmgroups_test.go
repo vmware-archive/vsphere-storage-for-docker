@@ -12,36 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build runonce
+
 package e2e
 
 import (
 	"log"
 	"strings"
-	. "gopkg.in/check.v1"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+
+	adminconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	adminutils "github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	adminconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	. "gopkg.in/check.v1"
 )
 
 const (
-	vmgroupsTest             = "vmgroup"
-	vgTestVMgroup1           = "vmgroup_test1"
-	vgTestVMgroup2           = "vmgroup_test2"
-	vgTestContainer          = "vmgroupContainer"
-	vmgroupVMRemoveErr       = "Cannot complete vmgroup vm rm"
+	vmgroupsTest       = "vmgroup"
+	vgTestVMgroup1     = "vmgroup_test1"
+	vgTestVMgroup2     = "vmgroup_test2"
+	vgTestContainer    = "vmgroupContainer"
+	vmgroupVMRemoveErr = "Cannot complete vmgroup vm rm"
 )
 
 // VmGroupTest - struct for vmgroup tests
 type VmGroupTest struct {
-	config *inputparams.TestConfig
-	vmgroup string
+	config        *inputparams.TestConfig
+	vmgroup       string
 	testContainer string
-	volName1 string
-	volName2 string
-	volName3 string
+	volName1      string
+	volName2      string
+	volName3      string
 }
 
 var _ = Suite(&VmGroupTest{})
@@ -49,7 +52,7 @@ var _ = Suite(&VmGroupTest{})
 func (vg *VmGroupTest) SetUpSuite(c *C) {
 	vg.testContainer = inputparams.GetContainerNameWithTimeStamp(vgTestContainer)
 
-	vg.config = inputparams.GetTestConfig()	
+	vg.config = inputparams.GetTestConfig()
 	if vg.config == nil {
 		c.Skip("Unable to retrieve test config, skipping vmgroup tests")
 	}
@@ -80,7 +83,7 @@ func (vg *VmGroupTest) SetUpSuite(c *C) {
 	out, err = ssh.InvokeCommand(vg.config.EsxHost, cmd)
 	c.Assert(err, IsNil, Commentf(out))
 
-	// Create volume names used for the test	
+	// Create volume names used for the test
 	vg.vmgroupGetVolName(c)
 
 	cmd = adminconst.ListVMgroups
@@ -332,13 +335,13 @@ func (vg *VmGroupTest) TestVmGroupVerifyMaxFileSizeOnVg(c *C) {
 	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName3, "-o size=1023mb")
 	c.Assert(err, Not(IsNil), Commentf(out))
 
-/*
-	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName2, "-o size=1024mb")
-	c.Assert(err, Not(IsNil), Commentf(out))
+	/*
+		out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName2, "-o size=1024mb")
+		c.Assert(err, Not(IsNil), Commentf(out))
 
-	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName2, "-o size=1025mb")
-	c.Assert(err, Not(IsNil), Commentf(out))
-*/
+		out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName2, "-o size=1025mb")
+		c.Assert(err, Not(IsNil), Commentf(out))
+	*/
 
 	// 4. Ensure the max file size and total size is set to 1G and 2G each.
 	out, err = adminutils.SetVolumeSizeForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0], "1gb", "2gb")
