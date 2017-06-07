@@ -111,6 +111,9 @@ func (vg *VmGroupTest) TearDownSuite(c *C) {
 	out, err = ssh.InvokeCommand(vg.config.EsxHost, cmd)
 	log.Printf(out)
 
+	// Remove Config DB
+	adminutils.ConfigRemove(vg.config.EsxHost)
+
 	log.Printf("Done cleanup of vmgroups test config.")
 }
 

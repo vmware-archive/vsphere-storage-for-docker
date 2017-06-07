@@ -25,7 +25,7 @@ type getVMPowerStatus func(string) string
 
 const (
 	maxAttempt = 20
-	waitTime = 5
+	waitTime   = 5
 )
 
 // SleepForSec sleep for a given number of seconds
@@ -48,18 +48,13 @@ func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) boo
 	log.Printf("Timed out to poll status\n")
 	return false
 }
-// LogTestStart - Print a start log with given test name and
-// current time stamp
+
+// LogTestStart - Print a start log with given test group and test case name
 func LogTestStart(testGroup string, testName string) {
-	log.Printf("START:%s %s %s", testGroup, testName, curTime())
+	log.Printf("START: %s.%s", testGroup, testName)
 }
 
-// LogTestEnd - Print a stop log with given test name and
-// current time stamp
+// LogTestEnd - Print a stop log with given test group and test case name
 func LogTestEnd(testGroup string, testName string) {
-	log.Printf("END:%s %s %s", testGroup, testName, curTime())
-}
-
-func curTime() string {
-	return time.Now().Format(time.UnixDate)
+	log.Printf("END: %s.%s", testGroup, testName)
 }

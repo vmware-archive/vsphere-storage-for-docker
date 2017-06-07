@@ -132,8 +132,10 @@ func GetTestConfig() *TestConfig {
 	config.EsxHost = os.Getenv("ESX")
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
-	config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[0]))
-	config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[1]))
+	//config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[0]))
+	//config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[1]))
+	config.DockerHostNames = append(config.DockerHostNames, "master-VM0.0")
+	config.DockerHostNames = append(config.DockerHostNames, "worker1-VM1.0")
 	config.Datastores = govc.GetDatastoreList()
 
 	if config.DockerHostNames[0] == "" || config.DockerHostNames[1] == "" ||
