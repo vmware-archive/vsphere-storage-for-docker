@@ -135,7 +135,7 @@ func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
 
 	//TODO: Need to implement generic polling logic for better reuse
-	for attempt := 0; attempt < 30; attempt++ {
+	for attempt := 0; attempt < 60; attempt++ {
 		misc.SleepForSec(2)
 		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {
