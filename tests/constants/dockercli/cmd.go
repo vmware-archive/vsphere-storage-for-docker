@@ -31,7 +31,7 @@ const (
 	// CreateVolume create a volume with vsphere driver
 	CreateVolume = dockerVol + " create --driver=vsphere "
 
-	// RemoveVolume constant refers delete volume command
+	// RemoveVolume delete volume command
 	RemoveVolume = dockerVol + "rm "
 
 	// KillDocker kill docker
@@ -99,4 +99,10 @@ const (
 
 	// RemoveService remove docker services
 	RemoveService = dockerService + "rm "
+
+	// StopAllContainers stopping all the containers
+	StopAllContainers = docker + "kill $(docker ps -aq)"
+
+	// RemoveAllContainers removing all the containers forcefully
+	RemoveAllContainers = docker + "rm $(docker ps -aq) -f"
 )
