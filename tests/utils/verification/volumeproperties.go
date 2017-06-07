@@ -95,15 +95,31 @@ func GetVolumePropertiesDockerCli(volName string, hostname string) string {
 
 // CheckVolumeAvailability returns true if the given volume is available
 // from the specified VM; false otherwise.
-func CheckVolumeAvailability(hostName string, volumeName string) bool {
-	log.Printf("Checking volume [%s] availability from VM [%s]\n", volumeName, hostName)
+func CheckVolumeAvailability(hostName string, reqVol string) bool {
+	return CheckVolumeListAvailability(hostName, []string{reqVol})
+}
+
+// CheckVolumeListAvailability returns true if the given volumes specified in list are
+// available from the specified VM; false otherwise.
+func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
+	log.Printf("Checking volume [%s] availability from VM [%s]\n", reqVolList, hostName)
 
 	volumes, err := ssh.InvokeCommand(hostName, dockercli.ListVolumes)
 	if err != nil {
 		return false
 	}
+
 	//TODO: add more detailed verification here, e.g. checking volume driver name
-	return strings.Contains(volumes, volumeName)
+
+	// check if each volume name is present in the output of docker volume ls
+	for _, name := range reqVolList {
+		name = strings.Replace(name, "\"", "", -1)
+		if strings.Contains(volumes, name) != true {
+			return false
+		}
+	}
+
+	return true
 }
 
 // GetFullVolumeName returns full volume name from the specified VM; return

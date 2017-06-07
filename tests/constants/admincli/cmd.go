@@ -79,4 +79,10 @@ const (
 
 	//RemoveVolumes option refers to removing all volumes from a vmgroup
 	RemoveVolumes = " --remove-volumes"
+
+	// ReadOnlyAccess read only rights for the volume
+	ReadOnlyAccess = "read-only"
+
+	// ReadWriteAccess read-write rights for the volume
+	ReadWriteAccess = "read-write"
 )
