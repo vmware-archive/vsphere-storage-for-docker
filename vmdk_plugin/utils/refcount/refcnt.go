@@ -158,7 +158,7 @@ func newRefCount() *refCount {
 }
 
 // return if refcount initialization has been successful
-func (r *RefCountsMap) GetInitSuccess() bool {
+func (r *RefCountsMap) IsInitialized() bool {
 	return r.refcntInitSuccess
 }
 
