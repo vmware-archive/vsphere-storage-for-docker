@@ -30,7 +30,7 @@ import (
 // CreateVolume is going to create vsphere docker volume with given name.
 func CreateVolume(ip, name string) (string, error) {
 	log.Printf("Creating volume [%s] on VM [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, dockercli.CreateVolume + " --name= " + name) 
+	return ssh.InvokeCommand(ip, dockercli.CreateVolume+" --name= "+name)
 }
 
 // CreateVolumeWithOptions is going to create vsphere docker volume with given name.
@@ -43,13 +43,13 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 func AttachVolume(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -d -v "+volName+
-		":/vol1 --name "+containerName+ dockercli.TestContainer)
+		":/vol1 --name "+containerName+dockercli.TestContainer)
 }
 
 // InspectVolume - fetch the named volume's properties
 func InspectVolume(ip, volName string) (string, error) {
 	log.Printf("Inspecting volume [%s] on VM [%s]\n", volName, ip)
-	return ssh.InvokeCommand(ip, dockercli.InspectVolume + volName)
+	return ssh.InvokeCommand(ip, dockercli.InspectVolume+volName)
 }
 
 // AttachVolumeWithRestart - attach volume to container on given host
@@ -187,11 +187,11 @@ func StopContainer(ip, containerName string) (string, error) {
 func ExecContainer(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
 	out, err := ssh.InvokeCommand(ip, dockercli.RunContainer+" -d --rm -v "+volName+
-			":/vol1 --name "+containerName+ dockercli.TestContainer)
+		":/vol1 --name "+containerName+dockercli.TestContainer)
 	if err != nil {
 		return out, err
 	}
-	return ssh.InvokeCommand(ip, dockercli.RemoveContainer + containerName)
+	return ssh.InvokeCommand(ip, dockercli.RemoveContainer+containerName)
 }
 
 // IsContainerExist - return true if container exists otherwise false
@@ -203,4 +203,23 @@ func IsContainerExist(ip, containerName string) bool {
 		return true
 	}
 	return false
+}
+
+// StopAllContainers - stops all the containers on a particular vm
+func StopAllContainers(ip string) (string, error) {
+	log.Printf("Stopping all containers on VM [%s]\n", ip)
+	return ssh.InvokeCommand(ip, dockercli.StopAllContainers)
+}
+
+// RemoveAllContainers - removes all the containers on a particular vm
+func RemoveAllContainers(ip string) (string, error) {
+	log.Printf("Removing all containers on VM [%s]\n", ip)
+	return ssh.InvokeCommand(ip, dockercli.RemoveAllContainers)
+}
+
+// GetVolumeProperties returns capacity,  attached-to-vm and disk-format field for volume.
+func GetVolumeProperties(volumeName, hostName string) (string, error) {
+	log.Printf("Getting size, disk-format and attached-to-vm for volume [%s] from vm [%s] using docker cli \n", volumeName, hostName)
+	cmd := dockercli.InspectVolume + volumeName + " --format ' {{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' | sed -e 's/<no value>/detached/' "
+	return ssh.InvokeCommand(hostName, cmd)
 }

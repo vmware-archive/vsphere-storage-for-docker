@@ -55,44 +55,6 @@ func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
 	return volProps[1]
 }
 
-// GetVolumePropertiesAdminCli returns capacity, attached-to-vm and disk-format field
-// for volume using Admin cli
-func GetVolumePropertiesAdminCli(volName string, hostname string) string {
-	cmd := admincli.ListVolumes + "-c volume,attached-to,capacity,disk-format 2>/dev/null | grep " + volName
-	op, _ := ssh.InvokeCommand(hostname, cmd)
-	if op == "" {
-		log.Fatal("Null value is returned by admin cli when looking for, size, disk-format and attached to vm. Output: ", op)
-	}
-	if len(strings.Fields(op)) != 4 {
-		log.Fatalf("Output is expected to consist of four elements only - "+
-			"volume name, attached-to-vm status, size and disk-format. Actual output: %s", op)
-	}
-	return op
-}
-
-// GetVolumePropertiesDockerCli returns capacity,  attached-to-vm and disk-format field
-// for volume using Docker cli
-func GetVolumePropertiesDockerCli(volName string, hostname string) string {
-	cmd := dockercli.InspectVolume + " --format '{{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' " + volName
-	op, _ := ssh.InvokeCommand(hostname, cmd)
-	expctedLen := 0
-	if op == "" {
-		log.Fatal("Null value is returned by docker cli when looking for, size, disk-format and attached to vm. Output: ", op)
-	}
-	// converting the output to an array and comparing the length of array is as expected so that we do not see any
-	// random strings/values attached to the expected output
-	if strings.Contains(op, "<no value>") {
-		expctedLen = 4
-	} else {
-		expctedLen = 3
-	}
-	if len(strings.Fields(op)) != expctedLen {
-		log.Fatalf("Docker cli inpect output is expected to consist of three elements only - "+
-			"size, disk-format and attached-to-vm status. Actual output: %s", op)
-	}
-	return op
-}
-
 // CheckVolumeAvailability returns true if the given volume is available
 // from the specified VM; false otherwise.
 func CheckVolumeAvailability(hostName string, reqVol string) bool {
