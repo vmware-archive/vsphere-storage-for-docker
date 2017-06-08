@@ -27,6 +27,11 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
+const (
+	maxAttempt = 15
+	waitTime   = 2
+)
+
 // CreateVolume is going to create vsphere docker volume with given name.
 func CreateVolume(ip, name string) (string, error) {
 	log.Printf("Creating volume [%s] on VM [%s]\n", name, ip)
@@ -85,7 +90,35 @@ func ReadFromVolume(ip, volName, containerName, fileName string) (string, error)
 // DeleteVolume helper deletes the created volume as per passed volume name.
 func DeleteVolume(ip, name string) (string, error) {
 	log.Printf("Destroying volume [%s]\n", name)
-	return ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
+	var out string
+	var err error
+	// name := "test2@sharedVmfs-0"
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
+
+	out, err = ssh.InvokeCommand("10.192.66.52", "pkill -9 dockerd")
+	log.Println("KILLED DOCKERD")
+	for attempt := 1; attempt <= maxAttempt; attempt++ {
+		out, err = ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
+		if err != nil {
+			if strings.Contains(out, "Plugin initialization in progress.") {
+				misc.SleepForSec(waitTime)
+				log.Printf("Retrying to delete volume - Attempt [%d]", attempt)
+				continue
+			}
+			return out, err
+		}
+		break
+	}
+	return out, err
 }
 
 // ListVolumes - runs the docker list volumes command and returns the
