@@ -18,6 +18,8 @@
 
 // Test assumes that SSH cert has been setup to enable password-less login to VM and ESX.
 
+// +build runalways
+
 package e2e
 
 import (

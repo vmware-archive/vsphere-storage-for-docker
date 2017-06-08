@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	maxAttempt = 15
-	waitTime   = 2
+	maxRemoveVolAttempt = 15
+	waitTime            = 2
+	pluginInitError     = "Plugin initialization in progress."
 )
 
 // CreateVolume is going to create vsphere docker volume with given name.
@@ -92,17 +93,16 @@ func DeleteVolume(ip, name string) (string, error) {
 	log.Printf("Destroying volume [%s]\n", name)
 	var out string
 	var err error
-	for attempt := 0; attempt <= maxAttempt; attempt++ {
+
+	for attempt := 0; attempt < maxRemoveVolAttempt; attempt++ {
 		out, err = ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
-		if err != nil {
-			if strings.Contains(out, "Plugin initialization in progress.") {
-				misc.SleepForSec(waitTime)
-				log.Printf("Volume cannot be deleted yet as plugin initialization still in progress. Retrying...")
-				continue
-			}
-			return out, err
+		if err != nil && strings.Contains(out, pluginInitError) {
+			misc.SleepForSec(waitTime)
+			log.Printf("Volume cannot be deleted yet as plugin initialization still in progress. Retrying...")
+			continue
+		} else {
+			break
 		}
-		break
 	}
 	return out, err
 }
