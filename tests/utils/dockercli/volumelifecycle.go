@@ -92,26 +92,12 @@ func DeleteVolume(ip, name string) (string, error) {
 	log.Printf("Destroying volume [%s]\n", name)
 	var out string
 	var err error
-	// name := "test2@sharedVmfs-0"
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-	out, err = ssh.InvokeCommand("10.192.66.52", "docker run -d -v test2@sharedVmfs-0:/vol1 busybox tail -f /dev/null")
-
-	out, err = ssh.InvokeCommand("10.192.66.52", "pkill -9 dockerd")
-	log.Println("KILLED DOCKERD")
-	for attempt := 1; attempt <= maxAttempt; attempt++ {
+	for attempt := 0; attempt <= maxAttempt; attempt++ {
 		out, err = ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
 		if err != nil {
 			if strings.Contains(out, "Plugin initialization in progress.") {
 				misc.SleepForSec(waitTime)
-				log.Printf("Retrying to delete volume - Attempt [%d]", attempt)
+				log.Printf("Volume cannot be deleted yet as plugin initialization still in progress. Retrying...")
 				continue
 			}
 			return out, err

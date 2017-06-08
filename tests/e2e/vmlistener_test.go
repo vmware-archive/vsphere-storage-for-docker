@@ -16,8 +16,6 @@
 // In case of vm/esx host restart vDVS cleans up stale attachment details
 // the volume.
 
-// +build unstable
-
 package e2e
 
 import (
@@ -128,5 +126,5 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	status = verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
-	log.Printf("END: Test vmdkops service restart + kill vm process")
+	log.Printf("\n END: Test vmdkops service restart + kill vm process")
 }
