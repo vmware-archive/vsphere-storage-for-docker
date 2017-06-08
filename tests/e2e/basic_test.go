@@ -68,9 +68,9 @@ func (s *BasicTestSuite) SetUpTest(c *C) {
 var _ = Suite(&BasicTestSuite{})
 
 // Test volume lifecycle management on different datastores:
-// VM1 - local VMFS datastore
-// VM2 - shared VMFS datastore
-// VM3 - shared VSAN datastore (TODO: currently not available)
+// VM1 - created on local VMFS datastore
+// VM2 - created on shared VMFS datastore
+// VM3 - created on shared VSAN datastore (TODO: currently not available)
 //
 // Test steps:
 // 1. Create a volume

@@ -29,6 +29,10 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
+const (
+	maxAttempt = 60
+)
+
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
 // TODO: make this private member after finishing refactoring of volmprop_test.go and remove this TODO
 func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
@@ -135,7 +139,7 @@ func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
 
 	//TODO: Need to implement generic polling logic for better reuse
-	for attempt := 0; attempt < 60; attempt++ {
+	for attempt := 0; attempt < maxAttempt; attempt++ {
 		misc.SleepForSec(2)
 		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {
