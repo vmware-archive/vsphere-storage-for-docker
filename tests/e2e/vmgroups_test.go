@@ -30,7 +30,6 @@ import (
 )
 
 const (
-	vmgroupsTest       = "vmgroup"
 	vgTestVMgroup1     = "vmgroup_test1"
 	vgTestVMgroup2     = "vmgroup_test2"
 	vgTestContainer    = "vmgroupContainer"
@@ -83,14 +82,16 @@ func (vg *VmGroupTest) SetUpSuite(c *C) {
 	out, err = ssh.InvokeCommand(vg.config.EsxHost, cmd)
 	c.Assert(err, IsNil, Commentf(out))
 
-	// Create volume names used for the test
-	vg.vmgroupGetVolName(c)
-
 	cmd = adminconst.ListVMgroups
 	out, err = ssh.InvokeCommand(vg.config.EsxHost, cmd)
 	log.Printf(out)
 
 	log.Printf("Done creating vmgroups test config.")
+}
+
+func (vg *VmGroupTest) SetUpTest(c *C) {
+	// Create volume names used for the test
+	vg.vmgroupGetVolName(c)
 }
 
 func (vg *VmGroupTest) TearDownSuite(c *C) {
@@ -118,9 +119,9 @@ func (vg *VmGroupTest) TearDownSuite(c *C) {
 }
 
 func (vg *VmGroupTest) vmgroupGetVolName(c *C) {
-	vg.volName1 = inputparams.GetUniqueVolumeName(vmgroupsTest)
-	vg.volName2 = inputparams.GetUniqueVolumeName(vmgroupsTest)
-	vg.volName3 = inputparams.GetUniqueVolumeName(vmgroupsTest)
+	vg.volName1 = inputparams.GetUniqueVolumeName(c.TestName())
+	vg.volName2 = inputparams.GetUniqueVolumeName(c.TestName())
+	vg.volName3 = inputparams.GetUniqueVolumeName(c.TestName())
 }
 
 // Tests to validate behavior with the __DEFAULT_ vmgroup.
@@ -143,7 +144,7 @@ func (vg *VmGroupTest) createVolumes(c *C, name string) {
 // 2. Verify the VM is able to attach and run a container with the volume
 // 3. Delete the volume
 func (vg *VmGroupTest) TestVmGroupVolumeCreate(c *C) {
-	misc.LogTestStart(vmgroupsTest, "TestVmGroupVolumeCreate")
+	misc.LogTestStart(c.TestName())
 
 	// Create a volume in the default group
 	vg.createVolumes(c, vg.volName1)
@@ -160,7 +161,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeCreate(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 	c.Logf("Passed - Volume create and attach on default vmgroup")
 
-	misc.LogTestEnd(vmgroupsTest, "TestVmGroupVolumeCreate")
+	misc.LogTestEnd(c.TestName())
 }
 
 // TestVmGroupVolumeAccessAcrossVmGroups - Verify volumes can be accessed only
@@ -173,7 +174,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeCreate(c *C) {
 // 5. Try deleting the volume in th default group from VM2
 // 6. Remove the newly created vmgroup
 func (vg *VmGroupTest) TestVmGroupVolumeAccessAcrossVmGroups(c *C) {
-	misc.LogTestStart(vmgroupsTest, "TestVmGroupVolumeAccessAcrossVmGroups")
+	misc.LogTestStart(c.TestName())
 
 	// 1. Create a volume in the default group
 	vg.createVolumes(c, vg.volName1)
@@ -206,7 +207,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeAccessAcrossVmGroups(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	c.Logf("Passed - Volume access across vmgroups")
-	misc.LogTestEnd(vmgroupsTest, "TestVmGroupVolumeAccessAcrossVmGroups")
+	misc.LogTestEnd(c.TestName())
 }
 
 // TestVmGroupCreateAccessPrivilege - Verify volumes can be
@@ -220,7 +221,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeAccessAcrossVmGroups(c *C) {
 // 5. Restore create privilege on default vmgroup
 // 6. Remove volume created in (1).
 func (vg *VmGroupTest) TestVmGroupCreateAccessPrivilege(c *C) {
-	misc.LogTestStart(vmgroupsTest, "TestVmGroupCreateAccessPrivilege")
+	misc.LogTestStart(c.TestName())
 
 	// 1. Create a volume in the default vmgroup
 	vg.createVolumes(c, vg.volName1)
@@ -255,7 +256,7 @@ func (vg *VmGroupTest) TestVmGroupCreateAccessPrivilege(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	c.Logf("Passed - create privilege on default vmgroup")
-	misc.LogTestEnd(vmgroupsTest, "TestVmGroupCreateAccessPrivilege")
+	misc.LogTestEnd(c.TestName())
 }
 
 // TestVmGroupVolumeCreateOnVg - Verify basic volume create/attach/delete
@@ -266,7 +267,7 @@ func (vg *VmGroupTest) TestVmGroupCreateAccessPrivilege(c *C) {
 // 4. Delete volume created in (2)
 // 5. Destroy the VM group
 func (vg *VmGroupTest) TestVmGroupVolumeCreateOnVg(c *C) {
-	misc.LogTestStart(vmgroupsTest, "TestVmGroupVolumeCreateOnVg")
+	misc.LogTestStart(c.TestName())
 
 	// 1. Remove VM from test group 1 and add to test group 2
 	out, err := adminutils.RemoveVMFromVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.DockerHostNames[0])
@@ -298,7 +299,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeCreateOnVg(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	c.Logf("Passed - create and attach volumes on a non-default vmgroup")
-	misc.LogTestEnd(vmgroupsTest, "TestVmGroupVolumeCreateOnVg")
+	misc.LogTestEnd(c.TestName())
 }
 
 // TestVmGroupVerifyMaxFileSizeOnVg - Verify that enough volumes can be created
@@ -311,7 +312,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeCreateOnVg(c *C) {
 // 5. Retry step (4) - expect success this time
 // 6. Remove both volumes
 func (vg *VmGroupTest) TestVmGroupVerifyMaxFileSizeOnVg(c *C) {
-	misc.LogTestStart(vmgroupsTest, "TestVmGroupVerifyMaxFileSizeOnVg")
+	misc.LogTestStart(c.TestName())
 
 	// 1. Ensure the max file size and total size is set to 1G each.
 	out, err := adminutils.SetVolumeSizeForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0], "1gb", "1gb")
@@ -359,7 +360,7 @@ func (vg *VmGroupTest) TestVmGroupVerifyMaxFileSizeOnVg(c *C) {
 	dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName2)
 
 	c.Logf("Passed - verified volumes can be created to match total size assigned to a vmgroup")
-	misc.LogTestEnd(vmgroupsTest, "TestVmGroupVerifyMaxFileSizeOnVg")
+	misc.LogTestEnd(c.TestName())
 }
 
 // TestVmGroupVolumeMobility - verify a VM with a volume
@@ -370,7 +371,7 @@ func (vg *VmGroupTest) TestVmGroupVerifyMaxFileSizeOnVg(c *C) {
 // 3. Attempt removing the VM from vmgroup (to default) (should fail)
 // 4. Delete container and attempt 3 (should pass)
 func (vg *VmGroupTest) TestVmGroupVolumeMobility(c *C) {
-	misc.LogTestStart(vmgroupsTest, "TestVmGroupVolumeMobility")
+	misc.LogTestStart(c.TestName())
 
 	// 1. Create a volume in the default group
 	vg.createVolumes(c, vg.volName1)
@@ -398,5 +399,5 @@ func (vg *VmGroupTest) TestVmGroupVolumeMobility(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	c.Logf("Passed - VM removal from vmgroups, with volume attached")
-	misc.LogTestEnd(vmgroupsTest, "TestVmGroupVolumeAccessAcrossVmGroups")
+	misc.LogTestEnd(c.TestName())
 }

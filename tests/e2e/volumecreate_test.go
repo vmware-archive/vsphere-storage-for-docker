@@ -31,7 +31,6 @@ import (
 )
 
 const (
-	volCreateTest     = "vol_create"
 	ErrorVolumeCreate = "Error response from daemon: create"
 )
 
@@ -129,7 +128,7 @@ func (s *VolumeCreateTestSuite) accessCheck(hostIP string, volList []string, c *
 // 7. contains unicode character
 // 8. contains space
 func (s *VolumeCreateTestSuite) TestValidName(c *C) {
-	misc.LogTestStart(volCreateTest, "TestValidName")
+	misc.LogTestStart(c.TestName())
 
 	volNameList := []string{
 		inputparams.GetVolumeNameOfSize(100),
@@ -145,7 +144,7 @@ func (s *VolumeCreateTestSuite) TestValidName(c *C) {
 	s.parallelCreateByName(volNameList, true, c)
 	s.accessCheck(s.config.DockerHosts[0], s.volumeList, c)
 
-	misc.LogTestEnd(volCreateTest, "TestValidName")
+	misc.LogTestEnd(c.TestName())
 }
 
 // Invalid volume names test
@@ -153,7 +152,7 @@ func (s *VolumeCreateTestSuite) TestValidName(c *C) {
 // 2. ending -NNNNNN (6Ns)
 // 3. contains @invalid datastore name
 func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
-	misc.LogTestStart(volCreateTest, "TestInvalidName")
+	misc.LogTestStart(c.TestName())
 
 	invalidVolList := []string{
 		inputparams.GetVolumeNameOfSize(101),
@@ -163,7 +162,7 @@ func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
 
 	s.parallelCreateByName(invalidVolList, false, c)
 
-	misc.LogTestEnd(volCreateTest, "TestInvalidName")
+	misc.LogTestEnd(c.TestName())
 }
 
 // Valid volume creation options
@@ -175,7 +174,7 @@ func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
 // 6. clone-from valid volume
 // 7. fstype xfs
 func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
-	misc.LogTestStart(volCreateTest, "TestValidOptions")
+	misc.LogTestStart(c.TestName())
 
 	// Need a valid volume source to test clone-from option
 	cloneSrcVol := inputparams.GetUniqueVolumeName("clone_src")
@@ -206,7 +205,7 @@ func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 
 	s.accessCheck(s.config.DockerHosts[0], s.volumeList, c)
 
-	misc.LogTestEnd(volCreateTest, "TestValidOptions")
+	misc.LogTestEnd(c.TestName())
 }
 
 // Invalid volume create operations
@@ -216,7 +215,7 @@ func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 // 4. Wrong access types
 // 5. Unavailable clone source
 func (s *VolumeCreateTestSuite) TestInvalidOptions(c *C) {
-	misc.LogTestStart(volCreateTest, "TestInvalidOptions")
+	misc.LogTestStart(c.TestName())
 
 	invalidVolOpts := []string{
 		" -o diskformat=zeroedthickk",
@@ -233,5 +232,5 @@ func (s *VolumeCreateTestSuite) TestInvalidOptions(c *C) {
 
 	s.parallelCreateByOption(invalidVolOpts, false, c)
 
-	misc.LogTestEnd(volCreateTest, "TestInvalidOptions")
+	misc.LogTestEnd(c.TestName())
 }

@@ -50,11 +50,11 @@ func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) boo
 }
 
 // LogTestStart - Print a start log with given test group and test case name
-func LogTestStart(testGroup string, testName string) {
-	log.Printf("START: %s.%s", testGroup, testName)
+func LogTestStart(testName string) {
+	log.Printf("START: %s", testName)
 }
 
 // LogTestEnd - Print a stop log with given test group and test case name
-func LogTestEnd(testGroup string, testName string) {
-	log.Printf("END: %s.%s", testGroup, testName)
+func LogTestEnd(testName string) {
+	log.Printf("END: %s", testName)
 }
