@@ -80,7 +80,7 @@ var _ = Suite(&VMListenerTestParams{})
 // 6. Verification: volume status should be detached
 
 func (s *VMListenerTestParams) TestKillVM(c *C) {
-	misc.LogTestStart("", c.TestName())
+	misc.LogTestStart(c.TestName())
 
 	out, err := dockercli.CreateVolume(s.dockerHostIP, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -128,5 +128,5 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	status = verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
-	misc.LogTestEnd("", c.TestName())
+	misc.LogTestEnd(c.TestName())
 }

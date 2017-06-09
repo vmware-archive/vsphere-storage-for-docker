@@ -184,7 +184,7 @@ func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	c.Assert(accessible, Equals, true, Commentf("Volume %s is not available on [%s]", s.volName2, s.vm1))
 
 	accessible = verification.CheckVolumeAvailability(s.vm2, s.volName2)
-	c.Assert(accessible, Equals, false, Commentf("Volume %s is still available on [%s]", s.volName2, s.vm2))
+	c.Assert(accessible, Equals, false, Commentf("Volume %s is available on [%s]", s.volName2, s.vm2))
 
 	// Clean up the volumes
 	out, err = dockercli.DeleteVolume(s.vm2, s.volName1)
