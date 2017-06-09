@@ -1524,11 +1524,6 @@ def signal_handler_stop(signalnum, frame):
     msg_about_signal(signalnum, "exiting")
     sys.exit(0)
 
-def signal_handler_restart(signalnum, frame):
-    vmci_release_listening_socket()
-    msg_about_signal(signalnum, "restarting")
-    os.execve(__file__, sys.argv, os.environ)
-
 def load_vmci():
    global lib
 
@@ -1677,7 +1672,6 @@ def main():
     logging.info("==== Starting vmdkops service pid=%d ====", os.getpid())
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
-    signal.signal(signal.SIGUSR1, signal_handler_restart)
     try:
         port = 1019
         opts, args = getopt.getopt(sys.argv[1:], 'hp:')
