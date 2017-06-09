@@ -16,7 +16,7 @@
 // In case of vm/esx host restart vDVS cleans up stale attachment details
 // the volume.
 
-// +build unstable
+// +build runonce
 
 package e2e
 
@@ -80,7 +80,7 @@ var _ = Suite(&VMListenerTestParams{})
 // 6. Verification: volume status should be detached
 
 func (s *VMListenerTestParams) TestKillVM(c *C) {
-	log.Printf("START: Test vmdkops service restart + kill vm process")
+	misc.LogTestStart("", c.TestName())
 
 	out, err := dockercli.CreateVolume(s.dockerHostIP, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -128,5 +128,5 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	status = verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
-	log.Printf("END: Test vmdkops service restart + kill vm process")
+	misc.LogTestEnd("", c.TestName())
 }
