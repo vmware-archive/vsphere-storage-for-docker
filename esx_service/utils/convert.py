@@ -24,7 +24,11 @@ def convert_to_MB(vol_size_str):
     """
 
     unit = vol_size_str[-2:].upper()
-    value = int(vol_size_str[:-2])
+    try:
+        value = int(vol_size_str[:-2])
+    except ValueError:
+        logging.error("Invalid volume size")
+        return 0
     conversions = {'MB' : 1,
                    'GB' : 1024,
                    'TB' : 1024*1024,
