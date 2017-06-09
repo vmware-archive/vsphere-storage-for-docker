@@ -334,7 +334,6 @@ checkremote:
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
 test-vm: checkremote deploy-vm-test
 	$(log_target)
-	-$(SSH) root@$(ESX) '/etc/init.d/vmdk-opsd start'
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(VMDKOPS_TEST_MODULE).test $(TEST_VERBOSE)
 	$(SSH) $(TEST_VM) $(TMP_LOC)/$(PLUGNAME).test $(TEST_VERBOSE) \
 		-v $(TEST_VOL_NAME) \
