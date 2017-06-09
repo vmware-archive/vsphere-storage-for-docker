@@ -1185,14 +1185,6 @@ def is_local_vmfs(datastore_name):
     return False
 
 
-def service_reset():
-    """Send a signal to the service to restart itself"""
-    (status, pid) = get_service_status()
-    if pid:
-        os.kill(int(pid), signal.SIGUSR1)
-    return None
-
-
 def err_out(_msg, _info=None):
     """A helper to print a message with (optional) info about DB MOde. Returns the message"""
     print(_msg)
@@ -1293,7 +1285,7 @@ def config_init(args):
         print("Creating a symlink to {} at {}".format(db_path, link_path))
         create_db_symlink(db_path, link_path)
 
-    return service_reset()
+    return None
 
 
 def config_rm(args):
@@ -1351,7 +1343,7 @@ def config_rm(args):
                 print("Removed link {}".format(link_path))
             except Exception as ex:
                 print(" Failed to remove {}: {}".format(link_path, ex))
-            return service_reset()
+            return None
 
     if mode == auth_data.DBMode.SingleNode:
         if args.unlink:
@@ -1361,7 +1353,7 @@ def config_rm(args):
             if not args.no_backup:
                 print("Moved {} to backup file {}".format(link_path,
                                                         db_move_to_backup(link_path)))
-            return service_reset()
+            return None
 
     # All other cases
     print("Nothing to do - Mode={}.".format(str(mode)))
