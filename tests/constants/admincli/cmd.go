@@ -26,9 +26,6 @@ const (
 	// ListVolumes referring to vmdkops_admin volume ls
 	ListVolumes = vmdkopsAdminVolume + "ls "
 
-	// CreatePolicy Create a policy
-	CreatePolicy = vmdkopsAdmin + " policy create "
-
 	// SetVolumeAccess set volume access
 	SetVolumeAccess = vmdkopsAdminVolume + " set "
 

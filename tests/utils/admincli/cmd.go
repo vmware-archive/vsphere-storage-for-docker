@@ -27,7 +27,26 @@ import (
 // CreatePolicy creates a policy
 func CreatePolicy(ip, name, content string) (string, error) {
 	log.Printf("Creating policy [%s] with content [%s] on ESX [%s]\n", name, content, ip)
-	return ssh.InvokeCommand(ip, admincli.CreatePolicy+" --name "+name+" --content "+content)
+	return ssh.InvokeCommand(ip, admincli.CreatePolicy+name+" --content "+content)
+}
+
+// RemovePolicy removes a policy.
+func RemovePolicy(ip, policyName string) (string, error) {
+	log.Printf("Removing policy [%s] on esx [%s]\n", policyName, ip)
+	return ssh.InvokeCommand(ip, admincli.RemovePolicy+policyName)
+}
+
+// VerifyActiveFromVsanPolicyListOutput is going to check, for the given vsan policy, whether the active
+// column returned by "vmdkops policy ls" command matches the value specified by input param "active"
+func VerifyActiveFromVsanPolicyListOutput(ip, policyName, active string) bool {
+	log.Printf("Verify vsanPolicy [%s] on esx [%s] has active as %s\n", policyName, ip, active)
+	cmd := admincli.ListPolicy + " 2>/dev/null | grep " + policyName
+	out, err := ssh.InvokeCommand(ip, cmd)
+	if err != nil {
+		return false
+	}
+	log.Printf("policy ls output for vsanPolicy [%s] is %s:", policyName, out)
+	return strings.Contains(out, active)
 }
 
 // UpdateVolumeAccess update the volume access as per params
