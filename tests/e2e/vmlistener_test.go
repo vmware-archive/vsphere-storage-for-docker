@@ -56,8 +56,8 @@ func (s *VMListenerTestParams) SetUpSuite(c *C) {
 }
 
 func (s *VMListenerTestParams) SetUpTest(c *C) {
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("vmlistener_test")
-	s.containerName = inputparams.GetContainerNameWithTimeStamp("vmlistener_test")
+	s.volumeName = inputparams.GetUniqueVolumeName("vmlistener_test")
+	s.containerName = inputparams.GetUniqueContainerName("vmlistener_test")
 }
 
 func (s *VMListenerTestParams) TearDownTest(c *C) {

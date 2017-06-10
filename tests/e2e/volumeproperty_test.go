@@ -71,7 +71,7 @@ func (s *VolumePropertyTestSuite) SetUpSuite(c *C) {
 }
 
 func (s *VolumePropertyTestSuite) SetUpTest(c *C) {
-	s.containerName = inputparams.GetContainerNameWithTimeStamp(testName)
+	s.containerName = inputparams.GetUniqueContainerName(testName)
 	s.formatTypes = []string{"thin", "zeroedthick", "eagerzeroedthick"}
 	s.volumeStatus = properties.DetachedStatus
 }
@@ -129,7 +129,7 @@ func (s *VolumePropertyTestSuite) TestVolumeProperties(c *C) {
 // createVolumes - creates volumes of each format type
 func (s *VolumePropertyTestSuite) createVolumes(c *C) {
 	for _, formatType := range s.formatTypes {
-		vname := inputparams.GetVolumeNameWithTimeStamp(formatType)
+		vname := inputparams.GetUniqueVolumeName(formatType)
 		out, err := dockercli.CreateVolumeWithOptions(s.config.DockerHosts[1], vname, diskFormatOption+formatType)
 		s.volumeNames = append(s.volumeNames, vname)
 		c.Assert(err, IsNil, Commentf(out))

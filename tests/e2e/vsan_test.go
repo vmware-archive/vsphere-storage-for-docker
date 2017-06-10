@@ -84,7 +84,7 @@ func (s *VsanTestSuite) TestValidPolicy(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 	s.policyList = append(s.policyList, policyName)
 
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("vsanVol") + "@" + s.vsanDSName
+	s.volumeName = inputparams.GetUniqueVolumeName("vsanVol") + "@" + s.vsanDSName
 	vsanOpts := " -o " + adminclicon.VsanPolicyFlag + "=" + policyName
 
 	out, err = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], s.volumeName, vsanOpts)
@@ -110,7 +110,7 @@ func (s *VsanTestSuite) TestInvalidPolicy(c *C) {
 	invalidVsanOpts := [2]string{"-o " + adminclicon.VsanPolicyFlag + "=IDontExist", "-o " +
 		adminclicon.VsanPolicyFlag + "=" + invalidContentPolicyName}
 	for _, option := range invalidVsanOpts {
-		invalidVolName := inputparams.GetVolumeNameWithTimeStamp("vsanVol") + "@" + s.vsanDSName
+		invalidVolName := inputparams.GetUniqueVolumeName("vsanVol") + "@" + s.vsanDSName
 		out, _ = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], invalidVolName, option)
 		c.Assert(strings.HasPrefix(out, ErrorVolumeCreate), Equals, true)
 	}
@@ -143,7 +143,7 @@ func (s *VsanTestSuite) TestDeleteVsanPolicyAlreadyInUse(c *C) {
 	res := admincli.VerifyActiveFromVsanPolicyListOutput(s.config.EsxHost, adminclicon.PolicyName, "Unused")
 	c.Assert(res, Equals, true, Commentf("vsanPolicy should be \"Unused\""))
 
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("vsanVol") + "@" + s.vsanDSName
+	s.volumeName = inputparams.GetUniqueVolumeName("vsanVol") + "@" + s.vsanDSName
 	vsanOpts := " -o " + adminclicon.VsanPolicyFlag + "=" + adminclicon.PolicyName
 	out, err = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], s.volumeName, vsanOpts)
 	c.Assert(err, IsNil, Commentf(out))

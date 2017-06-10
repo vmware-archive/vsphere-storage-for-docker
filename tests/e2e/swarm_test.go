@@ -47,8 +47,8 @@ func (s *SwarmTestSuite) SetUpSuite(c *C) {
 	s.worker2 = inputparams.GetSwarmWorker2()
 	s.swarmNodes = inputparams.GetSwarmNodes()
 
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("swarm_test")
-	s.serviceName = inputparams.GetServiceNameWithTimeStamp("swarm_test")
+	s.volumeName = inputparams.GetUniqueVolumeName("swarm_test")
+	s.serviceName = inputparams.GetUniqueServiceName("swarm_test")
 
 	// Verify if swarm cluster is already initialized
 	out, err := dockercli.ListNodes(s.master)
