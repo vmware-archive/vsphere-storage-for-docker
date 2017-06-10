@@ -30,7 +30,6 @@ import threadutils
 import log_config
 import vmdk_utils
 import vmdk_ops
-
 from pyVmomi import VmomiSupport, vim, vmodl
 # vim api version used - version11
 
@@ -212,9 +211,13 @@ def set_device_detached(vm_moref):
         # if it is a dvs managed volume, set its status as detached
         vmdk_path = vmdk_utils.find_dvs_volume(dev)
         if vmdk_path:
-            logging.info("Setting detach status for %s", vmdk_path)
+            readable_vmdk_path = vmdk_ops.gets_readable_path(vmdk_path)
+            if readable_vmdk_path == '':
+                logging.warning("Failed to fetch readable vmdk path")
+
+            logging.info("Setting detach status for %s", readable_vmdk_path)
             # disk detach and update the status in KV
             err_msg = vmdk_ops.disk_detach_int(vmdk_path, vm_moref, dev)
             if err_msg:
-                logging.error("Could not detach %s for %s: %s", vmdk_path,
+                logging.error("Could not detach %s for %s: %s", readable_vmdk_path,
                               vm_moref.config.name, err_msg)

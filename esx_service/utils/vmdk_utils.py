@@ -346,7 +346,11 @@ def find_dvs_volume(dev):
     # "[<datastore name>] <parent-directory>/tenant/<vmdk-descriptor-name>"
     # Trim the datastore name and keep disk path.
     datastore_name, disk_path = dev.backing.fileName.rsplit("]", 1)
-    logging.info("backing disk name is %s", disk_path)
+    readable_vmdk_path = vmdk_ops.gets_readable_path(disk_path)
+    if readable_vmdk_path == '':
+        logging.warning("Failed to fetch readable vmdk path")
+
+    logging.info("backing disk name is %s", readable_vmdk_path)
     # name formatting to remove unwanted characters
     datastore_name = datastore_name[1:]
     disk_path = disk_path.lstrip()
