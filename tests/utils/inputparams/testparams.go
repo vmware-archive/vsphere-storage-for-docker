@@ -22,16 +22,16 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
-	"time"
+
 	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
 )
 
 // TestConfig - struct for common test configuration params
 type TestConfig struct {
-	EsxHost string
-	DockerHosts []string
+	EsxHost         string
+	DockerHosts     []string
 	DockerHostNames []string
-	Datastores []string
+	Datastores      []string
 }
 
 var (
@@ -52,24 +52,25 @@ func init() {
 func GetVolumeName() string {
 	return volumeName
 }
-// GetVolumeNameWithTimeStamp prepares unique volume name by appending current time-stamp value
-func GetVolumeNameWithTimeStamp(volName string) string {
-	return volName + "_volume_" + strconv.FormatInt(time.Now().Unix(), 10)
+
+// GetUniqueContainerName prepares unique container name with a random generated number
+func GetUniqueContainerName(containerName string) string {
+	return containerName + "_container_" + strconv.FormatInt(rand.Int63(), 36)
+}
+
+// GetUniqueServiceName prepares unique service name with a random generated number
+func GetUniqueServiceName(serviceName string) string {
+	return serviceName + "_service_" + strconv.FormatInt(rand.Int63(), 36)
+}
+
+// GetUniqueVmgroupName prepares unique tenant name with a random generated number.
+func GetUniqueVmgroupName(vmgroupName string) string {
+	return vmgroupName + "_tenant_" + strconv.FormatInt(rand.Int63(), 36)
 }
 
 // GetUniqueVolumeName prepares unique volume name with a random generated number
 func GetUniqueVolumeName(volName string) string {
-	return volName + "_volume_" + strconv.FormatInt(rand.Int63(), 10)
-}
-
-// GetContainerNameWithTimeStamp prepares unique container name by appending current time-stamp value
-func GetContainerNameWithTimeStamp(containerName string) string {
-	return containerName + "_container_" + strconv.FormatInt(time.Now().Unix(), 10)
-}
-
-// GetServiceNameWithTimeStamp prepares unique service name by appending current time-stamp value
-func GetServiceNameWithTimeStamp(serviceName string) string {
-	return serviceName + "_service_" + strconv.FormatInt(time.Now().Unix(), 10)
+	return volName + "_volume_" + strconv.FormatInt(rand.Int63(), 36)
 }
 
 // GetVolumeNameOfSize returns a random volume name of required length

@@ -38,8 +38,8 @@ type BasicTestSuite struct {
 
 func (s *BasicTestSuite) SetUpTest(c *C) {
 	s.esxName = os.Getenv("ESX")
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("basic_test")
-	s.containerName = inputparams.GetContainerNameWithTimeStamp("basic_test")
+	s.volumeName = inputparams.GetUniqueVolumeName("basic_test")
+	s.containerName = inputparams.GetUniqueContainerName("basic_test")
 }
 
 var _ = Suite(&BasicTestSuite{})

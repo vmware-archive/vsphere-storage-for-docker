@@ -40,8 +40,8 @@ type PluginSuite struct {
 func (s *PluginSuite) SetUpTest(c *C) {
 	s.hostIP = os.Getenv("VM2")
 	s.esxIP = os.Getenv("ESX")
-	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("restart_test")
-	s.containerName = inputparams.GetContainerNameWithTimeStamp("restart_test")
+	s.volumeName = inputparams.GetUniqueVolumeName("restart_test")
+	s.containerName = inputparams.GetUniqueContainerName("restart_test")
 
 	// Create a volume
 	out, err := dockercli.CreateVolume(s.hostIP, s.volumeName)
