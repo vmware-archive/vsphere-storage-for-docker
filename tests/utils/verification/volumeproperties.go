@@ -64,7 +64,7 @@ func CheckVolumeAvailability(hostName string, reqVol string) bool {
 // CheckVolumeListAvailability returns true if the given volumes specified in list are
 // available from the specified VM; false otherwise.
 func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
-	log.Printf("Checking volume [%s] availability from VM [%s]\n", reqVolList, hostName)
+	log.Printf("Checking volume %s availability from VM [%s]\n", reqVolList, hostName)
 
 	volumes, err := ssh.InvokeCommand(hostName, dockercli.ListVolumes)
 	if err != nil {
