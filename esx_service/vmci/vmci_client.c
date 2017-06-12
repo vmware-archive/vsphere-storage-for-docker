@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,52 +18,16 @@
 //
 // Called mainly from Go code.
 //
-// API: Exposes only Vmci_GetReply. The call is blocking.
+// API: Exposes Vmci_GetReply and Vmci_FreeBuf. The calls are blocking.
 //
+// For details on _WIN32 specific handling, please refer to the following link:
+// https://pubs.vmware.com/vsphere-65/topic/com.vmware.vmci.pg.doc/vsockStreams.5.4.html
 //
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdint.h>
 #include <assert.h>
 
-#include "vmci_sockets.h"
-#include "connection_types.h"
-
-#define ERR_BUF_LEN 512
-
-// operations status. 0 is OK
-typedef int be_sock_status;
-
-//
-// Booking structure for opened VMCI / vSocket
-//
-typedef struct {
-   int sock_id; // socket id for socket APIs
-   struct sockaddr_vm addr; // held here for bookkeeping and reporting
-} be_sock_id;
-
-//
-// Protocol message structure: request and reply
-//
-
-typedef struct be_request {
-   uint32_t mlen;   // length of message (including trailing \0)
-   const char *msg; // null-terminated immutable JSON string.
-} be_request;
-
-#define MAXBUF 1024 * 1024 // Safety limit. We do not expect json string > 1M
-#define MAX_CLIENT_PORT 1023 // Last privileged port
-#define START_CLIENT_PORT 100 // Where to start client port
-
-// Retry entire range on bind failures
-#define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT)
-
-typedef struct be_answer {
-   char *buf;                  // response buffer
-   char errBuf[ERR_BUF_LEN];   // error response buffer
-} be_answer;
+#include "vmci_client.h"
 
 //
 // Interface for communication to "command execution" server.
@@ -171,6 +135,17 @@ dummy_get_reply(be_sock_id *id, be_request *r, be_answer* a)
 static be_sock_status
 vsock_init(be_sock_id *id, int cid, int port)
 {
+   #ifdef _WIN32
+      WORD versionRequested = MAKEWORD(2, 2);
+      WSADATA wsaData;
+      int wsaErr = WSAStartup(versionRequested, &wsaData);
+      if (wsaErr != 0) {
+         printf(stderr, "vsock_init: (%d) could not register with Winsock DLL.\n", wsaErr);
+         errno = wsaErr;
+         return CONN_FAILURE;
+      }
+   #endif
+
    static int round_robin = START_CLIENT_PORT; // Round robin client bind port
    int ret;
    int af;    // family id
@@ -316,7 +291,11 @@ vsock_get_reply(be_sock_id *s, be_request *r, be_answer* a)
 static void
 vsock_release(be_sock_id *id)
 {
-   close(id->sock_id);
+   #ifdef _WIN32
+      closesocket(id->sock_id);
+   #else
+      close(id->sock_id);
+   #endif
 }
 
 //
@@ -366,6 +345,9 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name,
    return host_request(be, &req, ans, ESX_VMCI_CID, port);
 }
 
+//
+// Frees a be_answer instance.
+//
 void
 Vmci_FreeBuf(be_answer *ans)
 {
