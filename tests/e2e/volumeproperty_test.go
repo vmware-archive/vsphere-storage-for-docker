@@ -38,8 +38,6 @@ import (
 )
 
 const (
-	testName         = "TestVolumeProperties"
-	testgroup        = "volumeproperty_group"
 	size             = "100MB"
 	diskFormatOption = " -o diskformat="
 )
@@ -71,7 +69,7 @@ func (s *VolumePropertyTestSuite) SetUpSuite(c *C) {
 }
 
 func (s *VolumePropertyTestSuite) SetUpTest(c *C) {
-	s.containerName = inputparams.GetUniqueContainerName(testName)
+	s.containerName = inputparams.GetUniqueContainerName(c.TestName())
 	s.formatTypes = []string{"thin", "zeroedthick", "eagerzeroedthick"}
 	s.volumeStatus = properties.DetachedStatus
 }
@@ -100,7 +98,7 @@ NOTE: Do steps 5 ,6 and 7 only for volume of 'thin' disk format type.
 */
 
 func (s *VolumePropertyTestSuite) TestVolumeProperties(c *C) {
-	misc.LogTestStart(testgroup, testName)
+	misc.LogTestStart(c.TestName())
 
 	// create volumes of all three disk formats
 	s.createVolumes(c)
@@ -123,7 +121,7 @@ func (s *VolumePropertyTestSuite) TestVolumeProperties(c *C) {
 
 	// Verify if docker and ESX properties of volumes are same and as expected.
 	s.verifyProperties(c)
-	misc.LogTestEnd(testgroup, testName)
+	misc.LogTestEnd(c.TestName())
 }
 
 // createVolumes - creates volumes of each format type

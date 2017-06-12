@@ -32,7 +32,6 @@ import (
 )
 
 const (
-	volAccessTest    = "vol_access"
 	errorWriteVolume = "Read-only file system"
 )
 
@@ -90,7 +89,7 @@ func (s *VolumeAccessTestSuite) newCName(i int) string {
 // 11. Write from host2 should succeed
 // 12. Read from host1 to verify the content is same
 func (s *VolumeAccessTestSuite) TestAccessUpdate(c *C) {
-	misc.LogTestStart(volAccessTest, "TestAccessUpdate")
+	misc.LogTestStart(c.TestName())
 
 	data1 := "message_by_host1"
 	data2 := "message_by_host2"
@@ -140,7 +139,7 @@ func (s *VolumeAccessTestSuite) TestAccessUpdate(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data2)
 
-	misc.LogTestEnd(volAccessTest, "TestAccessUpdate")
+	misc.LogTestEnd(c.TestName())
 }
 
 // Verify read, write is possible after volume access update
@@ -153,7 +152,7 @@ func (s *VolumeAccessTestSuite) TestAccessUpdate(c *C) {
 // 7. Write from host2 should succeed
 // 8. Read from host1 to verify the content is same
 func (s *VolumeAccessTestSuite) TestAccessUpdate_R_RW(c *C) {
-	misc.LogTestStart(volAccessTest, "TestAccessUpdate_R_RW")
+	misc.LogTestStart(c.TestName())
 
 	data1 := "message_by_host1"
 	data2 := "message_by_host2"
@@ -186,5 +185,5 @@ func (s *VolumeAccessTestSuite) TestAccessUpdate_R_RW(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data2)
 
-	misc.LogTestEnd(volAccessTest, "TestAccessUpdate_R_RW")
+	misc.LogTestEnd(c.TestName())
 }

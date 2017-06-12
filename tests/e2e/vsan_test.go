@@ -77,7 +77,7 @@ var _ = Suite(&VsanTestSuite{})
 // 2. Volume creation with valid policy should pass
 // 3. Valid volume should be accessible
 func (s *VsanTestSuite) TestValidPolicy(c *C) {
-	misc.LogTestStart("", c.TestName())
+	misc.LogTestStart(c.TestName())
 	s.volumeName = ""
 	policyName := "validPolicy"
 	out, err := admincli.CreatePolicy(s.config.EsxHost, policyName, adminclicon.PolicyContent)
@@ -92,7 +92,7 @@ func (s *VsanTestSuite) TestValidPolicy(c *C) {
 	isAvailable := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeName)
 	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", s.volumeName))
 
-	misc.LogTestEnd("", c.TestName())
+	misc.LogTestEnd(c.TestName())
 }
 
 // Steps:
@@ -100,7 +100,7 @@ func (s *VsanTestSuite) TestValidPolicy(c *C) {
 // 2. Volume creation with non existing policy should fail
 // 3. Volume creation with invalid policy should fail
 func (s *VsanTestSuite) TestInvalidPolicy(c *C) {
-	misc.LogTestStart("", c.TestName())
+	misc.LogTestStart(c.TestName())
 	s.volumeName = ""
 	invalidContentPolicyName := "invalidPolicy"
 	out, err := admincli.CreatePolicy(s.config.EsxHost, invalidContentPolicyName, "'((\"wrongKey\" i50)'")
@@ -115,7 +115,7 @@ func (s *VsanTestSuite) TestInvalidPolicy(c *C) {
 		c.Assert(strings.HasPrefix(out, ErrorVolumeCreate), Equals, true)
 	}
 
-	misc.LogTestEnd("", c.TestName())
+	misc.LogTestEnd(c.TestName())
 }
 
 // The purpose of this test is to verify:
@@ -133,7 +133,7 @@ func (s *VsanTestSuite) TestInvalidPolicy(c *C) {
 // 6. run "vmdkops_admin policy rm" to remove the policy, which should fail since the volume is still
 // use the vsan policy
 func (s *VsanTestSuite) TestDeleteVsanPolicyAlreadyInUse(c *C) {
-	misc.LogTestStart("", c.TestName())
+	misc.LogTestStart(c.TestName())
 	s.volumeName = ""
 	out, err := admincli.CreatePolicy(s.config.EsxHost, adminclicon.PolicyName, adminclicon.PolicyContent)
 	c.Assert(err, IsNil, Commentf(out))
@@ -159,6 +159,6 @@ func (s *VsanTestSuite) TestDeleteVsanPolicyAlreadyInUse(c *C) {
 	log.Printf("Remove vsanPolicy \"%s\" returns with %s", adminclicon.PolicyName, out)
 	c.Assert(out, Matches, "Error: Cannot remove.*", Commentf("vsanPolicy is still used by volumes and cannot be removed"))
 
-	misc.LogTestEnd("", c.TestName())
+	misc.LogTestEnd(c.TestName())
 
 }

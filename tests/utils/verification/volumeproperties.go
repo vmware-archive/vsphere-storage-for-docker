@@ -64,7 +64,7 @@ func CheckVolumeAvailability(hostName string, reqVol string) bool {
 // CheckVolumeListAvailability returns true if the given volumes specified in list are
 // available from the specified VM; false otherwise.
 func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
-	log.Printf("Checking volume [%s] availability from VM [%s]\n", reqVolList, hostName)
+	log.Printf("Checking volume %s availability from VM [%s]\n", reqVolList, hostName)
 
 	volumes, err := ssh.InvokeCommand(hostName, dockercli.ListVolumes)
 	if err != nil {
@@ -135,7 +135,8 @@ func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
 
 	//TODO: Need to implement generic polling logic for better reuse
-	for attempt := 0; attempt < 30; attempt++ {
+	const maxAttempt = 60
+	for attempt := 0; attempt < maxAttempt; attempt++ {
 		misc.SleepForSec(2)
 		status := getVolumeStatusHost(name, hostName)
 		if status != properties.DetachedStatus {
