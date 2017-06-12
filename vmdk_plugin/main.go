@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"reflect"
+	"runtime"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -35,23 +35,11 @@ import (
 )
 
 const (
-	pluginSockDir = "/run/docker/plugins"
-	mountRoot     = "/mnt/vmdk" // VMDK and photon volumes are mounted here
 	photonDriver  = "photon"
 	vmdkDriver    = "vmdk"
 	vsphereDriver = "vsphere"
 	defaultPort   = 1019
 )
-
-// An equivalent function is not exported from the SDK.
-// API supports passing a full address instead of just name.
-// Using the full path during creation and deletion. The path
-// is the same as the one generated internally. Ideally SDK
-// should have ability to clean up sock file instead of replicating
-// it here.
-func fullSocketAddress(pluginName string) string {
-	return filepath.Join(pluginSockDir, pluginName+".sock")
-}
 
 // init log with passed logLevel (and get config from configFile if it's present)
 // returns True if using defaults,  False if using config file
@@ -98,7 +86,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 }
 
 // main for docker-volume-vsphere
-// Parses flags, initializes and mounts refcounters and finally services Docker requests
+// Parses flags, initializes and mounts refcounters and finally initializes the server.
 func main() {
 	var driver volume.Driver
 
@@ -139,6 +127,16 @@ func main() {
 		} else {
 			*driverName = vsphereDriver
 		}
+	}
+
+	// On windows, if a driver other than vsphere is specified, switch
+	// to the vsphere driver and print a warning message.
+	if runtime.GOOS == "windows" && *driverName != vsphereDriver {
+		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
+			vsphereDriver, c.Driver)
+		log.Warning(msg)
+		fmt.Println(msg)
+		*driverName = vsphereDriver
 	}
 
 	log.WithFields(log.Fields{
@@ -194,15 +192,9 @@ func main() {
 	go func() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
-		os.Remove(fullSocketAddress(*driverName))
+		Destroy(driverName)
 		os.Exit(0)
 	}()
 
-	handler := volume.NewHandler(driver)
-
-	log.WithFields(log.Fields{
-		"address": fullSocketAddress(*driverName),
-	}).Info("Going into ServeUnix - Listening on Unix socket ")
-
-	log.Info(handler.ServeUnix("root", fullSocketAddress(*driverName)))
+	Init(driverName, &driver)
 }
