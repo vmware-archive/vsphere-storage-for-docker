@@ -50,7 +50,7 @@ type VmGroupTest struct {
 var _ = Suite(&VmGroupTest{})
 
 func (vg *VmGroupTest) SetUpSuite(c *C) {
-	vg.testContainer = inputparams.GetUniqueContainerName(vgTestContainer)
+	vg.testContainer = inputparams.GetContainerNameWithTimeStamp(vgTestContainer)
 
 	vg.config = inputparams.GetTestConfig()
 	if vg.config == nil {
