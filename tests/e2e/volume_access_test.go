@@ -52,7 +52,7 @@ func (s *VolumeAccessTestSuite) SetUpSuite(c *C) {
 
 func (s *VolumeAccessTestSuite) SetUpTest(c *C) {
 	dsName := s.config.Datastores[0]
-	s.volumeName = inputparams.GetUniqueVolumeName("vol_access") + "@" + dsName
+	s.volumeName = inputparams.GetVolumeNameWithTimeStamp("vol_access") + "@" + dsName
 }
 
 func (s *VolumeAccessTestSuite) TearDownTest(c *C) {
@@ -70,7 +70,7 @@ func (s *VolumeAccessTestSuite) TearDownTest(c *C) {
 var _ = Suite(&VolumeAccessTestSuite{})
 
 func (s *VolumeAccessTestSuite) newCName(i int) string {
-	cname := inputparams.GetUniqueContainerName("vol_access")
+	cname := inputparams.GetContainerNameWithTimeStamp("vol_access")
 	s.containerList[i] = append(s.containerList[i], cname)
 	return cname
 }
