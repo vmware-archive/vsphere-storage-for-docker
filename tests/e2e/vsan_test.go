@@ -57,6 +57,10 @@ func (s *VsanTestSuite) SetUpSuite(c *C) {
 	}
 }
 
+func (s *VsanTestSuite) SetUpTest(c *C) {
+	s.policyList = []string{}
+}
+
 func (s *VsanTestSuite) TearDownTest(c *C) {
 	if s.volumeName != "" {
 		out, err := dockercli.DeleteVolume(s.config.DockerHosts[0], s.volumeName)
