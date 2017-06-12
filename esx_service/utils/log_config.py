@@ -45,7 +45,10 @@ LOG_CONFIG_DEFAULT = {
         "'maxBytes' and 'backupCount' define max log size and number of log backup files kept",
         "For more, see https://docs.python.org/2/library/logging.config.html#logging-config-dictschema",
         "",
-        "Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file."
+        "Do NOT change 'rotate_file' name in handlers - it is used in code to locate the log file.",
+        "",
+        "WARNING: Changes to this file do not survive ESXi reboot. ",
+        "         Please see KB2043564 for more details and workarounds."
     ],
     "version":
     1,  # mandated by https://docs.python.org/2/library/logging.config.html#logging-config-dictschema
