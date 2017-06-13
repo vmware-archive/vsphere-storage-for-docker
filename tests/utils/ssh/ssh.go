@@ -39,9 +39,6 @@ func InvokeCommand(ip, cmd string) (string, error) {
 	sshIdentity := []string{sshKeyOpt[0], sshKeyOpt[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
 
 	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
-	if err != nil {
-		log.Printf("Failed to invoke command [%s]: %v", cmd, err)
-	}
 	return strings.TrimSpace(string(out[:])), err
 }
 
