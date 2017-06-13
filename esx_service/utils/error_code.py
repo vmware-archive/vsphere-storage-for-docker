@@ -78,6 +78,11 @@ class ErrorCode:
     # Catch all for SQLite errors. Note that logging() will have extra  info
     SQLITE3_ERROR = 506
 
+    # Volume option related error code start
+    OPT_VOLUME_SIZE_INVALID  = 507
+    # Volume option related error code end
+
+
 
 error_code_to_message = {
     ErrorCode.VM_NOT_BELONG_TO_TENANT : "VM {0} does not belong to any vmgroup",
@@ -128,6 +133,8 @@ error_code_to_message = {
     ErrorCode.FEATURE_NOT_SUPPORTED : "This feature is not supported for vmgroup {}.",
     ErrorCode.INIT_NEEDED: "Configuration not found. Please init configuration with 'vmdkops_admin.py config init'.",
     ErrorCode.SQLITE3_ERROR: "Sqlite3 error - see log for more info",
+
+    ErrorCode.OPT_VOLUME_SIZE_INVALID : "Invalid volume size specified.",
 }
 
 class ErrorInfo:
