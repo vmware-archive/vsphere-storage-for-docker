@@ -695,7 +695,7 @@ def _tenant_vm_add(name, vm_list):
     if error_info:
         error_info.msg = "Cannot add VM to vmgroup " + error_info.msg
         logging.error(error_info.msg)
-        return error_info, None
+        return error_info
 
     error_info, auth_mgr = get_auth_mgr_object()
 
