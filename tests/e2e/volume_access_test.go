@@ -15,7 +15,7 @@
 // The goal of this test suite is to verify read/write consistency on volumes
 // in accordance with the access updates on the volume
 
-// +build runalways
+// +build unstable
 
 package e2e
 
