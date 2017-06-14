@@ -394,7 +394,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	}
 	log.WithFields(log.Fields{"volume": r.Name}).Info("Start mkfs")
 	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
-	log.WithFields(log.Fields{"volume": r.Name}).Info("End mkfs")
+	log.WithFields(log.Fields{"volume": r.Name}).Info("End mkfs.")
 	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errMkfs}).Error("Create filesystem failed, removing the volume ")
