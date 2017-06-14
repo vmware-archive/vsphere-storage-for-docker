@@ -690,14 +690,18 @@ def detachVMDK(vmdk_path, vm_uuid):
 
 # Check existence (and creates if needed) the path for docker volume VMDKs
 def get_vol_path(datastore, tenant_name=None):
-    # If the command is NOT running under a tenant, the folder for Docker
+    # If tenant_name is set to None, the folder for Docker
     # volumes is created on <datastore>/DOCK_VOLS_DIR
-    # If the command is running under a tenant, the folder for Dock volume
+    # If tenant_name is set, the folder for Dock volume
     # is created on <datastore>/DOCK_VOLS_DIR/tenant_uuid
     # a symlink <datastore>/DOCK_VOLS_DIR/tenant_name will be created to point to
     # path <datastore>/DOCK_VOLS_DIR/tenant_uuid
+    # If the dock volume folder already exists,
+    # the path returned contains tenant name not UUID.
+    # This is to make logs more readable. OS will resolve this path
+    # as a symlink with tenant_name will already be present.
 
-    path = dock_vol_path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
+    readable_path = path = dock_vol_path = os.path.join("/vmfs/volumes", datastore, DOCK_VOLS_DIR)
 
     if tenant_name:
         error_info, tenant = auth_api.get_tenant_from_db(tenant_name)
@@ -705,11 +709,17 @@ def get_vol_path(datastore, tenant_name=None):
             logging.error("get_vol_path: failed to find tenant info for tenant %s", tenant_name)
             path = dock_vol_path
         path = os.path.join(dock_vol_path, tenant.id)
+        readable_path = os.path.join(dock_vol_path, tenant_name)
 
     if os.path.isdir(path):
-        # If the path exists then return it as is.
-        logging.debug("Found %s, returning", path)
-        return path, None
+        # If the readable_path exists then return, else return path with no symlinks
+        if os.path.exists(readable_path):
+            logging.debug("Found %s, returning", readable_path)
+            return readable_path, None
+        else:
+            logging.warning("Internal: Tenant name symlink not found for path %s", readable_path)
+            logging.debug("Found %s, returning", path)
+            return path, None
 
     if not os.path.isdir(dock_vol_path):
         # The osfs tools are usable for DOCK_VOLS_DIR on all datastores.
@@ -738,7 +748,7 @@ def get_vol_path(datastore, tenant_name=None):
             logging.info("Symlink %s is created to point to path %s", symlink_path, path)
 
     logging.info("Created %s", path)
-    return path, None
+    return readable_path, None
 
 def parse_vol_name(full_vol_name):
     """
