@@ -90,21 +90,8 @@ func ReadFromVolume(ip, volName, containerName, fileName string) (string, error)
 
 // DeleteVolume helper deletes the created volume as per passed volume name.
 func DeleteVolume(ip, name string) (string, error) {
-	log.Printf("Destroying volume [%s]\n", name)
-	var out string
-	var err error
-
-	for attempt := 0; attempt < maxRemoveVolAttempt; attempt++ {
-		out, err = ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
-		if err != nil && strings.Contains(out, pluginInitError) {
-			misc.SleepForSec(waitTime)
-			log.Printf("Volume cannot be deleted yet as plugin initialization still in progress. Retrying...")
-			continue
-		} else {
-			break
-		}
-	}
-	return out, err
+	log.Printf("Deleting volume [%s]\n", name)
+	return ssh.InvokeCommand(ip, dockercli.RemoveVolume+name)
 }
 
 // ListVolumes - runs the docker list volumes command and returns the
