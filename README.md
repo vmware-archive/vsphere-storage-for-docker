@@ -12,7 +12,7 @@ vSphere Docker Volume Service (vDVS) enables customers to address persistent sto
 To read more about code development and testing please read
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
 as well as the
-[FAQ on the project site](https://vmware.github.io/docker-volume-vsphere/documentation/user-guide/faq/).
+[FAQ on the project site](http://vmware.github.io/docker-volume-vsphere/documentation/faq.html).
 
 ## Detailed documentation
 
@@ -78,7 +78,7 @@ sudo rpm -ivh <name>.rpm # Photon or rpm based distros
 
 ## Using Docker CLI
 Refer to [tenancy
-documentation](http://vmware.github.io/docker-volume-vsphere/documentation/features/tenancy/) for setting up tenants.
+documentation](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html) for setting up tenants.
 ```
 # To select datastore use --name=MyVolume@<Datastore Name>
 $ docker volume create --driver=vsphere --name=MyVolume -o size=10gb
