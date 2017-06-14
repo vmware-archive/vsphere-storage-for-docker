@@ -126,7 +126,7 @@ error_code_to_message = {
     ErrorCode.INVALID_ARGUMENT : "Invalid Argument({0})",
     ErrorCode.VOLUME_NAME_INVALID : "Volume name {0} is invalid, only {1} is allowed",
     ErrorCode.FEATURE_NOT_SUPPORTED : "This feature is not supported for vmgroup {}.",
-    ErrorCode.INIT_NEEDED: "Please init configuration with 'vmdkops_admin.py config init' before changing it.",
+    ErrorCode.INIT_NEEDED: "Configuration not found. Please init configuration with 'vmdkops_admin.py config init'.",
     ErrorCode.SQLITE3_ERROR: "Sqlite3 error - see log for more info",
 }
 
