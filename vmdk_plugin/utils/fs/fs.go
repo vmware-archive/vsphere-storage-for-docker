@@ -104,7 +104,9 @@ loop:
 			break loop
 		}
 	}
+	log.WithFields(log.Fields{"device": device}).Info("Closing watcher ")
 	watcher.Close()
+	log.WithFields(log.Fields{"device": device}).Info("Attach complete ")
 }
 
 // Mkdir creates a directory at the specified path
