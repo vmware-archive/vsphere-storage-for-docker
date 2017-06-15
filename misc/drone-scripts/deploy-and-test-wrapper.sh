@@ -111,6 +111,9 @@ runtests)
           TARGET+=" deploy-vm e2e-test-runalways e2e-test-runonce testasroot test-esx test-vm"
         fi
         ;;
+coverage)
+        TARGET=" coverage"
+        ;;
 esac
 
 if make -s $TARGET $PARAMETER;
