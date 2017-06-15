@@ -14,7 +14,7 @@
 
 // This test is going to cover various volume creation test cases
 
-// +build runonce
+// +build unstable
 
 package e2e
 
@@ -22,16 +22,13 @@ import (
 	"strings"
 	"sync"
 
+	dockerclicon "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 
 	. "gopkg.in/check.v1"
-)
-
-const (
-	ErrorVolumeCreate = "Error response from daemon: create"
 )
 
 type VolumeCreateTestSuite struct {
@@ -82,7 +79,7 @@ func (s *VolumeCreateTestSuite) createVolCheck(name, option string, valid bool, 
 	} else {
 		// negative test case
 		c.Assert(err, Not(IsNil), Commentf(out))
-		c.Assert(strings.HasPrefix(out, ErrorVolumeCreate), Equals, true)
+		c.Assert(strings.HasPrefix(out, dockerclicon.ErrorVolumeCreate), Equals, true)
 	}
 }
 

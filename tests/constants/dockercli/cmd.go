@@ -105,4 +105,7 @@ const (
 
 	// RemoveAllContainers removing all the containers forcefully
 	RemoveAllContainers = docker + "rm $(docker ps -aq) -f"
+
+	// ErrorVolumeCreate Error string prefix when volume creation fails
+	ErrorVolumeCreate = "Error response from daemon: create"
 )
