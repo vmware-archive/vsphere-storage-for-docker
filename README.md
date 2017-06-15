@@ -37,6 +37,11 @@ The demos are located on the project [site](https://vmware.github.io/docker-volu
 
 Project page is located @ [https://vmware.github.io/docker-volume-vsphere/](https://vmware.github.io/docker-volume-vsphere). Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere/documentation](https://vmware.github.io/docker-volume-vsphere/documentation)
 
+## Supported Platform
+
+ESXi: 6.0 and above
+Docker: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
+
 ## Installation Instructions
 
 ### On ESX
