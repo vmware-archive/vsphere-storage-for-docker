@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	adminclicon "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
+	dockerclicon "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
@@ -116,7 +117,7 @@ func (s *VsanTestSuite) TestInvalidPolicy(c *C) {
 	for _, option := range invalidVsanOpts {
 		invalidVolName := inputparams.GetUniqueVolumeName("vsanVol") + "@" + s.vsanDSName
 		out, _ = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], invalidVolName, option)
-		c.Assert(strings.HasPrefix(out, ErrorVolumeCreate), Equals, true)
+		c.Assert(strings.HasPrefix(out, dockerclicon.ErrorVolumeCreate), Equals, true)
 	}
 
 	misc.LogTestEnd(c.TestName())
