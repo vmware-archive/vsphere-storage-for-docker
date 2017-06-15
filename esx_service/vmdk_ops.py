@@ -290,7 +290,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None):
         # Verify if the source volume is in use.
         attached, uuid, attach_as, attached_vm_name = getStatusAttached(src_vmdk_path)
         if attached:
-            log_attached_volume(vmdk_path, uuid)
+            log_attached_volume(vmdk_path, uuid, attached_vm_name)
 
         # Reauthorize with size info of the volume being cloned
         src_vol_info = kv.get_vol_info(src_vmdk_path)
@@ -598,15 +598,11 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
 
     # Check the current volume status
     kv_status_attached, kv_uuid, attach_mode, attached_vm_name = getStatusAttached(vmdk_path)
-    # If the volume is attached then don't try removing the volume, the uuid may be
-    # resolved to a VM on the local host or may not if the VM is on another host,
-    # either case attempting to clean the VMDK can leave it in an inconsistent state,
-    # VMDK is present but the KV has been deleted.
     if kv_status_attached:
         if vol_name is None:
             vol_name = vmdk_utils.get_volname_from_vmdk_path(vmdk_path)
         logging.info("*** removeVMDK: %s is in use, volume = %s VM = %s VM-uuid = %s",
-            vmdk_path, vol_name, attached_vm_name, kv_uuid)
+                      vmdk_path, vol_name, attached_vm_name, kv_uuid)
         return err("Failed to remove volume {0}, in use by VM = {1}.".format(vol_name, attached_vm_name))
 
     # Cleaning .vmdk file
@@ -1157,17 +1153,18 @@ def getStatusAttached(vmdk_path):
 
     return attached, uuid, attach_as, vm_name
 
-def log_attached_volume(vmdk_path, kv_uuid):
+def log_attached_volume(vmdk_path, kv_uuid, vol_name):
        '''
        Log appropriate message for volume thats already attached
        '''
        cur_vm = findVmByUuid(kv_uuid)
 
        if cur_vm:
-          msg = "Disk is {0} already attached to VM {1}".format(vmdk_path,
+          msg = "Disk {0} is already attached to VM {1}".format(vmdk_path,
                                                              cur_vm.config.name)
        else:
-          msg = "Failed to find VM (id {0}), disk {1} is already attached".format(kv_uuid,
+          msg = "Failed to find VM {0}({1}), disk {2} is already attached".format(vol_name,
+                                                                                 kv_uuid,
                                                                                  vmdk_path)
        logging.warning(msg)
 
@@ -1247,11 +1244,11 @@ def disk_attach(vmdk_path, vm):
     return error or unit:bus numbers of newly attached disk.
     '''
 
-    kv_status_attached, kv_uuid, attach_mode, _ = getStatusAttached(vmdk_path)
+    kv_status_attached, kv_uuid, attach_mode, attached_vm_name = getStatusAttached(vmdk_path)
     logging.info("Attaching {0} as {1}".format(vmdk_path, attach_mode))
 
     if kv_status_attached:
-       log_attached_volume(vmdk_path, kv_uuid)
+       log_attached_volume(vmdk_path, kv_uuid, attached_vm_name)
 
     # NOTE: vSphere is very picky about unit numbers and controllers of virtual
     # disks. Every controller supports 15 virtual disks, and the unit
