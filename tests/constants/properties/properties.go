@@ -19,6 +19,13 @@ package properties
 const (
 	//DetachedStatus - volume detached
 	DetachedStatus = "detached"
+
 	//AttachedStatus - volume attached
 	AttachedStatus = "attached"
+
+	// PowerOnState - VM powed on
+	PowerOnState = "poweredOn"
+
+	// PowerOffState - VM powed off
+	PowerOffState = "poweredOff"
 )
