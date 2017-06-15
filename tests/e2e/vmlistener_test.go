@@ -36,11 +36,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
-const (
-	powerOnState  = "poweredOn"
-	powerOffState = "poweredOff"
-)
-
 type VMListenerTestParams struct {
 	volumeName     string
 	dockerHostIP   string
@@ -58,6 +53,15 @@ func (s *VMListenerTestParams) SetUpSuite(c *C) {
 func (s *VMListenerTestParams) SetUpTest(c *C) {
 	s.volumeName = inputparams.GetUniqueVolumeName("vmlistener_test")
 	s.containerName = inputparams.GetUniqueContainerName("vmlistener_test")
+
+	out, err := dockercli.CreateVolume(s.dockerHostIP, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = dockercli.AttachVolume(s.dockerHostIP, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	status := verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 }
 
 func (s *VMListenerTestParams) TearDownTest(c *C) {
@@ -71,38 +75,39 @@ func (s *VMListenerTestParams) TearDownTest(c *C) {
 
 var _ = Suite(&VMListenerTestParams{})
 
-// Test vmdkops service restart + kill vm process
-// 1. Create a volume
-// 2. Attach it to a container
+// Test vmdkops service restart
+// 1. Setup: Create a volume
+// 2. Setup: Attach it to a container
 // 3. Restart the vmdkops service
-// 4. Verify vmdkops_admin volume ls > verify volume stays as attached
-// 5. Kill the vm
-// 6. Verification: volume status should be detached
-
-func (s *VMListenerTestParams) TestKillVM(c *C) {
+// 4. Verification: volume stays as attached
+func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	out, err := dockercli.CreateVolume(s.dockerHostIP, s.volumeName)
-	c.Assert(err, IsNil, Commentf(out))
-
-	out, err = dockercli.AttachVolume(s.dockerHostIP, s.volumeName, s.containerName)
-	c.Assert(err, IsNil, Commentf(out))
-
-	status := verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
-	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
-
 	// restart vmdkops service
-	out, err = admincli.RestartVmdkopsService(s.esxIP)
+	out, err := admincli.RestartVmdkopsService(s.esxIP)
 	c.Assert(err, IsNil, Commentf(out))
 
 	// make sure volume stays attached after vmdkopsd restart
-	status = verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test kill VM process
+// 1. Setup: Create a volume
+// 2. Setup: Attach it to a container
+// 3. Kill the VM
+// 4. Verification: volume status should be detached
+// 5. Power on the VM
+// 6. Verification: volume status should still be detached
+func (s *VMListenerTestParams) TestKillVM(c *C) {
+	misc.LogTestStart(c.TestName())
 
 	// make sure vm was powered on
 	powerState := govc.GetVMPowerState(s.dockerHostName)
 	log.Printf("VM[%s]'s current power state is [%s]", s.dockerHostName, powerState)
-	c.Assert(powerState, Equals, powerOnState, Commentf("VM [%s] should be powered on state", s.dockerHostName))
+	c.Assert(powerState, Equals, properties.PowerOnState, Commentf("VM [%s] should be powered on state", s.dockerHostName))
 
 	// grab worldID/vmProcessID
 	processID := esxcli.GetVMProcessID(s.esxIP, s.dockerHostName)
@@ -112,20 +117,20 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	isVMKilled := esxcli.KillVM(s.esxIP, processID)
 	c.Assert(isVMKilled, Equals, true, Commentf("Unable to kill VM %s ...", s.dockerHostName))
 
-	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, s.dockerHostName, powerOffState)
+	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, s.dockerHostName, properties.PowerOffState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered off state", s.dockerHostName))
 
 	// status should be detached
-	volAttachStatus := verification.GetVMAttachedToVolUsingAdminCli(s.volumeName, s.esxIP)
-	c.Assert(volAttachStatus, Equals, properties.DetachedStatus, Commentf("Volume %s is still attached", s.volumeName))
+	volStatus := verification.GetVMAttachedToVolUsingAdminCli(s.volumeName, s.esxIP)
+	c.Assert(volStatus, Equals, properties.DetachedStatus, Commentf("Volume %s is still attached", s.volumeName))
 
-	// power on vm
+	// power on VM
 	govc.PowerOnVM(s.dockerHostName)
-	isStatusChanged = misc.WaitForExpectedState(govc.GetVMPowerState, s.dockerHostName, powerOnState)
+	isStatusChanged = misc.WaitForExpectedState(govc.GetVMPowerState, s.dockerHostName, properties.PowerOnState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.dockerHostName))
 
 	// status should be detached
-	status = verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
+	status := verification.VerifyDetachedStatus(s.volumeName, s.dockerHostIP, s.esxIP)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
 	misc.LogTestEnd(c.TestName())
