@@ -45,7 +45,13 @@ dump_log_vm(){
 
 truncate_vm_logs() {
   $SSH $USER@$1 "echo > $VM_LOGFILE"
-  $SSH $USER@$1 "echo > $SYS_LOGFILE"
+  is_syslog_present=`$SSH $USER@$1 [[ -e $SYS_LOGFILE ]] && echo true || echo false`
+  log $is_syslog_present
+  if [ $is_syslog_present == "true" ]
+  then
+    $SSH $USER@$1 "echo > $SYS_LOGFILE"
+  fi
+
 }
 
 truncate_esx_logs() {
