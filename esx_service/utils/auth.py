@@ -249,13 +249,12 @@ def get_vol_size(opts):
     return opts[SIZE].upper()
 
 
-def check_max_volume_size(opts, privileges):
+def check_max_volume_size(vol_size_in_MB, privileges):
     """ Check whether the size of the volume to be created exceeds
         the max volume size specified in the privileges.
 
     """
     if privileges:
-        vol_size_in_MB = convert.convert_to_MB(get_vol_size(opts))
         max_vol_size_in_MB = privileges[auth_data_const.COL_MAX_VOLUME_SIZE]
         logging.debug("vol_size_in_MB=%d max_vol_size_in_MB=%d",
                       vol_size_in_MB, max_vol_size_in_MB)
@@ -301,10 +300,9 @@ def get_total_storage_used(tenant_uuid, datastore_url):
 
     return None, total_storage_used
 
-def check_usage_quota(opts, tenant_uuid, datastore_url, privileges):
+def check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges):
     """ Check if the volume can be created without violating the quota. """
     if privileges:
-        vol_size_in_MB = convert.convert_to_MB(get_vol_size(opts))
         error_msg, total_storage_used = get_total_storage_used(tenant_uuid, datastore_url)
         if error_msg:
             # cannot get the total_storage_used, to be safe, return False
@@ -335,20 +333,27 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileg
     if cmd in cmd_need_mount_privilege:
         if not has_privilege(privileges):
             result = error_code_to_message[ErrorCode.PRIVILEGE_NO_MOUNT_PRIVILEGE]
+            return result
 
     if cmd == CMD_CREATE:
         if not has_privilege(privileges, auth_data_const.COL_ALLOW_CREATE):
             result = error_code_to_message[ErrorCode.PRIVILEGE_NO_CREATE_PRIVILEGE]
-        if not check_max_volume_size(opts, privileges):
+            return result
+        vol_size_in_MB = convert.convert_to_MB(get_vol_size(opts))
+        if vol_size_in_MB == 0:
+            result = error_code_to_message[ErrorCode.OPT_VOLUME_SIZE_INVALID] 
+            return result
+        if not check_max_volume_size(vol_size_in_MB, privileges):
             result = error_code_to_message[ErrorCode.PRIVILEGE_MAX_VOL_EXCEED]
-        if not check_usage_quota(opts, tenant_uuid, datastore_url, privileges):
+            return result
+        if not check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges):
             result = error_code_to_message[ErrorCode.PRIVILEGE_USAGE_QUOTA_EXCEED]
+            return result
 
     if cmd == CMD_REMOVE:
         if not has_privilege(privileges, auth_data_const.COL_ALLOW_CREATE):
             result = error_code_to_message[ErrorCode.PRIVILEGE_NO_DELETE_PRIVILEGE]
-
-    return result
+            return result
 
 def err_msg_no_table(table_name):
     error_msg = "table " + table_name + " does not exist"
