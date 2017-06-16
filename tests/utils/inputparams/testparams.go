@@ -23,7 +23,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 )
 
 // TestConfig - struct for common test configuration params
@@ -132,9 +132,9 @@ func GetTestConfig() *TestConfig {
 	config.EsxHost = os.Getenv("ESX")
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
-	config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[0]))
-	config.DockerHostNames = append(config.DockerHostNames, govc.RetrieveVMNameFromIP(config.DockerHosts[1]))
-	config.Datastores = govc.GetDatastoreList()
+	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[0]))
+	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[1]))
+	config.Datastores = esx.GetDatastoreList()
 
 	if config.DockerHostNames[0] == "" || config.DockerHostNames[1] == "" ||
 		len(config.Datastores) <= 1 {

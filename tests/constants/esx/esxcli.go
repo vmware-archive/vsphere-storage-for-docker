@@ -14,7 +14,7 @@
 
 // A home to hold test constants related with esxcli.
 
-package esxcli
+package esx
 
 const (
 	esxcli = "esxcli "

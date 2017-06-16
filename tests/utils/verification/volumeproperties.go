@@ -106,7 +106,7 @@ func VerifyAttachedStatus(name, hostName, esxName string) bool {
 
 	vmAttachedHost := GetVMAttachedToVolUsingDockerCli(name, hostName)
 	vmAttachedESX := GetVMAttachedToVolUsingAdminCli(name, esxName)
-	//expectedVMName := govc.RetrieveVMNameFromIP(hostName)
+	//expectedVMName := esx.RetrieveVMNameFromIP(hostName)
 
 	//isMatching := ((vmAttachedHost == expectedVMName) && (vmAttachedHost == vmAttachedESX))
 	isMatching := (vmAttachedHost == vmAttachedESX)
