@@ -347,7 +347,7 @@ test-esx:
 testremote: test-esx test-vm
 test-all:  test e2e-test testremote
 
-# capture coverage of ESX Python code.
+# capture coverage of vDVS driver code.
 coverage:
 	$(log_target)
 	$(MAKE)  --directory=$(ESX_SRC) $@

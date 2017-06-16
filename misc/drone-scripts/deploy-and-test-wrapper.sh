@@ -23,7 +23,7 @@ usage() {
   echo "run this script from the root of the repo"
 }
 
-if [ $# -lt 3 ]
+if [ $# -lt 2 ]
 then
   usage
   exit 1

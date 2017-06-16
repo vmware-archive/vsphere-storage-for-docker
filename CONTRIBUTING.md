@@ -384,15 +384,17 @@ Coverage is captured using make coverage target (On CI it is called using drone 
 User can configure the setup and use this target to see the coverage.
 ### Setup ESX box to install python coverage package
 * Install https://coverage.readthedocs.io/en/coverage-4.4.1/ on your machine using pip
-- scp the coverage package dir installed on ur machine i.e. <Python Location>/site-packages/coverage to /lib64/python3.5/site-packages/ on ESX box.
-- scp the coverage binary i.e. /usr/local/bin/coverage to /bin/ on ESX box
-* create sitecustomize.py inside /lib64/python3.5/
+- scp the coverage package dir installed on ur machine i.e. <Python Location>/site-packages/coverage to /lib64/python3.5/site-packages/ on ESX box. <br />
+eg:- scp -r /Library/Python/3.5/site-packages/coverage root@$ESX:/lib64/python3.5/site-packages/
+- scp the coverage binary i.e. /usr/local/bin/coverage to /bin/ on ESX box <br />
+eg:- scp /usr/local/bin/coverage root@$1:/bin/
+* create sitecustomize.py inside /lib64/python3.5/ <br />
 The content of sitecustomize.py is
 ```
 import coverage
 coverage.process_startup()
 ```
-* create coverage.rc file in ESX home dir
+* create coverage.rc file in ESX home dir <br />
 The content of coverage.rc is
 ```
 [run]
