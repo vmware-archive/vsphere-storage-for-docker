@@ -38,7 +38,7 @@ func GetVMProcessID(esxHostIP, vmName string) string {
 // KillVM - kills VM using esxcli command
 // e.g. esxcli vm process kill --type=force --world-id=35713
 func KillVM(esxHostIP, vmName string) bool {
-	log.Printf("Killing VM [vmName] from ESX [%s]\n", esxHostIP)
+	log.Printf("Killing VM [%s] from ESX [%s]\n", vmName, esxHostIP)
 
 	// Grab worldID/vmProcessID
 	processID := GetVMProcessID(esxHostIP, vmName)
