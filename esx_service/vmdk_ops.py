@@ -1455,7 +1455,7 @@ def set_vol_opts(name, tenant_name, options):
        logging.exception(ex)
        return False
 
-    logging.debug("set_vol_opts: name=%s options=%s vol_name=%s, datastore=%s",
+    logging.info("set_vol_opts: name=%s options=%s vol_name=%s, datastore=%s",
                   name, options, vol_name, datastore)
 
     if not datastore:
@@ -1484,7 +1484,7 @@ def set_vol_opts(name, tenant_name, options):
 
     vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
 
-    logging.debug("set_vol_opts: path=%s vmdk_path=%s", path, vmdk_path)
+    logging.info("set_vol_opts: path=%s vmdk_path=%s", path, vmdk_path)
 
     if not os.path.isfile(vmdk_path):
        msg = 'Volume {0} not found.'.format(vol_name)

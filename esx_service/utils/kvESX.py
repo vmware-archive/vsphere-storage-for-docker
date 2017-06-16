@@ -27,6 +27,8 @@ import errno
 import time
 import threadutils
 import vmdk_utils
+import os
+import traceback
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -250,12 +252,12 @@ def align_str(kv_str, block):
     aligned_len = int((len(kv_str) + block - 1) / block) * block - 1
     return '{:<{width}}\n'.format(kv_str, width=aligned_len)
 
-
 @diskLibLock
 def load(volpath):
     """
     Load and return dictionary from the sidecar
     """
+    logging.info("Load dictionary from sidecar for vol path %s", volpath)
     meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
                                                 DVOL_KEY.encode())
     retry_count = 0
@@ -273,15 +275,24 @@ def load(volpath):
                 retry_count += 1
                 time.sleep(vmdk_utils.VMDK_RETRY_SLEEP)
             else:
-                logging.exception("Failed to access %s", meta_file)
+                logging.exception("load:Failed to access %s", meta_file)
                 return None
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            logging.exception('load: Unexpected exception:'.join('!! ' + line for line in lines))
+            return None
+
+    if os.stat(meta_file).st_size == 0:
+        logging.warning("load exit: meta file %s is empty", meta_file)
 
     try:
         return json.loads(kv_str)
     except ValueError:
         # Adding this log for DEBUG
-        logging.warning("kv_str from meta file is %s ", kv_str)
-        logging.exception("Failed to decode meta-data for %s", volpath)
+        logging.warning("load: Kv_str %s reading from meta file %s is not in JSON format",
+                        kv_str, meta_file)
+        logging.exception("load:Failed to decode meta-data for %s", volpath)
         return None
 
 
@@ -290,6 +301,7 @@ def save(volpath, kv_dict):
     """
     Save the dictionary to side car.
     """
+    logging.info("Save the dictionary %s to sidecar for vol path %s", kv_dict, volpath)
     meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
                                                 DVOL_KEY.encode())
     kv_str = json.dumps(kv_dict)
@@ -299,6 +311,7 @@ def save(volpath, kv_dict):
     while True:
         try:
             with open(meta_file, "w") as fh:
+                logging.info("save: write %s to meta_file %s", kv_str, meta_file)
                 fh.write(align_str(kv_str, KV_ALIGN))
             break
         except IOError as open_error:
@@ -311,6 +324,14 @@ def save(volpath, kv_dict):
             else:
                 logging.exception("Failed to save meta-data for %s", volpath)
                 return False
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            logging.exception('save: Unexpected exception:'.join('!! ' + line for line in lines))
+            return None
+
+    if os.stat(meta_file).st_size == 0:
+        logging.warning("save exit: meta file %s is empty", meta_file)
 
     return True
 
