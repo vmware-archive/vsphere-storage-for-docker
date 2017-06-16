@@ -106,14 +106,14 @@ func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
-// Test kill VM process
+// Test basic failover scenario by killing a VM and then power it on
 // 1. Setup: Create a volume
 // 2. Setup: Attach it to a container
 // 3. Kill the VM
 // 4. Verification: volume status should be detached
 // 5. Power on the VM
 // 6. Verification: volume status should still be detached
-func (s *VMListenerTestParams) TestKillVM(c *C) {
+func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	// Kill the VM
@@ -136,17 +136,22 @@ func (s *VMListenerTestParams) TestKillVM(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
-// Test failover by killing a VM and then mount the volume to a different VM
-// 1. Setup: Create a volume
-// 2. Setup: Attach it to a container
-// 3. Kill the VM
+// Test advanced failover scenario by killing a VM, mounting the volume to a different VM,
+// unmounting it, and then power on the original VM.
+// 1. Setup: Create a volume from VM1
+// 2. Setup: Attach it to a container on VM1
+// 3. Kill VM1
 // 4. Verification: volume status should be detached
-// 5. Attach it to a different container
+// 5. Attach it to a container on a different VM2
 // 6. Verification: volume status should attached
-func (s *VMListenerTestParams) TestFailover(c *C) {
+// 7. Remove the container from VM2
+// 8. Verification: volume status should be detached
+// 9. Power on VM1
+// 10. Verification: volume status should be still detached
+func (s *VMListenerTestParams) TestFailoverAcrossVM(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	// Kill the VM
+	// Kill VM1
 	isVMKilled := killVM(s.esx, s.vm1Name)
 	c.Assert(isVMKilled, Equals, true, Commentf("VM [%s] was not killed successfully", s.vm1Name))
 
@@ -154,7 +159,7 @@ func (s *VMListenerTestParams) TestFailover(c *C) {
 	volStatus := verification.GetVMAttachedToVolUsingAdminCli(s.volumeName, s.esx)
 	c.Assert(volStatus, Equals, properties.DetachedStatus, Commentf("Volume %s is still attached", s.volumeName))
 
-	// Attach to a container in a different VM
+	// Attach to a container on a different VM2
 	out, err := dockercli.AttachVolume(s.vm2, s.volumeName, s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
@@ -162,14 +167,22 @@ func (s *VMListenerTestParams) TestFailover(c *C) {
 	status := verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	// Remove the container
+	// Remove the container from VM2
 	out, err = dockercli.RemoveContainer(s.vm2, s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	// Power on VM
+	// Status should be detached
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm2, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Power on VM1 which has been killed
 	govc.PowerOnVM(s.vm1Name)
 	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, s.vm1Name, properties.PowerOnState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
+
+	// Status should be still detached
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
 
 	misc.LogTestEnd(c.TestName())
 }
