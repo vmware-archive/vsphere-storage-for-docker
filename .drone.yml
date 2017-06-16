@@ -128,6 +128,10 @@ build:
       - export VM2=$WORKER2
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
+      - echo "=> Capturing coverage on ESX_6.5" `date` > /dev/null
+      - #
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh coverage $GOVC_URL_6_5 < /dev/null
+      - #
       - echo "=> Running tests on ESX_6.0" `date` > /dev/null
       - #
       - export GOVC_URL=$GOVC_URL_6_0

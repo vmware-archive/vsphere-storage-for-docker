@@ -347,6 +347,11 @@ test-esx:
 testremote: test-esx test-vm
 test-all:  test e2e-test testremote
 
+# capture coverage of vDVS driver code.
+coverage:
+	$(log_target)
+	$(MAKE)  --directory=$(ESX_SRC) $@
+
 # An end-to-end test target for vSphere Docker Volume Driver
 e2e-test:
 	$(log_target)

@@ -23,7 +23,7 @@ usage() {
   echo "run this script from the root of the repo"
 }
 
-if [ $# -lt 3 ]
+if [ $# -lt 2 ]
 then
   usage
   exit 1
@@ -110,6 +110,9 @@ runtests)
           touch /tmp/$ESX
           TARGET+=" deploy-vm e2e-test-runalways e2e-test-runonce testasroot test-esx test-vm"
         fi
+        ;;
+coverage)
+        TARGET=" coverage"
         ;;
 esac
 

@@ -378,3 +378,32 @@ Test SSH keys, login form the drone node should not require typing in a password
 cd $GOPATH/src/github.com/vmware/docker-volume-vsphere/
 drone exec --trusted --yaml .drone.dev.yml -i ~/.ssh/id_rsa -e VM1=<ip VM1> -e VM2=<ip VM2> -e ESX=<ip ESX>
 ```
+
+## Capturing ESX Code Coverage
+Coverage is captured using make coverage target (On CI it is called using drone script).
+User can configure the setup and use this target to see the coverage.
+### Setup ESX box to install python coverage package
+* Install https://coverage.readthedocs.io/en/coverage-4.4.1/ on your machine using pip <br />
+```Desktop$ pip install coverage```
+- scp the coverage package dir installed on ur machine i.e. <Python Location>/site-packages/coverage to /lib64/python3.5/site-packages/ on ESX box. <br />
+eg:- ```Desktop$ scp -r /Library/Python/3.5/site-packages/coverage root@$ESX:/lib64/python3.5/site-packages/```
+- scp the coverage binary i.e. /usr/local/bin/coverage to /bin/ on ESX box <br />
+eg:- ```Desktop$ scp /usr/local/bin/coverage root@$ESX:/bin/```
+* On ESX create sitecustomize.py inside ```/lib64/python3.5/``` <br />
+The content of sitecustomize.py is
+```
+import coverage
+coverage.process_startup()
+```
+* On ESX create coverage.rc file in ESX home dir as ```vi /coverage.rc``` <br />
+The content of coverage.rc is
+```
+[run]
+omit=*_test.py
+parallel=True
+source=/usr/lib/vmware/vmdkops
+```
+* On ESX modify ```/etc/security/pam_env.conf``` and add following line.
+```
+COVERAGE_PROCESS_START DEFAULT=/coverage.rc
+```

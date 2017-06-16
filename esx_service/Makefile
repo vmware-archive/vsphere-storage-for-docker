@@ -206,3 +206,21 @@ test-esx:
 		done; \
 		exit $$status'
 	#$(SSH) root@$(ESX) rm -rf $(TMP_LOC)
+
+# binary for python coverage
+COVERAGE := coverage
+# vmdkops service manager
+VMDKOPSD := /etc/init.d/vmdk-opsd
+
+# check if coverage package exists on ESX
+COV_EXIST := $(shell $(SSH) root@$(ESX) '$(COVERAGE) 2> /dev/null')
+
+# This target is invoked from drone script on CI to capture coverage after the tests end.
+coverage:
+	$(log_target)
+ifdef COV_EXIST
+		@echo "python coverage package exists."
+		$(SSH) root@$(ESX) '$(VMDKOPSD) stop ; $(COVERAGE) combine .coverage* ; $(COVERAGE) report ; rm .coverage*'
+else
+		@echo "python coverage package doesn't exist."
+endif
