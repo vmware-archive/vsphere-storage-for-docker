@@ -30,7 +30,7 @@ import (
 	dockerclicon "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
@@ -52,7 +52,7 @@ func (s *VsanTestSuite) SetUpSuite(c *C) {
 		c.Skip("Unable to retrieve test config, skipping vsan tests")
 	}
 
-	s.vsanDSName = govc.GetDatastoreByType("vsan")
+	s.vsanDSName = esx.GetDatastoreByType("vsan")
 	if s.vsanDSName == "" {
 		c.Skip("Vsan datastore unavailable")
 	}

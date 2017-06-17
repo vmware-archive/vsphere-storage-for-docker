@@ -28,8 +28,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/esxcli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/govc"
+	esxutil "github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
@@ -125,8 +124,8 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	c.Assert(volStatus, Equals, properties.DetachedStatus, Commentf("Volume %s is still attached", s.volumeName))
 
 	// Power on VM
-	govc.PowerOnVM(s.vm1Name)
-	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, s.vm1Name, properties.PowerOnState)
+	esxutil.PowerOnVM(s.vm1Name)
+	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
 
 	// Status should be detached
@@ -176,8 +175,8 @@ func (s *VMListenerTestParams) TestFailoverAcrossVM(c *C) {
 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
 
 	// Power on VM1 which has been killed
-	govc.PowerOnVM(s.vm1Name)
-	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, s.vm1Name, properties.PowerOnState)
+	esxutil.PowerOnVM(s.vm1Name)
+	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
 
 	// Status should be still detached
@@ -189,22 +188,22 @@ func (s *VMListenerTestParams) TestFailoverAcrossVM(c *C) {
 
 func killVM(esx, vmName string) bool {
 	// Make sure VM is powered on
-	vmState := govc.GetVMPowerState(vmName)
+	vmState := esxutil.GetVMPowerState(vmName)
 	if vmState != properties.PowerOnState {
 		log.Printf("VM [%s] is in [%s] state", vmName, vmState)
 		return false
 	}
 
 	// Kill VM
-	isVMKilled := esxcli.KillVM(esx, vmName)
+	isVMKilled := esxutil.KillVM(esx, vmName)
 	if isVMKilled != true {
 		log.Printf("Unable to kill VM [%s]", vmName)
 		return false
 	}
 
-	isStatusChanged := misc.WaitForExpectedState(govc.GetVMPowerState, vmName, properties.PowerOffState)
+	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, vmName, properties.PowerOffState)
 	if isStatusChanged != true {
-		log.Printf("VM [%s] is no in expected %s state", vmName, properties.PowerOffState)
+		log.Printf("VM [%s] is not in expected %s state", vmName, properties.PowerOffState)
 		return false
 	}
 

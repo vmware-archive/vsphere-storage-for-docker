@@ -21,32 +21,10 @@ import (
 	"time"
 )
 
-type getVMPowerState func(string) string
-
-const (
-	maxAttempt = 20
-	waitTime   = 5
-)
-
 // SleepForSec sleep for a given number of seconds
 func SleepForSec(sec int) {
 	log.Printf("Sleep for %d seconds", sec)
 	time.Sleep(time.Duration(sec) * time.Second)
-}
-
-// WaitForExpectedState test
-func WaitForExpectedState(fn getVMPowerState, vmName, expectedState string) bool {
-
-	log.Printf("Confirming [%s] state for vm [%s]\n", expectedState, vmName)
-	for attempt := 0; attempt < maxAttempt; attempt++ {
-		SleepForSec(waitTime)
-		status := fn(vmName)
-		if status == expectedState {
-			return true
-		}
-	}
-	log.Printf("Timed out to poll VM state\n")
-	return false
 }
 
 // LogTestStart - Print a start log with given test group and test case name

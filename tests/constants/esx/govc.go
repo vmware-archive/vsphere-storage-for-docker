@@ -14,7 +14,7 @@
 
 // A home to hold govmomi cli constants.
 
-package govc
+package esx
 
 const (
 	govcCmd = "govc "
