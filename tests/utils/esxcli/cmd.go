@@ -26,7 +26,7 @@ import (
 // GetVMProcessID - returns VM process id for the passed VM
 // esxcli vm process list | grep -e "photon1" -C 1 | grep "World ID:" | awk '{print $3}'
 func GetVMProcessID(esxHostIP, vmName string) string {
-	log.Printf("Retrieving World ID for VM [%s] from ESX [%s]\n", vmName, esxHostIP)
+	log.Printf("Retrieving process ID for VM [%s] from ESX [%s]\n", vmName, esxHostIP)
 	cmd := esxcli.ListVMProcess + "| grep -e  " + vmName + " -C 1 | grep 'World ID:' | awk '{print $3}'"
 	out, err := ssh.InvokeCommand(esxHostIP, cmd)
 	if err != nil {
@@ -37,9 +37,14 @@ func GetVMProcessID(esxHostIP, vmName string) string {
 
 // KillVM - kills VM using esxcli command
 // e.g. esxcli vm process kill --type=force --world-id=35713
-func KillVM(esxHostIP, worldID string) bool {
-	log.Printf("Killing VM from ESX [%s]\n", esxHostIP)
-	cmd := esxcli.KillVMProcess + worldID
+func KillVM(esxHostIP, vmName string) bool {
+	log.Printf("Killing VM [%s] from ESX [%s]\n", vmName, esxHostIP)
+
+	// Grab worldID/vmProcessID
+	processID := GetVMProcessID(esxHostIP, vmName)
+	log.Printf("VM's process ID is: %s", processID)
+
+	cmd := esxcli.KillVMProcess + processID
 	_, err := ssh.InvokeCommand(esxHostIP, cmd)
 	if err != nil {
 		log.Printf("Failed to invoke command [%s]: %v", cmd, err)
