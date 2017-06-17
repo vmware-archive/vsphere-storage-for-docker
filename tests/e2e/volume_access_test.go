@@ -36,10 +36,8 @@ const (
 )
 
 type VolumeAccessTestSuite struct {
-	config *inputparams.TestConfig
-
-	volumeName    string
-	containerList [2][]string
+	config     *inputparams.TestConfig
+	volumeName string
 }
 
 func (s *VolumeAccessTestSuite) SetUpSuite(c *C) {
@@ -55,24 +53,11 @@ func (s *VolumeAccessTestSuite) SetUpTest(c *C) {
 }
 
 func (s *VolumeAccessTestSuite) TearDownTest(c *C) {
-	for i := 0; i < 2; i++ {
-		cnameList := strings.Join(s.containerList[i], " ")
-		out, err := dockercli.RemoveContainer(s.config.DockerHosts[i], cnameList)
-		c.Assert(err, IsNil, Commentf(out))
-		s.containerList[i] = s.containerList[i][:0]
-	}
-
 	out, err := dockercli.DeleteVolume(s.config.DockerHosts[0], s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 }
 
 var _ = Suite(&VolumeAccessTestSuite{})
-
-func (s *VolumeAccessTestSuite) newCName(i int) string {
-	cname := inputparams.GetUniqueContainerName("vol_access")
-	s.containerList[i] = append(s.containerList[i], cname)
-	return cname
-}
 
 // Verify read, write is possible after volume access update
 // 1. Write a message from host1 to a file on the volume
@@ -99,43 +84,43 @@ func (s *VolumeAccessTestSuite) TestAccessUpdate(c *C) {
 	out, err := dockercli.CreateVolume(s.config.DockerHosts[0], s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile, data1)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data1)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data1)
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile, data2)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data2)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data2)
 
 	out, err = admincli.UpdateVolumeAccess(s.config.EsxHost, s.volumeName, adminconst.DefaultVMgroup, adminconst.ReadOnlyAccess)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile, data1)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data1)
 	c.Assert(strings.Contains(out, errorWriteVolume), Equals, true, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile, data2)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data2)
 	c.Assert(strings.Contains(out, errorWriteVolume), Equals, true, Commentf(out))
 
 	out, err = admincli.UpdateVolumeAccess(s.config.EsxHost, s.volumeName, adminconst.DefaultVMgroup, adminconst.ReadWriteAccess)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile, data1)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data1)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data1)
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile, data2)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data2)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data2)
 
@@ -162,26 +147,26 @@ func (s *VolumeAccessTestSuite) TestAccessUpdate_R_RW(c *C) {
 	out, err := dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], s.volumeName, " -o access="+adminconst.ReadOnlyAccess)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile, data1)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data1)
 	c.Assert(strings.Contains(out, errorWriteVolume), Equals, true, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile, data2)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data2)
 	c.Assert(strings.Contains(out, errorWriteVolume), Equals, true, Commentf(out))
 
 	out, err = admincli.UpdateVolumeAccess(s.config.EsxHost, s.volumeName, adminconst.DefaultVMgroup, adminconst.ReadWriteAccess)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile, data1)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data1)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data1)
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, s.newCName(1), testFile, data2)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[1], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile, data2)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(0), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vol_access"), testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data2)
 

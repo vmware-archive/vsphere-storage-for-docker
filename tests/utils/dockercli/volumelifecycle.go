@@ -73,7 +73,7 @@ func WriteToVolume(ip, volName, containerName, fileName, data string) (string, e
 	log.Printf("Writing %s to file %s on volume [%s] from VM[%s]\n", data, fileName, volName, ip)
 
 	writeCmd := " /bin/sh -c 'echo \"" + data + "\" > /vol1/test.txt'"
-	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -v "+volName+
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+"--rm -v "+volName+
 		":/vol1 --name "+containerName+dockercli.ContainerImage+
 		writeCmd)
 }
@@ -83,7 +83,7 @@ func ReadFromVolume(ip, volName, containerName, fileName string) (string, error)
 	log.Printf("Reading from file %s on volume [%s] from VM[%s]\n", fileName, volName, ip)
 
 	readCmd := " /bin/sh -c 'cat /vol1/" + fileName + "'"
-	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -v "+volName+
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+"--rm -v "+volName+
 		":/vol1 --name "+containerName+dockercli.ContainerImage+
 		readCmd)
 }
