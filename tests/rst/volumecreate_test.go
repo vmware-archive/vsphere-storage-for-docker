@@ -202,7 +202,7 @@ func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 
 	// xfs file system needs volume name upto than 12 characters
 	xfsVolName := inputparams.GetVolumeNameOfSize(12)
-	out, err = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], xfsVolName, " -o fstype=xfs")
+	out, err = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], xfsVolName, " -o fstype=ext4")
 	c.Assert(err, IsNil, Commentf(out))
 	s.volumeList = append(s.volumeList, xfsVolName)
 
