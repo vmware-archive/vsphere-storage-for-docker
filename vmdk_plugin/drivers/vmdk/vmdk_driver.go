@@ -40,7 +40,7 @@ import (
 
 const (
 	devWaitTimeout   = 1 * time.Second
-	sleepBeforeMount = 1 * time.Second
+	sleepBeforeMount = 10 * time.Second
 	watchPath        = "/dev/disk/by-path"
 	version          = "vSphere Volume Driver v0.4"
 )
@@ -386,13 +386,17 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	}
 
 	if skipInotify {
+		log.WithFields(log.Fields{"name": r.Name}).Warning("Doing sleep for skipping notify")
 		time.Sleep(sleepBeforeMount)
 	} else {
 		// Wait for the attach to complete, may timeout
 		// in which case we continue creating the file system.
 		fs.DevAttachWait(watcher, r.Name, device)
+		log.WithFields(log.Fields{"name": r.Name}).Warning("Done dev attach")
 	}
+	//log.WithFields(log.Fields{"name": r.Name}).Warning("Start mkfs")
 	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
+	//log.WithFields(log.Fields{"name": r.Name}).Warning("End mkfs")
 	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errMkfs}).Error("Create filesystem failed, removing the volume ")
@@ -407,7 +411,9 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: errMkfs.Error()}
 	}
 
+	//log.WithFields(log.Fields{"name": r.Name}).Warning("Start detach")
 	errDetach := d.ops.Detach(r.Name, nil)
+	//log.WithFields(log.Fields{"name": r.Name}).Warning("End detach")
 	if errDetach != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": errDetach}).Error("Detach volume failed ")
 		return volume.Response{Err: errDetach.Error()}

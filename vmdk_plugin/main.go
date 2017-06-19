@@ -24,6 +24,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -189,12 +190,40 @@ func main() {
 		os.Exit(1)
 	}
 
+	//os.Setenv("GODEBUG", "allocfreetrace=1,efence=1,gcstackbarrierall=1,invalidptr=1,scavenge=1")
+
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
 		os.Remove(fullSocketAddress(*driverName))
+
+		/*
+			callers := make([]uintptr, 1024)
+			runtime.Callers(1, callers)
+			frames := runtime.CallersFrames(callers)
+			for {
+				frame, next := frames.Next()
+				log.Warning("Frame - %s %s %s\n", frame.Function, frame.File, frame.Line)
+				if !next {
+					break
+				}
+			}
+		*/
+		sbuf := make([]byte, 8192)
+		len := runtime.Stack(sbuf, true)
+		log.Warning(string(sbuf[:len]))
+		/*
+			var buf []byte
+			for {
+				buf = runtime.ReadTrace()
+				if buf == nil {
+					break
+				}
+				log.Warning(string(buf[:]))
+			}
+		*/
 		os.Exit(0)
 	}()
 
@@ -204,5 +233,9 @@ func main() {
 		"address": fullSocketAddress(*driverName),
 	}).Info("Going into ServeUnix - Listening on Unix socket ")
 
+	// Enable tracing
+	//runtime.StartTrace()
+
 	log.Info(handler.ServeUnix("root", fullSocketAddress(*driverName)))
+	//runtime.StopTrace()
 }
