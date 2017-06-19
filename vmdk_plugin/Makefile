@@ -84,7 +84,7 @@ VIB_BIN := $(BIN)/$(VIBFILE)
 PLUGIN := github.com/$(GOPATH_ORG)/$(GOPATH_PLUGNAME)
 
 # test location, picking up E2E tests
-E2E_Tests := github.com/$(GOPATH_ORG)/$(PLUGNAME)/tests/rst
+E2E_Tests := github.com/$(GOPATH_ORG)/$(PLUGNAME)/tests/e2e
 
 GO := GO15VENDOREXPERIMENT=1 go
 FPM := fpm
