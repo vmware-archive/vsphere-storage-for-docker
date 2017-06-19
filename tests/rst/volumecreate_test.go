@@ -115,7 +115,6 @@ func (s *VolumeCreateTestSuite) accessCheck(hostIP string, volList []string, c *
 	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", volList))
 }
 
-/*
 // Valid volume names test
 // 1. having 100 chars
 // 2. having various chars including alphanumerics
@@ -162,7 +161,6 @@ func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
 
 	misc.LogTestEnd(c.TestName())
 }
-*/
 
 // Valid volume creation options
 // 1. size 10gb

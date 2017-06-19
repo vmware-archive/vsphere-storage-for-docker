@@ -211,7 +211,7 @@ func main() {
 				}
 			}
 		*/
-		sbuf := make([]byte, 4096)
+		sbuf := make([]byte, 8192)
 		len := runtime.Stack(sbuf, true)
 		log.Warning(string(sbuf[:len]))
 		/*
