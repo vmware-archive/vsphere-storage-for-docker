@@ -190,7 +190,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	os.Setenv("GODEBUG", "allocfreetrace=1,efence=1,gcstackbarrierall=1,invalidptr=1,scavenge=1")
+	//os.Setenv("GODEBUG", "allocfreetrace=1,efence=1,gcstackbarrierall=1,invalidptr=1,scavenge=1")
 
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
