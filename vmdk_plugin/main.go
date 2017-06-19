@@ -229,8 +229,8 @@ func main() {
 	}).Info("Going into ServeUnix - Listening on Unix socket ")
 
 	// Enable tracing
-	runtime.StartTrace()
+	//runtime.StartTrace()
 
 	log.Info(handler.ServeUnix("root", fullSocketAddress(*driverName)))
-	runtime.StopTrace()
+	//runtime.StopTrace()
 }
