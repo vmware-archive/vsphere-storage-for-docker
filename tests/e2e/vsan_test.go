@@ -41,10 +41,9 @@ import (
 type VsanTestSuite struct {
 	config *inputparams.TestConfig
 
-	vsanDSName    string
-	volumeName    string
-	policyList    []string
-	containerList []string
+	vsanDSName string
+	volumeName string
+	policyList []string
 }
 
 func (s *VsanTestSuite) SetUpSuite(c *C) {
