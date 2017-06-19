@@ -64,10 +64,6 @@ func (s *VsanTestSuite) SetUpTest(c *C) {
 }
 
 func (s *VsanTestSuite) TearDownTest(c *C) {
-	if len(s.containerList) > 0 {
-		out, err := dockercli.RemoveAllContainers(s.config.DockerHosts[0])
-		c.Assert(err, IsNil, Commentf(out))
-	}
 	if s.volumeName != "" {
 		out, err := dockercli.DeleteVolume(s.config.DockerHosts[0], s.volumeName)
 		c.Assert(err, IsNil, Commentf(out))
@@ -81,13 +77,6 @@ func (s *VsanTestSuite) TearDownTest(c *C) {
 }
 
 var _ = Suite(&VsanTestSuite{})
-
-// This function is used to return a unique container name used for "vsan_test"
-func (s *VsanTestSuite) newCName() string {
-	cname := inputparams.GetUniqueContainerName("vsan_test")
-	s.containerList = append(s.containerList, cname)
-	return cname
-}
 
 // Steps:
 // 1. Create a valid vsan policy
@@ -115,10 +104,12 @@ func (s *VsanTestSuite) TestValidPolicy(c *C) {
 	isAvailable := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeName)
 	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", s.volumeName))
 
-	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(), testFile, data1)
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vsan_test"),
+		testFile, data1)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, s.newCName(), testFile)
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vsan_test"),
+		testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, data1)
 
