@@ -21,6 +21,7 @@ package e2e
 import (
 	"strings"
 	"sync"
+	"log"
 
 	dockerclicon "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
@@ -61,7 +62,7 @@ var _ = Suite(&VolumeCreateTestSuite{})
 func (s *VolumeCreateTestSuite) createVolCheck(name, option string, valid bool, c *C) {
 	var out string
 	var err error
-
+	log.Printf("creating volume %s", name)
 	if option == "" {
 		out, err = dockercli.CreateVolume(s.config.DockerHosts[0], name)
 	} else {
