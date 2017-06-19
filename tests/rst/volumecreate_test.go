@@ -163,6 +163,7 @@ func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 */
+
 // Valid volume creation options
 // 1. size 10gb
 // 2. disk format (thin, zeroedthick, eagerzeroedthick)
@@ -211,7 +212,6 @@ func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
-/*
 // Invalid volume create operations
 // 1. Wrong disk formats
 // 2. Wrong volume sizes
@@ -238,4 +238,4 @@ func (s *VolumeCreateTestSuite) TestInvalidOptions(c *C) {
 
 	misc.LogTestEnd(c.TestName())
 }
-*/
+

@@ -385,7 +385,6 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: errGetDevicePath.Error()}
 	}
 
-	skipInotify = true
 	if skipInotify {
 		log.WithFields(log.Fields{"name": r.Name}).Warning("Doing sleep for skipping notify")
 		time.Sleep(sleepBeforeMount)
