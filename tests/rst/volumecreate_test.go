@@ -183,11 +183,6 @@ func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 
 	validVolOpts := []string{
 		" -o size=10mb",
-		" -o size=10mb",
-		" -o size=10mb",
-		" -o size=10mb",
-		" -o size=10mb",
-		" -o size=10mb",
 		" -o diskformat=zeroedthick",
 		" -o diskformat=thin",
 		" -o diskformat=eagerzeroedthick",
