@@ -81,8 +81,14 @@ var _ = Suite(&VsanTestSuite{})
 // 1. Create a valid vsan policy
 // 2. Volume creation with valid policy should pass
 // 3. Valid volume should be accessible
+// 4. Start a container to mount the volume, and write message to the volume
+// 5. Start another container to mount the volume, and read message from volume and verify the
+// message is the same as the message written in step 4
 func (s *VsanTestSuite) TestValidPolicy(c *C) {
 	misc.LogTestStart(c.TestName())
+	data1 := "message_by_host1"
+	testFile := "test.txt"
+
 	s.volumeName = ""
 	policyName := "validPolicy"
 	out, err := admincli.CreatePolicy(s.config.EsxHost, policyName, adminclicon.PolicyContent)
@@ -96,6 +102,15 @@ func (s *VsanTestSuite) TestValidPolicy(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 	isAvailable := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeName)
 	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", s.volumeName))
+
+	out, err = dockercli.WriteToVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vsan_test"),
+		testFile, data1)
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = dockercli.ReadFromVolume(s.config.DockerHosts[0], s.volumeName, inputparams.GetUniqueContainerName("vsan_test"),
+		testFile)
+	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(out, Equals, data1)
 
 	misc.LogTestEnd(c.TestName())
 }
