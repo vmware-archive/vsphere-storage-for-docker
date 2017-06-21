@@ -156,9 +156,10 @@ func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	// Initialize Config DB
-	admincli.ConfigInit(s.esx)
+	out, err := admincli.ConfigInit(s.esx)
+	c.Assert(err, IsNil, Commentf(out))
 
-	out, err := dockercli.CreateVolume(s.vm1, s.volName1)
+	out, err = dockercli.CreateVolume(s.vm1, s.volName1)
 	c.Assert(err, IsNil, Commentf(out))
 
 	accessible := verification.CheckVolumeAvailability(s.vm1, s.volName1)
@@ -193,8 +194,13 @@ func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	out, err = dockercli.DeleteVolume(s.vm1, s.volName2)
 	c.Assert(err, IsNil, Commentf(out))
 
+	// Clean up the vm group
+	out, err = admincli.DeleteVMgroup(s.esx, vmgroup)
+	c.Assert(err, IsNil, Commentf(out))
+
 	// Remove Config DB
-	admincli.ConfigRemove(s.esx)
+	out, err = admincli.ConfigRemove(s.esx)
+	c.Assert(err, IsNil, Commentf(out))
 
 	misc.LogTestEnd(c.TestName())
 }
