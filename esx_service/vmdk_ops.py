@@ -164,8 +164,8 @@ def RunCommand(cmd):
 # for now we care about size and (maybe) policy
 def createVMDK(vmdk_path, vm_name, vol_name,
                opts={}, vm_uuid=None, tenant_uuid=None, datastore_url=None):
-    logging.info("*** createVMDK: %s opts = %s vm_name=%s tenant_uuid=%s datastore_url=%s",
-                  vmdk_path, opts, vm_name, tenant_uuid, datastore_url)
+    logging.info("*** createVMDK: %s opts = %s vm_name=%s vm_uuid=%s tenant_uuid=%s datastore_url=%s",
+                  vmdk_path, opts, vm_name, vm_uuid, tenant_uuid, datastore_url)
 
     if os.path.isfile(vmdk_path):
         # We are mostly here due to race or Plugin VMCI retry #1076
@@ -941,6 +941,7 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts):
         elif cmd == "create":
             response = createVMDK(vmdk_path=vmdk_path,
                                   vm_name=vm_name,
+                                  vm_uuid=vm_uuid,
                                   vol_name=vol_name,
                                   opts=opts,
                                   tenant_uuid=tenant_uuid,

@@ -398,6 +398,34 @@ func (vg *VmGroupTest) TestVmGroupVolumeMobility(c *C) {
 	out, err = adminutils.AddVMToVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.DockerHostNames[0])
 	c.Assert(err, IsNil, Commentf(out))
 
+	// 7. Remove the volume
+	dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName1)
+
 	c.Logf("Passed - VM removal from vmgroups, with volume attached")
+	misc.LogTestEnd(c.TestName())
+}
+
+// TestVmGroupVolumeClone - try cloning a volume from a non-default
+// vm group
+// 1. Create a volume in the VM's vmgroup
+// 2. Clone a volume from the volume created in (1)
+// 3. Cleanup and remove the volume
+func (vg *VmGroupTest) TestVmGroupVolumeClone(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// 1. Create a volume in the VM's vmgroup
+	vg.createVolumes(c, vg.volName1)
+
+	// 2. Clone a volume from the one created in (1)
+	cloneVolOpt :=  "-o clone-from=" + vg.volName1
+	out, err := dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName2, cloneVolOpt)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 3. Remove the volume
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName1)
+	c.Assert(err, IsNil, Commentf(out))
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName2)
+	c.Assert(err, IsNil, Commentf(out))
+
 	misc.LogTestEnd(c.TestName())
 }
