@@ -37,8 +37,11 @@ const (
 	// KillDocker kill docker
 	KillDocker = "pkill -9 dockerd "
 
-	// StartDocker - manually start docker
-	StartDocker = "systemctl start docker"
+	// RestartDockerWithSystemd - restart docker with systemctl
+	RestartDockerWithSystemd = "systemctl restart docker"
+
+	// RestartDockerService - restart docker service
+	RestartDockerService = "service docker restart"
 
 	// VDVSPluginName name of vDVS plugin
 	VDVSPluginName = "vsphere "

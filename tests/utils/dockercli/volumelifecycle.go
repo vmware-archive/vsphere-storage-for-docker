@@ -18,7 +18,6 @@
 package dockercli
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -32,6 +31,9 @@ const (
 	waitTime            = 2
 	pluginInitError     = "Plugin initialization in progress."
 )
+
+// VOLUME API
+// ----------
 
 // CreateVolume is going to create vsphere docker volume with given name.
 func CreateVolume(ip, name string) (string, error) {
@@ -114,131 +116,3 @@ func ListVolumes(ip string) (string, error) {
 	return ssh.InvokeCommand(ip, dockercli.ListVolumes)
 }
 
-// KillDocker - kill docker daemon. It is restarted automatically
-func KillDocker(ip string) (string, error) {
-	log.Printf("Killing docker on VM [%s]\n", ip)
-	out, err := ssh.InvokeCommand(ip, dockercli.KillDocker)
-	misc.SleepForSec(2)
-
-	dockerPID, err := ssh.InvokeCommand(ip, dockercli.GetDockerPID)
-	if dockerPID != "" {
-		return out, err
-	}
-
-	// docker needs manual start using systemctl
-	out, err = ssh.InvokeCommand(ip, dockercli.StartDocker)
-	misc.SleepForSec(2)
-	return out, err
-}
-
-// GetVDVSPlugin - get vDVS plugin id
-func GetVDVSPlugin(ip string) (string, error) {
-	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
-	if out == "" {
-		return "", fmt.Errorf("vDVS plugin unavailable")
-	}
-	return strings.Fields(out)[0], err
-}
-
-// GetVDVSPID - gets vDVS process id
-func GetVDVSPID(ip string) (string, error) {
-	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPID)
-	if err != nil {
-		log.Printf("Unable to get docker-volume-vsphere pid")
-		return "", err
-	}
-	return out, nil
-}
-
-// KillVDVSPlugin - kill vDVS plugin. It is restarted automatically
-func KillVDVSPlugin(ip string) (string, error) {
-	log.Printf("Killing vDVS plugin on VM [%s]\n", ip)
-
-	pluginID, err := GetVDVSPlugin(ip)
-	if err != nil {
-		return "", err
-	}
-
-	oldPID, err := GetVDVSPID(ip)
-	if err != nil {
-		return "", err
-	}
-
-	out, err := ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
-	if err != nil {
-		log.Printf("Killing vDVS plugin failed")
-		return "", err
-	}
-	misc.SleepForSec(2)
-
-	newPID, err := GetVDVSPID(ip)
-	if err != nil {
-		return "", err
-	}
-
-	// unsuccessful restart
-	if oldPID == newPID {
-		return "", fmt.Errorf("vDVS plugin autorestart failed")
-	}
-
-	return out, nil
-}
-
-// RemoveContainer - remove the container forcefully (stops and removes it)
-func RemoveContainer(ip, containerName string) (string, error) {
-	log.Printf("Removing container [%s] on VM [%s]\n", containerName, ip)
-	return ssh.InvokeCommand(ip, dockercli.RemoveContainer+containerName)
-}
-
-// StartContainer - starts an already created the container
-func StartContainer(ip, containerName string) (string, error) {
-	log.Printf("Starting container [%s] on VM [%s]", containerName, ip)
-	return ssh.InvokeCommand(ip, dockercli.StartContainer+containerName)
-}
-
-// StopContainer - stops the container
-func StopContainer(ip, containerName string) (string, error) {
-	log.Printf("Stopping container [%s] on VM [%s]", containerName, ip)
-	return ssh.InvokeCommand(ip, dockercli.StopContainer+containerName)
-}
-
-// ExecContainer - run a container and then remove it
-func ExecContainer(ip, volName, containerName string) (string, error) {
-	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
-	out, err := ssh.InvokeCommand(ip, dockercli.RunContainer+" -d --rm -v "+volName+
-		":/vol1 --name "+containerName+dockercli.TestContainer)
-	if err != nil {
-		return out, err
-	}
-	return ssh.InvokeCommand(ip, dockercli.RemoveContainer+containerName)
-}
-
-// IsContainerExist - return true if container exists otherwise false
-func IsContainerExist(ip, containerName string) bool {
-	log.Printf("Checking container [%s] presence on VM [%s]", containerName, ip)
-	out, _ := ssh.InvokeCommand(ip, dockercli.QueryContainer+containerName)
-	if out != "" {
-		log.Printf("container [%s] is present", containerName)
-		return true
-	}
-	return false
-}
-
-// StopAllContainers - stops all the containers on a particular vm
-func StopAllContainers(ip string) (string, error) {
-	log.Printf("Stopping all containers on VM [%s]\n", ip)
-	return ssh.InvokeCommand(ip, dockercli.StopAllContainers)
-}
-
-// RemoveAllContainers - removes all the containers on a particular vm
-func RemoveAllContainers(ip string) (string, error) {
-	log.Printf("Removing all containers on VM [%s]\n", ip)
-	return ssh.InvokeCommand(ip, dockercli.RemoveAllContainers)
-}
-
-// GetVolumeProperties returns capacity,  attached-to-vm and disk-format field for volume.
-func GetVolumeProperties(volumeName, hostName string) (string, error) {
-	log.Printf("Getting size, disk-format and attached-to-vm for volume [%s] from vm [%s] using docker cli \n", volumeName, hostName)
-	cmd := dockercli.InspectVolume + volumeName + " --format ' {{index .Status.capacity.size}} {{index .Status.diskformat}} {{index .Status \"attached to VM\"}}' | sed -e 's/<no value>/detached/' "
-	return ssh.InvokeCommand(hostName, cmd)
-}

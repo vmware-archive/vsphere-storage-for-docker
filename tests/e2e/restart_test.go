@@ -1,4 +1,4 @@
-// Copyright 2017 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved. 
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,67 +20,100 @@
 package e2e
 
 import (
-	"log"
-	"os"
-
 	. "gopkg.in/check.v1"
 
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 )
 
-type PluginSuite struct {
+type RestartTestData struct {
+	config        *inputparams.TestConfig
 	volumeName    string
-	hostIP        string
 	containerName string
-	esxIP         string
 }
 
-func (s *PluginSuite) SetUpTest(c *C) {
-	s.hostIP = os.Getenv("VM2")
-	s.esxIP = os.Getenv("ESX")
+func (s *RestartTestData) SetUpSuite(c *C) {
+	s.config = inputparams.GetTestConfig()
+	if s.config == nil {
+		c.Skip("Unable to retrieve test config, skipping docker/plugin restart tests")
+	}
+
 	s.volumeName = inputparams.GetUniqueVolumeName("restart_test")
 	s.containerName = inputparams.GetUniqueContainerName("restart_test")
 
+	// ensure there are no remanants from an earlier run
+	out, err := dockercli.RemoveContainer(s.config.DockerHosts[1], s.containerName)
+
 	// Create a volume
-	out, err := dockercli.CreateVolume(s.hostIP, s.volumeName)
+	out, err = dockercli.CreateVolume(s.config.DockerHosts[1], s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 }
 
-func (s *PluginSuite) TearDownTest(c *C) {
-	out, err := dockercli.RemoveContainer(s.hostIP, s.containerName)
-	c.Assert(err, IsNil, Commentf(out))
-	out, err = dockercli.DeleteVolume(s.hostIP, s.volumeName)
+func (s *RestartTestData) TearDownSuite(c *C) {
+	out, err := dockercli.DeleteVolume(s.config.DockerHosts[1], s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 }
 
-var _ = Suite(&PluginSuite{})
+var _ = Suite(&RestartTestData{})
 
-// Test Stale mount
-// 1. Attach a volume to a container
+// TestVolumeDetached - verifies a volume is detached when the docker
+// daemon is restarted.
+// 1. Attach a volume to a container on a host
 // 2. Verify attached status
 // 3. Restart docker
 // 4. Verify detached status. Volume should be detached (within the timeout)
-func (s *PluginSuite) TestVolumeStaleMount(c *C) {
-	log.Printf("START: restart_test.TestVolumeStaleMount")
+// 5. Verify a container can be started to use the same volume on another host
+// 6. Restart the docker daemon on the other host
+// 7. Verify detached status for the volume
+// 8. Verify a container can be started to use the same volume on the original host
+func (s *RestartTestData) TestVolumeDetached(c *C) {
+	misc.LogTestStart(c.TestName())
 
-	out, err := dockercli.AttachVolume(s.hostIP, s.volumeName, s.containerName)
+	// 1. Attach a volume to a container on a host
+	out, err := dockercli.AttachVolume(s.config.DockerHosts[1], s.volumeName, s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
+	// 2. Verify attached status
+	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	out, err = dockercli.KillDocker(s.hostIP)
+	// 3. Restart docker
+	out, err = dockercli.RestartDocker(s.config.DockerHosts[1])
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyDetachedStatus(s.volumeName, s.hostIP, s.esxIP)
+	// 4. Verify detached status. Volume should be detached (within the timeout)
+	status = verification.VerifyDetachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
-	log.Printf("END: restart_test.TestVolumeStaleMount")
+	out, err = dockercli.RemoveContainer(s.config.DockerHosts[1], s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 5. Verify a container can be started to use the same volume on another host
+	out, err = dockercli.AttachVolume(s.config.DockerHosts[0], s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 6. Restart the docker daemon on the other host
+	out, err = dockercli.RestartDocker(s.config.DockerHosts[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Clean up the container on host0
+	out, err = dockercli.RemoveContainer(s.config.DockerHosts[0], s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 7. Verify detached status for the volume
+	status = verification.VerifyDetachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
+
+	// 8. Verify a container can be started to use the same volume on the original host
+	out, err = dockercli.ExecContainer(s.config.DockerHosts[1], s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
 }
 
-// Test vDVS plugin restart
+// TestPluginKill - Test vDVS plugin kill
 // 1. Attach a volume with restart=always flag
 // 2. Verify volume attached status
 // 3. Kill vDVS plugin
@@ -88,29 +121,40 @@ func (s *PluginSuite) TestVolumeStaleMount(c *C) {
 // 5. Start the same container
 // 6. Stop the container
 // 7. Verify volume detached status
-func (s *PluginSuite) TestPluginKill(c *C) {
-	log.Printf("START: restart_test.TestPluginKill")
+func (s *RestartTestData) TestPluginKill(c *C) {
+	misc.LogTestStart(c.TestName())
 
-	out, err := dockercli.AttachVolumeWithRestart(s.hostIP, s.volumeName, s.containerName)
+	// 1. Attach a volume with restart=always flag
+	out, err := dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName, s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status := verification.VerifyAttachedStatus(s.volumeName, s.hostIP, s.esxIP)
+	// 2. Verify volume attached status
+	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	out, err = dockercli.KillVDVSPlugin(s.hostIP)
+	// 3. Kill vDVS plugin
+	out, err = dockercli.KillVDVSPlugin(s.config.DockerHosts[1])
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.StopContainer(s.hostIP, s.containerName)
+	// 4. Stop the container
+	out, err = dockercli.StopContainer(s.config.DockerHosts[1], s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.StartContainer(s.hostIP, s.containerName)
+	// 5. Start the same container
+	out, err = dockercli.StartContainer(s.config.DockerHosts[1], s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.StopContainer(s.hostIP, s.containerName)
+	// 6. Stop the container
+	out, err = dockercli.StopContainer(s.config.DockerHosts[1], s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyDetachedStatus(s.volumeName, s.hostIP, s.esxIP)
+	// 7. Verify volume detached status
+	status = verification.VerifyDetachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
-	log.Printf("END: restart_test.TestPluginKill")
+	// Cleanup container
+	out, err = dockercli.RemoveContainer(s.config.DockerHosts[1], s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
 }
