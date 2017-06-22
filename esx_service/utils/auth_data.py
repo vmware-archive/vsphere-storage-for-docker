@@ -1157,6 +1157,27 @@ class AuthorizationDataManager:
 
         return None
 
+    def remove_symlink_for_tenant(self, tenant_id):
+        """
+            Delete the symlink /vmfs/volume/datastore_name/tenant_name
+            which point to /vmfs/volumes/datastore_name/tenant_uuid
+        """
+        err, tenant_name = self.get_tenant_name(tenant_id)
+        if err:
+            return err
+        VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
+        for (datastore, _, path) in vmdk_utils.get_datastores():
+            dockvol_path, tenant_path = get_dockvol_path_tenant_path(datastore_name=datastore,
+                                                                        tenant_id=tenant_id)
+            logging.debug(VOL_RM_LOG_PREFIX + "try to remove symlink to %s", tenant_name, tenant_path)
+
+            if os.path.isdir(tenant_path):
+                exist_symlink_path = os.path.join(dockvol_path, tenant_name)
+                if os.path.isdir(exist_symlink_path):
+                    os.remove(exist_symlink_path)
+                    logging.debug(VOL_RM_LOG_PREFIX + "removing symlink %s", tenant_name, exist_symlink_path)
+
+        return None
 
     def __remove_volumes_for_tenant(self, tenant_id):
         """ Delete all volumes belongs to this tenant.
@@ -1195,19 +1216,11 @@ class AuthorizationDataManager:
                     logging.error("remove vmdk %s failed with error %s", vmdk_path, err)
                     error_msg += str(err)
 
-            VOL_RM_LOG_PREFIX = "Tenant <name> %s removal: "
-            # delete the symlink /vmfs/volume/datastore_name/tenant_name
-            # which point to /vmfs/volumes/datastore_name/tenant_uuid
-            for (datastore, _, path) in vmdk_utils.get_datastores():
-                dockvol_path, tenant_path = get_dockvol_path_tenant_path(datastore_name=datastore,
-                                                                         tenant_id=tenant_id)
-                logging.debug(VOL_RM_LOG_PREFIX + "try to remove symlink to %s", tenant_name, tenant_path)
-
-                if os.path.isdir(tenant_path):
-                    exist_symlink_path = os.path.join(dockvol_path, tenant_name)
-                    if os.path.isdir(exist_symlink_path):
-                        os.remove(exist_symlink_path)
-                        logging.debug(VOL_RM_LOG_PREFIX + "removing symlink %s", tenant_name, exist_symlink_path)
+            # remove symlink
+            err = self.remove_symlink_for_tenant(tenant_id)
+            if err:
+                logging.error("remove symlink for tenant %s return with error %s", tenant_name, err)
+                error_msg += str(err)
 
             # Delete path /vmfs/volumes/datastore_name/tenant_uuid
             logging.debug("Deleting dir paths %s", dir_paths)
@@ -1244,6 +1257,10 @@ class AuthorizationDataManager:
 
         if remove_volumes:
             error_msg = self.__remove_volumes_for_tenant(tenant_id)
+            if error_msg:
+                return error_msg
+        else:
+            error_msg = self.remove_symlink_for_tenant(tenant_id)
             if error_msg:
                 return error_msg
 
