@@ -105,10 +105,10 @@ pluginSanityCheck)
 runtests)
         if [ -e /tmp/$ESX ]
         then
-          TARGET+=" e2e-test-runalways test-vm"
+          TARGET+=" test-e2e-runalways test-vm"
         else
           touch /tmp/$ESX
-          TARGET+=" deploy-vm e2e-test-runalways e2e-test-runonce testasroot test-esx test-vm"
+          TARGET+=" deploy-vm test-e2e-runalways test-e2e-runonce testasroot test-esx test-vm"
         fi
         ;;
 coverage)

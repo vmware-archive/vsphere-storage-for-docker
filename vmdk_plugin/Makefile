@@ -329,7 +329,7 @@ checkremote:
 	@$(SSH) $(TEST_VM) docker -H $(VM2_DOCKER) ps > /dev/null 2>/dev/null || \
 		(echo VM2 $(VM2): $(CONN_MSG); exit 1)
 
-.PHONY: test-vm test-esx test-all testremote e2e-test
+.PHONY: test-vm test-esx test-all testremote test-e2e
 # test-vm runs GO unit tests and plugin test suite on a guest VM
 # expects binaries to be deployed ot the VM and ESX (see deploy-all target)
 test-vm: checkremote deploy-vm-test
@@ -345,7 +345,7 @@ test-esx:
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
 testremote: test-esx test-vm
-test-all:  test e2e-test testremote
+test-all:  test test-e2e testremote
 
 # capture coverage of vDVS driver code.
 coverage:
@@ -353,23 +353,23 @@ coverage:
 	$(MAKE)  --directory=$(ESX_SRC) $@
 
 # An end-to-end test target for vSphere Docker Volume Driver
-e2e-test:
+test-e2e:
 	$(log_target)
-	$(BUILD) e2e-test-runalways
-	$(BUILD) e2e-test-runonce
+	$(BUILD) test-e2e-runalways
+	$(BUILD) test-e2e-runonce
 
 #
 # E2E test target to control test run on CI.
 # We have 2 ESXs on CI testbed and 2 datastore type each (VMFS/VSAN).
-# e2e-test-runalways: makes sure to run test always
-# e2e-test-runonce: makes sure to run test *once per ESX*
+# test-e2e-runalways: makes sure to run test always
+# test-e2e-runonce: makes sure to run test *once per ESX*
 #
-.PHONY: e2e-test-runalways e2e-test-runonce
-e2e-test-runalways:
+.PHONY: test-e2e-runalways test-e2e-runonce
+test-e2e-runalways:
 	$(log_target)
 	$(GO) test -v -timeout 30m -tags runalways $(E2E_Tests)
 
-e2e-test-runonce:
+test-e2e-runonce:
 	$(log_target)
 	$(GO) test -v -timeout 30m -tags runonce $(E2E_Tests)
 
