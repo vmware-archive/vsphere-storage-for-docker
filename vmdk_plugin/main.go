@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"syscall"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
@@ -195,6 +196,9 @@ func main() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
 		os.Remove(fullSocketAddress(*driverName))
+		sbuf := make([]byte, 8192)
+		len := runtime.Stack(sbuf, true)
+		log.Warning(string(sbuf[:len]))
 		os.Exit(0)
 	}()
 

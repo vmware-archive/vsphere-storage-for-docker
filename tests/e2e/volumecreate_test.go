@@ -14,7 +14,7 @@
 
 // This test is going to cover various volume creation test cases
 
-// +build unstable
+// +build runalways
 
 package e2e
 
