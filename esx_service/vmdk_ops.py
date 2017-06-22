@@ -1155,7 +1155,7 @@ def getStatusAttached(vmdk_path):
 
 def log_attached_volume(vmdk_path, kv_uuid, vol_name):
        '''
-       Log appropriate message for volume thats already attached
+       Log appropriate message for volume thats already attached.
        '''
        cur_vm = findVmByUuid(kv_uuid)
 
