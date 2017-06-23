@@ -22,6 +22,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 )
@@ -55,22 +56,22 @@ func GetVolumeName() string {
 
 // GetUniqueContainerName prepares unique container name with a random generated number
 func GetUniqueContainerName(containerName string) string {
-	return containerName + "_container_" + strconv.FormatInt(rand.Int63(), 36)
+	return containerName + "_container_" + getRandomNumber()
 }
 
 // GetUniqueServiceName prepares unique service name with a random generated number
 func GetUniqueServiceName(serviceName string) string {
-	return serviceName + "_service_" + strconv.FormatInt(rand.Int63(), 36)
+	return serviceName + "_service_" + getRandomNumber()
 }
 
-// GetUniqueVmgroupName prepares unique tenant name with a random generated number.
+// GetUniqueVmgroupName prepares unique vmgroup name with a random generated number.
 func GetUniqueVmgroupName(vmgroupName string) string {
-	return vmgroupName + "_tenant_" + strconv.FormatInt(rand.Int63(), 36)
+	return vmgroupName + "_vmgroup_" + getRandomNumber()
 }
 
 // GetUniqueVolumeName prepares unique volume name with a random generated number
 func GetUniqueVolumeName(volName string) string {
-	return volName + "_volume_" + strconv.FormatInt(rand.Int63(), 36)
+	return volName + "_volume_" + getRandomNumber()
 }
 
 // GetVolumeNameOfSize returns a random volume name of required length
@@ -142,4 +143,13 @@ func GetTestConfig() *TestConfig {
 	}
 
 	return config
+}
+
+// getRandomNumber returns random number
+func getRandomNumber() string {
+	min := 99999
+	max := 999999
+	rand.Seed(time.Now().UTC().UnixNano())
+	bytes := min + rand.Intn(max)
+	return strconv.Itoa(int(bytes))
 }
