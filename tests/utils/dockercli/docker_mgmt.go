@@ -87,8 +87,25 @@ func KillVDVSPlugin(ip string) (string, error) {
 	return out, nil
 }
 
-// RestartDocker - restarts the docker service
+// RestartDocker - restarts the docker service (graceful)
 func RestartDocker(ip string) (string, error) {
-	log.Printf("Restarting docker ....")	
+	log.Printf("Restarting docker ....")
 	return ssh.InvokeCommand(ip, dockerRestartCmd)
+}
+
+// KillDocker - kill docker daemon. It is restarted automatically (ungraceful)
+func KillDocker(ip string) (string, error) {
+	log.Printf("Killing docker on VM [%s]\n", ip)
+	out, err := ssh.InvokeCommand(ip, dockercli.KillDocker)
+	misc.SleepForSec(2)
+
+	dockerPID, err := ssh.InvokeCommand(ip, dockercli.GetDockerPID)
+	if dockerPID != "" {
+		return out, err
+	}
+
+	// docker needs manual start using systemctl/service
+	out, err = ssh.InvokeCommand(ip, dockerRestartCmd)
+	misc.SleepForSec(2)
+	return out, err
 }

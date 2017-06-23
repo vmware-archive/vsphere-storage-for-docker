@@ -45,7 +45,6 @@ function deployvmtest {
         log "Deploying test code to $TARGET"
         $SSH $TARGET $MKDIR_P $TMP_LOC
         $SCP $SOURCE/*.test $TARGET:$TMP_LOC
-        $SCP $SCRIPTS/refcnt_test.sh $TARGET:$TMP_LOC
         $SCP $SCRIPTS/wait_for.sh $TARGET:$TMP_LOC
     done
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This util provides various helper methods that can be used by different tests to
-// fetch information related to docker service and containers.
+// This util provides various helper methods that can be used by different tests
+// to do verification in on of docker containers and docker service itself.
 
 package verification
 

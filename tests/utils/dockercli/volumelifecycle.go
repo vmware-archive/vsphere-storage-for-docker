@@ -51,7 +51,7 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 func AttachVolume(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -d -v "+volName+
-		":/vol1 --name "+containerName+dockercli.TestContainer)
+		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.TestContainer)
 }
 
 // InspectVolume - fetch the named volume's properties
@@ -66,17 +66,41 @@ func InspectVolume(ip, volName string) (string, error) {
 func AttachVolumeWithRestart(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM[%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always -d -v "+volName+
-		":/vol1 --name "+containerName+
+		":"+dockercli.ContainerMountPoint+" --name "+containerName+
 		dockercli.TestContainer)
+}
+
+// WriteToVolumeWithRestart this util does following:
+// 1. Attach the volume with restart flag
+// 2. Create a file with given name on volume
+// 3. Keep container running
+// Need restart flag so that container comes up automatically if it is stopped.
+func WriteToVolumeWithRestart(ip, volName, containerName, fileName string) (string, error) {
+	log.Printf("Attaching volume [%s] on VM[%s]\n", volName, ip)
+	writeCmd := " /bin/sh -c 'touch " + dockercli.ContainerMountPoint + "/" + fileName + "; sync ; tail -f /dev/null'"
+
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always -d -v "+volName+
+		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.ContainerImage+writeCmd)
+}
+
+// ListFilesOnVolume return output of list of files on volume
+// Called when we need to list files on a volume
+// This output is actual output (in form of string) of ls command on volume
+func ListFilesOnVolume(ip, volName string) (string, error) {
+	log.Printf("Listing files on volume [%s] on VM[%s]\n", volName, ip)
+	listCmd := " /bin/sh -c 'ls -1 " + dockercli.ContainerMountPoint + "/'"
+
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --rm -v "+volName+
+		":"+dockercli.ContainerMountPoint+" "+dockercli.ContainerImage+listCmd)
 }
 
 // WriteToVolume write data to a given file on given volume
 func WriteToVolume(ip, volName, containerName, fileName, data string) (string, error) {
 	log.Printf("Writing %s to file %s on volume [%s] from VM[%s]\n", data, fileName, volName, ip)
 
-	writeCmd := " /bin/sh -c 'echo \"" + data + "\" > /vol1/test.txt'"
+	writeCmd := " /bin/sh -c 'echo \"" + data + "\" > " + dockercli.ContainerMountPoint + "/test.txt'"
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+"--rm -v "+volName+
-		":/vol1 --name "+containerName+dockercli.ContainerImage+
+		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.ContainerImage+
 		writeCmd)
 }
 
@@ -84,9 +108,9 @@ func WriteToVolume(ip, volName, containerName, fileName, data string) (string, e
 func ReadFromVolume(ip, volName, containerName, fileName string) (string, error) {
 	log.Printf("Reading from file %s on volume [%s] from VM[%s]\n", fileName, volName, ip)
 
-	readCmd := " /bin/sh -c 'cat /vol1/" + fileName + "'"
+	readCmd := " /bin/sh -c 'cat " + dockercli.ContainerMountPoint + "/" + fileName + "'"
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+"--rm -v "+volName+
-		":/vol1 --name "+containerName+dockercli.ContainerImage+
+		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.ContainerImage+
 		readCmd)
 }
 
@@ -115,4 +139,3 @@ func ListVolumes(ip string) (string, error) {
 	log.Printf("Listing volumes.")
 	return ssh.InvokeCommand(ip, dockercli.ListVolumes)
 }
-

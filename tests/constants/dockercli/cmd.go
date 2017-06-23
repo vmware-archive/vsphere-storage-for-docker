@@ -85,6 +85,9 @@ const (
 	// QueryContainer checks whether container exists or not
 	QueryContainer = docker + "ps -aq --filter name="
 
+	// ContainerMountPoint mount point where a volume is mounted inside a container
+	ContainerMountPoint = "/vol"
+
 	// ListContainers list all running docker containers
 	ListContainers = docker + "ps "
 

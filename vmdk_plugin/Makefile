@@ -160,7 +160,7 @@ clean-as-root: pkg-post
 
 DIRS_TO_VERIFY := . utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
 	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification ../tests/constants/admincli \
-	../tests/constants/dockercli ../tests/utils/ssh ../tests/utils/misc
+	../tests/constants/dockercli ../tests/utils/ssh ../tests/utils/misc ../tests/constants/vm
 
 FILES_TO_VERIFY := $(foreach dir, $(DIRS_TO_VERIFY), $(dir)/*.go)
 .code_verify: $(FILES_TO_VERIFY)
