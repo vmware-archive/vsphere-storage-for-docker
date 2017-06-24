@@ -31,4 +31,10 @@ const (
 
 	// StartService starts vmdkops service
 	StartService = vmdkopsd + "start"
+
+	// DBNotConfigured - DB mode not configured
+	DBNotConfigured = "NotConfigured"
+
+	// DBSingleNode - DB mode SingleNode
+	DBSingleNode = "SingleNode"
 )

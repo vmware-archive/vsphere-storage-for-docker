@@ -56,13 +56,16 @@ const (
 	GetAccessForVMgroup = vmdkopsAdmin + "vmgroup access ls --name "
 
 	// ListVMgroups list vm groups
-	ListVMgroups = vmdkopsAdmin + "vmgroup ls"
+	ListVMgroups = vmdkopsAdmin + "vmgroup ls "
 
 	// DefaultVMgroup referring name of default vmgroup
-	DefaultVMgroup = "_DEFAULT "
+	DefaultVMgroup = "_DEFAULT"
 
 	// VMHomeDatastore referring datastore where the docker host vm is created
 	VMHomeDatastore = "_VM_DS"
+
+	// AllDatastore access to all datastore for vms in vmgroup
+	AllDatastore = "_ALL_DS"
 
 	// InitLocalConfigDb referring to Initialize (local) Single Node Config DB
 	InitLocalConfigDb = vmdkopsAdmin + "config init --local"
@@ -82,4 +85,16 @@ const (
 
 	// ReadWriteAccess read-write rights for the volume
 	ReadWriteAccess = "read-write"
+
+	// ListVmgroupVMs referring to vmdkops_admin vmgroups vm ls
+	ListVmgroupVMs = vmdkopsAdmin + "vmgroup vm ls --name="
+
+	// VMlist VM of the vmgroup
+	VMlist = " --vm-list="
+
+	// AddDatastoreAccess adds datastore to vmgroup
+	AddDatastoreAccess = vmdkopsAdmin + "vmgroup access add --name="
+
+	// GetDBMode get current DB config
+	GetDBMode = vmdkopsAdmin + "config status"
 )
