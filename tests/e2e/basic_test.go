@@ -20,13 +20,13 @@
 package e2e
 
 import (
-	. "gopkg.in/check.v1"
-
+	admincliconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
+	. "gopkg.in/check.v1"
 )
 
 type BasicTestSuite struct {
@@ -173,7 +173,7 @@ func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	c.Assert(accessible, Equals, true, Commentf("Volume %s is not available on [%s]", s.volName1, s.vm2))
 
 	const vmgroup = "T1"
-	out, err = admincli.CreateVMgroup(s.esx, vmgroup, s.vm1Name)
+	out, err = admincli.CreateVMgroup(s.esx, vmgroup, s.vm1Name, admincliconst.VMHomeDatastore)
 	c.Assert(err, IsNil, Commentf(out))
 
 	accessible = verification.CheckVolumeAvailability(s.vm1, s.volName1)
