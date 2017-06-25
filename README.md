@@ -123,13 +123,13 @@ journalctl -fu docker.service # Journalctl/Systemd
  "MaxLogSizeMb": 100,
  "LogPath": "/var/log/docker-volume-vsphere.log"}
 ```
-* **Turning on debug logging**: 
+* **Turning on debug logging**:
 
-   - **Package user (DEB/RPM installation)**: Stop the service and manually run with `--log_level=debug` flag 
+   - **Package user (DEB/RPM installation)**: Stop the service and manually run with `--log_level=debug` flag
 
-   - **Managed plugin user**: You can change the log level by passing `VDVS_LOG_LEVEL` key to `docker plugin install`. 
-      
-      e.g. 
+   - **Managed plugin user**: You can change the log level by passing `VDVS_LOG_LEVEL` key to `docker plugin install`.
+
+      e.g.
       ```
       docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug
       ```
@@ -160,6 +160,7 @@ logging config format for content details.
 # Known Issues
 
 -  Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) [#1191](https://github.com/vmware/docker-volume-vsphere/issues/1191). It's an ESX issue and will be available in the next vSphere release.
+-  Full volume name with format like "volume@datastore" cannot be specified in the compose file for stack deployment. [#1315](https://github.com/vmware/docker-volume-vsphere/issues/1315). It is a docker compose issue and a workaround has been provided in the issue.
 
 ## Contact us
 
