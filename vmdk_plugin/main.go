@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
 package main
 
 // A VMDK Docker Data Volume plugin - main
-// relies on docker/go-plugins-helpers/volume API
 
 import (
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"reflect"
 	"syscall"
 
@@ -35,22 +33,18 @@ import (
 )
 
 const (
-	pluginSockDir = "/run/docker/plugins"
-	mountRoot     = "/mnt/vmdk" // VMDK and photon volumes are mounted here
 	photonDriver  = "photon"
 	vmdkDriver    = "vmdk"
 	vsphereDriver = "vsphere"
 	defaultPort   = 1019
 )
 
-// An equivalent function is not exported from the SDK.
-// API supports passing a full address instead of just name.
-// Using the full path during creation and deletion. The path
-// is the same as the one generated internally. Ideally SDK
-// should have ability to clean up sock file instead of replicating
-// it here.
-func fullSocketAddress(pluginName string) string {
-	return filepath.Join(pluginSockDir, pluginName+".sock")
+// PluginServer responds to HTTP requests from Docker.
+type PluginServer interface {
+	// Init initializes the server.
+	Init()
+	// Destroy destroys the server.
+	Destroy()
 }
 
 // init log with passed logLevel (and get config from configFile if it's present)
@@ -98,7 +92,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 }
 
 // main for docker-volume-vsphere
-// Parses flags, initializes and mounts refcounters and finally services Docker requests
+// Parses flags, initializes and mounts refcounters and finally initializes the server.
 func main() {
 	var driver volume.Driver
 
@@ -189,20 +183,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	server := NewPluginServer(*driverName, &driver)
+
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
-		os.Remove(fullSocketAddress(*driverName))
+		server.Destroy()
 		os.Exit(0)
 	}()
 
-	handler := volume.NewHandler(driver)
-
-	log.WithFields(log.Fields{
-		"address": fullSocketAddress(*driverName),
-	}).Info("Going into ServeUnix - Listening on Unix socket ")
-
-	log.Info(handler.ServeUnix("root", fullSocketAddress(*driverName)))
+	server.Init()
 }
