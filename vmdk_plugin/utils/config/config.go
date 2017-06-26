@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,13 +23,6 @@ import (
 )
 
 const (
-	// Default paths - used in log init in main() and test:
-
-	// DefaultConfigPath is the default location of Log configuration file
-	DefaultConfigPath = "/etc/docker-volume-vsphere.conf"
-	// DefaultLogPath is the default location of log (trace) file
-	DefaultLogPath = "/var/log/docker-volume-vsphere.log"
-
 	// Local constants
 	defaultMaxLogSizeMb  = 100
 	defaultMaxLogAgeDays = 28
