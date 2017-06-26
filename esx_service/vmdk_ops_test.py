@@ -728,7 +728,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         # cleanup existing volume under DEFAULT tenant
         logging.info("VMDKTenantTest cleanup")
         if self.datastore_path:
-            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT)
+            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT_UUID)
             for vol in self.default_tenant_vols:
                 vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
                 response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)
@@ -1408,7 +1408,7 @@ class VmdkTenantPolicyUsageTestCase(unittest.TestCase):
         # cleanup existing volume under DEFAULT tenant
         logging.info("VmdkTenantPolicyUsageTestCase cleanup")
         if self.datastore_path:
-            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT)
+            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT_UUID)
             for vol in self.default_tenant_vols:
                 vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
                 response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)
@@ -1565,7 +1565,7 @@ class VMListenerTest(unittest.TestCase):
         # cleanup existing volume under DEFAULT tenant
         logging.info("VMListenerTest cleanup")
         if self.datastore_path:
-            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT)
+            default_tenant_path = os.path.join(self.datastore_path, auth_data_const.DEFAULT_TENANT_UUID)
             vol = self.default_tenant_vol1_name
             vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, vol)
             response = vmdk_ops.getVMDK(vmdk_path, vol, self.datastore_name)
