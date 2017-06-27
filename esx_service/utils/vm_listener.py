@@ -179,6 +179,9 @@ def listen_vm_propertychange(pc):
         except vmodl.fault.RequestCanceled as e:
             return e
 
+        except vmodl.fault.ManagedObjectNotFound as e:
+            # Log this info if required by admin just in case
+            logging.info("VMChangeListener: VM was powered down and then deleted right away. Fault msg: %s", e.msg)
         except Exception as e:
             # Do we need to alert the admin? how?
             logging.error("VMChangeListener: error %s", str(e))
