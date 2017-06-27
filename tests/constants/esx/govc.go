@@ -47,4 +47,7 @@ const (
 
 	// PowerOnVM refers to govc cli (power on vm)
 	PowerOnVM = govcCmd + "vm.power -on=true "
+
+	// PowerOffVM refers to govc cli (power off vm)
+	PowerOffVM = govcCmd + "vm.power -off=true "
 )

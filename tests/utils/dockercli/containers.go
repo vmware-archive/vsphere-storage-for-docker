@@ -86,3 +86,24 @@ func GetVolumeProperties(volumeName, hostName string) (string, error) {
 	return ssh.InvokeCommand(hostName, cmd)
 }
 
+// WriteToContainer write data to a file in the running container
+func WriteToContainer(ip, containerName, volPath, fileName, data string) (string, error) {
+	log.Printf("Writing data to file [%s] in container [%s] on VM [%s]\n", fileName, containerName, ip)
+
+	writeCmd := " /bin/sh -c 'echo \"" + data + "\" > " + volPath + "/" + fileName + "'"
+	fullCmd := dockercli.RunCmdInContainer + containerName + writeCmd
+
+	log.Println(fullCmd)
+	return ssh.InvokeCommand(ip, fullCmd)
+}
+
+// ReadFromContainer read content from the file in the running container
+func ReadFromContainer(ip, containerName, volPath, fileName string) (string, error) {
+	log.Printf("Reading from file [%s] in container [%s] on VM [%s]\n", fileName, containerName, ip)
+
+	readCmd := " /bin/sh -c 'cat " + volPath + "/" + fileName + "'"
+	fullCmd := dockercli.RunCmdInContainer + containerName + readCmd
+
+	log.Println(fullCmd)
+	return ssh.InvokeCommand(ip, fullCmd)
+}
