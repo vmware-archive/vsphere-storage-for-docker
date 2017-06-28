@@ -99,6 +99,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 		volPath  = "/vol"
 	)
 
+	// Create a swarm service that will be scheduled in the worker nodes only and will restart on failure automatically
 	fullVolumeName := verification.GetFullVolumeName(s.master, s.volumeName)
 	opts := "--mount type=volume,source=" + fullVolumeName + ",target=" + volPath + ",volume-driver=" + constant.VDVSPluginName + "--constraint node.role==worker --restart-condition on-failure" + constant.TestContainer
 	out, err := dockercli.CreateService(s.master, s.serviceName, opts)
@@ -110,7 +111,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	containerName, err := dockercli.GetContainerName(host, s.serviceName)
@@ -144,7 +145,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	status, host = verification.IsDockerContainerRunning([]string{otherWorker}, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	containerName, err = dockercli.GetContainerName(host, s.serviceName)
@@ -205,10 +206,10 @@ func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	status := verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, _ = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
+	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	out, err = dockercli.ScaleService(s.master, s.serviceName, 2)
@@ -217,7 +218,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
+	status, host = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running on any hosts", s.serviceName))
 
 	containerName, err := dockercli.GetContainerName(host, s.serviceName+".1")
@@ -228,10 +229,10 @@ func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, _ = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
+	status, host = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, s.master, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	out, err = dockercli.DeleteVolume(s.master, s.volumeName)
