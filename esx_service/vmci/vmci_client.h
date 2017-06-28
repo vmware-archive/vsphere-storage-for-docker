@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef __VMCI_CLIENT_H__
+#define __VMCI_CLIENT_H__
 
 //
 // VMCI sockets communication - client side.
@@ -69,3 +71,5 @@ Vmci_GetReply(int port, const char* json_request, const char* be_name, be_answer
 //
 void
 Vmci_FreeBuf(be_answer *ans);
+
+#endif /* __VMCI_CLIENT_H__ */

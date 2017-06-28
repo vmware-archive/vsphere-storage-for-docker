@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"runtime"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -30,13 +31,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/photon"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
-)
-
-const (
-	photonDriver  = "photon"
-	vmdkDriver    = "vmdk"
-	vsphereDriver = "vsphere"
-	defaultPort   = 1019
 )
 
 // PluginServer responds to HTTP requests from Docker.
@@ -133,6 +127,15 @@ func main() {
 		} else {
 			*driverName = vsphereDriver
 		}
+	}
+
+	// The windows plugin only supports the vsphere driver.
+	if runtime.GOOS == "windows" && *driverName != vsphereDriver {
+		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
+			vsphereDriver, c.Driver)
+		log.Warning(msg)
+		fmt.Println(msg)
+		*driverName = vsphereDriver
 	}
 
 	log.WithFields(log.Fields{

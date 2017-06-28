@@ -13,3 +13,4 @@ src/dvolplug/dvolplug
 *~
 .*~
 esx_service/.lint_*
+*.swp

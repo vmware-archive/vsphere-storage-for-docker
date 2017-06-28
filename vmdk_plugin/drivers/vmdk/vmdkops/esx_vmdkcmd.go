@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build linux
+// +build linux windows
 
 // The default (ESX) implementation of the VmdkCmdRunner interface.
 // This implementation sends synchronous commands to and receives responses from ESX.
@@ -34,7 +34,9 @@ import (
 
 /*
 #cgo CFLAGS: -I ../../../../esx_service/vmci
-#include "vmci_client.c"
+#cgo windows LDFLAGS: -L. -lvmci_client
+#include "vmci_client.h"
+#include "vmci_client_proxy.c"
 */
 import "C"
 
