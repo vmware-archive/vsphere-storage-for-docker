@@ -25,6 +25,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
@@ -106,13 +107,12 @@ func VerifyAttachedStatus(name, hostName, esxName string) bool {
 
 	vmAttachedHost := GetVMAttachedToVolUsingDockerCli(name, hostName)
 	vmAttachedESX := GetVMAttachedToVolUsingAdminCli(name, esxName)
-	//expectedVMName := esx.RetrieveVMNameFromIP(hostName)
+	expectedVMName := esx.RetrieveVMNameFromIP(hostName)
 
-	//isMatching := ((vmAttachedHost == expectedVMName) && (vmAttachedHost == vmAttachedESX))
-	isMatching := (vmAttachedHost == vmAttachedESX)
+	isMatching := ((vmAttachedHost == expectedVMName) && (vmAttachedHost == vmAttachedESX))
 
 	if !isMatching {
-		//log.Printf("Expected Attached VM name is [%s]", expectedVMName)
+		log.Printf("Expected Attached VM name is [%s]", expectedVMName)
 		log.Printf("Attached VM name from Docker CLI is [%s]", vmAttachedHost)
 		log.Printf("Attached VM name from Admin CLI is [%s]", vmAttachedESX)
 	}
