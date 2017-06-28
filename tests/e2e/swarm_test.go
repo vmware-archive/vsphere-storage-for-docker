@@ -15,7 +15,7 @@
 // This test suite includes test cases to verify basic vDVS functionality
 // in docker swarm mode.
 
-// +build unstable
+// +build runonce
 
 package e2e
 
