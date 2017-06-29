@@ -17,12 +17,15 @@
 // * storage team specifications. The `appendKeyValue` and `needsQuoting` functions are copied
 // * from the implementation of the TextFormatter in Logrus.
 
-package main
+package log_formatter
 
 import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/natefinch/lumberjack"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"os"
 	"strings"
 )
 
@@ -82,4 +85,52 @@ func (f *VmwareFormatter) appendKeyValue(b *bytes.Buffer, key string, value inte
 	}
 
 	b.WriteByte(' ')
+}
+
+// init log with passed logLevel (and get config from configFile if it's present)
+// returns True if using defaults,  False if using config file
+func LogInit(logLevel *string, logFile *string, configFile *string) bool {
+	usingConfigDefaults := false
+	c, err := config.Load(*configFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			usingConfigDefaults = true // no .conf file, so using defaults
+			c = config.Config{}
+			config.SetDefaults(&c)
+		} else {
+			panic(fmt.Sprintf("Failed to load config file %s: %v",
+				*configFile, err))
+		}
+	}
+
+	path := c.LogPath
+	if path == "" {
+		path = config.DefaultLogPath
+	}
+
+	if logFile != nil {
+		path = *logFile
+	}
+	log.SetOutput(&lumberjack.Logger{
+		Filename: path,
+		MaxSize:  c.MaxLogSizeMb,  // megabytes
+		MaxAge:   c.MaxLogAgeDays, // days
+	})
+
+	if *logLevel == "" {
+		*logLevel = c.LogLevel
+	}
+
+	level, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse log level: %v", err))
+	}
+
+	log.SetFormatter(new(VmwareFormatter))
+	log.SetLevel(level)
+
+	if usingConfigDefaults {
+		log.Info("No config file found. Using defaults.")
+	}
+	return usingConfigDefaults
 }

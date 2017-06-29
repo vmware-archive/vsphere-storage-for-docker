@@ -27,63 +27,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/natefinch/lumberjack"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/photon"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/log_formatter"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_server"
 )
-
-// PluginServer responds to HTTP requests from Docker.
-type PluginServer interface {
-	// Init initializes the server.
-	Init()
-	// Destroy destroys the server.
-	Destroy()
-}
-
-// init log with passed logLevel (and get config from configFile if it's present)
-// returns True if using defaults,  False if using config file
-func logInit(logLevel *string, logFile *string, configFile *string) bool {
-	usingConfigDefaults := false
-	c, err := config.Load(*configFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			usingConfigDefaults = true // no .conf file, so using defaults
-			c = config.Config{}
-			config.SetDefaults(&c)
-		} else {
-			panic(fmt.Sprintf("Failed to load config file %s: %v",
-				*configFile, err))
-		}
-	}
-
-	path := c.LogPath
-	if logFile != nil {
-		path = *logFile
-	}
-	log.SetOutput(&lumberjack.Logger{
-		Filename: path,
-		MaxSize:  c.MaxLogSizeMb,  // megabytes
-		MaxAge:   c.MaxLogAgeDays, // days
-	})
-
-	if *logLevel == "" {
-		*logLevel = c.LogLevel
-	}
-
-	level, err := log.ParseLevel(*logLevel)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse log level: %v", err))
-	}
-
-	log.SetFormatter(new(VmwareFormatter))
-	log.SetLevel(level)
-
-	if usingConfigDefaults {
-		log.Info("No config file found. Using defaults.")
-	}
-	return usingConfigDefaults
-}
 
 // main for docker-volume-vsphere
 // Parses flags, initializes and mounts refcounters and finally initializes the server.
@@ -111,7 +60,7 @@ func main() {
 
 	flag.Parse()
 
-	logInit(logLevel, nil, configFile)
+	log_formatter.LogInit(logLevel, nil, configFile)
 
 	// Load the configuration if one was provided.
 	c, err := config.Load(*configFile)
@@ -168,14 +117,14 @@ func main() {
 			os.Exit(1)
 		}
 		driver = photon.NewVolumeDriver(*targetURL, *projectID,
-			*vmID, mountRoot)
+			*vmID, plugin_server.MountRoot)
 	} else if *driverName == vsphereDriver || *driverName == vmdkDriver {
 		if *driverName == vmdkDriver {
 			log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing...")
 		}
 		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
 
-		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName)
+		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, plugin_server.MountRoot, *driverName)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)
@@ -186,7 +135,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	server := NewPluginServer(*driverName, &driver)
+	server := plugin_server.NewPluginServer(*driverName, &driver)
 
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)

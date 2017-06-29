@@ -42,6 +42,10 @@ build-all: dockerized-build-ui
 	$(MAKE) --directory=vmdk_plugin $@
 	$(MAKE) --directory=plugin all
 
+build-shared: dockerized-build-ui
+	$(MAKE) --directory=vmdk_plugin dockerbuild-shared
+	$(MAKE) --directory=plugin shared-all
+
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders
 # as root.

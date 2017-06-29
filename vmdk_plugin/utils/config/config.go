@@ -57,9 +57,6 @@ func Load(path string) (Config, error) {
 
 // SetDefaults for any config setting that is at its `bottom`
 func SetDefaults(config *Config) {
-	if config.LogPath == "" {
-		config.LogPath = DefaultLogPath
-	}
 	if config.MaxLogSizeMb == 0 {
 		config.MaxLogSizeMb = defaultMaxLogSizeMb
 	}

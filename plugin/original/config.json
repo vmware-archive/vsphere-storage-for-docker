@@ -28,7 +28,7 @@
 			"Options": ["rbind"]
 		},
 		{
-			"Description" : "Expose plugin logs in /var/log/docker-volume-vshpere.log",
+			"Description" : "Expose plugin logs in /var/log/docker-volume-vsphere.log",
 			"Source" : "/var/log",
 			"Destination" : "/var/log",
 			"Type": "bind",

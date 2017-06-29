@@ -60,10 +60,12 @@ PLUGIN_TAG := $(VERSION_TAG)$(EXTRA_TAG)
 
 # plugin name - used as a base for full plugin name and container for extracting rootfs
 PLUGIN_NAME=$(DOCKER_HUB_REPO)/docker-volume-vsphere
+SHARED_PLUGIN_NAME=$(DOCKER_HUB_REPO)/docker-volume-shared
 
 # Binaries we want to pick up from the actual build
 BIN_LOC := ../build
 BINARY := docker-volume-vsphere
+SHARED_BINARY := docker-volume-shared
 
 # Tmp docker image used to construct rootfs + our binaries
 TMP_IMAGE = $(PLUGIN_NAME):rootfs
@@ -74,14 +76,20 @@ TMP_LOC := /tmp/plugin
 
 # default target
 all: info plugin push
+shared-all: shared-info shared-plugin shared-push
 
 # unconditionally run those
-.PHONY: all clean info plugin
+.PHONY: all clean info plugin shared-clean shared-info shared-plugin
 
 info:
 	@echo Using the following config:
 	@echo DOCKER_HUB_REPO $(DOCKER_HUB_REPO) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)
 	@echo PLUGIN_NAME $(PLUGIN_NAME):$(PLUGIN_TAG)
+
+shared-info:
+	@echo Using the following config:
+	@echo DOCKER_HUB_REPO $(DOCKER_HUB_REPO) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)
+	@echo PLUGIN_NAME $(SHARED_PLUGIN_NAME):$(PLUGIN_TAG)
 
 clean:
 	@echo "=== Cleaning work files, images and plugin(s)..."
@@ -91,18 +99,42 @@ clean:
 	-docker rm -vf $(TMP_CONTAINER)
 	-docker rmi $(TMP_IMAGE)
 
+shared-clean:
+	@echo "=== Cleaning work files, images and plugin(s)..."
+	rm -rf $(TMP_LOC)
+	rm -f $(SHARED_BINARY)
+	-docker plugin rm $(SHARED_PLUGIN_NAME):$(PLUGIN_TAG) -f
+	-docker rm -vf $(TMP_CONTAINER)
+	-docker rmi $(TMP_IMAGE)
+
 plugin: clean
 	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
-	cp $(BIN_LOC)/$(BINARY) .
-	docker build -q -t $(TMP_IMAGE) .
+	cp $(BIN_LOC)/$(BINARY) ./original
+	docker build -q -t $(TMP_IMAGE) ./original
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
 	mkdir -p $(TMP_LOC)/rootfs
 	docker export  $(TMP_CONTAINER)  | tar -x -C $(TMP_LOC)/rootfs
-	cp config.json $(BINARY) $(TMP_LOC)
+	cp ./original/config.json ./original/$(BINARY) $(TMP_LOC)
 	@echo "-- Creating  plugin $(PLUGIN_NAME):$(PLUGIN_TAG) ..."
 	docker plugin create $(PLUGIN_NAME):$(PLUGIN_TAG) $(TMP_LOC)
+
+shared-plugin: shared-clean
+	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
+	cp $(BIN_LOC)/$(SHARED_BINARY) ./shared
+	docker build -q -t $(TMP_IMAGE) ./shared
+	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
+	mkdir -p $(TMP_LOC)/rootfs
+	docker export  $(TMP_CONTAINER)  | tar -x -C $(TMP_LOC)/rootfs
+	cp ./shared/config.json ./shared/$(SHARED_BINARY) $(TMP_LOC)
+	@echo "-- Creating  plugin $(SHARED_PLUGIN_NAME):$(PLUGIN_TAG) ..."
+	docker plugin create $(SHARED_PLUGIN_NAME):$(PLUGIN_TAG) $(TMP_LOC)
 
 push:
 	@echo Pushing $(PLUGIN_NAME):$(PLUGIN_TAG)  to dockerhub.io...
 	@docker plugin push $(PLUGIN_NAME):$(PLUGIN_TAG) || \
+			echo 'Please make sure the plugin is built ("make clean plugin") and you have logged in to docker hub first ("docker login -u $(DOCKER_HUB_REPO)")'
+
+shared-push:
+	@echo Pushing $(SHARED_PLUGIN_NAME):$(PLUGIN_TAG)  to dockerhub.io...
+	@docker plugin push $(SHARED_PLUGIN_NAME):$(PLUGIN_TAG) || \
 			echo 'Please make sure the plugin is built ("make clean plugin") and you have logged in to docker hub first ("docker login -u $(DOCKER_HUB_REPO)")'
