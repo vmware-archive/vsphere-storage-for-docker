@@ -4,6 +4,9 @@ title: FAQs
 
 ## General
 
+### Where do I get the binaries? What about the source?
+Please look at [GitHub Releases](https://github.com/vmware/docker-volume-vsphere/releases) for binaries. Github releases allow downloading of source for a release in addition to git clone.
+
 ### How to install and use the driver?
 Please see README.md in the for the release by clicking on the tag for the release. Example: [README](https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2)
 
@@ -35,6 +38,20 @@ It occurs if the Docker volume service cannot communicate to the ESX back end. T
 97 is a standard linux error (```#define EAFNOSUPPORT    97      /* Address family not supported by protocol */```)
 
 It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read ["What is VMCI and vSock and why is it needed?"](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed) above.
+
+#### I'm not able to create volume after upgrading to vDVS managed plugin, what is the cause?
+```
+# docker volume create -d vsphere vol5
+Error response from daemon: create vol5: Post http://%2Frun%2Fdocker%2Fplugins%2Fvsphere.sock/VolumeDriver.Create: dial unix /run/docker/plugins/vsphere.sock: connect: no such file or directory
+```
+
+Restart docker service is required.
+
+e.g.
+```
+systemctl restart docker
+```
+
 
 ## Upgrade to version 0.10 (Dec 2016) release
 
@@ -118,19 +135,14 @@ Step 4: Recreate the vmgroup configuration with new name “new-vmgroup1” (ass
 ***Note: Please DO NOT create the vmgroup with the old name “vmgroup1”!!!***
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6
-vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=new-vmgroup1 --datastore=datastore1  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-vmgroup access add succeeded
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6 --default-datastore=datastore1
+vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name           Description                 Default_datastore  VM_list
 ------------------------------------  -------------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vmgroup
 5c0927fb-86b5-4034-87db-8bdfa24018d4  new-vmgroup1                              datastore1         photon-6
-
-
-
 ```
 
 Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vmgroup1” which was created before will not be visible

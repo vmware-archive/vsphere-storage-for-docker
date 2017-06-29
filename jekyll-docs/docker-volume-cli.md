@@ -33,7 +33,7 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o vsan-polic
 You can find more details about policy management using vSAN in page [Storage policy based management](policy-based-management.md)
 
 ##### Disk Format (diskformat)
-The docker volumes are backed by VMDK and there are types of VMDK. At the moment following types of VMDKs are supported:
+The docker volumes are backed by VMDK and VMDKs support multiple [types](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242). At the moment following types of VMDKs are supported:
 
 <table class="table table-striped table-hover ">
   <thead>
@@ -58,6 +58,11 @@ The docker volumes are backed by VMDK and there are types of VMDK. At the moment
 </tbody>
 </table>
 
+```
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat=zeroedthick
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat=thin
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat=eagerzeroedthick
+```
 
 ##### Disk Modes (attach-as)
 Docker volumes used in vDVS are backed by VMDKs. VMDKs are attached to hosts on which containers are running. These VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
