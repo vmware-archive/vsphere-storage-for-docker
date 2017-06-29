@@ -2,17 +2,29 @@
 
 ## Topics
 * [Code contribution guidelines](#code-contribution-guidelines)
+  * [Dev Setup and debugging help](#dev-setup-and-debugging-help)
+  * [Generate Pull Requests](#pull-requests)
+  * [Merge approval process](#merge-approvals)
+* [Developer workflow](#typical-developer-workflow)
+  * [How to build?](#build-test-rinse-repeat)
+  * [Setting up local testbed](#local-testbed-setup)
+  * [Capturing ESX Code Coverage](#capturing-esx-code-coverage)
 * [Bug filing guidelines](#bug-filing-guidelines)
-* [Testing and CI](#testing-and-ci)
+* [Testing on CI](#testing-on-ci-system)
+  * [Current CI setup](#ci-system)
+* [Cutting a new release guidelines](#cutting-a-new-release-guidelines)
+  * [Tagging a release](#tag-a-release)
+  * [Generating change log](#generate-the-change-log)
+  * [Publishing artifacts](#publish-vdvs-managed-plugin-to-docker-store)
 
 ## Code Contribution guidelines
 ### Dev Setup and debugging help
 Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
-   * Branch should be suffixed with github user id: (branch name).(github user id) Example: mydevbranch.kerneltime
-   * If you want to trigger CI test runs for pushing into a branch prefix the branch with runci/ Example: runci/mylatestchange.kerneltime
-   * If you want to skip running CI test e.g. *Documentation change/Inline comment change* or when the change is in `WIP` or `PREVIEW` phase, add `[CI SKIP]` or `[SKIP CI]` to the PR title.
+   * Branch should be suffixed with github user id: `(branch name).(github user id)` Example: `mydevbranch.kerneltime`
+   * If you want to trigger CI test runs for pushing into a branch prefix the branch with `runci/` Example: `runci/mylatestchange.kerneltime`
+   * If you want to skip running CI test e.g. **Documentation change/Inline comment change** or when the change is in `WIP` or `PREVIEW` phase, add `[CI SKIP]` or `[SKIP CI]` to the PR title.
 * Each PR must be accompanied with unit/integration tests
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
@@ -21,7 +33,8 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * If there are any documentation changes then they must be in the same PR.
 * We don't have formal coding conventions at this point.
 * Add `[WIP]` or `[PREVIEW]` to the PR title to let reviewers know that the PR is not ready to be merged.
-Make sure your code follows same style and convention as existing code.
+
+**Note**: Make sure your code follows same style and convention as existing code.
 
 See  [Typical Developer Workflow](#typical-developer-workflow) to get started.
 
@@ -35,86 +48,6 @@ Failure to pass test would result in reverting a change.
 
 Do not hesitate to ask your colleagues if you need help or have questions.
 Post your question to Telegram or drop a line to cna-storage@vmware.com
-
-## Cutting a new release
-
-Once a release has been tagged, the CI system will start a build and push the binaries to GitHub Releases page. Creating the release on GitHub is a manual process but the binaries for it will be auto generated.
-
-Typical steps followed.
-
-Tag a release
-```
-git tag -a -m "0.11 Release for Jan 2017" 0.11
-```
-
-Push the tag
-```
-git push origin 0.11
-```
-
-Check to see if the new release shows up on GitHub and the CI build has started.
-
-
-Generate the change log
-```
-docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
-```
-
-Manually eye ball the list to make sure Issues are relevant to the release (Some times labels such as wontfix have not been applied to an Issue)
-
-Head to GitHub and author a new release add the changelog for the tag created.
-
-**Note**: Some manual steps are required before publishing new release as shown below.
-1. Download deliverables from Github release page
-2. Remove VIB/DEB/RPMs from the ```Downloads``` sections
-3. Perform steps from internal Confluence page to sign the VIB. Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release
-4. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB
-5. Push managed plugin to docker store
-6. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
-
-### Publish vDVS managed plugin to Docker Store
-**Note**: not automated as of 04/04/17
-
-To push plugin image
-```
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make all
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make all
-```
-
-### Publish signed VIB to Bintray
-1. Create a new version to upload [signed VIB](https://bintray.com/vmware/vDVS/VIB)
-2. Upload files at newly created version page
-3. Publish the newly uploaded VIB by marking it ```public```
-
-Update documentation following steps listed below.
-
-## Documentation
-
-Documentation is published to [GitHub
-Pages](https://vmware.github.io/docker-volume-vsphere/) using
-[mkdocs](http://www.mkdocs.org/).
-
-1. Documentation is updated each time a release is tagged.
-2. The latest documentation for the master can be found in
-   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs) in
-   markdown format
-
-To update documentation
-```
-# 1. Checkout the gh-pages branch
-git checkout gh-pages
-# 2. Go to jekyll-docs directory
-cd jekyll-docs
-# 3. Build the jekyll site
-docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
-# 4. Remove the old site and copy the new one.
-rm -rvf ../documentation
-mv _site ../documentation
-# 6. Push to GitHub
-git add documentation
-git commit
-git push origin gh-pages
-```
 
 ## Bug filing guidelines
 * Search for duplicates!
@@ -144,11 +77,18 @@ Use `make` or `make dockerbuild` to build.
 Build environment is described in README.md. The result of the build is a set
 of binaries in ./build directory.
 
-In order to test locally, you'd need a test setup. Local test setup automation is planned but but not done yet, so currently the environment has to be set up manually.
+### Local Testbed setup
 
-Test environment  typically consist of 1 ESX and 2  guest VMs running inside of the
-ESX. We also support 1 ESX and 1 guest VM. We require ESX 6.0 and later,
-and a Linux VM running  Docker 1.10+ enabled for  plain text TCP connection, i.e.
+In order to test locally, you'd need a test setup. Local testbed setup automation is planned but not done yet, so currently the environment has to be set up manually.
+
+Test environment  typically consist of 1 ESX and 3 guest VMs running inside of the ESX to run all automated tests.
+
+**TODO**: As a next step, an approach will be provided to run selective test and above testbed requirement will be simplified. Basic test run will not be blocked when minimum testbed requirement is met i.e. 1 ESX and 1 or 2 VMs.
+
+**Note**: All 3 guest VMs can be reused to run swarm testcase by configuring swarm cluster (by making one node as master and registered others as worker nodes). It is not mandatory to create extra VM to configure swarm cluster but feel free if you would like to do so. Please make sure to set environment variables correctly as mentioned in section below.
+
+We require ESX 6.0 and later,
+and a Linux VM running  Docker 1.13+ enabled for  plain text TCP connection, i.e.
 Docker Daemon running with "-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"
 options. Note that both tcp: and unix: need to be present
 Please check  "Configuring and running Docker"
@@ -165,9 +105,8 @@ To deploy the plugin and test code onto a test environment we support a set of
 Makefile targets. There targets rely on environment variables to point to the
 correct environment.
 
-Environment variables:
-- You **need** to set ESX and either VM_IP (in which case we'll use 1 VM) or
-both VM1 and VM2 environment variables
+**Environment variables**:
+- You **need** to set ESX and VM1, VM2 and VM3 environment variables
 
 - The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use [managed plugin](https://github.com/vmware/docker-volume-vsphere/blob/master/plugin/Makefile#L30).
 If you want to user another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
@@ -177,7 +116,8 @@ If you want to user another DockerHub repository you need to set `DOCKER_HUB_REP
   - `GOVC_URL` same as `ESX IP`
   - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials logging in to `ESX IP`
 
-- You **need** to set following environment variables to run swarm cluster related tests.
+- You **need** to set following environment variables to run swarm cluster related tests. You **need** to configure swarm cluster in order to run swarm related testcase otherwise there will be a test failure. As mentioned above, you may reuse the same set of VMs here; no need to create separately.
+
   - `MANAGER1` - swarm cluster manager node IP
   - `WORKER1` & `WORKER2` - swarm cluster worker node IP
 
@@ -196,6 +136,7 @@ or
 export ESX=10.20.105.54
 export VM1=10.20.105.121
 export VM2=10.20.104.210
+export VM3=10.20.104.241
 export DOCKER_HUB_REPO=cnastorage
 export GOVC_INSECURE=1
 export GOVC_URL=10.20.105.54
@@ -231,7 +172,7 @@ Standard invocation on VM: (as root)
 ```
 
 To remove the code from the testbed, use the same steps as above (i.e define
-ESX, VM1 and VM2) and use the following make targets:
+ESX, VM1, VM2 and VM3) and use the following make targets:
 
 ```
 # remove stuff from the build
@@ -271,7 +212,7 @@ a distinct functionality you want to handle as a unit of work. Then re-push your
 branch, with `git push origin <your_branch>`, or, if needed,
 `git push -f origin <your_branch>`
 * create a PR on github using already pushed branch. Please make sure the title,
-description and "tested:" section are accurate.
+description and "Testing Done:" section are accurate.
 * When applying review comments, create a new commit so the diff can be easily seen
 by reviewers.
 * When ready to merge (see "Merge Approvals" section above), squash multiple
@@ -292,9 +233,9 @@ git commit -m "Added new dependency go-plugins-helpers"
 exit
 ```
 
-## Testing and CI
+## Testing on CI system
 
-The work flow for coding looks like this
+The work flow for testing proposed code looks like this
 
 - Each checkin into a branch on the official repo will run the full set of
   tests.
@@ -308,7 +249,7 @@ The work flow for coding looks like this
   part of the CI system.
   - On success a docker image consisting of only the shippable docker
     plugin is posted to docker hub. The image is tagged with latest
-    (and <branch>-<build>). Any one can pull this image and run it to
+    (and `<branch>-<build>`). Any one can pull this image and run it to
     use the docker plugin.
 
 A typical workflow for a developer should be.
@@ -330,7 +271,7 @@ We are using the CI system that has been up by the CNA folks (@casualjim, @frapp
 The CI system is based on https://drone.io/  URL for the server is  https://ci.vmware.run/
 To be able to change the integration between CI and GitHub, first become admin using the self serve portal.
 
-Behind the firewall there is a HW node running ESX that hosts 2 ESX VMs (v6.0u2 and v6.5). Each VM in turn contains a VSAN datastore as well as a VMFS datastore with 2 VMs per datastore.
+Behind the firewall there is a HW node running ESX that hosts 2 ESX VMs (v6.0u2 and v6.5). Each VM in turn contains a VSAN datastore as well as a VMFS datastore with 2 VMs per datastore (VMs are reused to form swarm cluster). CI testbed is also configured to have swarm cluster and there 3 VMs participating into the swarm cluster (2 VMs created on vmfs datastore and 1 VM created on vsan datastore).
 
 There is a webhook setup between github repo and the CI server. The CI server uses
 .drone.yml file to drive the CI workflow.
@@ -338,12 +279,12 @@ There is a webhook setup between github repo and the CI server. The CI server us
 The credentials for Docker Hub deployment is secured using http://readme.drone.io/usage/secrets/
 
 ### Running CI/CD on a dev setup
-Each developer can run tests part of the CI/CD system locally in their sandbox.
+Each developer can run tests part of the CI/CD system locally in their sandbox. This section describes how to configure your development setup for running CI/CD. If you are looking for configuring local testbed setup, **please refer** [Setting up local testbed](#local-testbed-setup).
 
 * Setup:
 The current CI/CD workflow assumes that the testbed consists of:
    - One ESX
-   - 2 Linux VMs running on the same datastore in the ESX.
+   - 3 Linux VMs running on the same datastore in the ESX.
 
 * Install [Drone CLI](https://github.com/drone/drone-cli)
 ```
@@ -406,4 +347,83 @@ source=/usr/lib/vmware/vmdkops
 * On ESX modify ```/etc/security/pam_env.conf``` and add following line.
 ```
 COVERAGE_PROCESS_START DEFAULT=/coverage.rc
+```
+## Cutting a new release guidelines
+
+Once a release has been tagged, the CI system will start a build and push the binaries to GitHub Releases page. Creating the release on GitHub is a manual process but the binaries for it will be auto generated.
+
+Typical steps followed.
+
+### Tag a release
+```
+git tag -a -m "0.11 Release for Jan 2017" 0.11
+```
+
+Push the tag
+```
+git push origin 0.11
+```
+
+Check to see if the new release shows up on GitHub and the CI build has started.
+
+
+### Generate the change log
+```
+docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
+```
+
+Manually eye ball the list to make sure Issues are relevant to the release (Some times labels such as wontfix have not been applied to an Issue)
+
+Head to GitHub and author a new release add the changelog for the tag created.
+
+**Note**: Some manual steps are required before publishing new release as shown below.
+1. Download deliverables from Github release page
+2. Remove VIB/DEB/RPMs from the ```Downloads``` sections
+3. Perform steps from internal Confluence page to sign the VIB. Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release
+4. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB
+5. Push managed plugin to docker store
+6. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
+
+### Publish vDVS managed plugin to Docker Store
+**Note**: not automated as of 04/04/17
+
+To push plugin image
+```
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make all
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make all
+```
+
+### Publish signed VIB to Bintray
+1. Create a new version to upload [signed VIB](https://bintray.com/vmware/vDVS/VIB)
+2. Upload files at newly created version page
+3. Publish the newly uploaded VIB by marking it ```public```
+
+Update documentation following steps listed below.
+
+## Documentation
+
+Documentation is published to [GitHub
+Pages](https://vmware.github.io/docker-volume-vsphere/) using
+[jekyll](https://jekyllrb.com/).
+
+1. Documentation is updated each time a release is tagged.
+2. The latest documentation for the master can be found in
+   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs) in
+   markdown format
+
+To update documentation
+```
+# 1. Checkout the gh-pages branch
+git checkout gh-pages
+# 2. Go to jekyll-docs directory
+cd jekyll-docs
+# 3. Build the jekyll site
+docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
+# 4. Remove the old site and copy the new one.
+rm -rvf ../documentation
+mv _site ../documentation
+# 6. Push to GitHub
+git add documentation
+git commit
+git push origin gh-pages
 ```
