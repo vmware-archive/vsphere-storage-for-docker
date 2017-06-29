@@ -146,6 +146,7 @@ func getVolumeStatusHost(name, hostName string) string {
 // Use this util in test scenarios where the test expects instant change of status to detached.
 // eg: start a container ->  stop a container -> verify detached status
 func VerifyDetachedStatus(name, hostName, esxName string) bool {
+	var status string
 	log.Printf("Confirming detached status for volume [%s]\n", name)
 
 	fullName := GetFullVolumeName(hostName, name)
@@ -179,7 +180,7 @@ func PollDetachedStatus(name, hostName, esxName string) bool {
 		}
 		misc.SleepForSec(2)
 	}
-	log.Printf("Timed out to poll status\n")
+	log.Printf("Timed out waiting for volume to get detached - volume status is %s\n", status)
 	return false
 }
 
