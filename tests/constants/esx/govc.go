@@ -50,4 +50,13 @@ const (
 
 	// PowerOffVM refers to govc cli (power off vm)
 	PowerOffVM = govcCmd + "vm.power -off=true "
+
+	// VMCreate refers to govc create vm
+	VMCreate = govcCmd + "vm.create -ds="
+
+	// VMDestroy refers to govc destroy vm
+	VMDestroy = govcCmd + "vm.destroy "
+
+	// ListVMs refers to govc vm ls
+	ListVMs = govcCmd + "ls "
 )
