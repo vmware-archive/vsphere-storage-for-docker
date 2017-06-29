@@ -59,6 +59,14 @@ func PowerOnVM(vmName string) string {
 	return ssh.InvokeCommandLocally(cmd)
 }
 
+// PowerOffVM util powers off the VM
+// govc vm.power -off=true photon
+func PowerOffVM(vmName string) string {
+	// log.Printf("Powering off VM [%s]\n", vmName)
+	cmd := esx.PowerOffVM + vmName
+	return ssh.InvokeCommandLocally(cmd)
+}
+
 // GetDatastoreList returns a list of datastore names available
 func GetDatastoreList() []string {
 	// log.Printf("Finding Datastores available on ESX")

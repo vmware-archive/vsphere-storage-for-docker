@@ -94,7 +94,7 @@ func ListFilesOnVolume(ip, volName string) (string, error) {
 		":"+dockercli.ContainerMountPoint+" "+dockercli.ContainerImage+listCmd)
 }
 
-// WriteToVolume write data to a given file on given volume
+// WriteToVolume write data to a given file on given volume by starting a new container
 func WriteToVolume(ip, volName, containerName, fileName, data string) (string, error) {
 	log.Printf("Writing %s to file %s on volume [%s] from VM[%s]\n", data, fileName, volName, ip)
 
@@ -104,7 +104,7 @@ func WriteToVolume(ip, volName, containerName, fileName, data string) (string, e
 		writeCmd)
 }
 
-// ReadFromVolume read content of given file on a given volume
+// ReadFromVolume read content of given file on a given volume by starting a new container
 func ReadFromVolume(ip, volName, containerName, fileName string) (string, error) {
 	log.Printf("Reading from file %s on volume [%s] from VM[%s]\n", fileName, volName, ip)
 

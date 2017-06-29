@@ -76,6 +76,9 @@ const (
 	// RemoveContainer remove the container
 	RemoveContainer = docker + "rm -f "
 
+	// RunCmdInContainer run a command in a running container
+	RunCmdInContainer = docker + "exec -t "
+
 	// ContainerImage busybox container image
 	ContainerImage = " busybox "
 
@@ -99,6 +102,9 @@ const (
 
 	// ScaleService scale a docker service
 	ScaleService = dockerService + "scale "
+
+	// UpdateService updates a docker service
+	UpdateService = dockerService + "update "
 
 	// ListService list running docker services
 	ListService = dockerService + "ps "

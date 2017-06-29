@@ -105,12 +105,18 @@ func GetFullVolumeName(hostName string, volumeName string) string {
 func VerifyAttachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming attached status for volume [%s]\n", name)
 
-	vmAttachedHost := GetVMAttachedToVolUsingDockerCli(name, hostName)
+	// Use full name to check volume status on docker host
+	fullName := GetFullVolumeName(hostName, name)
+	vmAttachedHost := GetVMAttachedToVolUsingDockerCli(fullName, hostName)
+
+	// Use short name to check volume status on ESX
 	vmAttachedESX := GetVMAttachedToVolUsingAdminCli(name, esxName)
+
+	// Get VM name based on the host IP
 	expectedVMName := esx.RetrieveVMNameFromIP(hostName)
 
+	// Check if volume attached VM info matches between ESX and docker host
 	isMatching := ((vmAttachedHost == expectedVMName) && (vmAttachedHost == vmAttachedESX))
-
 	if !isMatching {
 		log.Printf("Expected Attached VM name is [%s]", expectedVMName)
 		log.Printf("Attached VM name from Docker CLI is [%s]", vmAttachedHost)

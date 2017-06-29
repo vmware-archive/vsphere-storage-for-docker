@@ -54,6 +54,12 @@ func ScaleService(ip, name string, replicas int) (string, error) {
 	return ssh.InvokeCommand(ip, dockercli.ScaleService+name+"="+strconv.Itoa(replicas))
 }
 
+// UpdateService updates the service with given command options
+func UpdateService(ip, name, opts string) (string, error) {
+	log.Printf("Updating service [%s] on VM [%s] with options: %s\n", name, ip, opts)
+	return ssh.InvokeCommand(ip, dockercli.UpdateService+name+" "+opts)
+}
+
 // StopService stops a docker service
 func StopService(ip, name string) (string, error) {
 	log.Printf("Stopping docker service [%s] on VM [%s]\n", name, ip)

@@ -199,6 +199,9 @@ func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Clean up the vm group
+	out, err = admincli.RemoveVMFromVMgroup(s.esx, vmgroup, s.vm1Name)
+	c.Assert(err, IsNil, Commentf(out))
+
 	out, err = admincli.DeleteVMgroup(s.esx, vmgroup)
 	c.Assert(err, IsNil, Commentf(out))
 
