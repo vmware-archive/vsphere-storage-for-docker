@@ -82,6 +82,12 @@ func SetVolumeSizeForVMgroup(ip, name, ds, msize, tsize string) (string, error) 
 
 // ConfigInit - Initialize the (local) Single Node Config DB
 func ConfigInit(ip string) (string, error) {
+	dbMode := GetDBmode(ip)
+	if dbMode != admincli.DBNotConfigured {
+		log.Printf("DB is already configured on esx [%s]. Removing the DB...\n", ip)
+		ConfigRemove(ip) // Ignore the error
+	}
+
 	log.Printf("Initializing the SingleNode Config DB on esx [%s] \n", ip)
 	return ssh.InvokeCommand(ip, admincli.InitLocalConfigDb)
 }
