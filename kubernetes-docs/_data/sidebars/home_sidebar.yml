@@ -1,0 +1,84 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: Sidebar
+  product: Menu
+  levels: three
+  folders:
+
+  - title: Get Started
+    output: web
+    folderitems:
+    - title: Introduction
+      url: /index.html
+      output: web
+  - title: vSphere Cloud Provider
+    output: web
+    folderitems:
+    - title: Overview
+      url: /overview.html
+      output: web
+      subfolders:
+      - title: Kubernetes Storage Support
+        output: web
+        subfolderitems:
+        - title: Volumes
+          url: /k8s-vols.html
+          output: web
+        - title: Persistent Volumes & Persistent Volumes Claims
+          url: /pv-pvc.html
+          output: web
+        - title: Dynamic Provisioning & Storage Class
+          url: /sc.html
+          output: web
+        - title: StatefulSets
+          url: /ss.html
+          output: web
+    - title: Storage Policy Based Management for Dynamic Provisioning
+      url: /spbm.html
+      output: web
+    - title: High Availability of Kubernetes Cluster
+      url: /ha.html
+      output: web
+  - title: Deployment
+    output: web
+    folderitems:
+      - title: Prerequistes
+        url: /prereq.html
+        output: web
+      - title: Kubernetes Anywhere
+        url: /k8sanywhere.html
+        output: web
+      - title: Configurations on existing Kubernetes Cluster
+        url: /existing.html
+        output: web
+      - title: Best Practices
+        url: /bestpractices.html
+        output: web
+  - title: Applications & Examples
+    output: web
+    folderitems:
+        - title: Running Stateful application - Guestbook app
+          url: /guestbook.html
+          output: web
+        - title: Running MongoDB on vSphere 
+          url: /mongodb.html
+          output: web
+        - title: Deploying S3 Stateful containers - Minio
+          url: /minio.html
+          output: web
+  - title: Miscellaneous
+    output: web
+    folderitems:
+        - title: FAQs
+          url: /faqs.html
+          output: web  
+        - title: Known Issues
+          url: /known-issues.html
+          output: web
+
+
+
+
+
+
