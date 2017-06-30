@@ -111,8 +111,13 @@ Labels:		<none>
 Capacity:	2Gi
 Access Modes:	RWO
 No events.
-Create Pod which uses Persistent Volume Claim.
-vpshere-volume-pvcpod.yaml
+```
+
+**Create Pod which uses Persistent Volume Claim**
+
+```
+#vpshere-volume-pvcpod.yaml
+
 apiVersion: v1
 kind: Pod
 metadata:

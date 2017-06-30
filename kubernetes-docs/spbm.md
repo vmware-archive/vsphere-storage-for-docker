@@ -160,8 +160,13 @@ Labels:		<none>
 Capacity:	2Gi
 Access Modes:	RWO
 No events.
-Persistent Volume is automatically created and is bounded to this pvc.
-Verifying persistent volume claim is created:
+```
+
+Persistent Volume is automatically created and is bounded to this pvc
+
+**Verify if persistent volume claim is created**
+
+```
 $ kubectl describe pv pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
 Name:		pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
 Labels:		<none>

@@ -2,7 +2,7 @@
 title: FAQs
 ---
 
-## Is  Kubernetes - vSphere Cloud Provider ready for production ?
+## Is vSphere Cloud Provider ready for production ?
 vSphere Cloud Provider is still in beta.
  
 ## What is the biggest Kubernetes cluster it has been tested for ?
