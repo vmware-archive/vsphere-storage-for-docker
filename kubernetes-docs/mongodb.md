@@ -14,7 +14,7 @@ kind: StorageClass
 apiVersion: storage.k8s.io/v1beta1 
 Metadata:
 name: platinum
-provisioner: kubernetes.io/vsphere-volume
+provisioner: Kubernetes.io/vsphere-volume
 	diskformat: thin
 ```					
 				
@@ -31,7 +31,7 @@ kind: PersistentVolumeClaim
 metadata:
 name: pvc128gb
 annotations:
- volume.beta.kubernetes.io/storage-class: 
+ volume.beta.Kubernetes.io/storage-class: 
 "platinum"
 spec:
 accessModes:

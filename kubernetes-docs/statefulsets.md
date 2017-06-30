@@ -2,22 +2,22 @@
 title: StatefulSets
 ---
 
-vSphere volumes can be consumed by Stateful Sets
+StatefulSets are valuable for applications which require any stable identifiers or stable storage. vSphere Cloud Provider suppoorts StatefulSets and vSphere volumes can be consumed by StatefulSets.
 
 **Note:**
 
-All the example yamls can be found [here](https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere) unless otherwise specified. Please download these examples.
+All the example yamls can be found [here](https://github.com/Kubernetes/Kubernetes/tree/master/examples/volumes/vsphere) unless otherwise specified. Please download these examples.
 
 **Create a storage class that will be used by the volumeClaimTemplates of a Stateful Set**
 
 ```
-simple-storageclass.yaml
+#simple-storageclass.yaml
 
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: thin-disk
-provisioner: kubernetes.io/vsphere-volume
+provisioner: Kubernetes.io/vsphere-volume
 parameters:
     diskformat: thin
 ```
@@ -25,7 +25,7 @@ parameters:
 **Create a Stateful set that consumes storage from the Storage Class created**
 
 ```
-simple-statefulset.yaml
+#simple-statefulset.yaml
 
 ---
 apiVersion: v1

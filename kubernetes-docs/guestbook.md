@@ -2,7 +2,7 @@
 title: Running Stateful application - Guestbook App
 --- 
  
-Guestbook is PHP application with Redis as backend. In this section we will demonstrate how to use  Kubernetes deployed on vSphere  to run Guestbook Application with persistent storage. At the end of this demo, you will have a sample guestbook app running inside Kubernetes where the data is resident inside VMDKs managed by vSphere.
+Guestbook is PHP application with Redis as backend. In this section, we will demonstrate how to use  Kubernetes deployed on vSphere  to run Guestbook Application with persistent storage. At the end of this demo, you will have a sample guestbook app running inside Kubernetes where the data is resident inside VMDKs managed by vSphere.
 
 The data in the VMDK is independent of the lifecycle of the pods and persists even if pods are deleted.					
 						
@@ -10,7 +10,7 @@ The data in the VMDK is independent of the lifecycle of the pods and persists ev
 							
 The backing VMDK files are needed when dynamic provisioning is not used. The VMDK files need to exist before creating the service in k8s that uses them.
 							
-Login to ESX (if more then one ESX is used make sure to have a common/shared datastore) and create the volumes 
+Login to ESX (if more than one ESX is used make sure to have a common/shared datastore) and create the volumes 
 		 	 	 		
 ```					
 # VMFS
@@ -35,23 +35,11 @@ vmkfstools -c 2G redis-master.vmdk
 In this example we will provision PVs and Guestbook pods will claim these PVs
  
 
-**Create a record for the persistent Single command [TODO]**
-
 Download all files in the PVC PV Demo from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook)
 						
-**Create all the records in one**
 
-```
-$ kubectl create -f guestbook-pvc # Folder containing all the yamls for the pvc demo 
-```
 						
-**Individual Steps**
-						
-Download the yaml files
-					
-				
-						
-Create the persistent volume records
+Create the persistent volume
 
 ```						
 $ kubectl create -f redis-master-pv.yaml create -f redis-slave-pv.yaml
@@ -76,9 +64,9 @@ Check that the volumes are bound to the claims
 ``` 
 $ kubectl get pv
  
-NAME             CAPACITY ACCESSMODES RECLAMIPOLICY STATUS CLAIM REASON AGE
-redis-master-pv 2Gi           RWO           Retain           Bound     default/redis-master-claim     34s 
-redis-slave-pv 2Gi           RWO              Retain               Bound     default/redis-slave-claim     34s 	 		
+NAME                CAPACITY ACCESSMODES RECLAMIPOLICY STATUS CLAIM REASON AGE
+redis-master-pv 2Gi RWO           Retain    Bound     default/redis-master-claim     34s 
+redis-slave-pv 2Gi    RWO         Retain    Bound     default/redis-slave-claim     34s 	 		
 ```
 
 Create the guestbook
@@ -90,7 +78,7 @@ kubectl create -f guestbook-all-in-one.yaml
 ## Guestbook Application with Dynamic Provisioning
 					
 						
-Download the yaml files for storage class based guestbook 
+Download the yaml files for storage class based guestbook from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook)
  
 Create the storage class
 
@@ -104,13 +92,13 @@ Create the claims that use the storage class
 $kubectl create -f redis-master-claim.yaml create -f redis-slave-claim.yaml
 ```
 
-This should trigger storage volumes getting created on the datastore configured on the vsphere cloud provider 					
+This should trigger creation of storage volumes on the datastore configured for the vSphere Cloud Provider. 					
  
 ```						
 [root@promc-2n-dhcp41:/vmfs/volumes/57f5768f-856aa050-fde c-e0db55248054/kubevols] ls *-pvc-* kubernetes-dynamic-pvc-91c9cd60-9a7c-11e6-a431-00505690d6 4d-flat.vmdk kubernetes-dynamic-pvc-a6abf43a-9a7c-11e6-a 431-00505690d64d-flat.vmdk kubernetes-dynamic-pvc-91c9cd60-9a7c-11e6-a431-00505690d6 4d.vmdk kubernetes-dynamic-pvc-a6abf43a-9a7c-11e6-a 431-00505690d64d.vmdk 
 ```
 
-All the dynamic provisioned volumes will be created in the kubevols directory inside the datastore.				
+All the dynamically provisioned volumes will be created in the kubevols directory inside the datastore.				
 		 	 	 		
 Create the guestbook app consuming the claims 
 
@@ -125,13 +113,13 @@ Wait till the pods are ready
 
 ``` 
 $ kubectl get pods
-NAME                                 READY STATUS RESTARTS AGE
-frontend-88237173-77e6n 1/1         Running  0                   43m
-redis-master-1145698066-2hbbk 1/1         Running  0                   43m
-redis-slave-5845680045-3ffdg 1/1         Running  0                   43m		
+NAME                         READY STATUS   RESTARTS AGE
+frontend-88237173-77e6n       1/1   Running    0     43m
+redis-master-1145698066-2hbbk 1/1   Running    0     43m
+redis-slave-5845680045-3ffdg  1/1   Running    0     43m		
 ``` 
  
-Get the port on which the front end is accessible (kube-up does not configure an external load balancer or ingress and guestbook uses NodePort mapping)
+Get the port on which the front end is accessible 
 
 ```					
 $ kubectl describe service frontend | grep NodePort
@@ -147,8 +135,8 @@ Get the IP address of one of the nodes (This can also be obtained from vCenter)
 Also possible from vCenter or the console output kube-up
 		
 ```
-$ kubectl describe node 
-$ kubernetes-minion-1|grep -i Address Addresses: 10.20.105.59 
+$ kubectl describe node kubernetes-minion-1|grep -i Address 
+Addresses: 10.20.105.59 
 ```					
 		 	 	 		
 				
@@ -162,11 +150,12 @@ To check the attach status of VMDKs on ESX head to vCenter (Settings page or Rec
 						
 To test the persistence, delete the guestbook and recreate it using the same volumes, the old messages on the guest book should show up. 
 					
-				
+```				
 $ kubectl delete -f guestbook-all-in-one.yaml 
 $ kubectl create -f guestbook-all-in-one.yaml
 					
-						
+```
+
 After create, the port mapping will change. 
 				
 ```						

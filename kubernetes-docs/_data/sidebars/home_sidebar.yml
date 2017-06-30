@@ -29,10 +29,10 @@ entries:
           url: /pv-pvc.html
           output: web
         - title: Dynamic Provisioning & Storage Class
-          url: /sc.html
+          url: /storageclass.html
           output: web
         - title: StatefulSets
-          url: /ss.html
+          url: /statefulsets.html
           output: web
     - title: Storage Policy Based Management for Dynamic Provisioning
       url: /spbm.html

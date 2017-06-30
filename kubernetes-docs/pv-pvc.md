@@ -2,16 +2,16 @@
 title: Persistent Volumes & Persistent Volumes Claims
 ---
 
-In case of Kubernetes Volumes we know that once the Pod is deleted the specification of the volume in the Pod is also lost, even though VMDK file persists but from Kubernetes perspective the volume is deleted.
+In case of Kubernetes Volumes we know that once the Pod is deleted the specification of the volume in the Pod is also lost. Even though VMDK file persists but from Kubernetes perspective the volume is deleted.
  
-Persistent Volumes API resource solves this problem where PVs have lifecycle independent of the Pods and not created when Pod is run. PVs are unit of storage which we provision in advance, they are Kubernetes objects backed by some storage vSphere in this case. PVs are created, deleted using kubectl commands.
+Persistent Volumes API resource solves this problem where PVs have lifecycle independent of the Pods and not created when Pod is run. PVs are unit of storage which we provision in advance, they are Kubernetes objects backed by some storage, vSphere in this case. PVs are created, deleted using kubectl commands.
  
 In order to use these PVs user needs to create PersistentVolumeClaims which is nothing but a request for PVs. A claim must specify the access mode and storage capacity, once a claim is created PV is automatically bound to this claim. Kubernetes will bind a PV to PVC based on access mode and storage capacity but claim can also mention volume name, selectors and volume class for a better match.
 This design of PV-PVCs not only abstract storage provisioning and consumption but also ensures security through access control. 
 
 **Note:**
 
-All the example yamls can be found [here](https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere) unless otherwise specified. Please download these examples.
+All the example yamls can be found [here](https://github.com/Kubernetes/kubernetes/tree/master/examples/volumes/vsphere) unless otherwise specified. Please download these examples.
 
 Here is an example of how to use PV and PVC to add persistent storage to your Pods.
 
@@ -26,7 +26,7 @@ vmkfstools -c 2G /vmfs/volumes/datastore1/volumes/myDisk.vmdk
 **Create Persistent Volume**
 
 ```
-vsphere-volume-pv.yaml
+#vsphere-volume-pv.yaml
 
 apiVersion: v1
 kind: PersistentVolume
@@ -74,8 +74,13 @@ Source:
     VolumePath:	[datastore1] volumes/myDisk
     FSType:	ext4
 No events.
-Create Persistent Volume Claim.
-vpshere-volume-pvc.yaml
+```
+
+**Create Persistent Volume Claim**
+
+```
+#vpshere-volume-pvc.yaml
+
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:

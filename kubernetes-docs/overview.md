@@ -23,16 +23,16 @@ vSphere is one of the cloud providers of Kubernetes and thus allows Kubernetes P
  
 Datastores is an abstraction which hides storage details and provide uniform interface for storing persistent data. Datastores enables simplified storage management with features like grouping them in folders. Depending upon the backend storage the datastores can be vSAN, VMFS or NFS.
  
-vSAN is a hyper-converged infrastructure storage which provides excellent performance as well as reliability. vSAN advantage is simplified storage management with features like policy driven administration. 
+* vSAN is a hyper-converged infrastructure storage which provides excellent performance as well as reliability. vSAN advantage is simplified storage management with features like policy driven administration. 
  
-VMFS (VMware FIle System) is a cluster file system that allows virtualization to scale beyond a single node for multiple VMware ESX servers. VMFS increases resource utilization by providing shared access to pool of storage.
+* VMFS (VMware FIle System) is a cluster file system that allows virtualization to scale beyond a single node for multiple VMware ESX servers. VMFS increases resource utilization by providing shared access to pool of storage.
  
-NFS (Network File System) is distributed file protocol to access storage over network like local storage. vSphere supports NFS as backend to store virtual machines files.
+* NFS (Network File System) is distributed file protocol to access storage over network like local storage. vSphere supports NFS as backend to store virtual machines files.
 
 ## Kubernetes Storage support
-vSphere supports all the the Kubernetes storage primitives which brings enterprise grade storage to Kubernetes. vSphere uses vSAN and VMFS datastores, these datastores store the volumes as VMDK files.
+vSphere supports all the the Kubernetes storage primitives which brings enterprise grade storage features to Kubernetes. vSphere uses vSAN and VMFS datastores, these datastores store the volumes as VMDK files.
 
-Kubernetes volumes can be defined in Pod specification where they reference VMDK files and these VMDK files are mounted as volumes when the container is running. When the Pod is deleted the Kubernetes volume is unmounted and the data in VMDK files persists.
+Kubernetes volumes are defined in Pod specification. They reference VMDK files and these VMDK files are mounted as volumes when the container is running. When the Pod is deleted the Kubernetes volume is unmounted and the data in VMDK files persists.
 
 
 ![Image](images/Picture1.png)
@@ -42,8 +42,8 @@ Kubernetes volumes can be defined in Pod specification where they reference VMDK
 vSphere is cloud provider which implements Instances interface and supports following Kubernetes storages primitives:
 
 * Volumes
-* Persistent Volumes
-* Persistent Volumes Claims
+* Persistent Volumes (PV)
+* Persistent Volumes Claims (PVC)
 * Storage Class
 * Stateful Sets
 

@@ -7,13 +7,13 @@ This case study describes the process to deploy distributed Minio server on Kube
 **Create Minio Storage class**
 
 ``` 
-minio-sc.yaml
+#minio-sc.yaml
  
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: miniosc
-provisioner: kubernetes.io/vsphere-volume
+provisioner: Kubernetes.io/vsphere-volume
 parameters:
     diskformat: thin
  
@@ -50,7 +50,7 @@ spec:
 Create the headless service
 
 ```
-$ kubectl create -f https://github.com/minio/minio/blob/master/docs/orchestration/kubernetes-yaml/minio-distributed-headless-service.yaml?raw=true
+$ kubectl create -f https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/minio/distributed/minio-distributed-headless-service.yaml?raw=true
 service "minio" created
 ```
 
@@ -70,7 +70,7 @@ spec:
   template:
     metadata:
       annotations:
-        pod.alpha.kubernetes.io/initialized: "true"
+        pod.alpha.Kubernetes.io/initialized: "true"
       labels:
         app: minio
     spec:
@@ -102,7 +102,7 @@ spec:
   - metadata:
       name: data
       annotations:
-        volume.beta.kubernetes.io/storage-class: miniosc
+        volume.beta.Kubernetes.io/storage-class: miniosc
     spec:
       accessModes:
         - ReadWriteOnce
@@ -114,7 +114,7 @@ spec:
 Create the Statefulset
 
 ``` 
-$ kubectl create -f https://github.com/minio/minio/blob/master/docs/orchestration/kubernetes-yaml/minio-distributed-statefulset.yaml?raw=true
+$ kubectl create -f https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/minio/distributed/minio-distributed-statefulset.yaml?raw=true
 statefulset "minio" created
 ```
 
@@ -127,7 +127,7 @@ There are 3 major service types — default type is ClusterIP, which exposes
 In this example, we expose the Minio Deployment by using NodePort. This is the service description.
 
 ``` 
-minio_NodePort.yaml
+#minio_NodePort.yaml
  
 apiVersion: v1
 kind: Service

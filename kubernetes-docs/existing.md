@@ -60,15 +60,22 @@ Sample Config:
         port = <Default 443 for vCenter>
         insecure-flag = <set to 1 if the host above uses a self-signed cert>
         datacenter = <Datacenter to be used>
-        datastore = <Datastore to use for provisioning volumes using storage classes/dynamic provisioning>
-        working-dir = <Folder in which VMs are provisioned, can be null. It should be full path to the folder in which Kubernetes nodes are provisioned. Not just a folder name. If deployed in root, no need to specify the folder name>
-        vm-uuid = <VM Instance UUID of virtual machine which can be retrieved from instanceUuid property in VmConfigInfo, or also set as vc.uuid in VMX file. If empty, will be retrieved from sysfs (requires root)>
+        datastore = <Datastore to use for provisioning volumes using storage 
+                     classes/dynamic provisioning>
+        working-dir = <Folder in which VMs are provisioned, can be null. It should 
+                      be full path to the folder in which Kubernetes nodes are 
+                      provisioned. Not just a folder name. If deployed in root, 
+                      no need to specify the folder name>
+        vm-uuid = <VM Instance UUID of virtual machine which can be retrieved 
+                    from instanceUuid property in VmConfigInfo, or also set as 
+                    vc.uuid in VMX file. If empty, will be retrieved from sysfs
+                    (requires root)>
 [Disk]
     scsicontrollertype = pvscsi
 ```
 
  
-VM uuid can be retrieved using following script. Execute this script on each node and update vsphere.conf file mentioned above.
+VM UUID can be retrieved using following script. Execute this script on each node and update vsphere.conf file mentioned above.
 
 ```
 cat /sys/class/dmi/id/product_serial | sed -e 's/^VMware-//' -e 's/-/ /' | awk '{ print toupper($1$2$3$4 "-" $5$6 "-" $7$8 "-" $9$10 "-" $11$12$13$14$15$16) }'
@@ -76,9 +83,9 @@ cat /sys/class/dmi/id/product_serial | sed -e 's/^VMware-//' -e 's/-/ /' | awk '
 
 Set the cloud provider via --cloud-provider=vsphere flag for each instance of kubelet, apiserver and controller manager.
 
-When upgrading to 1.6 install the default storage class addons, click here for more details. [TODO the related issue is close https://github.com/kubernetes/kubernetes/issues/40070]
+When upgrading to 1.6 install the default storage class addons.
 
-Using resource pool and maintaining the VMs from each cluster in their respective cluster folder you can even run Kubernetes on single node vCenter.
+Using resource pool and maintaining the VMs from each cluster in their respective cluster folder you can run multiple Kubernetes cluster on vCenter.
 
 vSphere supports shared storage across multiple vCenters. User can use shared storage in multiple Kubernetes Clusters.
  
