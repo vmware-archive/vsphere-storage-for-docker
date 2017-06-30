@@ -46,8 +46,11 @@ type SwarmTestSuite struct {
 func (s *SwarmTestSuite) SetUpSuite(c *C) {
 	s.esxName = inputparams.GetEsxIP()
 	s.master = inputparams.GetSwarmManager1()
+	c.Assert(s.master, Not(IsNil), Commentf("Master node is nil"))
 	s.worker1 = inputparams.GetSwarmWorker1()
+	c.Assert(s.worker1, Not(IsNil), Commentf("Worker1 node is nil"))
 	s.worker2 = inputparams.GetSwarmWorker2()
+	c.Assert(s.worker2, Not(IsNil), Commentf("Worker2 node is nil"))
 	s.swarmNodes = inputparams.GetSwarmNodes()
 
 	// Verify if swarm cluster is already initialized

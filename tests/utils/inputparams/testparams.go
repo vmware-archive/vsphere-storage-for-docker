@@ -22,7 +22,10 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"time"
+
+	"log"
 
 	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 )
@@ -39,6 +42,8 @@ var (
 	endPoint1  string
 	endPoint2  string
 	volumeName string
+	mu         sync.Mutex
+	config     *TestConfig
 )
 
 func init() {
@@ -96,17 +101,29 @@ func GetEndPoint2() string {
 
 // GetSwarmManager1 returns swarm manager node IP from the configured swarm cluster
 func GetSwarmManager1() string {
-	return os.Getenv("MANAGER1")
+	manager1 := os.Getenv("MANAGER1")
+	if manager1 == "" {
+		log.Printf("Manager node not found. Need this to run swarm test.")
+	}
+	return manager1
 }
 
 // GetSwarmWorker1 returns 1st swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker1() string {
-	return os.Getenv("WORKER1")
+	worker1 := os.Getenv("WORKER1")
+	if worker1 == "" {
+		log.Printf("Worker1 node not found. Need this to run swarm test.")
+	}
+	return worker1
 }
 
 // GetSwarmWorker2 returns 2nd swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker2() string {
-	return os.Getenv("WORKER2")
+	worker2 := os.Getenv("WORKER2")
+	if worker2 == "" {
+		log.Printf("Worker2 node not found. Need this to run swarm test.")
+	}
+	return worker2
 }
 
 // GetSwarmNodes returns all nodes in the configured swarm cluster
@@ -114,34 +131,38 @@ func GetSwarmNodes() []string {
 	return []string{GetSwarmManager1(), GetSwarmWorker1(), GetSwarmWorker2()}
 }
 
-// GetDockerHostIP - returns ip of the VM where vm can be first vm (VM1) or second vm (VM2)
-func GetDockerHostIP(vm string) string {
-	return os.Getenv(vm)
-}
-
 // GetEsxIP returns the ip of the esx
 func GetEsxIP() string {
-	return os.Getenv("ESX")
+	esxIP := os.Getenv("ESX")
+	if esxIP == "" {
+		log.Fatal("ESX host not found. Stopping the test run.")
+	}
+	return esxIP
 }
 
 // GetTestConfig - returns the configuration of IPs for the
 // ESX host, docker hosts and the datastores on the host
-func GetTestConfig() *TestConfig {
-	var config *TestConfig
-
+func getInstance() *TestConfig {
+	noVMName := "no such VM"
 	config = new(TestConfig)
 	config.EsxHost = os.Getenv("ESX")
+	if config.EsxHost == "" {
+		log.Fatal("ESX host not found. Stopping the test run.")
+	}
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
+	if config.DockerHosts[0] == "" && config.DockerHosts[1] == "" {
+		log.Fatal("No docker hosts found. Atleast one host is needed to run tests.")
+	}
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[0]))
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[1]))
-	config.Datastores = esx.GetDatastoreList()
-
-	if config.DockerHostNames[0] == "" || config.DockerHostNames[1] == "" ||
-		len(config.Datastores) <= 1 {
-		return nil
+	if config.DockerHostNames[0] == noVMName && config.DockerHostNames[1] == noVMName {
+		log.Fatalf("No names found for docker hosts - %s , %s ", config.DockerHosts[0], config.DockerHosts[1])
 	}
-
+	config.Datastores = esx.GetDatastoreList()
+	if len(config.Datastores) < 1 {
+		log.Fatalf("No datastores found. Atleast one datastore is needed to run tests.")
+	}
 	return config
 }
 
@@ -152,4 +173,16 @@ func GetRandomNumber() string {
 	rand.Seed(time.Now().UTC().UnixNano())
 	bytes := min + rand.Intn(max)
 	return strconv.Itoa(int(bytes))
+}
+
+// GetTestConfig - Creates one instance of TestConfig
+func GetTestConfig() *TestConfig {
+	if config == nil {
+		mu.Lock()
+		defer mu.Unlock()
+		if config == nil {
+			config = getInstance()
+		}
+	}
+	return config
 }
