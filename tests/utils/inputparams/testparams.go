@@ -56,22 +56,22 @@ func GetVolumeName() string {
 
 // GetUniqueContainerName prepares unique container name with a random generated number
 func GetUniqueContainerName(containerName string) string {
-	return containerName + "_container_" + getRandomNumber()
+	return containerName + "_container_" + GetRandomNumber()
 }
 
 // GetUniqueServiceName prepares unique service name with a random generated number
 func GetUniqueServiceName(serviceName string) string {
-	return serviceName + "_service_" + getRandomNumber()
+	return serviceName + "_service_" + GetRandomNumber()
 }
 
 // GetUniqueVmgroupName prepares unique vmgroup name with a random generated number.
 func GetUniqueVmgroupName(vmgroupName string) string {
-	return vmgroupName + "_vmgroup_" + getRandomNumber()
+	return vmgroupName + "_vmgroup_" + GetRandomNumber()
 }
 
 // GetUniqueVolumeName prepares unique volume name with a random generated number
 func GetUniqueVolumeName(volName string) string {
-	return volName + "_volume_" + getRandomNumber()
+	return volName + "_volume_" + GetRandomNumber()
 }
 
 // GetVolumeNameOfSize returns a random volume name of required length
@@ -145,8 +145,8 @@ func GetTestConfig() *TestConfig {
 	return config
 }
 
-// getRandomNumber returns random number
-func getRandomNumber() string {
+// GetRandomNumber returns random number
+func GetRandomNumber() string {
 	min := 99999
 	max := 999999
 	rand.Seed(time.Now().UTC().UnixNano())

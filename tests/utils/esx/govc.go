@@ -25,9 +25,11 @@ If some test is misbehaving, then the developer can enable that log and test.
 package esx
 
 import (
+	"log"
 	"strings"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
@@ -79,4 +81,33 @@ func GetDatastoreList() []string {
 func GetDatastoreByType(typeName string) string {
 	cmd := esx.DatastoreInfo + esxcliJSON + " '.Datastores[].Summary | select(.Type==\"" + typeName + "\") | .Name'"
 	return ssh.InvokeCommandLocally(cmd)
+}
+
+// CreateVM creates a vm on the specified ds and esx
+func CreateVM(vmName, datastore, networkAdapterType string) string {
+	log.Printf("Creating a vm [%s] \n", vmName)
+	cmd := esx.VMCreate + datastore + " -on=false -link=false -net.adapter=" + networkAdapterType + " " + vmName
+	return ssh.InvokeCommandLocally(cmd)
+}
+
+// DestroyVM deletes a vm
+func DestroyVM(vmName string) string {
+	log.Printf("Deleting a vm - %s \n", vmName)
+	cmd := esx.VMDestroy + vmName
+	return ssh.InvokeCommandLocally(cmd)
+}
+
+// IsVMExist returns true/false based on vm existence
+func IsVMExist(vmName string) bool {
+	log.Printf("Verifying if vm - %s exists \n", vmName)
+	maxAttempt := 15
+	waitTime := 2
+	for attempt := 0; attempt < maxAttempt; attempt++ {
+		vmList := ssh.InvokeCommandLocally(esx.ListVMs + " /ha-datacenter/vm")
+		if strings.Contains(vmList, vmName) {
+			return true
+		}
+		misc.SleepForSec(waitTime)
+	}
+	return false
 }

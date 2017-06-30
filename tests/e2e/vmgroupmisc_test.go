@@ -14,7 +14,7 @@
 
 // This test suite contains miscellaneous tests to verify behavior of non-default vmgroup
 
-// +build unstable
+// +build runonce
 
 package e2e
 
@@ -22,6 +22,7 @@ import (
 	admincliconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
@@ -222,5 +223,45 @@ func (s *vgBasicSuite) TestDSAccessPrivilegeForUserVG(c *C) {
 	out, err = dockercli.DeleteVolume(s.config.DockerHosts[1], s.volumeNames[1])
 	c.Assert(err, IsNil, Commentf(out))
 
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a vm VM1 using govc
+// 2. Create a vmgroup and associate VM1 to it.
+// 2. Execute vmgroup ls command.
+// 3. Delete the vm that was added to the vmgroup.
+// 4. Again execute vmgroup ls command to verify command works fine.
+func (s *vgBasicSuite) TestDeleteVMFromVmgroup(c *C) {
+	misc.LogTestStart(c.TestName())
+	vmName := "VM_" + inputparams.GetRandomNumber()
+	vgName := "VG_" + inputparams.GetRandomNumber()
+	networkAdapterType := "vmxnet3"
+
+	// Create a vm - we need this to add to vmgroup and later on delete this vm
+	esx.CreateVM(vmName, s.config.Datastores[0], networkAdapterType)
+	c.Assert(esx.IsVMExist(vmName), Equals, true, Commentf("Failed to create VM - %s .", vmName, vgName))
+
+	out, err := admincli.CreateVMgroup(s.config.EsxHost, vgName, vmName, admincliconst.VMHomeDatastore)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify if vmgroup exists
+	isVmgroupAvailable := admincli.IsVmgroupPresent(s.config.EsxHost, vgName)
+	c.Assert(isVmgroupAvailable, Equals, true, Commentf("vmgroup %s does not exists.", vgName))
+
+	// Verify vm belongs to vmgroup
+	isVMPartofVg := admincli.IsVMInVmgroup(s.config.EsxHost, vmName, vgName)
+	c.Assert(isVMPartofVg, Equals, true, Commentf("VM %s does not belong to vmgroup %s .", vmName, vgName))
+
+	// Destroy the vm
+	esx.DestroyVM(vmName)
+	c.Assert(esx.IsVMExist(vmName), Equals, false, Commentf("Failed to delete VM - %s .", vmName, vgName))
+
+	// Check vmgroup ls
+	isVmgroupAvailable = admincli.IsVmgroupPresent(s.config.EsxHost, vgName)
+	c.Assert(isVmgroupAvailable, Equals, true, Commentf("vmgroup %s does not exists.", vgName))
+
+	// TO DO: Due to product behavior vmgroup deletion is not possible - Issue # 1484
+	// Please add step to delete vmgroup after issue 1484 is fixed.
 	misc.LogTestEnd(c.TestName())
 }
