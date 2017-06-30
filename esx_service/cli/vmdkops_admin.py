@@ -53,15 +53,24 @@ UNSET = "Unset"
 VOL_SIZE = 'size'
 VOL_ALLOC = 'allocated'
 
+# Return this to shell
+# note: "1" is returned if a string is passed to sys.exit
+CLI_ERR_ARGS_PARSE = 3
+CLI_ERR_OPERATION_FAILURE = 2
+CLI_SUCCESS = 0
 
 def main():
+    'Main function for Admin CLI'
     log_config.configure()
     kv.init()
     if not vmdk_ops.is_service_available():
-       sys.exit('Unable to connect to the host-agent on this host, ensure the ESXi host agent is running before retrying.')
+        sys.exit('Unable to connect to the host-agent on this host, ensure the ESXi host agent is running before retrying.')
     args = parse_args()
-    if args:
-       args.func(args)
+    if not args:
+        sys.exit(CLI_ERR_ARGS_PARSE)
+    if args.func(args) != None:
+        sys.exit(CLI_ERR_OPERATION_FAILURE)
+    sys.exit(CLI_SUCCESS)  # not really needed, putting here as an eye candy
 
 
 def commands():

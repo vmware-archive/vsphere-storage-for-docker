@@ -71,7 +71,7 @@ func (s *DefaultVMGroupTestSuite) TestAddVMToDefaultTenant(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	out, err := admincli.AddVMToVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup, s.config.DockerHostNames[1])
-	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(err, Not(IsNil), Commentf(out))
 	c.Assert(strings.TrimRight(string(out), "\n"), Equals, vgErrorMsg, Commentf("Unexpected Behavior: "+
 		"We are able to add vm to the _DEFAULT tenant which is NOT allowed as per current spec."))
 
@@ -84,7 +84,7 @@ func (s *DefaultVMGroupTestSuite) TestRemoveDefaultTenantVMs(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	out, err := admincli.RemoveVMFromVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup, s.config.DockerHostNames[1])
-	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(err, Not(IsNil), Commentf(out))
 	c.Assert(strings.TrimRight(string(out), "\n"), Equals, vgErrorMsg, Commentf("Unexpected Behavior: "+
 		"We are able to remove vm from the _DEFAULT tenant which is NOT allowed as per current spec."))
 
@@ -97,7 +97,7 @@ func (s *DefaultVMGroupTestSuite) TestReplaceDefaultTenantVMs(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	out, err := admincli.ReplaceVMFromVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup, s.config.DockerHostNames[1])
-	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(err, Not(IsNil), Commentf(out))
 	c.Assert(strings.TrimRight(string(out), "\n"), Equals, vgErrorMsg, Commentf("Unexpected Behavior: "+
 		"We are able to replace vm from the _DEFAULT tenant which is NOT allowed as per current spec."))
 
