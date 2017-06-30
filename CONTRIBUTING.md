@@ -1,22 +1,3 @@
-# Contributing
-
-## Topics
-* [Code contribution guidelines](#code-contribution-guidelines)
-  * [Dev Setup and debugging help](#dev-setup-and-debugging-help)
-  * [Generate Pull Requests](#pull-requests)
-  * [Merge approval process](#merge-approvals)
-* [Developer workflow](#typical-developer-workflow)
-  * [How to build?](#build-test-rinse-repeat)
-  * [Setting up local testbed](#local-testbed-setup)
-  * [Capturing ESX Code Coverage](#capturing-esx-code-coverage)
-* [Bug filing guidelines](#bug-filing-guidelines)
-* [Testing on CI](#testing-on-ci-system)
-  * [Current CI setup](#ci-system)
-* [Cutting a new release guidelines](#cutting-a-new-release-guidelines)
-  * [Tagging a release](#tag-a-release)
-  * [Generating change log](#generate-the-change-log)
-  * [Publishing artifacts](#publish-vdvs-managed-plugin-to-docker-store)
-
 ## Code Contribution guidelines
 ### Dev Setup and debugging help
 Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
@@ -25,7 +6,7 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
    * Branch should be suffixed with github user id: `(branch name).(github user id)` Example: `mydevbranch.kerneltime`
    * If you want to trigger CI test runs for pushing into a branch prefix the branch with `runci/` Example: `runci/mylatestchange.kerneltime`
    * If you want to skip running CI test e.g. **Documentation change/Inline comment change** or when the change is in `WIP` or `PREVIEW` phase, add `[CI SKIP]` or `[SKIP CI]` to the PR title.
-* Each PR must be accompanied with unit/integration tests
+* Each PR should be accompanied with unit/integration tests whenever it is possible.
 * Add detailed description to pull request including reference to issues.
 * Add details of tests in "Testing Done".
 * Locally run integration tests.
@@ -71,6 +52,20 @@ Copy-paste relevant snippets from log file, code. Use github markdown language f
 
 ```
 ## Typical Developer Workflow
+
+A typical workflow for a developer should be.
+
+- Create a branch, push changes and make sure tests do not break as reported
+  by the CI system.
+- When ready post a PR, it will trigger a full set of tests on ESX. After all
+  the tests pass and the review is complete the PR will be merged in. If the PR
+  depends on new code checked into master, merge in the changes as a rebase and
+  push the changes to the branch.
+- When there is a failure unrelated to your PR, you may want to *Restart* the failed CI run instead of pushing dummy commit to trigger CI run.
+- When the PR is merged in the CI system will re-run the tests against the master.
+  On success a new Docker image will be ready for customers to deploy (This is only
+  for the docker plugin, the ESX code needs to be shipped separately).
+
 ### Build, test, rinse, repeat
 Use `make` or `make dockerbuild` to build.
 
@@ -87,12 +82,13 @@ Test environment  typically consist of 1 ESX and 3 guest VMs running inside of t
 
 **Note**: All 3 guest VMs can be reused to run swarm testcase by configuring swarm cluster (by making one node as master and registered others as worker nodes). It is not mandatory to create extra VM to configure swarm cluster but feel free if you would like to do so. Please make sure to set environment variables correctly as mentioned in section below.
 
-We require ESX 6.0 and later,
-and a Linux VM running  Docker 1.13+ enabled for  plain text TCP connection, i.e.
+We require ESX 6.0 and later, and a Linux VM running  Docker 1.13+ enabled for  plain text TCP connection, i.e.
 Docker Daemon running with "-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"
 options. Note that both tcp: and unix: need to be present
 Please check  "Configuring and running Docker"
 (https://docs.docker.com/engine/admin/configuring/)  page on how to configure this - also there is a github link at the bottom, for systemd config files.
+
+### Photon VM specific configuration
 
 If test environment has Docker running on Photon OS VMs, VMs should be configured to accept traffic on port 2375. Edit /etc/systemd/scripts/iptables, and add following rule at the end of the file. Restart iptable service after updating iptables file.
 
@@ -101,6 +97,7 @@ If test environment has Docker running on Photon OS VMs, VMs should be configure
 iptables -A INPUT -p tcp --dport 2375 -j ACCEPT
 ```
 
+### Testing configuration
 To deploy the plugin and test code onto a test environment we support a set of
 Makefile targets. There targets rely on environment variables to point to the
 correct environment.
@@ -233,93 +230,6 @@ git commit -m "Added new dependency go-plugins-helpers"
 exit
 ```
 
-## Testing on CI system
-
-The work flow for testing proposed code looks like this
-
-- Each checkin into a branch on the official repo will run the full set of
-  tests.
-
-- On Pull Requests the full set of tests will be run.
-  - The logs for the build and test will be posted to the CI server.
-  - Due to security concerns the artifacts will not be published.
-    https://github.com/drone/drone/issues/1476
-
-- Each commit into the master operation will run the full set of tests
-  part of the CI system.
-  - On success a docker image consisting of only the shippable docker
-    plugin is posted to docker hub. The image is tagged with latest
-    (and `<branch>-<build>`). Any one can pull this image and run it to
-    use the docker plugin.
-
-A typical workflow for a developer should be.
-
-- Create a branch, push changes and make sure tests do not break as reported
-  by the CI system.
-- When ready post a PR. This will trigger a full set of tests on ESX. After all
-  the tests pass and the review is complete the PR will be merged in. If the PR
-  depends on new code checked into master, merge in the changes as a rebase and
-  push the changes to the branch.
-- When there is a failure unrelated to your PR, you may want to *Restart* the failed CI run instead of pushing dummy commit to trigger CI run.
-- When the PR is merged in the CI system will re-run the tests against the master.
-  On success a new Docker image will be ready for customers to deploy (This is only
-  for the docker plugin, the ESX code needs to be shipped separately).
-
-## CI System
-
-We are using the CI system that has been up by the CNA folks (@casualjim, @frapposelli & @mhagen-vmware).
-The CI system is based on https://drone.io/  URL for the server is  https://ci.vmware.run/
-To be able to change the integration between CI and GitHub, first become admin using the self serve portal.
-
-Behind the firewall there is a HW node running ESX that hosts 2 ESX VMs (v6.0u2 and v6.5). Each VM in turn contains a VSAN datastore as well as a VMFS datastore with 2 VMs per datastore (VMs are reused to form swarm cluster). CI testbed is also configured to have swarm cluster and there 3 VMs participating into the swarm cluster (2 VMs created on vmfs datastore and 1 VM created on vsan datastore).
-
-There is a webhook setup between github repo and the CI server. The CI server uses
-.drone.yml file to drive the CI workflow.
-
-The credentials for Docker Hub deployment is secured using http://readme.drone.io/usage/secrets/
-
-### Running CI/CD on a dev setup
-Each developer can run tests part of the CI/CD system locally in their sandbox. This section describes how to configure your development setup for running CI/CD. If you are looking for configuring local testbed setup, **please refer** [Setting up local testbed](#local-testbed-setup).
-
-* Setup:
-The current CI/CD workflow assumes that the testbed consists of:
-   - One ESX
-   - 3 Linux VMs running on the same datastore in the ESX.
-
-* Install [Drone CLI](https://github.com/drone/drone-cli)
-```
-curl http://downloads.drone.io/drone-cli/drone_linux_amd64.tar.gz | tar zx
-sudo install -t /usr/local/bin drone
-```
-
-* If not already done, checkout source code in $GOPATH
-```
-mkdir -p $GOPATH/src/github.com/vmware
-cd $GOPATH/src/github.com/vmware
-git clone https://github.com/vmware/docker-volume-vsphere.git
-```
-
-* Setup ssh keys on linux nodes & ESX
-
-Linux:
-```
-export NODE=root@10.20.105.54
-cat ~/.ssh/id_rsa.pub | ssh $NODE  "mkdir -p ~/.ssh && cat >>  ~/.ssh/authorized_keys"
-```
-
-ESX:
-```
-cat ~/.ssh/id_rsa.pub | ssh $NODE " cat >> /etc/ssh/keys-root/authorized_keys"
-```
-Test SSH keys, login form the drone node should not require typing in a password.
-
-* Run drone exec
-
-```
-cd $GOPATH/src/github.com/vmware/docker-volume-vsphere/
-drone exec --trusted --yaml .drone.dev.yml -i ~/.ssh/id_rsa -e VM1=<ip VM1> -e VM2=<ip VM2> -e ESX=<ip ESX>
-```
-
 ## Capturing ESX Code Coverage
 Coverage is captured using make coverage target (On CI it is called using drone script).
 User can configure the setup and use this target to see the coverage.
@@ -348,6 +258,11 @@ source=/usr/lib/vmware/vmdkops
 ```
 COVERAGE_PROCESS_START DEFAULT=/coverage.rc
 ```
+
+## CI/CD System
+
+The CI/CD system is based on [Drone platform](https://drone.io/) and the server is  https://ci.vmware.run/. More information is found at our [CI.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CI.md)
+
 ## Cutting a new release guidelines
 
 Once a release has been tagged, the CI system will start a build and push the binaries to GitHub Releases page. Creating the release on GitHub is a manual process but the binaries for it will be auto generated.
