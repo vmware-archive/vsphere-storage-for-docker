@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li class="active"><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li class="active"><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -377,7 +377,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//sc.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//storageclass.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -388,25 +388,34 @@ Provisioner could be AWS EBS, vSphere, OpenStack and so on.</p>
 
 <p>vSphere is one of the provisioners and it allows following parameters:</p>
 
-<p><strong>Diskformat</strong> which can be thin(default), zeroedthick and eagerzeroedthick</p>
+<ul>
+  <li>
+    <p><strong>diskformat</strong> which can be thin(default), zeroedthick and eagerzeroedthick</p>
+  </li>
+  <li>
+    <p><strong>datastore</strong> is an optional field which can be VMFSDatastore or VSANDatastore. This allows user to select the datastore to provision PV from, if not specified the default datastore from vSphere config file is used.</p>
+  </li>
+  <li>
+    <p><strong>storagePolicyName</strong> is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.</p>
+  </li>
+</ul>
 
-<p><strong>Datastores</strong> is an optional field which can be VMFSDatastore or VSANDatastore. This allows user to select the datastore to provision PV from, if not specified the default datastore from vSphere config file is used.</p>
-
-<p><strong>storagepolicyName</strong> Name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.
-VSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these VSAN storage capabilities configured with it. (TODO - Add link to the section)</p>
+<p>vSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these vSAN storage capabilities configured with it.</p>
 
 <p>There are additional parameters which are covered in Storage Policy Management section.</p>
 
 <p><strong>Note:</strong></p>
 
-<p>All the example yamls can be found <a href="https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
+<p>All the example yamls can be found <a href="https://github.com/Kubernetes/Kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
 
-<p>Let us look at an example of how to use StorageClass for dynamic provisioning
-<strong>Note:</strong> Here you don’t need to create vmdk it is created dynamically.</p>
+<p>Let us look at an example of how to use StorageClass for dynamic provisioning.</p>
+
+<p><strong>Note:</strong> Here you don’t need to create vmdk it is created dynamically.</p>
 
 <p><strong>Create Storage Class</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>vpshere-volume-sc-fast.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#vpshere-volume-sc-fast.yaml
+
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
@@ -418,9 +427,10 @@ parameters:
 </code></pre>
 </div>
 
-<p>You can also specify the datastore in the Storageclass as shown in example 2. The volume will be created on the datastore specified in the storage class. This field is optional. If not specified as shown in example 1, the volume will be created on the datastore specified in the vsphere config file used to initialize the vSphere Cloud Provider.</p>
+<p>You can also specify the datastore in the Storageclass as shown below YAML for dynamic provisioning. The volume will be created on the datastore specified in the storage class. This field is optional. If not specified as shown in above YAML, the volume will be created on the datastore specified in the vsphere config file used to initialize the vSphere Cloud Provider.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>vsphere-volume-sc-slow.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-sc-slow.yaml
+
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
@@ -429,9 +439,12 @@ provisioner: kubernetes.io/vsphere-volume
 parameters:
     diskformat: zeroedthick
     datastore: VSANDatastore
-If datastore is member of DataStore Cluster or within some sub folder, the datastore folder path needs to be provided in the datastore parameter as below.
-parameters:
-   datastore:	DatastoreCluster/VSANDatastore
+</code></pre>
+</div>
+
+<p>If datastore is member of DataStore Cluster or within some sub folder, the datastore folder path needs to be provided in the datastore parameter as below.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>   datastore:	DatastoreCluster/VSANDatastore
 </code></pre>
 </div>
 
@@ -485,9 +498,9 @@ Labels:         &lt;none&gt;
 Capacity:       2Gi
 Access Modes:   RWO
 Events:
-  FirstSeen     LastSeen        Count   From                            SubObjectPath   Type            Reason                  Message
-  ---------     --------        -----   ----                            -------------   --------        ------                  -------
-  1m            1m              1       persistentvolume-controller                     Normal          ProvisioningSucceeded   Successfully provisioned volume pvc-83295256-f8e0-11e6-8263-005056b2349c using kubernetes.io/vsphere-volume
+  FirstSeen LastSeen Count From   SubObjectPath   Type  Reason Message
+  -----------------------------------------------------------
+  1m          1m      1       persistentvolume-controller  Normal  ProvisioningSucceeded   Successfully provisioned volume pvc-83295256-f8e0-11e6-8263-005056b2349c using Kubernetes.io/vsphere-volume
 </code></pre>
 </div>
 
@@ -510,9 +523,15 @@ Source:
     VolumePath: [datastore1] kubevols/kubernetes-dynamic-pvc-83295256-f8e0-11e6-8263-005056b2349c.vmdk
     FSType:     ext3
 No events.
-Note: VMDK is created inside kubevols folder in datastore which is mentioned in 'vsphere' cloudprovider configuration. The cloudprovider config is created during setup of Kubernetes cluster on vSphere.
-Create Pod which uses Persistent Volume Claim with storage class.
-vsphere-volume-pvcscpod.yaml
+</code></pre>
+</div>
+
+<p><strong>Note:</strong> VMDK is created inside kubevols folder in datastore which is mentioned in ‘vsphere’ cloudprovider configuration. The cloudprovider config is created during setup of Kubernetes cluster on vSphere.</p>
+
+<p><strong>Create Pod which uses Persistent Volume Claim with storage class.</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pvcscpod.yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -533,7 +552,7 @@ spec:
 
 <p><strong>Create the pod</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-pvcscpod.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcscpod.yaml
 </code></pre>
 </div>
 
@@ -541,7 +560,7 @@ spec:
 
 <div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl get pod pvpod
 NAME      READY     STATUS    RESTARTS   AGE
-pvpod       1/1 
+pvpod       1/1      Running   0          48m
 </code></pre>
 </div>
 
@@ -561,7 +580,7 @@ pvpod       1/1
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

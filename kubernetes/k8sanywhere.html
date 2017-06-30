@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -381,16 +381,16 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>There are several deployment mechanism available to deploy Kubernetes. Kubernetes-Anywhere is one of them. Please refer: https://github.com/kubernetes/kubernetes-anywhere</p>
+  <p>There are several deployment mechanisms available to deploy Kubernetes. Kubernetes-Anywhere is one of them. Please refer this <a href="https://github.com/Kubernetes/Kubernetes-anywhere">link</a></p>
 
 <p>We have simplified deployment with creating pre-build Kubernetes-Anywhere <a href="https://hub.docker.com/r/cnastorage/kubernetes-anywhere/">docker image</a></p>
 
-<p>User can just pull this image and run a container with this image to get into deployment wizard. User can fill in the questionnaires, Kubernetes-Anywhere will create a terraform deployment script to install kubernetes cluster on vSphere.
-After the cluster is deployed, cluster config file is available at /opt/kubernetes-anywhere/phase1/vsphere/.tmp/kubeconfig.json</p>
+<p>User can just pull this image and run a container with this image to get into deployment wizard. User can fill in the questionnaires, Kubernetes-Anywhere will create a terraform deployment script to install Kubernetes cluster on vSphere.
+After the cluster is deployed, cluster config file is available at /opt/Kubernetes-anywhere/phase1/vsphere/.tmp/kubeconfig.json</p>
 
 <p>Make sure to copy this file, before stopping the deployment container. This file is used to access Kubernetes cluster using kubectl.</p>
 
-<p>Please refer installation steps metioned in the getting started guide for deploying Kubernetes using <a href="https://github.com/kubernetes/kubernetes-anywhere/blob/master/phase1/vsphere/README.md#prerequisites">Kubernete-Anywhere</a></p>
+<p>Please refer installation steps mentioned in the getting started guide for deploying Kubernetes using <a href="https://github.com/Kubernetes/Kubernetes-anywhere/blob/master/phase1/vsphere/README.md#prerequisites">Kubernete-Anywhere</a></p>
 
 
   
@@ -409,7 +409,7 @@ After the cluster is deployed, cluster config file is available at /opt/kubernet
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

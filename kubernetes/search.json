@@ -995,17 +995,6 @@
 
 
 
-{
-"title": "Dynamic Provisioning and StorageClass API",
-"tags": "",
-"keywords": "",
-"url": "sc.html",
-"summary": ""
-}
-,
-
-
-
 
 
 
@@ -1025,7 +1014,18 @@
 "title": "StatefulSets",
 "tags": "",
 "keywords": "",
-"url": "ss.html",
+"url": "statefulsets.html",
+"summary": ""
+}
+,
+
+
+
+{
+"title": "Dynamic Provisioning and StorageClass API",
+"tags": "",
+"keywords": "",
+"url": "storageclass.html",
 "summary": ""
 }
 ,

@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -389,15 +389,16 @@ $('#toc').on('click', 'a', function() {
 
 <p>You can specify the existing vCenter Storage Policy Based Management (SPBM) policy to configure a persistent volume with SPBM policy. storagePolicyName parameter is used for this.</p>
 
-<p><strong>Note: SPBM policy based provisioning of persistent volumes will be available in 1.7.x release.</strong></p>
-
 <p><strong>Note:</strong></p>
 
-<p>All the example yamls can be found <a href="https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
+<ul>
+  <li>SPBM policy based provisioning of persistent volumes will be available in 1.7.x release.**</li>
+  <li>All the example yamls can be found <a href="https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</li>
+</ul>
 
 <p><strong>Create Storage Class</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>sphere-volume-spbm-policy.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#sphere-volume-spbm-policy.yaml
 
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -410,11 +411,27 @@ parameters:
 </code></pre>
 </div>
 
+<p>The admin specifies the SPBM policy - “gold” as part of storage class definition for dynamic volume provisioning. When a PVC is created, the persistent volume will be provisioned on a compatible datastore with maximum free space that satisfies the “gold” storage policy requirements.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    storagePolicyName: gold
+    datastore: VSANDatastore
+</code></pre>
+</div>
+
+<p>The admin can also specify a custom datastore where he wants the volume to be provisioned along with the SPBM policy name. When a PVC is created, the vSphere Cloud Provider checks if the user specified datastore satisfies the “gold” storage policy requirements. If yes, it will provision the persistent volume on user specified datastore. If not, it will error out to the user that the user specified datastore is not compatible with “gold” storage policy requirements.</p>
+
 <h2 id="virtual-san-policy-support">Virtual SAN policy support</h2>
 
 <p>Vsphere Infrastructure(VI) Admins will have the ability to specify custom Virtual SAN Storage Capabilities during dynamic volume provisioning. You can now define storage requirements, such as performance and availability, in the form of storage capabilities during dynamic volume provisioning. The storage capability requirements are converted into a Virtual SAN policy which are then pushed down to the Virtual SAN layer when a persistent volume (virtual disk) is being created. The virtual disk is distributed across the Virtual SAN datastore to meet the requirements.</p>
 
-<p>The official VSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by VSAN. The user can specify these storage capabilities as part of storage class definition based on his application needs.</p>
+<p>The official vSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by vSAN. The user can specify these storage capabilities as part of storage class definition based on his application needs.</p>
 
 <p>For vSAN policies you can few additional parameters in StorageClass can be specified:</p>
 
@@ -439,13 +456,16 @@ parameters:
   </li>
 </ul>
 
-<p><strong>Note:</strong> Here you don’t need to create persistent volume it is created dynamically</p>
+<p><strong>Note:</strong></p>
 
-<p><strong>Note:</strong> VSAN storage capability based provisioning of persistent volumes is available in 1.6.5 release.</p>
+<ul>
+  <li>Here you don’t need to create persistent volume it is created dynamically</li>
+  <li>vSAN storage capability based provisioning of persistent volumes is available in 1.6.5 release.</li>
+</ul>
 
-<p><em>Create Storage Class</em></p>
+<p><strong>Create Storage Class</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>vsphere-volume-sc-vsancapabilities.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-sc-vsancapabilities.yaml
 
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -461,10 +481,10 @@ parameters:
 
 <p>Here a persistent volume will be created with the Virtual SAN capabilities - hostFailuresToTolerate to 2 and cachereservation is 20% read cache reserved for storage object. Also the persistent volume will be zeroedthickdisk.</p>
 
-<p>The official VSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by VSAN and can be configured on the virtual disk.
+<p>The official vSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by vSAN and can be configured on the virtual disk.
 You can also specify the datastore in the Storageclass as shown in above example. The volume will be created on the datastore specified in the storage class. This field is optional. If not specified as shown in example 1, the volume will be created on the datastore specified in the vsphere config file used to initialize the vSphere Cloud Provider.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>vsphere-volume-sc-vsancapabilities.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-sc-vsancapabilities.yaml
 
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -479,11 +499,11 @@ parameters:
 </code></pre>
 </div>
 
-<p><strong>Note:</strong> If you do not apply a storage policy during dynamic provisioning on a VSAN datastore, it will use a default Virtual SAN policy.</p>
+<p><strong>Note:</strong> If you do not apply a storage policy during dynamic provisioning on a vSAN datastore, it will use a default Virtual SAN policy.</p>
 
 <p><strong>Create the storageclass</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-sc-vsancapabilities.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-sc-vsancapabilities.yaml
 </code></pre>
 </div>
 
@@ -508,14 +528,14 @@ spec:
   resources:
     requests:
       storage: 2Gi
- ```
-
-**Creating the persistent volume claim**
-
 </code></pre>
 </div>
-<p>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-pvcsc.yaml
-```</p>
+
+<p><strong>Create the persistent volume claim</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcsc.yaml
+</code></pre>
+</div>
 
 <p><strong>Verifying persistent volume claim is created</strong></p>
 
@@ -528,9 +548,14 @@ Labels:		&lt;none&gt;
 Capacity:	2Gi
 Access Modes:	RWO
 No events.
-Persistent Volume is automatically created and is bounded to this pvc.
-Verifying persistent volume claim is created:
-$ kubectl describe pv pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
+</code></pre>
+</div>
+
+<p>Persistent Volume is automatically created and is bounded to this pvc</p>
+
+<p><strong>Verify if persistent volume claim is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pv pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
 Name:		pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
 Labels:		&lt;none&gt;
 Status:		Bound
@@ -551,7 +576,7 @@ No events.
 
 <p><strong>Create Pod which uses Persistent Volume Claim with storage class</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>vsphere-volume-pvcscpod.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pvcscpod.yaml
 
 apiVersion: v1
 kind: Pod
@@ -568,18 +593,18 @@ spec:
   - name: test-volume
     persistentVolumeClaim:
       claimName: pvcsc-vsan
- ```
-
-**Create the pod**
-
 </code></pre>
 </div>
-<p>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-pvcscpod.yaml
+
+<p><strong>Create the pod</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcscpod.yaml
 Verifying pod is created:
 $ kubectl get pod pvpod
 NAME      READY     STATUS    RESTARTS   AGE
 pvpod       1/1     Running   0          48m
-```</p>
+</code></pre>
+</div>
 
   
 
@@ -597,7 +622,7 @@ pvpod       1/1     Running   0          48m
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

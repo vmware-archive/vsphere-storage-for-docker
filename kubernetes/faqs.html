@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -381,14 +381,14 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <h2 id="is--kubernetes---vsphere-cloud-provider-ready-for-production-">Is  Kubernetes - vSphere Cloud Provider ready for production ?</h2>
+  <h2 id="is-vsphere-cloud-provider-ready-for-production-">Is vSphere Cloud Provider ready for production ?</h2>
 <p>vSphere Cloud Provider is still in beta.</p>
 
 <h2 id="what-is-the-biggest-kubernetes-cluster-it-has-been-tested-for-">What is the biggest Kubernetes cluster it has been tested for ?</h2>
 <p>It has been tested on eight node cluster so far.</p>
 
 <h2 id="where-can-i-find-the-list-of-vsan-vmfs-and-nfs-features-supported-by-vsphere-cloud-provider-">Where can I find the list of vSAN, VMFS and NFS features supported by vSphere Cloud Provider ?</h2>
-<p>Please refer to this <a href="http://127.0.0.1:4000/spbm.html">section TODO</a>. Please report in case you find any features are missing.</p>
+<p>Please refer to this <a href="/spbm.html">section</a>. Please report in case you find any features are missing.</p>
 
 <h2 id="how-is-running-containers-on-vsphere-integrated-containers-different-from-running-them-on-kubernetes-on-vsphere-">How is running containers on vSphere Integrated Containers different from running them on Kubernetes on vSphere ?</h2>
 <p>VIC is infrastructure platform to run containerized workloads alongside traditional applications whereas vSphere Cloud provider provides an interface to run and take advantage of vSphere storage for workloads running on Kubernetes</p>
@@ -397,22 +397,22 @@ $('#toc').on('click', 'a', function() {
 <p>Yes as long as laptop supports nested virtualization you can try it on your laptop.</p>
 
 <h2 id="which-kubernetes-distribution-is-supported-">Which Kubernetes distribution is supported ?</h2>
-<p>vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. [Link to prerequisites section]</p>
+<p>vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. Please refer this <a href="/prereq.html">section.</a></p>
 
 <h2 id="can-we-deploy-multiple-kubernetes-cluster-on-one-vcenter">Can we deploy multiple Kubernetes Cluster on one vCenter?</h2>
-<p>Yes. TODO [Link]</p>
+<p>Yes. Please refer this <a href="/existing.html">section.</a></p>
 
 <h2 id="can-kubernetes-cluster-access-storage-from-another-vcenter">Can Kubernetes Cluster access storage from another vCenter?</h2>
-<p>Yes TODO [Link]</p>
+<p>Yes. Please refer this <a href="/existing.html">section.</a></p>
 
 <h2 id="which-operating-system-are-supported-">Which Operating System are supported ?</h2>
-<p>We support Photon, Ubuntu, Core OS, please check this section for details TODO[Link]</p>
+<p>We support Photon, Ubuntu, Core OS, please check this section for <a href="/prereq.html">details</a></p>
 
-<h2 id="how-kubernetes-volumes-can-be-made-resilient-to-failures-on-vsan-datastore">How kubernetes volumes can be made resilient to failures on VSAN datastore?</h2>
-<p>Link to Storage Profile section above TODO[Link]</p>
+<h2 id="how-kubernetes-volumes-can-be-made-resilient-to-failures-on-vsan-datastore">How Kubernetes volumes can be made resilient to failures on vSAN datastore?</h2>
+<p>Please check the HA section for <a href="/ha.html">details.</a></p>
 
 <h2 id="can-i-enable-sdrs-on-vms-hosting-kubernetes-cluster">Can I enable SDRS on VMs hosting kubernetes cluster?</h2>
-<p>No</p>
+<p>No.</p>
 
 <h2 id="can-we-have-a-setting-to-ensure-all-dynamic-pvs-with-have-default-policy-retain-instead-of-delete-or-can-we-request-the-desired-policy-from-the-moment-we-request-the-pv-via-the-pvc">Can we have a setting to ensure all dynamic PVs with have default policy Retain (instead of delete)? Or can we request the desired policy from the moment we request the PV via the PVC?</h2>
 <p>If the volume was dynamically provisioned, then the default reclaim policy is set to “delete”.  This means that, by default, when the PVC is deleted, the underlying PV and storage asset will also be deleted.
@@ -420,7 +420,7 @@ If you want to retain the data stored on the volume, then you must change the re
 
 <h2 id="how-do-we-resize-the-existing-dynamic-volumes-if-we-update-the-pvc-with-the-new-desired-size-is-it-enough">How do we resize the existing dynamic volumes? If we update the PVC with the new desired size, is it enough?</h2>
 <p>Support for resizing existing dynamic volume is not yet there.
-Proposal is out for <a href="https://github.com/gnufied/community/blob/91b41028182a5291b4eccbf88f8065f66b2b7eed/contributors/design-proposals/grow-volume-size.md">review</a></p>
+Proposal is out for <a href="https://github.com/gnufied/community/blob/91b41028182a5291b4eccbf88f8065f66b2b7eed/contributors/design-proposals/grow-volume-size.md">review.</a></p>
 
 <h2 id="can-we-create-readwritemany-volumes-with-vsphere-storage-with-pods-on-different-machines">Can we create ReadWriteMany volumes with VSphere storage, with pods on different machines?</h2>
 <p>ReadWriteMany is not supported with Pods on different machine. This is supported on the collocated pods on the same node.</p>
@@ -451,7 +451,7 @@ Customize hardware -&gt; VM Options -&gt; Configuration Parameters -&gt; Edit Co
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

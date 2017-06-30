@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -382,11 +382,11 @@ $('#toc').on('click', 'a', function() {
     
 
   <h2 id="overview">Overview</h2>
-<p>Containers are stateless and ephemeral but applications are stateful and need persistent storage. vSphere adds this persistent storage support to Kubernetes through interface called Cloud Provider. Cloud provider is an interface which helps in extending Kubernetes with cluster of instances managed by virtualisation technologies, public/private cloud platforms and required networking for these instances.</p>
+<p>Containers are stateless and ephemeral but applications are stateful and need persistent storage. vSphere adds this persistent storage support to Kubernetes through interface called Cloud Provider. Cloud provider is an interface which helps in extending Kubernetes with cluster of instances managed by virtualization technologies, public/private cloud platforms and required networking for these instances.</p>
 
 <p><img src="images/vSphere.png" alt="Image" /></p>
 
-<p>Kubernetes cloud provider is an interface to integrate various nodes (i.e. hosts), load balancers and networking routes. This interface allows extending Kubernetes to use various cloud and virtualisation solutions as base infrastructure to run on.</p>
+<p>Kubernetes cloud provider is an interface to integrate various nodes (i.e. hosts), load balancers and networking routes. This interface allows extending Kubernetes to use various cloud and virtualization solutions as base infrastructure to run on.</p>
 
 <p>Cloud provider provides following interfaces to effectively integrate cloud platforms:</p>
 
@@ -402,16 +402,22 @@ $('#toc').on('click', 'a', function() {
 
 <p>Datastores is an abstraction which hides storage details and provide uniform interface for storing persistent data. Datastores enables simplified storage management with features like grouping them in folders. Depending upon the backend storage the datastores can be vSAN, VMFS or NFS.</p>
 
-<p>vSAN is a hyper-converged infrastructure storage which provides excellent performance as well as reliability. vSAN advantage is simplified storage management with features like policy driven administration.</p>
-
-<p>VMFS (VMware FIle System) is a cluster file system that allows virtualization to scale beyond a single node for multiple VMware ESX servers. VMFS increases resource utilization by providing shared access to pool of storage.</p>
-
-<p>NFS (Network File System) is distributed file protocol to access storage over network like local storage. vSphere supports NFS as backend to store virtual machines files.</p>
+<ul>
+  <li>
+    <p>vSAN is a hyper-converged infrastructure storage which provides excellent performance as well as reliability. vSAN advantage is simplified storage management with features like policy driven administration.</p>
+  </li>
+  <li>
+    <p>VMFS (VMware FIle System) is a cluster file system that allows virtualization to scale beyond a single node for multiple VMware ESX servers. VMFS increases resource utilization by providing shared access to pool of storage.</p>
+  </li>
+  <li>
+    <p>NFS (Network File System) is distributed file protocol to access storage over network like local storage. vSphere supports NFS as backend to store virtual machines files.</p>
+  </li>
+</ul>
 
 <h2 id="kubernetes-storage-support">Kubernetes Storage support</h2>
-<p>vSphere supports all the the Kubernetes storage primitives which brings enterprise grade storage to Kubernetes. vSphere uses vSAN and VMFS datastores, these datastores store the volumes as VMDK files.</p>
+<p>vSphere supports all the the Kubernetes storage primitives which brings enterprise grade storage features to Kubernetes. vSphere uses vSAN and VMFS datastores, these datastores store the volumes as VMDK files.</p>
 
-<p>Kubernetes volumes can be defined in Pod specification where they reference VMDK files and these VMDK files are mounted as volumes when the container is running. When the Pod is deleted the Kubernetes volume is unmounted and the data in VMDK files persists.</p>
+<p>Kubernetes volumes are defined in Pod specification. They reference VMDK files and these VMDK files are mounted as volumes when the container is running. When the Pod is deleted the Kubernetes volume is unmounted and the data in VMDK files persists.</p>
 
 <p><img src="images/Picture1.png" alt="Image" /></p>
 
@@ -419,8 +425,8 @@ $('#toc').on('click', 'a', function() {
 
 <ul>
   <li>Volumes</li>
-  <li>Persistent Volumes</li>
-  <li>Persistent Volumes Claims</li>
+  <li>Persistent Volumes (PV)</li>
+  <li>Persistent Volumes Claims (PVC)</li>
   <li>Storage Class</li>
   <li>Stateful Sets</li>
 </ul>
@@ -442,7 +448,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

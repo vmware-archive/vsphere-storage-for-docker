@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -381,12 +381,19 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>This section describes the vSphere specific configurations:
-<strong>vSphere HA</strong>
-* vSphere Cloud Provider supports vSphere HA. To ensure high availability of node VMs, it is recommended to enable HA on the cluster.<a href="https://pubs.vmware.com/vsphere-65/index.jsp#com.vmware.vsphere.avail.doc/GUID-4BC60283-B638-472F-B1D2-1E4E57EAD213.html">Details</a></p>
+  <p>This section describes the vSphere specific configurations:</p>
 
-<p><strong>Use Resource Pool</strong>
-* It is recommended to place Kubernetes node VMs in the resource pool to ensure guaranteed performance. <a href="https://pubs.vmware.com/vsphere-65/index.jsp#com.vmware.vsphere.resmgmt.doc/GUID-0F6C6709-A5DA-4D38-BE08-6CB1002DD13D.html">Details</a></p>
+<p><strong>vSphere HA</strong></p>
+
+<ul>
+  <li>vSphere Cloud Provider supports vSphere HA. To ensure high availability of node VMs, it is recommended to enable HA on the cluster.<a href="https://docs.vmware.com/en/VMware-vSphere/6.5/com.vmware.vsphere.avail.doc/GUID-4BC60283-B638-472F-B1D2-1E4E57EAD213.html">Details</a></li>
+</ul>
+
+<p><strong>Use Resource Pool</strong></p>
+
+<ul>
+  <li>It is recommended to place Kubernetes node VMs in the resource pool to ensure guaranteed performance. <a href="https://docs.vmware.com/en/VMware-vSphere/6.5/com.vmware.vsphere.resmgmt.doc/GUID-0F6C6709-A5DA-4D38-BE08-6CB1002DD13D.html">Details</a></li>
+</ul>
 
   
 
@@ -404,7 +411,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -381,7 +381,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>A Pod can specify vsphereVolume as Kubernetes Volumes in it’s specification. vSphereVolume is used to mount a vSphere VMDK Volume into your Pod. The contents of a volume are preserved when it is unmounted. It supports both VMFS and VSAN datastore</p>
+  <p>A Pod can specify vsphereVolume as Kubernetes Volumes and then vSphere VMDK is mounted as Volume into your Pod. The contents of a volume are preserved when it is unmounted. It supports both VMFS and VSAN datastores.</p>
 
 <p>All the example yamls can be found <a href="https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
 
@@ -389,15 +389,15 @@ $('#toc').on('click', 'a', function() {
 
 <p><strong>Create VMDK</strong></p>
 
-<p>First ssh into ESX and then use following command to create vmdk</p>
+<p>First ssh into ESX and then use following command to create vmdk on datastore1</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>vmkfstools -c 2G /vmfs/volumes/datastore1/volumes/myDisk.vmdk
 </code></pre>
 </div>
 
-<p><strong>Create Pod which uses ‘myDisk.vmdk’</strong></p>
+<p><strong>Create Pod which uses vSphere Volume ‘myDisk.vmdk’</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>vsphere-volume-pod.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pod.yaml
 
   apiVersion: v1
    kind: Pod
@@ -421,7 +421,7 @@ $('#toc').on('click', 'a', function() {
 
 <p><strong>Create the pod</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-pod.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pod.yaml
 </code></pre>
 </div>
 
@@ -450,7 +450,7 @@ test-vmdk   1/1     Running   0          48m
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

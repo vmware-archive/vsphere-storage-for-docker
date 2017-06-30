@@ -204,13 +204,13 @@
                     
                     
                     
-                    <li><a href="sc.html">Dynamic Provisioning & Storage Class</a></li>
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="ss.html">StatefulSets</a></li>
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
                     
                     
                     
@@ -385,13 +385,13 @@ $('#toc').on('click', 'a', function() {
 
 <p><strong>Create Minio Storage class</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>minio-sc.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#minio-sc.yaml
  
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: miniosc
-provisioner: kubernetes.io/vsphere-volume
+provisioner: Kubernetes.io/vsphere-volume
 parameters:
     diskformat: thin
  
@@ -428,7 +428,7 @@ spec:
 
 <p>Create the headless service</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f https://github.com/minio/minio/blob/master/docs/orchestration/kubernetes-yaml/minio-distributed-headless-service.yaml?raw=true
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/minio/distributed/minio-distributed-headless-service.yaml?raw=true
 service "minio" created
 </code></pre>
 </div>
@@ -448,7 +448,7 @@ spec:
   template:
     metadata:
       annotations:
-        pod.alpha.kubernetes.io/initialized: "true"
+        pod.alpha.Kubernetes.io/initialized: "true"
       labels:
         app: minio
     spec:
@@ -480,7 +480,7 @@ spec:
   - metadata:
       name: data
       annotations:
-        volume.beta.kubernetes.io/storage-class: miniosc
+        volume.beta.Kubernetes.io/storage-class: miniosc
     spec:
       accessModes:
         - ReadWriteOnce
@@ -492,7 +492,7 @@ spec:
 
 <p>Create the Statefulset</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f https://github.com/minio/minio/blob/master/docs/orchestration/kubernetes-yaml/minio-distributed-statefulset.yaml?raw=true
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/minio/distributed/minio-distributed-statefulset.yaml?raw=true
 statefulset "minio" created
 </code></pre>
 </div>
@@ -505,7 +505,7 @@ statefulset "minio" created
 
 <p>In this example, we expose the Minio Deployment by using NodePort. This is the service description.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>minio_NodePort.yaml
+<div class="highlighter-rouge"><pre class="highlight"><code>#minio_NodePort.yaml
  
 apiVersion: v1
 kind: Service
@@ -564,7 +564,7 @@ http://10.160.132.97:30000/minio/login
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 29, 2017 <br />
+ Site last generated: Jun 30, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

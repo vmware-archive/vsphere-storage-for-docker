@@ -567,12 +567,6 @@
   
   
   
-  <url>
-    <loc>http://idratherbewriting.com/sc.html</loc>
-  </url>
-  
-  
-  
   
   
   
@@ -584,7 +578,13 @@
   
   
   <url>
-    <loc>http://idratherbewriting.com/ss.html</loc>
+    <loc>http://idratherbewriting.com/statefulsets.html</loc>
+  </url>
+  
+  
+  
+  <url>
+    <loc>http://idratherbewriting.com/storageclass.html</loc>
   </url>
   
   
