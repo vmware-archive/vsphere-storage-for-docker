@@ -20,5 +20,4 @@ type VolumeDriver interface {
 	MountVolume(string, string, string, bool, bool) (string, error)
 	UnmountVolume(string) error
 	GetVolume(string) (map[string]interface{}, error)
-	VolumesInRefMap() []string
 }

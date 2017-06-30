@@ -264,21 +264,6 @@ func (r *RefCountsMap) GetCount(vol string) uint {
 	return rc.count
 }
 
-// GetVolumeNames - return fully qualified volume names from refMap
-func (r *RefCountsMap) GetVolumeNames() []string {
-	r.mtx.RLock()
-	defer r.mtx.RUnlock()
-	var volumeList []string
-
-	for k := range r.refMap {
-		volumeList = append(volumeList, k)
-	}
-
-	// the list contains full volume names in format volume@datastore
-	// there can be volumes with same name on different datastores
-	return volumeList
-}
-
 // Incr refCount for the volume vol. Creates new entry if needed.
 func (r *RefCountsMap) Incr(vol string) uint {
 	// Locks the RefCountsMap

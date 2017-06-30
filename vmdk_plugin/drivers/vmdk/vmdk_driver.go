@@ -92,12 +92,6 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	return d
 }
 
-// VolumesInRefMap - get list of volumes names from refmap
-// names are in format volume@datastore
-func (d *VolumeDriver) VolumesInRefMap() []string {
-	return d.refCounts.GetVolumeNames()
-}
-
 // In following three operations on refcount, if refcount
 // map hasn't been initialized, return 1 to prevent detach and remove.
 

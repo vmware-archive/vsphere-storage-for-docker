@@ -82,43 +82,14 @@ func AlreadyMounted(name string, mountRoot string) bool {
 	return false
 }
 
-// JoinVolName - return a full name in format volume@datastore
-func JoinVolName(volName string, datastoreName string) string {
+// makeFullVolName - return a full name in format volume@datastore
+func makeFullVolName(volName string, datastoreName string) string {
 	return strings.Join([]string{volName, datastoreName}, "@")
-}
-
-// SplitVolName - split a volume name into short name and datastore
-func SplitVolName(fullVolName string) []string {
-	return strings.Split(fullVolName, "@")
 }
 
 // IsFullVolName - Check if volume name is full volume name
 func IsFullVolName(volName string) bool {
 	return strings.ContainsAny(volName, "@")
-}
-
-// GetNameFromRefmap - traverse the name entries in refmap
-// and if a single entry with volName match is found(no collision),
-// use that name as full volume name
-func GetNameFromRefmap(volName string, d drivers.VolumeDriver) string {
-	volumeNameList := d.VolumesInRefMap()
-
-	count := 0
-	fullname := ""
-
-	for _, name := range volumeNameList {
-		refVolName := SplitVolName(name)[0]
-		if refVolName != volName {
-			continue
-		}
-		// if there are collisions, return
-		if count > 0 {
-			return ""
-		}
-		count++
-		fullname = name
-	}
-	return fullname
 }
 
 // GetVolumeInfo - return VolumeInfo with a qualified volume name.
@@ -132,12 +103,7 @@ func GetVolumeInfo(name string, datastoreName string, d drivers.VolumeDriver) (*
 
 	// if datastore name is provided, append and return
 	if datastoreName != "" {
-		return &VolumeInfo{JoinVolName(name, datastoreName), datastoreName, nil}, nil
-	}
-
-	// find full volume names using refmap if possible
-	if fullVolumeName := GetNameFromRefmap(name, d); fullVolumeName != "" {
-		return &VolumeInfo{fullVolumeName, "", nil}, nil
+		return &VolumeInfo{makeFullVolName(name, datastoreName), datastoreName, nil}, nil
 	}
 
 	// Do a get trip to esx and construct full name
@@ -147,5 +113,6 @@ func GetVolumeInfo(name string, datastoreName string, d drivers.VolumeDriver) (*
 		return nil, err
 	}
 	datastoreName = volumeMeta[datastoreKey].(string)
-	return &VolumeInfo{JoinVolName(name, datastoreName), datastoreName, volumeMeta}, nil
+
+	return &VolumeInfo{makeFullVolName(name, datastoreName), datastoreName, volumeMeta}, nil
 }

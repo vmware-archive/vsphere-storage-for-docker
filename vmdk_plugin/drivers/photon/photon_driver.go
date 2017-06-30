@@ -363,12 +363,6 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	return mountpoint, fs.MountWithID(mountpoint, fstype, id, isReadOnly)
 }
 
-// VolumesInRefMap - get list of volumes names from refmap
-// names are in format volume@datastore
-func (d *VolumeDriver) VolumesInRefMap() []string {
-	return d.refCounts.GetVolumeNames()
-}
-
 // private function that does the job of mounting volume in conjunction with refcounting
 func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
