@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Dynamic Provisioning and StorageClass API | Kubernetes vSphere Cloud Provider</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/infracloudio-lavish-bootstrap.css">
+<link rel="stylesheet" href="css/vmware-customstyles.css">
+<link rel="stylesheet" href="css/infracloudio-theme-blue.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: true,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> Kubernetes vSphere Cloud Provider</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Home</a></li>
+                
+                
+                
+                <li><a href="faqs.html">FAQs</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="Dynamic Provisioning and StorageClass API">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Menu </li>
+    
+    
+    
+    <li>
+        <a href="#">Get Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">vSphere Cloud Provider</a>
+        <ul>
+            
+            
+            
+            <li><a href="overview.html">Overview</a></li>
+            
+            
+            
+            <li class="subfolders">
+                <a href="#">Kubernetes Storage Support</a>
+                <ul>
+                    
+                    
+                    
+                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li class="active"><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
+                    
+                    
+                    
+                </ul>
+            </li>
+            
+            
+            
+            
+            
+            
+            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Deployment</a>
+        <ul>
+            
+            
+            
+            <li><a href="prereq.html">Prerequistes</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="existing.html">Configurations on existing Kubernetes Cluster</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="bestpractices.html">Best Practices</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="guestbook.html">Running Stateful application - Guestbook app</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="mongodb.html">Running MongoDB on vSphere</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="minio.html">Deploying S3 Stateful containers - Minio</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="faqs.html">FAQs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+        <!-- if you aren't using the accordion, uncomment this block:
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+           -->
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Dynamic Provisioning and StorageClass API</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//storageclass.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <p>With PV and PVCs one can only provision storage statically i.e. PVs first needs to be created before a Pod claims it. However with StorageClass API Kubernetes enables dynamic volume provisioning which is very unique to Kubernetes. This avoids pre-provisioning of storage and storage is provisioned automatically when a user requests it.</p>
+
+<p>StorageClass API object specifies a provisioner and parameters  which are used to decide which volume plugin to be used and provisioner specific parameters.
+Provisioner could be AWS EBS, vSphere, OpenStack and so on.</p>
+
+<p>vSphere is one of the provisioners and it allows following parameters:</p>
+
+<ul>
+  <li>
+    <p><strong>diskformat</strong> which can be thin(default), zeroedthick and eagerzeroedthick</p>
+  </li>
+  <li>
+    <p><strong>datastore</strong> is an optional field which can be VMFSDatastore or VSANDatastore. This allows user to select the datastore to provision PV from, if not specified the default datastore from vSphere config file is used.</p>
+  </li>
+  <li>
+    <p><strong>storagePolicyName</strong> is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.</p>
+  </li>
+</ul>
+
+<p>vSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these vSAN storage capabilities configured with it.</p>
+
+<p>There are additional parameters which are covered in Storage Policy Management section.</p>
+
+<p><strong>Note:</strong></p>
+
+<p>All the example yamls can be found <a href="https://github.com/Kubernetes/Kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
+
+<p>Let us look at an example of how to use StorageClass for dynamic provisioning.</p>
+
+<p><strong>Note:</strong> Here you don’t need to create vmdk it is created dynamically.</p>
+
+<p><strong>Create Storage Class</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vpshere-volume-sc-fast.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    fstype:     ext3
+</code></pre>
+</div>
+
+<p>You can also specify the datastore in the Storageclass as shown below YAML for dynamic provisioning. The volume will be created on the datastore specified in the storage class. This field is optional. If not specified as shown in above YAML, the volume will be created on the datastore specified in the vsphere config file used to initialize the vSphere Cloud Provider.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-sc-slow.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    datastore: VSANDatastore
+</code></pre>
+</div>
+
+<p>If datastore is member of DataStore Cluster or within some sub folder, the datastore folder path needs to be provided in the datastore parameter as below.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>   datastore:	DatastoreCluster/VSANDatastore
+</code></pre>
+</div>
+
+<p><strong>Create the Storageclass</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-sc-fast.yaml
+</code></pre>
+</div>
+
+<p><strong>Verifying storage class is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe storageclass fast 
+Name:           fast
+IsDefaultClass: No
+Annotations:    &lt;none&gt;
+Provisioner:    kubernetes.io/vsphere-volume
+Parameters:     diskformat=zeroedthick,fstype=ext3
+No events.
+Create Persistent Volume Claim.
+Vsphere-volume-pvcsc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvcsc001
+  annotations:
+    volume.beta.kubernetes.io/storage-class: fast
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+</code></pre>
+</div>
+
+<p><strong>Create the persistent volume claim</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f examples/volumes/vsphere/vsphere-volume-pvcsc.yaml
+</code></pre>
+</div>
+
+<p><strong>Verify persistent volume claim is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pvc pvcsc001
+Name:           pvcsc001
+Namespace:      default
+StorageClass:   fast
+Status:         Bound
+Volume:         pvc-83295256-f8e0-11e6-8263-005056b2349c
+Labels:         &lt;none&gt;
+Capacity:       2Gi
+Access Modes:   RWO
+Events:
+  FirstSeen LastSeen Count From   SubObjectPath   Type  Reason Message
+  -----------------------------------------------------------
+  1m          1m      1       persistentvolume-controller  Normal  ProvisioningSucceeded   Successfully provisioned volume pvc-83295256-f8e0-11e6-8263-005056b2349c using Kubernetes.io/vsphere-volume
+</code></pre>
+</div>
+
+<p>Persistent Volume is automatically created and is bounded to this pvc.</p>
+
+<p><strong>Verify persistent volume claim is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pv pvc-83295256-f8e0-11e6-8263-005056b2349c
+Name:           pvc-83295256-f8e0-11e6-8263-005056b2349c
+Labels:         &lt;none&gt;
+StorageClass:   fast
+Status:         Bound
+Claim:          default/pvcsc001
+Reclaim Policy: Delete
+Access Modes:   RWO
+Capacity:       2Gi
+Message:
+Source:
+    Type:       vSphereVolume (a Persistent Disk resource in vSphere)
+    VolumePath: [datastore1] kubevols/kubernetes-dynamic-pvc-83295256-f8e0-11e6-8263-005056b2349c.vmdk
+    FSType:     ext3
+No events.
+</code></pre>
+</div>
+
+<p><strong>Note:</strong> VMDK is created inside kubevols folder in datastore which is mentioned in ‘vsphere’ cloudprovider configuration. The cloudprovider config is created during setup of Kubernetes cluster on vSphere.</p>
+
+<p><strong>Create Pod which uses Persistent Volume Claim with storage class.</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pvcscpod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvpod
+spec:
+  containers:
+  - name: test-container
+    image: gcr.io/google_containers/test-webserver
+    volumeMounts:
+    - name: test-volume
+      mountPath: /test-vmdk
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: pvcsc001
+</code></pre>
+</div>
+
+<p><strong>Create the pod</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcscpod.yaml
+</code></pre>
+</div>
+
+<p><strong>Verify pod is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl get pod pvpod
+NAME      READY     STATUS    RESTARTS   AGE
+pvpod       1/1      Running   0          48m
+</code></pre>
+</div>
+
+  
+
+    <div class="tags">
+        
+    </div>
+
+    
+
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2017 VMWare. All rights reserved. <br />
+ Site last generated: Jun 30, 2017 <br />
+<p><img src="images/company_logo.png" alt="Company logo"/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>

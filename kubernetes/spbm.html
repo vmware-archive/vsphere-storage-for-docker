@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Storage Policy Based Management for dynamic provisioning of volumes | Kubernetes vSphere Cloud Provider</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/infracloudio-lavish-bootstrap.css">
+<link rel="stylesheet" href="css/vmware-customstyles.css">
+<link rel="stylesheet" href="css/infracloudio-theme-blue.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/2.0.0/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: true,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> Kubernetes vSphere Cloud Provider</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Home</a></li>
+                
+                
+                
+                <li><a href="faqs.html">FAQs</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="Storage Policy Based Management for dynamic provisioning of volumes">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Menu </li>
+    
+    
+    
+    <li>
+        <a href="#">Get Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">vSphere Cloud Provider</a>
+        <ul>
+            
+            
+            
+            <li><a href="overview.html">Overview</a></li>
+            
+            
+            
+            <li class="subfolders">
+                <a href="#">Kubernetes Storage Support</a>
+                <ul>
+                    
+                    
+                    
+                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
+                    
+                    
+                    
+                </ul>
+            </li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Deployment</a>
+        <ul>
+            
+            
+            
+            <li><a href="prereq.html">Prerequistes</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="existing.html">Configurations on existing Kubernetes Cluster</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="bestpractices.html">Best Practices</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="guestbook.html">Running Stateful application - Guestbook app</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="mongodb.html">Running MongoDB on vSphere</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="minio.html">Deploying S3 Stateful containers - Minio</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="faqs.html">FAQs</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="known-issues.html">Known Issues</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+        <!-- if you aren't using the accordion, uncomment this block:
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+           -->
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Storage Policy Based Management for dynamic provisioning of volumes</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//spbm.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <h2 id="overview">Overview</h2>
+
+<p>One of the most important features of vSphere for Storage Management is Policy based Management. Storage Policy Based Management (SPBM) is a storage policy framework that provides a single unified control plane across a broad range of data services and storage solutions. SPBM enables vSphere administrators to overcome upfront storage provisioning challenges, such as capacity planning, differentiated service levels and managing capacity headroom</p>
+
+<p>As we discussed in previously StorageClass specifies provisioner and parameters. And using these parameters you can define the policy for that particular PV which will be dynamically provisioned.</p>
+
+<p>You can specify the existing vCenter Storage Policy Based Management (SPBM) policy to configure a persistent volume with SPBM policy. storagePolicyName parameter is used for this.</p>
+
+<p><strong>Note:</strong></p>
+
+<ul>
+  <li>SPBM policy based provisioning of persistent volumes will be available in 1.7.x release.**</li>
+  <li>All the example yamls can be found <a href="https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</li>
+</ul>
+
+<p><strong>Create Storage Class</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#sphere-volume-spbm-policy.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    storagePolicyName: gold
+</code></pre>
+</div>
+
+<p>The admin specifies the SPBM policy - “gold” as part of storage class definition for dynamic volume provisioning. When a PVC is created, the persistent volume will be provisioned on a compatible datastore with maximum free space that satisfies the “gold” storage policy requirements.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    storagePolicyName: gold
+    datastore: VSANDatastore
+</code></pre>
+</div>
+
+<p>The admin can also specify a custom datastore where he wants the volume to be provisioned along with the SPBM policy name. When a PVC is created, the vSphere Cloud Provider checks if the user specified datastore satisfies the “gold” storage policy requirements. If yes, it will provision the persistent volume on user specified datastore. If not, it will error out to the user that the user specified datastore is not compatible with “gold” storage policy requirements.</p>
+
+<h2 id="virtual-san-policy-support">Virtual SAN policy support</h2>
+
+<p>Vsphere Infrastructure(VI) Admins will have the ability to specify custom Virtual SAN Storage Capabilities during dynamic volume provisioning. You can now define storage requirements, such as performance and availability, in the form of storage capabilities during dynamic volume provisioning. The storage capability requirements are converted into a Virtual SAN policy which are then pushed down to the Virtual SAN layer when a persistent volume (virtual disk) is being created. The virtual disk is distributed across the Virtual SAN datastore to meet the requirements.</p>
+
+<p>The official vSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by vSAN. The user can specify these storage capabilities as part of storage class definition based on his application needs.</p>
+
+<p>For vSAN policies you can few additional parameters in StorageClass can be specified:</p>
+
+<ul>
+  <li>
+    <p><strong>cacheReservation:</strong> Flash capacity reserved as read cache for the container object. Specified as a percentage of the logical size of the virtual machine disk (vmdk) object. Reserved flash capacity cannot be used by other objects. Unreserved flash is shared fairly among all objects. Use this option only to address specific performance issues.</p>
+  </li>
+  <li>
+    <p><strong>diskStripes:</strong> The minimum number of capacity devices across which each replica of a object is striped. A value higher than 1 might result in better performance, but also results in higher use of system resources. Default value is 1. Maximum value is 12.</p>
+  </li>
+  <li>
+    <p><strong>forceProvisioning:</strong> If the option is set to Yes, the object is provisioned even if theNumber of failures to tolerate, Number of disk stripes per object, and Flash read cache reservation policies specified in the storage policy cannot be satisfied by the datastore</p>
+  </li>
+  <li>
+    <p><strong>hostFailuresToTolerate:</strong> Defines the number of host and device failures that a virtual machine object can tolerate. For n failures tolerated, each piece of data written is stored in n+1 places, including parity copies if using RAID 5 or RAID 6.</p>
+  </li>
+  <li>
+    <p><strong>iopsLimit:</strong> Defines the IOPS limit for an object, such as a VMDK. IOPS is calculated as the number of I/O operations, using a weighted size. If the system uses the default base size of 32 KB, a 64-KB I/O represents two I/O operations</p>
+  </li>
+  <li>
+    <p><strong>objectSpaceReservation:</strong> Percentage of the logical size of the virtual machine disk (vmdk) object that must be reserved, or thick provisioned when deploying virtual machines. Default value is 0%. Maximum value is 100%.</p>
+  </li>
+</ul>
+
+<p><strong>Note:</strong></p>
+
+<ul>
+  <li>Here you don’t need to create persistent volume it is created dynamically</li>
+  <li>vSAN storage capability based provisioning of persistent volumes is available in 1.6.5 release.</li>
+</ul>
+
+<p><strong>Create Storage Class</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-sc-vsancapabilities.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    hostFailuresToTolerate: "2"
+    cachereservation: "20"
+</code></pre>
+</div>
+
+<p>Here a persistent volume will be created with the Virtual SAN capabilities - hostFailuresToTolerate to 2 and cachereservation is 20% read cache reserved for storage object. Also the persistent volume will be zeroedthickdisk.</p>
+
+<p>The official vSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by vSAN and can be configured on the virtual disk.
+You can also specify the datastore in the Storageclass as shown in above example. The volume will be created on the datastore specified in the storage class. This field is optional. If not specified as shown in example 1, the volume will be created on the datastore specified in the vsphere config file used to initialize the vSphere Cloud Provider.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-sc-vsancapabilities.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/vsphere-volume
+parameters:
+    diskformat: zeroedthick
+    datastore: VSANDatastore
+    hostFailuresToTolerate: "2"
+    cachereservation: "20"
+</code></pre>
+</div>
+
+<p><strong>Note:</strong> If you do not apply a storage policy during dynamic provisioning on a vSAN datastore, it will use a default Virtual SAN policy.</p>
+
+<p><strong>Create the storageclass</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-sc-vsancapabilities.yaml
+</code></pre>
+</div>
+
+<p><strong>Verify storage class is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe storageclass fast
+Name:		fast
+Annotations:	&lt;none&gt;
+Provisioner:	kubernetes.io/vsphere-volume
+Parameters:	diskformat=zeroedthick, hostFailuresToTolerate="2", cachereservation="20"
+No events.
+Create Persistent Volume Claim.
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvcsc-vsan
+  annotations:
+    volume.beta.kubernetes.io/storage-class: fast
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+</code></pre>
+</div>
+
+<p><strong>Create the persistent volume claim</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcsc.yaml
+</code></pre>
+</div>
+
+<p><strong>Verifying persistent volume claim is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pvc pvcsc-vsan
+Name:		pvcsc-vsan
+Namespace:	default
+Status:		Bound
+Volume:		pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
+Labels:		&lt;none&gt;
+Capacity:	2Gi
+Access Modes:	RWO
+No events.
+</code></pre>
+</div>
+
+<p>Persistent Volume is automatically created and is bounded to this pvc</p>
+
+<p><strong>Verify if persistent volume claim is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pv pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
+Name:		pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d
+Labels:		&lt;none&gt;
+Status:		Bound
+Claim:		default/pvcsc-vsan
+Reclaim Policy:	Delete
+Access Modes:	RWO
+Capacity:	2Gi
+Message:
+Source:
+    Type:	vSphereVolume (a Persistent Disk resource in vSphere)
+    VolumePath:	[VSANDatastore] kubevols/kubernetes-dynamic-pvc-80f7b5c1-94b6-11e6-a24f-005056a79d2d.vmdk
+    FSType:	ext4
+No events.
+</code></pre>
+</div>
+
+<p><strong>Note:</strong> VMDK is created inside kubevols folder in datastore which is mentioned in ‘vsphere’ cloudprovider configuration. The cloudprovider config is created during setup of Kubernetes cluster on vSphere.</p>
+
+<p><strong>Create Pod which uses Persistent Volume Claim with storage class</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pvcscpod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvpod
+spec:
+  containers:
+  - name: test-container
+    image: gcr.io/google_containers/test-webserver
+    volumeMounts:
+    - name: test-volume
+      mountPath: /test
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: pvcsc-vsan
+</code></pre>
+</div>
+
+<p><strong>Create the pod</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcscpod.yaml
+Verifying pod is created:
+$ kubectl get pod pvpod
+NAME      READY     STATUS    RESTARTS   AGE
+pvpod       1/1     Running   0          48m
+</code></pre>
+</div>
+
+  
+
+    <div class="tags">
+        
+    </div>
+
+    
+
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2017 VMWare. All rights reserved. <br />
+ Site last generated: Jun 30, 2017 <br />
+<p><img src="images/company_logo.png" alt="Company logo"/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>
