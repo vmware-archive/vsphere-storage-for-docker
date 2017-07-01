@@ -5,9 +5,9 @@
         <description>Intended as a documentation theme based on Jekyll for technical writers documenting software and other technical products, this theme has all the elements you would need to handle multiple products with both multi-level sidebar navigation, tags, and other documentation features.</description>
         <link>http://idratherbewriting.com/</link>
         <atom:link href="http://idratherbewriting.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 10 May 2017 22:22:29 -0700</pubDate>
-        <lastBuildDate>Wed, 10 May 2017 22:22:29 -0700</lastBuildDate>
-        <generator>Jekyll v3.3.1</generator>
+        <pubDate>Sat, 01 Jul 2017 01:36:48 +0000</pubDate>
+        <lastBuildDate>Sat, 01 Jul 2017 01:36:48 +0000</lastBuildDate>
+        <generator>Jekyll v3.4.3</generator>
         
         <item>
             <title>Sample post</title>
@@ -20,7 +20,7 @@
 &lt;p&gt;Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries&lt;/p&gt;
 
 </description>
-            <pubDate>Fri, 26 Feb 2016 00:00:00 -0800</pubDate>
+            <pubDate>Fri, 26 Feb 2016 00:00:00 +0000</pubDate>
             <link>http://idratherbewriting.com/samplepost.html</link>
             <guid isPermaLink="true">http://idratherbewriting.com/samplepost.html</guid>
             
@@ -46,7 +46,7 @@
 &lt;/ul&gt;
 
 </description>
-            <pubDate>Wed, 24 Feb 2016 00:00:00 -0800</pubDate>
+            <pubDate>Wed, 24 Feb 2016 00:00:00 +0000</pubDate>
             <link>http://idratherbewriting.com/myupdate.html</link>
             <guid isPermaLink="true">http://idratherbewriting.com/myupdate.html</guid>
             
@@ -60,7 +60,7 @@
             <description>&lt;p&gt;This is just a test post from the previous year.&lt;/p&gt;
 
 </description>
-            <pubDate>Sun, 12 Apr 2015 00:00:00 -0700</pubDate>
+            <pubDate>Sun, 12 Apr 2015 00:00:00 +0000</pubDate>
             <link>http://idratherbewriting.com/test-post-from-last-year.html</link>
             <guid isPermaLink="true">http://idratherbewriting.com/test-post-from-last-year.html</guid>
             

@@ -426,7 +426,7 @@ $('#toc').on('click', 'a', function() {
 <script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async=""></script></p>
 
 <h2 id="docker-volume-create-options">Docker volume create options</h2>
-<p>### size</p>
+<h3 id="size">size</h3>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>docker volume create --driver=&lt;vsphere/photon&gt; --name=MyVolume -o size=10gb
 </code></pre>
@@ -515,13 +515,12 @@ vsphere                minio2@vsanDatastore
 vsphere                redis-data@vsanDatastore
 </code></pre>
 </div>
-<p>## Docker volume inspect
-You can use <code class="highlighter-rouge">docker volume inspect</code> command to see vSphere attributes of a particular volume.
-<code class="highlighter-rouge">
-docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
-</code>
-<code class="highlighter-rouge">
-docker volume inspect MyVolume
+<h2 id="docker-volume-inspect">Docker volume inspect</h2>
+<p>You can use <code class="highlighter-rouge">docker volume inspect</code> command to see vSphere attributes of a particular volume.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+</code></pre>
+</div>
+<div class="highlighter-rouge"><pre class="highlight"><code>docker volume inspect MyVolume
 [
     {
         "Driver": "vmdk",
@@ -552,8 +551,9 @@ docker volume inspect MyVolume
         }
     }
 ]
-</code>
-Note: For disk formats zeroedthick and zeroedthick, the allocated size would be total size plus the size of replicas.</p>
+</code></pre>
+</div>
+<p>Note: For disk formats zeroedthick and zeroedthick, the allocated size would be total size plus the size of replicas.</p>
 
 <h2 id="docker-compose">Docker Compose</h2>
 <div class="highlighter-rouge"><pre class="highlight"><code>cat nginx-stack-vsphere.yaml 
@@ -595,7 +595,7 @@ volumes:
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

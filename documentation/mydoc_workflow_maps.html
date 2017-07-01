@@ -818,19 +818,19 @@ folder: product2
   <li>
     <p>Create an include at _includes/custom/usermapcomplex.html, where usermapcomplex.html contains the workflow and links you want. See the usermapcomplex.html as an example. The code in that file simply implements Bootstrap modals to create the pop-up boxes. Add your custom content inside the modal body:</p>
 
-    <p>```</p>
-    <div class="modal-body">
-<p>This is just dummy text ... Your first steps should be to get started. You will need to do the following:</p>
+    <div class="highlighter-rouge"><pre class="highlight"><code>&lt;div class="modal-body"&gt;
+&lt;p&gt;This is just dummy text ... Your first steps should be to get started. You will need to do the following:&lt;/p&gt;
     
-    <ul>
-        <li><a href="p2_sample6.html">Sample 6</a></li>
-        <li><a href="p2_sample7.html">Sample 7</a></li>
-        <li><a href="p2_sample8.html">Sample 8</a></li>
-    </ul>
-    <p>If you run into any of these setup issues, you must solve them before you can continue on.</p>
+    &lt;ul&gt;
+        &lt;li&gt;&lt;a href="p2_sample6.html"&gt;Sample 6&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="p2_sample7.html"&gt;Sample 7&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="p2_sample8.html"&gt;Sample 8&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+    &lt;p&gt;If you run into any of these setup issues, you must solve them before you can continue on.&lt;/p&gt;
     
-          </div>
-    <p>```</p>
+          &lt;/div&gt;
+</code></pre>
+    </div>
 
     <p>The existing usermapcomplex.html file just has 3 workflow square modals. If you need more, duplicate the modal code. In the duplicated code, make sure you make the following values in red unique (but the same within the same modal):</p>
 
@@ -860,23 +860,23 @@ folder: product2
 
     <p>When your frontmatter contains <code class="highlighter-rouge">complex_map</code> equal to <code class="highlighter-rouge">true</code>, the following code gets activated in the page layout.html file:</p>
 
-    <p>```
-In the page.html layout, the following code gets activated when <code class="highlighter-rouge">map</code> equals <code class="highlighter-rouge">true</code>:</p>
-
-    <p>```
-    {% if page.complex_map == true %}</p>
-
-    <div class="highlighter-rouge"><pre class="highlight"><code>&lt;script&gt;
-    $(document).ready ( function(){
-        $('.modalButton{{page.box_number}}').addClass('active');
-    });
-&lt;/script&gt;
-    
-{% include custom/{{page.map_name}}.html %}
-    
-{% endif %}
-```  ```
+    <div class="highlighter-rouge"><pre class="highlight"><code>In the page.html layout, the following code gets activated when `map` equals `true`:
+        
 </code></pre>
+    </div>
+    <div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="err">%</span><span class="w"> </span><span class="err">if</span><span class="w"> </span><span class="err">page.complex_map</span><span class="w"> </span><span class="err">==</span><span class="w"> </span><span class="err">true</span><span class="w"> </span><span class="err">%</span><span class="p">}</span><span class="w">
+    
+</span><span class="err">&lt;script&gt;</span><span class="w">
+    </span><span class="err">$(document).ready</span><span class="w"> </span><span class="err">(</span><span class="w"> </span><span class="err">function()</span><span class="p">{</span><span class="w">
+        </span><span class="err">$('.modalButton{{page.box_number</span><span class="p">}</span><span class="err">}').addClass('active');</span><span class="w">
+    </span><span class="err">});</span><span class="w">
+</span><span class="err">&lt;/script&gt;</span><span class="w">
+    
+</span><span class="p">{</span><span class="err">%</span><span class="w"> </span><span class="err">include</span><span class="w"> </span><span class="err">custom/{{page.map_name</span><span class="p">}</span><span class="err">}.html</span><span class="w"> </span><span class="err">%}</span><span class="w">
+    
+</span><span class="p">{</span><span class="err">%</span><span class="w"> </span><span class="err">endif</span><span class="w"> </span><span class="err">%</span><span class="p">}</span><span class="w">
+</span><span class="err">```</span><span class="w">  </span><span class="err">```</span><span class="w">
+</span></code></pre>
     </div>
   </li>
 </ol>
@@ -906,7 +906,7 @@ In the page.html layout, the following code gets activated when <code class="hig
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
-<span>Page last updated:</span> July 16, 2016<br/> Site last generated: May 10, 2017 <br />
+<span>Page last updated:</span> July 16, 2016<br/> Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

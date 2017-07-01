@@ -423,7 +423,12 @@ $('#toc').on('click', 'a', function() {
   <p>This section lists the major known issues with vSphere Docker Volume Service. For complete list of issues please check our Github issues(https://github.com/vmware/docker-volume-vsphere/issues) page. If you notice an issue not listed in Github issues page, please do file a bug on the <a href="https://github.com/vmware/docker-volume-vsphere/issues">Github repo</a></p>
 
 <ul>
-  <li>Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) <a href="https://github.com/vmware/docker-volume-vsphere/issues/1191">#1191</a>. It’s an ESX issue and will be available in the next vSphere release.</li>
+  <li>
+    <p>Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) <a href="https://github.com/vmware/docker-volume-vsphere/issues/1191">#1191</a>. It’s an ESX issue and will be available in the next vSphere release.</p>
+  </li>
+  <li>
+    <p>Full volume name with format like “volume@datastore” cannot be specified in the compose file for stack deployment. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1315">#1315</a>. It is a docker compose issue and a workaround has been provided in the issue.</p>
+  </li>
 </ul>
 
   
@@ -442,7 +447,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

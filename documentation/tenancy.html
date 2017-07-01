@@ -527,7 +527,7 @@ datastore3  True          1.00GB           40.00GB
 Error response from daemon: create MyVolume: VolumeDriver.Create: volume size exceeds the max volume size limit
 </code></pre>
 </div>
-<p>The vDVS has restricted user from creating a volume of size &gt; 1 GB. Lets try to create volume on datastore other than the one which is set as default</p>
+<p>vDVS has restricted user from creating a volume of size &gt; 1 GB. Lets try to create volume on datastore other than the one which is set as default</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code># docker volume create --name=MyVolume@datastore1 --driver=vsphere -o size=2GB
 Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No create privilege
@@ -557,7 +557,7 @@ Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No 
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

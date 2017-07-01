@@ -422,7 +422,7 @@ $('#toc').on('click', 'a', function() {
 
   <h1 id="docker-volumes-on-esx">Docker volumes on ESX</h1>
 
-<p>Docker volumes on vSphere are powered by <a href="https://en.wikipedia.org/wiki/VMDK">VMDKs</a>. VMDKs can reside on datastores created on top of varying backends (NFS, SAN, VSAN, vVol). vSphere Docker Volume Service supports high availability for Docker volumes and allows for any VM requesting for the volume to gain access to it. The ability to attach the VMDK(Docker volume) to any VM when paired with a cluster manager such as Swarm allows a persistent container to be highly available.</p>
+<p>Docker volumes on vSphere are powered by <a href="https://en.wikipedia.org/wiki/VMDK">VMDKs</a>. VMDKs can reside on datastores created on top of varying backends (NFS, SAN, vSAN, vVol). vSphere Docker Volume Service supports high availability for Docker volumes and allows for any VM requesting for the volume to gain access to it. The ability to attach the VMDK(Docker volume) to any VM when paired with a cluster manager such as Swarm allows a persistent container to be highly available.</p>
 
 <p>The VMDKs on ESX are stored on the datastore in a folder that is independent of a VM.</p>
 
@@ -445,7 +445,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

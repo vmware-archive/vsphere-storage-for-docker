@@ -422,7 +422,7 @@ $('#toc').on('click', 'a', function() {
 
   <h1 id="docker-volumes-on-photon-platform">Docker volumes on Photon platform</h1>
 
-<p>Docker volumes on <a href="https://vmware.github.io/photon-controller">Photon platform</a> are provisioned, managed entirely via the Photon platform <a href="https://github.com/vmware/photon-controller/wiki/API">API</a>. Docker volumes are placed on datastores as decided by the Photon platform. The Photon platform selects datastores from within those that have been explicitly configured by the user on hosts managed by the Photon Controller and include backends such as NFS, SAN, VSAN, vVol. Accessibility of volumes to VMs running on the hosts is therefore dependent on whether the datastores are shared among hosts configured to the Photon platform. Accessibility of docker volumes on Photon is governed by the tenancy model of Photon, where each volume is scoped to a project within a tenant. Volumes are scoped to a project and hence accessible to all VMs within the same project. In addition, the count of volumes and storage capacity allocated (in total) to docker volumes within a project are managed via resource limits defined by the resource ticket associated with the tenant that the project belongs to. The Photon platform admin must hence take care to configure sufficient storage capacity, taking into consideration the max. number of volumes and the typical sizes of those. Once a configuration has been created, the Photon platform seamlessly manages accounting the count and storage capacity consumed by volumes in a project.</p>
+<p>Docker volumes on <a href="https://vmware.github.io/photon-controller">Photon platform</a> are provisioned, managed entirely via the Photon platform <a href="https://github.com/vmware/photon-controller/wiki/API">API</a>. Docker volumes are placed on datastores as decided by the Photon platform. The Photon platform selects datastores from within those that have been explicitly configured by the user on hosts managed by the Photon Controller and include backends such as NFS, SAN, vSAN, vVol. Accessibility of volumes to VMs running on the hosts is therefore dependent on whether the datastores are shared among hosts configured to the Photon platform. Accessibility of docker volumes on Photon is governed by the tenancy model of Photon, where each volume is scoped to a project within a tenant. Volumes are scoped to a project and hence accessible to all VMs within the same project. In addition, the count of volumes and storage capacity allocated (in total) to docker volumes within a project are managed via resource limits defined by the resource ticket associated with the tenant that the project belongs to. The Photon platform admin must hence take care to configure sufficient storage capacity, taking into consideration the max. number of volumes and the typical sizes of those. Once a configuration has been created, the Photon platform seamlessly manages accounting the count and storage capacity consumed by volumes in a project.</p>
 
 <script type="text/javascript" src="https://asciinema.org/a/80424.js" id="asciicast-80424" async=""></script>
 
@@ -443,7 +443,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

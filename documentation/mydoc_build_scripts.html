@@ -1031,8 +1031,6 @@ $('#toc').on('click', 'a', function() {
             
             
             
-            
-            
             <li class="active"> → 10. Configure the build scripts</li>
             
             
@@ -1074,7 +1072,7 @@ $('#toc').on('click', 'a', function() {
 
 <div class="alert alert-success" role="alert"><i class="fa fa-check-square-o"></i> <b>Tip:</b> In the descriptions of the build scripts, “mydoc” is used as the sample project. Substitute in whatever your real project name is.</div>
 
-<h3 id="mydoc1multiservepdfsh">mydoc_1_multiserve_pdf.sh</h3>
+<h3 id="mydoc_1_multiserve_pdfsh">mydoc_1_multiserve_pdf.sh</h3>
 
 <p>Here’s what this script looks like:</p>
 
@@ -1104,7 +1102,7 @@ echo "Now run . mydoc_2_multibuild_pdf.sh"
 
 <p>Customize the script with your own PDF configuration file names.</p>
 
-<h3 id="mydoc2multibuildpdfsh">mydoc_2_multibuild_pdf.sh</h3>
+<h3 id="mydoc_2_multibuild_pdfsh">mydoc_2_multibuild_pdf.sh</h3>
 
 <p>Here’s what this script looks like:</p>
 
@@ -1133,7 +1131,7 @@ echo "Now build the web outputs: . mydoc_3_multibuild_web.sh"
 
 <p>The Prince build script puts the output PDF into the mydoc/mydoc/files directory. Now you can reference the PDF file in your HTML site. For example, on the homepage you can allow people to download a PDF of the content at files/adtruth_dotnet_pdf.pdf.</p>
 
-<h3 id="mydoc3multibuildwebsh">mydoc_3_multibuild_web.sh</h3>
+<h3 id="mydoc_3_multibuild_websh">mydoc_3_multibuild_web.sh</h3>
 
 <p>Here’s what this script looks like:</p>
 
@@ -1159,7 +1157,7 @@ echo "Now push the builds to the server with . mydoc_4_publish.sh"
 
 <p>The <code class="highlighter-rouge">#</code> part below the <code class="highlighter-rouge">jekyll build</code> commands contains a serve command that is there for mere convenience in case you want to serve up just one site among many that you’re building. For example, if you don’t want to build everything — just one site — you might just use the serve command instead. (Anything after # in a YAML file comments out the content.)</p>
 
-<h3 id="mydoc4publishsh">mydoc_4_publish.sh</h3>
+<h3 id="mydoc_4_publishsh">mydoc_4_publish.sh</h3>
 
 <p>Here’s what this script looks like:</p>
 
@@ -1206,7 +1204,7 @@ cd ../../docs
 
 <p>Your delivery team can also grab the site output from these repos. After downloading it, the person unzips the folder and sees the website folders inside.</p>
 
-<h3 id="mydocallsh">mydoc_all.sh</h3>
+<h3 id="mydoc_allsh">mydoc_all.sh</h3>
 
 <p>Here’s what this script looks like:</p>
 
@@ -1223,8 +1221,6 @@ cd ../../docs
 <p>After setting up and customizing the build scripts, run a few tests to make sure everything is generating correctly. Getting this part right is somewhat difficult and may likely require you to tinker around with the scripts a while before it works flawlessly.</p>
 
 <p>
-    
-    
     
     
     
@@ -1542,7 +1538,7 @@ cd ../../docs
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
-<span>Page last updated:</span> November 30, 2016<br/> Site last generated: May 10, 2017 <br />
+<span>Page last updated:</span> November 30, 2016<br/> Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

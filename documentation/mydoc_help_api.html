@@ -763,7 +763,7 @@ $('#toc').on('click', 'a', function() {
 
 <p>To deliver help this way using Jekyll, follow the steps in each of the sections below.</p>
 
-<h2 id="create-a-collection-for-the-help-content">1. Create a “collection” for the help content</h2>
+<h2 id="1-create-a-collection-for-the-help-content">1. Create a “collection” for the help content</h2>
 
 <p>A collection is another content type that extends Jekyll beyond the use of pages and posts. Call the collection “tooltips.”</p>
 
@@ -779,7 +779,7 @@ $('#toc').on('click', 'a', function() {
 
 <p>In Jekyll, folders that begin with an underscore (“_”) aren’t included in the output. However, in the collection information that you add to your configuration file, if you change <code class="highlighter-rouge">output</code> to <code class="highlighter-rouge">true</code>, the tooltips folder will appear in the output, and each page inside tooltips will be generated. You most likely don’t want this for tooltips (you just want the JSON file), so make the <code class="highlighter-rouge">output</code> setting <code class="highlighter-rouge">false</code>.</p>
 
-<h2 id="create-tooltip-definitions-in-a-yaml-file">2. Create tooltip definitions in a YAML file</h2>
+<h2 id="2-create-tooltip-definitions-in-a-yaml-file">2. Create tooltip definitions in a YAML file</h2>
 
 <p>Inside the _data folder, create a YAML file called something like definitions.yml. Add the definitions for each of your tooltips here like this:</p>
 
@@ -789,7 +789,7 @@ $('#toc').on('click', 'a', function() {
 
 <p>The definition of basketball is stored this data file so that you can re-use it in other parts of the help as well. You’ll likely want the definition to appear not only in the tooltip in the UI, but also in the regular documentation as well.</p>
 
-<h2 id="create-pages-in-your-collection">3. Create pages in your collection</h2>
+<h2 id="3-create-pages-in-your-collection">3. Create pages in your collection</h2>
 
 <p>Create pages inside your new tooltips collection (that is, inside the _tooltips folder). Each page needs to have a unique <code class="highlighter-rouge">id</code> in the frontmatter as well as a <code class="highlighter-rouge">product</code>. Then reference the definition you created in the definitions.yml file.</p>
 
@@ -811,7 +811,7 @@ $('#toc').on('click', 'a', function() {
 
 <p>The product attribute is required in the frontmatter to distinguish the tooltips produced here from the tooltips for other products in the same _tooltips folder. When creating the JSON file, Jekyll will iterate through all the pages inside _tooltips, regardless of any subfolders included here.</p>
 
-<h2 id="create-a-json-file-that-loops-through-your-collection-pages">4. Create a JSON file that loops through your collection pages</h2>
+<h2 id="4-create-a-json-file-that-loops-through-your-collection-pages">4. Create a JSON file that loops through your collection pages</h2>
 
 <p>Now it’s time to create a JSON file with Liquid code that iterates through our tooltip collection and grabs the information from each tooltip file.</p>
 
@@ -872,11 +872,11 @@ search: exclude
 
 <p>By chunking up your JSON files, you can provide a quicker lookup. (I’m not sure how big the JSON file can be before you experience any latency with the jQuery lookup.)</p>
 
-<h2 id="build-your-site-and-look-for-the-json-file">5. Build your site and look for the JSON file</h2>
+<h2 id="5-build-your-site-and-look-for-the-json-file">5. Build your site and look for the JSON file</h2>
 
 <p>When you build your site, Jekyll will iterate through every page in your _tooltips folder and put the page id and body into this format. In the output, look for the JSON file in the tooltips.json file. You’ll see that Jekyll has populated it with content. This is because of the triple hyphen lines in the JSON file — this instructs Jekyll to process the file.</p>
 
-<h2 id="allow-cors-access-to-your-help-if-stored-on-a-remote-server">6. Allow CORS access to your help if stored on a remote server</h2>
+<h2 id="6-allow-cors-access-to-your-help-if-stored-on-a-remote-server">6. Allow CORS access to your help if stored on a remote server</h2>
 
 <p>You can simply deliver the JSON file to devs to add to the project. But if you have the option, it’s best to keep the JSON file stored in your own help system. Assuming you have the ability to update your content on the fly, this will give you completely control over the tooltips without being tied to a specific release window.</p>
 
@@ -931,7 +931,7 @@ search: exclude
 
 <div class="alert alert-success" role="alert"><i class="fa fa-check-square-o"></i> <b>Tip:</b> If enabling CORS is problematic, you could always just send developers the tooltips.json file and ask them to place it on their own server.</div>
 
-<h2 id="explain-how-developers-can-access-the-help">7. Explain how developers can access the help</h2>
+<h2 id="7-explain-how-developers-can-access-the-help">7. Explain how developers can access the help</h2>
 
 <p>Developers can access the help using the <code class="highlighter-rouge">.get</code> method from jQuery, among other methods. Here’s an example of how to get tooltips for basketball, baseball, football, and soccer:</p>
 
@@ -1004,7 +1004,7 @@ search: exclude
 
 <p>View the source code of the <a target="_blank" href="tooltips.html" class="noCrossRef">tooltip demo</a> for the full comments.</p>
 
-<h2 id="create-easy-links-to-embed-the-help-in-your-help-site">8. Create easy links to embed the help in your help site</h2>
+<h2 id="8-create-easy-links-to-embed-the-help-in-your-help-site">8. Create easy links to embed the help in your help site</h2>
 
 <p>You might also want to insert the same content into different parts of your help site. For example, if you have tooltips providing definitions for fields, you’ll probably want to create a page in your help that lists those same definitions.</p>
 
@@ -1118,7 +1118,7 @@ search: exclude
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
-<span>Page last updated:</span> July 3, 2016<br/> Site last generated: May 10, 2017 <br />
+<span>Page last updated:</span> July 3, 2016<br/> Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

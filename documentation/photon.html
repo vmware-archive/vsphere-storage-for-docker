@@ -421,7 +421,7 @@ $('#toc').on('click', 'a', function() {
     
 
   <h2 id="photon-platform-introduction">Photon Platform: Introduction</h2>
-<p>Docker volumes on <a href="https://vmware.github.io/photon-controller">Photon platform</a> are provisioned, managed entirely via the Photon platform <a href="https://github.com/vmware/photon-controller/wiki/API">API</a>. Docker volumes are placed on datastores as decided by the Photon platform. The Photon platform selects datastores from within those that have been explicitly configured by the user on hosts managed by the Photon Controller and include backends such as NFS, SAN, VSAN, vVol. Accessibility of volumes to VMs running on the hosts is therefore dependent on whether the datastores are shared among hosts configured to the Photon platform. Accessibility of docker volumes on Photon is governed by the tenancy model of Photon, where each volume is scoped to a project within a tenant. Volumes are scoped to a project and hence accessible to all VMs within the same project. In addition, the count of volumes and storage capacity allocated (in total) to docker volumes within a project are managed via resource limits defined by the resource ticket associated with the tenant that the project belongs to. The Photon platform admin must hence take care to configure sufficient storage capacity, taking into consideration the max. number of volumes and the typical sizes of those. Once a configuration has been created, the Photon platform seamlessly manages accounting the count and storage capacity consumed by volumes in a project.</p>
+<p>Docker volumes on <a href="https://vmware.github.io/photon-controller">Photon platform</a> are provisioned, managed entirely via the Photon platform <a href="https://github.com/vmware/photon-controller/wiki/API">API</a>. Docker volumes are placed on datastores as decided by the Photon platform. The Photon platform allocates storage objects based on disk storage settings based on a <a href="https://github.com/vmware/photon-controller/wiki/Tenants,-Quotas,-and-Projects">Project</a> and only includes vSAN as backend. Accessibility of volumes to VMs running on the hosts is therefore dependent on whether the datastores are shared among hosts configured to the Photon platform. Accessibility of docker volumes on Photon is governed by the tenancy model of Photon, where each volume is scoped to a project within a tenant. Volumes are scoped to a project and hence accessible to all VMs within the same project. In addition, the count of volumes and storage capacity allocated (in total) to docker volumes within a project are managed via Quotas with the tenant that the project belongs to. The Photon platform admin must hence take care to configure sufficient storage capacity, taking into consideration the max. number of volumes and the typical sizes of those. Once a configuration has been created, the Photon platform seamlessly manages accounting the count and storage capacity consumed by volumes in a project.</p>
 
 <h2 id="vdvs-with-photon-platform">vDVS with Photon Platform</h2>
 
@@ -515,8 +515,8 @@ vsphere                minio2@vsanDatastore
 photon                 redis-data@vsanDatastore
 </code></pre>
 </div>
-<p>### Inspect Volumes
-You can use <code class="highlighter-rouge">docker volume inspect</code> command to see attributes of a particular volume.</p>
+<h3 id="inspect-volumes">Inspect Volumes</h3>
+<p>You can use <code class="highlighter-rouge">docker volume inspect</code> command to see attributes of a particular volume.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>#docker volume create —driver=photon —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
 
@@ -575,7 +575,7 @@ db_data
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

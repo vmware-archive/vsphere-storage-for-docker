@@ -424,7 +424,7 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="multiple-datastores-support">Multiple datastores Support</h2>
 
-<p>By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. The vDVS allows you to create a volume on any of the datastores available.</p>
+<p>By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. vDVS allows you to create a volume on any of the datastores available.</p>
 
 <h2 id="default-datastore">Default datastore</h2>
 <p>By default when you just specify name of volume - it is created in the datastore that hosts the VM.</p>
@@ -444,7 +444,7 @@ defaultDsVolume.vmdk
 
 <h2 id="custom-datastore">Custom datastore</h2>
 
-<p>To choose a datastore other than one in which VM is hosted, you have to specify name and append the datastore name with a <code class="highlighter-rouge">@</code> symbol.</p>
+<p>To choose a datastore other than one in which VM is hosted, you have to specify name and append the datastore name with <code class="highlighter-rouge">@</code> symbol.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>$docker volume create --driver=vsphere --name=ds1volume@datastore1 -o size=10gb
 
@@ -453,7 +453,7 @@ ds1volume@datastore1
 </div>
 <p>We can check that volume is created in the datastore1</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$esx ls /vmfs/volumes/datastore1/dockvols
+<div class="highlighter-rouge"><pre class="highlight"><code>$esx ls /vmfs/volumes/datastore1/dockvols/&lt;VMGROUP_NAME&gt;/ds1volume
 
 ds1volume.vmdk
 </code></pre>
@@ -473,6 +473,13 @@ photon			ds2volume@datastore2
 </code></pre>
 </div>
 
+<p>Datastore for a volume is decided as shown below (preference from top to bottom)</p>
+
+<ol>
+  <li>Using volume long/fully qualified name (with @<datastore_name>): volume is created on custom datastore</datastore_name></li>
+  <li>Using short name (not passed @<datastore_name>): volume is created on the vmgroup's default_datastore.</datastore_name></li>
+</ol>
+
   
 
     <div class="tags">
@@ -489,7 +496,7 @@ photon			ds2volume@datastore2
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: May 10, 2017 <br />
+ Site last generated: Jul 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
