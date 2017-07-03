@@ -1,4 +1,8 @@
-# Short Volume names
+---
+title: Short Volume names
+---
+
+## Short Volume names
 Short Volume Name can contain up to a 100 characters.
 All characters are allowed, but the last '@' will be interpreted as a separator
 between volume and datastore name (see below).
@@ -8,7 +12,7 @@ during VM snapshots). Examples: `MyVolume_fast.12`,  `_12SuperStorage`,
 `super-volume-200` are all valid names, while `myVolume-000012` is not valid.
 
 
-# Full volume names
+## Full volume names
 Full volume name is a combination of Short Volume name and datastore name,
 separated by @ symbol.
 Datastore name is a vSphere Datastore , e.g. vsanDatastore.
@@ -16,7 +20,7 @@ Examples: `BigFatDisk@vsanDatastore` or `myVol123.33@datastore255`.
 Datastore name length is limited to 100 characters.
 
 
-# Default datastore 
+## Default datastore 
 
 Our approach is `if you do not care about specific datastore, use just the volume name and the rest will be taken care of`.
 
@@ -41,7 +45,7 @@ vsphere         volume1@vsanDatastore
 vsphere         volume2@vsanDatastore
 ```
 
-# Volume name usage
+## Volume name usage
 volume@datastore can be used anywhere where `volume name` is needed - i.e. in 'docker run -v **volume**:/path ...' ,
 'docker volume create', 'docker volume rm', docker volume inspect'. In all cases, using short volume name (with no datastore) will refer to the volume 
 with the given name located on the same datastore where the Docker VM is located.

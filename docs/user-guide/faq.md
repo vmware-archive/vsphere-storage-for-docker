@@ -1,21 +1,23 @@
-[TOC]
+---
+title: FAQs
+---
 
-# General
+## General
 
-## Where do I get the binaries ? What about the source ?
+### Where do I get the binaries? What about the source?
 Please look at [GitHub Releases](https://github.com/vmware/docker-volume-vsphere/releases) for binaries. Github releases allow downloading of source for a release in addition to git clone.
 
-## How to install and use the driver?
+### How to install and use the driver?
 Please see README.md in the for the release by clicking on the tag for the release. Example: [README](https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2)
 
-## How do I run the setup on my laptop?
+### How do I run the setup on my laptop?
 Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack)
 
-# Troubleshooting
+## Troubleshooting
 
-## Docker Service to ESX Backend Communication.
+### Docker Service to ESX Backend Communication.
 
-### What is VMCI and vSock and why is it needed?
+#### What is VMCI and vSock and why is it needed?
 
 vSphere Docker Volume Service uses VMCI and vSock to communicate with the hypervisor to implement the volume operations. It comes installed on Photon OS and on Ubuntu follow [VMware tools installation](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.vm_admin.doc/GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F.html#GUID-08BB9465-D40A-4E16-9E15-8C016CC8166F) or use open vmtools
 ```apt-get install open-vm-tools```.
@@ -24,7 +26,7 @@ Additional reading for differences between VMware tools and open vm tools:
 * [Open-VM-Tools (OVT): The Future Of VMware Tools For Linux](http://blogs.vmware.com/vsphere/2015/09/open-vm-tools-ovt-the-future-of-vmware-tools-for-linux.html)
 * [VMware Tools vs Open VM Tools](http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools)
 
-### I see "connection reset by peer (errno=104)" in the [service's logs](https://github.com/vmware/docker-volume-vsphere#logging), what is the cause?
+#### I see "connection reset by peer (errno=104)" in the [service's logs](https://github.com/vmware/docker-volume-vsphere#logging), what is the cause?
 104 is a standard linux error (```#define ECONNRESET      104     /* Connection reset by peer */```)
 
 It occurs if the Docker volume service cannot communicate to the ESX back end. This can happen if:
@@ -32,18 +34,18 @@ It occurs if the Docker volume service cannot communicate to the ESX back end. T
    * ESX service is not running. ```/etc/init.d/vmdk-opsd status```. Check [ESX Logs](https://github.com/vmware/docker-volume-vsphere#logging)
    * ESX service and the docker volume service are not communicating on the same port. ```ps -c | grep vmdk #On ESX``` and ```ps aux| grep docker-volume-vsphere # On VM``` check the port param passed in and make sure they are the same
 
-### I see "address family not supported by protocol (errno=97)" in the [service's logs](https://github.com/vmware/docker-volume-vsphere#logging), what is the cause?
+#### I see "address family not supported by protocol (errno=97)" in the [service's logs](https://github.com/vmware/docker-volume-vsphere#logging), what is the cause?
 97 is a standard linux error (```#define EAFNOSUPPORT    97      /* Address family not supported by protocol */```)
 
 It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read ["What is VMCI and vSock and why is it needed?"](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed) above.
 
-### I'm not able to create volume after upgrading to vDVS managed plugin, what is the cause?
+#### I'm not able to create volume after upgrading to vDVS managed plugin, what is the cause?
 ```
 # docker volume create -d vsphere vol5
 Error response from daemon: create vol5: Post http://%2Frun%2Fdocker%2Fplugins%2Fvsphere.sock/VolumeDriver.Create: dial unix /run/docker/plugins/vsphere.sock: connect: no such file or directory
 ```
 
-You are running into known [Docker Issue #32635](https://github.com/docker/docker/issues/32635). Restart docker service is required.
+Restart docker service is required.
 
 e.g.
 ```
@@ -135,14 +137,12 @@ Step 4: Recreate the vmgroup configuration with new name “new-vmgroup1” (ass
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6 --default-datastore=datastore1
 vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name           Description                 Default_datastore  VM_list
 ------------------------------------  -------------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vmgroup
 5c0927fb-86b5-4034-87db-8bdfa24018d4  new-vmgroup1                              datastore1         photon-6
-
-
-
 ```
 
 Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vmgroup1” which was created before will not be visible

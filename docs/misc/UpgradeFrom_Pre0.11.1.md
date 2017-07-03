@@ -1,6 +1,10 @@
-# Update from Release 0.11
+---
+title: Update from Release 0.11
+---
 
-# Issue
+## Update from Release 0.11
+
+## Issue
 Release 0.11 has a regression introduced by Tenant feature.
 
 This regression impacts visibility of Docker volumes created by a Docker VM running on another ESX node

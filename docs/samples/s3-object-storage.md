@@ -1,4 +1,6 @@
-# S3 Object Storage with vSphere Volumes
+---
+title: S3 Object Storage with vSphere Volumes
+---
 
 [Minio](https://www.minio.io/) is lightweight AWS S3 compatible object storage server built for cloud applications.
 
@@ -6,10 +8,10 @@ vSphere Docker Volume Service (vDVS) enables running stateful containers backed 
 
 With Minio’s simple object storage layer and VMware’s highly available vSphere Docker Volumes, you can reliably run any application that requires object storage with vDVS for e.g. Docker Trusted Registry.
 
-
 ## Launch Minio with vDVS and Docker Swarm
 
 Minio Stack (vMinio.yml):
+
 ```
 version: "3"
 
@@ -44,11 +46,13 @@ volumes:
 ```
 
 Deploy Minio Stack:
+
 ```
 docker stack deploy -c vMinio.yml minio
 ```
 
 Check Minio has started successfully:
+
 ```
 docker stack ps minio
 ```
@@ -65,6 +69,7 @@ vsphere:latest      minio_export@datastore1
 ```
 
 ## Accessing Minio Object Storage:
+
 -	Point your browser to [http://Swarm-Master-IP:9000](http://Swarm-Master-IP:9000) and login using credentials specified in compose file.
 
 -	You can also access Minio Object Storage using [CLI, API](http://docs.minio.io/)
