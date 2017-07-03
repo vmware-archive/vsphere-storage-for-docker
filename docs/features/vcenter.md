@@ -1,5 +1,3 @@
-###...
-
 # vCenter Integration
 
 vCenter Plugin integration is under development.
