@@ -145,10 +145,7 @@ func GetEsxIP() string {
 func getInstance() *TestConfig {
 	noVMName := "no such VM"
 	config = new(TestConfig)
-	config.EsxHost = os.Getenv("ESX")
-	if config.EsxHost == "" {
-		log.Fatal("ESX host not found. Stopping the test run.")
-	}
+	config.EsxHost = GetEsxIP()
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
 	if config.DockerHosts[0] == "" && config.DockerHosts[1] == "" {

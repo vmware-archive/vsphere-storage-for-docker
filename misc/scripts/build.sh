@@ -139,8 +139,8 @@ else
     -e "ESX=$ESX" \
     -e "VM1=$VM1" \
     -e "VM2=$VM2" \
-    -e "GOVC_INSECURE=$GOVC_INSECURE" \
-    -e "GOVC_URL=$GOVC_URL" \
+    -e "GOVC_INSECURE=1" \
+    -e "GOVC_URL=$ESX" \
     -e "GOVC_USERNAME=$GOVC_USERNAME" \
     -e "GOVC_PASSWORD=$GOVC_PASSWORD" \
     -e "MANAGER1=$MANAGER1" \

@@ -108,10 +108,8 @@ correct environment.
 - The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use [managed plugin](https://github.com/vmware/docker-volume-vsphere/blob/master/plugin/Makefile#L30).
 If you want to user another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
 
-- Test verification is extended using gvmomi integration and `govc` cli is **required to set** following environment variables.
-  - `GOVC_INSECURE` as `1`
-  - `GOVC_URL` same as `ESX IP`
-  - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials logging in to `ESX IP`
+- Test verification is extended using govmomi integration and `govc` cli is **required to set** following environment variables.
+  - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials for logging in to `ESX IP`
 
 - You **need** to set following environment variables to run swarm cluster related tests. You **need** to configure swarm cluster in order to run swarm related testcase otherwise there will be a test failure. As mentioned above, you may reuse the same set of VMs here; no need to create separately.
 
@@ -135,8 +133,6 @@ export VM1=10.20.105.121
 export VM2=10.20.104.210
 export VM3=10.20.104.241
 export DOCKER_HUB_REPO=cnastorage
-export GOVC_INSECURE=1
-export GOVC_URL=10.20.105.54
 export GOVC_USERNAME=root
 export GOVC_PASSWORD=<ESX login passwd>
 export MANAGER1=10.20.105.122
