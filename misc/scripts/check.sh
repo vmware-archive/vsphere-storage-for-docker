@@ -84,7 +84,12 @@ then
    printNQuit "GOPATH environment variable needs to be set"
 fi
 
+if [ "$1" == "global" ]
+then
+EXPECTED_PATH="$GOPATH/src/github.com/vmware/docker-volume-vsphere/global_plugin"
+else
 EXPECTED_PATH="$GOPATH/src/github.com/vmware/docker-volume-vsphere/vmdk_plugin"
+fi
 
 if [[ "$EXPECTED_PATH" != "$PWD" ]]
 then

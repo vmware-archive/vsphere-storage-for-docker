@@ -1,0 +1,65 @@
+{
+	"Description": "VMWare Global Docker Volume plugin",
+	"Documentation": "http://vmware.github.io/docker-volume-vsphere/documentation",
+	"Entrypoint": ["/usr/bin/docker-volume-global",
+					"--config", "/etc/docker-volume-global.conf"
+	],
+	"PropagatedMount": "/mnt/global",
+	"Mounts": [
+		{
+			"Description" : "The plugin uses dev to mount volumes and watch for attaches",
+			"Source" : "/dev",
+			"Destination" : "/dev",
+			"Type": "bind",
+			"Options": ["rbind", "shared"]
+		},
+		{
+			"Description" : "The plugin uses /var/run/docker.sock to ask Docker some questions",
+			"Source" : "/var/run",
+			"Destination" : "/var/run",
+			"Type": "bind",
+			"Options": ["rbind"]
+		},
+		{
+			"Description" : "Location to look for config file (/etc/docker-volume-global.conf)",
+			"Source" : "/etc",
+			"Destination" : "/etc",
+			"Type": "bind",
+			"Options": ["rbind"]
+		},
+		{
+			"Description" : "Expose plugin logs in /var/log/docker-volume-global.log",
+			"Source" : "/var/log",
+			"Destination" : "/var/log",
+			"Type": "bind",
+			"Options": ["rbind"]
+		}
+	],
+	"Network": {
+		"Type": ""
+	},
+	"Interface" : {
+		"Types": ["docker.volumedriver/1.0"],
+		"Socket": "vsphere.sock"
+	},
+	"Linux": {
+		"AllowAllDevices": true,
+		"Capabilities": ["CAP_SYS_ADMIN"],
+		"Devices": null
+
+	},
+	"Env": [ {
+      "name": "VDVS_LOG_LEVEL",
+      "description": "Log level - info, warn, error or debug",
+      "value": "info",
+      "Settable": [ "value"]
+	},
+	{
+      "name": "VDVS_TEST_PROTOCOL_VERSION",
+      "description": "Client protocol version used in test",
+      "value": "",
+      "Settable": [ "value"]
+	}
+	]
+}
+

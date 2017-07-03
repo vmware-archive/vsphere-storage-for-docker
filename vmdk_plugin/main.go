@@ -31,6 +31,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/photon"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/log_formatter"
 )
 
 // PluginServer responds to HTTP requests from Docker.
@@ -58,6 +59,10 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 	}
 
 	path := c.LogPath
+	if path == "" {
+		path = config.DefaultLogPath
+	}
+
 	if logFile != nil {
 		path = *logFile
 	}
@@ -76,7 +81,7 @@ func logInit(logLevel *string, logFile *string, configFile *string) bool {
 		panic(fmt.Sprintf("Failed to parse log level: %v", err))
 	}
 
-	log.SetFormatter(new(VmwareFormatter))
+	log.SetFormatter(new(log_formatter.VmwareFormatter))
 	log.SetLevel(level)
 
 	if usingConfigDefaults {

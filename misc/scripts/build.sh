@@ -96,6 +96,7 @@ host_dir=$PWD/..
 MAKE="$DEBUG make --directory=vmdk_plugin"
 MAKE_UI="$DEBUG make --directory=ui"
 MAKE_ESX="$DEBUG make --directory=esx_service"
+MAKE_GLOBAL="$DEBUG make --directory=global_plugin"
 
 DOCKER="$DEBUG docker"
 
@@ -121,6 +122,25 @@ then
 elif [ "$1" == "pylint" ]
 then
   $DOCKER run --rm  -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
+elif [ "$1" == "global" ]
+then
+  docker_socket=/var/run/docker.sock
+  if [ -z $SSH_KEY_OPT ]
+  then
+    SSH_KEY_OPT="-i /root/.ssh/id_rsa"
+  fi
+  ssh_key_opt_container=`echo $SSH_KEY_OPT | cut -d" " -f2`
+  ssh_key_path=$SSH_KEY_PATH
+  if [ -z $ssh_key_path ]
+  then
+    ssh_key_path=~/.ssh/id_rsa
+  fi
+  $DOCKER run --privileged --rm  \
+    -e "PKG_VERSION=$PKG_VERSION" \
+    -e "INCLUDE_UI=$INCLUDE_UI" \
+    -v $docker_socket:$docker_socket  \
+    -v $ssh_key_path:$ssh_key_opt_container:ro \
+    -v $PWD/..:$dir -w $dir $plug_container $MAKE_GLOBAL build
 else
   docker_socket=/var/run/docker.sock
   if [ -z $SSH_KEY_OPT ]

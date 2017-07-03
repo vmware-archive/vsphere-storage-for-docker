@@ -33,6 +33,7 @@ import (
 	"github.com/docker/engine-api/types/strslice"
 	testutil "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/log_formatter"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/net/context"
 )
@@ -86,7 +87,7 @@ func init() {
 		"conf_file":                *configFile,
 		"using_conf_file_defaults": usingConfigFileDefaults,
 	}).Info("VMDK plugin tests started ")
-	log.SetFormatter(new(VmwareFormatter))
+	log.SetFormatter(new(log_formatter.VmwareFormatter))
 }
 
 // returns in-container mount point for a volume

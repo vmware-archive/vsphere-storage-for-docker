@@ -42,11 +42,16 @@ build-all: dockerized-build-ui
 	$(MAKE) --directory=vmdk_plugin $@
 	$(MAKE) --directory=plugin all
 
+build-global: dockerized-build-ui
+	$(MAKE) --directory=global_plugin build-all
+	$(MAKE) --directory=global_plugin_docker all
+
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders
 # as root.
 clean: dockerized-clean-ui
 	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=global_plugin $@
 
 # Non dockerized build, used by CI
 build:
@@ -54,6 +59,7 @@ ifeq ($(INCLUDE_UI), true)
 	$(MAKE) --directory=ui $@
 endif
 	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=global_plugin $@
 
 # Forward to UI inside docker run
 dockerized-build-ui:

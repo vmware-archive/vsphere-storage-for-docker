@@ -24,4 +24,8 @@ var (
 	DefaultConfigPath = filepath.Join(os.Getenv("PROGRAMDATA"), "docker-volume-vsphere", "docker-volume-vsphere.conf")
 	// DefaultLogPath is the default location of the log (trace) file.
 	DefaultLogPath = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "logs", "docker-volume-vsphere.log")
+	// DefaultGlobalConfigPath is the default location of the config file.
+	DefaultGlobalConfigPath = filepath.Join(os.Getenv("PROGRAMDATA"), "docker-volume-global", "docker-volume-global.conf")
+	// DefaultGlobalLogPath is the default location of the log (trace) file.
+	DefaultGlobalLogPath = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-global", "logs", "docker-volume-global.log")
 )
