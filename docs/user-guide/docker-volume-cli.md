@@ -1,100 +1,109 @@
-# Using the Service in Docker
+---
+title: Docker Volume Management
+---
 
-The Docker volume commands are supported for both the vSphere and Photon platforms with minor differences in capabilities. Features that are specific to either of the platforms are mentioned explicitly below.
-<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
+## Creation and management of docker volumes
+The docker volume commands are completely supported by vDVS plugin. This section demonstrates use of various commands with examples.
 
-## Docker volume create options
-### size
+
+##### Size
+You can specify the size of volume while creating a volume. Supported units of sizes are mb, gb and tb. By default if you don’t specify the size, a 100MB volume is created.
 
 ```
-docker volume create --driver=<vsphere/photon> --name=MyVolume -o size=10gb
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb
 ```
 
-The volume units can be ```mb, gb and tb```
+##### File System Type (fstype)
+You can specify the filesystem which will be used it to create the volumes. The docker plugin will look for existing filesystesm in /sbin/mkfs.fstype but if the specified filesystem is not found then it will return a list for which it has found mkfs. The default filesystem if not specified is ext4.
 
-The default volume size is 100mb
+```
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o fstype=xfs
+docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o fstype=ext4 (default)
 
-### vsan-policy-name (vSphere only)
+```
+
+##### vsan-policy-name
+For the vSphere driver you can specify the vsan policy name. The policy itself must be created or should be present before using this in volume creation. You can use vmdkops-admin-cli for creation of policy. The syntax for passing policy name while creating volume looks like this:
 
 ```
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o vsan-policy-name=allflash
+
 ```
 
-Policy needs to be created via the vmdkops-admin-cli. Once policy is created, it can be addressed during create by passing the ```-o vsan-policy-name``` flag.
+You can find more details about policy management using vSAN in page [Storage policy based management](policy-based-management.md)
 
-### diskformat (vSphere only)
+##### Disk Format (diskformat)
+The docker volumes are backed by VMDK and VMDKs support multiple [types](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242). At the moment following types of VMDKs are supported:
+
+<table class="table table-striped table-hover ">
+  <thead>
+    <tr>
+      <th>VMDK Type </th>
+      <th>Abbreviation to be used in volume command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Thick Provision Lazy Zeroed</td>
+      <td>zeroedthick</td>
+    </tr>
+    <tr>
+      <td>Thin Provision</td>
+      <td>thin</td>
+    </tr>
+    <tr>
+      <td>Thick Provision Eager Zeroed</td>
+      <td>eagerzeroedthick</td>
+    </tr>
+</tbody>
+</table>
+
 ```
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat=zeroedthick
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat=thin
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat=eagerzeroedthick
 ```
 
-Docker volumes are backed by VMDKs. VMDKs support multiple [types](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)
+##### Disk Modes (attach-as)
+Docker volumes used in vDVS are backed by VMDKs. VMDKs are attached to hosts on which containers are running. These VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
 
-Currently the following are supported
+1. Persistent mode: In persistent mode the VMDK becomes part of the VM snapshot if a snapshot of the VM is taken while VMDK was attached.
+2. Independent Persistent Mode: In the independent persistent mode the VMDK snapshotting is indepedent of the VM snapshot lifecycle. Even if a snapshot of the VM is taken while the Volume is attached to host, the volume VMDK does not become part of the VM snapshot.
 
-1. Thick Provision Lazy Zeroed ([zeroedthick]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
-2. Thin Provision ([thin]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
-3. Thick Provision Eager Zeroed ([eagerzeroedthick]((https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242)))
-
-### attach-as (vSphere only)
 ```
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=independent_persistent
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o attach-as=persistent
 ```
-Docker volumes are backed by VMDKs. VMDKs are attached to the VM in which Docker is requesting for a volume during Docker run. VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
 
-Currently the following are supported
+##### Clone Volume (clone-from)
 
-1. [persistent](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/): If the VMDK is attached as persistent it will be part of a VM snapshot. If a VM snapshot has been taken while the Docker volume is attached to a VM, the Docker volume then continues to be attached to the VM that was snapshotted.
-2. [independent_persistent](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/): If the VMDK is attached as independent_persistent it will not be part of a VM snapshot. The Docker volume can be attached to any VM that can access the datastore independent of snapshots.
+When creating a new volume, you can specificy a volume to clone and create a new one. This is a complete new volume of which you can change all parameters except size and fstype.
 
-### access (vSphere only)
-```
-docker volume create --driver=vsphere --name=MyVolume -o access=read-only -o diskformat=thin
-docker volume create --driver=vsphere --name=MyVolume -o access=read-write -o diskformat=thin (default)
-```
 
-The access mode determines if the volume is modifiable by containers in a VM. The access mode allows to first create a volume with write access and initialize it with binary images, libraries (for exmple), and subsequently change the access to "read-only" (via the admin CLI). Thereby, creating content sharable by all containers in a VM.
-
-### fstype
-```
-docker volume create --driver=<vsphere/photon> --name=MyVolume -o size=10gb -o fstype=xfs
-docker volume create --driver=<vsphere/photon> --name=MyVolume -o size=10gb -o fstype=ext4 (default)
-```
-
-Specifies which filesystem will be created on the new volume. vSphere Docker Volume Service will search for a existing /sbin/mkfs.**fstype** on the docker host to create the filesystem, and if not found it will return a list of filesystems for which it has found a corresponding mkfs. The specified filesystem must be supported by the running kernel and support labels (-L flag for mkfs). Defaults to ext4 if not specified. 
-
-### clone-from (vSphere only)
 ```
 docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume -o access=read-only
 docker volume create --driver=vsphere --name=CloneVolume -o clone-from=MyVolume -o diskformat=thin (default)
 ```
 
-Specifies a volume to be cloned when creating a new volume. The created clone is completely independent from the original volume and will inherit the same options, which can be changed with the exception of the size and fstype.
- 
-### flavor (Photon only)
-```
-docker volume create --driver=vsphere --name=CloneVolume -o flavor=<Photon persistent disk flavor name>
-```
+## List Volumes
+Docker volume list can be used to volume names & their DRIVER type
 
-The flavor specifies the name of the persistent disk flavor that must have already been created in the Photon Controller. The flavor indicats the resource limits that are applied to the volume being created.
-
-## Docker volume list
 ```
 docker volume ls
 DRIVER              VOLUME NAME
 vsphere                MyVolume@vsanDatastore
 vsphere                minio1@vsanDatastore
 vsphere                minio2@vsanDatastore
-vsphere                redis-data@vsanDatastore
+photon                 redis-data@vsanDatastore
 ```
-## Docker volume inspect
-You can use `docker volume inspect` command to see vSphere attributes of a particular volume.
+
+## Inspect Volume
+You can use docker volume inspect command to see vSphere attributes of a particular volume.
+
 ```
 docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
-```
-```
+
+
 docker volume inspect MyVolume
 [
     {
@@ -127,28 +136,24 @@ docker volume inspect MyVolume
     }
 ]
 ```
-Note: For disk formats zeroedthick and zeroedthick, the allocated size would be total size plus the size of replicas.
 
-## Docker Compose
-```
-cat nginx-stack-vsphere.yaml 
-version: "3"
-services:
-  nginx:
-    image: nginx
-    ports:
-      - "5000:80"
-    volumes:
-      - log:/var/log/nginx
-    deploy:
-      replicas: 1 
-      restart_policy:
-        condition: on-failure
+Note: For disk formats zeroedthick and thin, the allocated size would be total size plus the size of replicas.
 
-volumes:
-   log:
-      driver: vsphere
+
+## Remove Volume
+You can remove the volume with following command
+
 ```
+# docker volume rm db_data
+db_data
 ```
-docker stack deploy -c  nginx-stack-vsphere.yaml nginx
-```
+
+## Prune Volume
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h6 class="panel-title">Docker volume prune</h6>
+  </div>
+  <div class="panel-body">
+    Docker volume prune command is not supported at the moment.
+  </div>
+</div>
