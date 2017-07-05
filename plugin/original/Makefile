@@ -62,7 +62,7 @@ PLUGIN_TAG := $(VERSION_TAG)$(EXTRA_TAG)
 PLUGIN_NAME=$(DOCKER_HUB_REPO)/docker-volume-vsphere
 
 # Binaries we want to pick up from the actual build
-BIN_LOC := ../build
+BIN_LOC := ../../build
 BINARY := docker-volume-vsphere
 
 # Tmp docker image used to construct rootfs + our binaries
