@@ -59,4 +59,10 @@ const (
 
 	// ListVMs refers to govc vm ls
 	ListVMs = govcCmd + "ls "
+
+	// TakeSnapshot takes a snapshot of a VM
+	TakeSnapshot = govcCmd + "snapshot.create -vm %s %s"
+
+	// RemoveSnapshot removes a snapshot of a VM
+	RemoveSnapshot = govcCmd + "snapshot.remove -vm %s %s"
 )

@@ -27,6 +27,7 @@ package esx
 import (
 	"log"
 	"strings"
+	"fmt"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
@@ -42,7 +43,8 @@ const (
 func RetrieveVMNameFromIP(ip string) string {
 	// log.Printf("Finding VM name from IP Address [%s]\n", ip)
 	cmd := esx.VMInfoByIP + ip + esxcliJSON + esx.VMName
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // GetVMPowerState util retrieves VM's current power state
@@ -50,7 +52,8 @@ func RetrieveVMNameFromIP(ip string) string {
 func GetVMPowerState(vmName string) string {
 	// log.Printf("Retrieving VM power state for [%s]\n", vmName)
 	cmd := esx.VMInfo + esx.JSONTypeOutput + vmName + " | " + esx.JSONParser + esx.VMPowerState
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // PowerOnVM util powers on the VM
@@ -58,7 +61,8 @@ func GetVMPowerState(vmName string) string {
 func PowerOnVM(vmName string) string {
 	// log.Printf("Powering on VM [%s]\n", vmName)
 	cmd := esx.PowerOnVM + vmName
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // PowerOffVM util powers off the VM
@@ -66,35 +70,39 @@ func PowerOnVM(vmName string) string {
 func PowerOffVM(vmName string) string {
 	// log.Printf("Powering off VM [%s]\n", vmName)
 	cmd := esx.PowerOffVM + vmName
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // GetDatastoreList returns a list of datastore names available
 func GetDatastoreList() []string {
 	// log.Printf("Finding Datastores available on ESX")
 	cmd := esx.DatastoreInfo + esxcliJSON + esx.DatastoreList
-	out := ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
 	return strings.Fields(out)
 }
 
 // GetDatastoreByType returns the datastore name of type specified
 func GetDatastoreByType(typeName string) string {
 	cmd := esx.DatastoreInfo + esxcliJSON + " '.Datastores[].Summary | select(.Type==\"" + typeName + "\") | .Name'"
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // CreateVM creates a vm on the specified ds and esx
 func CreateVM(vmName, datastore, networkAdapterType string) string {
 	log.Printf("Creating a vm [%s] \n", vmName)
 	cmd := esx.VMCreate + datastore + " -on=false -link=false -net.adapter=" + networkAdapterType + " " + vmName
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // DestroyVM deletes a vm
 func DestroyVM(vmName string) string {
 	log.Printf("Deleting a vm - %s \n", vmName)
 	cmd := esx.VMDestroy + vmName
-	return ssh.InvokeCommandLocally(cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
 
 // IsVMExist returns true/false based on vm existence
@@ -103,11 +111,27 @@ func IsVMExist(vmName string) bool {
 	maxAttempt := 15
 	waitTime := 2
 	for attempt := 0; attempt < maxAttempt; attempt++ {
-		vmList := ssh.InvokeCommandLocally(esx.ListVMs + " /ha-datacenter/vm")
+		vmList, _ := ssh.InvokeCommandLocally(esx.ListVMs + " /ha-datacenter/vm")
 		if strings.Contains(vmList, vmName) {
 			return true
 		}
 		misc.SleepForSec(waitTime)
 	}
 	return false
+}
+
+// TakeSnapshot - take a VM snapshot
+func TakeSnapshot(vm, snap string) (string, error) {
+	cmd := fmt.Sprintf(esx.TakeSnapshot, vm, snap)
+	log.Printf("Creating snapshot - %s", cmd)
+	out, err := ssh.InvokeCommandLocally(cmd)
+	return out, err
+}
+
+// RemoveSnapshot - remove a VM snapshot
+func RemoveSnapshot(vm, snap string) (string, error) {
+	cmd := fmt.Sprintf(esx.RemoveSnapshot, vm, snap)
+	log.Printf("Removing snapshot - %s", cmd)
+	out, err := ssh.InvokeCommandLocally(cmd)
+	return out, err
 }
