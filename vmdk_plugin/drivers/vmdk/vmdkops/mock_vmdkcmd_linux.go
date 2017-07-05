@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-// +build linux
 
 // An implementation of the VmdkCmdRunner interface that mocks ESX. This removes the requirement forunning ESX at all when testing the plugin.
 
@@ -39,6 +37,11 @@ const (
 	backingRoot     = "/tmp/docker-volumes" // Files for loopback device backing stored here
 	fileSizeInBytes = 100 * 1024 * 1024     // file size for loopback block device
 )
+
+// NewMockCmd returns a new instance of MockVmdkCmd.
+func NewMockCmd() MockVmdkCmd {
+	return MockVmdkCmd{}
+}
 
 func getBackingFileName(nameBase string) string {
 	// make unique name - avoid clashes shall we find any garbage in the directory
@@ -142,11 +145,11 @@ func createBlockDevice(label string, opts map[string]string) error {
 	if _, result := opts["fstype"]; result == false {
 		opts["fstype"] = fs.FstypeDefault
 	}
-	mkfscmd, result := fs.MkfsLookup()[opts["fstype"]]
-	if result == false {
+	errFstype := fs.VerifyFSSupport(opts["fstype"])
+	if errFstype != nil {
 		return fmt.Errorf("Not found mkfs for %s", opts["fstype"])
 	}
-	return fs.Mkfs(mkfscmd, label, device)
+	return fs.MkfsByDevicePath(opts["fstype"], label, device)
 }
 
 func getBlockDeviceForName(name string) ([]byte, error) {

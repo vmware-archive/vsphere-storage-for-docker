@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ import (
 )
 
 func TestCommands(t *testing.T) {
-	ops := vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}}
+	ops := vmdkops.VmdkOps{Cmd: vmdkops.NewMockCmd()}
 	name := testparams.GetVolumeName()
 	t.Logf("\nCreating Test Volume with name = [%s]...\n", name)
 	opts := map[string]string{"size": "2gb"}
 	if assert.Nil(t, ops.Create(name, opts)) {
 
 		opts = map[string]string{}
-		_, err := ops.Attach(name, opts)
+		_, err := ops.RawAttach(name, opts)
 		assert.Nil(t, err)
 		assert.Nil(t, ops.Detach(name, opts))
 		assert.Nil(t, ops.Remove(name, opts))

@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -140,7 +140,8 @@ func (d *VolumeDriver) getMountPoint(volName string) string {
 	return filepath.Join(d.mountRoot, volName)
 }
 
-func validateCreateOptions(r volume.Request, fsMap map[string]string) error {
+// validateCreateOptions validates the volume create request.
+func validateCreateOptions(r volume.Request) error {
 	// Clone isn't supported
 	if _, result := r.Options["clone-from"]; result == true {
 		return fmt.Errorf("Unrecognized option - clone-from")
@@ -156,22 +157,12 @@ func validateCreateOptions(r volume.Request, fsMap map[string]string) error {
 		r.Options[fsTypeTag] = fs.FstypeDefault
 	}
 
-	// Verify the existence of fstype mkfs
-	_, result := fsMap[r.Options[fsTypeTag]]
-	if result == false {
-		msg := "Not found mkfs for " + r.Options[fsTypeTag]
-		msg += "\nSupported filesystems found: "
-		validfs := ""
-		for fs := range fsMap {
-			if validfs != "" {
-				validfs += ", " + fs
-			} else {
-				validfs += fs
-			}
-		}
+	// Check whether the fstype filesystem is supported.
+	errFstype := fs.VerifyFSSupport(r.Options[fsTypeTag])
+	if errFstype != nil {
 		log.WithFields(log.Fields{"name": r.Name,
-			"fstype": r.Options[fsTypeTag]}).Error("Not found ")
-		return fmt.Errorf(msg + validfs)
+			"fstype": r.Options[fsTypeTag]}).Error("Not supported ")
+		return errFstype
 	}
 	return nil
 }
@@ -458,10 +449,7 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name, "option": r.Options}).Info("Creating volume ")
 
-	// Get existent filesystem tools, for now only ext4
-	supportedFs := fs.MkfsLookup()
-
-	err := validateCreateOptions(r, supportedFs)
+	err := validateCreateOptions(r)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -526,7 +514,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: errGetDevicePath.Error()}
 	}
 
-	errMkfs := fs.Mkfs(supportedFs[r.Options[fsTypeTag]], r.Name, device)
+	errMkfs := fs.MkfsByDevicePath(r.Options[fsTypeTag], r.Name, device)
 	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": errMkfs}).Error("Create filesystem failed, removing the volume ")
 		err = d.detachVolume(r.Name, createTask.Entity.ID)

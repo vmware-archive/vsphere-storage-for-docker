@@ -1,4 +1,4 @@
-// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fs
+// +build !linux
 
-// VolumeDevSpec - volume spec returned from the server on an attach
-type VolumeDevSpec struct {
-	Unit                    string
-	ControllerPciSlotNumber string
+package vmdkops
+
+import "errors"
+
+// UnsupportedMockCmd struct.
+type UnsupportedMockCmd struct{}
+
+// NewMockCmd returns a new instance of UnsupportedMockCmd.
+func NewMockCmd() UnsupportedMockCmd {
+	return UnsupportedMockCmd{}
+}
+
+// Run returns an error.
+func (u UnsupportedMockCmd) Run(cmd string, name string, opts map[string]string) ([]byte, error) {
+	return nil, errors.New("VmdkCmdRunner mocking is not supported on this platform")
 }

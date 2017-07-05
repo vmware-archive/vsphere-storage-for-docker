@@ -1,4 +1,4 @@
-// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,20 @@
 
 package fs
 
-// VolumeDevSpec - volume spec returned from the server on an attach
-type VolumeDevSpec struct {
-	Unit                    string
-	ControllerPciSlotNumber string
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
+	"testing"
+)
+
+const funnyfs = "funnyfs"
+
+func TestVerifyFSSupport(t *testing.T) {
+	err := fs.VerifyFSSupport(fs.FstypeDefault)
+	assert.Nil(t, err, "Fstype %s should be supported", fs.FstypeDefault)
+}
+
+func TestVerifyFSSupportError(t *testing.T) {
+	err := fs.VerifyFSSupport(funnyfs)
+	assert.NotNil(t, err, "Fstype %s shouldn't be supported", funnyfs)
 }
