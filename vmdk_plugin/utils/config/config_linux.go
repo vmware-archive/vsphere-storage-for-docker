@@ -21,4 +21,8 @@ const (
 	DefaultConfigPath = "/etc/docker-volume-vsphere.conf"
 	// DefaultLogPath is the default location of log (trace) file
 	DefaultLogPath = "/var/log/docker-volume-vsphere.log"
+	// DefaultSharedPluginConfigPath is the default location of Log configuration file for shared plugin
+	DefaultSharedPluginConfigPath = "/etc/docker-volume-shared.conf"
+	// DefaultSharedPluginLogPath is the default location of log (trace) file for shared plugin
+	DefaultSharedPluginLogPath = "/var/log/docker-volume-shared.log"
 )

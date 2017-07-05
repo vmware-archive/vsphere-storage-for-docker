@@ -43,6 +43,7 @@ SCRIPTS     := ../misc/scripts
 
 # Packaging variables
 PLUGNAME  := docker-volume-vsphere
+SHARED_PLUGNAME  := docker-volume-shared
 GOPATH_PLUGNAME := $(PLUGNAME)/vmdk_plugin
 GOPATH_ORG :=vmware
 MAINTAINERS := cna-storage@vmware.com
@@ -73,9 +74,11 @@ VMCI_SRC    := $(ESX_SRC)/vmci/*.h $(ESX_SRC)/vmci/vmci_client.c
 
 #  binaries location
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
+SHARED_PLUGIN_BIN = $(BIN)/$(SHARED_PLUGNAME)
 
 # all binaries for VMs - plugin and tests
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test
+SHARED_VM_BINS = $(SHARED_PLUGIN_BIN)
 
 VIBFILE := vmware-esx-vmdkops-$(PKG_VERSION).vib
 VIB_BIN := $(BIN)/$(VIBFILE)
@@ -95,9 +98,17 @@ VMDKOPS_TEST_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
-SRC = main.go log_formatter.go utils/refcount/refcnt.go \
+SRC = original_plugin/main.go original_plugin/constants.go \
+	utils/refcount/refcnt.go utils/log_formatter/log_formatter.go \
+	utils/plugin_server/plugin_server.go \
 	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go\
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
+
+SHARED_PLUGIN_SRC = shared_plugin/main.go shared_plugin/constants.go \
+	utils/refcount/refcnt.go utils/log_formatter/log_formatter.go \
+        utils/plugin_server/plugin_server.go \
+        utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go\
+        drivers/shared/shared_driver.go
 
 TEST_SRC = ../tests/utils/inputparams/testparams.go
 
@@ -117,6 +128,10 @@ dockerbuild:
 	$(BUILD) pylint
 	$(BUILD) build
 
+.PHONY: dockerbuild-shared
+dockerbuild-shared:
+	@$(CHECK) dockerbuild
+	$(BUILD) build-shared
 
 # The non docker build.
 .PHONY: build pylint
@@ -124,6 +139,7 @@ build: prereqs .code_verify $(VM_BINS)
 	$(MAKE)  --directory=$(ESX_SRC) $@
 pylint:
 	$(MAKE)  --directory=$(ESX_SRC) $@
+build-shared: prereqs .code_verify $(SHARED_VM_BINS)
 
 .PHONY: gvt
 gvt:
@@ -139,13 +155,17 @@ prereqs:
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
-	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
+	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)/original_plugin
 
 $(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(TEST_SRC) $(VMDKOPS_MODULE)/*_test.go
 	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
-$(BIN)/$(PLUGNAME).test: $(SRC) $(TEST_SRC) *_test.go
-	$(GO) test -c -o $@ $(PLUGIN) -cover
+$(BIN)/$(PLUGNAME).test: $(SRC) $(TEST_SRC) ./original_plugin/*_test.go
+	$(GO) test -c -o $@ $(PLUGIN)/original_plugin -cover
+
+$(SHARED_PLUGIN_BIN): $(SHARED_PLUGIN_SRC)
+	@-mkdir -p $(BIN) && chmod a+w $(BIN)
+	$(GO) build --ldflags '-extldflags "-static"' -o $(SHARED_PLUGIN_BIN) $(PLUGIN)/shared_plugin
 
 .PHONY: clean
 clean:
@@ -158,7 +178,8 @@ clean-as-root: pkg-post
 
 # GO Code quality checks.
 
-DIRS_TO_VERIFY := . utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
+DIRS_TO_VERIFY := original_plugin shared_plugin \
+	utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
 	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification ../tests/constants/admincli \
 	../tests/constants/dockercli ../tests/utils/ssh ../tests/utils/misc ../tests/constants/vm
 
