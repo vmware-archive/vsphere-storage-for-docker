@@ -32,6 +32,8 @@ const (
 // Config stores the configuration for the plugin
 type Config struct {
 	Driver        string `json:",omitempty"`
+	KVport        string `json:",omitempty"`
+	KVtimeout     string `json:",omitempty"`
 	LogPath       string `json:",omitempty"`
 	MaxLogSizeMb  int    `json:",omitempty"`
 	MaxLogAgeDays int    `json:",omitempty"`

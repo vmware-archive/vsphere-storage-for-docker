@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"reflect"
 	"runtime"
+	"strconv"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -47,6 +48,8 @@ func main() {
 	}
 	configFile := flag.String("config", config.DefaultSharedPluginConfigPath, "Configuration file path")
 	driverName := flag.String("driver", "", "Volume driver")
+	kvStorePort := flag.String("KVport", "", "Port number for KV store service")
+	strTimeout := flag.String("KVtimeout", "", "Timeout for requests to KV store")
 
 	flag.Parse()
 
@@ -68,6 +71,40 @@ func main() {
 		}
 	}
 
+	// The port number for KV store should be read from the configuration file
+	if *kvStorePort == "" {
+		if err == nil && c.KVport != "" {
+			*kvStorePort = c.KVport
+		} else {
+			*kvStorePort = defaultKVstorePort
+		}
+	}
+	log.Infof("Using KV store port: %s", *kvStorePort)
+
+	// Set timeout for KV store operations
+	kvtimeout := 0
+	if *strTimeout == "" {
+		// No CLI input. Set from config file.
+		// On failure set default.
+		if err == nil && c.KVtimeout != "" {
+			kvtimeout, err = strconv.Atoi(c.KVtimeout)
+			log.Infof("Setting KV timeout from config file: %v", err)
+		}
+		if err != nil {
+			kvtimeout = defaultKVtimeout
+			log.Infof("Setting KV timeout to default value")
+		}
+	} else {
+		// Set from CLI input
+		// On failure set default.
+		kvtimeout, err = strconv.Atoi(*strTimeout)
+		log.Infof("Setting KV timeout from CLI input")
+		if err != nil {
+			kvtimeout = defaultKVtimeout
+			log.Infof("Failed to set KV timeout from CLI input. Falling back to default value. Reason: %v", err)
+		}
+	}
+
 	// The windows plugin only supports the vsphere driver.
 	if runtime.GOOS == "windows" && *driverName != sharedDriver {
 		msg := fmt.Sprintf("Shared Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
@@ -85,7 +122,7 @@ func main() {
 
 	// The Shared driver doesn't depend on the config file for options
 	if *driverName == sharedDriver {
-		driver = shared.NewVolumeDriver(plugin_server.MountRoot, *driverName)
+		driver = shared.NewVolumeDriver(plugin_server.MountRoot, *driverName, *kvStorePort, kvtimeout)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)

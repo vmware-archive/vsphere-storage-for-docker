@@ -21,6 +21,12 @@ const (
 	// Docker driver types.
 	volumeDriver = "VolumeDriver"
 
+	// Default KV store port
+	defaultKVstorePort = "12379"
+
+	// Default KV store request timeout in seconds
+	defaultKVtimeout = 5
+
 	// Docker plugin handshake endpoint.
 	// Also see https://docs.docker.com/engine/extend/plugin_api/#handshake-api
 	pluginActivatePath = "/Plugin.Activate"
