@@ -182,3 +182,40 @@ func (s *VsanTestSuite) TestDeleteVsanPolicyAlreadyInUse(c *C) {
 	misc.LogTestEnd(c.TestName())
 
 }
+
+// Test creation of a vsan volume on a non vsan datastore.
+// 1. Create a valid vsan policy
+// 2. Get the name of VMFS datastore
+// 3. Create the volume on VMFS datastore but specify the vsan policy
+// 4. Creation should fail. Also verify that volume is not available
+func (s *VsanTestSuite) TestNonVSANDatastore(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// create valid policy
+	out, err := admincli.CreatePolicy(s.config.EsxHost, adminclicon.PolicyName, adminclicon.PolicyContent)
+	c.Assert(err, IsNil, Commentf(out))
+	s.policyList = append(s.policyList, adminclicon.PolicyName)
+
+	// get list of non-vsan (vmfs) datastores
+	localDSList := esx.GetDatastoreByType("VMFS")
+	if localDSList == "" {
+		log.Printf("Local datastore unavailable")
+		c.Skip("Local datastore unavailable")
+	}
+
+	localDS := strings.Fields(localDSList)[0]
+
+	// specify vsan policy name as volume create option
+	invalidVolName := inputparams.GetUniqueVolumeName("vsanVol") + "@" + localDS
+	vsanOpts := " -o " + adminclicon.VsanPolicyFlag + "=" + adminclicon.PolicyName
+
+	// this create should fail
+	out, err = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], invalidVolName, vsanOpts)
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// this availibility check should fail
+	isAvailable := verification.CheckVolumeAvailability(s.config.DockerHosts[0], invalidVolName)
+	c.Assert(isAvailable, Equals, false, Commentf("Volume %s creation should have failed. Instead it succeeded.", invalidVolName))
+
+	misc.LogTestEnd(c.TestName())
+}
