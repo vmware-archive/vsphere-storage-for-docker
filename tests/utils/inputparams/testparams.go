@@ -101,20 +101,18 @@ func GetEndPoint2() string {
 
 // GetSwarmManager1 returns swarm manager node IP from the configured swarm cluster
 func GetSwarmManager1() string {
-	manager1 := os.Getenv("MANAGER1")
-	return manager1
+	return os.Getenv("MANAGER1")
 }
 
 // GetSwarmWorker1 returns 1st swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker1() string {
-	worker1 := os.Getenv("WORKER1")
-	return worker1
+	return os.Getenv("WORKER1")
 }
 
 // GetSwarmWorker2 returns 2nd swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker2() string {
-	worker2 := os.Getenv("WORKER2")
-	return worker2
+	return os.Getenv("WORKER2")
+
 }
 
 // GetSwarmNodes returns all nodes in the configured swarm cluster
@@ -139,13 +137,13 @@ func getInstance() *TestConfig {
 	config.EsxHost = GetEsxIP()
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
-	if config.DockerHosts[0] == "" && config.DockerHosts[1] == "" {
-		log.Fatal("No docker hosts found. At least one host is needed to run tests.")
+	if config.DockerHosts[0] == "" || config.DockerHosts[1] == "" {
+		log.Fatal("Two docker hosts are needed to run tests.")
 	}
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[0]))
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[1]))
-	if config.DockerHostNames[0] == noVMName && config.DockerHostNames[1] == noVMName {
-		log.Fatalf("No names found for docker hosts - %s , %s ", config.DockerHosts[0], config.DockerHosts[1])
+	if config.DockerHostNames[0] == noVMName || config.DockerHostNames[1] == noVMName {
+		log.Fatalf("Failed to find vm name for docker hosts - %s , %s ", config.DockerHosts[0], config.DockerHosts[1])
 	}
 	config.Datastores = esx.GetDatastoreList()
 	if len(config.Datastores) < 1 {
