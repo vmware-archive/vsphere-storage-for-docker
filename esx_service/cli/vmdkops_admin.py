@@ -776,7 +776,7 @@ def human_readable(size_in_bytes):
 def policy_create(args):
     output = vsan_policy.create(args.name, args.content)
     if output:
-        print(output)
+        return err_out(output)
     else:
         print('Successfully created policy: {0}'.format(args.name))
 
@@ -784,7 +784,7 @@ def policy_create(args):
 def policy_rm(args):
     output = vsan_policy.delete(args.name)
     if output:
-        print(output)
+        return err_out(output)
     else:
         print('Successfully removed policy: {0}'.format(args.name))
 
@@ -815,7 +815,7 @@ def policy_ls(args):
 def policy_update(args):
     output = vsan_policy.update(args.name,  args.content)
     if output:
-        print(output)
+        return err_out(output)
     else:
         print('Successfully updated policy: {0}'.format(args.name))
 
@@ -850,9 +850,9 @@ def set_vol_opts(args):
         if set_ok:
             print('Successfully updated settings for : {0}'.format(args.volume))
         else:
-            print('Failed to update {0} for {1}.'.format(args.options, args.volume))
+            return err_out('Failed to update {0} for {1}.'.format(args.options, args.volume))
     except Exception as ex:
-        print('Failed to update {0} for {1} - {2}.'.format(args.options,
+        return err_out('Failed to update {0} for {1} - {2}.'.format(args.options,
                                                            args.volume,
                                                            str(ex)))
 
@@ -898,10 +898,6 @@ def get_version():
         return version_str.decode('utf-8')
     except:
         return NOT_AVAILABLE
-
-def operation_fail(error_info):
-    print(error_info)
-    return error_info
 
 def tenant_ls_headers():
     """ Return column names for tenant ls command """
@@ -958,7 +954,7 @@ def tenant_create(args):
                                                  privileges=[])
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.".format(args.name))
 
@@ -970,7 +966,7 @@ def tenant_update(args):
                                          default_datastore=args.default_datastore)
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup modify succeeded")
 
@@ -986,7 +982,7 @@ def tenant_rm(args):
     error_info = auth_api._tenant_rm(args.name, remove_volumes)
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup rm succeeded")
 
@@ -994,12 +990,12 @@ def tenant_ls(args):
     """ Handle tenant ls command """
     error_info, tenant_list = auth_api._tenant_ls()
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
 
     header = tenant_ls_headers()
     error_info, rows = generate_tenant_ls_rows(tenant_list)
     if error_info:
-        print(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print(cli_table.create(header, rows))
 
@@ -1008,7 +1004,7 @@ def tenant_vm_add(args):
     error_info = auth_api._tenant_vm_add(args.name, args.vm_list)
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup vm add succeeded")
 
@@ -1017,7 +1013,7 @@ def tenant_vm_rm(args):
     error_info = auth_api._tenant_vm_rm(args.name, args.vm_list)
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup vm rm succeeded")
 
@@ -1026,7 +1022,7 @@ def tenant_vm_replace(args):
     error_info = auth_api._tenant_vm_replace(args.name, args.vm_list)
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup vm replace succeeded")
 
@@ -1054,12 +1050,11 @@ def tenant_vm_ls(args):
     # Handling _DEFAULT tenant case separately to print info message
     # instead of printing empty list
     if (args.name == auth_data_const.DEFAULT_TENANT):
-        print("{0} tenant contains all VMs which were not added to other tenants".format(auth_data_const.DEFAULT_TENANT))
-        return
+        return err_out("{0} tenant contains all VMs which were not added to other tenants".format(auth_data_const.DEFAULT_TENANT))
 
     error_info, vms = auth_api._tenant_vm_ls(args.name)
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
 
     header = tenant_vm_ls_headers()
     rows = generate_tenant_vm_ls_rows(vms)
@@ -1083,7 +1078,7 @@ def tenant_access_add(args):
                                             )
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup access add succeeded")
 
@@ -1103,7 +1098,7 @@ def tenant_access_set(args):
                                              volume_totalsize_in_MB=volume_totalsize_in_MB)
 
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup access set succeeded")
 
@@ -1111,7 +1106,7 @@ def tenant_access_rm(args):
     """ Handle tenant access rm command """
     error_info = auth_api._tenant_access_rm(args.name, args.datastore)
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print("vmgroup access rm succeeded")
 
@@ -1147,12 +1142,12 @@ def tenant_access_ls(args):
     name = args.name
     error_info, privileges = auth_api._tenant_access_ls(name)
     if error_info:
-        return operation_fail(error_info.msg)
+        return err_out(error_info.msg)
 
     header = tenant_access_ls_headers()
     error_info, rows = generate_tenant_access_ls_rows(privileges, name)
     if error_info:
-        print(error_info.msg)
+        return err_out(error_info.msg)
     else:
         print(cli_table.create(header, rows))
 
@@ -1198,7 +1193,10 @@ def is_local_vmfs(datastore_name):
 
 
 def err_out(_msg, _info=None):
-    """A helper to print a message with (optional) info about DB MOde. Returns the message"""
+    """
+    A helper to print an error message with (optional) info if the vmdkops admin command fails.
+    Returns the message.
+    """
     print(_msg)
     if _info:
         print("Additional information: {}".format(_info))
