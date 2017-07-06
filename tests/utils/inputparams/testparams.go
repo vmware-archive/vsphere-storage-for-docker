@@ -22,7 +22,10 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"time"
+
+	"log"
 
 	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 )
@@ -39,6 +42,8 @@ var (
 	endPoint1  string
 	endPoint2  string
 	volumeName string
+	once       sync.Once
+	config     *TestConfig
 )
 
 func init() {
@@ -107,6 +112,7 @@ func GetSwarmWorker1() string {
 // GetSwarmWorker2 returns 2nd swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker2() string {
 	return os.Getenv("WORKER2")
+
 }
 
 // GetSwarmNodes returns all nodes in the configured swarm cluster
@@ -114,14 +120,13 @@ func GetSwarmNodes() []string {
 	return []string{GetSwarmManager1(), GetSwarmWorker1(), GetSwarmWorker2()}
 }
 
-// GetDockerHostIP - returns ip of the VM where vm can be first vm (VM1) or second vm (VM2)
-func GetDockerHostIP(vm string) string {
-	return os.Getenv(vm)
-}
-
 // GetEsxIP returns the ip of the esx
 func GetEsxIP() string {
-	return os.Getenv("ESX")
+	esxIP := os.Getenv("ESX")
+	if esxIP == "" {
+		log.Fatal("ESX host not found. Stopping the test run.")
+	}
+	return esxIP
 }
 
 // GetDatastores returns list of datastores
@@ -131,22 +136,24 @@ func GetDatastores() []string {
 
 // GetTestConfig - returns the configuration of IPs for the
 // ESX host, docker hosts and the datastores on the host
-func GetTestConfig() *TestConfig {
-	var config *TestConfig
-
+func getInstance() *TestConfig {
+	noVMName := "no such VM"
 	config = new(TestConfig)
-	config.EsxHost = os.Getenv("ESX")
+	config.EsxHost = GetEsxIP()
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
+	if config.DockerHosts[0] == "" || config.DockerHosts[1] == "" {
+		log.Fatal("Two docker hosts are needed to run tests.")
+	}
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[0]))
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[1]))
-	config.Datastores = esx.GetDatastoreList()
-
-	if config.DockerHostNames[0] == "" || config.DockerHostNames[1] == "" ||
-		len(config.Datastores) <= 1 {
-		return nil
+	if config.DockerHostNames[0] == noVMName || config.DockerHostNames[1] == noVMName {
+		log.Fatalf("Failed to find vm name for docker hosts - %s , %s ", config.DockerHosts[0], config.DockerHosts[1])
 	}
-
+	config.Datastores = esx.GetDatastoreList()
+	if len(config.Datastores) < 1 {
+		log.Fatalf("No datastores found. At least one datastore is needed to run tests.")
+	}
 	return config
 }
 
@@ -157,4 +164,12 @@ func GetRandomNumber() string {
 	rand.Seed(time.Now().UTC().UnixNano())
 	bytes := min + rand.Intn(max)
 	return strconv.Itoa(int(bytes))
+}
+
+// GetTestConfig - Creates one instance of TestConfig
+func GetTestConfig() *TestConfig {
+	once.Do(func() {
+		config = getInstance()
+	})
+	return config
 }
