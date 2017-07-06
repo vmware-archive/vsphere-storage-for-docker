@@ -42,7 +42,7 @@ var (
 	endPoint1  string
 	endPoint2  string
 	volumeName string
-	mu         sync.Mutex
+	once       sync.Once
 	config     *TestConfig
 )
 
@@ -102,27 +102,18 @@ func GetEndPoint2() string {
 // GetSwarmManager1 returns swarm manager node IP from the configured swarm cluster
 func GetSwarmManager1() string {
 	manager1 := os.Getenv("MANAGER1")
-	if manager1 == "" {
-		log.Printf("Manager node not found. Need this to run swarm test.")
-	}
 	return manager1
 }
 
 // GetSwarmWorker1 returns 1st swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker1() string {
 	worker1 := os.Getenv("WORKER1")
-	if worker1 == "" {
-		log.Printf("Worker1 node not found. Need this to run swarm test.")
-	}
 	return worker1
 }
 
 // GetSwarmWorker2 returns 2nd swarm worker node IP from the configured swarm cluster
 func GetSwarmWorker2() string {
 	worker2 := os.Getenv("WORKER2")
-	if worker2 == "" {
-		log.Printf("Worker2 node not found. Need this to run swarm test.")
-	}
 	return worker2
 }
 
@@ -149,7 +140,7 @@ func getInstance() *TestConfig {
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
 	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
 	if config.DockerHosts[0] == "" && config.DockerHosts[1] == "" {
-		log.Fatal("No docker hosts found. Atleast one host is needed to run tests.")
+		log.Fatal("No docker hosts found. At least one host is needed to run tests.")
 	}
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[0]))
 	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[1]))
@@ -158,7 +149,7 @@ func getInstance() *TestConfig {
 	}
 	config.Datastores = esx.GetDatastoreList()
 	if len(config.Datastores) < 1 {
-		log.Fatalf("No datastores found. Atleast one datastore is needed to run tests.")
+		log.Fatalf("No datastores found. At least one datastore is needed to run tests.")
 	}
 	return config
 }
@@ -174,12 +165,8 @@ func GetRandomNumber() string {
 
 // GetTestConfig - Creates one instance of TestConfig
 func GetTestConfig() *TestConfig {
-	if config == nil {
-		mu.Lock()
-		defer mu.Unlock()
-		if config == nil {
-			config = getInstance()
-		}
-	}
+	once.Do(func() {
+		config = getInstance()
+	})
 	return config
 }
