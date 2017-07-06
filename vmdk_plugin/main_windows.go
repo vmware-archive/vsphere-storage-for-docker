@@ -52,7 +52,9 @@ type PluginActivateResponse struct {
 
 // NewPluginServer returns a new instance of NpipePluginServer.
 func NewPluginServer(driverName string, driver *volume.Driver) *NpipePluginServer {
-	return &NpipePluginServer{driver: driver, mux: http.NewServeMux()}
+	server := &NpipePluginServer{driver: driver, mux: http.NewServeMux()}
+	server.registerHandlers()
+	return server
 }
 
 // writeJSON writes the JSON encoding of resp to the writer.
@@ -117,8 +119,6 @@ func (s *NpipePluginServer) Init() {
 		fmt.Println(msg)
 		os.Exit(1)
 	}
-
-	s.registerHandlers()
 	log.WithFields(log.Fields{"npipe": npipeAddr}).Info("Going into Serve - Listening on npipe ")
 	log.Info(http.Serve(s.listener, s.mux))
 }
