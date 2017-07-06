@@ -49,6 +49,9 @@ const (
 	// where --name will be name of the vmgroup
 	ReplaceVMFromVMgroup = vmdkopsAdmin + "vmgroup vm replace --name="
 
+	// AddAccessForVMgroup create access perms on vmgroup
+	AddAccessForVMgroup = vmdkopsAdmin + "vmgroup access add --name "
+
 	// SetAccessForVMgroup modify access perms on vmgroup
 	SetAccessForVMgroup = vmdkopsAdmin + "vmgroup access set --name "
 
@@ -91,9 +94,6 @@ const (
 
 	// VMlist VM of the vmgroup
 	VMlist = " --vm-list="
-
-	// AddDatastoreAccess adds datastore to vmgroup
-	AddDatastoreAccess = vmdkopsAdmin + "vmgroup access add --name="
 
 	// GetDBMode get current DB config
 	GetDBMode = vmdkopsAdmin + "config status"

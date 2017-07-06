@@ -74,7 +74,7 @@ func (s *vgBasicSuite) TearDownSuite(c *C) {
 	isVMPartofVg := admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[0], vmGroupName)
 	c.Assert(isVMPartofVg, Equals, false, Commentf("Unexpected Behavior: VM %s belong to vmgroup %s .", s.config.DockerHostNames[0], vmGroupName))
 
-	admincli.DeleteVMgroup(s.config.EsxHost, vmGroupName)
+	admincli.DeleteVMgroup(s.config.EsxHost, vmGroupName, true)
 	// Verify vmgroup does not exist
 	isVmgroupAvailable := admincli.IsVmgroupPresent(s.config.EsxHost, vmGroupName)
 	c.Assert(isVmgroupAvailable, Equals, false, Commentf("Failed to delete the vmgroup [%s] .", vmGroupName))
@@ -182,7 +182,7 @@ func (s *vgBasicSuite) TestDSAccessPrivilegeForUserVG(c *C) {
 		" even though vmgroup [%s] does not have access rights for the datastore %s", s.volumeNames[1], vmGroupName, s.config.Datastores[1]))
 
 	// Set the create privilege on the vmgroup  for specified datastore
-	out, _ = admincli.AddCreateAccessForVMgroup(s.config.EsxHost, vmGroupName, s.config.Datastores[1])
+	out, _ = admincli.SetCreateAccessForVMgroup(s.config.EsxHost, vmGroupName, s.config.Datastores[1])
 	isDatastoreAccessible = admincli.IsDSAccessibleForVMgroup(s.config.EsxHost, vmGroupName, s.config.Datastores[1])
 	c.Assert(isDatastoreAccessible, Equals, true, Commentf("Datstore %s is not accessible for vmgroup %s .", s.config.Datastores[1], vmGroupName))
 

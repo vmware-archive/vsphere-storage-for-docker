@@ -137,7 +137,7 @@ func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	c.Assert(isVolInVmgroup, Equals, true, Commentf("Volume [%s] does not belong to vmgroup [%s]", admincliconst.DefaultVMgroup, s.volumeNames[0]))
 
 	// Delete default vmgroup and verify it does not exist
-	admincli.DeleteVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup)
+	admincli.DeleteVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup, false)
 
 	isVmgroupAvailable = admincli.IsVmgroupPresent(s.config.EsxHost, admincliconst.DefaultVMgroup)
 	c.Assert(isVmgroupAvailable, Equals, false, Commentf("Failed to delete vmgroup %s .", admincliconst.DefaultVMgroup))

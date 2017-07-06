@@ -124,6 +124,11 @@ func GetEsxIP() string {
 	return os.Getenv("ESX")
 }
 
+// GetDatastores returns list of datastores
+func GetDatastores() []string {
+	return esx.GetDatastoreList()
+}
+
 // GetTestConfig - returns the configuration of IPs for the
 // ESX host, docker hosts and the datastores on the host
 func GetTestConfig() *TestConfig {

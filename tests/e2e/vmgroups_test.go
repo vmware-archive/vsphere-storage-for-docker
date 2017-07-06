@@ -28,6 +28,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 	. "gopkg.in/check.v1"
 )
 
@@ -104,10 +105,10 @@ func (vg *VmGroupTest) TearDownSuite(c *C) {
 	adminutils.RemoveVMFromVMgroup(vg.config.EsxHost, vgTestVMgroup2, vg.config.DockerHostNames[1])
 
 	// Remove both test vmgroups
-	out, err := adminutils.DeleteVMgroup(vg.config.EsxHost, vgTestVMgroup1)
+	out, err := adminutils.DeleteVMgroup(vg.config.EsxHost, vgTestVMgroup1, true)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = adminutils.DeleteVMgroup(vg.config.EsxHost, vgTestVMgroup2)
+	out, err = adminutils.DeleteVMgroup(vg.config.EsxHost, vgTestVMgroup2, true)
 	c.Assert(err, IsNil, Commentf(out))
 
 	cmd := adminconst.ListVMgroups
@@ -250,7 +251,7 @@ func (vg *VmGroupTest) TestVmGroupCreateAccessPrivilege(c *C) {
 	c.Assert(err, Not(IsNil), Commentf(out))
 
 	// 5. Restore the create privilege on the default  for specified datastore
-	out, err = adminutils.AddCreateAccessForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0])
+	out, err = adminutils.SetCreateAccessForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0])
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 6. Remove the volume created earlier
@@ -419,7 +420,7 @@ func (vg *VmGroupTest) TestVmGroupVolumeClone(c *C) {
 	vg.createVolumes(c, vg.volName1)
 
 	// 2. Clone a volume from the one created in (1)
-	cloneVolOpt :=  "-o clone-from=" + vg.volName1
+	cloneVolOpt := "-o clone-from=" + vg.volName1
 	out, err := dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName2, cloneVolOpt)
 	c.Assert(err, IsNil, Commentf(out))
 
@@ -431,3 +432,135 @@ func (vg *VmGroupTest) TestVmGroupVolumeClone(c *C) {
 
 	misc.LogTestEnd(c.TestName())
 }
+
+// Restore VMgroup
+func (vg *VmGroupTest) restoreVmgroup(c *C) {
+	vmList := vg.config.DockerHostNames[0] + "," + vg.config.DockerHostNames[1]
+	cmd := adminconst.CreateVMgroup + vgTestVMgroup1 + " --default-datastore " + vg.config.Datastores[0]
+	log.Printf("Recreating test vmgroup %s", vgTestVMgroup1)
+	out, err := ssh.InvokeCommand(vg.config.EsxHost, cmd)
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = adminutils.AddVMToVMgroup(vg.config.EsxHost, vgTestVMgroup1, vmList)
+	c.Assert(err, IsNil, Commentf(out))
+}
+
+// test to verify volume is removed after user created vmgroup is removed with "--remove-volume" option
+// 1. create a user created vmgroup "vmgroup_test1" and add VMs to this vmgroup
+// 2. create two volumes for this vmgroup, one is on default datastore, and the other is on non default_datastore
+// 3. verify mount/unmount for those two volumes
+// 4. after unmount, verify volume is detached for those two volumes
+// 5. remove VMs from this vmgroup, and remove the vmgroup with "--remove-volume" option
+// 6. verify that volumes do not exist after removing vmgroup
+func (vg *VmGroupTest) TestVmgroupRemoveWithRemoveVol(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// Create a volume in vgTestVMgroup1 on default_datastore
+	vg.createVolumes(c, vg.volName1)
+
+	// Add create privilege for the second datastore
+	out, err := adminutils.AddCreateAccessForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[1])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Create another volume on second datastore
+	// need to use full name for volume name
+	vg.createVolumes(c, vg.volName2+"@"+vg.config.Datastores[1])
+
+	// Run a container and then remove it using the first volume
+	out, err = dockercli.ExecContainer(vg.config.DockerHosts[0], vg.volName1, vg.testContainer)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Status should be detached after removing the container
+	status := verification.VerifyDetachedStatus(vg.volName1, vg.config.DockerHosts[0], vg.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", vg.volName1))
+
+	// Run a container and then remove it using the first volume
+	out, err = dockercli.ExecContainer(vg.config.DockerHosts[0], vg.volName2+"@"+vg.config.Datastores[1], vg.testContainer)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Status should be detached after removing the container
+	status = verification.VerifyDetachedStatus(vg.volName2, vg.config.DockerHosts[0], vg.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", vg.volName2+"@"+vg.config.Datastores[1]))
+
+	// remove VM1 and VM2 from vgTestVMgroup1 and then remove the vmgroup
+	vmList := vg.config.DockerHostNames[0] + "," + vg.config.DockerHostNames[1]
+	out, err = adminutils.RemoveVMFromVMgroup(vg.config.EsxHost, vgTestVMgroup1, vmList)
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = adminutils.DeleteVMgroup(vg.config.EsxHost, vgTestVMgroup1, true)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// vmgroup has been removed and all volumes belong to it have been removed
+	// "err.Error()" will be filled with "exit status 1"
+	volumeList := []string{vg.volName1, vg.volName2}
+	for _, volume := range volumeList {
+		out, err = verification.GetVMGroupForVolume(vg.config.EsxHost, volume)
+		log.Println("GetVMGroupForVolume return out[%s] err[%s] for volume %s", out, err, volume)
+		c.Assert(err.Error(), Equals, "exit status 1", Commentf("volume %s should be removed", volume))
+	}
+	// Restore vmgroup
+	vg.restoreVmgroup(c)
+	misc.LogTestEnd(c.TestName())
+}
+
+// TODO: Need to enable or remove the following tests after we have conclusion on issue #1469
+// test to verify volume is removed after user created vmgroup is removed without "--remove-volume" option
+// 1. create a user created vmgroup "vmgroup_test1" and add VMs to this vmgroup
+// 2. create two volumes for this vmgroup, one is on default datastore, and the other is on non-default datastore
+// 3. verify mount/unmount for this volume
+// 4. after unmount, verify the volume is detached for both volumes
+// 5. remove VMs from this vmgroup, and remove the vmgroup without "--remove-volume" option
+// 6. verify that volumes exist but do not belong to any vmgroup
+// func (vg *VmGroupTest) TestVmgroupRemove(c *C) {
+// 	misc.LogTestStart(c.TestName())
+
+// 	Create a volume in vgTestVMgroup1
+// 	vg.createVolumes(c, vg.volName1)
+
+// 	Add create privilege for the second datastore
+// 	out, err := adminutils.AddCreateAccessForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[1])
+// 	c.Assert(err, IsNil, Commentf(out))
+
+// 	Create another volume on second datastore
+// 	vg.createVolumes(c, vg.volName2+"@"+vg.config.Datastores[1])
+
+// 	Verify volume can be mounted and unmounted for the first volume
+// 	out, err = dockercli.ExecContainer(vg.config.DockerHosts[0], vg.volName1, vg.testContainer)
+// 	c.Assert(err, IsNil, Commentf(out))
+
+// 	Status should be detached
+// 	status := verification.VerifyDetachedStatus(vg.volName1, vg.config.DockerHosts[0], vg.config.EsxHost)
+// 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", vg.volName1))
+
+// 	Verify volume can be mounted and unmounted for the second volume
+// 	out, err = dockercli.ExecContainer(vg.config.DockerHosts[0], vg.volName2+"@"+vg.config.Datastores[1], vg.testContainer)
+// 	c.Assert(err, IsNil, Commentf(out))
+
+// 	Status should be detached
+// 	status = verification.VerifyDetachedStatusNonDefaultDS(vg.volName2, vg.config.DockerHosts[0], vg.config.EsxHost)
+// 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", vg.volName2+"@"+vg.config.Datastores[1]))
+
+// 	remove VM1 and VM2 from vgTestVMgroup1 and then remove the vmgroup
+// 	vmList := []string{vg.config.DockerHostNames[0], vg.config.DockerHostNames[1]}
+// 	for _, vm := range vmList {
+// 		out, err = adminutils.RemoveVMFromVMgroup(vg.config.EsxHost, vgTestVMgroup1, vm)
+// 		c.Assert(err, IsNil, Commentf(out))
+// 	}
+
+// 	log.Printf("Removing test vmgroup %s", vgTestVMgroup1)
+// 	out, err = adminutils.DeleteVMgroup(vg.config.EsxHost, vgTestVMgroup1, false)
+// 	c.Assert(err, IsNil, Commentf(out))
+
+// 	volumeList := []string{vg.volName1, vg.volName2}
+// 	for _, volume := range volumeList {
+// 		volume does not belong to any vmgroup, so "out" is expected to be "N/A"
+// 		out, err = verification.GetVMGroupForVolume(vg.config.EsxHost, volume)
+// 		log.Println("GetVMGroupForVolume return out[%s] err[%s] for volume %s", out, err, volume)
+// 		c.Assert(out, Equals, "N/A", Commentf("volume %s should not belong to any vmgroup", volume))
+// 	}
+
+// Restore vmgroup
+//  vg.restoreVmgroup(c)
+
+// 	misc.LogTestEnd(c.TestName())
+// }

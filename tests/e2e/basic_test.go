@@ -202,7 +202,7 @@ func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	out, err = admincli.RemoveVMFromVMgroup(s.esx, vmgroup, s.vm1Name)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = admincli.DeleteVMgroup(s.esx, vmgroup)
+	out, err = admincli.DeleteVMgroup(s.esx, vmgroup, false)
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Remove Config DB

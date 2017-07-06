@@ -31,16 +31,14 @@ func CreateVMgroup(ip, name, vmName, dsName string) (string, error) {
 	return ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+dsName+admincli.VMlist+vmName)
 }
 
-// DeleteVMgroup method deletes a vmgroup
-func DeleteVMgroup(ip, name string) (string, error) {
-	log.Printf("Deleting a vmgroup [%s] on esx [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name)
-}
-
-// DeleteVMgroupAndItsVolumes method deletes a vmgroup and removes its volumes
-func DeleteVMgroupAndItsVolumes(ip, name string) (string, error) {
-	log.Printf("Deleting a vmgroup and its corresponding volumes [%s] on esx [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name+admincli.RemoveVolumes)
+// DeleteVMgroup method deletes a vmgroup and removes its volumes as well if "delete_vol" is set
+func DeleteVMgroup(ip, name string, delete_vol bool) (string, error) {
+	log.Printf("Deleting a vmgroup [%s] on esx [%s] with delete_vol[%d]\n", name, ip, delete_vol)
+	if delete_vol {
+		return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name+admincli.RemoveVolumes)
+	} else {
+		return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name)
+	}
 }
 
 // AddVMToVMgroup - Adds vm to vmgroup
@@ -61,8 +59,14 @@ func ReplaceVMFromVMgroup(ip, name, vmName string) (string, error) {
 	return ssh.InvokeCommand(ip, admincli.ReplaceVMFromVMgroup+name+admincli.VMlist+vmName)
 }
 
-// AddCreateAccessForVMgroup - set allow-create access on the vmgroup
+// AddCreateAccessForVMgroup - add allow-create access on the vmgroup
 func AddCreateAccessForVMgroup(ip, name, datastore string) (string, error) {
+	log.Printf("Creating create access for vmgroup %s, datastore %s on esx [%s] \n", name, datastore, ip)
+	return ssh.InvokeCommand(ip, admincli.AddAccessForVMgroup+name+" --allow-create --datastore "+datastore)
+}
+
+// SetCreateAccessForVMgroup - set allow-create access on the vmgroup
+func SetCreateAccessForVMgroup(ip, name, datastore string) (string, error) {
 	log.Printf("Enabling create access for vmgroup %s, datastore %s on esx [%s] \n", name, datastore, ip)
 	return ssh.InvokeCommand(ip, admincli.SetAccessForVMgroup+name+" --allow-create True --datastore "+datastore)
 }
@@ -145,7 +149,7 @@ func IsVMInVmgroup(esxIP, vmName, vmgroupName string) bool {
 // AddDatastoreToVmgroup - Grants datastore to a vmgroup whose access is controlled
 func AddDatastoreToVmgroup(ip, name, datastore string) (string, error) {
 	log.Printf("Adding datastore %s to  vmgroup %s,  on esx [%s] \n", datastore, name, ip)
-	return ssh.InvokeCommand(ip, admincli.AddDatastoreAccess+name+" --datastore="+datastore)
+	return ssh.InvokeCommand(ip, admincli.AddAccessForVMgroup+name+" --datastore="+datastore)
 }
 
 // IsDSAccessibleForVMgroup - Verifies if vmgroup has access rights to a datastore
@@ -178,7 +182,7 @@ func CreateDefaultVmgroup(ip string) bool {
 	}
 
 	// Set datastore to _ALL_DS to allow access to all datastore for default vmgroup
-	ssh.InvokeCommand(ip, admincli.AddDatastoreAccess+admincli.DefaultVMgroup+" --datastore="+admincli.AllDatastore+" --allow-create ")
+	ssh.InvokeCommand(ip, admincli.AddAccessForVMgroup+admincli.DefaultVMgroup+" --datastore="+admincli.AllDatastore+" --allow-create ")
 	return IsDSAccessibleForVMgroup(ip, admincli.DefaultVMgroup, admincli.AllDatastore)
 }
 
