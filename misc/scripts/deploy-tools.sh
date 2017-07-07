@@ -37,6 +37,7 @@ TMP_LOC=/tmp/$PLUGIN_NAME
 VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
 BUILD_LOC=$TMP_LOC/build
 PLUGIN_LOC=$TMP_LOC/plugin
+COMMON_VARS="../Commonvars.mk"
 
 # VM Functions
 
@@ -68,7 +69,7 @@ function deployplugin {
         $SSH $TARGET "rm -fr $TMP_LOC; $MKDIR_P $TMP_LOC $BUILD_LOC"
         log "Copying required files to $TARGET ..."
         $SCP $PLUGIN_BIN $TARGET:$BUILD_LOC
-        $SCP $MANAGED_PLUGIN_SRC $TARGET:$TMP_LOC
+        $SCP $MANAGED_PLUGIN_SRC $COMMON_VARS $TARGET:$TMP_LOC
         if [ -z  "$($SSH $TARGET 'which make')" ]; then
             setupVMType
             case $FILE_EXT in
@@ -152,7 +153,7 @@ function deployESXPre {
 
 function deployESXInstall {
     counter=5
-    wait_for "$SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)" $counter 
+    wait_for "$SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)" $counter
     if [ $? -ne 0 ]
     then
         log "deployESXInstall: Installation hit an error on $TARGET"

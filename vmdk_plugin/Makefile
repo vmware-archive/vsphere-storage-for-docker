@@ -15,7 +15,10 @@
 
 # Makefile for Docker data volume plugin
 
-# Guest Package Version
+export INCLUDE_UI
+
+# Exporting common constants
+-include ../Commonvars.mk
 
 # PKG_VERSION is either set externally as part of a build off a tag or
 # suffixed with a sha1 of the most recent commit to the prefix of the
@@ -27,16 +30,7 @@ PKG_VERSION ?= $(shell \
 	       ).$(shell \
 	       git log --pretty=format:'%h' -n 1)
 
-export PKG_VERSION
-export INCLUDE_UI
-
--include ../plugin/Makefile
-
 EPOCH := 0
-
-# Place binaries here
-BIN := ../build
-MANAGED_PLUGIN := ../plugin
 
 # Location for scripts
 SCRIPTS     := ../misc/scripts
@@ -294,7 +288,7 @@ deploy-vm: clean-vm
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 deploy-vm-plugin:
-	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
@@ -372,8 +366,6 @@ test-e2e-runalways:
 test-e2e-runonce:
 	$(log_target)
 	$(GO) test -v -timeout 30m -tags runonce $(E2E_Tests)
-
-MANAGED_PLUGIN_NAME="vsphere:latest"
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
