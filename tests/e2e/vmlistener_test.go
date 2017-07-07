@@ -128,7 +128,8 @@ func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 // 5. Verification: volume status should be detached
 // 6. Power on the VM
 // 7. Verification: volume status should still be detached
-// 8. Remove the volume
+// 8. Remove the container if it still exists
+// 9. Remove the volume
 func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	misc.LogTestStart(c.TestName())
 
@@ -162,6 +163,12 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
+	// Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
 	// Remove the volume
 	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -183,7 +190,8 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 // 9. Verification: volume status should be detached
 // 10. Power on VM1
 // 11. Verification: volume status should be still detached
-// 12. Remove the volume
+// 12. Remove the container if it still exists
+// 13. Remove the volume
 func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 	misc.LogTestStart(c.TestName())
 
@@ -233,6 +241,12 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
 
+	// Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
 	// Remove the volume
 	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -255,8 +269,9 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 // 10. Verification: volume status should be detached
 // 11. Power on VM1
 // 12. Verification: volume status should be still detached
-// 13. Remove the volume
-// 14. Remove the VSAN policy
+// 13. Remove the container if it still exists
+// 14. Remove the volume
+// 15. Remove the VSAN policy
 func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 	misc.LogTestStart(c.TestName())
 
@@ -312,6 +327,12 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
 
 	// Remove the volume
 	out, err = dockercli.DeleteVolume(s.vm1, fullVolumeName)
