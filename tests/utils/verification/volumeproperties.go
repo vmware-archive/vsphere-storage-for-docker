@@ -96,6 +96,7 @@ func GetFullVolumeName(hostName string, volumeName string) string {
 	cmd := dockercli.ListVolumes + "--filter name='" + volumeName + "' --format '{{.Name}}'"
 	fullName, err := ssh.InvokeCommand(hostName, cmd)
 	if err != nil {
+		log.Printf("Error: %s\n", err)
 		return volumeName
 	}
 
@@ -104,7 +105,8 @@ func GetFullVolumeName(hostName string, volumeName string) string {
 }
 
 // VerifyAttachedStatus - verify volume is attached and name of the VM attached
-// is consistent on both docker host and ESX
+// is consistent on both docker host and ESX. The name of the volume MUST be a
+// shorter name without @datastore suffix.
 func VerifyAttachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming attached status for volume [%s]\n", name)
 
@@ -139,7 +141,8 @@ func getVolumeStatusHost(name, hostName string) string {
 	return out
 }
 
-// VerifyDetachedStatus - check if the status gets detached within the timeout
+// VerifyDetachedStatus - check if the status gets detached within the timeout.
+// The name of the volume MUST be a shorter name without @datastore suffix.
 func VerifyDetachedStatus(name, hostName, esxName string) bool {
 	log.Printf("Confirming detached status for volume [%s]\n", name)
 
@@ -171,7 +174,7 @@ func GetAssociatedPolicyName(hostname string, volName string) (string, error) {
 	cmd := dockercli.InspectVolume + " --format '{{index .Status \"vsan-policy-name\"}}' " + volName
 	op, err := ssh.InvokeCommand(hostname, cmd)
 	if op == "" {
-		log.Printf("Null value is returned by docker cli when looking for the name of vsan policy used by volume. Output: ", op)
+		log.Printf("Null value is returned by docker cli when looking for the name of vsan policy used by volume. Output: %s", op)
 	}
 	return op, err
 }

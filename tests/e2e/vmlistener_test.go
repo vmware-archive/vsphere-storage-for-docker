@@ -25,6 +25,7 @@ import (
 
 	. "gopkg.in/check.v1"
 
+	adminconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
@@ -43,6 +44,7 @@ type VMListenerTestParams struct {
 	vm2Name       string
 	volumeName    string
 	containerName string
+	vsanDSName    string
 }
 
 func (s *VMListenerTestParams) SetUpSuite(c *C) {
@@ -56,20 +58,12 @@ func (s *VMListenerTestParams) SetUpSuite(c *C) {
 	s.vm2 = s.config.DockerHosts[1]
 	s.vm1Name = s.config.DockerHostNames[0]
 	s.vm2Name = s.config.DockerHostNames[1]
+	s.vsanDSName = esxutil.GetDatastoreByType("vsan")
 }
 
 func (s *VMListenerTestParams) SetUpTest(c *C) {
 	s.volumeName = inputparams.GetUniqueVolumeName("vmlistener_test")
 	s.containerName = inputparams.GetUniqueContainerName("vmlistener_test")
-
-	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
-	c.Assert(err, IsNil, Commentf(out))
-
-	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
-	c.Assert(err, IsNil, Commentf(out))
-
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
-	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 }
 
 func (s *VMListenerTestParams) TearDownTest(c *C) {
@@ -80,40 +74,76 @@ func (s *VMListenerTestParams) TearDownTest(c *C) {
 		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
 		c.Assert(err, IsNil, Commentf(out))
 	}
-	out, err := dockercli.DeleteVolume(s.vm1, s.volumeName)
-	c.Assert(err, IsNil, Commentf(out))
 }
 
 var _ = Suite(&VMListenerTestParams{})
 
 // Test vmdkops service restart
-// 1. Setup: Create a volume
-// 2. Setup: Attach it to a container
-// 3. Restart the vmdkops service
-// 4. Verification: volume stays as attached
+// 1. Create a volume
+// 2. Attach the volume to a container
+// 3. Verification: volume is in attached status
+// 4. Restart the vmdkops service
+// 5. Verification: volume stays as attached
+// 6. Remove the container
+// 7. Remove the volume
 func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 	misc.LogTestStart(c.TestName())
 
+	// Create the volume
+	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify the volume is in attached status
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
 	// Restart vmdkops service
-	out, err := admincli.RestartVmdkopsService(s.esx)
+	out, err = admincli.RestartVmdkopsService(s.esx)
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Make sure volume stays attached after vmdkopsd restart
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status = verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	// Remove the container
+	out, err = dockercli.RemoveContainer(s.vm1, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
 
 	misc.LogTestEnd(c.TestName())
 }
 
 // Test basic failover scenario by killing a VM and then power it on
-// 1. Setup: Create a volume
-// 2. Setup: Attach it to a container
-// 3. Kill the VM
-// 4. Verification: volume status should be detached
-// 5. Power on the VM
-// 6. Verification: volume status should still be detached
+// 1. Create a volume
+// 2. Attach the volume to a container
+// 3. Verification: volume is in attached status
+// 4. Kill the VM
+// 5. Verification: volume status should be detached
+// 6. Power on the VM
+// 7. Verification: volume status should still be detached
+// 8. Remove the container if it still exists
+// 9. Remove the volume
 func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	misc.LogTestStart(c.TestName())
+
+	// Create the volume
+	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify the volume is in attached status
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Kill the VM
 	isVMKilled := killVM(s.esx, s.vm1Name)
@@ -127,28 +157,55 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	esxutil.PowerOnVM(s.vm1Name)
 	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
+	c.Assert(verification.IsVDVSIsRunning(s.vm1), Equals, true, Commentf("vDVS is not running on [%s]", s.vm1Name))
 
 	// Status should be detached
-	status := verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
+
+	// Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
+	// Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
 
 	misc.LogTestEnd(c.TestName())
 }
 
-// Test advanced failover scenario by killing a VM, mounting the volume to a different VM,
-// unmounting it, and then power on the original VM.
-// 1. Setup: Create a volume from VM1
-// 2. Setup: Attach it to a container on VM1
-// 3. Kill VM1
-// 4. Verification: volume status should be detached
-// 5. Attach it to a container on a different VM2
-// 6. Verification: volume status should attached
-// 7. Remove the container from VM2
-// 8. Verification: volume status should be detached
-// 9. Power on VM1
-// 10. Verification: volume status should be still detached
-func (s *VMListenerTestParams) TestFailoverAcrossVM(c *C) {
+// Test advanced failover scenario on VMFS datastore by killing a VM,
+// mounting the volume to a different VM, unmounting it, and then
+// power on the original VM.
+// 1. Create a volume from VM1
+// 2. Attach it to a container on VM1
+// 3. Verification: volume is in attached status
+// 4. Kill VM1
+// 5. Verification: volume status should be detached
+// 6. Attach it to a container on a different VM2
+// 7. Verification: volume status should attached
+// 8. Remove the container from VM2
+// 9. Verification: volume status should be detached
+// 10. Power on VM1
+// 11. Verification: volume status should be still detached
+// 12. Remove the container if it still exists
+// 13. Remove the volume
+func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 	misc.LogTestStart(c.TestName())
+
+	// Create the volume
+	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify the volume is in attached status
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Kill VM1
 	isVMKilled := killVM(s.esx, s.vm1Name)
@@ -159,11 +216,11 @@ func (s *VMListenerTestParams) TestFailoverAcrossVM(c *C) {
 	c.Assert(volStatus, Equals, properties.DetachedStatus, Commentf("Volume %s is still attached", s.volumeName))
 
 	// Attach to a container on a different VM2
-	out, err := dockercli.AttachVolume(s.vm2, s.volumeName, s.containerName)
+	out, err = dockercli.AttachVolume(s.vm2, s.volumeName, s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Status should be attached
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx)
+	status = verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Remove the container from VM2
@@ -178,10 +235,113 @@ func (s *VMListenerTestParams) TestFailoverAcrossVM(c *C) {
 	esxutil.PowerOnVM(s.vm1Name)
 	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
+	c.Assert(verification.IsVDVSIsRunning(s.vm1), Equals, true, Commentf("vDVS is not running on [%s]", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
+	// Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test advanced failover scenario on VSAN datastore by killing a VM,
+// mounting the volume to a different VM, unmounting it, and then
+// power on the original VM.
+// 1. Create a VSAN policy
+// 2. Create a volume with VSAN policy from VM1
+// 3. Attach the volume to a container on VM1
+// 4. Verification: volume is in attached status
+// 5. Kill VM1
+// 6. Verification: volume status should be detached
+// 7. Attach it to a container on a different VM2
+// 8. Verification: volume status should attached
+// 9. Remove the container from VM2
+// 10. Verification: volume status should be detached
+// 11. Power on VM1
+// 12. Verification: volume status should be still detached
+// 13. Remove the container if it still exists
+// 14. Remove the volume
+// 15. Remove the VSAN policy
+func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// Create the VSAN policy
+	out, err := admincli.CreatePolicy(s.config.EsxHost, adminconst.PolicyName, adminconst.PolicyContent)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Create the volume with VSAN policy
+	fullVolumeName := s.volumeName + "@" + s.vsanDSName
+	vsanOpts := " -o " + adminconst.VsanPolicyFlag + "=" + adminconst.PolicyName
+
+	out, err = dockercli.CreateVolumeWithOptions(s.vm1, fullVolumeName, vsanOpts)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, fullVolumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify the volume is in attached status
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	// Kill VM1
+	isVMKilled := killVM(s.esx, s.vm1Name)
+	c.Assert(isVMKilled, Equals, true, Commentf("VM [%s] was not killed successfully", s.vm1Name))
+
+	// Status should be detached
+	volStatus := verification.GetVMAttachedToVolUsingAdminCli(s.volumeName, s.esx)
+	c.Assert(volStatus, Equals, properties.DetachedStatus, Commentf("Volume %s is still attached", s.volumeName))
+
+	// Attach to a container on a different VM2
+	out, err = dockercli.AttachVolume(s.vm2, fullVolumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Status should be attached
+	status = verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	// Remove the container from VM2
+	out, err = dockercli.RemoveContainer(s.vm2, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Status should be detached
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm2, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Power on VM1 which has been killed
+	esxutil.PowerOnVM(s.vm1Name)
+	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
+	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
+	c.Assert(verification.IsVDVSIsRunning(s.vm1), Equals, true, Commentf("vDVS is not running on [%s]", s.vm1Name))
+
+	// Status should be still detached
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
+	// Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, fullVolumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Remove the VSAN policy
+	out, err = admincli.RemovePolicy(s.esx, adminconst.PolicyName)
+	log.Printf("Remove vsanPolicy \"%s\" returns with %s", adminconst.PolicyName, out)
+	c.Assert(err, IsNil, Commentf(out))
 
 	misc.LogTestEnd(c.TestName())
 }
