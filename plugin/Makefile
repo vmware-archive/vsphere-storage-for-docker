@@ -70,7 +70,7 @@ TMP_IMAGE = $(PLUGIN_NAME):rootfs
 # Tmp container used for exporting rootfs from it
 TMP_CONTAINER := tempContainer
 # Tmp location on local FS to manipulate plugin files
-TMP_LOC := /tmp/plugin
+TMP_LOC := /tmp/plugin_stage
 
 # default target
 all: info plugin push
