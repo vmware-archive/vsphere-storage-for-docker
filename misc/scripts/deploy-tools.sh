@@ -152,7 +152,7 @@ function deployESXPre {
 
 function deployESXInstall {
     counter=5
-    wait_for "$SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)" $counter 
+    wait_for "$SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)" $counter
     if [ $? -ne 0 ]
     then
         log "deployESXInstall: Installation hit an error on $TARGET"
@@ -222,7 +222,7 @@ function cleanvm {
 function cleanupVMPre {
     case $FILE_EXT in
     deb)
-        $SSH $TARGET "$DEB_QUERY $PLUGIN_NAME > /dev/null"
+        $SSH $TARGET "$DEB_QUERY $PLUGIN_NAME > /dev/null 2>&1"
         if [ $? -eq 0 ]
         then
             let PLUGIN_INSTALLED=0
@@ -231,7 +231,7 @@ function cleanupVMPre {
         fi
         ;;
     rpm)
-        $SSH $TARGET "$RPM_QUERY $PLUGIN_NAME > /dev/null"
+        $SSH $TARGET "$RPM_QUERY $PLUGIN_NAME > /dev/null 2>&1"
         if [ $? -eq 0 ]
         then
             let PLUGIN_INSTALLED=0
@@ -243,7 +243,7 @@ function cleanupVMPre {
 
     if [ $PLUGIN_INSTALLED -eq 0 ]
     then
-        $SSH $TARGET "$IS_SYSTEMD > /dev/null"
+        $SSH $TARGET "$IS_SYSTEMD > /dev/null 2>&1"
         if [ $? -eq 0 ]
         then
             $SSH $TARGET systemctl stop docker
@@ -273,7 +273,7 @@ function cleanupVM {
         fi
         ;;
     esac
-    $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f > /dev/null"
+    $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f > /dev/null 2>&1"
 }
 
 function cleanupVMPost {
