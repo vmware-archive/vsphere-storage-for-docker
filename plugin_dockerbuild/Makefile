@@ -16,7 +16,7 @@
 # Makefile for Docker data volume *managed* plugin.
 #
 # This Makefile assumes it's in ./plugin in the tree and the binaries are already built
-# Eventually we will throw away deb/rpm build from ../vmdk_plugin/Makefile and will use only
+# Eventually we will throw away deb/rpm build from ../client_plugin/Makefile and will use only
 # managed plugin
 
 #

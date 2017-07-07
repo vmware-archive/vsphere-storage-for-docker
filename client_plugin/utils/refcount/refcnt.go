@@ -81,8 +81,8 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
 	"golang.org/x/net/context"
 )
 

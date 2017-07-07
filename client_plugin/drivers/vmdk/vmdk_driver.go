@@ -31,10 +31,10 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk/vmdkops"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk/vmdkops"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 )
 
 const version = "vSphere Volume Driver v0.5"
