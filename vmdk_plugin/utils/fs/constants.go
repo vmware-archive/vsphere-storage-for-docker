@@ -12,22 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Platform independent fs module constants.
+
 package fs
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+const (
+	cr   = "\r"   // carriage return
+	lf   = "\n"   // line feed
+	crlf = "\r\n" // carriage return line feed
 )
-
-const funnyfs = "funnyfs"
-
-func TestVerifyFSSupport(t *testing.T) {
-	err := VerifyFSSupport(FstypeDefault)
-	assert.Nil(t, err, "Fstype %s should be supported", FstypeDefault)
-}
-
-func TestVerifyFSSupportError(t *testing.T) {
-	err := VerifyFSSupport(funnyfs)
-	assert.NotNil(t, err, "Fstype %s shouldn't be supported", funnyfs)
-}
