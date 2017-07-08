@@ -37,6 +37,7 @@ TMP_LOC=/tmp/$PLUGIN_NAME
 VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
 BUILD_LOC=$TMP_LOC/build
 PLUGIN_LOC=$TMP_LOC/plugin
+COMMON_VARS="../Commonvars.mk"
 
 # VM Functions
 
@@ -68,7 +69,7 @@ function deployplugin {
         $SSH $TARGET "rm -fr $TMP_LOC; $MKDIR_P $TMP_LOC $BUILD_LOC"
         log "Copying required files to $TARGET ..."
         $SCP $PLUGIN_BIN $TARGET:$BUILD_LOC
-        $SCP $MANAGED_PLUGIN_SRC $TARGET:$TMP_LOC
+        $SCP $MANAGED_PLUGIN_SRC $COMMON_VARS $TARGET:$TMP_LOC
         if [ -z  "$($SSH $TARGET 'which make')" ]; then
             setupVMType
             case $FILE_EXT in

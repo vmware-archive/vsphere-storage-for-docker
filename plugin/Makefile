@@ -25,44 +25,11 @@
 # Make targets:
 #    info (helpful info), clean (remove build artefacts), plugin, (build plugin), push (push to dockerhub)
 #
-# Use the following environment vars to change the behavior :
-#
-# DOCKER_HUB_REPO - Dockerhub repo to use, in both name forming and in pushing to dockerhub.
-#                   Defaults to the result of `whoami` command.
-#                   Note: you first need to run 'docker login' in order for 'make push' to succeed
-# VERSION_TAG     - How you want the version to look. Default is "current git tag +1 "
-# EXTRA_TAG       - additional info you want in tag. Default is "-dev"
-#
-# To check resulting settings use  "make info"
-# examples:
-#   make
-#          --> resulting name (for my build as of 3/17/17)  msterin/docker-volume-vsphere:0.13-dev
-#
-# 	DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make
-#           --> resulting name vmware/docker-volume-vsphere:latest
-#
-#   DOCKER_HUB_REPO=cnastorage EXTRA_TAG=-CI make
-#           --> resulting name cnastorage/docker-volume-vspehere:0.13-CI
-#
 
-# grab the latest commit SHA and related tag from git so we can construct plugin tag
-GIT_SHA := $(shell git rev-parse --revs-only --short HEAD)
-GIT_TAG := $(shell git describe --tags --abbrev=0 $(GIT_SHA))
-
-# Allow these vars to be suplied in environment
-DOCKER_HUB_REPO ?= $(shell whoami)
-# "git tag + 1" , so "0.11" becomes "0.12"
-VERSION_TAG ?= $(shell echo $(GIT_TAG) | awk -F. '{printf ("%d.%d", $$1, $$2+1)}' )
-EXTRA_TAG ?= -dev
-
-# final tag
-PLUGIN_TAG := $(VERSION_TAG)$(EXTRA_TAG)
-
-# plugin name - used as a base for full plugin name and container for extracting rootfs
-PLUGIN_NAME=$(DOCKER_HUB_REPO)/docker-volume-vsphere
+# Exporting common constants
+-include ../Commonvars.mk
 
 # Binaries we want to pick up from the actual build
-BIN_LOC := ../build
 BINARY := docker-volume-vsphere
 
 # Tmp docker image used to construct rootfs + our binaries
@@ -93,7 +60,7 @@ clean:
 
 plugin: clean
 	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
-	cp $(BIN_LOC)/$(BINARY) .
+	cp $(BIN)/$(BINARY) .
 	docker build -q -t $(TMP_IMAGE) .
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
 	mkdir -p $(TMP_LOC)/rootfs
