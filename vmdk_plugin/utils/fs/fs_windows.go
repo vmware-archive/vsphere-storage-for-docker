@@ -19,7 +19,6 @@ package fs
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os/exec"
 	"strings"
 	"time"
@@ -35,8 +34,6 @@ const (
 	ntfs                 = "ntfs"
 	powershell           = "powershell"
 	diskNotFound         = "DiskNotFound"
-	diskpart             = "diskpart"
-	diskpartSuccessMsg   = "DiskPart successfully formatted the volume."
 
 	// Using a PowerShell script here due to lack of a functional Go WMI library.
 	// PowerShell script to identify the disk number given a scsi controller
@@ -67,17 +64,14 @@ const (
 		Write-Host "DiskNotFound"
 	`
 
-	// DiskPart script to format a disk with a filesystem.
+	// PowerShell script to format a disk with a filesystem.
+	// Note: -Confirm:$false suppresses the confirmation prompt.
 	formatDiskScript = `
-		select disk %s
-		clean
-		online disk
-		attribute disk clear readonly
-		create partition primary
-		select partition 1
-		active
-		format fs=%s label="%s" quick
-		exit
+		Set-Disk -Number %s -IsOffline $false
+		Set-Disk -Number %s -IsReadOnly $false
+		Initialize-Disk -Number %s -PartitionStyle MBR -PassThru |
+		New-Partition -UseMaximumSize |
+		Format-Volume -FileSystem %s -NewFileSystemLabel "%s" -Confirm:$false
 	`
 )
 
@@ -151,24 +145,15 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 		return err
 	}
 
-	// The diskpart utility consumes the script via stdin and formats a disk.
-	cmd := exec.Command(diskpart)
-	stdin, _ := cmd.StdinPipe()
-	defer stdin.Close()
-	io.WriteString(stdin, fmt.Sprintf(formatDiskScript, diskNum, ntfs, label))
-
-	out, err := cmd.CombinedOutput()
+	script := fmt.Sprintf(formatDiskScript, diskNum, diskNum, diskNum, fstype, label)
+	out, err := exec.Command(powershell, script).Output()
 	if err != nil {
 		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "err": err}).Error("DiskPart script failed to execute ")
+			"diskNum": diskNum, "err": err}).Error("Format disk script failed ")
 		return err
-	} else if tailSegment(out, crlf, 5) != diskpartSuccessMsg {
-		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "out": string(out)}).Error("DiskPart failed to format the disk ")
-		return fmt.Errorf("DiskPart failed to format the disk for diskNum = %s", diskNum)
 	} else {
 		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "out": string(out)}).Info("DiskPart script executed successfully ")
+			"diskNum": diskNum, "out": string(out)}).Info("Format disk script executed successfully ")
 		return nil
 	}
 }
