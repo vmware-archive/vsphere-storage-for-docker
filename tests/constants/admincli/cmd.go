@@ -95,6 +95,12 @@ const (
 	// VMlist VM of the vmgroup
 	VMlist = " --vm-list="
 
+	// AddDatastoreAccess adds datastore to vmgroup
+	AddDatastoreAccess = vmdkopsAdmin + "vmgroup access add --name="
+
+	// RemoveDatastoreAccess removes a datastore from a vmgroup
+	RemoveDatastoreAccess = vmdkopsAdmin + "vmgroup access rm --name %s --datastore %s"
+
 	// GetDBMode get current DB config
 	GetDBMode = vmdkopsAdmin + "config status"
 )

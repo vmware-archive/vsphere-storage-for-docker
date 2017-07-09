@@ -19,6 +19,7 @@ package dockercli
 
 import (
 	"log"
+	"strings"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
@@ -106,4 +107,25 @@ func ReadFromContainer(ip, containerName, volPath, fileName string) (string, err
 
 	log.Println(fullCmd)
 	return ssh.InvokeCommand(ip, fullCmd)
+}
+
+// GetVolumeStatus returns a property map for a volume 
+func GetVolumeStatus(hostName, volumeName string) (map[string]string, error) {
+ 	formatStr1 := " --format '{{index .Status.access}} {{index .Status \"attach-as\"}} {{index .Status.capacity.allocated}} {{index .Status.capacity.size}} {{index .Status \"clone-from\"}}"
+	formatStr2 := " {{index .Status \"created by VM\"}} {{index .Status.datastore}} {{index .Status.diskformat}} {{index .Status.fstype}} {{index .Status.status}} {{index .Status \"attached to VM\"}}'"
+
+	cmd := dockercli.InspectVolume + volumeName + formatStr1 + formatStr2
+	out, err := ssh.InvokeCommand(hostName, cmd)
+
+	if err != nil {
+		return nil, err
+	}
+
+	status := make(map[string]string)
+	val := strings.Fields(out)
+
+	for i := 0; i < len(dockercli.VolumeStatusFields); i += 1 {
+		status[dockercli.VolumeStatusFields[i]] = val[i]
+	}
+	return status, nil
 }

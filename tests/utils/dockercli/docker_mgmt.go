@@ -29,6 +29,10 @@ import (
 
 const (
 	dockerRestartCmd = "pidof systemd && " + dockercli.RestartDockerWithSystemd + " || " + dockercli.RestartDockerService
+	dockerInfoCmd = "docker info"
+	restartWait = 6
+	maxRestartRetries = 10
+
 )
 
 // DOCKER AND PLUGIN MGMT API
@@ -90,7 +94,18 @@ func KillVDVSPlugin(ip string) (string, error) {
 // RestartDocker - restarts the docker service (graceful)
 func RestartDocker(ip string) (string, error) {
 	log.Printf("Restarting docker ....")
-	return ssh.InvokeCommand(ip, dockerRestartCmd)
+	out, err := ssh.InvokeCommand(ip, dockerRestartCmd)
+	if err != nil {
+		return "", err
+	}
+	// Verify Docker daemon is available
+	retries := 0
+	out, err = ssh.InvokeCommand(ip, dockerInfoCmd)
+	for retries < maxRestartRetries && err != nil {
+		misc.SleepForSec(restartWait)
+		out, err = ssh.InvokeCommand(ip, dockerInfoCmd)
+	}
+	return out, err
 }
 
 // KillDocker - kill docker daemon. It is restarted automatically (ungraceful)

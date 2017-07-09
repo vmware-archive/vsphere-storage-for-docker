@@ -50,7 +50,7 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 // AttachVolume - attach volume to container on given host
 func AttachVolume(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)
-	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -d -v "+volName+
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --volume-driver vsphere -d -v "+volName+
 		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.TestContainer)
 }
 
@@ -65,7 +65,7 @@ func InspectVolume(ip, volName string) (string, error) {
 // automatically restarts if killed
 func AttachVolumeWithRestart(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM[%s]\n", volName, ip)
-	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always -d -v "+volName+
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" --restart=always --volume-driver vsphere -d -v "+volName+
 		":"+dockercli.ContainerMountPoint+" --name "+containerName+
 		dockercli.TestContainer)
 }
