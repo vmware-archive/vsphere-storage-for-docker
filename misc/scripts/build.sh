@@ -92,8 +92,8 @@ dir=/go/src/github.com/vmware/docker-volume-vsphere
 # We need to mount this into the container:
 host_dir=$PWD/..
 
-# we run from top level (i.e. ./misc/scripts/build.sh) , but run make in 'vmdk_plugin'
-MAKE="$DEBUG make --directory=vmdk_plugin"
+# we run from top level (i.e. ./misc/scripts/build.sh) , but run make in 'client_plugin'
+MAKE="$DEBUG make --directory=client_plugin"
 MAKE_UI="$DEBUG make --directory=ui"
 MAKE_ESX="$DEBUG make --directory=esx_service"
 

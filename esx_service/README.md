@@ -12,5 +12,5 @@ Install with with something like this:
   > esxcli software vib install --no-sig-check -v `pwd`/<vib_name>
 ```
 
-On client side, ../vmdk_plugin/vmdkops is a Go client module
+On client side, ../client_plugin/vmdkops is a Go client module
 

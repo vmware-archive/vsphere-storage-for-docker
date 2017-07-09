@@ -1,4 +1,4 @@
-// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,14 @@
 
 package config_test
 
-// Test Loading JSON config files
-
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"os"
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
-	conf, err := config.Load("../../default-config.json")
-	assert.Nil(t, err)
-	assert.Equal(t, conf.MaxLogSizeMb, 100)
-	assert.Equal(t, conf.MaxLogAgeDays, 28)
-	assert.Equal(t, conf.LogPath, "/var/log/docker-volume-vsphere.log")
+func TestWindowsPath(t *testing.T) {
+	assert.Equal(t, config.DefaultConfigPath, os.Getenv("PROGRAMDATA")+`\docker-volume-vsphere\docker-volume-vsphere.conf`)
+	assert.Equal(t, config.DefaultLogPath, os.Getenv("LOCALAPPDATA")+`\docker-volume-vsphere\logs\docker-volume-vsphere.log`)
 }

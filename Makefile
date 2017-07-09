@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This Makefile has 2 purposes:
-#   - convenience: redirects targets to ./vmdk_plugin so 'make'
+#   - convenience: redirects targets to ./client_plugin so 'make'
 #                  can be run from the top
 #   - drone invariant: defines deb/rpm/build/testasroot targets so drone.yml
 #                   can be kept as-is
@@ -39,21 +39,21 @@ export INCLUDE_UI
 default: build-all
 
 build-all: dockerized-build-ui
-	$(MAKE) --directory=vmdk_plugin $@
-	$(MAKE) --directory=plugin all
+	$(MAKE) --directory=client_plugin $@
+	$(MAKE) --directory=plugin_dockerbuild all
 
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders
 # as root.
 clean: dockerized-clean-ui
-	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=client_plugin $@
 
 # Non dockerized build, used by CI
 build:
 ifeq ($(INCLUDE_UI), true)
 	$(MAKE) --directory=ui $@
 endif
-	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=client_plugin $@
 
 # Forward to UI inside docker run
 dockerized-build-ui:
@@ -68,8 +68,8 @@ endif
 
 # redirect all
 $(TARGETS):
-	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=client_plugin $@
 
-# if we do not recognize the target, just pass it on to vmdk_plugin Makefile
+# if we do not recognize the target, just pass it on to client_plugin Makefile
 .DEFAULT:
-	$(MAKE) --directory=vmdk_plugin $@
+	$(MAKE) --directory=client_plugin $@

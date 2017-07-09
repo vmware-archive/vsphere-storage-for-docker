@@ -31,9 +31,9 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 	testutil "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 	"golang.org/x/net/context"
 )
 

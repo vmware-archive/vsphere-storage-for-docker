@@ -28,9 +28,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/natefinch/lumberjack"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/photon"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers/vmdk"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/photon"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 )
 
 // PluginServer responds to HTTP requests from Docker.

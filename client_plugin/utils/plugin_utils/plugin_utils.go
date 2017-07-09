@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/drivers"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
 )
 
 const (

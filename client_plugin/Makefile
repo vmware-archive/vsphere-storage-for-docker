@@ -37,7 +37,7 @@ SCRIPTS     := ../misc/scripts
 
 # Packaging variables
 PLUGNAME  := docker-volume-vsphere
-GOPATH_PLUGNAME := $(PLUGNAME)/vmdk_plugin
+GOPATH_PLUGNAME := $(PLUGNAME)/client_plugin
 GOPATH_ORG :=vmware
 MAINTAINERS := cna-storage@vmware.com
 REPO_URL    := https://github.com/$(GOPATH_ORG)/$(PLUGNAME)
@@ -89,7 +89,7 @@ VMDKOPS_TEST_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
-SRC = main.go log_formatter.go utils/refcount/refcnt.go \
+SRC = vmdk_plugin/main.go vmdk_plugin/log_formatter.go utils/refcount/refcnt.go \
 	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go\
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 
@@ -133,13 +133,13 @@ prereqs:
 
 $(PLUGIN_BIN): $(SRC) $(VMDKOPS_MODULE_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
-	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)
+	$(GO) build --ldflags '-extldflags "-static"' -o $(PLUGIN_BIN) $(PLUGIN)/vmdk_plugin
 
 $(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(TEST_SRC) $(VMDKOPS_MODULE)/*_test.go
 	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
-$(BIN)/$(PLUGNAME).test: $(SRC) $(TEST_SRC) *_test.go
-	$(GO) test -c -o $@ $(PLUGIN) -cover
+$(BIN)/$(PLUGNAME).test: $(SRC) $(TEST_SRC) ./vmdk_plugin/*_test.go
+	$(GO) test -c -o $@ $(PLUGIN)/vmdk_plugin -cover
 
 .PHONY: clean
 clean:
@@ -152,7 +152,7 @@ clean-as-root: pkg-post
 
 # GO Code quality checks.
 
-DIRS_TO_VERIFY := . utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
+DIRS_TO_VERIFY := vmdk_plugin utils/fs utils/config drivers/photon drivers/vmdk drivers/vmdk/vmdkops ../tests/e2e \
 	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification ../tests/constants/admincli \
 	../tests/constants/dockercli ../tests/utils/ssh ../tests/utils/misc ../tests/constants/vm
 

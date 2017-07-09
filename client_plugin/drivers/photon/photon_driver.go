@@ -26,7 +26,7 @@ package photon
 
 //"fmt"
 //"path/filepath"
-//"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
+//"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 //"golang.org/x/exp/inotify"
 import (
 	"fmt"
@@ -37,9 +37,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 	"github.com/vmware/photon-controller-go-sdk/photon"
 )
 

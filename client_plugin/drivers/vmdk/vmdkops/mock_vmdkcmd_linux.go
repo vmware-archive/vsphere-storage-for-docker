@@ -27,7 +27,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 )
 
 // MockVmdkCmd struct

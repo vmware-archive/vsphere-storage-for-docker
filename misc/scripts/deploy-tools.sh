@@ -36,7 +36,7 @@ VIB_NAME=esx-vmdkops-service
 TMP_LOC=/tmp/$PLUGIN_NAME
 VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
 BUILD_LOC=$TMP_LOC/build
-PLUGIN_LOC=$TMP_LOC/plugin
+PLUGIN_LOC=$TMP_LOC/plugin_dockerbuild
 COMMON_VARS="../Commonvars.mk"
 
 # VM Functions

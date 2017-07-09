@@ -61,4 +61,4 @@ MANAGED_PLUGIN_NAME := "vsphere:latest"
 
 # build places binaries here:
 BIN := ../build
-MANAGED_PLUGIN_LOC := ../plugin
+MANAGED_PLUGIN_LOC := ../plugin_dockerbuild
