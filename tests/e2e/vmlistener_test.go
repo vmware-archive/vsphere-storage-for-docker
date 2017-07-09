@@ -145,8 +145,8 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 
 	// Power on VM
 	esxutil.PowerOnVM(s.vm1Name)
-	isVMBackOnline := esxutil.IsVMBackOnline(s.vm1, s.vm1Name)
-	c.Assert(isVMBackOnline, Equals, true, Commentf("VM [%s] is not back online", s.vm1Name))
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -222,8 +222,8 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 
 	// Power on VM1 which has been killed
 	esxutil.PowerOnVM(s.vm1Name)
-	isVMBackOnline := esxutil.IsVMBackOnline(s.vm1, s.vm1Name)
-	c.Assert(isVMBackOnline, Equals, true, Commentf("VM [%s] is not back online", s.vm1Name))
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -308,8 +308,8 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 
 	// Power on VM1 which has been killed
 	esxutil.PowerOnVM(s.vm1Name)
-	isVMBackOnline := esxutil.IsVMBackOnline(s.vm1, s.vm1Name)
-	c.Assert(isVMBackOnline, Equals, true, Commentf("VM [%s] is not back online", s.vm1Name))
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)

@@ -79,38 +79,19 @@ func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) boo
 	return false
 }
 
-// IsVMBackOnline checks if VM is fully back online after being restarted
-func IsVMBackOnline(vmIP, vmName string) bool {
+// IsVDVSRunningAfterVMRestart checks if vDVS is up and running after VM being restarted.
+func IsVDVSRunningAfterVMRestart(vmIP, vmName string) bool {
 	isStatusOnline := WaitForExpectedState(GetVMPowerState, vmName, properties.PowerOnState)
 	if !isStatusOnline {
 		log.Printf("VM %s is not in PoweredOn state", vmName)
 		return false
 	}
 
-	isVDVSRunning := isVDVSRunning(vmIP)
+	isVDVSRunning := IsVDVSRunning(vmIP)
 	if !isVDVSRunning {
 		log.Printf("vDVS is not running on VM [%s]. Please check if the previous VM IP [%s] has changed.", vmName, vmIP)
 		return false
 	}
 
 	return true
-}
-
-// isVDVSRunning checks if vDVS is running. This util can be useful
-// in scenarios where vm is powered-on and user wants to find out if
-// vm is fully up to be able to run docker volume commands.
-func isVDVSRunning(ip string) bool {
-	log.Printf("Verifying if vDVS is running on vm: %s", ip)
-	maxAttempt := 30
-	waitTime := 3
-	for attempt := 0; attempt < maxAttempt; attempt++ {
-		misc.SleepForSec(waitTime)
-		pid, _ := ssh.InvokeCommand(ip, "pidof docker-volume-vsphere")
-		if pid != "" {
-			log.Printf("Process ID of docker-volume-vsphere is: %s", pid)
-			return true
-		}
-	}
-	log.Printf("vDVS is not running on VM: %s", ip)
-	return false
 }
