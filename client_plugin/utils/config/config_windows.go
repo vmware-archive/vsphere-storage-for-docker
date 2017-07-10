@@ -24,4 +24,7 @@ var (
 	DefaultConfigPath = filepath.Join(os.Getenv("PROGRAMDATA"), "docker-volume-vsphere", "docker-volume-vsphere.conf")
 	// DefaultLogPath is the default location of the log (trace) file.
 	DefaultLogPath = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "logs", "docker-volume-vsphere.log")
+
+	// VMDK volumes are mounted here
+	MountRoot = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "mounts")
 )

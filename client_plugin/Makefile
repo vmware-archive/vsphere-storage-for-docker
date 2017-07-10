@@ -89,7 +89,8 @@ VMDKOPS_TEST_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
-SRC = vmdk_plugin/main.go vmdk_plugin/log_formatter.go utils/refcount/refcnt.go \
+SRC = vmdk_plugin/main.go utils/log_formatter/log_formatter.go \
+	utils/refcount/refcnt.go utils/plugin_server/plugin_server.go \
 	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go\
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 

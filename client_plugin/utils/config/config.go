@@ -19,10 +19,27 @@ package config
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/natefinch/lumberjack"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/log_formatter"
 	"io/ioutil"
+	"os"
+	"runtime"
 )
 
 const (
+	// PhotonDriver is the driver to handle single attach vmdk-based volumes in Photon Platform
+	PhotonDriver = "photon"
+	// VMDKDriver is the driver to handle single attach vmdk-based in vSphere/vCenter 6.0+ (deprecated)
+	VMDKDriver = "vmdk"
+	// VSphereDriver is the driver to handle single attach vmdk-based in vSphere/vCenter 6.0+
+	VSphereDriver = "vsphere"
+
+	// DefaultPort is the default ESX service port.
+	DefaultPort = 1019
+
 	// Local constants
 	defaultMaxLogSizeMb  = 100
 	defaultMaxLogAgeDays = 28
@@ -41,6 +58,14 @@ type Config struct {
 	Host          string `json:",omitempty"`
 }
 
+// LogInfo stores parameters for setting up logs
+type LogInfo struct {
+	LogLevel       *string
+	LogFile        *string
+	DefaultLogFile string
+	ConfigFile     *string
+}
+
 // Load the configuration from a file and return a Config.
 func Load(path string) (Config, error) {
 	jsonBlob, err := ioutil.ReadFile(path)
@@ -51,15 +76,12 @@ func Load(path string) (Config, error) {
 	if err := json.Unmarshal(jsonBlob, &config); err != nil {
 		return Config{}, err
 	}
-	SetDefaults(&config)
+	setDefaults(&config)
 	return config, nil
 }
 
-// SetDefaults for any config setting that is at its `bottom`
-func SetDefaults(config *Config) {
-	if config.LogPath == "" {
-		config.LogPath = DefaultLogPath
-	}
+// setDefaults for any config setting that is at its `bottom`
+func setDefaults(config *Config) {
 	if config.MaxLogSizeMb == 0 {
 		config.MaxLogSizeMb = defaultMaxLogSizeMb
 	}
@@ -69,4 +91,108 @@ func SetDefaults(config *Config) {
 	if config.LogLevel == "" {
 		config.LogLevel = defaultLogLevel
 	}
+}
+
+// LogInit init log with passed logLevel (and get config from configFile if it's present)
+// returns True if using defaults,  False if using config file
+func LogInit(logInfo *LogInfo) bool {
+	usingConfigDefaults := false
+	c, err := Load(*logInfo.ConfigFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			usingConfigDefaults = true // no .conf file, so using defaults
+			c = Config{}
+			setDefaults(&c)
+		} else {
+			panic(fmt.Sprintf("Failed to load config file %s: %v",
+				*logInfo.ConfigFile, err))
+		}
+	}
+
+	path := c.LogPath
+	if path == "" {
+		path = logInfo.DefaultLogFile
+	}
+
+	if logInfo.LogFile != nil {
+		path = *logInfo.LogFile
+	}
+	log.SetOutput(&lumberjack.Logger{
+		Filename: path,
+		MaxSize:  c.MaxLogSizeMb,  // megabytes
+		MaxAge:   c.MaxLogAgeDays, // days
+	})
+
+	if *logInfo.LogLevel == "" {
+		*logInfo.LogLevel = c.LogLevel
+	}
+
+	level, err := log.ParseLevel(*logInfo.LogLevel)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse log level: %v", err))
+	}
+
+	log.SetFormatter(new(log_formatter.VmwareFormatter))
+	log.SetLevel(level)
+
+	if usingConfigDefaults {
+		log.Info("No config file found. Using defaults.")
+	}
+	return usingConfigDefaults
+}
+
+// InitConfig set up driver specific options
+func InitConfig(defaultConfigPath string, defaultLogPath string, defaultDriver string,
+	defaultWindowsDriver string) (Config, error) {
+	// Get options from ENV (where available), and from command line.
+	// ENV takes precedence, so we can modify it in Docker plugin install
+	logEnv := os.Getenv("VDVS_LOG_LEVEL")
+	logLevel := &logEnv
+	if *logLevel == "" {
+		logLevel = flag.String("log_level", "", "Logging Level")
+	}
+	configFile := flag.String("config", defaultConfigPath, "Configuration file path")
+	driverName := flag.String("driver", "", "Volume driver")
+
+	flag.Parse()
+
+	// Load the configuration if one was provided.
+	c, err := Load(*configFile)
+	if err != nil {
+		log.Warningf("Failed to load config file %s: %v", *configFile, err)
+	}
+
+	logInfo := &LogInfo{
+		LogLevel:       logLevel,
+		LogFile:        nil,
+		DefaultLogFile: defaultLogPath,
+		ConfigFile:     configFile,
+	}
+	LogInit(logInfo)
+
+	// If no driver provided on the command line, use the one in the
+	// config file or the default.
+	if *driverName != "" {
+		c.Driver = *driverName
+	} else if c.Driver == "" {
+		c.Driver = defaultDriver
+	}
+
+	// The windows plugin only supports the vsphere driver.
+	if runtime.GOOS == "windows" && c.Driver != defaultWindowsDriver {
+		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
+			defaultWindowsDriver, c.Driver)
+		log.Warning(msg)
+		fmt.Println(msg)
+		c.Driver = defaultWindowsDriver
+	}
+
+	log.WithFields(log.Fields{
+		"driver":    c.Driver,
+		"log_level": *logLevel,
+		"config":    *configFile,
+	}).Info("Starting plugin ")
+
+	return c, nil
+
 }

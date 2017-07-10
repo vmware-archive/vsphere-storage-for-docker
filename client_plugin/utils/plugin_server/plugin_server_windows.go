@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package plugin_server
 
 // A VMDK Docker Data Volume plugin implementation for Windows OS.
 
@@ -31,10 +31,9 @@ import (
 
 const (
 	npipeAddr = `\\.\pipe\vsphere-dvs` // Plugin's npipe address
-)
 
-var (
-	mountRoot = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "mounts") // VMDK volumes are mounted here
+	// Docker driver types.
+	volumeDriver = "VolumeDriver"
 )
 
 // NpipePluginServer serves HTTP requests from Docker over windows npipe.

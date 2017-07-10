@@ -14,7 +14,7 @@
 
 // Basic tests for the NpipePluginServer implementation.
 
-package main
+package plugin_server
 
 import (
 	"bufio"

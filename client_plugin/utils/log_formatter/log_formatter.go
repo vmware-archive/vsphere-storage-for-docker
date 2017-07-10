@@ -17,7 +17,7 @@
 // * storage team specifications. The `appendKeyValue` and `needsQuoting` functions are copied
 // * from the implementation of the TextFormatter in Logrus.
 
-package main
+package log_formatter
 
 import (
 	"bytes"

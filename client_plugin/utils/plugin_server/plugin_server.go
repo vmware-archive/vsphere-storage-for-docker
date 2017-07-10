@@ -1,4 +1,4 @@
-// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package plugin_server
+
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/docker/go-plugins-helpers/volume"
+	"os"
+	"os/signal"
+	"syscall"
+)
 
 const (
-	// vDVS drivers.
-	photonDriver  = "photon"
-	vmdkDriver    = "vmdk" // deprecated
-	vsphereDriver = "vsphere"
-
-	// Default ESX service port.
-	defaultPort = 1019
-
-	// Docker driver types.
-	volumeDriver = "VolumeDriver"
-
 	// Docker plugin handshake endpoint.
 	// Also see https://docs.docker.com/engine/extend/plugin_api/#handshake-api
 	pluginActivatePath = "/Plugin.Activate"
@@ -34,3 +31,27 @@ const (
 	// Also see https://docs.docker.com/engine/extend/plugins_volume/#volume-plugin-protocol
 	volumeDriverCreatePath = "/VolumeDriver.Create"
 )
+
+// PluginServer responds to HTTP requests from Docker.
+type PluginServer interface {
+	// Init initializes the server.
+	Init()
+	// Destroy destroys the server.
+	Destroy()
+}
+
+// StartServer starts a plugin server based on runtime OS
+func StartServer(driverName string, driver *volume.Driver) {
+	server := NewPluginServer(driverName, driver)
+
+	sigChannel := make(chan os.Signal, 1)
+	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigChannel
+		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
+		server.Destroy()
+		os.Exit(0)
+	}()
+
+	server.Init()
+}

@@ -75,7 +75,14 @@ func init() {
 	flag.IntVar(&parallelVolumes, "parallel_volumes", 3, "Volumes per docker daemon for create/delete concurrent tests")
 	flag.IntVar(&parallelClones, "parallel_clones", 2, "Volumes per docker daemon for clone concurrent tests")
 	flag.Parse()
-	usingConfigFileDefaults := logInit(logLevel, logFile, configFile)
+
+	logInfo := &config.LogInfo{
+		LogLevel:       logLevel,
+		LogFile:        logFile,
+		DefaultLogFile: config.DefaultLogPath,
+		ConfigFile:     configFile,
+	}
+	usingConfigFileDefaults := config.LogInit(logInfo)
 
 	defaultHeaders = map[string]string{"User-Agent": "engine-api-client-1.0"}
 
@@ -86,7 +93,6 @@ func init() {
 		"conf_file":                *configFile,
 		"using_conf_file_defaults": usingConfigFileDefaults,
 	}).Info("VMDK plugin tests started ")
-	log.SetFormatter(new(VmwareFormatter))
 }
 
 // returns in-container mount point for a volume

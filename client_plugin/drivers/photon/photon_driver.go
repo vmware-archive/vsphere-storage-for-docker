@@ -29,6 +29,7 @@ package photon
 //"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 //"golang.org/x/exp/inotify"
 import (
+	"flag"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -37,6 +38,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
@@ -79,31 +81,52 @@ func (d *VolumeDriver) verifyTarget() error {
 }
 
 // NewVolumeDriver - creates Driver, creates client for given target
-func NewVolumeDriver(targetURL string, projectID string, hostID string, mountDir string) *VolumeDriver {
+func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
+	// Read command line flags
+	targetURL := flag.String("target", "", "Photon controller URL")
+	projectID := flag.String("project", "", "Project ID of the docker host")
+	hostID := flag.String("host", "", "ID of docker host")
+	flag.Parse()
+
+	if *targetURL == "" {
+		*targetURL = cfg.Target
+	}
+	if *projectID == "" {
+		*projectID = cfg.Project
+	}
+	if *hostID == "" {
+		*hostID = cfg.Host
+	}
+	if *targetURL == "" || *projectID == "" || *hostID == "" {
+		log.Warning("Invalid options specified for target/project/host")
+		fmt.Printf("Invalid options specified for target - %s project - %s host - %s. Exiting.\n",
+			*targetURL, *projectID, *hostID)
+		return nil
+	}
 
 	d := &VolumeDriver{
-		target:  targetURL,
-		project: projectID,
-		hostID:  hostID,
+		target:  *targetURL,
+		project: *projectID,
+		hostID:  *hostID,
 	}
 	// Use default timeout of thirty seconds and retry of three
-	d.client = photon.NewClient(targetURL, nil, nil)
+	d.client = photon.NewClient(*targetURL, nil, nil)
 
 	err := d.verifyTarget()
 	if err != nil {
-		log.WithFields(log.Fields{"target": targetURL, "project-id": projectID}).Warning("Invalid target and or project ID, exiting.")
+		log.WithFields(log.Fields{"target": *targetURL, "project-id": *projectID}).Warning("Invalid target and or project ID, exiting.")
 		return nil
 	}
 	d.mountRoot = mountDir
 	d.refCounts = refcount.NewRefCountsMap()
-	d.refCounts.Init(d, mountDir, driverName)
+	d.refCounts.Init(d, mountDir, cfg.Driver)
 	d.mountIDtoName = make(map[string]string)
 
 	log.WithFields(log.Fields{
 		"version": version,
-		"target":  targetURL,
-		"project": projectID,
-		"hostID":  hostID,
+		"target":  *targetURL,
+		"project": *projectID,
+		"hostID":  *hostID,
 	}).Info("Docker Photon plugin started ")
 
 	return d

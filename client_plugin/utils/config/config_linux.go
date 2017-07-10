@@ -21,4 +21,7 @@ const (
 	DefaultConfigPath = "/etc/docker-volume-vsphere.conf"
 	// DefaultLogPath is the default location of log (trace) file
 	DefaultLogPath = "/var/log/docker-volume-vsphere.log"
+
+	// MountRoot is the path where VMDK and photon volumes are mounted
+	MountRoot = "/mnt/vmdk"
 )

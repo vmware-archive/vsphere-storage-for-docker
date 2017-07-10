@@ -17,185 +17,47 @@ package main
 // A VMDK Docker Data Volume plugin - main
 
 import (
-	"flag"
-	"fmt"
 	"os"
-	"os/signal"
 	"reflect"
-	"runtime"
-	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/natefinch/lumberjack"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/photon"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_server"
 )
-
-// PluginServer responds to HTTP requests from Docker.
-type PluginServer interface {
-	// Init initializes the server.
-	Init()
-	// Destroy destroys the server.
-	Destroy()
-}
-
-// init log with passed logLevel (and get config from configFile if it's present)
-// returns True if using defaults,  False if using config file
-func logInit(logLevel *string, logFile *string, configFile *string) bool {
-	usingConfigDefaults := false
-	c, err := config.Load(*configFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			usingConfigDefaults = true // no .conf file, so using defaults
-			c = config.Config{}
-			config.SetDefaults(&c)
-		} else {
-			panic(fmt.Sprintf("Failed to load config file %s: %v",
-				*configFile, err))
-		}
-	}
-
-	path := c.LogPath
-	if logFile != nil {
-		path = *logFile
-	}
-	log.SetOutput(&lumberjack.Logger{
-		Filename: path,
-		MaxSize:  c.MaxLogSizeMb,  // megabytes
-		MaxAge:   c.MaxLogAgeDays, // days
-	})
-
-	if *logLevel == "" {
-		*logLevel = c.LogLevel
-	}
-
-	level, err := log.ParseLevel(*logLevel)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse log level: %v", err))
-	}
-
-	log.SetFormatter(new(VmwareFormatter))
-	log.SetLevel(level)
-
-	if usingConfigDefaults {
-		log.Info("No config file found. Using defaults.")
-	}
-	return usingConfigDefaults
-}
 
 // main for docker-volume-vsphere
 // Parses flags, initializes and mounts refcounters and finally initializes the server.
 func main() {
 	var driver volume.Driver
 
-	// Get options from ENV (where available), and from command line.
-	// ENV takes precedence, so we can modify it in Docker plugin install
-	logEnv := os.Getenv("VDVS_LOG_LEVEL")
-	logLevel := &logEnv
-	if *logLevel == "" {
-		logLevel = flag.String("log_level", "", "Logging Level")
-	}
-	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
-	driverName := flag.String("driver", "", "Volume driver")
-
-	// Photon driver options
-	targetURL := flag.String("target", "", "Photon controller URL")
-	projectID := flag.String("project", "", "Project ID of the docker host")
-	vmID := flag.String("host", "", "ID of docker host")
-
-	// vSphere driver options
-	port := flag.Int("port", defaultPort, "Default port to connect to ESX service")
-	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX service")
-
-	flag.Parse()
-
-	logInit(logLevel, nil, configFile)
-
-	// Load the configuration if one was provided.
-	c, err := config.Load(*configFile)
+	cfg, err := config.InitConfig(config.DefaultConfigPath, config.DefaultLogPath,
+		config.VSphereDriver, config.VSphereDriver)
 	if err != nil {
-		log.Warningf("Failed to load config file %s: %v", *configFile, err)
+		log.Warning("Failed to initialize config variables for vmdk plugin")
+		os.Exit(1)
 	}
 
-	// If no driver provided on the command line, use the one in the
-	// config file or the default.
-	if *driverName == "" {
-		if err == nil && c.Driver != "" {
-			*driverName = c.Driver
-		} else {
-			*driverName = vsphereDriver
-		}
-	}
-
-	// The windows plugin only supports the vsphere driver.
-	if runtime.GOOS == "windows" && *driverName != vsphereDriver {
-		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
-			vsphereDriver, c.Driver)
-		log.Warning(msg)
-		fmt.Println(msg)
-		*driverName = vsphereDriver
-	}
-
-	log.WithFields(log.Fields{
-		"driver":    *driverName,
-		"log_level": *logLevel,
-		"config":    *configFile,
-	}).Info("Starting plugin ")
-
-	// The vSphere driver doesn't depend on the config file for options
-	if *driverName == photonDriver && err == nil {
-		if *targetURL == "" {
-			*targetURL = c.Target
-		}
-		if *projectID == "" {
-			*projectID = c.Project
-		}
-		if *vmID == "" {
-			*vmID = c.Host
-		}
-
-		log.WithFields(log.Fields{
-			"target":  *targetURL,
-			"project": *projectID,
-			"host":    *vmID}).Info("Plugin options - ")
-
-		if *targetURL == "" || *projectID == "" || *vmID == "" {
-			log.Warning("Invalid options specified for target/project/host")
-			fmt.Printf("Invalid options specified for target - %s project - %s host - %s. Exiting.\n",
-				*targetURL, *projectID, *vmID)
-			os.Exit(1)
-		}
-		driver = photon.NewVolumeDriver(*targetURL, *projectID,
-			*vmID, mountRoot)
-	} else if *driverName == vsphereDriver || *driverName == vmdkDriver {
-		if *driverName == vmdkDriver {
-			log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing...")
-		}
-		log.WithFields(log.Fields{"port": *port}).Info("Plugin options - ")
-
-		driver = vmdk.NewVolumeDriver(*port, *useMockEsx, mountRoot, *driverName)
-	} else {
-		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
+	switch {
+	case cfg.Driver == config.PhotonDriver:
+		driver = photon.NewVolumeDriver(cfg, config.MountRoot)
+	case cfg.Driver == config.VSphereDriver:
+		driver = vmdk.NewVolumeDriver(cfg, config.MountRoot)
+	case cfg.Driver == config.VMDKDriver:
+		log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing...")
+		cfg.Driver = config.VSphereDriver
+		driver = vmdk.NewVolumeDriver(cfg, config.MountRoot)
+	default:
+		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", cfg.Driver)
 		os.Exit(1)
 	}
 
 	if reflect.ValueOf(driver).IsNil() == true {
-		log.Warning("Error in driver initialization exiting - ", *driverName)
+		log.Warning("Error in driver initialization exiting - ", cfg.Driver)
 		os.Exit(1)
 	}
 
-	server := NewPluginServer(*driverName, &driver)
-
-	sigChannel := make(chan os.Signal, 1)
-	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		sig := <-sigChannel
-		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
-		server.Destroy()
-		os.Exit(0)
-	}()
-
-	server.Init()
+	plugin_server.StartServer(cfg.Driver, &driver)
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package plugin_server
 
 // A VMDK Docker Data Volume plugin implementation for linux that
 // relies on the docker/go-plugins-helpers/volume API.
@@ -25,10 +25,8 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const (
-	mountRoot     = "/mnt/vmdk"           // VMDK and photon volumes are mounted here
-	pluginSockDir = "/run/docker/plugins" // Unix sock for the plugin is maintained here
-)
+// Unix sock for the plugin is maintained here
+const pluginSockDir = "/run/docker/plugins"
 
 // SockPluginServer serves HTTP requests from Docker over unix sock.
 type SockPluginServer struct {

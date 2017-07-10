@@ -25,6 +25,7 @@ package vmdk
 ///
 
 import (
+	"flag"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -32,6 +33,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk/vmdkops"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
@@ -50,13 +52,18 @@ type VolumeDriver struct {
 var mountRoot string
 
 // NewVolumeDriver creates Driver which to real ESX (useMockEsx=False) or a mock
-func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName string) *VolumeDriver {
+func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	var d *VolumeDriver
 
-	vmdkops.EsxPort = port
+	// Read command line flags
+	port := flag.Int("port", config.DefaultPort, "Default port to connect to ESX service")
+	useMockEsx := flag.Bool("mock_esx", false, "Mock the ESX service")
+	flag.Parse()
+
+	vmdkops.EsxPort = *port
 	mountRoot = mountDir
 
-	if useMockEsx {
+	if *useMockEsx {
 		d = &VolumeDriver{
 			useMockEsx: true,
 			ops:        vmdkops.VmdkOps{Cmd: vmdkops.NewMockCmd()},
@@ -75,12 +82,12 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	}
 
 	d.mountIDtoName = make(map[string]string)
-	d.refCounts.Init(d, mountDir, driverName)
+	d.refCounts.Init(d, mountDir, cfg.Driver)
 
 	log.WithFields(log.Fields{
 		"version":  version,
 		"port":     vmdkops.EsxPort,
-		"mock_esx": useMockEsx,
+		"mock_esx": *useMockEsx,
 	}).Info("Docker VMDK plugin started ")
 
 	return d
