@@ -26,6 +26,7 @@ import (
 	"log"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
+	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
@@ -76,4 +77,21 @@ func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) boo
 	}
 	log.Printf("Timed out to poll status\n")
 	return false
+}
+
+// IsVDVSRunningAfterVMRestart checks if vDVS is up and running after VM being restarted.
+func IsVDVSRunningAfterVMRestart(vmIP, vmName string) bool {
+	isStatusOnline := WaitForExpectedState(GetVMPowerState, vmName, properties.PowerOnState)
+	if !isStatusOnline {
+		log.Printf("VM %s is not in PoweredOn state", vmName)
+		return false
+	}
+
+	isVDVSRunning := IsVDVSRunning(vmIP)
+	if !isVDVSRunning {
+		log.Printf("vDVS is not running on VM [%s]. Please check if the previous VM IP [%s] has changed.", vmName, vmIP)
+		return false
+	}
+
+	return true
 }

@@ -66,16 +66,6 @@ func (s *VMListenerTestParams) SetUpTest(c *C) {
 	s.containerName = inputparams.GetUniqueContainerName("vmlistener_test")
 }
 
-func (s *VMListenerTestParams) TearDownTest(c *C) {
-	// After killing a VM, the container may or may not be wiped off depending
-	// on OS type: different Linux distribution has different behavior. So need
-	// to check if the container exists or not.
-	if dockercli.IsContainerExist(s.vm1, s.containerName) {
-		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
-		c.Assert(err, IsNil, Commentf(out))
-	}
-}
-
 var _ = Suite(&VMListenerTestParams{})
 
 // Test vmdkops service restart
@@ -155,9 +145,8 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 
 	// Power on VM
 	esxutil.PowerOnVM(s.vm1Name)
-	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
-	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
-	c.Assert(verification.IsVDVSIsRunning(s.vm1), Equals, true, Commentf("vDVS is not running on [%s]", s.vm1Name))
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -233,9 +222,8 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 
 	// Power on VM1 which has been killed
 	esxutil.PowerOnVM(s.vm1Name)
-	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
-	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
-	c.Assert(verification.IsVDVSIsRunning(s.vm1), Equals, true, Commentf("vDVS is not running on [%s]", s.vm1Name))
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -320,9 +308,8 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 
 	// Power on VM1 which has been killed
 	esxutil.PowerOnVM(s.vm1Name)
-	isStatusChanged := esxutil.WaitForExpectedState(esxutil.GetVMPowerState, s.vm1Name, properties.PowerOnState)
-	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", s.vm1Name))
-	c.Assert(verification.IsVDVSIsRunning(s.vm1), Equals, true, Commentf("vDVS is not running on [%s]", s.vm1Name))
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)

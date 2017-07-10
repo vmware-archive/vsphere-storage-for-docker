@@ -161,9 +161,8 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 
 	// Power on the worker node
 	esx.PowerOnVM(hostName)
-	isStatusChanged = esx.WaitForExpectedState(esx.GetVMPowerState, hostName, properties.PowerOnState)
-	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered on state", hostName))
-	c.Assert(verification.IsVDVSIsRunning(host), Equals, true, Commentf("vDVS [%s] is not running", hostName))
+	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host, hostName)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", hostName))
 
 	out, err = dockercli.RemoveService(s.master, s.serviceName)
 	c.Assert(err, IsNil, Commentf(out))

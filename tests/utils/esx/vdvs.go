@@ -15,7 +15,7 @@
 // This util provides various helper methods that can be used by different tests to
 // fetch information related to vSphere docker-volume-service.
 
-package verification
+package esx
 
 import (
 	"log"
@@ -24,21 +24,21 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
-// IsVDVSIsRunning -  finds out if vDVS is running. This util can be useful
-// in scenarios where vm is powered-on and user wants to find out if
-// vm is fully up to be able to run docker volume commands.
-func IsVDVSIsRunning(ip string) bool {
-	log.Printf("Verifying if vDVS is running on vm : %s", ip)
+// IsVDVSRunning checks if vDVS is running on given VM. This util can be
+// useful in scenarios where VM is powered-on and user wants to find out
+// if VDVS is up and running to be able to run docker volume commands.
+func IsVDVSRunning(ip string) bool {
+	log.Printf("Verifying if vDVS is running on vm: %s", ip)
 	maxAttempt := 30
 	waitTime := 3
 	for attempt := 0; attempt < maxAttempt; attempt++ {
 		misc.SleepForSec(waitTime)
 		pid, _ := ssh.InvokeCommand(ip, "pidof docker-volume-vsphere")
 		if pid != "" {
-			log.Printf("Process ID of docker-volume-vsphere is : %s", pid)
+			log.Printf("Process ID of docker-volume-vsphere is: %s", pid)
 			return true
 		}
 	}
-	log.Printf("vDVS failed to start.\n")
+	log.Printf("vDVS is not running on VM: %s", ip)
 	return false
 }
