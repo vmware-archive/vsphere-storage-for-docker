@@ -30,7 +30,8 @@
 -include ../Commonvars.mk
 
 # Binaries we want to pick up from the actual build
-BINARY := docker-volume-vsphere
+BINARY ?= docker-volume-vsphere
+SHARED_BINARY := vsphere-shared
 
 # Tmp docker image used to construct rootfs + our binaries
 TMP_IMAGE = $(PLUGIN_NAME):rootfs
@@ -41,25 +42,34 @@ TMP_LOC := /tmp/plugin
 
 # default target
 all: info plugin push
+shared-all: shared-info shared-plugin shared-push
 
 # unconditionally run those
-.PHONY: all clean info plugin
+.PHONY: all clean info plugin shared-all shared-info shared-plugin shared-push
 
 info:
 	@echo Using the following config:
 	@echo DOCKER_HUB_REPO $(DOCKER_HUB_REPO) EXTRA_TAG $(EXTRA_TAG) VERSION_TAG $(VERSION_TAG)
 	@echo PLUGIN_NAME $(PLUGIN_NAME):$(PLUGIN_TAG)
+shared-info:
+	PLUGIN_NAME=$(SHARED_PLUGIN_NAME) $(MAKE) info
 
 clean:
 	@echo "=== Cleaning work files, images and plugin(s)..."
 	rm -rf $(TMP_LOC)
 	rm -f $(BINARY)
+	rm -f Dockerfile
+	rm -f config.json
 	-docker plugin rm $(PLUGIN_NAME):$(PLUGIN_TAG) -f
 	-docker rm -vf $(TMP_CONTAINER)
 	-docker rmi $(TMP_IMAGE)
+shared-clean:
+	PLUGIN_NAME=$(SHARED_PLUGIN_NAME) BINARY=$(SHARED_BINARY) $(MAKE) clean
 
 plugin: clean
 	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
+	sed "s/\%BINARY\%/$(BINARY)/g" Dockerfile-template > Dockerfile
+	sed 's/\%BINARY\%/$(BINARY)/g' config.json-template > config.json
 	cp $(BIN)/$(BINARY) .
 	docker build -q -t $(TMP_IMAGE) .
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
@@ -68,8 +78,12 @@ plugin: clean
 	cp config.json $(BINARY) $(TMP_LOC)
 	@echo "-- Creating  plugin $(PLUGIN_NAME):$(PLUGIN_TAG) ..."
 	docker plugin create $(PLUGIN_NAME):$(PLUGIN_TAG) $(TMP_LOC)
+shared-plugin: shared-clean
+	PLUGIN_NAME=$(SHARED_PLUGIN_NAME) BINARY=$(SHARED_BINARY) $(MAKE) plugin
 
 push:
 	@echo Pushing $(PLUGIN_NAME):$(PLUGIN_TAG)  to dockerhub.io...
 	@docker plugin push $(PLUGIN_NAME):$(PLUGIN_TAG) || \
 			echo 'Please make sure the plugin is built ("make clean plugin") and you have logged in to docker hub first ("docker login -u $(DOCKER_HUB_REPO)")'
+shared-push:
+	PLUGIN_NAME=$(SHARED_PLUGIN_NAME) $(MAKE) push

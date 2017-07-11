@@ -20,10 +20,10 @@ import (
 )
 
 var (
-	// DefaultConfigPath is the default location of the config file.
-	DefaultConfigPath = filepath.Join(os.Getenv("PROGRAMDATA"), "docker-volume-vsphere", "docker-volume-vsphere.conf")
-	// DefaultLogPath is the default location of the log (trace) file.
-	DefaultLogPath = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "logs", "docker-volume-vsphere.log")
+	// DefaultVMDKPluginConfigPath is the default location of the vmdk plugin config file.
+	DefaultVMDKPluginConfigPath = filepath.Join(os.Getenv("PROGRAMDATA"), "docker-volume-vsphere", "docker-volume-vsphere.conf")
+	// DefaultVMDKPluginLogPath is the default location of the vmdk plugin log (trace) file.
+	DefaultVMDKPluginLogPath = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "logs", "docker-volume-vsphere.log")
 
 	// VMDK volumes are mounted here
 	MountRoot = filepath.Join(os.Getenv("LOCALAPPDATA"), "docker-volume-vsphere", "mounts")
