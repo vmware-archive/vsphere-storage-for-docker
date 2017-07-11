@@ -18,9 +18,10 @@
 package admincli
 
 import (
+	"fmt"
 	"log"
 	"strings"
-	"fmt"
+
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
@@ -28,17 +29,44 @@ import (
 // CreateVMgroup method is going to create a vmgroup and adds vm to it.
 func CreateVMgroup(ip, name, vmName, dsName string) (string, error) {
 	log.Printf("Creating a vmgroup [%s] on esx [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+dsName+admincli.VMlist+vmName)
+	out, err := ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+dsName+admincli.VMlist+vmName)
+
+	if err != nil {
+		return out, err
+	}
+
+	// Verify the vmgroup creation
+	if IsVmgroupPresent(ip, name) {
+		return out, nil
+	}
+
+	msg := "Could not verify presence of vmgroup " + name + "  on esx " + ip
+	return msg, fmt.Errorf(msg)
+
 }
 
 // DeleteVMgroup method deletes a vmgroup and removes its volumes as well if "delete_vol" is set
 func DeleteVMgroup(ip, name string, delete_vol bool) (string, error) {
 	log.Printf("Deleting a vmgroup [%s] on esx [%s] with delete_vol[%d]\n", name, ip, delete_vol)
+	var out string
+	var err error
 	if delete_vol {
-		return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name+admincli.RemoveVolumes)
+		out, err = ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name+admincli.RemoveVolumes)
 	} else {
-		return ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name)
+		out, err = ssh.InvokeCommand(ip, admincli.RemoveVMgroup+name)
 	}
+
+	if err != nil {
+		return out, err
+	}
+
+	// Verify the vmgroup removal
+	if IsVmgroupPresent(ip, name) != true {
+		return out, nil
+	}
+
+	msg := "Could not verify removal of vmgroup " + name + " on esx " + ip
+	return msg, fmt.Errorf(msg)
 }
 
 // AddVMToVMgroup - Adds vm to vmgroup
@@ -93,13 +121,37 @@ func ConfigInit(ip string) (string, error) {
 	}
 
 	log.Printf("Initializing the SingleNode Config DB on esx [%s] \n", ip)
-	return ssh.InvokeCommand(ip, admincli.InitLocalConfigDb)
+	out, err := ssh.InvokeCommand(ip, admincli.InitLocalConfigDb)
+
+	if err != nil {
+		return out, err
+	}
+
+	// verify the DB init
+	if GetDBmode(ip) == admincli.DBSingleNode {
+		return out, nil
+	}
+
+	msg := "Could not init DB to SingleNode on esx " + ip
+	return msg, fmt.Errorf(msg)
 }
 
 // ConfigRemove - Remove the (local) Single Node Config DB
 func ConfigRemove(ip string) (string, error) {
 	log.Printf("Removing the SingleNode Config DB on esx [%s] \n", ip)
-	return ssh.InvokeCommand(ip, admincli.RemoveLocalConfigDb)
+	out, err := ssh.InvokeCommand(ip, admincli.RemoveLocalConfigDb)
+
+	if err != nil {
+		return out, err
+	}
+
+	// verify the DB removal
+	if GetDBmode(ip) == admincli.DBNotConfigured {
+		return out, nil
+	}
+
+	msg := "Could not remove DB on esx " + ip
+	return msg, fmt.Errorf(msg)
 }
 
 // IsVmgroupPresent - checks for a vmgroup in list of vmgroups
