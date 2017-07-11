@@ -20,21 +20,22 @@
 package e2e
 
 import (
-	. "gopkg.in/check.v1"
-	"strings"
 	"log"
+	"strings"
 
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
+	. "gopkg.in/check.v1"
+
 	adminconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
 	adminutil "github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
 type RestartTestData struct {
-	config        *inputparams.TestConfig
-	volumeName    string
+	config            *inputparams.TestConfig
+	volumeName        string
 	containerNameList []string
 }
 
@@ -51,8 +52,8 @@ func (s *RestartTestData) SetUpSuite(c *C) {
 
 	s.volumeName = inputparams.GetUniqueVolumeName("restart_test")
 	s.containerNameList = []string{inputparams.GetUniqueContainerName("restart_test"),
-				inputparams.GetUniqueContainerName("restart_test"),
-				inputparams.GetUniqueContainerName("restart_test")}
+		inputparams.GetUniqueContainerName("restart_test"),
+		inputparams.GetUniqueContainerName("restart_test")}
 
 	// Create a volume
 	out, err := dockercli.CreateVolume(s.config.DockerHosts[1], s.volumeName)
@@ -61,7 +62,7 @@ func (s *RestartTestData) SetUpSuite(c *C) {
 	// Get volume status
 	status, err := dockercli.GetVolumeStatus(s.config.DockerHosts[1], s.volumeName)
 	c.Assert(err, IsNil, Commentf("Failed to fetch status for volume %s", s.volumeName))
-	
+
 	ds2 = s.config.Datastores[0]
 	if strings.Compare(status["datastore"], s.config.Datastores[0]) == 0 {
 		ds2 = s.config.Datastores[1]
@@ -72,7 +73,7 @@ func (s *RestartTestData) SetUpSuite(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Create a volume on the second datastore
-	out, err = dockercli.CreateVolume(s.config.DockerHosts[1], s.volumeName + "@" + ds2)
+	out, err = dockercli.CreateVolume(s.config.DockerHosts[1], s.volumeName+"@"+ds2)
 	c.Assert(err, IsNil, Commentf(out))
 
 	log.Printf("Restart tests setup complete")
@@ -128,7 +129,7 @@ func (s *RestartTestData) TestVolumeDetached(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 4. Verify detached status. Volume should be detached (within the timeout)
-	status = verification.VerifyDetachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
+	status = verification.PollDetachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
 	out, err = dockercli.RemoveContainer(s.config.DockerHosts[1], s.containerNameList[0])
@@ -218,7 +219,7 @@ func (s *RestartTestData) TestRecoverMountsAfterRestart(c *C) {
 	out, err := dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName, s.containerNameList[0])
 	c.Assert(err, IsNil, Commentf(out))
 
-	// Run second container 
+	// Run second container
 	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName, s.containerNameList[1])
 	c.Assert(err, IsNil, Commentf(out))
 
@@ -271,7 +272,7 @@ func (s *RestartTestData) TestLongVolumeName(c *C) {
 
 	misc.SleepForSec(20)
 
-	// 3. Run second container 
+	// 3. Run second container
 	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName, s.containerNameList[1])
 	c.Assert(err, IsNil, Commentf(out))
 
@@ -280,7 +281,7 @@ func (s *RestartTestData) TestLongVolumeName(c *C) {
 	c.Assert(err, IsNil, Commentf("Failed to fetch status for volume %s", s.volumeName))
 
 	// 4. Run third container with long volume name
-	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName + "@" + status["datastore"], s.containerNameList[2])
+	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName+"@"+status["datastore"], s.containerNameList[2])
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 5. Stop the three containers
@@ -307,8 +308,8 @@ func (s *RestartTestData) TestDuplicateVolumeName(c *C) {
 	out, err := dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName, s.containerNameList[0])
 	c.Assert(err, IsNil, Commentf(out))
 
-	// 2. Run second container with same volume name on the other datastore 
-	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName + "@" + ds2, s.containerNameList[1])
+	// 2. Run second container with same volume name on the other datastore
+	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName+"@"+ds2, s.containerNameList[1])
 	c.Assert(err, IsNil, Commentf(out))
 
 	status, err := dockercli.GetVolumeStatus(s.config.DockerHosts[1], s.volumeName)
@@ -321,7 +322,7 @@ func (s *RestartTestData) TestDuplicateVolumeName(c *C) {
 	misc.SleepForSec(20)
 
 	// 4. Run third container with same volume as the first container
-	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName + "@" + status["datastore"], s.containerNameList[2])
+	out, err = dockercli.AttachVolumeWithRestart(s.config.DockerHosts[1], s.volumeName+"@"+status["datastore"], s.containerNameList[2])
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 5. Stop the three containers
@@ -329,7 +330,7 @@ func (s *RestartTestData) TestDuplicateVolumeName(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Cleanup volume on the second datastore
-	out, err = dockercli.DeleteVolume(s.config.DockerHosts[1], s.volumeName + "@" + ds2)
+	out, err = dockercli.DeleteVolume(s.config.DockerHosts[1], s.volumeName+"@"+ds2)
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 6. Run container on other host to verify the volume is detached after stopping the containers

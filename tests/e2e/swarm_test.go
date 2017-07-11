@@ -170,7 +170,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	out, err = dockercli.ListService(s.master, s.serviceName)
 	c.Assert(err, NotNil, Commentf("Expected error does not happen"))
 
-	status = verification.VerifyDetachedStatus(s.volumeName, s.master, s.esxName)
+	status = verification.PollDetachedStatus(s.volumeName, s.master, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
 	misc.LogTestEnd(c.TestName())
@@ -247,7 +247,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	out, err = dockercli.ListService(s.master, s.serviceName)
 	c.Assert(err, NotNil, Commentf("Expected error does not happen"))
 
-	status = verification.VerifyDetachedStatus(s.volumeName, s.master, s.esxName)
+	status = verification.PollDetachedStatus(s.volumeName, s.master, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeName))
 
 	misc.LogTestEnd(c.TestName())
