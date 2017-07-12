@@ -26,10 +26,14 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
-// CreateVMgroup method is going to create a vmgroup and adds vm to it.
+// CreateVMgroup method is going to create a vmgroup and adds vm to it if vm name is passed.
 func CreateVMgroup(ip, name, vmName, dsName string) (string, error) {
 	log.Printf("Creating a vmgroup [%s] on esx [%s]\n", name, ip)
-	out, err := ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+dsName+admincli.VMlist+vmName)
+	cmd := admincli.CreateVMgroup + name + " --default-datastore=" + dsName
+	if vmName != "" {
+		cmd = cmd + admincli.VMlist + vmName
+	}
+	out, err := ssh.InvokeCommand(ip, cmd)
 
 	if err != nil {
 		return out, err
@@ -252,9 +256,15 @@ func GetDBmode(esxIP string) string {
 	}
 }
 
-// RemvoeDatastoreAccessFromVmgroup - Remove access for a datastore from a vmgroup
+// RemoveDatastoreAccessFromVmgroup - Remove access for a datastore from a vmgroup
 func RemoveDatastoreFromVmgroup(ip, vmgroup, dsName string) (string, error) {
 	log.Printf("Removing access for %s from vmgroup %s", dsName, vmgroup)
 	cmd := fmt.Sprintf(admincli.RemoveDatastoreAccess, vmgroup, dsName)
 	return ssh.InvokeCommand(ip, cmd)
+}
+
+// RenameVMgroup method to update a vmgroup's name.
+func RenameVMgroup(esxIP, currentVmgroupName, newVmgroupName string) (string, error) {
+	log.Printf("Renaming a vmgroup [%s] to %s on esx [%s]\n", currentVmgroupName, newVmgroupName, esxIP)
+	return ssh.InvokeCommand(esxIP, admincli.UpdateVMgroup+currentVmgroupName+" --new-name="+newVmgroupName)
 }

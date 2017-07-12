@@ -229,16 +229,16 @@ func (s *vgBasicSuite) TestDSAccessPrivilegeForUserVG(c *C) {
 // Test steps:
 // 1. Create a vm VM1 using govc
 // 2. Create a vmgroup and associate VM1 to it.
-// 2. Execute vmgroup ls command.
-// 3. Delete the vm that was added to the vmgroup.
-// 4. Again execute vmgroup ls command to verify command works fine.
+// 3. Execute vmgroup ls command.
+// 4. Delete the vm that was added to the vmgroup.
+// 5. Again execute vmgroup ls command to verify command works fine.
 func (s *vgBasicSuite) TestDeleteVMFromVmgroup(c *C) {
 	misc.LogTestStart(c.TestName())
 	vmName := "VM_" + inputparams.GetRandomNumber()
 	vgName := "VG_" + inputparams.GetRandomNumber()
 	networkAdapterType := "vmxnet3"
 
-	// Create a vm - we need this to add to vmgroup and later on delete this vm
+	// Create a vm - we need this to add to vmgroup and later on we will delete this vm
 	esx.CreateVM(vmName, s.config.Datastores[0], networkAdapterType)
 	c.Assert(esx.IsVMExist(vmName), Equals, true, Commentf("Failed to create VM - %s .", vmName, vgName))
 
@@ -263,5 +263,144 @@ func (s *vgBasicSuite) TestDeleteVMFromVmgroup(c *C) {
 
 	// TO DO: Due to product behavior vmgroup deletion is not possible - Issue # 1484
 	// Please add step to delete vmgroup after issue 1484 is fixed.
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a vmgroup by passing a non-existent vm - operation should fail
+// 2. Verify vmgroup creation was not successful
+func (s *vgBasicSuite) TestVGCreateWithNonExistentVM(c *C) {
+	misc.LogTestStart(c.TestName())
+	vmName := "VM_not_exist"
+	vgName := "VG_" + inputparams.GetRandomNumber()
+
+	// Create a vmgroup by passing a non-existent vm - operation should fail
+	out, err := admincli.CreateVMgroup(s.config.EsxHost, vgName, vmName, admincliconst.VMHomeDatastore)
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a vmgroup by passing an empty string as vm name - "". operation should fail
+// 2. Verify vmgroup creation was not successful
+func (s *vgBasicSuite) TestVGCreateWithEmptyVMName(c *C) {
+	misc.LogTestStart(c.TestName())
+	vgName := "VG_" + inputparams.GetRandomNumber()
+
+	// Create a vmgroup by passing an empty string as vm name - " "
+	out, err := admincli.CreateVMgroup(s.config.EsxHost, vgName, "\" \"", admincliconst.VMHomeDatastore)
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a vmgroup
+// 2. Rename the vmgroup
+func (s *vgBasicSuite) TestRenameVmgroup(c *C) {
+	misc.LogTestStart(c.TestName())
+	vgName := "VG_" + inputparams.GetRandomNumber()
+
+	// Create a vmgroup without passing a vm - operation should succeed
+	out, err := admincli.CreateVMgroup(s.config.EsxHost, vgName, "", s.config.Datastores[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Rename vmgroup
+	newVgName := "VG_" + inputparams.GetRandomNumber()
+	out, err = admincli.RenameVMgroup(s.config.EsxHost, vgName, newVgName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify if vmgroup exists
+	isVmgroupAvailable := admincli.IsVmgroupPresent(s.config.EsxHost, newVgName)
+	c.Assert(isVmgroupAvailable, Equals, true, Commentf("vmgroup %s does not exists.", newVgName))
+
+	// Now delete the vmgroup
+	out, err = admincli.DeleteVMgroup(s.config.EsxHost, newVgName, true)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a vmgroup
+// 2. Add a vm to vmgroup
+// 3. Rename the vmgroup
+func (s *vgBasicSuite) TestRenameVmgroupPostVMAdd(c *C) {
+	misc.LogTestStart(c.TestName())
+	vgName := "VG_" + inputparams.GetRandomNumber()
+
+	// Create a vmgroup without passing a vm
+	out, err := admincli.CreateVMgroup(s.config.EsxHost, vgName, "", s.config.Datastores[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Add VM to vmgroup
+	out, err = admincli.AddVMToVMgroup(s.config.EsxHost, vgName, s.config.DockerHostNames[1])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm belongs to vmgroup
+	isVMPartofVg := admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[1], vgName)
+	c.Assert(isVMPartofVg, Equals, true, Commentf("VM %s does not belong to vmgroup %s .", s.config.DockerHostNames[1], vgName))
+
+	// Rename the vmgroup
+	newVgName := "VG_" + inputparams.GetRandomNumber()
+	out, err = admincli.RenameVMgroup(s.config.EsxHost, vgName, newVgName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify if vmgroup exists
+	isVmgroupAvailable := admincli.IsVmgroupPresent(s.config.EsxHost, newVgName)
+	c.Assert(isVmgroupAvailable, Equals, true, Commentf("vmgroup %s does not exists.", newVgName))
+
+	// Remove VM from vmgroup
+	out, err = admincli.RemoveVMFromVMgroup(s.config.EsxHost, newVgName, s.config.DockerHostNames[1])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm does not belong to vmgroup
+	isVMPartofVg = admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[1], newVgName)
+	c.Assert(isVMPartofVg, Equals, false, Commentf("VM %s does not belong to vmgroup %s .", s.config.DockerHostNames[1], newVgName))
+
+	// Now delete the vmgroup
+	out, err = admincli.DeleteVMgroup(s.config.EsxHost, newVgName, true)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a vmgroup and associate a vm to vmgroup at create time itself
+// 2. Rename the vmgroup
+func (s *vgBasicSuite) TestRenameVGWithVMAddedAtCreateTime(c *C) {
+	misc.LogTestStart(c.TestName())
+	vgName := "VG_" + inputparams.GetRandomNumber()
+
+	// Create vmgroup
+	out, err := admincli.CreateVMgroup(s.config.EsxHost, vgName, s.config.DockerHostNames[1], admincliconst.VMHomeDatastore)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm belongs to vmgroup
+	isVMPartofVg := admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[1], vgName)
+	c.Assert(isVMPartofVg, Equals, true, Commentf("VM %s does not belong to vmgroup %s .", s.config.DockerHostNames[1], vgName))
+
+	// Rename the vmgroup
+	newVgName := "VG_" + inputparams.GetRandomNumber()
+	out, err = admincli.RenameVMgroup(s.config.EsxHost, vgName, newVgName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify if vmgroup exists
+	isVmgroupAvailable := admincli.IsVmgroupPresent(s.config.EsxHost, newVgName)
+	c.Assert(isVmgroupAvailable, Equals, true, Commentf("vmgroup %s does not exists.", newVgName))
+
+	// Remove VM from vmgroup
+	out, err = admincli.RemoveVMFromVMgroup(s.config.EsxHost, newVgName, s.config.DockerHostNames[1])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm does not belong to vmgroup
+	isVMPartofVg = admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[1], newVgName)
+	c.Assert(isVMPartofVg, Equals, false, Commentf("VM %s does not belong to vmgroup %s .", s.config.DockerHostNames[1], newVgName))
+
+	// Now delete the vmgroup
+	out, err = admincli.DeleteVMgroup(s.config.EsxHost, newVgName, true)
+	c.Assert(err, IsNil, Commentf(out))
+
 	misc.LogTestEnd(c.TestName())
 }

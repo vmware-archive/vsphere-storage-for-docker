@@ -114,7 +114,6 @@ func (s *DefaultVMGroupTestSuite) TestReplaceDefaultTenantVMs(c *C) {
 // 6. Create _DEFAULT vmgroup with —default-datastore=_VM_DS
 // 7. Again create new volume - operation should succeed
 // 8. Verify volume from esx and docker host
-
 func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	misc.LogTestStart(c.TestName())
 	nullVmgroup := "N/A"
@@ -167,6 +166,164 @@ func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	c.Assert(isVolInVmgroup, Equals, true, Commentf("All volumes [%s] do not belong to vmgroup [%s]", s.volumeNames, admincliconst.DefaultVMgroup))
 
 	out, err = ssh.InvokeCommand(s.config.DockerHosts[0], dockerconst.RemoveVolume+strings.Join(s.volumeNames, " "))
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a volume from VM1
+// 2. Run a container with volume attached to VM1 - leave the container running
+// 3. Create a vmgroup with vm added at vmgroup creation time - operation should fail
+// 4. Remove container and again attempt step # 3 - operation should pass
+
+// Note: In this test, we are creating a vmgroup and adding a vm to vmgroup at
+// the time of vmgroup creation itself
+func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup1(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	containerName := inputparams.GetUniqueContainerName(c.TestName())
+	vmGroupName := "vg_" + inputparams.GetRandomNumber()
+
+	// Create a volume from a vm that belongs to default vmgroup
+	out, err := dockercli.CreateVolume(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Check if volume was successfully created
+	isAvailable := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available on docker host - %s", s.volumeNames[0], s.config.DockerHosts[0]))
+
+	isAvailable = admincli.IsVolumeAvailableOnESX(s.config.EsxHost, s.volumeNames[0])
+	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available on ESX - %s", s.volumeNames[0], s.config.EsxHost))
+
+	// 2. Run a container and leave it running
+	out, err = dockercli.AttachVolume(s.config.DockerHosts[0], s.volumeNames[0], containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	status := verification.VerifyAttachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeNames[0]))
+
+	// Create a vmgroup - operation should fail
+	out, err = admincli.CreateVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0], s.config.Datastores[0])
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// Remove the container
+	out, err = dockercli.RemoveContainer(s.config.DockerHosts[0], containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	status = verification.VerifyDetachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeNames[0]))
+
+	// Remove volume
+	out, err = dockercli.DeleteVolume(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	accessible := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(accessible, Equals, false, Commentf("Volume %s is still available", s.volumeNames[0]))
+
+	// Create a vmgroup - operation should succeed
+	out, err = admincli.CreateVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0], s.config.Datastores[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm belongs to vmgroup
+	isVMPartofVg := admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[0], vmGroupName)
+	c.Assert(isVMPartofVg, Equals, true, Commentf("VM %s does not belong to vmgroup %s .", s.config.DockerHostNames[0], vmGroupName))
+
+	// Remove VM from vmgroup
+	out, err = admincli.RemoveVMFromVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm does not belong to vmgroup
+	isVMPartofVg = admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[0], vmGroupName)
+	c.Assert(isVMPartofVg, Equals, false, Commentf("Unexpected behavior: VM %s still belong to vmgroup %s .", s.config.DockerHostNames[0], vmGroupName))
+
+	// Now delete the vmgroup
+	out, err = admincli.DeleteVMgroup(s.config.EsxHost, vmGroupName, true)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// Test steps:
+// 1. Create a volume from VM1
+// 2. Run a container with volume attached to VM1 - leave the container running
+// 3. Create a vmgroup - VG1
+// 4. Add the VM1 from default vmgroup to VG1 - operation should fail
+// 5. Remove container and again attempt step # 4 - operation should pass
+
+// Note: In this test, we are first creating a vmgroup and then adding a vm in a seperate step
+func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup2(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	containerName := inputparams.GetUniqueContainerName(c.TestName())
+	vmGroupName := "vg_" + inputparams.GetRandomNumber()
+
+	// Create a volume from a vm that belongs to default vmgroup
+	out, err := dockercli.CreateVolume(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Check if volume was successfully created
+	isAvailable := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available on docker host - %s", s.volumeNames[0], s.config.DockerHosts[0]))
+
+	isAvailable = admincli.IsVolumeAvailableOnESX(s.config.EsxHost, s.volumeNames[0])
+	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available on ESX - %s", s.volumeNames[0], s.config.EsxHost))
+
+	// 2. Run a container and leave it running
+	out, err = dockercli.AttachVolume(s.config.DockerHosts[0], s.volumeNames[0], containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	status := verification.VerifyAttachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeNames[0]))
+
+	// Create a vmgroup - operation should fail
+	out, err = admincli.CreateVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0], s.config.Datastores[0])
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// Create a vmgroup without passing a vm - operation should succeed
+	out, err = admincli.CreateVMgroup(s.config.EsxHost, vmGroupName, "", s.config.Datastores[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Add VM to vmgroup - operation should fail as container is still running
+	out, err = admincli.AddVMToVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0])
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// Verify vm does not belongs to vmgroup
+	isVMPartofVg := admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[0], vmGroupName)
+	c.Assert(isVMPartofVg, Equals, false, Commentf("VM %s does belong to vmgroup %s .", s.config.DockerHostNames[0], vmGroupName))
+
+	// Remove the container
+	out, err = dockercli.RemoveContainer(s.config.DockerHosts[0], containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	status = verification.VerifyDetachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost)
+	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volumeNames[0]))
+
+	// Remove volume
+	out, err = dockercli.DeleteVolume(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	accessible := verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(accessible, Equals, false, Commentf("Volume %s is still available", s.volumeNames[0]))
+
+	// Add VM to vmgroup
+	out, err = admincli.AddVMToVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm belongs to vmgroup
+	isVMPartofVg = admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[0], vmGroupName)
+	c.Assert(isVMPartofVg, Equals, true, Commentf("VM %s does not belong to vmgroup %s .", s.config.DockerHostNames[0], vmGroupName))
+
+	// Remove VM from vmgroup
+	out, err = admincli.RemoveVMFromVMgroup(s.config.EsxHost, vmGroupName, s.config.DockerHostNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Verify vm does not belong to vmgroup
+	isVMPartofVg = admincli.IsVMInVmgroup(s.config.EsxHost, s.config.DockerHostNames[0], vmGroupName)
+	c.Assert(isVMPartofVg, Equals, false, Commentf("Unexpected behavior: VM %s still belong to vmgroup %s .", s.config.DockerHostNames[0], vmGroupName))
+
+	// Now delete the vmgroup
+	out, err = admincli.DeleteVMgroup(s.config.EsxHost, vmGroupName, true)
 	c.Assert(err, IsNil, Commentf(out))
 
 	misc.LogTestEnd(c.TestName())
