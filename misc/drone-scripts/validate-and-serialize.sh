@@ -30,11 +30,12 @@ check_lock="check_lock"
 DRONE_BUILD_NUMBER=${DRONE_BUILD_NUMBER:=0}
 
 # wait time in seconds
-interval=30
+interval=90
 
 # Decide whether cleanup is needed or not.
-# grab ongoing build# and parse build info, returns true when build_status
-# is "*not* Running" or the request is from the same build number
+# returns true if the ongoing/build info is stale and the build is not running
+# anymore, or if the user wants to restart the build so the ongoing/build and
+# current build have the same ID
 function is_cleanup_needed {
     # Retrieve on-going build information
     ongoingBuildInfo=`drone build info vmware/docker-volume-vsphere $1`
@@ -95,6 +96,9 @@ do
             govc datastore.rm $DS docker-volume-vsphere/ongoing/${runningBuildArr[0]}
             release_lock $check_lock
             break
+        else
+            # Let's release build_check_lock
+            release_lock $check_lock
         fi
     fi
     # wait for some time to poll again
