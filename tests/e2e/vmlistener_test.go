@@ -29,10 +29,16 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 	esxutil "github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
+)
+
+const (
+	restartHostd = "/etc/init.d/hostd restart"
+	killHostd = "kill -9 `pidof hostd`"
 )
 
 type VMListenerTestParams struct {
@@ -328,6 +334,176 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 	// Remove the VSAN policy
 	out, err = admincli.RemovePolicy(s.esx, adminconst.PolicyName)
 	log.Printf("Remove vsanPolicy \"%s\" returns with %s", adminconst.PolicyName, out)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// TestVolumeAttachedForHostdRestart - verify an in use volume
+// remains attached when hostd is restarted.
+// 1. Restart hostd
+// 2. Verify volume stays as attached
+// 3. Kill the vm
+// 4. Status of the volume should be detached.
+func (s *VMListenerTestParams) TestVolumeAttachedForHostdRestart(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// Create the volume
+	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 1. Restart hostd
+	out, err = ssh.InvokeCommand(s.esx, restartHostd)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Hostd reports running status in about a second but
+	// takes around 10 - 15 seconds to be able to serve requests
+	misc.SleepForSec(15)
+
+	// 2. Verify volume stays attached
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	// 3. Kill this VM
+	isVMKilled := killVM(s.esx, s.vm1Name)
+	c.Assert(isVMKilled, Equals, true, Commentf("VM [%s] was not killed successfully", s.vm1Name))
+
+	// Give some time for the VM event to be handled
+	misc.SleepForSec(5)
+
+	// 4. Status should be detached
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm2, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// 5. Restore VM
+	esxutil.PowerOnVM(s.vm1Name)
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+
+	// 6. Status should be detached (verify on the VM)
+	status = verification.PollDetachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Remove the container if it still exists, after step 6 it should not exist ideally
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
+	// Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// TestVolumeAttachedForVMSuspend - verify an in use volume
+// remains attached when VM is suspended/resumed
+// 1. Suspend the VM and resume it again.
+// 2. Resume is like a power-on and so include the same checks
+// 3. Verify volume stays attached
+// 4. Remove the container if it still exists
+// 5. Remove the volume
+func (s *VMListenerTestParams) TestVolumeAttachedForVMSuspend(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// Create the volume
+	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 1. Suspend and resume the VM
+	out, err = esxutil.SuspendResumeVM(s.esx, s.vm1Name)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// After suspend/resume, fetching the VM name fails via govc, hence this delay
+	misc.SleepForSec(15)
+
+	// 2. Resume is like a power-on and so include the same checks
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+
+	// 3. Verify volume stays attached
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	// 4. Remove the container if it still exists
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
+	// 5. Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// TestVolumeAttachedWhenHostdKilled verify volume remains
+// attached when hostd is killed.
+// 1. Kill hostd
+// 2. Verify volume is attached
+// 3. Kill the vm
+// 4. Status of the volume should be detached.
+func (s *VMListenerTestParams) TestVolumeAttachedWhenHostdKilled(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// Create the volume
+	out, err := dockercli.CreateVolume(s.vm1, s.volumeName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Attach the volume
+	out, err = dockercli.AttachVolume(s.vm1, s.volumeName, s.containerName)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 1. Kill hostd
+	out, err = ssh.InvokeCommand(s.esx, killHostd)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Hostd reports running status in about a second but
+	// takes around 10 - 15 seconds to be able to serve requests
+	misc.SleepForSec(15)
+
+	// 2. Verify volume stays attached
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+
+	// 3. Kill this VM
+	isVMKilled := killVM(s.esx, s.vm1Name)
+	c.Assert(isVMKilled, Equals, true, Commentf("VM [%s] was not killed successfully", s.vm1Name))
+
+	// Give time for the listener to detach the vmdk
+	misc.SleepForSec(5)
+
+	// 4. Status should be detached
+	status = verification.VerifyDetachedStatus(s.volumeName, s.vm2, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// 5. Restore VM
+	esxutil.PowerOnVM(s.vm1Name)
+	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+
+	// 6. Status should be detached (verify on the VM)
+	status = verification.PollDetachedStatus(s.volumeName, s.vm1, s.esx)
+	c.Assert(status, Equals, true, Commentf("Volume %s is not detached", s.volumeName))
+
+	// Remove the container if it still exists, shouldn't exist if the volume was detached
+	if dockercli.IsContainerExist(s.vm1, s.containerName) {
+		out, err := dockercli.RemoveContainer(s.vm1, s.containerName)
+		c.Assert(err, IsNil, Commentf(out))
+	}
+
+	// Remove the volume
+	out, err = dockercli.DeleteVolume(s.vm1, s.volumeName)
 	c.Assert(err, IsNil, Commentf(out))
 
 	misc.LogTestEnd(c.TestName())

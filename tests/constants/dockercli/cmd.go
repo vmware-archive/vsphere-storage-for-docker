@@ -122,5 +122,5 @@ const (
 	ErrorVolumeCreate = "Error response from daemon: create"
 )
 
-// Volume properties returned for a volume by inspecting it
+// VolumeStatusFields properties returned for a volume by inspecting it
 var VolumeStatusFields = []string{"access", "attach_as", "allocated", "used", "cloned_from", "created_by_VM", "datastore", "diskformat", "fstype", "disk_status", "attached_vm"}
