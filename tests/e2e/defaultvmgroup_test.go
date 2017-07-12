@@ -176,6 +176,9 @@ func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 // 2. Run a container with volume attached to VM1 - leave the container running
 // 3. Create a vmgroup with vm added at vmgroup creation time - operation should fail
 // 4. Remove container and again attempt step # 3 - operation should pass
+
+// Note: In this test, we are creating a vmgroup and adding a vm to vmgroup at
+// the time of vmgroup creation itself
 func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup1(c *C) {
 	misc.LogTestStart(c.TestName())
 
@@ -247,6 +250,8 @@ func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup1(c *C) {
 // 3. Create a vmgroup - VG1
 // 4. Add the VM1 from default vmgroup to VG1 - operation should fail
 // 5. Remove container and again attempt step # 4 - operation should pass
+
+// Note: In this test, we are first creating a vmgroup and then adding a vm in a seperate step
 func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup2(c *C) {
 	misc.LogTestStart(c.TestName())
 

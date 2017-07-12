@@ -29,14 +29,11 @@ import (
 // CreateVMgroup method is going to create a vmgroup and adds vm to it if vm name is passed.
 func CreateVMgroup(ip, name, vmName, dsName string) (string, error) {
 	log.Printf("Creating a vmgroup [%s] on esx [%s]\n", name, ip)
-	var out string
-	var err error
-	if vmName == "" {
-		out, err = ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+dsName)
-	} else {
-		out, err = ssh.InvokeCommand(ip, admincli.CreateVMgroup+name+" --default-datastore="+dsName+admincli.VMlist+vmName)
-
+	cmd := admincli.CreateVMgroup + name + " --default-datastore=" + dsName
+	if vmName != "" {
+		cmd = cmd + admincli.VMlist + vmName
 	}
+	out, err := ssh.InvokeCommand(ip, cmd)
 
 	if err != nil {
 		return out, err
