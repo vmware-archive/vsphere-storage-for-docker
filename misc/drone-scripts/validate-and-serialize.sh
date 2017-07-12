@@ -50,8 +50,7 @@ function is_cleanup_needed {
     fi
 }
 
-# Util to remove created directory (consumed as locking mechanism or
-# preserving metadata for ongoing build)
+# Util to release lock
 function release_lock {
     if [ -z "$1" ] ;
     then
