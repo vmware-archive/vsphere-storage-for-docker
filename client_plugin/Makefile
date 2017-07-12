@@ -362,11 +362,11 @@ test-e2e:
 .PHONY: test-e2e-runalways test-e2e-runonce
 test-e2e-runalways:
 	$(log_target)
-	$(GO) test -v -timeout 30m -tags runalways $(E2E_Tests)
+	$(GO) test -v -timeout 40m -tags runalways $(E2E_Tests)
 
 test-e2e-runonce:
 	$(log_target)
-	$(GO) test -v -timeout 30m -tags runonce $(E2E_Tests)
+	$(GO) test -v -timeout 40m -tags runonce $(E2E_Tests)
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
