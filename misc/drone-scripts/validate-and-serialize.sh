@@ -13,33 +13,98 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# datastore name refers to storage backed by base ESX (physical ESX) where
+# ongoing/<build_no> contains the directory named after the currently running
+# CI/ build
 DS='-ds=datastore1'
-unit_test_array=($TEST_URL_ARRAY)
-numServers=${#unit_test_array[@]}
+
+# lock names, to use in lock/unlock
+# build_lock:
+#       Overall lock makes sure only one thread at a time runs
+# check_lock:
+#       Represents a lock to perform cleanup leftover from previous run builds.
+build_lock="build_lock"
+check_lock="check_lock"
+
+# refers current CI build#
 DRONE_BUILD_NUMBER=${DRONE_BUILD_NUMBER:=0}
-prevBuildStatus=`drone build info vmware/docker-volume-vsphere $(( $DRONE_BUILD_NUMBER-$numServers ))`
-outArray=($prevBuildStatus)
 
-# Check if any other build is in the ongoing folder, if present, check if entry is stale.
-# If entry is stale clean it up.
-# If entry is an on going build wait for it.
+# wait time in seconds
+interval=90
 
-prevBuild=`govc datastore.ls $DS docker-volume-vsphere/ongoing|tail -n 1`
+# Decide whether cleanup is needed or not.
+# returns true if the ongoing/build info is stale and the build is not running
+# anymore, or if the user wants to restart the build so the ongoing/build and
+# current build have the same ID
+function is_cleanup_needed {
+    # Retrieve on-going build information
+    ongoingBuildInfo=`drone build info vmware/docker-volume-vsphere $1`
+    buildInfoObj=($ongoingBuildInfo)
 
-while [[ "$prevBuild" != "" ]];
-do
-    prevBuildStatus=`drone build info vmware/docker-volume-vsphere $prevBuild`
-    outArray=($prevBuildStatus)
-    if [[ ${outArray[2]} != *"running"* || ${outArray[2]} == *"running"* && $prevBuild == $DRONE_BUILD_NUMBER ]]
+    # verifies status value OR request is resulted from *Restart* event
+    if [[ ${buildInfoObj[2]} != *"running"* || $1 == $DRONE_BUILD_NUMBER ]]
     then
-        govc datastore.rm $DS docker-volume-vsphere/ongoing/$prevBuild
+        return 0
     else
-        echo "Waiting 2 minutes for previous build $prevBuild to complete";
-        sleep 120;
+        return 1
     fi
-    prevBuild=`govc datastore.ls $DS docker-volume-vsphere/ongoing|tail -n 1`
+}
+
+# Util to release lock
+function release_lock {
+    if [ -z "$1" ] ;
+    then
+        echo "Missing argument in release_lock" ;
+        echo "USAGE: release_lock <lock_name>"
+        return 2;
+    fi
+    govc datastore.rm $DS docker-volume-vsphere/$1
+    return $?
+}
+
+# Util to create directory which in turns consumed as lock
+function acquire_lock {
+    if [ -z "$1" ] ;
+    then
+        echo "Missing argument in acquire_lock" ;
+        echo "USAGE: acquire_lock <lock_name>"
+        return 2;
+    fi
+    govc datastore.mkdir $DS docker-volume-vsphere/$1 2>/dev/null > /dev/null
+    return $?
+}
+
+# First it tries acquire lock "build-start-lock" which makes sure only
+# one thead (test run request gets this opportunity ) and other are
+# being blocked and keeping polling at definite interval.
+# Whichever thread gets success acquiring the "build-start-lock" lock
+# moves forward with kicking off the test run.
+while ! acquire_lock $build_lock
+do
+    # take build check lock
+    if acquire_lock $check_lock
+    then
+        # Grab ongoing build information from drone.
+        runningBuild=`govc datastore.ls $DS docker-volume-vsphere/ongoing`
+        runningBuildArr=($runningBuild)
+        # Let's check cleanup is needed or not
+        # cleans up if return value is 0 otherwise not; checking build is finished or not
+        if is_cleanup_needed ${runningBuildArr[0]}
+        then
+            echo "Cleanning stale data..."
+            govc datastore.rm $DS docker-volume-vsphere/ongoing/${runningBuildArr[0]}
+            release_lock $check_lock
+            break
+        else
+            # Let's release build_check_lock
+            release_lock $check_lock
+        fi
+    fi
+    # wait for some time to poll again
+    echo "Waiting $interval seconds for build ${runningBuildArr[0]} to complete";
+    sleep $interval;
 done
 
 govc datastore.mkdir $DS docker-volume-vsphere/ongoing/$DRONE_BUILD_NUMBER
-
+echo "$DRONE_BUILD_NUMBER is added to ongoing folder"
 exit 0
