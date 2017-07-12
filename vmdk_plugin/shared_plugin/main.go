@@ -50,6 +50,7 @@ func main() {
 	driverName := flag.String("driver", "", "Volume driver")
 	kvStorePort := flag.String("KVport", "", "Port number for KV store service")
 	strTimeout := flag.String("KVtimeout", "", "Timeout for requests to KV store")
+	sdSlave := flag.String("SharedDriverSlave", "", "Driver that the shared driver calls for internal volume creation")
 
 	flag.Parse()
 
@@ -88,9 +89,8 @@ func main() {
 		// On failure set default.
 		if err == nil && c.KVtimeout != "" {
 			kvtimeout, err = strconv.Atoi(c.KVtimeout)
-			log.Infof("Setting KV timeout from config file: %v", err)
-		}
-		if err != nil {
+			log.Infof("Setting KV timeout from config file")
+		} else {
 			kvtimeout = defaultKVtimeout
 			log.Infof("Setting KV timeout to default value")
 		}
@@ -102,6 +102,15 @@ func main() {
 		if err != nil {
 			kvtimeout = defaultKVtimeout
 			log.Infof("Failed to set KV timeout from CLI input. Falling back to default value. Reason: %v", err)
+		}
+	}
+
+	// Set slave driver for shared plugin
+	if *sdSlave == "" {
+		if err == nil && c.SharedDriverSlave != "" {
+			*sdSlave = c.SharedDriverSlave
+		} else {
+			*sdSlave = defaultsdSlave
 		}
 	}
 
@@ -122,7 +131,8 @@ func main() {
 
 	// The Shared driver doesn't depend on the config file for options
 	if *driverName == sharedDriver {
-		driver = shared.NewVolumeDriver(plugin_server.MountRoot, *driverName, *kvStorePort, kvtimeout)
+		driver = shared.NewVolumeDriver(plugin_server.MountRoot, *driverName,
+			*kvStorePort, kvtimeout, *sdSlave)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", *driverName)
 		os.Exit(1)

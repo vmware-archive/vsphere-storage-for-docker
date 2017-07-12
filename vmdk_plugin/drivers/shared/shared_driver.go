@@ -24,19 +24,20 @@ package shared
 
 import (
 	"errors"
-        "strings"
 	"fmt"
+        "strconv"
 	log "github.com/Sirupsen/logrus"
-	"golang.org/x/net/context"
-	"os"
-	"path/filepath"
-	"time"
 	etcdClient "github.com/coreos/etcd/client"
-	dockerTypes "github.com/docker/engine-api/types"
 	dockerClient "github.com/docker/engine-api/client"
+	dockerTypes "github.com/docker/engine-api/types"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
+	"golang.org/x/net/context"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 const (
@@ -84,7 +85,7 @@ func NewVolumeDriver(mountDir string, driverName string,
 
 	kvStoreRequestTimeout = time.Duration(kvtimeout)
 	sharedDriverSlave = sdslave
-        mountRoot = mountDir
+	mountRoot = mountDir
 
 	d = &VolumeDriver{
 		refCounts: refcount.NewRefCountsMap(),
@@ -96,7 +97,7 @@ func NewVolumeDriver(mountDir string, driverName string,
 	// Initialize the connection to KV store
 	kvendpoint := "http://127.0.0.1:"
 	kvendpoint = kvendpoint + kvStorePort
-	kvcfg = etcdClient.Config {
+	kvcfg = etcdClient.Config{
 		Endpoints: []string{kvendpoint},
 		Transport: etcdClient.DefaultTransport,
 	}
@@ -226,10 +227,11 @@ func writeVolMetadata(name string,
 
 // Read volume metadata from KV store
 func readVolumeMetadata(name string) (error, SharedVolumeMetadata) {
-        var err error
-        var value string
-        var resp etcdClient.Response
-        var record SharedVolumeMetadata
+	//var err error
+        var msg string
+	var value string
+	//var resp etcdClient.Response
+	var record SharedVolumeMetadata
 
 	volname := "/" + name
 	kAPI := etcdClient.NewKeysAPI(kvclient)
@@ -237,28 +239,28 @@ func readVolumeMetadata(name string) (error, SharedVolumeMetadata) {
 		kvStoreRequestTimeout*time.Second)
 	defer cancel()
 
-        resp, err = kAPI.Get(ctx, volname, nil)
-        if err != nil {
+        resp, err := kAPI.Get(ctx, volname, nil)
+	if err != nil {
 		msg = fmt.Sprintf("Failed to read metadata entry for volume %s. Reason: %v", name, err)
 		log.Warningf(msg)
-		return errors.New(msg)
-        }
+		return errors.New(msg), record
+	}
 
-        value = resp.Node.Value
-        words := strings.Split(value, ":")
-        record.status = words[0]
-        record.globalRefcount = int(words[1])
-        record.port = int(words[2])
-        record.username = words[3]
-        record.password = words[4]
-        hostnames := strings.Split(words[5], "?")
-        for _, element := range hostnames {
-                if element != "" {
-                        record.clientList = append(record.clientList, element)
-                }
-        }
+	value = resp.Node.Value
+	words := strings.Split(value, ":")
+	record.status = words[0]
+	record.globalRefcount, _ = strconv.Atoi(words[1])
+	record.port, _ = strconv.Atoi(words[2])
+	record.username = words[3]
+	record.password = words[4]
+	hostnames := strings.Split(words[5], "?")
+	for _, element := range hostnames {
+		if element != "" {
+			record.clientList = append(record.clientList, element)
+		}
+	}
 
-        return nil, record
+	return nil, record
 }
 
 // Delete volume metadata from KV store
@@ -276,7 +278,7 @@ func deleteVolMetadata(name string) error {
 		return errors.New(msg)
 	}
 
-        return nil
+	return nil
 }
 
 // Create - create a volume.
@@ -285,7 +287,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	var msg string
 	var hnames []string
 
-        // Initialize volume metadata in KV store
+	// Initialize volume metadata in KV store
 	hostname, err := os.Hostname()
 	if err != nil {
 		msg = fmt.Sprintf("Failed to fetch hostname during volume creation")
@@ -314,18 +316,18 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	msg = fmt.Sprintf("Attempting to create internal volume for %s", r.Name)
 	log.Infof(msg)
 	internalVolname := tradVolumePrefix + r.Name
-	dockerVolOptions := dockerTypes.VolumeCreateRequest {
+	dockerVolOptions := dockerTypes.VolumeCreateRequest{
 		Driver:     "vsphere", //TODO read this from config file
 		Name:       internalVolname,
 		DriverOpts: r.Options,
 	}
 	_, err = dockerd.VolumeCreate(context.Background(), dockerVolOptions)
 	if err != nil {
-                omsg := fmt.Sprintf("Failed to create volume %s. Reason: %v",
+		omsg := fmt.Sprintf("Failed to create volume %s. Reason: %v",
 			r.Name, err)
 		log.Warningf(omsg)
 
-                // Attempt to delete the metadata for this volume
+		// Attempt to delete the metadata for this volume
 		err = deleteVolMetadata(r.Name)
 		if err != nil {
 			msg = fmt.Sprintf("%v. Please remove metadata entry manually using etcd CLI.", err)
@@ -336,7 +338,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	}
 
 	// Update metadata to indicate successful volume creation
-	volRecord = SharedVolumeMetadata {
+	volRecord = SharedVolumeMetadata{
 		status:         volStateReady,
 		globalRefcount: 0,
 		port:           0,

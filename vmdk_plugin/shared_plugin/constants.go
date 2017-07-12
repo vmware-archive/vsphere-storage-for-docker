@@ -27,6 +27,9 @@ const (
 	// Default KV store request timeout in seconds
 	defaultKVtimeout = 5
 
+	// Slave driver that the shared plugin uses for internal volume creation
+	defaultsdSlave = "vsphere"
+
 	// Docker plugin handshake endpoint.
 	// Also see https://docs.docker.com/engine/extend/plugin_api/#handshake-api
 	pluginActivatePath = "/Plugin.Activate"
