@@ -28,8 +28,6 @@
 #
 
 . ../misc/scripts/commands.sh
-DIR=$(dirname ${BASH_SOURCE[0]})
-. $DIR/wait_for.sh
 
 PLUGIN_NAME=docker-volume-vsphere
 VIB_NAME=esx-vmdkops-service
@@ -152,8 +150,7 @@ function deployESXPre {
 }
 
 function deployESXInstall {
-    counter=5
-    wait_for "$SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)" $counter
+    $SSH $TARGET $VIB_INSTALL --no-sig-check -v $TMP_LOC/$(basename $SOURCE)
     if [ $? -ne 0 ]
     then
         log "deployESXInstall: Installation hit an error on $TARGET"
