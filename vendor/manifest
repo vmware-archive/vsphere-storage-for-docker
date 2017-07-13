@@ -17,6 +17,60 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/coreos/etcd/client",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "0a2b580f738715da801d64a46682d92fbe125d0f",
+			"branch": "master",
+			"path": "/client",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/pathutil",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "0a2b580f738715da801d64a46682d92fbe125d0f",
+			"branch": "master",
+			"path": "pkg/pathutil",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/srv",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "0a2b580f738715da801d64a46682d92fbe125d0f",
+			"branch": "master",
+			"path": "pkg/srv",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/types",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "0a2b580f738715da801d64a46682d92fbe125d0f",
+			"branch": "master",
+			"path": "pkg/types",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/etcd/version",
+			"repository": "https://github.com/coreos/etcd",
+			"vcs": "git",
+			"revision": "0a2b580f738715da801d64a46682d92fbe125d0f",
+			"branch": "master",
+			"path": "version",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/coreos/go-semver/semver",
+			"repository": "https://github.com/coreos/go-semver",
+			"vcs": "git",
+			"revision": "1817cd4bea52af76542157eeabd74b057d1a199e",
+			"branch": "master",
+			"path": "/semver",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/coreos/go-systemd",
 			"repository": "https://github.com/coreos/go-systemd",
 			"vcs": "git",
@@ -216,6 +270,15 @@
 			"vcs": "",
 			"revision": "1f4a1643a57e798696635ea4c126e9127adb7d3c",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/ugorji/go/codec",
+			"repository": "https://github.com/ugorji/go",
+			"vcs": "git",
+			"revision": "5efa3251c7f7d05e5d9704a69a984ec9f1386a40",
+			"branch": "master",
+			"path": "/codec",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/vmware/photon-controller-go-sdk",
