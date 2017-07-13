@@ -31,13 +31,13 @@ package photon
 import (
 	"flag"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
@@ -59,13 +59,11 @@ const (
 
 // VolumeDriver - Photon volume driver struct
 type VolumeDriver struct {
-	client        *photon.Client
-	hostID        string
-	mountRoot     string
-	project       string
-	refCounts     *refcount.RefCountsMap
-	target        string
-	mountIDtoName map[string]string // map of mountID -> full volume name
+	utils.PluginDriver
+	client  *photon.Client
+	hostID  string
+	project string
+	target  string
 }
 
 func (d *VolumeDriver) verifyTarget() error {
@@ -117,10 +115,10 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 		log.WithFields(log.Fields{"target": *targetURL, "project-id": *projectID}).Warning("Invalid target and or project ID, exiting.")
 		return nil
 	}
-	d.mountRoot = mountDir
-	d.refCounts = refcount.NewRefCountsMap()
-	d.refCounts.Init(d, mountDir, cfg.Driver)
-	d.mountIDtoName = make(map[string]string)
+	d.MountRoot = mountDir
+	d.RefCounts = refcount.NewRefCountsMap()
+	d.RefCounts.Init(d, mountDir, cfg.Driver)
+	d.MountIDtoName = make(map[string]string)
 
 	log.WithFields(log.Fields{
 		"version": version,
@@ -130,37 +128,6 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	}).Info("Docker Photon plugin started ")
 
 	return d
-}
-
-// In following three operations on refcount, if refcount
-// map hasn't been initialized, return 1 prevent detach and remove.
-
-// Return the number of references for the given volume
-func (d *VolumeDriver) getRefCount(vol string) uint {
-	if d.refCounts.IsInitialized() != true {
-		return 1
-	}
-	return d.refCounts.GetCount(vol)
-}
-
-// Increment the reference count for the given volume
-func (d *VolumeDriver) incrRefCount(vol string) uint {
-	if d.refCounts.IsInitialized() != true {
-		return 1
-	}
-	return d.refCounts.Incr(vol)
-}
-
-// Decrement the reference count for the given volume
-func (d *VolumeDriver) decrRefCount(vol string) (uint, error) {
-	if d.refCounts.IsInitialized() != true {
-		return 1, nil
-	}
-	return d.refCounts.Decr(vol)
-}
-
-func (d *VolumeDriver) getMountPoint(volName string) string {
-	return filepath.Join(d.mountRoot, volName)
 }
 
 // validateCreateOptions validates the volume create request.
@@ -249,7 +216,7 @@ func convertDiskTags2Map(tags []string, status map[string]interface{}) {
 
 // Get info about a single volume
 func (d *VolumeDriver) Get(r volume.Request) volume.Response {
-	mountpoint := d.getMountPoint(r.Name)
+	mountpoint := d.GetMountPoint(r.Name)
 	status, err := d.GetVolume(r.Name)
 	if err != nil {
 		log.WithFields(
@@ -272,7 +239,7 @@ func (d *VolumeDriver) List(r volume.Request) volume.Response {
 	}
 	responseVolumes := make([]*volume.Volume, 0, len(dlist.Items))
 	for _, vol := range dlist.Items {
-		mountpoint := d.getMountPoint(vol.Name)
+		mountpoint := d.GetMountPoint(vol.Name)
 		responseVol := volume.Volume{Name: vol.Name, Mountpoint: mountpoint}
 		responseVolumes = append(responseVolumes, &responseVol)
 	}
@@ -359,7 +326,7 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 // MountVolume - Request attach and them mounts the volume.
 // Returns mount point and  error (or nil)
 func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
-	mountpoint := d.getMountPoint(name)
+	mountpoint := d.GetMountPoint(name)
 
 	// First, make sure  that mountpoint exists.
 	err := fs.Mkdir(mountpoint)
@@ -385,29 +352,29 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 		return volume.Response{Err: err.Error()}
 	}
 	r.Name = volumeInfo.VolumeName
-	d.mountIDtoName[r.ID] = r.Name
+	d.MountIDtoName[r.ID] = r.Name
 
 	// If the volume is already mounted , just increase the refcount.
 	// Note: for new keys, GO maps return zero value, so no need for if_exists.
-	refcnt := d.incrRefCount(r.Name) // save map traversal
+	refcnt := d.IncrRefCount(r.Name) // save map traversal
 	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
 	if refcnt > 1 {
 		log.WithFields(
 			log.Fields{"name": r.Name, "refcount": refcnt},
 		).Info("Already mounted, skipping mount. ")
-		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
+		return volume.Response{Mountpoint: d.GetMountPoint(r.Name)}
 	}
 
-	if plugin_utils.AlreadyMounted(r.Name, d.mountRoot) {
+	if plugin_utils.AlreadyMounted(r.Name, d.MountRoot) {
 		log.WithFields(log.Fields{"name": r.Name}).Info("Already mounted, skipping mount. ")
-		return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
+		return volume.Response{Mountpoint: d.GetMountPoint(r.Name)}
 	}
 
 	// get volume metadata if required
 	volumeMeta := volumeInfo.VolumeMeta
 	if volumeMeta == nil {
 		if volumeMeta, err = d.GetVolume(r.Name); err != nil {
-			d.decrRefCount(r.Name)
+			d.DecrRefCount(r.Name)
 			return volume.Response{Err: err.Error()}
 		}
 	}
@@ -435,7 +402,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 			log.Fields{"name": r.Name, "error": err.Error()},
 		).Error("Failed to mount ")
 
-		d.decrRefCount(r.Name)
+		d.DecrRefCount(r.Name)
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -444,7 +411,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 
 // UnmountVolume - Unmounts the volume and then requests detach
 func (d *VolumeDriver) UnmountVolume(name string) error {
-	mountpoint := d.getMountPoint(name)
+	mountpoint := d.GetMountPoint(name)
 	status, err := d.GetVolume(name)
 	if err != nil {
 		return err
@@ -567,16 +534,16 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 
 	// Cannot remove volumes till plugin completely initializes (refcounting is complete)
 	// because we don't know if it is being used or not
-	if d.refCounts.IsInitialized() != true {
+	if d.RefCounts.IsInitialized() != true {
 		msg := fmt.Sprintf(plugin_utils.PluginInitError+" Cannot remove volume=%s", r.Name)
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
 
 	// Docker is supposed to block 'remove' command if the volume is used.
-	if d.getRefCount(r.Name) != 0 {
+	if d.GetRefCount(r.Name) != 0 {
 		msg := fmt.Sprintf("Remove failure - volume is still mounted. "+
-			" volume=%s, refcount=%d", r.Name, d.getRefCount(r.Name))
+			" volume=%s, refcount=%d", r.Name, d.GetRefCount(r.Name))
 		log.Error(msg)
 		return volume.Response{Err: msg}
 	}
@@ -616,7 +583,7 @@ func (d *VolumeDriver) Capabilities(r volume.Request) volume.Response {
 
 // Path - give docker a reminder of the volume mount path
 func (d *VolumeDriver) Path(r volume.Request) volume.Response {
-	return volume.Response{Mountpoint: d.getMountPoint(r.Name)}
+	return volume.Response{Mountpoint: d.GetMountPoint(r.Name)}
 }
 
 // Provide a volume to docker container - called once per container start.
@@ -627,12 +594,12 @@ func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
 	// lock the state
-	d.refCounts.StateMtx.Lock()
-	defer d.refCounts.StateMtx.Unlock()
+	d.RefCounts.StateMtx.Lock()
+	defer d.RefCounts.StateMtx.Unlock()
 
 	// checked by refcounting thread until refmap initialized
 	// useless after that
-	d.refCounts.MarkDirty()
+	d.RefCounts.MarkDirty()
 
 	return d.processMount(r)
 }
@@ -643,20 +610,20 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
 	// lock the state
-	d.refCounts.StateMtx.Lock()
-	defer d.refCounts.StateMtx.Unlock()
+	d.RefCounts.StateMtx.Lock()
+	defer d.RefCounts.StateMtx.Unlock()
 
-	if d.refCounts.IsInitialized() != true {
+	if d.RefCounts.IsInitialized() != true {
 		// if refcounting hasn't been succesful,
 		// no refcounting, no unmount. All unmounts are delayed
 		// until we succesfully populate the refcount map
-		d.refCounts.MarkDirty()
+		d.RefCounts.MarkDirty()
 		return volume.Response{Err: ""}
 	}
 
-	if fullVolName, exist := d.mountIDtoName[r.ID]; exist {
+	if fullVolName, exist := d.MountIDtoName[r.ID]; exist {
 		r.Name = fullVolName
-		delete(d.mountIDtoName, r.ID) //cleanup the map
+		delete(d.MountIDtoName, r.ID) //cleanup the map
 	} else {
 		volumeInfo, err := plugin_utils.GetVolumeInfo(r.Name, "", d)
 		if err != nil {
@@ -668,7 +635,7 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 
 	// if refcount has been succcessful, Normal flow.
 	// if the volume is still used by other containers, just return OK
-	refcnt, err := d.decrRefCount(r.Name)
+	refcnt, err := d.DecrRefCount(r.Name)
 	if err != nil {
 		// something went wrong - yell, but still try to unmount
 		log.WithFields(

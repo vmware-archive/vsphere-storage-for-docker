@@ -67,8 +67,8 @@ type testClient struct {
 // so do not expect ALL inits from other tests (if any) to compete by now.
 func init() {
 	logLevel := flag.String("log_level", "debug", "Logging Level")
-	logFile := flag.String("log_file", config.DefaultLogPath, "Log file path")
-	configFile := flag.String("config", config.DefaultConfigPath, "Configuration file path")
+	logFile := flag.String("log_file", config.DefaultVMDKPluginLogPath, "Log file path")
+	configFile := flag.String("config", config.DefaultVMDKPluginConfigPath, "Configuration file path")
 
 	flag.BoolVar(&removeContainers, "rm", true, "rm container after run")
 	flag.StringVar(&driverName, "d", "vsphere:latest", "Driver name. We refcount volumes on this driver")
@@ -79,7 +79,7 @@ func init() {
 	logInfo := &config.LogInfo{
 		LogLevel:       logLevel,
 		LogFile:        logFile,
-		DefaultLogFile: config.DefaultLogPath,
+		DefaultLogFile: config.DefaultVMDKPluginLogPath,
 		ConfigFile:     configFile,
 	}
 	usingConfigFileDefaults := config.LogInit(logInfo)

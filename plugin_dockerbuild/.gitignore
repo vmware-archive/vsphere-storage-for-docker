@@ -1,2 +1,5 @@
 docker-volume-vsphere
+vsphere-shared
+Dockerfile
+config.json
 rootfs/

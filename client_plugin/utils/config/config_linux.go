@@ -17,10 +17,14 @@ package config
 const (
 	// Default paths - used in log init in main() and test:
 
-	// DefaultConfigPath is the default location of Log configuration file
-	DefaultConfigPath = "/etc/docker-volume-vsphere.conf"
-	// DefaultLogPath is the default location of log (trace) file
-	DefaultLogPath = "/var/log/docker-volume-vsphere.log"
+	// DefaultVMDKPluginConfigPath is the default location of Log configuration file
+	DefaultVMDKPluginConfigPath = "/etc/docker-volume-vsphere.conf"
+	// DefaultVMDKPluginLogPath is the default location of log (trace) file
+	DefaultVMDKPluginLogPath = "/var/log/docker-volume-vsphere.log"
+	// DefaultSharedPluginConfigPath is the default location of Log configuration file for shared plugin
+	DefaultSharedPluginConfigPath = "/etc/vsphere-shared.conf"
+	// DefaultSharedPluginLogPath is the default location of log (trace) file for shared plugin
+	DefaultSharedPluginLogPath = "/var/log/vsphere-shared.log"
 
 	// MountRoot is the path where VMDK and photon volumes are mounted
 	MountRoot = "/mnt/vmdk"

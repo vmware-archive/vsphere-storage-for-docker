@@ -14,7 +14,7 @@
 
 package main
 
-// A VMDK Docker Data Volume plugin - main
+// A vSphere Shared Docker Data Volume plugin - main
 
 import (
 	"os"
@@ -22,8 +22,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/photon"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_server"
 )
@@ -33,23 +32,16 @@ import (
 func main() {
 	var driver volume.Driver
 
-	cfg, err := config.InitConfig(config.DefaultVMDKPluginConfigPath, config.DefaultVMDKPluginLogPath,
-		config.VSphereDriver, config.VSphereDriver)
+	cfg, err := config.InitConfig(config.DefaultSharedPluginConfigPath, config.DefaultSharedPluginLogPath,
+		config.SharedDriver, "")
 	if err != nil {
-		log.Warning("Failed to initialize config variables for vmdk plugin")
+		log.Warning("Failed to initialize config variables for shared plugin")
 		os.Exit(1)
 	}
 
-	switch {
-	case cfg.Driver == config.PhotonDriver:
-		driver = photon.NewVolumeDriver(cfg, config.MountRoot)
-	case cfg.Driver == config.VSphereDriver:
-		driver = vmdk.NewVolumeDriver(cfg, config.MountRoot)
-	case cfg.Driver == config.VMDKDriver:
-		log.Warning("Using deprecated \"vmdk\" driver, use \"vsphere\" driver instead - continuing...")
-		cfg.Driver = config.VSphereDriver
-		driver = vmdk.NewVolumeDriver(cfg, config.MountRoot)
-	default:
+	if cfg.Driver == config.SharedDriver {
+		driver = shared.NewVolumeDriver(cfg, config.MountRoot)
+	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", cfg.Driver)
 		os.Exit(1)
 	}

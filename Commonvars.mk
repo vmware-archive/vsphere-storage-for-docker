@@ -54,7 +54,8 @@ EXTRA_TAG ?= -dev
 PLUGIN_TAG := $(VERSION_TAG)$(EXTRA_TAG)
 
 # plugin name - used as a base for full plugin name and container for extracting rootfs
-PLUGIN_NAME=$(DOCKER_HUB_REPO)/docker-volume-vsphere
+PLUGIN_NAME ?= $(DOCKER_HUB_REPO)/docker-volume-vsphere
+SHARED_PLUGIN_NAME = $(DOCKER_HUB_REPO)/vsphere-shared
 
 # Managed plugin alias name
 MANAGED_PLUGIN_NAME := "vsphere:latest"
