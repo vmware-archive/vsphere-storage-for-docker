@@ -54,6 +54,7 @@ AFTER_REMOVE   := $(SCRIPTS)/install/after-remove.sh
 CHECK	    := $(SCRIPTS)/check.sh
 BUILD       := $(SCRIPTS)/build.sh
 DEPLOY_TOOLS := $(SCRIPTS)/deploy-tools.sh
+UPGRADE_TEST := $(SCRIPTS)/upgrade_test.sh
 SYSTEMD_UNIT := $(SCRIPTS)/install/$(PLUGNAME).service
 UPSTART_CONF := $(SCRIPTS)/install/$(PLUGNAME).conf
 PACKAGE      := package
@@ -271,6 +272,7 @@ DEPLOY_VM_SH  := $(DEPLOY_TOOLS) deployvm
 DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS) deployvmtest
 DEPLOY_VM_PLUGIN_SH := $(DEPLOY_TOOLS) deployplugin
 DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
+DEPLOY_ESX_FOR_UPGRADE := $(DEPLOY_TOOLS) deployesxForUpgrade
 CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
 CLEANESX_SH   := $(DEPLOY_TOOLS) cleanesx
 
@@ -281,6 +283,12 @@ CLEANESX_SH   := $(DEPLOY_TOOLS) cleanesx
 .PHONY: deploy-esx deploy-vm deploy-vm-test deploy deploy-all deploy
 deploy-esx: clean-esx
 	$(DEPLOY_ESX_SH) "$(ESX)" "$(VIB_BIN)"
+
+# This target is added to run upgrade test
+test-upgrade:
+	$(BUILD) run-upgrade-test
+run-upgrade-test:
+	ESX='$(ESX)' VM1='$(VM1)' UPGRADE_FROM_VER='$(UPGRADE_FROM_VER)' UPGRADE_TO_VER='$(UPGRADE_TO_VER)' $(UPGRADE_TEST)
 
 VMS= $(VM1) $(VM2) $(WORKER2) $(CI_NODE4)
 

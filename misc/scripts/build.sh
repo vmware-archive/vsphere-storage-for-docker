@@ -147,6 +147,8 @@ else
     -e "WORKER1=$WORKER1" \
     -e "WORKER2=$WORKER2" \
     -e "SSH_KEY_OPT=$SSH_KEY_OPT" \
+    -e "UPGRADE_FROM_VER=$UPGRADE_FROM_VER" \
+    -e "UPGRADE_TO_VER=$UPGRADE_TO_VER" \
     -v $docker_socket:$docker_socket  \
     -v $ssh_key_path:$ssh_key_opt_container:ro \
     -v $PWD/..:$dir -w $dir $plug_container $MAKE $1

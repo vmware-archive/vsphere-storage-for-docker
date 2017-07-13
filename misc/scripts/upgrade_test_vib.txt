@@ -1,0 +1,2 @@
+0.14 https://bintray.com/vmware/vDVS/download_file?file_path=VMWare_bootbank_esx-vmdkops-service_0.14.0577889-0.0.1.vib
+0.15 https://bintray.com/vmware/vDVS/download_file?file_path=VMWare_bootbank_esx-vmdkops-service_0.15.b93c186-0.0.1.vib
