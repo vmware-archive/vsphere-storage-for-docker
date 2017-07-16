@@ -17,94 +17,27 @@ package plugin_server
 // A VMDK Docker Data Volume plugin implementation for Windows OS.
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/Microsoft/go-winio"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const (
-	npipeAddr = `\\.\pipe\vsphere-dvs` // Plugin's npipe address
-
-	// Docker driver types.
-	volumeDriver = "VolumeDriver"
-)
+const npipeAddr = `\\.\pipe\vsphere-dvs` // Plugin's npipe address
 
 // NpipePluginServer serves HTTP requests from Docker over windows npipe.
 type NpipePluginServer struct {
 	PluginServer
 	driver   *volume.Driver // The driver implementation
-	mux      *http.ServeMux // The HTTP mux
 	listener net.Listener   // The npipe listener
-}
-
-// Response for /Plugin.Activate to activate the Docker plugin.
-type PluginActivateResponse struct {
-	Implements []string // Slice of implemented driver types
 }
 
 // NewPluginServer returns a new instance of NpipePluginServer.
 func NewPluginServer(driverName string, driver *volume.Driver) *NpipePluginServer {
-	server := &NpipePluginServer{driver: driver, mux: http.NewServeMux()}
-	server.registerHandlers()
-	return server
-}
-
-// writeJSON writes the JSON encoding of resp to the writer.
-func writeJSON(resp interface{}, writer *http.ResponseWriter) error {
-	bytes, err := json.Marshal(resp)
-	if err == nil {
-		fmt.Fprintf(*writer, string(bytes))
-	}
-	return err
-}
-
-// writeError writes an error message and status to the writer.
-func writeError(path string, writer http.ResponseWriter, req *http.Request, status int, err error) {
-	log.WithFields(log.Fields{"path": path, "req": req, "status": status,
-		"err": err}).Error("Failed to service request ")
-	http.Error(writer, err.Error(), status)
-}
-
-// PluginActivate writes the plugin's handshake response to the writer.
-func (s *NpipePluginServer) PluginActivate(writer http.ResponseWriter, req *http.Request) {
-	resp := &PluginActivateResponse{Implements: []string{volumeDriver}}
-	errJSON := writeJSON(resp, &writer)
-	if errJSON != nil {
-		writeError(pluginActivatePath, writer, req, http.StatusInternalServerError, errJSON)
-		return
-	}
-	log.WithFields(log.Fields{"resp": resp}).Info("Plugin activated ")
-}
-
-// VolumeDriverCreate creates a volume and writes the response to the writer.
-func (s *NpipePluginServer) VolumeDriverCreate(writer http.ResponseWriter, req *http.Request) {
-	var volumeReq volume.Request
-	err := json.NewDecoder(req.Body).Decode(&volumeReq)
-	if err != nil {
-		writeError(volumeDriverCreatePath, writer, req, http.StatusBadRequest, err)
-		return
-	}
-
-	resp := (*s.driver).Create(volumeReq)
-	errJSON := writeJSON(resp, &writer)
-	if errJSON != nil {
-		writeError(volumeDriverCreatePath, writer, req, http.StatusInternalServerError, errJSON)
-		return
-	}
-	log.WithFields(log.Fields{"resp": resp}).Info("Serviced /VolumeDriver.Create ")
-}
-
-// registerHttpHandlers registers handlers with the HTTP mux.
-func (s *NpipePluginServer) registerHandlers() {
-	s.mux.HandleFunc(pluginActivatePath, s.PluginActivate)
-	s.mux.HandleFunc(volumeDriverCreatePath, s.VolumeDriverCreate)
+	return &NpipePluginServer{driver: driver}
 }
 
 // Init initializes the npipe listener which serves HTTP requests
@@ -118,8 +51,10 @@ func (s *NpipePluginServer) Init() {
 		fmt.Println(msg)
 		os.Exit(1)
 	}
+
+	handler := volume.NewHandler(*s.driver)
 	log.WithFields(log.Fields{"npipe": npipeAddr}).Info("Going into Serve - Listening on npipe ")
-	log.Info(http.Serve(s.listener, s.mux))
+	log.Info(handler.Serve(s.listener))
 }
 
 // Destroy shuts down the npipe listener.

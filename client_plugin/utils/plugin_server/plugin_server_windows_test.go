@@ -19,11 +19,13 @@ package plugin_server
 import (
 	"bufio"
 	"fmt"
-	"github.com/Microsoft/go-winio"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
 	"time"
+
+	"github.com/Microsoft/go-winio"
+	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -32,13 +34,19 @@ const (
 	httpOK         = "HTTP/1.0 200 OK\r\n"
 )
 
+type MockDriver struct {
+	volume.Driver
+}
+
 func TestNewPluginServer(t *testing.T) {
 	server := NewPluginServer(mock, nil)
 	assert.NotNil(t, server, "NewPluginServer should return a server instance")
 }
 
 func initPluginServer() *NpipePluginServer {
-	server := NewPluginServer(mock, nil)
+	var driver volume.Driver
+	driver = &MockDriver{}
+	server := NewPluginServer(mock, &driver)
 	go server.Init()                   // server.Init() blocks forever
 	time.Sleep(100 * time.Millisecond) // wait for goroutine to execute
 	return server
@@ -69,7 +77,7 @@ func TestPluginServerActivate(t *testing.T) {
 	server := initPluginServer()
 	conn, err := winio.DialPipe(npipeAddr, nil)
 	assert.Nil(t, err, "Failed to dial to npipe %s", npipeAddr)
-	resp := request(conn, pluginActivatePath)
+	resp := request(conn, "/Plugin.Activate")
 	assert.Equal(t, httpOK, resp, "Plugin activate request failed")
 	server.Destroy()
 }

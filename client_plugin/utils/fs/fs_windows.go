@@ -146,10 +146,10 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 	}
 
 	script := fmt.Sprintf(formatDiskScript, diskNum, diskNum, diskNum, fstype, label)
-	out, err := exec.Command(powershell, script).Output()
+	out, err := exec.Command(powershell, script).CombinedOutput()
 	if err != nil {
 		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "err": err}).Error("Format disk script failed ")
+			"diskNum": diskNum, "err": err, "out": string(out)}).Error("Format disk script failed ")
 		return err
 	} else {
 		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
@@ -174,10 +174,10 @@ func Unmount(mountpoint string) error {
 // failing to identify the disk.
 func getDiskNum(volDev *VolumeDevSpec) (string, error) {
 	script := fmt.Sprintf(scsiAddrToDiskNumScript, volDev.ControllerPciSlotNumber, volDev.Unit)
-	out, err := exec.Command(powershell, script).Output()
+	out, err := exec.Command(powershell, script).CombinedOutput()
 	if err != nil {
 		log.WithFields(log.Fields{"volDev": *volDev,
-			"err": err}).Error("Failed to execute the disk mapping script ")
+			"err": err, "out": string(out)}).Error("Failed to execute the disk mapping script ")
 		return "", err
 	}
 	log.WithFields(log.Fields{"volDev": *volDev,

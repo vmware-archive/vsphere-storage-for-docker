@@ -15,21 +15,12 @@
 package plugin_server
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/go-plugins-helpers/volume"
 	"os"
 	"os/signal"
 	"syscall"
-)
 
-const (
-	// Docker plugin handshake endpoint.
-	// Also see https://docs.docker.com/engine/extend/plugin_api/#handshake-api
-	pluginActivatePath = "/Plugin.Activate"
-
-	// Docker volume plugin endpoints.
-	// Also see https://docs.docker.com/engine/extend/plugins_volume/#volume-plugin-protocol
-	volumeDriverCreatePath = "/VolumeDriver.Create"
+	log "github.com/Sirupsen/logrus"
+	"github.com/docker/go-plugins-helpers/volume"
 )
 
 // PluginServer responds to HTTP requests from Docker.
