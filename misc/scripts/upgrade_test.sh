@@ -27,14 +27,50 @@
         VIB_URL=${match_array[1]}
     }
 
+    if [ -z $UPGRADE_FROM_VER ]
+    then
+        echo "Environment variable UPGRADE_FROM_VER is not set"
+        exit 1
+    fi
+
+    if [ -z $UPGRADE_TO_VER ]
+    then
+        echo "Environment variable UPGRADE_TO_VER is not set"
+        exit 1
+    fi
+
     VIB_URL=""
     get_vib_url $UPGRADE_FROM_VER
     BASE_VIB_URL=$VIB_URL
     echo "BASE_VIB_URL=$BASE_VIB_URL"
 
-    get_vib_url $UPGRADE_TO_VER
-    UPGRADE_VIB_URL=$VIB_URL
-    echo "UPGRADE_VIB_URL=$UPGRADE_VIB_URL"
+    # $UPGARDE_FROM_VER is set to an invalid value
+    if [ $BASE_VIB_URL == ""]
+    then
+        echo "Cannot find corresponding VIB URL for version $UPGRADE_FROM_VER"
+        exit 1
+    fi
+
+    if [ $UPGRADE_TO_VER != "CURRENT" ]
+    then
+        get_vib_url $UPGRADE_TO_VER
+        UPGRADE_VIB_URL=$VIB_URL
+        echo "UPGRADE_VIB_URL=$UPGRADE_VIB_URL"
+
+        # $UPGARDE_TO_VER is set to an invalid value
+        if [ $UPGRADE_VIB_URL == ""]
+        then
+            echo "Cannot find corresponding VIB URL for version $UPGRADE_TO_VER"
+            exit 1
+        fi
+
+        # $UPGRADE_FROM_VER is not lower than $UPGRADE_TO_VER
+        if [[ $UPGRADE_FROM_VER > $UPGRADE_TO_VER ]] || [[ $UPGRADE_FROM_VER == $UPGRADE_TO_VER ]]
+        then
+            echo "Cannot upgrade from $UPGRADE_FROM_VER to $UPGRADE_TO_VER"
+            exit 1
+        fi
+    fi
 
     echo "Upgrade test: from ver $UPGRADE_FROM_VER to ver $UPGRADE_TO_VER"
 
@@ -51,15 +87,27 @@
 	echo "Upgrade test step 3: run pre-upgrade test"
 	$GO test -v -tags runpreupgrade $E2E_Tests
 
-	echo "Upgrade test step 4: deploy on $ESX with $UPGRADE_VIB_URL"
-	$DEPLOY_TOOLS_SH deployesxforupgrade  $ESX $UPGRADE_VIB_URL
+    if [ $UPGRADE_TO_VER != "CURRENT" ]
+    then
+	    echo "Upgrade test step 4: deploy on $ESX with $UPGRADE_VIB_URL"
+	    $DEPLOY_TOOLS_SH deployesxforupgrade  $ESX $UPGRADE_VIB_URL
+    else
+        echo "Upgrade test step 4: deploy on $ESX with $VIB_BIN"
+        $DEPLOY_TOOLS_SH deployesx $ESX $VIB_BIN
+    fi
 
 	echo "Upgrade test step 5.1: remove plugin $MANAGED_PLUGIN_NAME on $VM1"
 	$DEPLOY_TOOLS_SH cleanvm $VM1 $MANAGED_PLUGIN_NAME
 
-	echo "Upgrade test step 5.2: deploy plugin vmware/docker-volume-vsphere:$UPGRADE_TO_VER on $VM1"
-	../misc/scripts/deploy-tools.sh deployvm $VM1 vmware/docker-volume-vsphere:$UPGRADE_TO_VER
-	$SSH $VM1 "systemctl restart docker || service docker restart"
+    if [ $UPGRADE_TO_VER != "CURRENT" ]
+    then
+	    echo "Upgrade test step 5.2: deploy plugin vmware/docker-volume-vsphere:$UPGRADE_TO_VER on $VM1"
+	    $DEPLOY_TOOLS_SH deployvm $VM1 vmware/docker-volume-vsphere:$UPGRADE_TO_VER
+    else
+        echo "Upgrade test step 5.2: deploy plugin $PLUGIN_NAME:$PLUGIN_TAG on $VM1"
+        $DEPLOY_TOOLS_SH deployvm $VM1 $PLUGIN_NAME:$PLUGIN_TAG
+    fi
+    $SSH $VM1 "systemctl restart docker || service docker restart"
 
 	echo "Upgrade test step 6: run post-upgrade test"
 	$GO test -v -tags runpostupgrade $E2E_Tests

@@ -303,9 +303,13 @@ deploy-esx: clean-esx
 
 # This target is added to run upgrade test
 test-upgrade:
+ifeq ($(UPGRADE_TO_VER), CURRENT)
+	$(MAKE) build-all
+	$(MAKE) --directory=../plugin_dockerbuild all
+endif
 	$(BUILD) run-upgrade-test
 run-upgrade-test:
-	ESX='$(ESX)' VM1='$(VM1)' UPGRADE_FROM_VER='$(UPGRADE_FROM_VER)' UPGRADE_TO_VER='$(UPGRADE_TO_VER)' $(UPGRADE_TEST)
+	ESX='$(ESX)' VM1='$(VM1)' VIB_BIN='$(VIB_BIN)' PLUGIN_NAME='$(PLUGIN_NAME)' PLUGIN_TAG='$(PLUGIN_TAG)' UPGRADE_FROM_VER='$(UPGRADE_FROM_VER)' UPGRADE_TO_VER='$(UPGRADE_TO_VER)' $(DOCKER_HUB_REPO)='$(DOCKER_HUB_REPO)' $(UPGRADE_TEST)
 
 VMS= $(VM1) $(VM2) $(WORKER2) $(CI_NODE4)
 
