@@ -38,23 +38,7 @@ When there is a failure unrelated to your PR, you may want to *Restart* the fail
 
 Here are some known issues with current CI/CD system, if you run into any of the following **please** hit *Restart* button to re-run tests against your PR.
 
-- [Issue#1436](https://github.com/vmware/docker-volume-vsphere/issues/1436): Deploy esx failed with error: Failed to create ramdisk vibtransaction
-
-```
-=> Deploying to ESX root@192.168.31.62 Sat Jun 17 04:26:23 UTC 2017
-
-Errors:
- [InstallationError]
- Failed to create ramdisk vibtransaction
- Please refer to the log file for more details.
-
-=> deployESXInstall: Installation hit an error on root@192.168.31.62 Sat Jun 17 04:26:32 UTC 2017
-
-
-make[1]: *** [deploy-esx] Error 2
-make: *** [deploy-esx] Error 2
-=> Build + Test not successful Sat Jun 17 04:26:32 UTC 2017
-```
+- There is not any known issue of the CI/CD system. Incase of CI failure which is unrelated to your PR, please raise a new issue.
 
 ### Running CI/CD on a dev setup
 Each developer can run tests part of the CI/CD system locally in their sandbox. This section describes how to configure your development setup for running CI/CD. If you are looking for configuring local testbed setup, **please refer** [Setting up local testbed](#local-testbed-setup).

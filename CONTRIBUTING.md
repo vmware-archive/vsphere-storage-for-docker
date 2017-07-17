@@ -15,6 +15,19 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * We don't have formal coding conventions at this point.
 * Add `[WIP]` or `[PREVIEW]` to the PR title to let reviewers know that the PR is not ready to be merged.
 
+#### Documentation PR
+Any changes to `[master]/docs` will not be promoted to `gh-pages` (document release branch). The process is not automated yet and you need to copy them manually. Please use following steps and generate the separate PR to merge changes to `gh-pages`.
+
+```
+1. Checkout the local gh-pages branch
+e.g. git checkout -b localdocs vmware/gh-pages
+
+2. Copy markdown file changes to `gh-pages/jekyll-docs` respective markdown file.
+e.g. any changes to `[master]/docs/user-guide/admin-cli.md` should be copied to `gh-pages/jekyll-docs/admin-cli.md`
+
+3. When ready post a PR
+```
+
 **Note**: Make sure your code follows same style and convention as existing code.
 
 See  [Typical Developer Workflow](#typical-developer-workflow) to get started.
