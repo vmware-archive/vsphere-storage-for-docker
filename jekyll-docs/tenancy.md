@@ -17,7 +17,7 @@ vmgroup
 
 ## Admin CLI
 
-Vmgroups can be created and managed via the [Admin CLI](/user-guide/admin-cli/#Vmgroup)
+Vmgroups can be created and managed via the [Admin CLI](/docs/user-guide/admin-cli.md/#vmgroup)
 
 ## Multitenancy concepts
 
@@ -26,42 +26,56 @@ Vmgroups can be created and managed via the [Admin CLI](/user-guide/admin-cli/#V
 When a VM which does not belong to any vmgroup issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT vmgroup, and will get privileges associated with this vmgroup. \_DEFAULT vmgroup will be automatically created by system post install, so by default vmdk_ops will support request from any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this vmgroup or modify privileges, thus locking down vmdk_ops to serve only explicitly configured VMs.
 
 ```
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name      Description                Default_datastore  VM_list
-------------------------------------  --------  -------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=_DEFAULT
+Datastore  Allow_create  Max_volume_size  Total_size
+---------  ------------  ---------------  ----------
+_ALL_DS   True          Unset            Unset
+_VM_DS    True          Unset            Unset
 ```
-
-### Default privileges
-When a VM tries to manipulate volumes on a datastore which is not configured, the system will use _DEFAULT privilege, which is created automatically by system post install. This _DEFAULT privilege allows access to ANY datastore by default. An admin can edit or remove this record, thus locking down the functionality to allow access only to explicitly configured datastores.
 
 ### Default datastore
 When a VM addresses the volume using short notation (volume_name, without @datastore), all VMs in this vmgroup will use default datastore to resolve short volume reference (volume_name will actually mean volume_name@default_datastore).
 
-If "default_datastore" is not set for a vmgroup, then datastore where the VM resides will be used as "default_datastore".
+"Default_datastore" is a required parameter when creating a vmgroup. The value is either a valid datastore name, or special string "_VM_DS".  The "Default_datastore" field is set to "_VM_DS" for "_DEFAULT" vmgroup post install and any volume created from VM which belongs to "_DEFAULT" vmgroup will be created on the datastore where VM resides.
+
 
 ## Example
 
-Lets consider a sample use case where there are 2 teams – Dev and Test working on Product1. Lets create separate vmgroups (namely Product1Dev and Product2Test) for each of the teams where we can put restriction on datastore consumption.
+Let's consider a sample use case where there are 2 teams – Dev and Test working on Product1. Lets create separate vmgroups (namely Product1Dev and Product1Test) for each of the teams where we can put restriction on datastore consumption.
 
 ```
-# /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Dev
-vmgroup 'Product1Dev' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Dev --default-datastore=datastore3
+vmgroup 'Product1Dev' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Test
-vmgroup 'Product1Test' is created.  Do not forget to run 'vmgroup vm add' and 'vmgroup access add' commands to enable access control.
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Test --default-datastore=datastore3
+vmgroup 'Product1Test' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+```
+The full access privilege to default datastore("datastore3" in this example) has been created after creating vmgroup.
 
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=_DEFAULT
+```
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Dev
+Datastore     Allow_create  Max_volume_size  Total_size
+------------  ------------  ---------------  ----------
+datastore3    True          Unset            Unset
+
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Test
+Datastore     Allow_create  Max_volume_size  Total_size
+------------  ------------  ---------------  ----------
+datastore3    True          Unset            Unset
+
+```
+Then we removed _DEFAULT vmgroup to lock down vmdk_ops to serve only explicitly configured VMs.
+
+```
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=_DEFAULT
 vmgroup rm succeeded
 
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name          Description  Default_datastore  VM_list
-------------------------------------  ------------  -----------  -----------------  -------
-ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev
-f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test
+------------------------------------  ------------  -----------  -----------------  ------------
+ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev                datastore3
+f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test               datastore3
 ```
-Here we have removed _DEFAULT vmgroup to lock down vmdk_ops to serve only explicitly configured VMs.
-
 
 Lets add VMs (docker hosts) in respective VM groups.
 
@@ -83,39 +97,40 @@ f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test                              
 Lets limit dev team to create volumes of total 20 Gb each not exceeding size of 1 GB. Similarly for QA team, lets put restriction of total 40 GB consumption with each volume size not exceeding 1 GB.
 
 ```
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=Product1Dev --datastore=datastore3  --allow-create --default-datastore --volume-maxsize=1GB --volume-totalsize=20GB
-vmgroup access add succeeded
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=Product1Dev --datastore=datastore3  --volume-maxsize=1GB --volume-totalsize=20GB
+vmgroup access set succeeded
 
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=Product1Test --datastore=datastore3  --allow-create --default-datastore --volume-maxsize=1GB --volume-totalsize=40GB
-vmgroup access add succeeded
-```
-Lets verify that storage restrictions has been set properly.
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=Product1Test --datastore=datastore3  --volume-maxsize=1GB --volume-totalsize=40GB
+vmgroup access set succeeded
 
 ```
-#usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name Product1Dev
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore3  True          1.00GB           20.00GB
+Lets verify that storage restrictions have been set properly.
 
-#usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name Product1Test
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore3  True          1.00GB           40.00GB
+```
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Dev
+Datastore     Allow_create  Max_volume_size  Total_size
+------------  ------------  ---------------  ----------
+datastore3    True          1.00GB           20.00GB
+
+[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Test
+Datastore     Allow_create  Max_volume_size  Total_size
+------------  ------------  ---------------  ----------
+datastore3    True          1.00GB           40.00GB
 
 ```
 Lets try to create a volume from one of the QA machines with size = 2 GB
 
 ```
-#docker volume create --name=MyVolume --driver=vsphere -o size=2GB
-Error response from daemon: create MyVolume: VolumeDriver.Create: volume size exceeds the max volume size limit
+#  docker volume create --name=MyVolume --driver=vsphere -o size=2GB
+Error response from daemon: create MyVolume: VolumeDriver.Create: Volume size exceeds the max volume size limit
 ```
 vDVS has restricted user from creating a volume of size > 1 GB. Lets try to create volume on datastore other than the one which is set as default
 
 ```
-# docker volume create --name=MyVolume@datastore1 --driver=vsphere -o size=2GB
-Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No create privilege
+root@sc-rdops-vm02-dhcp-52-237:~# docker volume create --name=MyVolume@datastore1 --driver=vsphere -o size=2GB
+Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No access privilege exists
 ```
-Remember we have set default datastore as datastore3 which as “--allow-create” permissions.
+Remember we have set default datastore as "datastore3" which as “--allow-create” permissions and we don't have access privilege to datastore "datastore1".
 
 
 
