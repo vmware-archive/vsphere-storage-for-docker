@@ -36,6 +36,7 @@ VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
 BUILD_LOC=$TMP_LOC/build
 PLUGIN_LOC=$TMP_LOC/plugin_dockerbuild
 COMMON_VARS="../Commonvars.mk"
+VMDK_OPS_CONFIG=/etc/vmware/vmdkops/log_config.json
 
 # VM Functions
 
@@ -137,7 +138,6 @@ function deployesx {
     do
         TARGET=root@$ip
         log "Deploying to ESX $TARGET"
-        $SSH $TARGET  rm -f /etc/vmware/vmdkops/log_config.json
         deployESXPre
         deployESXInstall
         deployESXPost
@@ -210,10 +210,8 @@ function cleanesx {
             log "cleanesx: Failed to clean up resource groups!"
             exit 1
         fi
-        $SSH $TARGET "$RM_RF $TMP_LOC"
-        $SSH $TARGET "$RM_RF $VMDK_OPS_UNITTEST"
+        $SSH $TARGET "$RM_RF $TMP_LOC $VMDK_OPS_UNITTEST $VMDK_OPS_CONFIG"
     done
-    rm -f /etc/vmware/vmdkops/log_config.json
 }
 
 # cleanvm
