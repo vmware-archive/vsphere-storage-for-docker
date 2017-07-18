@@ -74,7 +74,7 @@ plugin: clean
 	docker build -q -t $(TMP_IMAGE) .
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
 	mkdir -p $(TMP_LOC)/rootfs
-	docker export  $(TMP_CONTAINER)  | tar -x -C $(TMP_LOC)/rootfs
+	docker export  $(TMP_CONTAINER)  | tar -xm -C $(TMP_LOC)/rootfs
 	cp config.json $(BINARY) $(TMP_LOC)
 	@echo "-- Creating  plugin $(PLUGIN_NAME):$(PLUGIN_TAG) ..."
 	docker plugin create $(PLUGIN_NAME):$(PLUGIN_TAG) $(TMP_LOC)
