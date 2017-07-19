@@ -36,11 +36,11 @@
 		}
 	],
 	"Network": {
-		"Type": ""
+		"Type": "%NETWORKTYPE%"
 	},
 	"Interface" : {
 		"Types": ["docker.volumedriver/1.0"],
-		"Socket": "vsphere.sock"
+		"Socket": "%SOCKTYPE%.sock"
 	},
 	"Linux": {
 		"AllowAllDevices": true,

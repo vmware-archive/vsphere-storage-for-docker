@@ -33,6 +33,18 @@
 BINARY ?= docker-volume-vsphere
 SHARED_BINARY := vsphere-shared
 
+# Dockerfile templates
+DOCKERFILE ?= Dockerfile.vmdk
+SHARED_DOCKERFILE := Dockerfile.shared
+
+# Network Type
+NETWORK ?=
+SHARED_NETWORK := host
+
+# Sock Type
+SOCKTYPE ?= vsphere
+SHARED_SOCKTYPE := shared
+
 # Tmp docker image used to construct rootfs + our binaries
 TMP_IMAGE = $(PLUGIN_NAME):rootfs
 # Tmp container used for exporting rootfs from it
@@ -68,8 +80,8 @@ shared-clean:
 
 plugin: clean
 	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
-	sed "s/\%BINARY\%/$(BINARY)/g" Dockerfile-template > Dockerfile
-	sed 's/\%BINARY\%/$(BINARY)/g' config.json-template > config.json
+	cp $(DOCKERFILE) Dockerfile
+	sed 's/\%BINARY\%/$(BINARY)/g;s/\%NETWORKTYPE\%/$(NETWORK)/g;s/\%SOCKTYPE\%/$(SOCKTYPE)/g' config.json-template > config.json
 	cp $(BIN)/$(BINARY) .
 	docker build -q -t $(TMP_IMAGE) .
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)
@@ -79,7 +91,7 @@ plugin: clean
 	@echo "-- Creating  plugin $(PLUGIN_NAME):$(PLUGIN_TAG) ..."
 	docker plugin create $(PLUGIN_NAME):$(PLUGIN_TAG) $(TMP_LOC)
 shared-plugin: shared-clean
-	PLUGIN_NAME=$(SHARED_PLUGIN_NAME) BINARY=$(SHARED_BINARY) $(MAKE) plugin
+	PLUGIN_NAME=$(SHARED_PLUGIN_NAME) BINARY=$(SHARED_BINARY) DOCKERFILE=$(SHARED_DOCKERFILE) NETWORK=$(SHARED_NETWORK) SOCKTYPE=$(SHARED_SOCKTYPE) $(MAKE) plugin
 
 push:
 	@echo Pushing $(PLUGIN_NAME):$(PLUGIN_TAG)  to dockerhub.io...

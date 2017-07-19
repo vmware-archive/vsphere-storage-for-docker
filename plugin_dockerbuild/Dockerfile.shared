@@ -1,0 +1,21 @@
+# Dockerile for packaging https://github.com/vmware/docker-volume-vsphere as
+# Docker managed plugin.
+#
+# Image created with this file is used to unpack to plugin rootfs and then build
+# plugin image
+#
+# We need <fs>progs to allow formatting fresh disks from within the plugin
+
+
+FROM alpine:3.5
+
+RUN apk update ; apk add e2fsprogs xfsprogs
+RUN apk add --update ca-certificates openssl tar && \
+wget https://storage.googleapis.com/etcd/v3.2.3/etcd-v3.2.3-linux-amd64.tar.gz && \
+tar zxvf etcd-v3.2.3-linux-amd64.tar.gz && \
+mv etcd-v3.2.3-linux-amd64/etcd* /bin/ && \
+apk del --purge tar openssl && \
+rm -Rf etcd-v3.2.3-linux-amd64* /var/cache/apk/*
+RUN mkdir -p /mnt/vmdk
+COPY vsphere-shared /usr/bin
+CMD ["/usr/bin/vsphere-shared"]
