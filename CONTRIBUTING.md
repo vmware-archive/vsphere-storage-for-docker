@@ -112,14 +112,17 @@ iptables -A INPUT -p tcp --dport 2375 -j ACCEPT
 
 ### Testing configuration
 To deploy the plugin and test code onto a test environment we support a set of
-Makefile targets. There targets rely on environment variables to point to the
+Makefile targets. These targets rely on environment variables to point to the
 correct environment.
+
+**Prerequisite**
+
+The prerequisite to build and deploy the plugin is to have a DockerHub account. If you don't have a DockerHub account, you need to create an account [here](https://hub.docker.com/).
 
 **Environment variables**:
 - You **need** to set ESX and VM1, VM2 and VM3 environment variables
 
-- The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use [managed plugin](https://github.com/vmware/docker-volume-vsphere/blob/master/plugin/Makefile#L30).
-If you want to user another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
+- The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use managed plugin. If you want to use another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
 
 - Test verification is extended using govmomi integration and `govc` cli is **required to set** following environment variables.
   - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials for logging in to `ESX IP`
