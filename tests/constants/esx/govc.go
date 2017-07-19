@@ -65,4 +65,7 @@ const (
 
 	// RemoveSnapshot removes a snapshot of a VM
 	RemoveSnapshot = govcCmd + "snapshot.remove -vm %s %s"
+
+	// ShutDownVM refers to govc cli (shut down vm)
+	ShutDownVM = govcCmd + "vm.power -s=true "
 )

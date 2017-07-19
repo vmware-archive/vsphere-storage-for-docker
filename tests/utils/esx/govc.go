@@ -25,9 +25,9 @@ If some test is misbehaving, then the developer can enable that log and test.
 package esx
 
 import (
+	"fmt"
 	"log"
 	"strings"
-	"fmt"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
@@ -134,4 +134,13 @@ func RemoveSnapshot(vm, snap string) (string, error) {
 	log.Printf("Removing snapshot - %s", cmd)
 	out, err := ssh.InvokeCommandLocally(cmd)
 	return out, err
+}
+
+// ShutDownVM util shuts down the VM
+// govc vm.power -s=true photon
+func ShutDownVM(vmName string) string {
+	log.Printf("Shutting down VM [%s]\n", vmName)
+	cmd := esx.ShutDownVM + vmName
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
 }
