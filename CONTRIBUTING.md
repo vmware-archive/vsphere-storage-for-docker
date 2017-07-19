@@ -337,6 +337,10 @@ docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll buil
 # 4. Remove the old site and copy the new one.
 rm -rvf ../documentation
 mv _site ../documentation
+#Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md 
+#Bug in jekyll template does not render the name "index"
+vi ../documentation/index.html 
+
 # 6. Push to GitHub
 git add documentation
 git commit
