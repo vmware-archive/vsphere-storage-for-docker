@@ -487,22 +487,20 @@ InUse 	 -&gt; InUse       # RefCount++
 
 <ul>
   <li>Docker engine crashes: Docker has not sent any unmount request to the plugin.
-    <div class="highlighter-rouge"><pre class="highlight"><code>States: Volumes are either in Init or in Mounted state. 
+<code class="highlighter-rouge">
+States: Volumes are either in Init or in Mounted state. 
 Recovery: Mounted state needs recovery.
-</code></pre>
-    </div>
-    <p>. Plugin crashes (Plugin accidentally restarted is considered a crash, install and upgrade require docker to be stopped, as mentioned above).</p>
-    <div class="highlighter-rouge"><pre class="highlight"><code>States: Volumes can be in any state and plugin needs to rebuild volume state. 
+</code>
+. Plugin crashes (Plugin accidentally restarted is considered a crash, install and upgrade require docker to be stopped, as mentioned above).
+ <code class="highlighter-rouge">
+States: Volumes can be in any state and plugin needs to rebuild volume state. 
 Recovery: The end goal is to insure volumes are in Init, or InUse.
-</code></pre>
-    </div>
-  </li>
+</code></li>
   <li>VM Crashes and starts up: Docker has not consumed any volume and plugin has no refcount.
-    <div class="highlighter-rouge"><pre class="highlight"><code>States: Volumes can be in Init or Attached state. 
+<code class="highlighter-rouge">
+States: Volumes can be in Init or Attached state. 
 Recovery: In the absence of docker engine consuming volumes all volumes need to return to Init state.
-</code></pre>
-    </div>
-  </li>
+</code></li>
 </ul>
 
 <p>Note: The manual/automated stopping and starting of docker covers the installation and upgrade case.</p>
@@ -528,7 +526,7 @@ Recovery: In the absence of docker engine consuming volumes all volumes need to 
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

@@ -461,14 +461,12 @@ vSphere Docker Volume Service RPMs on Docker VMs.</li>
 <p>We provide a script to migrate data and configuration from Release 0.11 (or 0.10) to 0.11.2.
 The script is located <a href="https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py">here</a>.</p>
 
-<p>Upgrade steps are as follows:</p>
-<ul>
-  <li>Install VIB with Release 0.11.2 (or later) on each ESX.</li>
-  <li>Download the upgrade script. This step is for Release 0.11.2 only. For 0.12 and later, skip directly to running the script.</li>
-  <li>Download the script from https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py and place it into /usr/lib/vmware/vmdkops/bin/ on each ESX</li>
-  <li>make it executabe on each ESX : <code class="highlighter-rouge">cd /usr/lib/vmware/vmdkops/bin/ ; chmod a+x vmdkops_post_update.11.1.py;</code></li>
-  <li>on each ESX, run <code class="highlighter-rouge">/usr/lib/vmware/vmdkops/bin/vmdkops_post_update.11.1.py</code></li>
-</ul>
+<p>Upgrade steps are as follows: 
+* Install VIB with Release 0.11.2 (or later) on each ESX.
+* Download the upgrade script. This step is for Release 0.11.2 only. For 0.12 and later, skip directly to running the script.
+ * Download the script from https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py and place it into /usr/lib/vmware/vmdkops/bin/ on each ESX
+  * make it executabe on each ESX : <code class="highlighter-rouge">cd /usr/lib/vmware/vmdkops/bin/ ; chmod a+x vmdkops_post_update.11.1.py;</code>
+* on each ESX, run <code class="highlighter-rouge">/usr/lib/vmware/vmdkops/bin/vmdkops_post_update.11.1.py</code></p>
 
 <p>To understand which steps the script is taking, please look at the <a href="https://github.com/vmware/docker-volume-vsphere/blob/master/esx_service/cli/vmdkops_post_update.11.1.py">source</a></p>
 
@@ -492,7 +490,7 @@ The script is located <a href="https://raw.githubusercontent.com/vmware/docker-v
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

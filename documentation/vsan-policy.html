@@ -421,21 +421,21 @@ $('#toc').on('click', 'a', function() {
     
 
   <h2 id="what-is-vsan">What is vSAN</h2>
-<p><a href="http://www.vmware.com/products/virtual-san.html">vSAN</a> is a shared storage (all ESX nodes in a cluster can access the same vSAN store), hyper-converged (vSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.</p>
-<h1 id="vsan-policy">vSAN Policy</h1>
-<p>vSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.</p>
+<p><a href="http://www.vmware.com/products/virtual-san.html">vSAN</a> is a shared storage (all ESX nodes in a cluster can access the same vSAN store), hyper-converged (vSAN is integrated into vSphere and runs on the same hardware nodes that vSphere manages), flash optimized storage offering from VMware.
+# vSAN Policy
+vSAN provides software defined storage and for each storage object it can specify the policy which controls attributes such as Number of failures to be tolerated.</p>
 
 <h2 id="mapping-docker-volumes-to-vsan-objects-with-policy">Mapping Docker volumes to vSAN objects with policy</h2>
 
-<p>Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>ESX# vmdkops_admin.py policy create —name=myPolicy —content='(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
+<p>Using the Admin CLI an IT admin can create the policies that can be consumed by Docker volumes. The Docker admin can then create a volume using the policies available.
+<code class="highlighter-rouge">
+ESX# vmdkops_admin.py policy create —name=myPolicy —content='(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
 Successfully created policy: myPolicy
-</code></pre>
-</div>
-<div class="highlighter-rouge"><pre class="highlight"><code>swarm-1# docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
+</code>
+<code class="highlighter-rouge">
+swarm-1# docker volume create —driver=vmdk —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
 MyVolume
-</code></pre>
-</div>
+</code></p>
 
   
 
@@ -453,7 +453,7 @@ MyVolume
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

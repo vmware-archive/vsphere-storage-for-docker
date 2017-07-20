@@ -420,10 +420,8 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a vmgroup.</p>
-<ol>
-  <li>By default _DEFAULT vmgroup is created as part of installation and new VMs get assigned to this vmgroup and will get privileges associated with this vmgroup.</li>
-</ol>
+  <p>For the vSphere Docker Volume Service, Multi-tenancy is implemented by assigning a Datastore and VMs to a vmgroup. 
+1.	By default _DEFAULT vmgroup is created as part of installation and new VMs get assigned to this vmgroup and will get privileges associated with this vmgroup.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
@@ -444,22 +442,26 @@ vmgroup 'Product1Test' is created.  Do not forget to run 'vmgroup vm add' and 'v
 </code></pre>
 </div>
 <ol>
-  <li>Now we remove _DEFAULT vmgroup to lock down vmdk_ops to serve only explicitly configured VMs.
-    <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=_DEFAULT
+  <li>
+    <p>Now we remove _DEFAULT vmgroup to lock down vmdk_ops to serve only explicitly configured VMs.
+<code class="highlighter-rouge">
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=_DEFAULT
 vmgroup rm succeeded
-</code></pre>
-    </div>
+</code></p>
   </li>
-  <li>Verify that vmgroups have got created.
-    <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+  <li>
+    <p>Verify that vmgroups have got created.
+<code class="highlighter-rouge">
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name          Description  Default_datastore  VM_list
 ------------------------------------  ------------  -----------  -----------------  -------
 ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev
 f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test
-</code></pre>
-    </div>
+</code></p>
   </li>
-  <li>Let’s add VMs (docker hosts) in respective VM groups.</li>
+  <li>
+    <p>Let’s add VMs (docker hosts) in respective VM groups.</p>
+  </li>
 </ol>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add --vm-list=Photon1,Photon2,Photon3 --name=Product1Dev
@@ -497,24 +499,28 @@ datastore3  True          1.00GB           20.00GB</li>
 <p>[root@localhost:~] usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name Product1Test
 Datastore   Allow_create  Max_volume_size  Total_size
 ———-  ————  —————  ———-
-datastore3  True          1.00GB           40.00GB</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>
-6. Now try to create a volume from one of the QA machines with size = 2 GB
-
-</code></pre>
-</div>
-<p>root@photon4 [ ~ ]# docker volume create –name=MyVolume –driver=vsphere -o size=2GB
-Error response from daemon: create MyVolume: VolumeDriver.Create: volume size exceeds the max volume size limit</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>
-vDVS has restricted user from creating a volume of size &gt; 1 GB.
-
-7.	Try to create volume on datastore other than the one which is set as default
-
-</code></pre>
-</div>
-<p>root@photon4 [ ~ ]# docker volume create –name=MyVolume@datastore1 –driver=vsphere -o size=2GB
-Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No create privilege
+datastore3  True          1.00GB           40.00GB
 ```</p>
+
+<ol>
+  <li>Now try to create a volume from one of the QA machines with size = 2 GB</li>
+</ol>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>root@photon4 [ ~ ]# docker volume create --name=MyVolume --driver=vsphere -o size=2GB
+Error response from daemon: create MyVolume: VolumeDriver.Create: volume size exceeds the max volume size limit
+</code></pre>
+</div>
+
+<p>vDVS has restricted user from creating a volume of size &gt; 1 GB.</p>
+
+<ol>
+  <li>Try to create volume on datastore other than the one which is set as default</li>
+</ol>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>root@photon4 [ ~ ]# docker volume create --name=MyVolume@datastore1 --driver=vsphere -o size=2GB
+Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No create privilege
+</code></pre>
+</div>
 
 <p>Remember we have set default datastore as datastore3 which as “–allow-create” permissions.</p>
 
@@ -536,7 +542,7 @@ Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No 
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

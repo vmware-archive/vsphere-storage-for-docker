@@ -447,28 +447,23 @@ that the commands covered in this document only operate on a single ESX host.</p
 Volumes in all datastores will be shown with the volume name in the first column and the datastore
 in the second.</p>
 
-<p><code class="highlighter-rouge">ls</code> supports the following options:</p>
-<ul>
-  <li>No options - List the names of all volumes</li>
-  <li><code class="highlighter-rouge">ls -l</code> - List all volumes and their corresponding metadata. Note that missing metadata will be
-marked <code class="highlighter-rouge">N/A</code>.
-    <ul>
-      <li>Created by (VM Name)</li>
-      <li>Creation Time</li>
-      <li>Last Attached Time</li>
-      <li>Datastore</li>
-      <li>Policy Name</li>
-      <li>Capacity</li>
-      <li>Used Space</li>
-      <li>Attached To (VM Name)</li>
-    </ul>
-  </li>
-  <li><code class="highlighter-rouge">ls -c [Column1, Column2, ...]</code> - List only the columns specified, implies <code class="highlighter-rouge">-l</code></li>
-  <li><code class="highlighter-rouge">ls -f &lt;ColumnName Pattern Value&gt;</code> - Filter output by only including volumes whose columns match the
-                                     sort pattern (See below). Note that the priority is P2 on
-                                     this and it may be developed after the initial release
-                                     depending on timing/effort.</li>
-</ul>
+<p><code class="highlighter-rouge">ls</code> supports the following options:
+  * No options - List the names of all volumes
+  * <code class="highlighter-rouge">ls -l</code> - List all volumes and their corresponding metadata. Note that missing metadata will be
+    marked <code class="highlighter-rouge">N/A</code>.
+    * Created by (VM Name)
+    * Creation Time
+    * Last Attached Time
+    * Datastore
+    * Policy Name
+    * Capacity
+    * Used Space
+    * Attached To (VM Name)
+  * <code class="highlighter-rouge">ls -c [Column1, Column2, ...]</code> - List only the columns specified, implies <code class="highlighter-rouge">-l</code>
+  * <code class="highlighter-rouge">ls -f &lt;ColumnName Pattern Value&gt;</code> - Filter output by only including volumes whose columns match the
+                                         sort pattern (See below). Note that the priority is P2 on
+                                         this and it may be developed after the initial release
+                                         depending on timing/effort.</p>
 
 <p>Sort patterns are used for filtering. The argument, <code class="highlighter-rouge">X</code>, itself is of a type specific to the attribute. All dates are given in <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601 format</a></p>
 
@@ -478,24 +473,22 @@ marked <code class="highlighter-rouge">N/A</code>.
   <li><code class="highlighter-rouge">= X</code> The attribute matches a Glob X</li>
 </ul>
 
-<p>Examples:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>vmdkops-admin ls -c CreatedBy,CreationTime,Datastore,PolicyName
+<p>Examples:
+<code class="highlighter-rouge">
+vmdkops-admin ls -c CreatedBy,CreationTime,Datastore,PolicyName
 vmdkops-admin ls -f 'LastAttachedTime &gt; 2016-03-11'
 vmdkops-admin ls -f 'AttachedTo = Test*'
-</code></pre>
-</div>
+</code></p>
 
 <h1 id="policy">policy</h1>
 <p>Create, configure and show the vSAN policy names and their corresponding vSAN policies. Also show whether or not they are in use.</p>
 
-<p>Examples:</p>
-<ul>
-  <li><code class="highlighter-rouge">vmdkops-admin policy create --name=myPolicy --content="string"</code> - Create a new policy</li>
-  <li><code class="highlighter-rouge">vmdkops-admin policy rm myPolicy</code> - Remove the given policy</li>
-  <li><code class="highlighter-rouge">vmdkops-admin policy ls</code> - List policies and the Volumes that are using that policy.</li>
-  <li><code class="highlighter-rouge">vmdkops-admin policy update --name=myPolicy --content="string"</code> - Update an existing vSAN policy and
-any volumes currently using that policy</li>
-</ul>
+<p>Examples:
+ * <code class="highlighter-rouge">vmdkops-admin policy create --name=myPolicy --content="string"</code> - Create a new policy
+ * <code class="highlighter-rouge">vmdkops-admin policy rm myPolicy</code> - Remove the given policy
+ * <code class="highlighter-rouge">vmdkops-admin policy ls</code> - List policies and the Volumes that are using that policy.
+ * <code class="highlighter-rouge">vmdkops-admin policy update --name=myPolicy --content="string"</code> - Update an existing vSAN policy and
+   any volumes currently using that policy</p>
 
 <p>Note that on volume creation from docker, a policy name will be passed with a <code class="highlighter-rouge">-o</code> option.</p>
 
@@ -514,20 +507,15 @@ permissions in a straightforward manner.</p>
 
 <p><code class="highlighter-rouge">vmdkops-admin role create --name=Test --matches-vm=\*Test --volume-maxsize=2TB --rights=create,delete,mount</code></p>
 
-<p><code class="highlighter-rouge">role create</code> accepts the following options as shown in the prior example:</p>
-<ul>
-  <li><code class="highlighter-rouge">--name=&lt;Name&gt;</code> - The name of the role to be created</li>
-  <li><code class="highlighter-rouge">--matches-vm=&lt;Glob&gt;</code> - The glob that matches VM names where the role should be applied. This
-                        flag may be applied multiple times, where a VM matching any of the globs would
-                        apply.</li>
-  <li><code class="highlighter-rouge">--rights=&lt;Perm1,Perm2,...&gt;</code> - The permissions granted to matching VMs. The list of applicable rights is:
-    <ul>
-      <li><code class="highlighter-rouge">create</code> - Allow volume creation. If the <code class="highlighter-rouge">--volume-maxsize</code> parameter is given it applies to create, otherwise size is unlimited.</li>
-      <li><code class="highlighter-rouge">rm</code> - Allow volume deletion</li>
-      <li><code class="highlighter-rouge">mount</code> - Allow volume mounting</li>
-    </ul>
-  </li>
-</ul>
+<p><code class="highlighter-rouge">role create</code> accepts the following options as shown in the prior example:
+ * <code class="highlighter-rouge">--name=&lt;Name&gt;</code> - The name of the role to be created
+ * <code class="highlighter-rouge">--matches-vm=&lt;Glob&gt;</code> - The glob that matches VM names where the role should be applied. This
+                           flag may be applied multiple times, where a VM matching any of the globs would
+                           apply.
+ * <code class="highlighter-rouge">--rights=&lt;Perm1,Perm2,...&gt;</code> - The permissions granted to matching VMs. The list of applicable rights is:
+   * <code class="highlighter-rouge">create</code> - Allow volume creation. If the <code class="highlighter-rouge">--volume-maxsize</code> parameter is given it applies to create, otherwise size is unlimited.
+   * <code class="highlighter-rouge">rm</code> - Allow volume deletion
+   * <code class="highlighter-rouge">mount</code> - Allow volume mounting</p>
 
 <p>Currently the idea is to allow volume deletion and mounting of any volume if the rights are granted.
 However it may make sense to limit these to specific volumes, perhaps via a glob match.</p>
@@ -541,14 +529,14 @@ only. Finally, there needs to be a way to check permissions. This can be perform
 get</code> command. <code class="highlighter-rouge">role get</code> takes a VM name and returns both a list of the rights granted to the VM and
 the roles that the VM matches on separate lines.</p>
 
-<p>Examples are provided below.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code> vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount
+<p>Examples are provided below.
+<code class="highlighter-rouge">
+ vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount
  vmdkops-admin role rm myrole
  vmdkops-admin role ls
  vmdkops-admin role set --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=4TB --rights=create,mount
  vmdkops-admin role get &lt;VmName&gt;
-</code></pre>
-</div>
+</code></p>
 
 <p>Role information is stored in a flat file, for lack of a better solution. The format of the file
 is JSON, but the schema is currently undefined. Permission checking will need to be performed at
@@ -605,7 +593,7 @@ LogLevel: INFO
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

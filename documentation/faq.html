@@ -446,17 +446,15 @@ Additional reading for differences between VMware tools and open vm tools:</p>
   <li><a href="http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools">VMware Tools vs Open VM Tools</a></li>
 </ul>
 
-<h4 id="i-see-connection-reset-by-peer-errno104-in-the-services-logs-what-is-the-cause">I see “connection reset by peer (errno=104)” in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service’s logs</a>, what is the cause?</h4>
+<h4 id="i-see-connection-reset-by-peer-errno104-in-the-services-logshttpsgithubcomvmwaredocker-volume-vspherelogging-what-is-the-cause">I see “connection reset by peer (errno=104)” in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service’s logs</a>, what is the cause?</h4>
 <p>104 is a standard linux error (<code class="highlighter-rouge">#define ECONNRESET      104     /* Connection reset by peer */</code>)</p>
 
-<p>It occurs if the Docker volume service cannot communicate to the ESX back end. This can happen if:</p>
-<ul>
-  <li>VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read “What is VMCI and vSock and why is it needed?” above.</li>
-  <li>ESX service is not running. <code class="highlighter-rouge">/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/docker-volume-vsphere#logging">ESX Logs</a></li>
-  <li>ESX service and the docker volume service are not communicating on the same port. <code class="highlighter-rouge">ps -c | grep vmdk #On ESX</code> and <code class="highlighter-rouge">ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</li>
-</ul>
+<p>It occurs if the Docker volume service cannot communicate to the ESX back end. This can happen if:
+   * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read “What is VMCI and vSock and why is it needed?” above.
+   * ESX service is not running. <code class="highlighter-rouge">/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/docker-volume-vsphere#logging">ESX Logs</a>
+   * ESX service and the docker volume service are not communicating on the same port. <code class="highlighter-rouge">ps -c | grep vmdk #On ESX</code> and <code class="highlighter-rouge">ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</p>
 
-<h4 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logs-what-is-the-cause">I see “address family not supported by protocol (errno=97)” in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service’s logs</a>, what is the cause?</h4>
+<h4 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logshttpsgithubcomvmwaredocker-volume-vspherelogging-what-is-the-cause">I see “address family not supported by protocol (errno=97)” in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service’s logs</a>, what is the cause?</h4>
 <p>97 is a standard linux error (<code class="highlighter-rouge">#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>)</p>
 
 <p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">“What is VMCI and vSock and why is it needed?”</a> above.</p>
@@ -469,10 +467,10 @@ Error response from daemon: create vol5: Post http://%2Frun%2Fdocker%2Fplugins%2
 
 <p>Restart docker service is required.</p>
 
-<p>e.g.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>systemctl restart docker
-</code></pre>
-</div>
+<p>e.g.
+<code class="highlighter-rouge">
+systemctl restart docker
+</code></p>
 
 <h2 id="upgrade-to-version-010-dec-2016-release">Upgrade to version 0.10 (Dec 2016) release</h2>
 
@@ -510,27 +508,27 @@ Failed to connect auth DB(DB connection error /etc/vmware/vmdkops/auth-db)
 </code></pre>
 </div>
 
-<p>Step 2: Verify “vmgroup ls” command</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>Step 2: Verify “vmgroup ls” command
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
-------------------------------------  ---------  --------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup
+————————————  ———  ————————–  —————–  ——-
+11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>
+After this point, the manually upgrade is done, and tenancy operations will succeed.
+
+#### Case2: Has vmgroup configured before
+Step 1: Backup data manually.
+
+Example below has a vmgroup ```vmgroup1``` with VM ```photon-6``` assigned to this vmgroup1 and one volumes: vol1@datastore1 created.
 
 </code></pre>
 </div>
-
-<p>After this point, the manually upgrade is done, and tenancy operations will succeed.</p>
-
-<h4 id="case2-has-vmgroup-configured-before">Case2: Has vmgroup configured before</h4>
-<p>Step 1: Backup data manually.</p>
-
-<p>Example below has a vmgroup <code class="highlighter-rouge">vmgroup1</code> with VM <code class="highlighter-rouge">photon-6</code> assigned to this vmgroup1 and one volumes: vol1@datastore1 created.</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
+<p>root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME
 vmdk                vol1@datastore1
-</code></pre>
-</div>
+```</p>
 
 <p>User needs to manually backup data stored in vol1@datastore1.</p>
 
@@ -566,20 +564,20 @@ Uuid                                  Name           Description                
 </code></pre>
 </div>
 
-<p>Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vmgroup1” which was created before will not be visible</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
+<p>Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vmgroup1” which was created before will not be visible
+<code class="highlighter-rouge">
+root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME
-</code></pre>
-</div>
+</code></p>
 
-<p>Step 5: Run “docker volume create”  to create a new volume “new-vol1” and run “docker volume ls”,   should only able to see this volume which was just created</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>root@photon-KwqUODFXp [ ~ ]# docker volume create --driver=vsphere --name=new-vol1 -o size=100MB
+<p>Step 5: Run “docker volume create”  to create a new volume “new-vol1” and run “docker volume ls”,   should only able to see this volume which was just created
+<code class="highlighter-rouge">
+root@photon-KwqUODFXp [ ~ ]# docker volume create --driver=vsphere --name=new-vol1 -o size=100MB
 new-vol1
 root@photon-KwqUODFXp [ ~ ]# docker volume ls
 DRIVER              VOLUME NAME
 vsphere             new-vol1@datastore1
-</code></pre>
-</div>
+</code></p>
 
 <p>Volume “vol1” which was created before still exists, and can be seen from the following AdminCLI command</p>
 
@@ -613,7 +611,7 @@ The path which stores this new volume is “/vmfs/volumes/datastore1/dockvols/ne
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

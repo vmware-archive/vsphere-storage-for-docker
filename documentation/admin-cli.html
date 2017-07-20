@@ -472,12 +472,12 @@ Manipulate volumes:
 </code></pre>
 </div>
 
-<p>It also prompts for available choices, e.g.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] vmdkops_admin volume hm
+<p>It also prompts for available choices, e.g.
+<code class="highlighter-rouge">
+[root@localhost:~] vmdkops_admin volume hm
 usage: vmdkops_admin.py volume [-h] {set,ls} ...
 vmdkops_admin.py volume: error: invalid choice: 'hm' (choose from 'set', 'ls')
-</code></pre>
-</div>
+</code></p>
 
 <p>The remainder of this document will describe each admin CLI command and provide examples
 of their usage.</p>
@@ -506,24 +506,24 @@ optional arguments:
 </div>
 
 <h3 id="create">Create</h3>
-<p>A vmgroup named “_DEFAULT” will be created automatically post install.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>A vmgroup named “_DEFAULT” will be created automatically post install.
+<code class="highlighter-rouge">
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
 ------------------------------------  --------  -------------------------  -----------------  -------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-</code></pre>
-</div>
+</code></p>
 
 <p>The “Default_datastore” field is set to “_VM_DS” for “_DEFAULT” vmgroup. Any volume create from VM which belongs to “_DEFAULT” vmgroup will be created on the datastore where VM resides.</p>
 
-<p>When configuration is initialized with ‘config init’, the access to _ALL_DS and _VM_DS for all VMs is automatically enabled.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=_DEFAULT
+<p>When configuration is initialized with ‘config init’, the access to _ALL_DS and _VM_DS for all VMs is automatically enabled.
+<code class="highlighter-rouge">
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=_DEFAULT
 Datastore  Allow_create  Max_volume_size  Total_size
 ---------  ------------  ---------------  ----------
 _ALL_DS   True          Unset            Unset
 _VM_DS    True          Unset            Unset
-</code></pre>
-</div>
+</code></p>
 
 <p>Creates a new named vmgroup and optionally assigns VMs. Valid vmgroup name is only allowed to be “[a-zA-Z0-9<em>][a-zA-Z0-9</em>.-]*”</p>
 
@@ -534,141 +534,141 @@ After default_datastore is set, all VMs in the group have full access to it. Als
 will be placed on this datastore.
 Users can modify this privilege using <code class="highlighter-rouge">vmgroup access</code> subcommands.</p>
 
-<p>Sample:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1 --default-datastore=datastore1
-vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+<p>Sample:
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup1 –default-datastore=datastore1
+vmgroup ‘vmgroup1’ is created. Do not forget to run ‘vmgroup vm add’ to add vm to vmgroup.
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-------------------------------------  --------  -------------------------  -----------------  -------
+————————————  ——–  ————————-  —————–  ——-
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-9de84179-6894-44ad-b444-470e8619a5ed  vmgroup1                             datastore1
+9de84179-6894-44ad-b444-470e8619a5ed  vmgroup1                             datastore1</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
+———-  ————  —————  ———-
 datastore1  True          Unset            Unset
-</code></pre>
-</div>
+```</p>
 
-<p>The “default_datastore” can be also set to a special value “_VM_DS” during vmgroup create.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>The “default_datastore” can be also set to a special value “_VM_DS” during vmgroup create.
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                  Default_datastore  VM_list
-------------------------------------  --------  ---------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is the default vmgroup  _VM_DS
+————————————  ——–  —————————  —————–  ——-
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is the default vmgroup  _VM_DS</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1 --default-datastore="_VM_DS"
-vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup1 –default-datastore=”_VM_DS”
+vmgroup ‘vmgroup1’ is created. Do not forget to run ‘vmgroup vm add’ to add vm to vmgroup.
 [root@localhost:~]
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                  Default_datastore  VM_list
-------------------------------------  --------  ---------------------------  -----------------  -------
+————————————  ——–  —————————  —————–  ——-
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is the default vmgroup  _VM_DS
-30545fdc-20e0-409a-8330-6ebe027fcc34  vmgroup1                               _VM_DS
+30545fdc-20e0-409a-8330-6ebe027fcc34  vmgroup1                               _VM_DS</p>
 
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
+<p>[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
 Datastore  Allow_create  Max_volume_size  Total_size
----------  ------------  ---------------  ----------
-_VM_DS    True          Unset            Unset
+———  ————  —————  ———-
+_VM_DS    True          Unset            Unset</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+"Default_datastore" cannot be set to "_ALL_DS". An attempt to do so will generate an error"
 </code></pre>
 </div>
-
-<p>“Default_datastore” cannot be set to “_ALL_DS”. An attempt to do so will generate an error”</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup2 --default-datastore="_ALL_DS"
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup2 –default-datastore=”_ALL_DS”
 Cannot use _ALL_DS as default datastore. Please use specific datastore name or _VM_DS special datastore
-</code></pre>
-</div>
+```</p>
 
 <p>The vmgroup to VM association can be done at create time.</p>
 
-<p>Sample:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=vmgroup1 --default-datastore=datastore1 --vm-list=photon7
-vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+<p>Sample:
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup1 –default-datastore=datastore1 –vm-list=photon7
+vmgroup ‘vmgroup1’ is created. Do not forget to run ‘vmgroup vm add’ to add vm to vmgroup.</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-------------------------------------  --------  -------------------------  -----------------  -------
+————————————  ——–  ————————-  —————–  ——-
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-04423382-efa4-4525-b0a6-16b98ce38f0f  vmgroup1                             datastore1         photon7
+04423382-efa4-4525-b0a6-16b98ce38f0f  vmgroup1                             datastore1         photon7</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+#### Help
 </code></pre>
 </div>
-
-<h4 id="help-1">Help</h4>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create -h
-usage: vmdkops_admin.py vmgroup create [-h] --name NAME --default-datastore
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create -h
+usage: vmdkops_admin.py vmgroup create [-h] –name NAME –default-datastore
                                        DEFAULT_DATASTORE
-                                       [--description DESCRIPTION]
-                                       [--vm-list vm1, vm2, ...]
+                                       [–description DESCRIPTION]
+                                       [–vm-list vm1, vm2, …]</p>
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --name NAME           The name of the vmgroup
-  --default-datastore DEFAULT_DATASTORE
+<p>optional arguments:
+  -h, –help            show this help message and exit
+  –name NAME           The name of the vmgroup
+  –default-datastore DEFAULT_DATASTORE
                         Datastore to be used by default for volumes placement
-  --description DESCRIPTION
+  –description DESCRIPTION
                         The description of the vmgroup
-  --vm-list vm1, vm2, ...
-                        A list of VM names to place in this vmgroup
+  –vm-list vm1, vm2, …
+                        A list of VM names to place in this vmgroup</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>### List
+List existing vmgroups, the datastores vmgroups have access to and the VMs assigned.
 </code></pre>
 </div>
-<h3 id="list">List</h3>
-<p>List existing vmgroups, the datastores vmgroups have access to and the VMs assigned.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-------------------------------------  --------  -------------------------  -----------------  -------
+————————————  ——–  ————————-  —————–  ——-
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-04423382-efa4-4525-b0a6-16b98ce38f0f  vmgroup1                             datastore1         photon7
+04423382-efa4-4525-b0a6-16b98ce38f0f  vmgroup1                             datastore1         photon7</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+#### Help
 </code></pre>
 </div>
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls -h
+usage: vmdkops_admin.py vmgroup ls [-h]</p>
 
-<h4 id="help-2">Help</h4>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls -h
-usage: vmdkops_admin.py vmgroup ls [-h]
-
-optional arguments:
-  -h, --help  show this help message and exit
-</code></pre>
-</div>
+<p>optional arguments:
+  -h, –help  show this help message and exit
+```</p>
 
 <h3 id="update">Update</h3>
 <p>Update existing vmgroup. This command allows to update “Description” and “Default_datastore” fields, or rename an existing vmgroup.
 “Default_datastore” is either a valid datastore name or a special value “_VM_DS”.
 After changing the “default_datastore” for a vmgroup, a full access privilege to the new “default_datastore” will be created automatically, and the existing access privilege to old “default_datastore” will remain. User can remove the access privilege to old “default_datastore” if not needed using <code class="highlighter-rouge">vmgroup access rm</code> subcommands.
-Sample:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name      Description                Default_datastore  VM_list
-------------------------------------  --------  -------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-0767f5f8-73de-4382-8c38-1935bb636ef4  vmgroup1                             datastore1         photon7
-
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup update --name=vmgroup1 --description="New description of vmgroup1" --new-name=new-vmgroup1 --default-datastore=datastore2
-vmgroup modify succeeded
-
+Sample:
+```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name          Description                  Default_datastore  VM_list
-------------------------------------  ------------  ---------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT      This is a default vmgroup    _VM_DS
-0767f5f8-73de-4382-8c38-1935bb636ef4  new-vmgroup1  New description of vmgroup1  datastore2         photon7
+Uuid                                  Name      Description                Default_datastore  VM_list
+————————————  ——–  ————————-  —————–  ——-
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
+0767f5f8-73de-4382-8c38-1935bb636ef4  vmgroup1                             datastore1         photon7</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=new-vmgroup1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
+———-  ————  —————  ———-
+datastore1  True          Unset            Unset</p>
+
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup update –name=vmgroup1 –description=”New description of vmgroup1” –new-name=new-vmgroup1 –default-datastore=datastore2
+vmgroup modify succeeded</p>
+
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Uuid                                  Name          Description                  Default_datastore  VM_list
+————————————  ————  —————————  —————–  ——-
+11111111-1111-1111-1111-111111111111  _DEFAULT      This is a default vmgroup    _VM_DS
+0767f5f8-73de-4382-8c38-1935bb636ef4  new-vmgroup1  New description of vmgroup1  datastore2         photon7</p>
+
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=new-vmgroup1
+Datastore   Allow_create  Max_volume_size  Total_size
+———-  ————  —————  ———-
 datastore1  True          Unset            Unset
 datastore2  True          Unset            Unset
-</code></pre>
-</div>
-<p>Please use the test suggested above, for “create”.</p>
+```
+Please use the test suggested above, for “create”.</p>
 
-<h4 id="help-3">Help</h4>
+<h4 id="help-1">Help</h4>
 <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup  update -h
 usage: vmdkops_admin.py vmgroup update [-h] --name NAME
                                         [--default-datastore DEFAULT_DATASTORE]
@@ -691,101 +691,99 @@ optional arguments:
 <h3 id="remove">Remove</h3>
 <p>Remove a vmgroup, optionally all volumes for a vmgroup can be removed as well.</p>
 
-<p>Sample:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=vmgroup1 --remove-volumes
+<p>Sample:
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm –name=vmgroup1 –remove-volumes
 All Volumes will be removed
-vmgroup rm succeeded
+vmgroup rm succeeded</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                 Default_datastore  VM_list
-------------------------------------  --------  --------------------------  -----------------  -------
+————————————  ——–  ————————–  —————–  ——-
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
-</code></pre>
-</div>
+```</p>
 
 <p>In MultiNode mode, VMs from different hosts can be a part of a vmgroup.
 When in this mode, vmgroup which has member VMs in it cannot be directly deleted.
 First remove the VMs individually from the vmgroup using admin cli
 on the same host on which the VM resides.
-Then remove the vmgroup.</p>
-<h4 id="help-4">Help</h4>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm -h
-usage: vmdkops_admin.py vmgroup rm [-h] --name NAME [--remove-volumes]
+Then remove the vmgroup.
+#### Help
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm -h
+usage: vmdkops_admin.py vmgroup rm [-h] –name NAME [–remove-volumes]</p>
 
-optional arguments:
-  -h, --help        show this help message and exit
-  --name NAME       The name of the vmgroup
-  --remove-volumes  BE CAREFUL: Removes this vmgroup volumes when removing a
-                    vmgroup
+<p>optional arguments:
+  -h, –help        show this help message and exit
+  –name NAME       The name of the vmgroup
+  –remove-volumes  BE CAREFUL: Removes this vmgroup volumes when removing a
+                    vmgroup</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+### Virtual Machine
+
+#### Add
+Add a VM to a vmgroup. A VM can only access the datastores for the vmgroup it is assigned to.
+VMs can be assigned to only one vmgroup at a time.
 </code></pre>
 </div>
-
-<h3 id="virtual-machine">Virtual Machine</h3>
-
-<h4 id="add">Add</h4>
-<p>Add a VM to a vmgroup. A VM can only access the datastores for the vmgroup it is assigned to.
-VMs can be assigned to only one vmgroup at a time.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
-------------------------------------  ---------  --------------------------  -----------------  --------
+————————————  ———  ————————–  —————–  ——–
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup
-6d810c66-ffc7-47c8-8870-72114f86c2cf  vmgroup1                                                 photon6
+6d810c66-ffc7-47c8-8870-72114f86c2cf  vmgroup1                                                 photon6</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add --name=vmgroup1 --vm-list=photon7
-vmgroup vm add succeeded
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add –name=vmgroup1 –vm-list=photon7
+vmgroup vm add succeeded</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+#### List
 </code></pre>
 </div>
-
-<h4 id="list-1">List</h4>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls --name=vmgroup1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
 Uuid                                  Name
-------------------------------------  --------
+————————————  ——–
 564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
 564d99a2-4097-9966-579f-3dc4082b10c9  photon7
-</code></pre>
-</div>
+```</p>
 
 <h4 id="remove-1">Remove</h4>
-<p>Remove a VM from a vmgroup’s list of VMs. VM will no longer be able to access the volumes created for the vmgroup.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm rm --name=vmgroup1 --vm-list=photon7
+<p>Remove a VM from a vmgroup’s list of VMs. VM will no longer be able to access the volumes created for the vmgroup.
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm rm –name=vmgroup1 –vm-list=photon7
 vmgroup vm rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls --name=vmgroup1
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
 Uuid                                  Name
-------------------------------------  --------
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
+————————————  ——–
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+### Replace
+Replace VMs from a vmgroup's list of VMs. VMs which are replaced will no longer be able to access the volumes created for the vmgroup.
 </code></pre>
 </div>
-
-<h3 id="replace">Replace</h3>
-<p>Replace VMs from a vmgroup’s list of VMs. VMs which are replaced will no longer be able to access the volumes created for the vmgroup.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls --name=vmgroup1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
 Uuid                                  Name
-------------------------------------  --------
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
+————————————  ——–
+564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm replace --name=vmgroup1 --vm-list=photon7
-vmgroup vm replace succeeded
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm replace –name=vmgroup1 –vm-list=photon7
+vmgroup vm replace succeeded</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls --name=vmgroup1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
 Uuid                                  Name
-------------------------------------  --------
+————————————  ——–
 564d99a2-4097-9966-579f-3dc4082b10c9  photon7
-</code></pre>
-</div>
+```</p>
 
 <p>Note: If the VMs have volumes attached (containers running), their membership change i.e. changing the vmgroup to which
 they belong is not permitted. Make sure no volumes are attached.
-To do so:</p>
-<ol>
-  <li>Get the list of containers running. (docker ps)</li>
-  <li>If the container has any vDVS volume mounted (docker inspect container_name), stop the container.</li>
-  <li>Ensure that the dvs volumes have status detached (docker volume inspect)</li>
-</ol>
+To do so:
+1. Get the list of containers running. (docker ps)
+2. If the container has any vDVS volume mounted (docker inspect container_name), stop the container.
+3. Ensure that the dvs volumes have status detached (docker volume inspect)</p>
 
-<h4 id="help-5">Help</h4>
+<h4 id="help-2">Help</h4>
 <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm -h
 usage: vmdkops_admin.py vmgroup vm [-h] {rm,add,ls,replace} ...
 
@@ -806,7 +804,7 @@ optional arguments:
 <p>Change the access control for a vmgroup.
 This includes ability to grant privileges &amp; set resource consumption limits for a datastore.</p>
 
-<h4 id="help-6">Help</h4>
+<h4 id="help-3">Help</h4>
 <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access -h
 usage: vmdkops_admin.py vmgroup access <span class="o">[</span>-h] <span class="o">{</span>rm,add,set,ls<span class="o">}</span> ...
 
@@ -823,7 +821,7 @@ optional arguments:
 </code></pre>
 </div>
 
-<h4 id="add-1">Add</h4>
+<h4 id="add">Add</h4>
 <p>Grants datastore access to a vmgroup.
 Valid value for “datastore” includes the name of valid datastores in the ESX host , special value “_VM_DS” or “_ALL_DS”.
 When DS is set to _VM_DS, access to vm_datastore where vm lives is allowed for vms in vmgroup.
@@ -861,56 +859,57 @@ datastore2  False         500.00MB         1.00GB
 </code></pre>
 </div>
 
-<p>“allow_create” right is given when you run the command with “–allow-create” flag.</p>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>datastore2  --volume-maxsize<span class="o">=</span>500MB --volume-totalsize<span class="o">=</span>1GB --allow-create
+<p>“allow_create” right is given when you run the command with “–allow-create” flag.
+<code class="highlighter-rouge">bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=datastore2  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
 vmgroup access add succeeded
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-datastore2  True          500.00MB         1.00GB
-</code></pre>
-</div>
-<p>For _VM_DS and _ALL_DS special DS names, –volume-totalzie has to be “Unset”.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_VM_DS  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-Canont set volume-totalsize for _VM_DS
 [root@localhost:~]
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-Canont set volume-totalsize for _VM_DS
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB  --allow-create
-vmgroup access add succeeded
 [root@localhost:~]
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  True          Unset            Unset
-_ALL_DS    True          500.00MB         Unset
+datastore2  True          500.00MB         1.00GB
+</code>
+For _VM_DS and _ALL_DS special DS names, –volume-totalzie has to be “Unset”.
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add –name=vmgroup1 –datastore=_VM_DS  –volume-maxsize=500MB –volume-totalsize=1GB –allow-create
+Canont set volume-totalsize for _VM_DS
+[root@localhost:~]
+[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add –name=vmgroup1 –datastore=_ALL_DS  –volume-maxsize=500MB –volume-totalsize=1GB –allow-create
+Canont set volume-totalsize for _VM_DS
+[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add –name=vmgroup1 –datastore=_ALL_DS  –volume-maxsize=500MB  –allow-create
+vmgroup access add succeeded
+[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
+Datastore   Allow_create  Max_volume_size  Total_size
+———-  ————  —————  ———-
+datastore1  True          Unset            Unset
+_ALL_DS    True          500.00MB         Unset</p>
 
-</code></pre>
-</div>
+<div class="highlighter-rouge"><pre class="highlight"><code>
 
-<h5 id="help-7">Help</h5>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add -h
-usage: vmdkops_admin.py vmgroup access add <span class="o">[</span>-h]
-                                           <span class="o">[</span>--volume-totalsize Num<span class="o">{</span>MB,GB,TB<span class="o">}</span> - e.g. 2TB]
+##### Help
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add -h
+usage: vmdkops_admin.py vmgroup access add [-h]
+                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
                                            --name NAME
-                                           <span class="o">[</span>--volume-maxsize Num<span class="o">{</span>MB,GB,TB<span class="o">}</span> - e.g. 2TB]
-                                           <span class="o">[</span>--allow-create] --datastore
+                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
+                                           [--allow-create] --datastore
                                            DATASTORE
 
 optional arguments:
-  -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
-  --volume-totalsize Num<span class="o">{</span>MB,GB,TB<span class="o">}</span> - e.g. 2TB
+  -h, --help            show this help message and exit
+  --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum total size of all volume that can be created
-                        on the datastore <span class="k">for </span>this vmgroup
+                        on the datastore for this vmgroup
   --name NAME           The name of the vmgroup
-  --volume-maxsize Num<span class="o">{</span>MB,GB,TB<span class="o">}</span> - e.g. 2TB
+  --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
                         Maximum size of the volume that can be created
-  --allow-create        Allow create and delete on datastore <span class="k">if </span><span class="nb">set</span>
+  --allow-create        Allow create and delete on datastore if set
   --datastore DATASTORE
                         Datastore which access is controlled
 
@@ -918,7 +917,7 @@ optional arguments:
 </code></pre>
 </div>
 
-<h4 id="list-2">List</h4>
+<h4 id="list">List</h4>
 <p>List the current access control granted to a vmgroup.</p>
 
 <p>When displaying the result keep in mind:</p>
@@ -935,7 +934,7 @@ datastore2  True          500.00MB         1.00GB
 </code></pre>
 </div>
 
-<h5 id="help-8">Help</h5>
+<h5 id="help-4">Help</h5>
 <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls -h
 usage: vmdkops_admin.py vmgroup access ls <span class="o">[</span>-h] --name NAME
 
@@ -948,41 +947,41 @@ optional arguments:
 
 <h4 id="remove-2">Remove</h4>
 <p>Remove access to a datastore for a vmgroup.
-Removing of access privilege to “default_datastore” is not suported</p>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Removing of access privilege to “default_datastore” is not suported
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-------------------------------------  --------  -------------------------  -----------------  -------
+————————————  ——–  ————————-  —————–  ——-
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-2a97fef4-30cd-4a50-bf31-3dbc7d130be2  vmgroup1                             datastore1         photon7
+2a97fef4-30cd-4a50-bf31-3dbc7d130be2  vmgroup1                             datastore1         photon7</p>
 
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
+———-  ————  —————  ———-
 datastore1  True          Unset            Unset
-datastore2  True          500.00MB         1.00GB
+datastore2  True          500.00MB         1.00GB</p>
 
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access rm --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>datastore1
-Removing of access privilege to <span class="s2">"default_datastore"</span> is not supported
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access rm --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>datastore2
+<p>[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access rm –name=vmgroup1 –datastore=datastore1
+Removing of access privilege to “default_datastore” is not supported
+[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access rm –name=vmgroup1 –datastore=datastore2
 vmgroup access rm succeeded
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
+[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
+———-  ————  —————  ———-
+datastore1  True          Unset            Unset</p>
 
-</code></pre>
-</div>
-
-<h5 id="help-9">Help</h5>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup  access rm -h
-usage: vmdkops_admin.py vmgroup access rm <span class="o">[</span>-h] --name NAME --datastore
+<div class="highlighter-rouge"><pre class="highlight"><code>
+##### Help
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup  access rm -h
+usage: vmdkops_admin.py vmgroup access rm [-h] --name NAME --datastore
                                            DATASTORE
 
 optional arguments:
-  -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
+  -h, --help            show this help message and exit
   --name NAME           The name of the vmgroup
   --datastore DATASTORE
                         Datstore which access is controlled
@@ -1013,24 +1012,24 @@ _ALL_DS    True          500.00MB         Unset
 </code></pre>
 </div>
 
-<p>“-volume-totalsize” cannot be set to the value other than unlimit when add privilege for special value “_VM_DS” and “_ALL_DS”.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
+<p>“-volume-totalsize” cannot be set to the value other than unlimit when add privilege for special value “_VM_DS” and “_ALL_DS”.
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
+———-  ————  —————  ———-
 datastore1  True          1000.00MB        2.00GB
 _ALL_DS    True          500.00MB         Unset
-_VM_DS     True          Unset            Unset
+_VM_DS     True          Unset            Unset</p>
 
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=_VM_DS --volume-totalsize=1GB
-Canont set volume-totalsize for _VM_DS
+<p>[root@localhost:~]
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set –name=vmgroup1 –datastore=_VM_DS –volume-totalsize=1GB
+Canont set volume-totalsize for _VM_DS</p>
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=_ALL_DS --volume-totalsize=1GB
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set –name=vmgroup1 –datastore=_ALL_DS –volume-totalsize=1GB
 Canont set volume-totalsize for _ALL_DS
-</code></pre>
-</div>
+```</p>
 
-<h5 id="help-10">Help</h5>
+<h5 id="help-5">Help</h5>
 <div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set -h
 usage: vmdkops_admin.py vmgroup access set [-h]
                                             [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
@@ -1059,7 +1058,7 @@ optional arguments:
 
 <h2 id="volume">Volume</h2>
 
-<h4 id="help-11">Help</h4>
+<h4 id="help-6">Help</h4>
 <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls -h
 usage: vmdkops_admin.py volume ls <span class="o">[</span>-h] <span class="o">[</span>-c Col1,Col2,...]
 
@@ -1143,39 +1142,40 @@ This removes the need to depend on <a href="https://docs.docker.com/engine/tutor
 
 <p>The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.</p>
 
-<p>Example:</p>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
+<p>Example:
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume  Datastore   VMGroup  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
-------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
-vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
-vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
-vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
-vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
+——  ———-  ——–  ——–  —-  ———-  ——  ———–  ———–  ———-  ———————-  ———-  ————————
+vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
+vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
+vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
+vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016</p>
 
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume <span class="nb">set</span> --volume<span class="o">=</span>vol1@datastore1 --vmgroup<span class="o">=</span>_DEFAULT --options<span class="o">=</span><span class="s2">"access=read-only"</span>
-Successfully updated settings <span class="k">for</span> : vol1@datastore1
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume set –volume=vol1@datastore1 –vmgroup=_DEFAULT –options=”access=read-only”
+Successfully updated settings for : vol1@datastore1</p>
 
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
+<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 Volume  Datastore   VMGroup  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
-------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
-vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-only   independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
-vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
-vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
-vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
+——  ———-  ——–  ——–  —-  ———-  ——  ———–  ———–  ———-  ———————-  ———-  ————————
+vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-only   independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
+vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
+vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
+vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016</p>
 
-</code></pre>
-</div>
+<div class="highlighter-rouge"><pre class="highlight"><code>
 
-<h2 id="policy">Policy</h2>
+## Policy
 
-<p>Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.</p>
+Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.
 
-<h4 id="help-12">Help</h4>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy -h
-usage: vmdkops_admin.py policy <span class="o">[</span>-h] <span class="o">{</span>rm,create,ls,update<span class="o">}</span> ...
+#### Help
+```bash
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy -h
+usage: vmdkops_admin.py policy [-h] {rm,create,ls,update} ...
 
 positional arguments:
-  <span class="o">{</span>rm,create,ls,update<span class="o">}</span>
+  {rm,create,ls,update}
     rm                  Remove a storage policy
     create              Create a storage policy
     ls                  List storage policies and volumes using those policies
@@ -1183,7 +1183,7 @@ positional arguments:
                         objects using that policy
 
 optional arguments:
-  -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
+  -h, --help            show this help message and exit
 </code></pre>
 </div>
 
@@ -1200,7 +1200,7 @@ Successfully created policy: some-policy
 string.  Please refer to the <a href="https://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.vcli.ref.doc%2Fesxcli_vsan.html">VSAN documentation</a>
 for storage policy options.</p>
 
-<h4 id="list-3">List</h4>
+<h4 id="list-1">List</h4>
 
 <p>List all VSAN storage policies.</p>
 
@@ -1248,11 +1248,11 @@ Successfully removed policy: some-policy
 
 <p><strong>THIS FEATURE IS EXPERIMENTAL</strong></p>
 
-<p>Creates, removes, moves and reports on status of Authorization config DB (referred to as <code class="highlighter-rouge">Config DB</code>). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] vmdkops_admin vmgroup create --name MY
+<p>Creates, removes, moves and reports on status of Authorization config DB (referred to as <code class="highlighter-rouge">Config DB</code>). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
+<code class="highlighter-rouge">
+[root@localhost:~] vmdkops_admin vmgroup create --name MY
 Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
-</code></pre>
-</div>
+</code></p>
 
 <p>If the Config DB is not initialized, Docker Volume Service will use  “Config DB NotConfigured” Mode, when any request to create, remove, mount or unmount Docker volume is accepted.</p>
 
@@ -1351,15 +1351,16 @@ usage: vmdkops_admin.py status [-h] [--fast]
 optional arguments:
   -h, --help  show this help message and exit
   --fast      SKip some of the data collection (port, version)
-</code></pre>
-</div>
+  ```
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] <span class="nb">time</span> /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
+
+```bash
+[root@localhost:~] time /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
 Version: 0.12.0afa0ec-0.0.1
 Status: Running
 DB_LocalPath: /etc/vmware/vmdkops/auth-db
 DB_SharedLocation: N/A
-DB_Mode: SingleNode <span class="o">(</span><span class="nb">local </span>DB exists<span class="o">)</span>
+DB_Mode: SingleNode (local DB exists)
 Pid: 6298936
 Port: 1019
 LogConfigFile: /etc/vmware/vmdkops/log_config.json
@@ -1408,7 +1409,7 @@ sys	0m 0.00s
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 1, 2017 <br />
+ Site last generated: Jul 20, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
