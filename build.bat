@@ -35,8 +35,8 @@
 set projectRoot=%cd%
 set winBuildDir=%projectRoot%\build\windows
 set vmciDir=%projectRoot%\esx_service\vmci
-set pluginDir=%projectRoot%\vmdk_plugin
-set refcountDir=%pluginDir%\utils\refcount
+set pluginDir=%projectRoot%\client_plugin\vmdk_plugin
+set vmdkopsDir=%projectRoot%\client_plugin\drivers\vmdk\vmdkops
 set vsphereJsonPath=C:\ProgramData\docker\plugins\vsphere.json
 set msvcBatPath=C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat
 
@@ -53,7 +53,7 @@ echo Found Go.
 :: Verify that MSVC Build Tools are accessible.
 if not exist "%msvcBatPath%" (
 	echo ERROR: Couldn't find Microsoft Visual C++ Build Tools.
-	echo Download URL: https://www.visualstudio.com/downloads/#build-tools-for-visual-studio-2017
+	echo Download URL: http://landinghub.visualstudio.com/visual-cpp-build-tools
 	exit /B
 )
 echo Found Microsoft Visual C++ Build Tools.
@@ -79,28 +79,17 @@ cl /D_USRDLL /D_WINDLL vmci_client.c /link /defaultlib:ws2_32.lib /DLL /OUT:vmci
 del vmci_client.exp vmci_client.lib vmci_client.obj
 echo Compiled vmci_client.dll successfully.
 
-:: Move vmci_client.dll to the plugin directory.
-echo Moving vmci_client.dll to the plugin directory.
-move /y vmci_client.dll %pluginDir%
-echo Successfully moved vmci_client.dll to the plugin directory.
-
-:: Remove refcnt.go build tag.
-:: TODO: Remove this section after porting refcnt.go to Windows.
-echo Entering the refcount directory.
-cd %refcountDir%
-
-echo Removing refcnt.go build tag.
-findstr /v "+build linux" refcnt.go > refcnt.go.tmp
-del refcnt.go
-rename refcnt.go.tmp refcnt.go
-echo Successfully removed refcnt.go build tag.
+:: Move vmci_client.dll to the vmdkops directory.
+echo Moving vmci_client.dll to the vmdkops directory.
+move /y vmci_client.dll %vmdkopsDir%
+echo Successfully moved vmci_client.dll to the vmdkops directory.
 
 :: Build vdvs.exe.
 echo Entering the plugin directory.
 cd %pluginDir%
 
 echo Building vdvs.exe.
-go build -v -o vdvs.exe main.go main_windows.go constants.go log_formatter.go
+go build -v -o vdvs.exe main.go
 echo Successfully built vdvs.exe.
 
 :: Write vsphere.json to the docker plugin config directory.
@@ -108,7 +97,7 @@ echo Writing vsphere.json to the docker plugin config directory.
 del %vsphereJsonPath%
 (
 echo {
-echo   "Name": "vsphere"
+echo   "Name": "vsphere",
 echo   "Addr": "npipe:////./pipe/vsphere-dvs"
 echo }
 ) > %vsphereJsonPath%
@@ -117,9 +106,10 @@ echo Successfully wrote vsphere.json to the docker plugin config directory.
 :: Move binaries to build directory.
 echo Moving binaries to the build directory.
 if not exist %winBuildDir% mkdir %winBuildDir%
-move /y vmci_client.dll %winBuildDir%
+move /y %vmdkopsDir%\vmci_client.dll %winBuildDir%
 move /y vdvs.exe %winBuildDir%
 echo Successfully moved binaries to the build directory.
 
+cd %projectRoot%
 echo vDVS build complete.
 echo Binaries are available under %winBuildDir%.

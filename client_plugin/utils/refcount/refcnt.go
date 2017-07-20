@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-// +build linux
 
 //
 // Refcount discovery from local docker.
@@ -37,16 +35,18 @@
 // generic refcnt API and also supports refcount discovery on restarts:
 // - Connects to Docker over unix socket, enumerates Volume Mounts and builds
 //   "volume mounts refcount" map as Docker sees it.
-// - Gets actual mounts from /proc/mounts, and makes sure the refcounts and
-//   actual mounts are in sync.
+// - Gets actual mounts using fs.GetMountInfo(), and makes sure the refcounts
+//   and actual mounts are in sync.
 //
 // The process is initiated on plugin start,and ONLY if Docker is already
 // running and thus answering client.Info() request.
 //
-// After refcount discovery, results are compared to /proc/mounts content.
+// After refcount discovery, results are compared to fs.GetMountInfo() content.
 //
-// We rely on all plugin mounts being in /mnt/vmdk/<volume_name>, and will
-// unount stuff there at will - this place SHOULD NOT be used for manual mounts.
+// We rely on all plugin mounts being in /mnt/vmdk/<volume_name> for Linux and
+// C:\Users\Administrator\AppData\Local\docker-volume-vsphere\mounts\<volume_name>
+// on Windows, and  will unmount stuff there at will - this place SHOULD NOT be
+// used for manual mounts.
 //
 // If a volume IS mounted, but should not be (refcount = 0)
 //   - we assume there was a restart of VM or even ESX, and
@@ -82,13 +82,13 @@ import (
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
 	"golang.org/x/net/context"
 )
 
 const (
 	ApiVersion              = "v1.24" // docker engine 1.12 and above support this api version
-	DockerUSocket           = "unix:///var/run/docker.sock"
 	defaultSleepIntervalSec = 1
 	dockerConnTimeoutSec    = 2
 	refCountDelayStartSec   = 2
@@ -210,21 +210,21 @@ func (r *RefCountsMap) retryCalculate(d drivers.VolumeDriver, mountDir string, n
 
 // calculate Refcounts. Discover volume usage refcounts from Docker.
 func (r *RefCountsMap) calculate(d drivers.VolumeDriver, mountDir string, name string) error {
-	c, err := client.NewClient(DockerUSocket, ApiVersion, nil, defaultHeaders)
+	c, err := client.NewClient(DockerHostAddr, ApiVersion, nil, defaultHeaders)
 	if err != nil {
 		log.Panicf("Failed to create client for Docker at %s.( %v)",
-			DockerUSocket, err)
+			DockerHostAddr, err)
 	}
 	mountRoot = mountDir
 	driverName = name
 
-	log.Infof("Getting volume data from %s", DockerUSocket)
+	log.Infof("Getting volume data from %s", DockerHostAddr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), dockerConnTimeoutSec*time.Second)
 	defer cancel()
 	info, err := c.Info(ctx)
 	if err != nil {
-		log.Infof("Can't connect to %s due to (%v), skipping discovery", DockerUSocket, err)
+		log.Infof("Can't connect to %s due to (%v), skipping discovery", DockerHostAddr, err)
 		return err
 	}
 	log.Debugf("Docker info: version=%s, root=%s, OS=%s",
@@ -491,7 +491,7 @@ func (r *RefCountsMap) updateRefMap() error {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	volumeMap, err := plugin_utils.GetMountInfo(mountRoot)
+	volumeMap, err := fs.GetMountInfo(mountRoot)
 
 	if err != nil {
 		return err
@@ -505,7 +505,7 @@ func (r *RefCountsMap) updateRefMap() error {
 		refInfo.mounted = true
 		refInfo.dev = dev
 		r.refMap[volName] = refInfo
-		log.Debugf("Found '%s' in /proc/mount, ref=(%#v)", volName, refInfo)
+		log.Debugf("Volume '%s' was found mounted, ref=(%#v)", volName, refInfo)
 	}
 
 	return nil

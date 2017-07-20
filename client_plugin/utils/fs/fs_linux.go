@@ -19,8 +19,6 @@ package fs
 import (
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"golang.org/x/exp/inotify"
 	"io"
 	"io/ioutil"
 	"os"
@@ -29,6 +27,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"golang.org/x/exp/inotify"
 )
 
 const (
@@ -46,6 +47,7 @@ const (
 	deleteFile       = "/device/delete"
 	watchPath        = "/dev/disk/by-id"
 	diskWatchPath    = "/dev/disk/by-path"
+	linuxMountsFile  = "/proc/mounts" // Path of file containing linux mounts information
 )
 
 // BinSearchPath contains search paths for host binaries
@@ -353,4 +355,31 @@ func getDevicePath(volDev *VolumeDevSpec) (string, error) {
 		return "", fmt.Errorf("Device not found")
 	}
 	return fmt.Sprintf("/dev/disk/by-path/pci-%s.0-scsi-0:0:%s:0", string(buf), volDev.Unit), nil
+}
+
+// GetMountInfo returns a map of mounted volumes and devices.
+func GetMountInfo(mountRoot string) (map[string]string, error) {
+	volumeMountMap := make(map[string]string) // map [volume mount path] -> device
+
+	data, err := ioutil.ReadFile(linuxMountsFile)
+	if err != nil {
+		log.Errorf("Can't get info from %s (%v)", linuxMountsFile, err)
+		return volumeMountMap, err
+	}
+	log.WithFields(log.Fields{"data": string(data)}).Info("Mounts read successfully")
+
+	for _, line := range strings.Split(string(data), lf) {
+		field := strings.Fields(line)
+		if len(field) < 2 {
+			continue // skip empty line and lines too short to have our mount
+		}
+		// fields format: [/dev/sdb /mnt/vmdk/vol1 ext2 rw,relatime 0 0]
+		if filepath.Dir(field[1]) != mountRoot {
+			continue
+		}
+		volumeMountMap[filepath.Base(field[1])] = field[0]
+	}
+
+	log.WithFields(log.Fields{"map": volumeMountMap}).Info("Successfully retrieved mounts")
+	return volumeMountMap, nil
 }

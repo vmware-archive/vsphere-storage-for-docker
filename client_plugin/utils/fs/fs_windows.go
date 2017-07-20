@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -72,6 +73,15 @@ const (
 		Initialize-Disk -Number %s -PartitionStyle MBR -PassThru |
 		New-Partition -UseMaximumSize |
 		Format-Volume -FileSystem %s -NewFileSystemLabel "%s" -Confirm:$false
+	`
+
+	// mountListScript is a PowerShell script that lists disk numbers and their access paths.
+	// Sample output:
+	//   0 \\?\Volume{1cca2a47-0000-0000-0000-100000000000}\
+	//   1 C:\Users\Administrator\AppData\Local\docker-volume-vsphere\mounts\volName\ \\?\Volume{145c5662-0000-0000-0000-100000000000}\
+	mountListScript = `
+		Get-Partition |
+		ForEach-Object { Write-Host $_.DiskNumber, $_.AccessPaths }
 	`
 )
 
@@ -200,6 +210,36 @@ func tailSegment(b []byte, delim string, n int) string {
 	segments := strings.Split(string(b), delim)
 	segment := segments[len(segments)-n]
 	return segment
+}
+
+// GetMountInfo returns a map of mounted volumes and disk numbers.
+func GetMountInfo(mountRoot string) (map[string]string, error) {
+	volumeMountMap := make(map[string]string)
+
+	out, err := exec.Command(powershell, mountListScript).CombinedOutput()
+	if err != nil {
+		log.WithFields(log.Fields{"err": err,
+			"out": string(out)}).Error("Couldn't execute script to list mounts")
+		return volumeMountMap, err
+	}
+	log.WithFields(log.Fields{"out": string(out)}).Info("List mounts script executed")
+
+	for _, line := range strings.Split(string(out), lf) {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue // skip empty line and lines too short to have our mount
+		}
+		for _, path := range fields[1:] {
+			path = filepath.Clean(path) // remove trailing slash
+			if filepath.Dir(path) == mountRoot {
+				volumeMountMap[filepath.Base(path)] = fields[0]
+				break
+			}
+		}
+	}
+
+	log.WithFields(log.Fields{"map": volumeMountMap}).Info("Successfully retrieved mounts")
+	return volumeMountMap, nil
 }
 
 // Functions needed by the photon driver, but not implemented for the Windows OS.

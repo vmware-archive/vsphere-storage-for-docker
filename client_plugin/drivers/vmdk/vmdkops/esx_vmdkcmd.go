@@ -34,7 +34,7 @@ import (
 
 /*
 #cgo CFLAGS: -I ../../../../esx_service/vmci
-#cgo windows LDFLAGS: -L${SRCDIR}/../../../ -lvmci_client
+#cgo windows LDFLAGS: -L${SRCDIR} -lvmci_client
 #include "vmci_client.h"
 #include "vmci_client_proxy.c"
 */

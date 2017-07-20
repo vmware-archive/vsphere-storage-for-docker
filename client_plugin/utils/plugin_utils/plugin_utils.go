@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,18 +17,14 @@ package plugin_utils
 // This file holds utility/helper methods required in plugin module
 
 import (
-	"io/ioutil"
-	"path/filepath"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 )
 
 const (
-	// consts for finding and parsing linux mount information
-	linuxMountsFile = "/proc/mounts"
-
 	// index datastore from volume meta
 	// "datastore" key is defined in vmdkops service
 	datastoreKey = "datastore"
@@ -44,33 +40,9 @@ type VolumeInfo struct {
 	VolumeMeta    map[string]interface{}
 }
 
-// GetMountInfo - return a map of mounted volumes and devices
-func GetMountInfo(mountRoot string) (map[string]string, error) {
-	volumeMountMap := make(map[string]string) //map [volume mount path] -> device
-	data, err := ioutil.ReadFile(linuxMountsFile)
-
-	if err != nil {
-		log.Errorf("Can't get info from %s (%v)", linuxMountsFile, err)
-		return volumeMountMap, err
-	}
-
-	for _, line := range strings.Split(string(data), "\n") {
-		field := strings.Fields(line)
-		if len(field) < 2 {
-			continue // skip empty line and lines too short to have our mount
-		}
-		// fields format: [/dev/sdb /mnt/vmdk/vol1 ext2 rw,relatime 0 0]
-		if filepath.Dir(field[1]) != mountRoot {
-			continue
-		}
-		volumeMountMap[filepath.Base(field[1])] = field[0]
-	}
-	return volumeMountMap, nil
-}
-
 // AlreadyMounted - check if volume is already mounted on the mountRoot
 func AlreadyMounted(name string, mountRoot string) bool {
-	volumeMap, err := GetMountInfo(mountRoot)
+	volumeMap, err := fs.GetMountInfo(mountRoot)
 
 	if err != nil {
 		return false

@@ -74,14 +74,14 @@ func (w *DeviceWatcher) Init() {
 // awaitEventAndEmit awaits and emits a device change event or an error.
 func (w *DeviceWatcher) awaitEventAndEmit() {
 	script := fmt.Sprintf(devChangeWaitScript, devChangeTimeoutSec)
-	out, err := exec.Command(powershell, script).Output()
+	out, err := exec.Command(powershell, script).CombinedOutput()
 	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Failed to watch device event ")
+		log.WithFields(log.Fields{"err": err, "out": string(out)}).Error("Failed to watch device event ")
 		select {
 		case w.Error <- err:
-			log.WithFields(log.Fields{"err": err}).Info("Successfully emitted error ")
+			log.WithFields(log.Fields{"err": err, "out": string(out)}).Info("Successfully emitted error ")
 		default:
-			log.WithFields(log.Fields{"err": err}).Warn("Couldn't emit error, continuing.. ")
+			log.WithFields(log.Fields{"err": err, "out": string(out)}).Warn("Couldn't emit error, continuing.. ")
 		}
 		return
 	}
