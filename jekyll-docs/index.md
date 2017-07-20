@@ -36,5 +36,5 @@ vDVS abstracts underlying enterprise class storage and makes it available as doc
 
 ## Documentation Version
 
-The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in [jekyll-docs folder](https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs). The doc site is generated at the time of release cut and served from [documentation folder](https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/documentation)
+The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in [jekyll-docs folder](https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs). For older releases, browse to [releases](https://github.com/vmware/docker-volume-vsphere/releases) select the release, click on the tag for the release and browse the docs folder. 
 
