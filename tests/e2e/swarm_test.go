@@ -30,6 +30,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
@@ -102,56 +103,80 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 		volPath  = "/vol"
 	)
 
-	// Create a swarm service that will be scheduled in the worker nodes only and will restart on failure automatically
+	// Create a swarm service that will be scheduled in the worker nodes only and will restart on failure automatically.
 	fullVolumeName := verification.GetFullVolumeName(s.master, s.volumeName)
 	opts := "--mount type=volume,source=" + fullVolumeName + ",target=" + volPath + ",volume-driver=" + constant.VDVSPluginName + "--constraint node.role==worker --restart-condition on-failure" + constant.TestContainer
+
 	out, err := dockercli.CreateService(s.master, s.serviceName, opts)
 	c.Assert(err, IsNil, Commentf(out))
 
 	status := verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
+	status, host1 := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
+	log.Printf("container %s is running on host %s", s.serviceName, host1)
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host1, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
+	log.Printf("Volume %s is attached to host %s", s.volumeName, host1)
 
-	containerName, err := dockercli.GetContainerName(host, s.serviceName)
+	containerName, err := dockercli.GetContainerName(host1, s.serviceName)
 	log.Printf("ContainerName: [%s]\n", containerName)
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 
-	out, err = dockercli.WriteToContainer(host, containerName, volPath, testFile, testData)
+	out, err = dockercli.WriteToContainer(host1, containerName, volPath, testFile, testData)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromContainer(host, containerName, volPath, testFile)
+	out, err = dockercli.ReadFromContainer(host1, containerName, volPath, testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, testData)
 
-	// Power off the running worker node
-	hostName := esx.RetrieveVMNameFromIP(host)
-	esx.PowerOffVM(hostName)
+	// Shut down and then power off the running worker node.
+	hostName1 := esx.RetrieveVMNameFromIP(host1)
+	esx.ShutDownVM(hostName1)
+	log.Printf("vm %s is shutdown", host1)
 
-	isStatusChanged := esx.WaitForExpectedState(esx.GetVMPowerState, hostName, properties.PowerOffState)
-	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered off state", hostName))
+	isStatusChanged := esx.WaitForExpectedState(esx.GetVMPowerState, hostName1, properties.PowerOffState)
+	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered off state", hostName1))
 
 	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	// Only 2 worker nodes - running node is down, the container should be failed over to the other node
+	// Only 2 worker nodes - running node is down, the container should fail over to the other node
 	var otherWorker string
-	if host == s.worker1 {
+	if host1 == s.worker1 {
 		otherWorker = s.worker2
 	} else {
 		otherWorker = s.worker1
 	}
-	status, host = verification.IsDockerContainerRunning([]string{otherWorker}, s.serviceName, 1)
-	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	statusNew, host2 := verification.IsDockerContainerRunning([]string{otherWorker}, s.serviceName, 1)
+	c.Assert(statusNew, Equals, true, Commentf("Container %s is not running", s.serviceName))
+	log.Printf("Container %s is running on host %s", s.serviceName, host2)
+	log.Printf("host is %s", host2)
+	log.Printf("otherWorker is %s", otherWorker)
+	if host2 != otherWorker {
+		log.Println("host2 and otherWorker are different. They should be same.")
+	}
+
+	/*
+		hostName2 := esx.RetrieveVMNameFromIP(host2)
+		isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host2, hostName2)
+		c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running on VM [%s]", host2))
+	*/
+
+	// misc.SleepForSec(10)
+
+	log.Printf("Printing Docker volume inspect for volume %s", s.volumeName)
+	cmd := "docker volume inspect " + fullVolumeName
+	out, err = ssh.InvokeCommand(host2, cmd)
+	log.Printf("OUT: %s", out)
+
+	status = verification.VerifyAttachedStatus(s.volumeName, host2, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	containerName, err = dockercli.GetContainerName(host, s.serviceName)
+	containerName, err = dockercli.GetContainerName(host2, s.serviceName)
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 
 	// TODO: this verification does not pass during auto run - need further investigation
@@ -159,10 +184,15 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	// c.Assert(err, IsNil, Commentf(out))
 	// c.Assert(out, Equals, testData)
 
-	// Power on the worker node
-	esx.PowerOnVM(hostName)
-	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host, hostName)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", hostName))
+	out, err = dockercli.ReadFromContainer(host2, containerName, volPath, testFile)
+	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(out, Equals, testData)
+
+	// Power on the worker node.
+	esx.PowerOnVM(hostName1)
+	//hostName = esx.RetrieveVMNameFromIP(host1)
+	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host1, hostName1)
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", hostName1))
 
 	out, err = dockercli.RemoveService(s.master, s.serviceName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -186,19 +216,21 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 // 1. Create a docker service with replicas setting to 1
 // 2. Verify the service is up and running with one node
 // 3. Verify one container is spawned
-// 5. Verify the volume is in attached status
-// 6. Scale the service to set replica numbers to 2
-// 7. Verify the service is up and running with two nodes
-// 8. Verify 2 containers are spawned
-// 9. Stop one node of the service
-// 10. Verify the service is still running with two nodes
-// 11. Verify there are still 2 containers up and running
-// 12. Verify the volume is in attached status
-// 13. Delete the volume - expect fail
-// 14. Remove the service
-// 15. Verify the service is gone
-// 16. Verify the volume is in detached status
+// 4. Verify the volume is in attached status
+// 5. Scale the service to set replica numbers to 2
+// 6. Verify the service is up and running with two nodes
+// 7. Verify 2 containers are spawned
+// 8. Stop one node of the service
+// 9. Verify the service is still running with two nodes
+// 10. Verify there are still 2 containers up and running
+// 11. Verify the volume is in attached status
+// 12. Delete the volume - expect fail
+// 13. Remove the service
+// 14. Verify the service is gone
+// 15. Verify the volume is in detached status
 func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
+	c.Skip("Not needed")
+
 	misc.LogTestStart(c.TestName())
 
 	fullVolumeName := verification.GetFullVolumeName(s.master, s.volumeName)

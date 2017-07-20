@@ -39,12 +39,16 @@ func ListNodes(ip string) (string, error) {
 // CreateService creates a docker service
 func CreateService(ip, name, opts string) (string, error) {
 	log.Printf("Creating a docker service [%s] on VM [%s]\n", name, ip)
+	cmdMain := dockercli.CreateService + "--name " + name + " " + opts
+	log.Printf("cmd for creating service: %s", cmdMain)
 	return ssh.InvokeCommand(ip, dockercli.CreateService+"--name "+name+" "+opts)
 }
 
 // ListService lists the tasks of a docker service
 func ListService(ip, name string) (string, error) {
 	log.Printf("Listing docker service [%s] running on VM [%s]\n", name, ip)
+	cmdMain := dockercli.ListService + name
+	log.Printf("cmd : %s", cmdMain)
 	return ssh.InvokeCommand(ip, dockercli.ListService+name)
 }
 
@@ -81,5 +85,6 @@ func GetContainerName(hostName, shortName string) (string, error) {
 // GetAllContainers returns all running containers on the give host based on the filtering criteria
 func GetAllContainers(hostName, filter string) (string, error) {
 	cmd := dockercli.ListContainers + "--filter name='" + filter + "' --format '{{.Names}}'"
+	log.Printf("cmd to GetAllContainers: %s", cmd)
 	return ssh.InvokeCommand(hostName, cmd)
 }
