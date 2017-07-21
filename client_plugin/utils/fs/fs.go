@@ -12,10 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Platform independent fs functionality.
+
 package fs
+
+import (
+	"fmt"
+	"os"
+
+	log "github.com/Sirupsen/logrus"
+)
 
 // VolumeDevSpec - volume spec returned from the server on an attach
 type VolumeDevSpec struct {
 	Unit                    string
 	ControllerPciSlotNumber string
+}
+
+// Mkdir creates a directory at the specified path.
+func Mkdir(path string) error {
+	stat, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		log.WithField("path", path).Info("Directory doesn't exist, creating it ")
+		if err := os.MkdirAll(path, 0755); err != nil {
+			log.WithFields(log.Fields{"path": path,
+				"err": err}).Error("Failed to create directory ")
+			return err
+		}
+	} else if err != nil {
+		log.WithFields(log.Fields{"path": path,
+			"err": err}).Error("Failed to test directory existence ")
+		return err
+	}
+
+	if stat != nil && !stat.IsDir() {
+		msg := fmt.Sprintf("%v already exists and it's not a directory", path)
+		log.Error(msg)
+		return fmt.Errorf(msg)
+	}
+	return nil
 }

@@ -119,23 +119,6 @@ func DevAttachWaitFallback() {
 	time.Sleep(sleepBeforeMount)
 }
 
-// Mkdir creates a directory at the specified path
-func Mkdir(path string) error {
-	stat, err := os.Lstat(path)
-	if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, 0755); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
-
-	if stat != nil && !stat.IsDir() {
-		return fmt.Errorf("%v already exist and it's not a directory", path)
-	}
-	return nil
-}
-
 // Mkfs creates a filesystem at the specified volDev.
 func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 	device, err := getDevicePath(volDev)

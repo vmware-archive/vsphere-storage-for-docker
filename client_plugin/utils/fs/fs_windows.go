@@ -83,6 +83,28 @@ const (
 		Get-Partition |
 		ForEach-Object { Write-Host $_.DiskNumber, $_.AccessPaths }
 	`
+
+	// mountDiskScript is a PowerShell script that sets the disk's mode to RO if
+	// needed, and then mounts its first partition at the given mountpoint.
+	mountDiskScript = `
+		Set-Disk -Number %s -IsReadOnly $%t
+		Add-PartitionAccessPath -DiskNumber %s -PartitionNumber 1 -AccessPath "%s"
+	`
+
+	// unmountDiskScript is a PowerShell script that identifies the disk mounted
+	// at the given mountpoint, and then unmounts it.
+	unmountDiskScript = `
+		Get-Partition |
+		ForEach-Object {
+			If ($_.AccessPaths -contains "%s") {
+				$diskNum = $_.DiskNumber
+				Remove-PartitionAccessPath -DiskNumber $diskNum -PartitionNumber 1 -AccessPath "%s"
+				Write-Host $diskNum
+				exit
+			}
+		}
+		Write-Host "DiskNotFound"
+	`
 )
 
 // VerifyFSSupport checks whether the fstype filesystem is supported.
@@ -140,12 +162,6 @@ func DevAttachWaitFallback() {
 	// NOP since DevAttachWaitPrep never returns an error
 }
 
-// Mkdir creates a directory at the specified path.
-func Mkdir(path string) error {
-	// TODO: Implement for the volume mount workflow.
-	return nil
-}
-
 // Mkfs creates a filesystem at the specified volDev.
 func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 	diskNum, err := getDiskNum(volDev)
@@ -170,13 +186,47 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 
 // Mount mounts the filesystem on the volDev at the given mountpoint.
 func Mount(mountpoint string, fstype string, volDev *VolumeDevSpec, isReadOnly bool) error {
-	// TODO: Implement for the volume mount workflow.
+	diskNum, err := getDiskNum(volDev)
+	if err != nil {
+		log.WithFields(log.Fields{"mountpoint": mountpoint, "fstype": fstype,
+			"volDev": *volDev, "isReadOnly": isReadOnly, "err": err}).Error("Failed to locate disk ")
+		return err
+	}
+
+	script := fmt.Sprintf(mountDiskScript, diskNum, isReadOnly, diskNum, mountpoint)
+	out, err := exec.Command(powershell, script).CombinedOutput()
+	if err != nil {
+		log.WithFields(log.Fields{"mountpoint": mountpoint, "fstype": fstype,
+			"volDev": *volDev, "isReadOnly": isReadOnly, "diskNum": diskNum,
+			"err": err, "out": string(out)}).Error("Failed to mount disk ")
+		return err
+	}
+
+	log.WithFields(log.Fields{"mountpoint": mountpoint, "fstype": fstype, "volDev": *volDev,
+		"isReadOnly": isReadOnly, "diskNum": diskNum}).Info("Disk successfully mounted ")
 	return nil
 }
 
 // Unmount unmounts a disk from the given mount point.
 func Unmount(mountpoint string) error {
-	// TODO: Implement for the volume unmount workflow.
+	// PowerShell returns access paths with a trailing slash.
+	if !strings.HasSuffix(mountpoint, `\`) {
+		mountpoint += `\`
+	}
+
+	script := fmt.Sprintf(unmountDiskScript, mountpoint, mountpoint)
+	out, err := exec.Command(powershell, script).CombinedOutput()
+	if err != nil {
+		log.WithFields(log.Fields{"mountpoint": mountpoint, "err": err,
+			"out": string(out)}).Error("Failed to unmount disk ")
+		return err
+	} else if tailSegment(out, lf, 2) == diskNotFound {
+		msg := fmt.Sprintf("Failed to unmount disk from '%s'", mountpoint)
+		log.WithField("out", string(out)).Error(msg)
+		return errors.New(msg)
+	}
+	log.WithFields(log.Fields{"mountpoint": mountpoint,
+		"out": string(out)}).Info("Disk unmounted ")
 	return nil
 }
 
