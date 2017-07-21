@@ -374,6 +374,22 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/kardianos/osext",
+			"repository": "https://github.com/kardianos/osext",
+			"vcs": "git",
+			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/kardianos/service",
+			"repository": "https://github.com/kardianos/service",
+			"vcs": "git",
+			"revision": "f6635a45eccea31fd54922e3c1bf7e5e5a5df097",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/natefinch/lumberjack",
 			"repository": "https://github.com/natefinch/lumberjack",
 			"vcs": "",
@@ -515,6 +531,15 @@
 			"revision": "abf9c25f54453410d0c6668e519582a9e1115027",
 			"branch": "master",
 			"path": "/unix",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/windows",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "c4489faa6e5ab84c0ef40d6ee878f7a030281f0f",
+			"branch": "master",
+			"path": "windows",
 			"notests": true
 		},
 		{
