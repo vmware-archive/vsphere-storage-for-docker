@@ -31,6 +31,10 @@ import (
 // main for docker-volume-vsphere
 // Parses flags, initializes and mounts refcounters and finally initializes the server.
 func main() {
+	runVdvs()
+}
+
+func startPluginServer() {
 	var driver volume.Driver
 
 	cfg, err := config.InitConfig(config.DefaultVMDKPluginConfigPath, config.DefaultVMDKPluginLogPath,
