@@ -20,36 +20,37 @@ import (
     log "github.com/Sirupsen/logrus"
 )
 
-var logger service.Logger
+// pluginServer is a wrapper for vDVS plugin so that the plugin can be run
+// as a service on Windows. Windows controls services by setting up callbacks
+// that is non-trivial. This wrapper utilizes a vendor library to handle this.
+type pluginServer struct{}
 
-type program struct{}
-
-func (p *program) Start(s service.Service) error {
+func (p *pluginServer) Start(s service.Service) error {
     // Start should not block. Do the actual work async.
     go p.run()
     return nil
 }
 
-func (p *program) run() {
+func (p *pluginServer) run() {
     // Do work here
     startPluginServer()
 }
 
-func (p *program) Stop(s service.Service) error {
+func (p *pluginServer) Stop(s service.Service) error {
     // Stop should not block. Return directly.
     return nil
 }
 
-// Run vDVS plugin on Windows
-func runVdvs() {
+// startDaemon starts vDVS plugin daemon on Windows
+func startDaemon() {
     svcConfig := &service.Config {
         Name:        "vdvs",
         DisplayName: "vSphere Docker Volume Service",
         Description: "Enables user to run stateful containerized applications on top of VMware vSphere.",
     }
 
-    prg := &program{}
-    svc, err := service.New(prg, svcConfig)
+    ps := &pluginServer{}
+    svc, err := service.New(ps, svcConfig)
     if err != nil {
         log.Fatal("Failed to create the service: ", err)
     }
