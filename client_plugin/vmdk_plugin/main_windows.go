@@ -1,4 +1,4 @@
-// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package main
 
 import (
-	"github.com/kardianos/service"
-	log "github.com/Sirupsen/logrus"
+    "github.com/kardianos/service"
+    log "github.com/Sirupsen/logrus"
 )
 
 var logger service.Logger
@@ -31,8 +31,8 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	// Do work here
-	startPluginServer()
+    // Do work here
+    startPluginServer()
 }
 
 func (p *program) Stop(s service.Service) error {
@@ -42,7 +42,7 @@ func (p *program) Stop(s service.Service) error {
 
 // Run vDVS plugin on Windows
 func runVdvs() {
-	svcConfig := &service.Config {
+    svcConfig := &service.Config {
         Name:        "vdvs",
         DisplayName: "vSphere Docker Volume Service",
         Description: "Enables user to run stateful containerized applications on top of VMware vSphere.",
@@ -54,13 +54,13 @@ func runVdvs() {
         log.Fatal("Failed to create the service: ", err)
     }
 
-	logger, err = svc.Logger(nil)
+    logger, err = svc.Logger(nil)
     if err != nil {
         log.Fatal(err)
-	}
-	
+    }
+    
     err = svc.Run()
     if err != nil {
-		logger.Error(err)
+        logger.Error(err)
     }
 }
