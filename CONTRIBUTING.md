@@ -353,13 +353,21 @@ To update documentation
 ```
 # 1. Checkout the gh-pages branch
 git checkout gh-pages
+
 # 2. Go to jekyll-docs directory
 cd jekyll-docs
+
 # 3. Build the jekyll site
 docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
+
 # 4. Remove the old site and copy the new one.
 rm -rvf ../documentation
 mv _site ../documentation
+
+# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md 
+#Bug in jekyll template does not render the name "index"
+vi ../documentation/index.html 
+
 # 6. Push to GitHub
 git add documentation
 git commit
