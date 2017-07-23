@@ -56,7 +56,7 @@ func startDaemon() {
         log.Fatal("Failed to create the service: ", err)
     }
 
-    logger, err = svc.Logger(nil)
+    logger, err := svc.Logger(nil)
     if err != nil {
         log.Fatal(err)
     }
