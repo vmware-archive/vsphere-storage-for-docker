@@ -63,6 +63,11 @@ SYSTEMD_LIB  := $(PACKAGE)/lib/systemd/system/
 INSTALL_BIN  := $(PACKAGE)/usr/local/bin
 UPSTART_INIT := $(PACKAGE)/etc/init/
 
+#
+# Scripts to set up VMs to create a Docker swarm test bed
+#
+SETUP_VMS := $(SCRIPTS)/testbed.sh
+
 # esx service for docker volume ops
 ESX_SRC     := ../esx_service
 VMCI_SRC    := $(ESX_SRC)/vmci/*.h $(ESX_SRC)/vmci/vmci_client.c
@@ -424,3 +429,17 @@ all: clean-all build-all deploy-all test-all
 # if we do not recognize the target, warn and keep going.
 .DEFAULT:
 	@echo "***" Warning: Skipping unsupported target \"$@\"
+
+# Create a test set up of VMs and a docker swarm
+.PHONY: testbed setup-vms delete-testbed delete-vms
+testbed:
+	$(BUILD) setup-vms
+
+delete-testbed:
+	$(BUILD) delete-vms
+
+setup-vms:
+	$(SETUP_VMS) 1
+
+delete-vms:
+	$(SETUP_VMS) 0
