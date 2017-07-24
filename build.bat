@@ -89,7 +89,7 @@ echo Entering the plugin directory.
 cd %pluginDir%
 
 echo Building vdvs.exe.
-go build -v -o vdvs.exe main.go
+go build -v -o vdvs.exe main.go main_windows.go
 echo Successfully built vdvs.exe.
 
 :: Write vsphere.json to the docker plugin config directory.
