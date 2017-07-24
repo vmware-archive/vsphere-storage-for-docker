@@ -58,11 +58,12 @@ func startDaemon() {
 
     logger, err := svc.Logger(nil)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Failed to get service logger: ", err)
     }
     
     err = svc.Run()
     if err != nil {
+        log.Fatal("Failed to run the service: ", err)
         logger.Error(err)
     }
 }

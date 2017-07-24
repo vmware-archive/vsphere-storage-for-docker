@@ -29,12 +29,12 @@ import (
 )
 
 // main for docker-volume-vsphere
-// Parses flags, initializes and mounts refcounters and finally initializes the server.
 func main() {
 	startDaemon()
 }
 
-// startPluginServer starts vDVS plugin server
+// startPluginServer starts vDVS plugin server.
+// Parses flags, initializes and mounts refcounters and finally initializes the server.
 func startPluginServer() {
 	var driver volume.Driver
 
