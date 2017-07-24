@@ -297,7 +297,7 @@ def save(volpath, kv_dict, key=None, value=None):
     while True:
         try:
             with open(meta_file, "w") as fh:
-		if key:
+                if key:
                     kv_val = fh.read()
                     try:
                         kv_dict = json.loads(kv_val)
