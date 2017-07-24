@@ -18,20 +18,20 @@ VIC is infrastructure platform to run containerized workloads alongside traditio
 Yes as long as laptop supports nested virtualization you can try it on your laptop.
  
 ## Which Kubernetes distribution is supported ?
-vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. Please refer this [section.](/prereq.html)  
+vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. Please refer this [section.](/docker-volume-vsphere/kubernetes/prereq.html)  
  
 ## Can we deploy multiple Kubernetes Cluster on one vCenter? 
-Yes. Please refer this [section.](/existing.html)  
+Yes. Please refer this [section.](/docker-volume-vsphere/kubernetes/existing.html)  
  
  
 ## Can Kubernetes Cluster access storage from another vCenter? 
-Yes. Please refer this [section.](/existing.html)
+Yes. Please refer this [section.](/docker-volume-vsphere/kubernetes/existing.html)
  
 ## Which Operating System are supported ? 
-We support Photon, Ubuntu, Core OS, please check this section for [details](/prereq.html)
+We support Photon, Ubuntu, Core OS, please check this section for [details](/docker-volume-vsphere/kubernetes/prereq.html)
  
 ## How Kubernetes volumes can be made resilient to failures on vSAN datastore?
-Please check the HA section for [details.](/ha.html)
+Please check the HA section for [details.](/docker-volume-vsphere/kubernetes/ha.html)
  
 ## Can I enable SDRS on VMs hosting kubernetes cluster?
 No.

@@ -21,22 +21,22 @@ vmkfstools -c 2G /vmfs/volumes/datastore1/volumes/myDisk.vmdk
 #vsphere-volume-pod.yaml
 
   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: test-vmdk
-   spec:
-     containers:
-     - image: gcr.io/google_containers/test-webserver
-       name: test-container
-       volumeMounts:
-       - mountPath: /test-vmdk
-         name: test-volume
-     volumes:
-     - name: test-volume
-       # This VMDK volume must already exist.
-       vsphereVolume:
-         volumePath: "[datastore1] volumes/myDisk"
-         fsType: ext4
+  kind: Pod
+  metadata:
+    name: test-vmdk
+  spec:
+    containers:
+    - image: gcr.io/google_containers/test-webserver
+      name: test-container
+      volumeMounts:
+      - mountPath: /test-vmdk
+        name: test-volume
+    volumes:
+    - name: test-volume
+      # This VMDK volume must already exist.
+      vsphereVolume:
+        volumePath: "[datastore1] volumes/myDisk"
+        fsType: ext4
 ```
 
 **Create the pod**

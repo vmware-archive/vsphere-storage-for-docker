@@ -79,7 +79,7 @@ No events.
 **Create Persistent Volume Claim**
 
 ```
-#vpshere-volume-pvc.yaml
+#vsphere-volume-pvc.yaml
 
 kind: PersistentVolumeClaim
 apiVersion: v1
