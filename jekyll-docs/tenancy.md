@@ -89,8 +89,8 @@ vmgroup vm add succeeded
 #/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
 Uuid                                  Name          Description  Default_datastore  VM_list
 ------------------------------------  ------------  -----------  -----------------  -----------------------
-ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev                                   Photon1,Photon2,Photon3
-f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test                                  Photon4,Photon5,Photon6
+ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev                datastore3         Photon1,Photon2,Photon3
+f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test               datastore3         Photon4,Photon5,Photon6
 
 ```
 
