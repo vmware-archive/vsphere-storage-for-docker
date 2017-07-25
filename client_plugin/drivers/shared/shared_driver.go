@@ -24,6 +24,7 @@ package shared
 
 import (
 	log "github.com/Sirupsen/logrus"
+	dockerClient "github.com/docker/engine-api/client"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
@@ -31,12 +32,15 @@ import (
 )
 
 const (
-	version = "vSphere Shared Volume Driver v0.2"
+	version       = "vSphere Shared Volume Driver v0.2"
+	apiVersion    = "v1.24" // docker engine 1.24 and above support this api version
+	dockerUSocket = "unix:///var/run/docker.sock"
 )
 
 // VolumeDriver - vsphere shared plugin volume driver struct
 type VolumeDriver struct {
 	utils.PluginDriver
+	dockerd *dockerClient.Client
 }
 
 // NewVolumeDriver creates driver instance
@@ -47,6 +51,23 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	d.RefCounts.Init(&d, mountDir, cfg.Driver)
 	d.MountIDtoName = make(map[string]string)
 	d.MountRoot = mountDir
+
+	// create new docker client
+	cli, err := dockerClient.NewClient(dockerUSocket, apiVersion, nil, nil)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"error": err},
+		).Error("Failed to create client for Docker ")
+		return nil
+	}
+	d.dockerd = cli
+
+	// initialize built-in etcd cluster
+	err = d.initEtcd()
+	if err != nil {
+		log.Errorf("Failed to InitEtcd")
+		return nil
+	}
 
 	log.WithFields(log.Fields{
 		"version": version,

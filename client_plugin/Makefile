@@ -101,7 +101,7 @@ COMMON_SRC = utils/log_formatter/log_formatter.go \
 VMDK_PLUGIN_SRC = vmdk_plugin/main.go vmdk_plugin/main_linux.go \
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 
-SHARED_PLUGIN_SRC = shared_plugin/main.go drivers/shared/shared_driver.go
+SHARED_PLUGIN_SRC = shared_plugin/main.go drivers/shared/shared_driver.go drivers/shared/etcdops.go
 
 TEST_SRC = ../tests/utils/inputparams/testparams.go
 
