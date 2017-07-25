@@ -16,8 +16,8 @@
 package main
 
 import (
-    "github.com/kardianos/service"
-    log "github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
+	"github.com/kardianos/service"
 )
 
 // pluginService is a wrapper for vDVS plugin server so that the plugin can
@@ -27,43 +27,43 @@ import (
 type pluginService struct{}
 
 func (p *pluginService) Start(s service.Service) error {
-    // Start should not block. Do the actual work async.
-    go p.run()
-    return nil
+	// Start should not block. Do the actual work async.
+	go p.run()
+	return nil
 }
 
 func (p *pluginService) run() {
-    // Do work here
-    startPluginServer()
+	// Do work here
+	startPluginServer()
 }
 
 func (p *pluginService) Stop(s service.Service) error {
-    // Stop should not block. Return directly.
-    return nil
+	// Stop should not block. Return directly.
+	return nil
 }
 
 // startDaemon starts vDVS plugin daemon on Windows
 func startDaemon() {
-    svcConfig := &service.Config {
-        Name:        "vdvs",
-        DisplayName: "vSphere Docker Volume Service",
-        Description: "Enables user to run stateful containerized applications on top of VMware vSphere.",
-    }
+	svcConfig := &service.Config{
+		Name:        "vdvs",
+		DisplayName: "vSphere Docker Volume Service",
+		Description: "Enables user to run stateful containerized applications on top of VMware vSphere.",
+	}
 
-    ps := &pluginService{}
-    svc, err := service.New(ps, svcConfig)
-    if err != nil {
-        log.Fatal("Failed to create the service: ", err)
-    }
+	ps := &pluginService{}
+	svc, err := service.New(ps, svcConfig)
+	if err != nil {
+		log.Fatal("Failed to create the service: ", err)
+	}
 
-    logger, err := svc.Logger(nil)
-    if err != nil {
-        log.Fatal("Failed to get service logger: ", err)
-    }
-    
-    err = svc.Run()
-    if err != nil {
-        log.Fatal("Failed to run the service: ", err)
-        logger.Error(err)
-    }
+	logger, err := svc.Logger(nil)
+	if err != nil {
+		log.Fatal("Failed to get service logger: ", err)
+	}
+
+	err = svc.Run()
+	if err != nil {
+		log.Fatal("Failed to run the service: ", err)
+		logger.Error(err)
+	}
 }
