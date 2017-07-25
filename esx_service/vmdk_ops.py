@@ -1426,7 +1426,7 @@ def disk_detach_int(vmdk_path, vm, device, key=None, value=None):
         logging.warning("%s\n%s", msg, "".join(traceback.format_tb(ex_traceback)))
         return err(msg)
 
-    setStatusDetached(vmdk_path, key=None, value=None)
+    setStatusDetached(vmdk_path, key, value)
     logging.info("Disk detached %s", vmdk_path)
     return None
 
