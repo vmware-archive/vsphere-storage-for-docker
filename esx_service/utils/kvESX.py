@@ -296,16 +296,18 @@ def save(volpath, kv_dict, key=None, value=None):
     vol_name = vmdk_utils.get_volname_from_vmdk_path(volpath)
     while True:
         try:
-            with open(meta_file, "w") as fh:
-                if key:
-                    kv_val = fh.read()
+            if key:
+                with open(meta_file, "r") as rfh:
+                    kv_val = rfh.read()
                     try:
-                        kv_dict = json.loads(kv_val)
+                        kv_match = json.loads(kv_val)
                     except ValueError:
                         logging.exception("load:Failed to decode meta-data for %s", volpath)
                         return False
-                    if key in kv_dict and kv_dict[key] != value:
+
+                    if key in kv_match and kv_match[key] != value:
                         return False
+            with open(meta_file, "w") as fh:
                 fh.write(align_str(kv_str, KV_ALIGN))
             break
         except IOError as open_error:
