@@ -18,29 +18,9 @@ package ssh
 
 import (
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 )
-
-const (
-	sshKeyOptPath = "-i /root/.ssh/id_rsa"
-)
-
-// InvokeCommand - can be consumed by test directly to invoke
-// any command on the remote host.
-// ip: remote machine address to execute on the machine
-// cmd: A command string to be executed on the remote host as per
-func InvokeCommand(ip, cmd string) (string, error) {
-	sshKeyOpt := strings.Split(os.Getenv("SSH_KEY_OPT"), " ")
-	if sshKeyOpt == nil {
-		sshKeyOpt = strings.Split(sshKeyOptPath, " ")
-	}
-	sshIdentity := []string{sshKeyOpt[0], sshKeyOpt[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
-
-	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
-	return strings.TrimSpace(string(out[:])), err
-}
 
 // InvokeCommandLocally - can be consumed by test directly to invoke
 // any command locally.
