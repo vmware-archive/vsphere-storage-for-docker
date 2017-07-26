@@ -25,9 +25,9 @@ If some test is misbehaving, then the developer can enable that log and test.
 package esx
 
 import (
+	"fmt"
 	"log"
 	"strings"
-	"fmt"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
@@ -59,17 +59,28 @@ func GetVMPowerState(vmName string) string {
 // PowerOnVM util powers on the VM
 // govc vm.power -on=true photon
 func PowerOnVM(vmName string) string {
-	// log.Printf("Powering on VM [%s]\n", vmName)
+	log.Printf("Powering on VM [%s]\n", vmName)
 	cmd := esx.PowerOnVM + vmName
 	out, _ := ssh.InvokeCommandLocally(cmd)
 	return out
 }
 
 // PowerOffVM util powers off the VM
+// Caution: If a VM is writing to disk when it receives a
+// Power Off command, data corruption may occur.
 // govc vm.power -off=true photon
 func PowerOffVM(vmName string) string {
-	// log.Printf("Powering off VM [%s]\n", vmName)
+	log.Printf("Powering off VM [%s]\n", vmName)
 	cmd := esx.PowerOffVM + vmName
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
+}
+
+// ShutDownVM util shuts down the VM
+// govc vm.power -s=true photon
+func ShutDownVM(vmName string) string {
+	log.Printf("Shutting down VM [%s]\n", vmName)
+	cmd := esx.ShutDownVM + vmName
 	out, _ := ssh.InvokeCommandLocally(cmd)
 	return out
 }

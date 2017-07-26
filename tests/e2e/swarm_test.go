@@ -111,26 +111,26 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	status := verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
+	status, host1 := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host1, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	containerName, err := dockercli.GetContainerName(host, s.serviceName)
+	containerName, err := dockercli.GetContainerName(host1, s.serviceName)
 	log.Printf("ContainerName: [%s]\n", containerName)
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 
-	out, err = dockercli.WriteToContainer(host, containerName, volPath, testFile, testData)
+	out, err = dockercli.WriteToContainer(host1, containerName, volPath, testFile, testData)
 	c.Assert(err, IsNil, Commentf(out))
 
-	out, err = dockercli.ReadFromContainer(host, containerName, volPath, testFile)
+	out, err = dockercli.ReadFromContainer(host1, containerName, volPath, testFile)
 	c.Assert(err, IsNil, Commentf(out))
 	c.Assert(out, Equals, testData)
 
-	// Power off the running worker node
-	hostName := esx.RetrieveVMNameFromIP(host)
-	esx.PowerOffVM(hostName)
+	// Shut down and then power off the running worker node
+	hostName := esx.RetrieveVMNameFromIP(host1)
+	esx.ShutDownVM(hostName)
 
 	isStatusChanged := esx.WaitForExpectedState(esx.GetVMPowerState, hostName, properties.PowerOffState)
 	c.Assert(isStatusChanged, Equals, true, Commentf("VM [%s] should be powered off state", hostName))
@@ -138,30 +138,29 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	status = verification.IsDockerServiceRunning(s.master, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Service %s is not running", s.serviceName))
 
-	// Only 2 worker nodes - running node is down, the container should be failed over to the other node
+	// Only 2 worker nodes - And as running node is down, the container should fail over to the other node
 	var otherWorker string
-	if host == s.worker1 {
+	if host1 == s.worker1 {
 		otherWorker = s.worker2
 	} else {
 		otherWorker = s.worker1
 	}
-	status, host = verification.IsDockerContainerRunning([]string{otherWorker}, s.serviceName, 1)
+	status, host2 := verification.IsDockerContainerRunning([]string{otherWorker}, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatus(s.volumeName, host2, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	containerName, err = dockercli.GetContainerName(host, s.serviceName)
+	containerName, err = dockercli.GetContainerName(host2, s.serviceName)
 	c.Assert(err, IsNil, Commentf("Failed to retrieve container name: %s", containerName))
 
-	// TODO: this verification does not pass during auto run - need further investigation
-	// out, err = dockercli.ReadFromContainer(host, containerName, volPath, testFile)
-	// c.Assert(err, IsNil, Commentf(out))
-	// c.Assert(out, Equals, testData)
+	out, err = dockercli.ReadFromContainer(host2, containerName, volPath, testFile)
+	c.Assert(err, IsNil, Commentf(out))
+	c.Assert(out, Equals, testData)
 
 	// Power on the worker node
 	esx.PowerOnVM(hostName)
-	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host, hostName)
+	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host1, hostName)
 	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", hostName))
 
 	out, err = dockercli.RemoveService(s.master, s.serviceName)
@@ -186,18 +185,18 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 // 1. Create a docker service with replicas setting to 1
 // 2. Verify the service is up and running with one node
 // 3. Verify one container is spawned
-// 5. Verify the volume is in attached status
-// 6. Scale the service to set replica numbers to 2
-// 7. Verify the service is up and running with two nodes
-// 8. Verify 2 containers are spawned
-// 9. Stop one node of the service
-// 10. Verify the service is still running with two nodes
-// 11. Verify there are still 2 containers up and running
-// 12. Verify the volume is in attached status
-// 13. Delete the volume - expect fail
-// 14. Remove the service
-// 15. Verify the service is gone
-// 16. Verify the volume is in detached status
+// 4. Verify the volume is in attached status
+// 5. Scale the service to set replica numbers to 2
+// 6. Verify the service is up and running with two nodes
+// 7. Verify 2 containers are spawned
+// 8. Stop one node of the service
+// 9. Verify the service is still running with two nodes
+// 10. Verify there are still 2 containers up and running
+// 11. Verify the volume is in attached status
+// 12. Delete the volume - expect fail
+// 13. Remove the service
+// 14. Verify the service is gone
+// 15. Verify the volume is in detached status
 func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	misc.LogTestStart(c.TestName())
 
