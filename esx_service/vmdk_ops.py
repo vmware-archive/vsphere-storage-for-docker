@@ -1129,7 +1129,7 @@ def setStatusAttached(vmdk_path, vm, vm_dev_info=None):
         logging.warning("Attach: Failed to save Disk metadata for %s", vmdk_path)
 
 
-def setStatusDetached(vmdk_path):
+def setStatusDetached(vmdk_path, key=None, value=None):
     '''Sets metadata for vmdk_path to "detached"'''
     logging.debug("Set status=detached disk=%s", vmdk_path)
     vol_meta = kv.getAll(vmdk_path)
@@ -1143,7 +1143,7 @@ def setStatusDetached(vmdk_path):
         del vol_meta[kv.ATTACHED_VM_DEV]
     except:
         pass
-    if not kv.setAll(vmdk_path, vol_meta):
+    if not kv.setAll(vmdk_path, vol_meta, key, value):
         logging.warning("Detach: Failed to save Disk metadata for %s", vmdk_path)
 
 
@@ -1407,7 +1407,7 @@ def disk_detach(vmdk_path, vm):
 
     return disk_detach_int(vmdk_path, vm, device)
 
-def disk_detach_int(vmdk_path, vm, device):
+def disk_detach_int(vmdk_path, vm, device, key=None, value=None):
     si = get_si()
     spec = vim.vm.ConfigSpec()
     dev_changes = []
@@ -1426,7 +1426,7 @@ def disk_detach_int(vmdk_path, vm, device):
         logging.warning("%s\n%s", msg, "".join(traceback.format_tb(ex_traceback)))
         return err(msg)
 
-    setStatusDetached(vmdk_path)
+    setStatusDetached(vmdk_path, key, value)
     logging.info("Disk detached %s", vmdk_path)
     return None
 

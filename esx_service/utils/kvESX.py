@@ -284,7 +284,7 @@ def load(volpath):
 
 
 @diskLibLock
-def save(volpath, kv_dict):
+def save(volpath, kv_dict, key=None, value=None):
     """
     Save the dictionary to side car.
     """
@@ -296,6 +296,17 @@ def save(volpath, kv_dict):
     vol_name = vmdk_utils.get_volname_from_vmdk_path(volpath)
     while True:
         try:
+            if key:
+                with open(meta_file, "r") as rfh:
+                    kv_val = rfh.read()
+                    try:
+                        kv_match = json.loads(kv_val)
+                    except ValueError:
+                        logging.exception("load:Failed to decode meta-data for %s", volpath)
+                        return False
+
+                    if key in kv_match and kv_match[key] != value:
+                        return False
             with open(meta_file, "w") as fh:
                 fh.write(align_str(kv_str, KV_ALIGN))
             break

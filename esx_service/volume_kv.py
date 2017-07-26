@@ -121,13 +121,13 @@ def getAll(vol_path):
     return kvESX.load(vol_path)
 
 
-def setAll(vol_path, vol_meta):
+def setAll(vol_path, vol_meta, key=None, value=None):
     """
     Store the meta-data for a given vol-path
     Return true if successful, false otherwise
     """
     if vol_meta:
-        return kvESX.save(vol_path, vol_meta)
+        return kvESX.save(vol_path, vol_meta, key, value)
     # No data to save
     return True
 
