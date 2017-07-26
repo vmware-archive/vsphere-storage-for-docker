@@ -131,7 +131,11 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 }
 
 // validateCreateOptions validates the volume create request.
-func validateCreateOptions(r volume.Request) error {
+func validateCreateOptions(r *volume.Request) error {
+	if r.Options == nil {
+		r.Options = make(map[string]string)
+	}
+
 	// Clone isn't supported
 	if _, result := r.Options["clone-from"]; result == true {
 		return fmt.Errorf("Unrecognized option - clone-from")
@@ -439,7 +443,7 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name, "option": r.Options}).Info("Creating volume ")
 
-	err := validateCreateOptions(r)
+	err := validateCreateOptions(&r)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
