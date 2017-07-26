@@ -200,7 +200,7 @@ func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup1(c *C) {
 	out, err = dockercli.AttachVolume(s.config.DockerHosts[0], s.volumeNames[0], containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status := verification.VerifyAttachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost)
+	status := verification.VerifyAttachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost, s.config.DockerHostNames[0])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeNames[0]))
 
 	// Create a vmgroup - operation should fail
@@ -273,7 +273,7 @@ func (s *DefaultVMGroupTestSuite) TestMoveVMBetweenVmgroup2(c *C) {
 	out, err = dockercli.AttachVolume(s.config.DockerHosts[0], s.volumeNames[0], containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status := verification.VerifyAttachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost)
+	status := verification.VerifyAttachedStatus(s.volumeNames[0], s.config.DockerHosts[0], s.config.EsxHost, s.config.DockerHostNames[0])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeNames[0]))
 
 	// Create a vmgroup - operation should fail

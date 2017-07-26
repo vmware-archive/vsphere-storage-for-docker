@@ -114,7 +114,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatusByIP(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	containerName, err := dockercli.GetContainerName(host, s.serviceName)
@@ -148,7 +148,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	status, host = verification.IsDockerContainerRunning([]string{otherWorker}, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatusByIP(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	containerName, err = dockercli.GetContainerName(host, s.serviceName)
@@ -212,7 +212,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	status, host := verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 1)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatusByIP(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	out, err = dockercli.ScaleService(s.master, s.serviceName, 2)
@@ -235,7 +235,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossReplicas(c *C) {
 	status, host = verification.IsDockerContainerRunning(s.swarmNodes, s.serviceName, 2)
 	c.Assert(status, Equals, true, Commentf("Container %s is not running", s.serviceName))
 
-	status = verification.VerifyAttachedStatus(s.volumeName, host, s.esxName)
+	status = verification.VerifyAttachedStatusByIP(s.volumeName, host, s.esxName)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	out, err = dockercli.DeleteVolume(s.master, s.volumeName)

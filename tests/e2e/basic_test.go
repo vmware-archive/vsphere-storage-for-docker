@@ -80,7 +80,7 @@ var _ = Suite(&BasicTestSuite{})
 func (s *BasicTestSuite) TestVolumeLifecycle(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	for _, host := range s.config.DockerHosts {
+	for idx, host := range s.config.DockerHosts {
 		out, err := dockercli.CreateVolume(host, s.volName1)
 		c.Assert(err, IsNil, Commentf(out))
 
@@ -90,7 +90,7 @@ func (s *BasicTestSuite) TestVolumeLifecycle(c *C) {
 		out, err = dockercli.AttachVolume(host, s.volName1, s.containerName)
 		c.Assert(err, IsNil, Commentf(out))
 
-		status := verification.VerifyAttachedStatus(s.volName1, host, s.esx)
+		status := verification.VerifyAttachedStatus(s.volName1, host, s.esx, s.config.DockerHostNames[idx])
 		c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volName1))
 
 		out, err = dockercli.DeleteVolume(host, s.volName1)

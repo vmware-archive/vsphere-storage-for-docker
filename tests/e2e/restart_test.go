@@ -121,7 +121,7 @@ func (s *RestartTestData) TestVolumeDetached(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 2. Verify attached status
-	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost, s.config.DockerHostNames[1])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// 3. Restart docker
@@ -174,7 +174,7 @@ func (s *RestartTestData) TestPluginKill(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 2. Verify volume attached status
-	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost, s.config.DockerHostNames[1])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// 3. Kill vDVS plugin
@@ -230,7 +230,7 @@ func (s *RestartTestData) TestRecoverMountsAfterRestart(c *C) {
 	misc.SleepForSec(20)
 
 	// 3. Verify the volume is attached to the VM
-	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost, s.config.DockerHostNames[1])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// 4. Run third container

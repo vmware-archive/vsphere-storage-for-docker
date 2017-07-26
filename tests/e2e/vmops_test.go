@@ -86,7 +86,7 @@ func (vm *VMOpsTest) TestVMSnapWithPersistentDisk(c *C) {
 	_, err := dockercli.AttachVolume(vm.config.DockerHosts[0], vm.volName1, vm.testContainer)
 	c.Assert(err, IsNil, Commentf("Failed running container %s with volume %s attached as persistent\n", vm.testContainer, vm.volName1))
 
-	status := verification.VerifyAttachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost)
+	status := verification.VerifyAttachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost, vm.config.DockerHostNames[0])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", vm.volName1))
 
 	// 2. Snapshot VM and verify attached state of volume
@@ -97,7 +97,7 @@ func (vm *VMOpsTest) TestVMSnapWithPersistentDisk(c *C) {
 	out, err = esx.RemoveSnapshot(vm.config.DockerHostNames[0], "snap1")
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyAttachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost)
+	status = verification.VerifyAttachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost, vm.config.DockerHostNames[0])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", vm.volName1))
 
 	// 4. Stop container and verify volume is detached
@@ -126,7 +126,7 @@ func (vm *VMOpsTest) TestVMSnapWithIndependentDisk(c *C) {
 	out, err := esx.TakeSnapshot(vm.config.DockerHostNames[0], "snap1")
 	c.Assert(err, Not(IsNil), Commentf(out))
 
-	status := verification.VerifyAttachedStatus(vm.volName2, vm.config.DockerHosts[0], vm.config.EsxHost)
+	status := verification.VerifyAttachedStatus(vm.volName2, vm.config.DockerHosts[0], vm.config.EsxHost, vm.config.DockerHostNames[0])
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", vm.volName2))
 
 	// 3. Stop container and verify volume is detached

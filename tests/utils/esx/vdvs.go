@@ -32,12 +32,12 @@ func IsVDVSRunning(ip string) bool {
 	maxAttempt := 30
 	waitTime := 3
 	for attempt := 0; attempt < maxAttempt; attempt++ {
-		misc.SleepForSec(waitTime)
 		pid, _ := ssh.InvokeCommand(ip, "pidof docker-volume-vsphere")
 		if pid != "" {
 			log.Printf("Process ID of docker-volume-vsphere is: %s", pid)
 			return true
 		}
+		misc.SleepForSec(waitTime)
 	}
 	log.Printf("vDVS is not running on VM: %s", ip)
 	return false

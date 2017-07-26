@@ -103,7 +103,7 @@ func (s *PostUpgradeTestSuite) TestVolumeLifecycle(c *C) {
 	out, err := dockercli.AttachVolume(s.vm1, s.volName1, s.containerName1)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyAttachedStatus(s.volName1, s.vm1, s.esx)
+	status = verification.VerifyAttachedStatus(s.volName1, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volName1))
 
 	out, err = dockercli.ReadFromContainer(s.vm1, s.containerName1, volPath, testFile)
@@ -146,7 +146,7 @@ func (s *PostUpgradeTestSuite) TestVolumeLifecycle(c *C) {
 	out, err = dockercli.AttachVolume(s.vm1, s.volName2, s.containerName2)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status = verification.VerifyAttachedStatus(s.volName2, s.vm1, s.esx)
+	status = verification.VerifyAttachedStatus(s.volName2, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volName2))
 
 	out, err = dockercli.WriteToContainer(s.vm1, s.containerName2, volPath, testFile, testData)

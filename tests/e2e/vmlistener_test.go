@@ -94,7 +94,7 @@ func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Verify the volume is in attached status
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Restart vmdkops service
@@ -102,7 +102,7 @@ func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Make sure volume stays attached after vmdkopsd restart
-	status = verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status = verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Remove the container
@@ -138,7 +138,7 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Verify the volume is in attached status
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Kill the VM
@@ -199,7 +199,7 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Verify the volume is in attached status
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Kill VM1
@@ -215,7 +215,7 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Status should be attached
-	status = verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx)
+	status = verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx, s.vm2Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Remove the container from VM2
@@ -285,7 +285,7 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Verify the volume is in attached status
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Kill VM1
@@ -301,7 +301,7 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// Status should be attached
-	status = verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx)
+	status = verification.VerifyAttachedStatus(s.volumeName, s.vm2, s.esx, s.vm2Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// Remove the container from VM2
@@ -365,7 +365,7 @@ func (s *VMListenerTestParams) TestVolumeAttachedForHostdRestart(c *C) {
 	misc.SleepForSec(15)
 
 	// 2. Verify volume stays attached
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// 3. Kill this VM
@@ -423,15 +423,12 @@ func (s *VMListenerTestParams) TestVolumeAttachedForVMSuspend(c *C) {
 	out, err = esxutil.SuspendResumeVM(s.esx, s.vm1Name)
 	c.Assert(err, IsNil, Commentf(out))
 
-	// After suspend/resume, fetching the VM name fails via govc, hence this delay
-	misc.SleepForSec(15)
-
 	// 2. Resume is like a power-on and so include the same checks
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
 	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// 3. Verify volume stays attached
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// 4. Remove the container if it still exists
@@ -473,7 +470,7 @@ func (s *VMListenerTestParams) TestVolumeAttachedWhenHostdKilled(c *C) {
 	misc.SleepForSec(15)
 
 	// 2. Verify volume stays attached
-	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
 	// 3. Kill this VM

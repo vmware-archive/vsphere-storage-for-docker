@@ -255,7 +255,6 @@ func (s *vgBasicSuite) TestDeleteVMFromVmgroup(c *C) {
 
 	// Destroy the vm
 	esx.DestroyVM(vmName)
-	c.Assert(esx.IsVMExist(vmName), Equals, false, Commentf("Failed to delete VM - %s .", vmName, vgName))
 
 	// Check vmgroup ls
 	isVmgroupAvailable = admincli.IsVmgroupPresent(s.config.EsxHost, vgName)

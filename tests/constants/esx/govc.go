@@ -25,6 +25,9 @@ const (
 	// VMInfoByIP refers to govc query to grab VM IP from VM info object
 	VMInfoByIP = VMInfo + "-vm.ip="
 
+	// VMInfoByUuid refers to govc query to fetch VM infor using the VM UUID
+	VMInfoByUuid = VMInfo + "-waitip=true -vm.uuid="
+
 	// DatastoreInfo get datastore info from govc
 	DatastoreInfo = govcCmd + "datastore.info "
 
@@ -41,6 +44,9 @@ const (
 
 	// VMName JSON object key refers VM name
 	VMName = govcResponseRoot + ".Name"
+
+	// VMUuid JSON object key refers VM name
+	VMUuid = govcResponseRoot + ".Config.Uuid"
 
 	// VMPowerState JSON object key refers VM power state
 	VMPowerState = govcResponseRoot + ".Runtime.PowerState"

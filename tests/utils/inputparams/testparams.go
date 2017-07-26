@@ -35,6 +35,7 @@ type TestConfig struct {
 	EsxHost         string
 	DockerHosts     []string
 	DockerHostNames []string
+	DockerHostUuids []string
 	Datastores      []string
 }
 
@@ -150,6 +151,9 @@ func getInstance() *TestConfig {
 	if config.DockerHostNames[0] == noVMName || config.DockerHostNames[1] == noVMName {
 		log.Fatalf("Failed to find vm name for docker hosts - %s , %s ", config.DockerHosts[0], config.DockerHosts[1])
 	}
+	config.DockerHostUuids = append(config.DockerHostUuids, esx.RetrieveVMUuidFromIP(config.DockerHosts[0]))
+	config.DockerHostUuids = append(config.DockerHostUuids, esx.RetrieveVMUuidFromIP(config.DockerHosts[1]))
+
 	config.Datastores = esx.GetDatastoreList()
 	if len(config.Datastores) < 1 {
 		log.Fatalf("No datastores found. At least one datastore is needed to run tests.")

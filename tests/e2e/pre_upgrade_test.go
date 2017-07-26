@@ -88,7 +88,7 @@ func (s *PreUpgradeTestSuite) TestVolumeLifecycle(c *C) {
 	out, err = dockercli.AttachVolume(s.vm1, s.volName1, s.containerName)
 	c.Assert(err, IsNil, Commentf(out))
 
-	status := verification.VerifyAttachedStatus(s.volName1, s.vm1, s.esx)
+	status := verification.VerifyAttachedStatus(s.volName1, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volName1))
 
 	out, err = dockercli.WriteToContainer(s.vm1, s.containerName, volPath, testFile, testData)
@@ -113,7 +113,7 @@ func (s *PreUpgradeTestSuite) TestVolumeLifecycle(c *C) {
 	c.Assert(out, Equals, testData, Commentf("Data read from volume[%s] does not match written previously[%s]",
 		out, testData))
 
-	status = verification.VerifyAttachedStatus(s.volName1, s.vm1, s.esx)
+	status = verification.VerifyAttachedStatus(s.volName1, s.vm1, s.esx, s.vm1Name)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volName1))
 
 	out, err = dockercli.RemoveContainer(s.vm1, s.containerName)

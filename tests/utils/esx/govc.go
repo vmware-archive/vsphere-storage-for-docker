@@ -30,7 +30,6 @@ import (
 	"fmt"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
@@ -39,7 +38,7 @@ const (
 )
 
 // RetrieveVMNameFromIP util retrieves VM  name from passed VM IP
-//govc vm.info -vm.ip=10.20.104.62 -json | jq -r .VirtualMachines[].Name
+//govc vm.info -vm.ip=<vm IP> -json | jq -r .VirtualMachines[].Name
 func RetrieveVMNameFromIP(ip string) string {
 	// log.Printf("Finding VM name from IP Address [%s]\n", ip)
 	cmd := esx.VMInfoByIP + ip + esxcliJSON + esx.VMName
@@ -47,6 +46,16 @@ func RetrieveVMNameFromIP(ip string) string {
 	return out
 }
 
+// RetrieveVMUuidFromIP retrieves VM UUID from passed VM IP
+//govc vm.info -vm.ip=<vm IP> -json | jq -r .VirtualMachines[].Config.Uuid
+func RetrieveVMUuidFromIP(ip string) string {
+	// log.Printf("Finding VM uuid with IP [%s]\n", ip)
+	cmd := esx.VMInfoByIP + ip + esxcliJSON + esx.VMUuid
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
+}
+
+// GetVMPowerState util retrieves VM's current power state
 // GetVMPowerState util retrieves VM's current power state
 // govc vm.info -json photon1 | jq -r .VirtualMachines[].Runtime.PowerState
 func GetVMPowerState(vmName string) string {
@@ -108,14 +117,9 @@ func DestroyVM(vmName string) string {
 // IsVMExist returns true/false based on vm existence
 func IsVMExist(vmName string) bool {
 	log.Printf("Verifying if vm - %s exists \n", vmName)
-	maxAttempt := 15
-	waitTime := 2
-	for attempt := 0; attempt < maxAttempt; attempt++ {
-		vmList, _ := ssh.InvokeCommandLocally(esx.ListVMs + " /ha-datacenter/vm")
-		if strings.Contains(vmList, vmName) {
-			return true
-		}
-		misc.SleepForSec(waitTime)
+	vmList, _ := ssh.InvokeCommandLocally(esx.ListVMs + " /ha-datacenter/vm")
+	if strings.Contains(vmList, vmName) {
+		return true
 	}
 	return false
 }

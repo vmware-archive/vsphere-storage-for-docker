@@ -100,7 +100,7 @@ func (s *RefcountTestSuite) TestRefcountingRecovery(c *C) {
 
 		s.containerNameList = append(s.containerNameList, cName)
 
-		status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[0], s.config.EsxHost)
+		status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[0], s.config.EsxHost, s.config.DockerHostNames[0])
 		c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 	}
 
