@@ -23,10 +23,10 @@ entries:
         output: web
         subfolderitems:
         - title: Volumes
-          url: /k8s-vols.html
+          url: /kubernetes-volumes.html
           output: web
         - title: Persistent Volumes & Persistent Volumes Claims
-          url: /pv-pvc.html
+          url: /persistent-vols-claims.html
           output: web
         - title: Dynamic Provisioning & Storage Class
           url: /storageclass.html
@@ -35,19 +35,19 @@ entries:
           url: /statefulsets.html
           output: web
     - title: Storage Policy Based Management for Dynamic Provisioning
-      url: /spbm.html
+      url: /policy-based-mgmt.html
       output: web
     - title: High Availability of Kubernetes Cluster
-      url: /ha.html
+      url: /high-availability.html
       output: web
   - title: Deployment
     output: web
     folderitems:
       - title: Prerequistes
-        url: /prereq.html
+        url: /prerequisites.html
         output: web
       - title: Kubernetes Anywhere
-        url: /k8sanywhere.html
+        url: /kubernetes-anywhere.html
         output: web
       - title: Configurations on existing Kubernetes Cluster
         url: /existing.html

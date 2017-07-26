@@ -14,10 +14,7 @@ vSphere is one of the provisioners and it allows following parameters:
 * **datastore** is an optional field which can be VMFSDatastore or VSANDatastore. This allows user to select the datastore to provision PV from, if not specified the default datastore from vSphere config file is used.
 
 * **storagePolicyName** is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.
-
-vSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these vSAN storage capabilities configured with it. 
- 
-There are additional parameters which are covered in Storage Policy Management section.
+vSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these vSAN storage capabilities configured with it. There are additional parameters which are covered in [Storage Policy Management section](/docker-volume-vsphere/kubernetes/policy-based-mgmt.html).
 
 **Note:**
 
@@ -79,7 +76,11 @@ Annotations:    <none>
 Provisioner:    kubernetes.io/vsphere-volume
 Parameters:     diskformat=zeroedthick,fstype=ext3
 No events.
-Create Persistent Volume Claim.
+```
+
+**Create Persistent Volume Claim**
+
+```
 Vsphere-volume-pvcsc.yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -114,9 +115,11 @@ Labels:         <none>
 Capacity:       2Gi
 Access Modes:   RWO
 Events:
-  FirstSeen LastSeen Count From   SubObjectPath   Type  Reason Message
+  FirstSeen LastSeen Count  From        SubObjectPath   Type  Reason Message
   -----------------------------------------------------------
-  1m          1m      1       persistentvolume-controller  Normal  ProvisioningSucceeded   Successfully provisioned volume pvc-83295256-f8e0-11e6-8263-005056b2349c using Kubernetes.io/vsphere-volume
+  1m          1m      1   persistentvolume-controller  Normal  Provisioning Succeeded   
+
+  Successfully provisioned volume pvc-83295256-f8e0-11e6-8263-005056b2349c using Kubernetes.io/vsphere-volume
 ```
 
 Persistent Volume is automatically created and is bounded to this pvc.

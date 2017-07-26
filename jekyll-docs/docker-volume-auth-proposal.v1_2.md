@@ -109,16 +109,20 @@ The following privileges and limits can be granted to tenants for specific datas
 The following example is illustrated via CLI commands from a hypothetical program called `auth_config`. `auth_config` is not tied to any specific implementation but is expected to display the workflow of managing authorization configuration.
 
 1.  **Create a tenant named `tenant1` consisting of 3 VMs**
-    `auth_config` `tenant` `create` `tenant1` `--vms` `vm1,vm2,vm3`
+    ```
+    auth_config tenant create tenant1 --vms vm1,vm2,vm3
+    ```
 
 2.  **Assigning create, mount and delete privileges to a datastore for a tenant**
-    `auth_config` `tenant` `set` `privileges` `--tenant` `tenant1` `--datastore` `datastore1` `--privileges` `create,mount,delete`
+    ```
+    auth_config tenant set privileges --tenant tenant1 --datastore datastore1 --privileges create,mount,delete
+    ```
 
 3.  **Commit the configuration**
+    ```
+    auth_config commit
+    ```
 
-`auth_config` `commit`
-
-</ol>
 ### Defaults
 
 By default, VMs are assigned to a default tenant and are granted unlimited privileges to all datastores visible from the host on which they reside. The privileges on the default tenant cannot be modified or restricted. VMs can see all volumes ever created on these datastores by other VMs that are or were part of the default tenant, and can mount and delete these volumes. However, volumes created by VMs on a tenant other than the default tenant are not visible to VMs in the default tenant. Note that a VM can only be a member of a single tenant at a time.

@@ -18,7 +18,7 @@ You can specify the existing vCenter Storage Policy Based Management (SPBM) poli
 **Create Storage Class**
 
 ```
-#sphere-volume-spbm-policy.yaml
+#vsphere-volume-spbm-policy.yaml
 
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -127,7 +127,11 @@ Annotations:	<none>
 Provisioner:	kubernetes.io/vsphere-volume
 Parameters:	diskformat=zeroedthick, hostFailuresToTolerate="2", cachereservation="20"
 No events.
-Create Persistent Volume Claim.
+```
+
+**Create Persistent Volume Claim**
+
+```
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
