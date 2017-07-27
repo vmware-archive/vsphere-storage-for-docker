@@ -108,6 +108,7 @@ echo Moving binaries to the build directory.
 if not exist %winBuildDir% mkdir %winBuildDir%
 move /y %vmdkopsDir%\vmci_client.dll %winBuildDir%
 move /y vdvs.exe %winBuildDir%
+powershell Compress-Archive -Path %winBuildDir%\* -DestinationPath %winBuildDir%\docker-volume-vsphere.zip
 echo Successfully moved binaries to the build directory.
 
 cd %projectRoot%
