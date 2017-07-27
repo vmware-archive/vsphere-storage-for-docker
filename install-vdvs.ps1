@@ -20,7 +20,7 @@
 
 # Command line parameters
 param (
-    [string]$uri, # TODO: add a default value once it's available
+    [string]$uri, # TODO: add a default value once it's available (issue #1645)
     [switch]$uninstall
 )
 
@@ -41,7 +41,7 @@ function Uninstall-Service([System.ServiceProcess.ServiceController]$svc) {
     echo "Deleting Windows service $svcName..."
     sc.exe delete $svcName
 
-    echo "Deleteing $installPath..."
+    echo "Deleting $installPath..."
     Remove-Item -Path $installPath -Recurse -Force
 
     echo "Windows service $svcName uninstalled successfully!"
@@ -63,7 +63,8 @@ if ($uninstall) {
     return
 }
 
-# Check URI parameter - TODO: remove this once we have a default value for the URI parameter
+# Check URI parameter
+# TODO: remove this once we have a default value for the URI parameter (issue #1645)
 if (! $uri) {
      echo "Usage: install-vdvs.ps1 <uri>"
      return
