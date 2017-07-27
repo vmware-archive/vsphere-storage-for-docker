@@ -32,7 +32,7 @@ $exePathName = $installPath + "\vdvs.exe"
 $zipFileName = "docker-volume-vsphere.zip"
 
 # Check if vdvs plugin is already installed
-$svc = Get-Service -Name $svcName
+$svc = Get-Service | Where-Object {$_.Name -eq $svcName}
 if ($svc) {
     echo "Windows service $svcName is already installed."
     $reinstall = Read-Host "Do you want to reinstall [Y/N]?"
