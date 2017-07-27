@@ -82,5 +82,4 @@ if (! $?) {
 
 # Show the running service
 Get-Service -Name $svcName
-
 echo "Windows service $svcName installed successfully!"
