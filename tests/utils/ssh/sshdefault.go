@@ -12,23 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This util exposes util to invoke remove commands using ssh
+// Exposes util to invoke remote commands on non-windows hosts via ssh.
+
+// +build !winutil
 
 package ssh
 
 import (
-	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
 
-// InvokeCommandLocally - can be consumed by test directly to invoke
-// any command locally.
+// sshKeyOptPath is the option to specify the rsa key while connecting via ssh.
+const sshKeyOptPath = "-i /root/.ssh/id_rsa"
+
+// InvokeCommand - can be consumed by test directly to invoke
+// any command on the remote host.
+// ip: remote machine address to execute on the machine
 // cmd: A command string to be executed on the remote host as per
-func InvokeCommandLocally(cmd string) (string, error) {
-	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
-	if err != nil {
-		log.Printf("Failed to invoke command [%s]: %v", cmd, err)
+func InvokeCommand(ip, cmd string) (string, error) {
+	sshKeyOpt := strings.Split(os.Getenv("SSH_KEY_OPT"), " ")
+	if sshKeyOpt == nil {
+		sshKeyOpt = strings.Split(sshKeyOptPath, " ")
 	}
+	sshIdentity := []string{sshKeyOpt[0], sshKeyOpt[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
+
+	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
 	return strings.TrimSpace(string(out[:])), err
 }
