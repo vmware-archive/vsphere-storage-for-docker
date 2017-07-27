@@ -37,15 +37,12 @@ if ($svc) {
     echo "Windows service $svcName is already installed."
     $reinstall = Read-Host "Do you want to reinstall [Y/N]?"
     if ($reinstall -eq "Y") {
-        $svc = Get-Service -Name $svcName
         if ($svc.Status -eq "Running") {
             echo "Stopping Windows service $svcName..."
-            sc.exe stop $svcName
-            echo "Stopping Windows service $svcName successfully!"
+            Stop-Service -Name $svcName
         }
         echo "Uninstalling Windows service $svcName..."
         sc.exe delete $svcName
-        echo "Uninstalling Windows service $svcName successfully!"
     } else {
         return
     }
@@ -54,10 +51,7 @@ if ($svc) {
 # Download the vdvs binary
 echo "Downloading from $uri..."
 Invoke-WebRequest $uri -OutFile $zipFileName
-
-if ($?) {
-    echo "Downloading from $uri successfully!"
-} else {
+if (! $?) {
     echo "Failed to download from $uri."
     return
 }
@@ -65,9 +59,7 @@ if ($?) {
 # Extract to the installation folder
 echo "Extracting $zipFileName into $installPath..."
 Expand-Archive -Path $zipFileName -DestinationPath $installPath -Force
-if ($?) {
-    echo "Extracting $zipFileName into $installPath successfully!"
-} else {
+if (! $?) {
     echo "Failed to extract $zipFileName into $installPath."
     return
 }
@@ -75,9 +67,7 @@ if ($?) {
 # Install the vdvs plugin as a service
 echo "Installing Windows service $svcName from $exePathName..."
 New-Service -Name $svcName -BinaryPathName $exePathName -DisplayName $svcDisplayName -Description $svcDescription
-if ($?) {
-    echo "Installing Windows service $svcName successfully!"
-} else {
+if (! $?) {
     echo "Failed to install Windows service $svcName."
     return
 }
@@ -85,13 +75,10 @@ if ($?) {
 # Start the vdvs service
 echo "Starting Windows service $svcName..."
 Start-Service -Name $svcName
-if ($?) {
-    echo "Starting Windows service $svcName successfully!"
-} else {
+if (! $?) {
     echo "Failed to start Windows service $svcName."
     return
 }
 
 # Show the running service
-$svc = Get-Service -Name $svcName
-echo $svc
+Get-Service -Name $svcName
