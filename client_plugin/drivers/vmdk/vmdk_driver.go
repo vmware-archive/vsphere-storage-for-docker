@@ -266,8 +266,9 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	return volume.Response{Mountpoint: mountpoint}
 }
 
-// prepareCreateOptions sets default options for create request r.
-func (d *VolumeDriver) prepareCreateOptions(r volume.Request) error {
+// prepareCreateOptions sets default options for the given request, allocates
+// request options if needed
+func (d *VolumeDriver) prepareCreateOptions(r *volume.Request) error {
 	if r.Options == nil {
 		r.Options = make(map[string]string)
 	}
@@ -332,7 +333,7 @@ func (d *VolumeDriver) detachAndRemove(name string) {
 
 // Create creates a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
-	err := d.prepareCreateOptions(r)
+	err := d.prepareCreateOptions(&r)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to prepare options ")
 		return volume.Response{Err: err.Error()}
