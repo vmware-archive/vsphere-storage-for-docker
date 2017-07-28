@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
@@ -33,15 +34,25 @@ const (
 	etcdScheme               = "http://"
 	etcdClusterStateNew      = "new"
 	etcdClusterStateExisting = "existing"
+	requestTimeout           = 5 * time.Second
+	// prefix for volume state key in etcd
+	etcdPrefixState = "SVOLS_stat_"
+	// prefix for volume global refcount key in etcd
+	etcdPrefixGRef = "SVOLS_gref_"
+	// prefix for volume information key in etcd
+	// volume information includes port, service name, credentials, client lists...
+	etcdPrefixInfo = "SVOLS_info_"
+
+	etcdClientCreateError = "Failed to create etcd client"
 )
 
 // initEtcd start or join ETCD cluster depending on the role of the node
 func (d *VolumeDriver) initEtcd() error {
 	ctx := context.Background()
-	cli := d.dockerd
+	docker := d.dockerd
 
 	// get NodeID from docker client
-	info, err := cli.Info(ctx)
+	info, err := docker.Info(ctx)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"error": err},
@@ -59,7 +70,7 @@ func (d *VolumeDriver) initEtcd() error {
 	}
 
 	// check my local role
-	node, _, err := cli.NodeInspectWithRaw(ctx, nodeID)
+	node, _, err := docker.NodeInspectWithRaw(ctx, nodeID)
 	if err != nil {
 		log.WithFields(log.Fields{"nodeID": nodeID,
 			"error": err}).Error("Failed to inspect node ")
@@ -84,7 +95,7 @@ func (d *VolumeDriver) initEtcd() error {
 	}
 
 	// if manager, first find out who's leader, then proceed to join ETCD cluster
-	nodes, err := cli.NodeList(ctx, types.NodeListOptions{})
+	nodes, err := docker.NodeList(ctx, types.NodeListOptions{})
 	if err != nil {
 		log.WithFields(log.Fields{"nodeID": nodeID,
 			"error": err}).Error("Failed to get NodeList from swarm manager")
@@ -125,7 +136,7 @@ func startEtcdCluster(nodeAddr string, nodeID string) error {
 
 // joinEtcdCluster function is called by a non-leader swarm manager to join a ETCD cluster
 func joinEtcdCluster(nodeAddr string, leaderAddr string, nodeID string) error {
-	cli, err := addrToEtcdClient(leaderAddr)
+	etcd, err := addrToEtcdClient(leaderAddr)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"nodeAddr": nodeAddr,
@@ -135,7 +146,7 @@ func joinEtcdCluster(nodeAddr string, leaderAddr string, nodeID string) error {
 	}
 
 	// list all current ETCD members, check if this node is already added as a member
-	lresp, err := cli.MemberList(context.Background())
+	lresp, err := etcd.MemberList(context.Background())
 	if err != nil {
 		log.WithFields(
 			log.Fields{"leaderAddr": leaderAddr,
@@ -168,7 +179,7 @@ func joinEtcdCluster(nodeAddr string, leaderAddr string, nodeID string) error {
 						"peerAddr": peerAddr},
 				).Info("Already joined as a etcd member and started. Action: remove self before re-join ")
 
-				_, err = cli.MemberRemove(context.Background(), member.ID)
+				_, err = etcd.MemberRemove(context.Background(), member.ID)
 				if err != nil {
 					log.WithFields(
 						log.Fields{"peerAddr": peerAddr,
@@ -185,7 +196,7 @@ func joinEtcdCluster(nodeAddr string, leaderAddr string, nodeID string) error {
 	initCluster := ""
 	if !existing {
 		peerAddrs := []string{peerAddr}
-		aresp, err := cli.MemberAdd(context.Background(), peerAddrs)
+		aresp, err := etcd.MemberAdd(context.Background(), peerAddrs)
 		if err != nil {
 			log.WithFields(
 				log.Fields{"leaderAddr": leaderAddr,
@@ -244,9 +255,9 @@ func (d *VolumeDriver) createEtcdClient() *etcdClient.Client {
 	}
 
 	for _, manager := range info.Swarm.RemoteManagers {
-		cli, err := addrToEtcdClient(manager.Addr)
+		etcd, err := addrToEtcdClient(manager.Addr)
 		if err == nil {
-			return cli
+			return etcd
 		}
 	}
 
@@ -269,7 +280,7 @@ func addrToEtcdClient(addr string) (*etcdClient.Client, error) {
 		Endpoints: []string{endpoint},
 	}
 
-	cli, err := etcdClient.New(cfg)
+	etcd, err := etcdClient.New(cfg)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"endpoint": endpoint,
@@ -278,5 +289,32 @@ func addrToEtcdClient(addr string) (*etcdClient.Client, error) {
 		return nil, err
 	}
 
-	return cli, nil
+	return etcd, nil
+}
+
+// etcdList function lists all the volume names associated with this KV store
+func (d *VolumeDriver) etcdList() ([]string, error) {
+	var volumes []string
+
+	etcd := d.createEtcdClient()
+	if etcd == nil {
+		return nil, fmt.Errorf(etcdClientCreateError)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	resp, err := etcd.Get(ctx, etcdPrefixState, etcdClient.WithPrefix(),
+		etcdClient.WithSort(etcdClient.SortByKey, etcdClient.SortDescend))
+	cancel()
+	if err != nil {
+		log.WithFields(
+			log.Fields{"error": err},
+		).Error("Failed to call etcd Get for listing all volumes ")
+		return nil, err
+	}
+
+	for _, ev := range resp.Kvs {
+		volumes = append(volumes, strings.TrimPrefix(string(ev.Key), etcdPrefixState))
+	}
+
+	return volumes, nil
 }

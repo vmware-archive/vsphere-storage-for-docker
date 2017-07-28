@@ -84,8 +84,20 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 
 // List volumes known to the driver
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
-	log.Errorf("VolumeDriver List to be implemented")
-	return volume.Response{Err: ""}
+	volumes, err := d.etcdList()
+	if err != nil {
+		return volume.Response{Err: err.Error()}
+	}
+
+	responseVolumes := make([]*volume.Volume, 0, len(volumes))
+
+	for _, vol := range volumes {
+		responseVol := volume.Volume{Name: vol,
+			Mountpoint: d.GetMountPoint(vol)}
+		responseVolumes = append(responseVolumes, &responseVol)
+	}
+
+	return volume.Response{Volumes: responseVolumes}
 }
 
 // GetVolume - return volume meta-data.
