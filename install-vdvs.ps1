@@ -18,10 +18,23 @@
 # PS C:\Users\Administrator> .\install-vdvs.ps1 <vdvs-download-url>
 # ============================================================================
 
+<#
+.SYNOPSIS
+    Installation script for VMware vSphere Docker Volume Plugin.
+.DESCRIPTION
+    This script helps to download, install, uninstall, and re-install VMware vSphere Docker Volume Plugin on your system.
+.EXAMPLE
+   ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere.zip
+.EXAMPLE
+   ./install-vdvs.ps1 -uninstall
+.LINK
+    https://vmware.github.io/docker-volume-vsphere/
+#>
+
 # Command line parameters
 param (
-    [string]$uri, # TODO: add a default value once it's available (issue #1645)
-    [switch]$uninstall
+    [string] $uri,
+    [switch] $uninstall
 )
 
 # Define the constants
@@ -63,10 +76,9 @@ if ($uninstall) {
     return
 }
 
-# Check URI parameter
-# TODO: remove this once we have a default value for the URI parameter (issue #1645)
+# Check URI parameter for installation process
 if (! $uri) {
-     echo "Usage: install-vdvs.ps1 <uri>"
+     echo "Usage: install-vdvs.ps1 [[-uri] <String>] [-uninstall]"
      return
 }
 
@@ -96,6 +108,10 @@ if (! $?) {
     echo "Failed to extract $zipFileName into $installPath."
     return
 }
+
+# Remove the archive after successful expanding
+echo "Deleting $zipFileName..."
+Remove-Item -Path $zipFileName -Force
 
 # Install the vdvs plugin as a service
 echo "Installing Windows service $svcName from $exePathName..."
