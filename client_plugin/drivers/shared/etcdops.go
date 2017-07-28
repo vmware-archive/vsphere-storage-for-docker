@@ -16,6 +16,7 @@ package shared
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -34,7 +35,7 @@ const (
 	etcdScheme               = "http://"
 	etcdClusterStateNew      = "new"
 	etcdClusterStateExisting = "existing"
-	requestTimeout           = 5 * time.Second
+	requestTimeout           = 10 * time.Second
 	// prefix for volume state key in etcd
 	etcdPrefixState = "SVOLS_stat_"
 	// prefix for volume global refcount key in etcd
@@ -42,9 +43,14 @@ const (
 	// prefix for volume information key in etcd
 	// volume information includes port, service name, credentials, client lists...
 	etcdPrefixInfo = "SVOLS_info_"
-
 	etcdClientCreateError = "Failed to create etcd client"
 )
+
+// kvPair : Key Value pair holder
+type kvPair struct {
+	key   string
+	value string
+}
 
 // initEtcd start or join ETCD cluster depending on the role of the node
 func (d *VolumeDriver) initEtcd() error {
@@ -317,4 +323,105 @@ func (d *VolumeDriver) etcdList() ([]string, error) {
 	}
 
 	return volumes, nil
+}
+
+// writeVolMetadata - Update or Create volume metadata in KV store
+func (d *VolumeDriver) writeVolMetadata(entries []kvPair) error {
+
+	var ops []etcdClient.Op
+	var msg string
+	var err error
+
+	// Create a client to talk to etcd
+	etcdAPI := d.createEtcdClient()
+	defer etcdAPI.Close()
+
+	// ops hold multiple operations that will be done to etcd
+	// in a single revision
+	for _, elem := range entries {
+		ops = append(ops, etcdClient.OpPut(elem.key, elem.value))
+	}
+
+	// Lets write the metadata in a single transaction
+	// Use a transaction if more than one entries are to be written
+	if len(entries) > 1 {
+		_, err = etcdAPI.Txn(context.TODO()).Then(ops...).Commit()
+	} else {
+		_, err = etcdAPI.Do(context.TODO(), ops[0])
+	}
+
+	if err != nil {
+		msg = fmt.Sprintf("Failed to write metadata. Reason: %v", err)
+		log.Warningf(msg)
+		return errors.New(msg)
+	}
+	return nil
+}
+
+// readVolMetadata - Read volume metadata in KV store
+func (d *VolumeDriver) readVolMetadata(keys []string) ([]kvPair, error) {
+	var entries []kvPair
+	var msg string
+
+	// Create a client to talk to etcd
+	etcdAPI := d.createEtcdClient()
+	defer etcdAPI.Close()
+
+	// Read does not require transactions
+	// Just read all the keys required
+	for _, k := range keys {
+		elem := kvPair{key: k, value: ""}
+		ctx, cancel := context.WithTimeout(context.Background(),
+			requestTimeout)
+		resp, err := etcdAPI.Get(ctx, k)
+		// cancel is context cancelFunc()
+		// Its purpose is to ensure that the previous etcd op has
+		// come to an end. In this case if Get is still running
+		// in background, it will cancel it
+		cancel()
+		if err != nil {
+			msg = fmt.Sprintf("Failed to read metadata. Reason: %v", err)
+			log.Warningf(msg)
+			return entries, errors.New(msg)
+		}
+
+		// If Get() didnt find a key, there wont be
+		// an error returned. It will just return an empty resp
+                // Return whatever you have now. Caller will have to
+		// match the number of keys demanded to keys returned
+		if resp.Count == 0 {
+			return entries, nil
+		}
+		elem.value = string(resp.Kvs[0].Value)
+		entries = append(entries, elem)
+	}
+	return entries, nil
+}
+
+// deleteVolMetadata - Delete volume metadata in KV store
+func (d *VolumeDriver) deleteVolMetadata(name string) error {
+
+	var msg string
+	var err error
+
+	// Create a client to talk to etcd
+	etcdAPI := d.createEtcdClient()
+	defer etcdAPI.Close()
+
+	// ops hold multiple operations that will be done to etcd
+	// in a single revision. Add all keys for this volname.
+	ops := []etcdClient.Op{
+		etcdClient.OpDelete(etcdPrefixState + name),
+		etcdClient.OpDelete(etcdPrefixGRef + name),
+		etcdClient.OpDelete(etcdPrefixInfo + name),
+	}
+
+	// Delete the metadata in a single transaction
+	_, err = etcdAPI.Txn(context.TODO()).Then(ops...).Commit()
+	if err != nil {
+		msg = fmt.Sprintf("Failed to delete metadata for volume %s. Reason: %v", name, err)
+		log.Warningf(msg)
+		return errors.New(msg)
+	}
+	return nil
 }
