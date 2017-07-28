@@ -20,7 +20,8 @@
 
 # Command line parameters
 param (
-    [Parameter(Mandatory=$true)][string]$uri
+    [string]$uri, # TODO: add a default value once it's available (issue #1645)
+    [switch]$uninstall
 )
 
 # Define the constants
@@ -31,18 +32,50 @@ $installPath = "C:\Program Files\VMware\vmdkops"
 $exePathName = $installPath + "\vdvs.exe"
 $zipFileName = "docker-volume-vsphere.zip"
 
-# Check if vdvs plugin is already installed
+function Uninstall-Service([System.ServiceProcess.ServiceController]$svc) {
+    if ($svc.Status -eq "Running") {
+        echo "Stopping Windows service $svcName..."
+        Stop-Service -Name $svcName
+    }
+
+    echo "Deleting Windows service $svcName..."
+    sc.exe delete $svcName
+
+    echo "Deleting $installPath..."
+    Remove-Item -Path $installPath -Recurse -Force
+
+    echo "Windows service $svcName uninstalled successfully!"
+}
+
+# Check if vDVS plugin is already installed
 $svc = Get-Service | Where-Object {$_.Name -eq $svcName}
+
+# Handle uninstallation
+if ($uninstall) {
+    if ($svc) {
+        $confirmUninstall = Read-Host "Do you really want to uninstall $svcName [Y/N]?"
+        if ($confirmUninstall -eq "Y") {
+            Uninstall-Service($svc)
+        }
+    } else {
+        echo "Windows service $svcName is not installed."
+    }
+    return
+}
+
+# Check URI parameter
+# TODO: remove this once we have a default value for the URI parameter (issue #1645)
+if (! $uri) {
+     echo "Usage: install-vdvs.ps1 <uri>"
+     return
+}
+
+# Handle reinstallation
 if ($svc) {
     echo "Windows service $svcName is already installed."
-    $reinstall = Read-Host "Do you want to reinstall [Y/N]?"
+    $reinstall = Read-Host "Do you want to reinstall $svcName [Y/N]?"
     if ($reinstall -eq "Y") {
-        if ($svc.Status -eq "Running") {
-            echo "Stopping Windows service $svcName..."
-            Stop-Service -Name $svcName
-        }
-        echo "Uninstalling Windows service $svcName..."
-        sc.exe delete $svcName
+        Uninstall-Service($svc)
     } else {
         return
     }
