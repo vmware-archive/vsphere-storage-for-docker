@@ -35,7 +35,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
-	"os"
 	"strconv"
 )
 
@@ -44,7 +43,7 @@ type volStatus string
 
 /* Constants
    version:              Version of the shared plugin driver
-   dockerApiVersion:     docker engine 1.24 and above support this api version
+   dockerAPIVersion:     docker engine 1.24 and above support this api version
    dockerUSocket:        Unix socket on which Docker engine is listening
    internalVolumePrefix: Prefix for the names of internal volumes. These
                          volumes are the actual vmdk backing the shared volumes.
@@ -61,9 +60,9 @@ type volStatus string
                          Dont proceed with your op if this is the status.
 */
 const (
-	version          = "vSphere Shared Volume Driver v0.2"
-	dockerApiVersion = "v1.24"
-	dockerUSocket    = "unix:///var/run/docker.sock"
+	version              = "vSphere Shared Volume Driver v0.2"
+	dockerAPIVersion     = "v1.24"
+	dockerUSocket        = "unix:///var/run/docker.sock"
 	internalVolumePrefix = "InternalVol"
 	// TODO Replace with our own samba later
 	sambaImageName                 = "dperson/samba"
@@ -72,10 +71,10 @@ const (
 	volStateCreating     volStatus = "Creating"
 	volStateReady        volStatus = "Ready"
 	volStateMounted      volStatus = "Mounted"
-	volStateIntermediate volStatus = "Intermediate"
-        stateIdx                       = 0
-        GRefIdx                        = 1
-        InfoIdx                        = 2
+	volStateIntermediate volStatus = "MetadataUpdateInProgress"
+	stateIdx                       = 0
+	GRefIdx                        = 1
+	InfoIdx                        = 2
 )
 
 /* VolumeMetadata structure contains all the
@@ -91,6 +90,7 @@ const (
                     for multi tenancy.
    clientList:      List of all host VMs using this shared volume
 */
+
 // VolumeMetadata - Contains metadata of shared volumes
 type VolumeMetadata struct {
 	Status         volStatus `json:"-"` // Field won't be marshalled
@@ -107,6 +107,7 @@ type VolumeMetadata struct {
    internalVolumeDriver:    Name of the plugin used by shared volume
                             plugin to create internal volumes
 */
+
 // VolumeDriver - Contains vars specific to this driver
 type VolumeDriver struct {
 	utils.PluginDriver
@@ -124,7 +125,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	d.MountRoot = mountDir
 
 	// Read flag from CLI. If not provided, use cfg value
-	internalVolumeParam := flag.String("sharedDriverSlave", "",
+	internalVolumeParam := flag.String("InternalDriver", "",
 		"Driver which creates internal volumes")
 	flag.Parse()
 	if *internalVolumeParam == "" {
@@ -134,7 +135,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	}
 
 	// create new docker client
-	cli, err := dockerClient.NewClient(dockerUSocket, dockerApiVersion, nil, nil)
+	cli, err := dockerClient.NewClient(dockerUSocket, dockerAPIVersion, nil, nil)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"error": err},
@@ -159,7 +160,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 
 // Get info about a single volume
 func (d *VolumeDriver) Get(r volume.Request) volume.Response {
-	log.Infof("VolumeDriver Get")
+	log.Infof("VolumeDriver Get: %s", r.Name)
 	status, err := d.GetVolume(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
@@ -204,19 +205,14 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	// KV pairs will be returned in same order in which they were requested
 	entries, err := d.readVolMetadata(keys)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to read volume metadata from etcd. %v", err)
+		if err.Error() == VolumeDoesNotExistError {
+			log.Infof("Volume not found: %s", name)
+			return statusMap, err
+		}
+		msg := fmt.Sprintf("Failed to read metadata for volume %s from KV store. %v",
+			name, err)
 		log.Warningf(msg)
 		return statusMap, errors.New(msg)
-	}
-	if len(entries) == 0 {
-		// Volume does not exist!
-		msg := fmt.Sprintf("Volume does not exist")
-		return statusMap, errors.New(msg)
-	} else if len(entries) != len(keys) {
-		// Volume exists but we didn't find all its keys
-		msg := fmt.Sprintf("Failed to get volume. Couldn't find all keys!")
-		log.Warningf(msg)
-                panic(msg)
 	}
 
 	statusMap["Volume Status"] = entries[stateIdx].value
@@ -250,7 +246,7 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 
 // Create - create a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
-	log.Infof("Entering VolumeDriver Create")
+	log.Infof("VolumeDriver Create: %s", r.Name)
 	var msg string
 	var entries []kvPair
 
@@ -298,8 +294,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	}
 
 	// Create traditional volume as backend to shared volume
-	msg = fmt.Sprintf("Attempting to create internal volume for %s", r.Name)
-	log.Infof(msg)
+	log.Infof("Attempting to create internal volume for %s", r.Name)
 	internalVolname := internalVolumePrefix + r.Name
 	dockerVolOptions := dockerTypes.VolumeCreateRequest{
 		Driver:     d.internalVolumeDriver,
@@ -309,7 +304,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	_, err = d.dockerd.VolumeCreate(context.Background(), dockerVolOptions)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to create internal volume %s. Reason: %v", r.Name, err)
-                msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
+		msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
 		log.Warningf(msg)
 
 		// If failed, attempt to delete the metadata for this volume
