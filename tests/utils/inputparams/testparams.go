@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ var (
 )
 
 func init() {
-
 	flag.StringVar(&endPoint1, "H1", "unix:///var/run/docker.sock", "Endpoint (Host1) to connect to")
 	flag.StringVar(&endPoint2, "H2", "unix:///var/run/docker.sock", "Endpoint (Host2) to connect to")
 	flag.StringVar(&volumeName, "v", "TestVol", "Volume name to use in tests")
@@ -81,10 +80,9 @@ func GetUniqueVolumeName(volName string) string {
 
 // GetVolumeNameOfSize returns a random volume name of required length
 func GetVolumeNameOfSize(size int) string {
-	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	result := make([]byte, size)
 	for i := range result {
-		result[i] = chars[rand.Intn(len(chars))]
+		result[i] = volNameCharset[rand.Intn(len(volNameCharset))]
 	}
 	return string(result)
 }
@@ -140,15 +138,13 @@ func getInstance() *TestConfig {
 	noVMName := "no such VM"
 	config = new(TestConfig)
 	config.EsxHost = GetEsxIP()
-	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM1"))
-	config.DockerHosts = append(config.DockerHosts, os.Getenv("VM2"))
-	if config.DockerHosts[0] == "" || config.DockerHosts[1] == "" {
-		log.Fatal("Two docker hosts are needed to run tests.")
-	}
-	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[0]))
-	config.DockerHostNames = append(config.DockerHostNames, esx.RetrieveVMNameFromIP(config.DockerHosts[1]))
-	if config.DockerHostNames[0] == noVMName || config.DockerHostNames[1] == noVMName {
-		log.Fatalf("Failed to find vm name for docker hosts - %s , %s ", config.DockerHosts[0], config.DockerHosts[1])
+	config.DockerHosts = getDockerHosts()
+	for _, dockerHost := range config.DockerHosts {
+		dockerHostName := esx.RetrieveVMNameFromIP(dockerHost)
+		if dockerHostName == noVMName {
+			log.Fatalf("Failed to find vm name for docker host - %s", dockerHost)
+		}
+		config.DockerHostNames = append(config.DockerHostNames, dockerHostName)
 	}
 	config.Datastores = esx.GetDatastoreList()
 	if len(config.Datastores) < 1 {

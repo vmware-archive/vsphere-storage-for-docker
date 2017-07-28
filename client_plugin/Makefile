@@ -1,4 +1,4 @@
-# Copyright 2016 VMware, Inc. All Rights Reserved.
+# Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ pkg-post:
 #   Need target machines (ESX/Guest) to have proper ~/.ssh/authorized_keys
 #
 # You can
-#   set ESX and VM (and VM1 / VM2) as env. vars,
+#   set ESX and VM (and VM1 / VM2 / WIN_VM1) as env. vars,
 # or pass on command line
 # 	make deploy-esx ESX=10.20.105.54
 # 	make deploy-vm  VM=10.20.105.121
@@ -381,14 +381,16 @@ test-e2e:
 	$(log_target)
 	$(BUILD) test-e2e-runalways
 	$(BUILD) test-e2e-runonce
+	# TODO: Enable $(BUILD) test-e2e-runonce-windows once Windows VM is available locally.
 
 #
 # E2E test target to control test run on CI.
 # We have 2 ESXs on CI testbed and 2 datastore type each (VMFS/VSAN).
 # test-e2e-runalways: makes sure to run test always
 # test-e2e-runonce: makes sure to run test *once per ESX*
+# test-e2e-runonce-windows: makes sure to run windows tests *once per ESX*
 #
-.PHONY: test-e2e-runalways test-e2e-runonce
+.PHONY: test-e2e-runalways test-e2e-runonce test-e2e-runonce-windows
 test-e2e-runalways:
 	$(log_target)
 	$(GO) test -v -timeout 40m -tags runalways $(E2E_Tests)
@@ -396,6 +398,10 @@ test-e2e-runalways:
 test-e2e-runonce:
 	$(log_target)
 	$(GO) test -v -timeout 40m -tags runonce $(E2E_Tests)
+
+test-e2e-runonce-windows:
+	$(log_target)
+	$(GO) test -v -timeout 40m -tags "runoncewin winutil" $(E2E_Tests)
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:

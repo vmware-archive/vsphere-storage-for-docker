@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2016 VMware, Inc. All Rights Reserved.
+# Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -139,6 +139,7 @@ else
     -e "ESX=$ESX" \
     -e "VM1=$VM1" \
     -e "VM2=$VM2" \
+    -e "WIN_VM1=$WIN_VM1" \
     -e "GOVC_INSECURE=1" \
     -e "GOVC_URL=$ESX" \
     -e "GOVC_USERNAME=$GOVC_USERNAME" \

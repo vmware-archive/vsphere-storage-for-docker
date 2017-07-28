@@ -14,7 +14,7 @@
 
 // This test is going to cover various volume creation test cases
 
-// +build runonce
+// +build runonce runoncewin
 
 package e2e
 
@@ -79,7 +79,7 @@ func (s *VolumeCreateTestSuite) createVolCheck(name, option string, valid bool, 
 	} else {
 		// negative test case
 		c.Assert(err, Not(IsNil), Commentf(out))
-		c.Assert(strings.HasPrefix(out, dockerclicon.ErrorVolumeCreate), Equals, true)
+		c.Assert(strings.HasPrefix(out, dockerclicon.ErrorVolumeCreate), Equals, true, Commentf(out))
 	}
 }
 
@@ -116,48 +116,20 @@ func (s *VolumeCreateTestSuite) accessCheck(hostIP string, volList []string, c *
 }
 
 // Valid volume names test
-// 1. having 100 chars
-// 2. having various chars including alphanumerics
-// 3. ending in 5Ns
-// 4. ending in 7Ns
-// 5. contains @datastore (valid name)
-// 6. contains multiple '@'
-// 7. contains unicode character
-// 8. contains space
 func (s *VolumeCreateTestSuite) TestValidName(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	volNameList := []string{
-		inputparams.GetVolumeNameOfSize(100),
-		"Volume-0000000-****-###",
-		"Volume-00000",
-		"Volume-0000000",
-		inputparams.GetUniqueVolumeName("abc") + "@" + s.config.Datastores[0],
-		inputparams.GetUniqueVolumeName("abc") + "@@@@" + s.config.Datastores[0],
-		inputparams.GetUniqueVolumeName("Volume-你"),
-		"\"Volume Space\"",
-	}
-
-	s.parallelCreateByName(volNameList, true, c)
+	s.parallelCreateByName(s.validVolNames(), true, c)
 	s.accessCheck(s.config.DockerHosts[0], s.volumeList, c)
 
 	misc.LogTestEnd(c.TestName())
 }
 
 // Invalid volume names test
-// 1. having more than 100 chars
-// 2. ending -NNNNNN (6Ns)
-// 3. contains @invalid datastore name
 func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	invalidVolList := []string{
-		inputparams.GetVolumeNameOfSize(101),
-		"Volume-000000",
-		inputparams.GetUniqueVolumeName("Volume") + "@invalidDatastore",
-	}
-
-	s.parallelCreateByName(invalidVolList, false, c)
+	s.parallelCreateByName(invalidVolNameList, false, c)
 
 	misc.LogTestEnd(c.TestName())
 }
@@ -166,10 +138,9 @@ func (s *VolumeCreateTestSuite) TestInvalidName(c *C) {
 // 1. size 10gb
 // 2. disk format (thin, zeroedthick, eagerzeroedthick)
 // 3. attach-as (persistent, independent_persistent)
-// 4. fstype ext4
+// 4. fstype ext4 for linux / ntfs for windows
 // 5. access (read-write, read-only)
 // 6. clone-from valid volume
-// 7. fstype xfs
 func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 	misc.LogTestStart(c.TestName())
 
@@ -186,20 +157,13 @@ func (s *VolumeCreateTestSuite) TestValidOptions(c *C) {
 		" -o diskformat=eagerzeroedthick",
 		" -o attach-as=independent_persistent",
 		" -o attach-as=persistent",
-		" -o fstype=ext4",
+		" -o fstype=" + validFstype,
 		" -o access=read-only",
 		" -o access=read-write",
 		" -o clone-from=" + cloneSrcVol,
 	}
 
 	s.parallelCreateByOption(validVolOpts, true, c)
-
-	// xfs file system needs volume name upto than 12 characters
-	xfsVolName := inputparams.GetVolumeNameOfSize(12)
-	out, err = dockercli.CreateVolumeWithOptions(s.config.DockerHosts[0], xfsVolName, " -o fstype=xfs")
-	c.Assert(err, IsNil, Commentf(out))
-	s.volumeList = append(s.volumeList, xfsVolName)
-
 	s.accessCheck(s.config.DockerHosts[0], s.volumeList, c)
 
 	misc.LogTestEnd(c.TestName())
