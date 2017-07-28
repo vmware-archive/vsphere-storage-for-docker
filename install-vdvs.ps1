@@ -107,11 +107,11 @@ Expand-Archive -Path $zipFileName -DestinationPath $installPath -Force
 if (! $?) {
     echo "Failed to extract $zipFileName into $installPath."
     return
-} else {
-    # Remove the archive after successful expanding
-    echo "Deleting $zipFileName..."
-    Remove-Item -Path $zipFileName -Force
 }
+
+# Remove the archive after successful expanding
+echo "Deleting $zipFileName..."
+Remove-Item -Path $zipFileName -Force
 
 # Install the vdvs plugin as a service
 echo "Installing Windows service $svcName from $exePathName..."
