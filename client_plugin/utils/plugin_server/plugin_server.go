@@ -21,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/codecov"
 )
 
 // PluginServer responds to HTTP requests from Docker.
@@ -40,6 +41,7 @@ func StartServer(driverName string, driver *volume.Driver) {
 	go func() {
 		sig := <-sigChannel
 		log.WithFields(log.Fields{"signal": sig}).Warning("Received signal ")
+		coverage.Capture()
 		server.Destroy()
 		os.Exit(0)
 	}()

@@ -16,6 +16,8 @@
 // VMDK Docker driver sanity tests.
 //
 
+// +build sanity
+
 package main
 
 import (

@@ -39,6 +39,7 @@ SCRIPTS     := ../misc/scripts
 PLUGNAME  := docker-volume-vsphere
 SHARED_PLUGNAME  := vsphere-shared
 GOPATH_PLUGNAME := $(PLUGNAME)/client_plugin
+INSTRUMENTED_PLUGIN_BIN := vdvs-instrumented
 GOPATH_ORG :=vmware
 MAINTAINERS := cna-storage@vmware.com
 REPO_URL    := https://github.com/$(GOPATH_ORG)/$(PLUGNAME)
@@ -72,7 +73,11 @@ PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 SHARED_PLUGIN_BIN = $(BIN)/$(SHARED_PLUGNAME)
 
 # all binaries for VMs - plugin and tests
-VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test
+# PLUGIN_BIN - vDVS plugin binary
+# $(BIN)/$(VMDKOPS_TEST_MODULE).test - Running mock esx test
+# $(BIN)/$(PLUGNAME).test - Running sanity test
+# $(BIN)/$(INSTRUMENTED_PLUGIN_BIN) - Instrumented vDVS plugin binary for capturing code coverage
+VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test $(BIN)/$(INSTRUMENTED_PLUGIN_BIN)
 SHARED_VM_BINS = $(SHARED_PLUGIN_BIN)
 
 VIBFILE := vmware-esx-vmdkops-$(PKG_VERSION).vib
@@ -84,7 +89,7 @@ PLUGIN := github.com/$(GOPATH_ORG)/$(GOPATH_PLUGNAME)
 # test location, picking up E2E tests
 E2E_Tests := github.com/$(GOPATH_ORG)/$(PLUGNAME)/tests/e2e
 
-GO := GO15VENDOREXPERIMENT=1 go
+GO := go
 FPM := fpm
 
 # make sure we rebuild of vmkdops or Dockerfile change (since we develop them together)
@@ -104,6 +109,8 @@ VMDK_PLUGIN_SRC = vmdk_plugin/main.go vmdk_plugin/main_linux.go \
 SHARED_PLUGIN_SRC = shared_plugin/main.go drivers/shared/shared_driver.go drivers/shared/etcdops.go
 
 TEST_SRC = ../tests/utils/inputparams/testparams.go
+
+VMDK_PLUGIN_TEST_SRC = ./vmdk_plugin/*_test.go
 
 # Canned recipe
 define log_target
@@ -152,12 +159,16 @@ $(PLUGIN_BIN): $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(VMDKOPS_MODULE_SRC)
 $(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(TEST_SRC) $(VMDKOPS_MODULE)/*_test.go
 	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
-$(BIN)/$(PLUGNAME).test: $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(TEST_SRC) ./vmdk_plugin/*_test.go
-	$(GO) test -c -o $@ $(PLUGIN)/vmdk_plugin -cover
+$(BIN)/$(PLUGNAME).test: $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(TEST_SRC) $(VMDK_PLUGIN_TEST_SRC)
+	$(GO) test -c -o $@ $(PLUGIN)/vmdk_plugin -cover -tags sanity
 
 $(SHARED_PLUGIN_BIN): $(COMMON_SRC) $(SHARED_PLUGIN_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(SHARED_PLUGIN_BIN) $(PLUGIN)/shared_plugin
+
+# vDVS binary to capture code coverage
+$(BIN)/$(INSTRUMENTED_PLUGIN_BIN): $(COMMON_SRC) $(VMDKOPS_MODULE_SRC) $(VMDK_PLUGIN_TEST_SRC)
+	$(GO) test -coverprofile=/tmp/cover.out -coverpkg=$(PLUGIN)/... -c -o $@ $(PLUGIN)/vmdk_plugin -tags testmain -covermode count
 
 .PHONY: clean
 clean:
