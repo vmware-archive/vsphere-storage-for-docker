@@ -73,6 +73,10 @@ PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 SHARED_PLUGIN_BIN = $(BIN)/$(SHARED_PLUGNAME)
 
 # all binaries for VMs - plugin and tests
+# PLUGIN_BIN - vDVS plugin binary
+# $(BIN)/$(VMDKOPS_TEST_MODULE).test - Running mock esx test
+# $(BIN)/$(PLUGNAME).test - Running sanity test
+# $(BIN)/$(INSTRUMENTED_PLUGIN_BIN) - Instrumented vDVS plugin binary for capturing code coverage
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test $(BIN)/$(INSTRUMENTED_PLUGIN_BIN)
 SHARED_VM_BINS = $(SHARED_PLUGIN_BIN)
 
@@ -106,11 +110,7 @@ SHARED_PLUGIN_SRC = shared_plugin/main.go drivers/shared/shared_driver.go driver
 
 TEST_SRC = ../tests/utils/inputparams/testparams.go
 
-E2E_TEST_SRC = ../tests/utils/admincli/*.go ../tests/utils/dockercli/*.go \
-	../tests/utils/esx/*.go ../tests/utils/inputparams/*.go \
-	../tests/utils/misc/*.go ../tests/utils/ssh/*.go ../tests/utils/verification/*.go \
-	../tests/e2e/*.go ../tests/constants/dockercli/*.go ../tests/constants/admincli/*.go \
-	../tests/constants/esx/*.go ../tests/constants/properties/*.go ../tests/constants/vm/*.go
+VMDK_PLUGIN_TEST_SRC = ./vmdk_plugin/*_test.go
 
 # Canned recipe
 define log_target
@@ -159,14 +159,15 @@ $(PLUGIN_BIN): $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(VMDKOPS_MODULE_SRC)
 $(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(TEST_SRC) $(VMDKOPS_MODULE)/*_test.go
 	$(GO) test -c -o $@ $(PLUGIN)/$(VMDKOPS_MODULE) -cover
 
-$(BIN)/$(PLUGNAME).test: $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(TEST_SRC) ./vmdk_plugin/*_test.go
+$(BIN)/$(PLUGNAME).test: $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(TEST_SRC) $(VMDK_PLUGIN_TEST_SRC)
 	$(GO) test -c -o $@ $(PLUGIN)/vmdk_plugin -cover -tags sanity
 
 $(SHARED_PLUGIN_BIN): $(COMMON_SRC) $(SHARED_PLUGIN_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(SHARED_PLUGIN_BIN) $(PLUGIN)/shared_plugin
 
-$(BIN)/$(INSTRUMENTED_PLUGIN_BIN): $(COMMON_SRC) $(VMDKOPS_MODULE_SRC) $(E2E_TEST_SRC) ./vmdk_plugin/*_test.go
+# vDVS binary to capture code coverage
+$(BIN)/$(INSTRUMENTED_PLUGIN_BIN): $(COMMON_SRC) $(VMDKOPS_MODULE_SRC) $(VMDK_PLUGIN_TEST_SRC)
 	$(GO) test -coverprofile=/tmp/cover.out -coverpkg=$(PLUGIN)/... -c -o $@ $(PLUGIN)/vmdk_plugin -tags testmain -covermode count
 
 .PHONY: clean
