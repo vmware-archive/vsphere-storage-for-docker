@@ -193,7 +193,8 @@ def get_volumes(tenant_re):
 
 
 def get_vmdk_path(path, vol_name):
-    """If the volume-related VMDK exists, returns full path to the latest
+    """
+    If the volume-related VMDK exists, returns full path to the latest
     VMDK disk in the disk chain, be it volume-NNNNNN.vmdk or volume.vmdk.
     If the disk does not exists, returns full path to the disk for create().
     """
@@ -333,6 +334,47 @@ def get_vm_config_path(vm_name):
     vm_config_path = os.path.join(datastore_path, path)
     return vm_config_path
 
+def get_attached_volume_path(vm, volname, datastore):
+    """
+    Returns full path for docker volume "volname", residing on "datastore" and attached to "VM"
+    Files a warning and returns None if the volume is not attached
+    """
+
+    # Find the attached disk with backing matching "[datastore] dockvols/[.*]/volname[-ddddddd]?.vmdk"
+    # SInce we don't know the vmgroup (the path after dockvols), we'll just pick the first match (and yell if
+    # there is more that one match)
+    # yes, it is super redundant - we will find VM, scan disks and find a matching one here, then return the path
+    # and it will likely be used to do the same steps - find VM, scan the disks, etc.. It's a hack and it's a corner
+    # case, so we'll live with this
+
+    # Note that if VM is moved to a different vmgroup in flight, we may fail here and it's fine.
+    # Note that if ther is a volume with the same name in 2 different vmgroup folders and both are attached
+    # and VM is moved between the groups we may end up returning  the wrong volume but it's less
+
+    if not datastore:
+        # we rely on datastore always being a part of volume name passed to detach.
+        # if this contract breaks, or we are called from somewhere else - bail out
+        logging.error("get_attached_volume_path internal error - empty datastore")
+        return None
+
+    # look for '[datastore] dockvols/tenant/volume.vmdk' name
+    # and account for delta disks (e.g. volume-000001.vmdk)
+    prog = re.compile('\[%s\] %s/[^/]+/%s(-[0-9]{6})?\.vmdk$' %
+                      (datastore, vmdk_ops.DOCK_VOLS_DIR, volname))
+    attached = [d for d in vm.config.hardware.device  \
+                    if isinstance(d, vim.VirtualDisk) and \
+                       isinstance(d.backing, vim.VirtualDisk.FlatVer2BackingInfo) and \
+                       prog.match(d.backing.fileName)]
+    if len(attached) == 0:
+        logging.error("Can't find device attached to '%s' for volume '%s' on [%s].",
+                      vm.config.name, volname, datastore)
+        return None
+    if len(attached) > 1:
+        logging.warning("More than 1  device attached to '%s' for volume '%s' on [%s].",
+                        vm.config.name, volname, datastore)
+    path = find_dvs_volume(attached[0])
+    logging.warning("Found path: %s", path)
+    return path
 
 def find_dvs_volume(dev):
     """
