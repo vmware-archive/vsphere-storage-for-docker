@@ -50,14 +50,15 @@ const (
 
 // Config stores the configuration for the plugin
 type Config struct {
-	Driver        string `json:",omitempty"`
-	LogPath       string `json:",omitempty"`
-	MaxLogSizeMb  int    `json:",omitempty"`
-	MaxLogAgeDays int    `json:",omitempty"`
-	LogLevel      string `json:",omitempty"`
-	Target        string `json:",omitempty"`
-	Project       string `json:",omitempty"`
-	Host          string `json:",omitempty"`
+	Driver         string `json:",omitempty"`
+	InternalDriver string `json:",omitempty"`
+	LogPath        string `json:",omitempty"`
+	MaxLogSizeMb   int    `json:",omitempty"`
+	MaxLogAgeDays  int    `json:",omitempty"`
+	LogLevel       string `json:",omitempty"`
+	Target         string `json:",omitempty"`
+	Project        string `json:",omitempty"`
+	Host           string `json:",omitempty"`
 }
 
 // LogInfo stores parameters for setting up logs
@@ -178,6 +179,13 @@ func InitConfig(defaultConfigPath string, defaultLogPath string, defaultDriver s
 		c.Driver = *driverName
 	} else if c.Driver == "" {
 		c.Driver = defaultDriver
+	}
+
+	// If we couldn't read it from config file, set it
+	// to a default value. We will check the CLI param in
+	// our own driver code.
+	if c.InternalDriver == "" {
+		c.InternalDriver = VSphereDriver
 	}
 
 	// The windows plugin only supports the vsphere driver.

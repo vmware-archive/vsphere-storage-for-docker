@@ -16,6 +16,7 @@ package shared
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -26,6 +27,29 @@ import (
 	"github.com/docker/engine-api/types"
 )
 
+/*
+   etcdClientPort:             On which port do etcd clients talk to
+                               the peers?
+   etcdPeerPort:               On which port do etcd peers talk to
+                               each other?
+   etcdClusterToken:           ID of the cluster to create/join
+   etcdListenURL:              On which interface is etcd listening?
+   etcdScheme:                 Protocol used for communication
+   etcdClusterStateNew:        Used to indicate the formation of a new
+                               cluster
+   etcdClusterStateExisting:   Used to indicate that this node is joining
+                               an existing etcd cluster
+   etcdPrefixState:            Each volume has three metadata keys. Each such
+                               key terminates in the name of the volume, but
+                               is preceded by a prefix. This is the prefix
+                               for "State" key
+   etcdPrefixGRef:             The prefix for GRef key (Global refcount)
+   etcdPrefixInfo:             The prefix for info key. This key holds all
+                               other metadata fields squashed into one
+   requestTimeout:             After how long should an etcd request timeout
+   etcdClientCreateError:      Error indicating failure to create etcd client
+   VolumeDoesNotExistError:    Error indicating that there is no such volume
+*/
 const (
 	etcdClientPort           = ":2379"
 	etcdPeerPort             = ":2380"
@@ -34,17 +58,19 @@ const (
 	etcdScheme               = "http://"
 	etcdClusterStateNew      = "new"
 	etcdClusterStateExisting = "existing"
-	requestTimeout           = 5 * time.Second
-	// prefix for volume state key in etcd
-	etcdPrefixState = "SVOLS_stat_"
-	// prefix for volume global refcount key in etcd
-	etcdPrefixGRef = "SVOLS_gref_"
-	// prefix for volume information key in etcd
-	// volume information includes port, service name, credentials, client lists...
-	etcdPrefixInfo = "SVOLS_info_"
-
-	etcdClientCreateError = "Failed to create etcd client"
+	etcdPrefixState          = "SVOLS_stat_"
+	etcdPrefixGRef           = "SVOLS_gref_"
+	etcdPrefixInfo           = "SVOLS_info_"
+	requestTimeout           = 10 * time.Second
+	etcdClientCreateError    = "Failed to create etcd client"
+	VolumeDoesNotExistError  = "No such volume"
 )
+
+// kvPair : Key Value pair holder
+type kvPair struct {
+	key   string
+	value string
+}
 
 // initEtcd start or join ETCD cluster depending on the role of the node
 func (d *VolumeDriver) initEtcd() error {
@@ -317,4 +343,117 @@ func (d *VolumeDriver) etcdList() ([]string, error) {
 	}
 
 	return volumes, nil
+}
+
+// writeVolMetadata - Update or Create volume metadata in KV store
+func (d *VolumeDriver) writeVolMetadata(entries []kvPair) error {
+
+	var ops []etcdClient.Op
+	var msg string
+	var err error
+
+	// Create a client to talk to etcd
+	etcdAPI := d.createEtcdClient()
+	defer etcdAPI.Close()
+
+	// ops contain multiple operations that will be done to etcd
+	// in a single revision
+	for _, elem := range entries {
+		ops = append(ops, etcdClient.OpPut(elem.key, elem.value))
+	}
+
+	// Lets write the metadata in a single transaction
+	// Use a transaction if more than one entries are to be written
+	if len(entries) > 1 {
+		_, err = etcdAPI.Txn(context.TODO()).Then(ops...).Commit()
+	} else {
+		_, err = etcdAPI.Do(context.TODO(), ops[0])
+	}
+
+	if err != nil {
+		msg = fmt.Sprintf("Failed to write metadata. Reason: %v", err)
+		log.Warningf(msg)
+		return errors.New(msg)
+	}
+	return nil
+}
+
+// readVolMetadata - Read volume metadata in KV store
+func (d *VolumeDriver) readVolMetadata(keys []string) ([]kvPair, error) {
+	var entries []kvPair
+	var ops []etcdClient.Op
+	var missedCount int
+
+	// Create a client to talk to etcd
+	etcdAPI := d.createEtcdClient()
+	defer etcdAPI.Close()
+
+	// Lets build the request which will be executed
+	// in a single transaction
+	// ops contain multiple read operations
+	for _, elem := range keys {
+		ops = append(ops, etcdClient.OpGet(elem))
+	}
+
+	// Read all requested keys in one transaction
+	getresp, err := etcdAPI.Txn(context.TODO()).Then(ops...).Commit()
+	if err != nil {
+		log.Warningf("Transactional metadata read failed: %v", err)
+		return entries, err
+	}
+
+	// Check responses and append them in entries[]
+	missedCount = 0
+	for i, elem := range keys {
+		resp := getresp.Responses[i].GetResponseRange()
+		// If any Get() didnt find a key, there wont be
+		// an error returned. It will just return an empty resp
+		// Update the number of misses and carry on
+		if resp.Count == 0 {
+			missedCount++
+			continue
+		}
+		entry := kvPair{key: elem, value: string(resp.Kvs[0].Value)}
+		entries = append(entries, entry)
+	}
+
+	if missedCount == len(keys) {
+		// Volume does not exist
+		return nil, errors.New(VolumeDoesNotExistError)
+	} else if missedCount > 0 {
+		// This should not happen
+		// There is a volume but we couldn't read all its keys
+		msg := fmt.Sprintf("Failed to get volume. Couldn't find all keys!")
+		log.Warningf(msg)
+		panic(msg)
+	}
+	return entries, nil
+}
+
+// deleteVolMetadata - Delete volume metadata in KV store
+func (d *VolumeDriver) deleteVolMetadata(name string) error {
+
+	var msg string
+	var err error
+
+	// Create a client to talk to etcd
+	etcdAPI := d.createEtcdClient()
+	defer etcdAPI.Close()
+
+	// ops hold multiple operations that will be done to etcd
+	// in a single revision. Add all keys for this volname.
+	ops := []etcdClient.Op{
+		etcdClient.OpDelete(etcdPrefixState + name),
+		etcdClient.OpDelete(etcdPrefixGRef + name),
+		etcdClient.OpDelete(etcdPrefixInfo + name),
+	}
+
+	// Delete the metadata in a single transaction
+	_, err = etcdAPI.Txn(context.TODO()).Then(ops...).Commit()
+	if err != nil {
+		msg = fmt.Sprintf("Failed to delete metadata for volume %s. Reason: %v", name, err)
+		log.Warningf(msg)
+		return errors.New(msg)
+	}
+	return nil
 }
