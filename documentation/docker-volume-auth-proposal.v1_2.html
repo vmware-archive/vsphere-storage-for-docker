@@ -544,21 +544,25 @@ $('#toc').on('click', 'a', function() {
 <ol>
   <li>
     <p><strong>Create a tenant named <code class="highlighter-rouge">tenant1</code> consisting of 3 VMs</strong>
-<code class="highlighter-rouge">auth_config</code> <code class="highlighter-rouge">tenant</code> <code class="highlighter-rouge">create</code> <code class="highlighter-rouge">tenant1</code> <code class="highlighter-rouge">--vms</code> <code class="highlighter-rouge">vm1,vm2,vm3</code></p>
+<code class="highlighter-rouge">
+auth_config tenant create tenant1 --vms vm1,vm2,vm3
+</code></p>
   </li>
   <li>
     <p><strong>Assigning create, mount and delete privileges to a datastore for a tenant</strong>
-<code class="highlighter-rouge">auth_config</code> <code class="highlighter-rouge">tenant</code> <code class="highlighter-rouge">set</code> <code class="highlighter-rouge">privileges</code> <code class="highlighter-rouge">--tenant</code> <code class="highlighter-rouge">tenant1</code> <code class="highlighter-rouge">--datastore</code> <code class="highlighter-rouge">datastore1</code> <code class="highlighter-rouge">--privileges</code> <code class="highlighter-rouge">create,mount,delete</code></p>
+<code class="highlighter-rouge">
+auth_config tenant set privileges --tenant tenant1 --datastore datastore1 --privileges create,mount,delete
+</code></p>
   </li>
   <li>
-    <p><strong>Commit the configuration</strong></p>
+    <p><strong>Commit the configuration</strong>
+<code class="highlighter-rouge">
+auth_config commit
+</code></p>
   </li>
 </ol>
 
-<p><code class="highlighter-rouge">auth_config</code> <code class="highlighter-rouge">commit</code></p>
-
-<p>&lt;/ol&gt;
-### Defaults</p>
+<h3 id="defaults">Defaults</h3>
 
 <p>By default, VMs are assigned to a default tenant and are granted unlimited privileges to all datastores visible from the host on which they reside. The privileges on the default tenant cannot be modified or restricted. VMs can see all volumes ever created on these datastores by other VMs that are or were part of the default tenant, and can mount and delete these volumes. However, volumes created by VMs on a tenant other than the default tenant are not visible to VMs in the default tenant. Note that a VM can only be a member of a single tenant at a time.</p>
 
@@ -690,7 +694,7 @@ Vol1@datastore2
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jul 26, 2017 <br />
+ Site last generated: Jul 31, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
