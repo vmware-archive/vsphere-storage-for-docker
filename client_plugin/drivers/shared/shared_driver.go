@@ -72,6 +72,7 @@ const (
 	volStateReady        volStatus = "Ready"
 	volStateMounted      volStatus = "Mounted"
 	volStateIntermediate volStatus = "MetadataUpdateInProgress"
+	volStateError        volStatus = "Error"
 	stateIdx                       = 0
 	GRefIdx                        = 1
 	InfoIdx                        = 2
@@ -113,6 +114,7 @@ type VolumeDriver struct {
 	utils.PluginDriver
 	dockerd              *dockerClient.Client
 	internalVolumeDriver string
+	etcd                 *etcdKVS
 }
 
 // NewVolumeDriver creates driver instance
@@ -145,9 +147,9 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	d.dockerd = cli
 
 	// initialize built-in etcd cluster
-	err = d.initEtcd()
-	if err != nil {
-		log.Errorf("Failed to InitEtcd")
+	d.etcd = NewKvStore(&d)
+	if d.etcd == nil {
+		log.Errorf("Failed to create new etcd KV store")
 		return nil
 	}
 
@@ -173,7 +175,7 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 
 // List volumes known to the driver
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
-	volumes, err := d.etcdList()
+	volumes, err := d.etcd.ListVolumeName()
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -203,7 +205,7 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	}
 
 	// KV pairs will be returned in same order in which they were requested
-	entries, err := d.readVolMetadata(keys)
+	entries, err := d.etcd.ReadVolMetadata(keys)
 	if err != nil {
 		if err.Error() == VolumeDoesNotExistError {
 			log.Infof("Volume not found: %s", name)
@@ -285,7 +287,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	entries = append(entries, kvPair{key: etcdPrefixInfo + r.Name, value: string(byteRecord)})
 
 	log.Infof("Attempting to write initial metadata entry for %s", r.Name)
-	err = d.writeVolMetadata(entries)
+	err = d.etcd.WriteVolMetadata(entries)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to create volume %s. Reason: %v",
 			r.Name, err)
@@ -308,7 +310,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		log.Warningf(msg)
 
 		// If failed, attempt to delete the metadata for this volume
-		err = d.deleteVolMetadata(r.Name)
+		err = d.etcd.DeleteVolMetadata(r.Name)
 		if err != nil {
 			log.Warningf("Failed to remove metadata entry for volume: %s. Reason: %v", r.Name, err)
 		}
@@ -319,7 +321,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.Infof("Attempting to update volume state to ready for volume: %s", r.Name)
 	entries = nil
 	entries = append(entries, kvPair{key: etcdPrefixState + r.Name, value: string(volStateReady)})
-	err = d.writeVolMetadata(entries)
+	err = d.etcd.WriteVolMetadata(entries)
 	if err != nil {
 		outerMessage := fmt.Sprintf("Failed to set status of volume %s to ready. Reason: %v", r.Name, err)
 		log.Warningf(outerMessage)
@@ -335,7 +337,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		}
 
 		// Attempt to delete the metadata for this volume
-		err = d.deleteVolMetadata(r.Name)
+		err = d.etcd.DeleteVolMetadata(r.Name)
 		if err != nil {
 			log.Warningf("Failed to remove metadata entry for volume: %s. Reason: %v", r.Name, err)
 		}
@@ -386,4 +388,16 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 // Capabilities - Report plugin scope to Docker
 func (d *VolumeDriver) Capabilities(r volume.Request) volume.Response {
 	return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
+}
+
+// startSMBServer - Start SMB server
+func (d *VolumeDriver) startSMBServer(volName string) bool {
+	log.Errorf("startSMBServer to be implemented")
+	return true
+}
+
+// stopSMBServer - Stop SMB server
+func (d *VolumeDriver) stopSMBServer(volName string) bool {
+	log.Errorf("stopSMBServer to be implemented")
+	return true
 }
