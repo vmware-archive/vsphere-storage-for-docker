@@ -163,6 +163,8 @@ logging config format for content details.
 -  Full volume name with format like "volume@datastore" cannot be specified in the compose file for stack deployment. [#1315](https://github.com/vmware/docker-volume-vsphere/issues/1315). It is a docker compose issue and a workaround has been provided in the issue.
 -  Specifying "Datastore Cluster" name during volume creation is not supported. Datastore clusters (as a part of Storage DRS) is a VC feature and not available on individual ESX. [#556](https://github.com/vmware/docker-volume-vsphere/issues/556)
 -  Volume creation using VFAT filesystem is not working currently. [#1327](https://github.com/vmware/docker-volume-vsphere/issues/1327)
+-  Volume is not shown when running ```docker volume ls``` and ```vmdkops_admin volume ls``` command after performing Storage vMotion of VM when volume is attached to VM. It is an expected behavior since Storage vMotion changes the location and name of attached vmdk files.
+We only see this when trying to do Storage vMotion with volume attached. So avoid Storage vMotion when volume is attached. [#1618](https://github.com/vmware/docker-volume-vsphere/issues/1618)
 
 ## Contact us
 
