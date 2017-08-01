@@ -342,14 +342,15 @@ def get_attached_volume_path(vm, volname, datastore):
 
     # Find the attached disk with backing matching "[datastore] dockvols/[.*]/volname[-ddddddd]?.vmdk"
     # SInce we don't know the vmgroup (the path after dockvols), we'll just pick the first match (and yell if
-    # there is more that one match)
-    # yes, it is super redundant - we will find VM, scan disks and find a matching one here, then return the path
+    # there is more than one match)
+    # Yes, it is super redundant - we will find VM, scan disks and find a matching one here, then return the path
     # and it will likely be used to do the same steps - find VM, scan the disks, etc.. It's a hack and it's a corner
     # case, so we'll live with this
 
     # Note that if VM is moved to a different vmgroup in flight, we may fail here and it's fine.
-    # Note that if ther is a volume with the same name in 2 different vmgroup folders and both are attached
-    # and VM is moved between the groups we may end up returning  the wrong volume but it's less
+    # Note that if there is a volume with the same name in 2 different vmgroup folders and both are attached
+    # and VM is moved between the groups we may end up returning  the wrong volume but not  possible, as the user
+    # would need to change VMgroup in-flight and admin tool would block it when volumes are attached.
 
     if not datastore:
         # we rely on datastore always being a part of volume name passed to detach.

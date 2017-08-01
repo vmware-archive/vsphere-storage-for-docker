@@ -666,8 +666,8 @@ def findVmByUuid(vm_uuid):
 
 def findVmByUuidChoice(bios_uuid, vc_uuid):
     """
-    returns vm object based on either vc_uuid, or bios_uuid.
-    returns None if failed to find. Logs errors if needed
+    Returns vm object based on either vc_uuid, or bios_uuid.
+    Returns None if failed to find.
     """
     vm = None
     if vc_uuid:
@@ -675,7 +675,7 @@ def findVmByUuidChoice(bios_uuid, vc_uuid):
     if not vm: # either vc_uuid is not even passed, or we failed to find the VM by VC uuid:
         logging.warning("Failed to find VM by VC UUID %s, trying BIOS UUID %s", vc_uuid, bios_uuid)
         vm = findVmByUuid(bios_uuid)
-    if not vm: # can find VM by VC or BIOS uuid
+    if not vm: # can't find VM by VC or BIOS uuid
         logging.error("Failed to find VM by BIOS UUID either.")
         return None
     logging.info("Found vm name='%s'", vm.config.name)
@@ -885,15 +885,15 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts, vc_u
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
     force_detach = False
     if error_info:
-        # For "docker volume ls", in case of error fron the plugin Docker prints a list of cached volume names,
+        # For "docker volume ls", in case of error from the plugin Docker prints a list of cached volume names,
         # which is misleading. To avoid this, we replace error with an empty list. See Issue #990 for details.
         if (cmd == "list") and (not tenant_uuid):
             return []
         # We need special handling for failure to find tenants in "detach".
-        # get_tenant() will may fail if the the VM was in the default VM grop and the latter
+        # get_tenant() will fail if the the VM was in the default VM group and the latter
         # got deleted to tighten security.
         # Note: since admin_cli will block removing a VM with attached disks from named groups,
-        # this fix only impacts "default' group removal.  See issue #1441.
+        # this fix only impacts "default" vmgroup removal.  See issue #1441.
         elif (cmd =="detach"):
             force_detach = True
         else:
