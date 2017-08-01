@@ -664,6 +664,23 @@ def findVmByUuid(vm_uuid):
     vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True, False)
     return vm
 
+def findVmByUuidChoice(bios_uuid, vc_uuid):
+    """
+    Returns vm object based on either vc_uuid, or bios_uuid.
+    Returns None if failed to find.
+    """
+    vm = None
+    if vc_uuid:
+        vm = findVmByUuid(vc_uuid)
+    if not vm: # either vc_uuid is not even passed, or we failed to find the VM by VC uuid:
+        logging.warning("Failed to find VM by VC UUID %s, trying BIOS UUID %s", vc_uuid, bios_uuid)
+        vm = findVmByUuid(bios_uuid)
+    if not vm: # can't find VM by VC or BIOS uuid
+        logging.error("Failed to find VM by BIOS UUID either.")
+        return None
+    logging.info("Found vm name='%s'", vm.config.name)
+    return vm
+
 def vm_uuid2name(vm_uuid):
     vm = findVmByUuid(vm_uuid)
     if not vm or not vm.config:
@@ -685,16 +702,9 @@ def apply_action_VMDK(action, vmdk_path, vm_name, bios_uuid, vc_uuid):
 
     logging.info("*** %s: VMDK %s to VM '%s' , bios uuid = %s, VC uuid=%s)",
                  action.__name__, vmdk_path, vm_name, bios_uuid, vc_uuid)
-    vm = None
-    if vc_uuid:
-        vm = findVmByUuid(vc_uuid)
-    if not vm: # either vc_uuid is not even passed, or we failed to find the VM by VC uuid:
-        logging.warning("Failed to find VM by VC UUID %s, trying BIOS UUID %s", vc_uuid, bios_uuid)
-        vm = findVmByUuid(bios_uuid)
+    vm = findVmByUuidChoice(bios_uuid, vc_uuid)
     if not vm: # can find VM by VC or BIOS uuid
-        msg = "Failed to find VM object for %s (bios %s vc %s)" % (vm_name, bios_uuid, vc_uuid)
-        logging.error(msg)
-        return err(msg)
+        return err("Failed to find VM object for %s (bios %s vc %s)" % (vm_name, bios_uuid, vc_uuid))
 
     if vm.config.name != vm_name:
         logging.warning("vm_name from vSocket '%s' does not match VM object '%s' ", vm_name, vm.config.name)
@@ -702,8 +712,12 @@ def apply_action_VMDK(action, vmdk_path, vm_name, bios_uuid, vc_uuid):
     return action(vmdk_path, vm)
 
 
-# Check existence (and creates if needed) the path for docker volume VMDKs
 def get_vol_path(datastore, tenant_name=None):
+    """
+    Check existence (and create if needed) the path for docker volume VMDKs
+    Returns either path to tenant-specific folder (if tenant name is passed)
+    or path to dockvol.
+    """
     # If tenant_name is set to None, the folder for Docker
     # volumes is created on <datastore>/DOCK_VOLS_DIR
     # If tenant_name is set, the folder for Dock volume
@@ -834,7 +848,7 @@ def authorize_check(vm_uuid, datastore_url, cmd, opts, use_default_ds, datastore
         if error_info:
             return error_info
     else:
-        # user passsed in volume with format vol@datastore
+        # user passed in volume with format vol@datastore
         # check the privilege to that datastore
         error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid, datastore_url, cmd, opts)
         # no privilege exist for the given datastore
@@ -862,83 +876,117 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts, vc_u
     Returns None (if all OK) or error string
     """
     logging.debug("config_path=%s", config_path)
+    # get datastore the VM is running on
     vm_datastore_url = vmdk_utils.get_datastore_url_from_config_path(config_path)
     vm_datastore = get_datastore_name(vm_datastore_url)
     logging.debug("executeRequest: vm_datastore = %s, vm_datastore_url = %s",
                   vm_datastore, vm_datastore_url)
 
     error_info, tenant_uuid, tenant_name = auth.get_tenant(vm_uuid)
+    force_detach = False
     if error_info:
-        # For docker volume ls, docker prints a list of cached volume names in case
-        # of error(in this case, orphan VM). See Issue #990
-        # Explicity providing empty list of volumes to avoid misleading output.
+        # For "docker volume ls", in case of error from the plugin Docker prints a list of cached volume names,
+        # which is misleading. To avoid this, we replace error with an empty list. See Issue #990 for details.
         if (cmd == "list") and (not tenant_uuid):
             return []
+        # We need special handling for failure to find tenants in "detach".
+        # get_tenant() will fail if the the VM was in the default VM group and the latter
+        # got deleted to tighten security.
+        # Note: since admin_cli will block removing a VM with attached disks from named groups,
+        # this fix only impacts "default" vmgroup removal.  See issue #1441.
+        elif (cmd =="detach"):
+            force_detach = True
         else:
             return err(error_info)
 
-    # default_datastore must be set for tenant
-    error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
-    if error_info:
-        return err(error_info.msg)
-    elif not default_datastore_url:
-        err_msg = error_code_to_message[ErrorCode.DS_DEFAULT_NOT_SET].format(tenant_name)
-        logging.warning(err_msg)
-        return err(err_msg)
+    if force_detach:
+        # Special (ugly) patch for detaching from VMs where we can't find tenant
+        # (e.g. tenant definition was removed)
+        # The patch is ugly since the affected code is a bit convoluted and can benefit
+        # from refactoring.
+        # The patch does the following: circumvents all the code for authentication and
+        # vmdk path calculation, and instead find good match in the list of devices actually attached.
 
-    # default_datastore could be a real datastore name or a hard coded  one "_VM_DS"
-    default_datastore = get_datastore_name(default_datastore_url)
+        logging.warning("executeRequest: FORCE_DETACH vm_uuid=%s, vm_name=%s, full_volume_name=%s",
+                        vm_uuid, vm_name, full_vol_name)
+        # For detach, we get full volume name from docker so it should always be valid.
+        try:
+            vol_name, datastore = parse_vol_name(full_vol_name)
+            logging.info("vol_name=%s, datastore=%s", vol_name, datastore)
+        except ValidationError as ex:
+            return err(str(ex))
+        # we use tenant name to form a unique lock name, so let's fake it
+        tenant_name = "__NoSuchTenant__"
 
-    logging.debug("executeRequest: vm uuid=%s VC uuid=%s name=%s, tenant_name=%s, default_datastore=%s",
-                  vm_uuid, vc_uuid, vm_name, tenant_name, default_datastore)
+        # Since we do not know the tenant and thus cannot construct the /vmfs/volumes/<datastore>/dockvols/<tenant>
+        # let's just look in the attached device for the best match.
+        vm = findVmByUuidChoice(vm_uuid, vc_uuid)
+        vmdk_path = vmdk_utils.get_attached_volume_path(vm, vol_name, datastore)
 
-    if cmd == "list":
-        threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
-        # if default_datastore is not set, should return error
-        return listVMDK(tenant_name)
-
-    try:
-        vol_name, datastore = parse_vol_name(full_vol_name)
-    except ValidationError as ex:
-        return err(str(ex))
-
-    if datastore and not vmdk_utils.validate_datastore(datastore):
-        return err("Invalid datastore '%s'.\n" \
-                   "Known datastores: %s.\n" \
-                   "Default datastore: %s" \
-                   % (datastore, ", ".join(get_datastore_names_list()), default_datastore))
-
-    if not datastore:
-        datastore_url = default_datastore_url
-        datastore = default_datastore
-        use_default_ds = True
     else:
-        datastore_url = vmdk_utils.get_datastore_url(datastore)
-        use_default_ds = False
+        # default_datastore must be set for tenant
+        error_info, default_datastore_url = auth_api.get_default_datastore_url(tenant_name)
+        if error_info:
+            return err(error_info.msg)
+        elif not default_datastore_url:
+            err_msg = error_code_to_message[ErrorCode.DS_DEFAULT_NOT_SET].format(tenant_name)
+            logging.warning(err_msg)
+            return err(err_msg)
 
-    logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, "
-                  "default_datastore_url=%s datastore_url=%s",
-                  vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url, datastore_url)
+        # default_datastore could be a real datastore name or a hard coded  one "_VM_DS"
+        default_datastore = get_datastore_name(default_datastore_url)
 
-    error_info = authorize_check(vm_uuid, datastore_url, cmd, opts, use_default_ds, datastore,
-                                 vm_datastore)
-    if error_info:
-        return err(error_info)
+        logging.debug("executeRequest: vm uuid=%s VC uuid=%s name=%s, tenant_name=%s, default_datastore=%s",
+                    vm_uuid, vc_uuid, vm_name, tenant_name, default_datastore)
 
-    # get_vol_path() need to pass in a real datastore name
-    if datastore == auth_data_const.VM_DS:
-        datastore = vm_datastore
-        # set datastore_url to a real datastore_url
-        # createVMDK() and removeVMDK() need to pass in
-        # a real datastore_url instead of url of _VM_DS
-        datastore_url = vm_datastore_url
+        if cmd == "list":
+            threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
+            # if default_datastore is not set, should return error
+            return listVMDK(tenant_name)
 
-    path, errMsg = get_vol_path(datastore, tenant_name)
-    logging.debug("executeRequest for tenant %s with path %s", tenant_name, path)
-    if path is None:
-        return errMsg
+        try:
+            vol_name, datastore = parse_vol_name(full_vol_name)
+        except ValidationError as ex:
+            return err(str(ex))
 
-    vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
+        if datastore and not vmdk_utils.validate_datastore(datastore):
+            return err("Invalid datastore '%s'.\n" \
+                    "Known datastores: %s.\n" \
+                    "Default datastore: %s" \
+                    % (datastore, ", ".join(get_datastore_names_list()), default_datastore))
+
+        if not datastore:
+            datastore_url = default_datastore_url
+            datastore = default_datastore
+            use_default_ds = True
+        else:
+            datastore_url = vmdk_utils.get_datastore_url(datastore)
+            use_default_ds = False
+
+        logging.debug("executeRequest: vm_uuid=%s, vm_name=%s, tenant_name=%s, tenant_uuid=%s, "
+                      "default_datastore_url=%s datastore_url=%s",
+                      vm_uuid, vm_name, tenant_uuid, tenant_name, default_datastore_url, datastore_url)
+
+        error_info = authorize_check(vm_uuid, datastore_url, cmd, opts, use_default_ds, datastore,
+                                    vm_datastore)
+        if error_info:
+            return err(error_info)
+
+        # get_vol_path() need to pass in a real datastore name
+        if datastore == auth_data_const.VM_DS:
+            datastore = vm_datastore
+            # set datastore_url to a real datastore_url
+            # createVMDK() and removeVMDK() need to pass in
+            # a real datastore_url instead of url of _VM_DS
+            datastore_url = vm_datastore_url
+
+        path, errMsg = get_vol_path(datastore, tenant_name)
+        logging.debug("executeRequest for tenant %s with path %s", tenant_name, path)
+        if path is None:
+            return errMsg
+
+        vmdk_path = vmdk_utils.get_vmdk_path(path, vol_name)
+
 
     # Set up locking for volume operations.
     # Lock name defaults to combination of DS,tenant name and vol name
@@ -1408,6 +1456,10 @@ def disk_detach(vmdk_path, vm):
     return disk_detach_int(vmdk_path, vm, device)
 
 def disk_detach_int(vmdk_path, vm, device, key=None, value=None):
+    """
+    Disk Detach imlementation. We get here after all validations are done,
+    and here we simply connect to ESX and execute  Reconfig("remove disk") task
+    """
     si = get_si()
     spec = vim.vm.ConfigSpec()
     dev_changes = []
