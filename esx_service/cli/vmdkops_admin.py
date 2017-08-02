@@ -955,8 +955,10 @@ def tenant_create(args):
 
     if error_info:
         return err_out(error_info.msg)
-    else:
+    elif args.name != auth_data_const.DEFAULT_TENANT:
         print("vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.".format(args.name))
+    else:
+        print("vmgroup '{}' is created.".format(args.name))
 
 def tenant_update(args):
     """ Handle tenant update command """

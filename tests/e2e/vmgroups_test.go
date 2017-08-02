@@ -564,3 +564,25 @@ func (vg *VmGroupTest) TestVmgroupRemoveWithRemoveVol(c *C) {
 
 // 	misc.LogTestEnd(c.TestName())
 // }
+
+// TestVMListForDefaultGroup - Verifies that when creating the default vmgroup
+// a vmlist if provided is discarded and the vmgroup creation fails.
+// 1. Delete the _DEFAULT vmgroup
+// 2. Create the _DEFAULT vmgroup and provide a vm list. This step must fail
+// 3. Repeat (2) without the VM list and verify that the default vmgroup is created.
+func (vg *VmGroupTest) TestVMListForDefaultGroup(c *C) {
+	misc.LogTestStart(c.TestName())
+	
+	// 1. Delete the _DEFAULT vmgroup
+	out, err := adminutils.DeleteVMgroup(vg.config.EsxHost, adminconst.DefaultVMgroup, false)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 2. Create the _DEFAULT vmgroup and provide a vm list, must fail
+	out, err = adminutils.CreateVMgroup(vg.config.EsxHost, adminconst.DefaultVMgroup, vg.config.DockerHostNames[0], adminconst.VMHomeDatastore)
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// 3. Repeat (2) without the VM list and verify that the default vmgroup is created.
+	out, err = adminutils.CreateVMgroup(vg.config.EsxHost, adminconst.DefaultVMgroup, "", adminconst.VMHomeDatastore)
+	c.Assert(err, IsNil, Commentf(out))
+	misc.LogTestEnd(c.TestName())
+}
