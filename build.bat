@@ -37,7 +37,6 @@ set winBuildDir=%projectRoot%\build\windows
 set vmciDir=%projectRoot%\esx_service\vmci
 set pluginDir=%projectRoot%\client_plugin\vmdk_plugin
 set vmdkopsDir=%projectRoot%\client_plugin\drivers\vmdk\vmdkops
-set vsphereJsonPath=C:\ProgramData\docker\plugins\vsphere.json
 set msvcBatPath=C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat
 
 :: ---- Prerequisites ----
@@ -92,23 +91,12 @@ echo Building vdvs.exe.
 go build -v -o vdvs.exe main.go main_windows.go
 echo Successfully built vdvs.exe.
 
-:: Write vsphere.json to the docker plugin config directory.
-echo Writing vsphere.json to the docker plugin config directory.
-del %vsphereJsonPath%
-(
-echo {
-echo   "Name": "vsphere",
-echo   "Addr": "npipe:////./pipe/vsphere-dvs"
-echo }
-) > %vsphereJsonPath%
-echo Successfully wrote vsphere.json to the docker plugin config directory.
-
 :: Move binaries to build directory.
 echo Moving binaries to the build directory.
 if not exist %winBuildDir% mkdir %winBuildDir%
 move /y %vmdkopsDir%\vmci_client.dll %winBuildDir%
 move /y vdvs.exe %winBuildDir%
-powershell Compress-Archive -Path %winBuildDir%\* -DestinationPath %winBuildDir%\docker-volume-vsphere.zip
+powershell Compress-Archive -Path %winBuildDir%\* -DestinationPath %winBuildDir%\docker-volume-vsphere.zip -Force
 echo Successfully moved binaries to the build directory.
 
 cd %projectRoot%
