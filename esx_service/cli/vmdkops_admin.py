@@ -949,7 +949,7 @@ def tenant_create(args):
     """ Handle tenant create command """
     error_info, tenant = auth_api._tenant_create(name=args.name,
                                                  default_datastore=args.default_datastore,
-                                                 description="",
+                                                 description=args.description,
                                                  vm_list=args.vm_list,
                                                  privileges=[])
 
