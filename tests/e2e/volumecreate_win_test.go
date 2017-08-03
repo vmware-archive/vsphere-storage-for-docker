@@ -31,6 +31,7 @@ var (
 		"volume-000000",
 		inputparams.GetUniqueVolumeName("volume") + "@invaliddatastore",
 		"volume-0000000-****-###",
+		"volume\\abc",
 	}
 
 	// validFstype is a valid fstype for the TestValidOptions test.
