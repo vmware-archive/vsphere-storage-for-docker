@@ -458,6 +458,10 @@ def _tenant_create(name, default_datastore, description="", vm_list=None, privil
     # VM list can be empty during tenant create. Validate only if it exists
     vms = None
     if vm_list:
+        if name == auth_data_const.DEFAULT_TENANT:
+            error_info = generate_error_info(ErrorCode.INVALID_ARGUMENT, vm_list)
+            return error_info, None
+
         error_info = is_vm_duplicate(vm_list)
         if error_info:
             return error_info, None
