@@ -947,9 +947,12 @@ def generate_tenant_ls_rows(tenant_list):
 
 def tenant_create(args):
     """ Handle tenant create command """
+    desc = ""
+    if args.description:
+        desc = args.description
     error_info, tenant = auth_api._tenant_create(name=args.name,
                                                  default_datastore=args.default_datastore,
-                                                 description="",
+                                                 description=desc,
                                                  vm_list=args.vm_list,
                                                  privileges=[])
 
@@ -962,9 +965,12 @@ def tenant_create(args):
 
 def tenant_update(args):
     """ Handle tenant update command """
+    desc = ""
+    if args.description:
+        desc = args.description
     error_info = auth_api._tenant_update(name=args.name,
                                          new_name=args.new_name,
-                                         description=args.description,
+                                         description=desc,
                                          default_datastore=args.default_datastore)
 
     if error_info:
