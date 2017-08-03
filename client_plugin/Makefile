@@ -298,7 +298,9 @@ TMP_LOC := /tmp/$(PLUGNAME)
 # scripts started locally to deploy to and clean up test machines
 DEPLOY_VM_SH  := $(DEPLOY_TOOLS) deployvm
 DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS) deployvmtest
-DEPLOY_VM_PLUGIN_SH := $(DEPLOY_TOOLS) deployplugin
+BUILD_PLUGIN_SH := $(DEPLOY_TOOLS) buildplugin
+BUILD_WINDOWS_PLUGIN_SH := $(DEPLOY_TOOLS) buildwindowsplugin
+DEPLOY_WINDOWS_PLUGIN_SH := $(DEPLOY_TOOLS) deploywindowsplugin
 DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
 DEPLOY_ESX_FOR_UPGRADE := $(DEPLOY_TOOLS) deployesxForUpgrade
 CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
@@ -323,13 +325,18 @@ run-upgrade-test:
 	ESX='$(ESX)' VM1='$(VM1)' VIB_BIN='$(VIB_BIN)' PLUGIN_NAME='$(PLUGIN_NAME)' PLUGIN_TAG='$(PLUGIN_TAG)' UPGRADE_FROM_VER='$(UPGRADE_FROM_VER)' UPGRADE_TO_VER='$(UPGRADE_TO_VER)' $(DOCKER_HUB_REPO)='$(DOCKER_HUB_REPO)' $(UPGRADE_TEST)
 
 VMS= $(VM1) $(VM2) $(WORKER2) $(CI_NODE4)
+WIN_VMS= $(WIN_VM1)
 
 deploy-vm: clean-vm
 	$(DEPLOY_VM_SH) "$(VMS)" $(PLUGIN_NAME):$(PLUGIN_TAG)
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
-deploy-vm-plugin:
-	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+build-plugin:
+	$(BUILD_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+build-windows-plugin:
+	$(BUILD_WINDOWS_PLUGIN_SH) $(WIN_VM1)
+deploy-windows-plugin:
+	$(DEPLOY_WINDOWS_PLUGIN_SH) "$(WIN_VMS)"
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
@@ -392,7 +399,11 @@ test-e2e:
 	$(log_target)
 	$(BUILD) test-e2e-runalways
 	$(BUILD) test-e2e-runonce
-	# TODO: Enable $(BUILD) test-e2e-runonce-windows once Windows VM is available locally.
+
+# An end-to-end windows test target for vSphere Docker Volume Driver
+test-e2e-windows:
+	$(log_target)
+	$(BUILD) test-e2e-runonce-windows
 
 #
 # E2E test target to control test run on CI.

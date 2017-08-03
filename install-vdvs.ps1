@@ -16,6 +16,12 @@
 # ============================================================================
 # Run the script with the plugin url as the parameter in a PowerShell session:
 # PS C:\Users\Administrator> .\install-vdvs.ps1 <vdvs-download-url>
+#
+# The -Force parameter suppresses any confirmation prompt and performs an
+# affirmative action. For example, supplying -Force during installation will
+# uninstall any previous installation of the plugin, without confirmation.
+# Supplying -Force during uninstallation suppresses the confirmation prompt
+# and uninstalls the plugin.
 # ============================================================================
 
 <#
@@ -24,9 +30,9 @@
 .DESCRIPTION
     This script helps to download, install, uninstall, and re-install VMware vSphere Docker Volume Plugin on your system.
 .EXAMPLE
-   ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere.zip
+    ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere.zip
 .EXAMPLE
-   ./install-vdvs.ps1 -uninstall
+    ./install-vdvs.ps1 -uninstall
 .LINK
     https://vmware.github.io/docker-volume-vsphere/
 #>
@@ -34,7 +40,8 @@
 # Command line parameters
 param (
     [string] $uri,
-    [switch] $uninstall
+    [switch] $uninstall,
+    [switch] $Force
 )
 
 # Define the constants
@@ -66,8 +73,7 @@ $svc = Get-Service | Where-Object {$_.Name -eq $svcName}
 # Handle uninstallation
 if ($uninstall) {
     if ($svc) {
-        $confirmUninstall = Read-Host "Do you really want to uninstall $svcName [Y/N]?"
-        if ($confirmUninstall -eq "Y") {
+        if ($Force -Or ($result = Read-Host "Do you really want to uninstall $svcName [Y/N]?") -eq "Y") {
             Uninstall-Service($svc)
         }
     } else {
@@ -78,15 +84,14 @@ if ($uninstall) {
 
 # Check URI parameter for installation process
 if (! $uri) {
-     echo "Usage: install-vdvs.ps1 [[-uri] <String>] [-uninstall]"
+     echo "Usage: install-vdvs.ps1 [[-uri] <String>] [-uninstall] [-Force]"
      return
 }
 
 # Handle reinstallation
 if ($svc) {
     echo "Windows service $svcName is already installed."
-    $reinstall = Read-Host "Do you want to reinstall $svcName [Y/N]?"
-    if ($reinstall -eq "Y") {
+    if ($Force -Or ($result = Read-Host "Do you want to reinstall $svcName [Y/N]?") -eq "Y") {
         Uninstall-Service($svc)
     } else {
         return

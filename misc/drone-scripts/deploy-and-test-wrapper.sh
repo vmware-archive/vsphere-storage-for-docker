@@ -100,7 +100,7 @@ PARAMETER="TEST_VOL_NAME=vol.build$BUILD_NUMBER"
 
 case $FUNCTION_NAME in
 pluginSanityCheck)
-        TARGET+=" deploy-vm-plugin"
+        TARGET+=" build-plugin"
         ;;
 runtests)
         if [ -e /tmp/$ESX ]
