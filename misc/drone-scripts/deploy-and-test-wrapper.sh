@@ -114,6 +114,9 @@ runtests)
 coverage)
         TARGET=" coverage"
         ;;
+winplugin)
+        TARGET=" build-windows-plugin deploy-windows-plugin test-e2e-windows"
+        ;;
 esac
 
 if make -s $TARGET $PARAMETER;
