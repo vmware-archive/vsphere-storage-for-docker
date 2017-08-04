@@ -68,6 +68,9 @@ PY2_LOC = os.path.join(PY_LOC, "2")
 MAX_VOL_NAME_LEN = 100
 MAX_DS_NAME_LEN  = 100
 
+# Characters not acceptable in volume name
+ILLEGAL_CHARACTERS = {'/', '\\'}
+
 # vmdkops python utils are in PY_LOC, so insert to path ahead of other stuff
 sys.path.insert(0, PY_LOC)
 
@@ -784,12 +787,6 @@ def parse_vol_name(full_vol_name):
     On parse errors raises ValidationError with syntax explanation
     """
     # Parse volume name with regexp package
-    #
-    # Caveat: we block '-NNNNNN' in end of volume name to make sure that volume
-    # name never conflicts with VMDK snapshot name (e.g. 'disk-000001.vmdk').
-    # Note that N is a digit and there are exactly 6 of them (hardcoded in ESXi)
-    # vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
-    #
     try:
         at = full_vol_name.rindex('@')
         vol_name = full_vol_name[:at]
@@ -798,13 +795,30 @@ def parse_vol_name(full_vol_name):
         # '@' not found
         vol_name = full_vol_name
         ds_name = None
-    # now block the '-NNNNN' volume names
+
+    # Now block the '-NNNNN' volume names
+    #
+    # Caveat: we block '-NNNNNN' in end of volume name to make sure that volume
+    # name never conflicts with VMDK snapshot name (e.g. 'disk-000001.vmdk').
+    # Note that N is a digit and there are exactly 6 of them (hardcoded in ESXi)
+    # vmdk_utils.py:list_vmdks() explicitly relies on this assumption.
     if re.match(vmdk_utils.SNAP_NAME_REGEXP, vol_name):
         raise ValidationError("Volume names ending with '-NNNNNN' (where N is a digit) are not supported")
+
+    # Check if the volume name is too long
     if len(vol_name) > MAX_VOL_NAME_LEN:
         raise ValidationError("Volume name is too long (max len is {0})".format(MAX_VOL_NAME_LEN))
+
+    # Check if the volume name contains illegal characters
+    for c in ILLEGAL_CHARACTERS:
+        if c in vol_name:
+            raise ValidationError("Volume name contains illegal characters: {0}".format(c))
+
+    # Check if the datastore name is too long
     if ds_name and len(ds_name) > MAX_DS_NAME_LEN:
         raise ValidationError("Datastore name is too long (max len is {0})".format(MAX_DS_NAME_LEN))
+
+    # Return qualified volume name and datastore name
     return vol_name, ds_name
 
 
