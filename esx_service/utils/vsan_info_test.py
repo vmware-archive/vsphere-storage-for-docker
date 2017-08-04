@@ -32,7 +32,7 @@ class TestVsanInfo(unittest.TestCase):
     """ Test VSAN Info API """
 
     VM_NAME = "test-vm"
-    VSAN_DS = "/vmfs/volumes/vsanDatastore"
+    VSAN_DS = "/vmfs/volumes/vsandatastore"
     TEST_DIR = os.path.join(VSAN_DS, "vsan_info_test")
     TEST_VOL = "test_policy_vol"
     VMDK_PATH = os.path.join(TEST_DIR, TEST_VOL + ".vmdk")
