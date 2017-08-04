@@ -1642,12 +1642,11 @@ def execRequestThread(client_socket, cartel, request):
             client_protocol_version = int(req["version"]) if "version" in req else SERVER_PROTOCOL_VERSION
             logging.debug("execRequestThread: client protocol version=%d", client_protocol_version)
             if client_protocol_version != SERVER_PROTOCOL_VERSION:
-                if client_protocol_version < SERVER_PROTOCOL_VERSION:
-                    reply_string = err("vSphere Docker Volume Service client version ({}) is older than server version ({}), "
-                                    "please update the client.".format(client_protocol_version, SERVER_PROTOCOL_VERSION))
-                else:
-                    reply_string = err("vSphere Docker Volume Service client version ({}) is newer than server version ({}), "
-                                    "please update the server.".format(client_protocol_version, SERVER_PROTOCOL_VERSION))
+                reply_string = err("""There is a mismatch between vDVS client (Docker plugin) protocol version
+                                    ({}) and server (ESXi) protocol version ({}) which indicates different
+                                    versions of the product are installed on Guest and ESXi sides,
+                                    please make sure vDVS plugin and driver are from the same release version.
+                                    """.format(client_protocol_version, SERVER_PROTOCOL_VERSION))
                 send_vmci_reply(client_socket, reply_string)
                 logging.warning("executeRequest '%s' failed: %s", req["cmd"], reply_string)
                 return
