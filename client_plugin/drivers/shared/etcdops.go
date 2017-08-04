@@ -18,14 +18,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os/exec"
-	"strings"
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/swarm"
+	"os/exec"
+	"strings"
+	"time"
 )
 
 /*
@@ -360,12 +359,14 @@ func (e *etcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 		log.Fields{"type": ev.Type},
 	).Infof("Watcher on global refcount returns event ")
 
-	nested := func(key string, fromState volStatus, toState volStatus, fn func(string) bool) {
+	nested := func(key string, fromState volStatus,
+		toState volStatus, interimState volStatus,
+		fn func(string) bool) {
 		// watcher observes global refcount critical change
 		// transactional edit state first
 		volName := strings.TrimPrefix(key, etcdPrefixGRef)
-		succeeded := e.CompareAndPut(etcdPrefixState+volName,
-			string(fromState), string(volStateIntermediate))
+		succeeded := e.CompareAndPutStateOrBusywait(etcdPrefixState+volName,
+			string(fromState), string(interimState))
 		if !succeeded {
 			// this handler doesn't get the right to start server
 			return
@@ -374,38 +375,42 @@ func (e *etcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 		if fn(volName) {
 			// server start/stop succeed, set desired state
 			if e.CompareAndPut(etcdPrefixState+volName,
-				string(volStateIntermediate),
+				string(interimState),
 				string(toState)) == false {
 				// Failed to set state to desired state
 				// set to state Error
 				e.CompareAndPut(etcdPrefixState+volName,
-					string(volStateIntermediate),
+					string(interimState),
 					string(volStateError))
 			}
 		} else {
 			// failed to start/stop server, set to state Error
 			e.CompareAndPut(etcdPrefixState+volName,
-				string(volStateIntermediate),
+				string(interimState),
 				string(volStateError))
 		}
 		return
 	}
 
+	// What we want to monitor are PUT requests on global refcount
+	// Not delete, not get, not anything else
 	if ev.Type == etcdClient.EventTypePut {
 		if string(ev.Kv.Value) == etcdSingleRef &&
 			ev.PrevKv != nil &&
 			string(ev.PrevKv.Value) == etcdNoRef {
-			nested(string(ev.Kv.Key), volStateReady, volStateMounted, e.driver.startSMBServer)
-			return
-		}
-
-		if string(ev.Kv.Value) == etcdNoRef &&
+			// Refcount went 0 -> 1
+			nested(string(ev.Kv.Key), volStateReady,
+				volStateMounted, volStateMounting,
+				e.driver.startSMBServer)
+		} else if string(ev.Kv.Value) == etcdNoRef &&
 			ev.PrevKv != nil &&
 			string(ev.PrevKv.Value) == etcdSingleRef {
-			nested(string(ev.Kv.Key), volStateMounted, volStateReady, e.driver.stopSMBServer)
+			// Refcount went 1 -> 0
+			nested(string(ev.Kv.Key), volStateMounted,
+				volStateReady, volStateUnmounting,
+				e.driver.stopSMBServer)
 		}
 	}
-
 	return
 }
 
@@ -429,6 +434,71 @@ func (e *etcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 	}
 
 	return txresp.Succeeded
+}
+
+//CompareAndPutOrFetch - Compare and put of get the current value of the key
+func (e *etcdKVS) CompareAndPutOrFetch(key string,
+	oldVal string,
+	newVal string) (*etcdClient.TxnResponse, error) {
+	txresp, err := e.client.Txn(context.TODO()).If(
+		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
+	).Then(
+		etcdClient.OpPut(key, newVal),
+	).Else(
+		etcdClient.OpGet(key),
+	).Commit()
+
+	if err != nil {
+		// There was some error
+		log.WithFields(
+			log.Fields{"Key": key,
+				"Value to compare": oldVal,
+				"Value to replace": newVal,
+				"Error":            err},
+		).Errorf("Failed to compare and put ")
+	}
+	return txresp, err
+}
+
+// CompareAndPutStateOrBusywait function: compare the volume state with oldVal
+// if equal, replace with newVal and return true; or else, return false;
+// waits if volume is in a state from where it can reach the ready state
+func (e *etcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal string) bool {
+	var txresp *etcdClient.TxnResponse
+	var err error
+
+	ticker := time.NewTicker(checkSleepDuration)
+	defer ticker.Stop()
+	timer := time.NewTimer(2 * requestTimeout)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			// Retry
+			log.Infof("Attempting to change volume state to %s", newVal)
+			txresp, err = e.CompareAndPutOrFetch(key, oldVal, newVal)
+			if err != nil {
+				return false
+			}
+			if txresp.Succeeded == false {
+				resp := txresp.Responses[0].GetResponseRange()
+				// Did we encounter states other than Unmounting or Creating?
+				if (string(resp.Kvs[0].Value) != string(volStateUnmounting)) &&
+					(string(resp.Kvs[0].Value) != string(volStateCreating)) {
+					log.Infof("Volume not in proper state for the operation: %s",
+						string(resp.Kvs[0].Value))
+					return false
+				}
+			} else {
+				return true
+			}
+		case <-timer.C:
+			// Time out
+			log.Warningf("Operation to change state from %s to %s timed out!",
+				oldVal, newVal)
+			return false
+		}
+	}
 }
 
 func (e *etcdKVS) createEtcdClient() *etcdClient.Client {

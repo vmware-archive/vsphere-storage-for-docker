@@ -34,8 +34,10 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 	"strconv"
+	"strings"
 )
 
 // volStatus: Datatype for keeping status of a shared volume
@@ -56,8 +58,11 @@ type volStatus string
                          no Samba service running right now.
    volStateMounted:      Samba service already running. Volume mounted
                          on at least one host VM.
-   volStateIntermediate: Metadata of shared volume is being changed.
-                         Dont proceed with your op if this is the status.
+   volStateMounting:     Volume is being mounted, File sharing service is being
+                         started for this volume.
+   volStateUnmounting:   Volume is being unmounted, File sharing service is being
+                         stopped for this volume.
+   volStateDeleting:     Shared volume is being deleted. Not ready to be mounted.
 */
 const (
 	version              = "vSphere Shared Volume Driver v0.2"
@@ -65,17 +70,19 @@ const (
 	dockerUSocket        = "unix:///var/run/docker.sock"
 	internalVolumePrefix = "InternalVol"
 	// TODO Replace with our own samba later
-	sambaImageName                 = "dperson/samba"
-	sambaUsername                  = "root"
-	sambaPassword                  = "badpass"
-	volStateCreating     volStatus = "Creating"
-	volStateReady        volStatus = "Ready"
-	volStateMounted      volStatus = "Mounted"
-	volStateIntermediate volStatus = "MetadataUpdateInProgress"
-	volStateError        volStatus = "Error"
-	stateIdx                       = 0
-	GRefIdx                        = 1
-	InfoIdx                        = 2
+	sambaImageName               = "dperson/samba"
+	sambaUsername                = "root"
+	sambaPassword                = "badpass"
+	volStateCreating   volStatus = "Creating"
+	volStateReady      volStatus = "Ready"
+	volStateMounting   volStatus = "Mounting"
+	volStateMounted    volStatus = "Mounted"
+	volStateError      volStatus = "Error"
+	volStateUnmounting volStatus = "Unmounting"
+	volStateDeleting   volStatus = "Deleting"
+	stateIdx                     = 0
+	GRefIdx                      = 1
+	InfoIdx                      = 2
 )
 
 /* VolumeMetadata structure contains all the
@@ -107,6 +114,7 @@ type VolumeMetadata struct {
    dockerd:                 Client used for talking to Docker
    internalVolumeDriver:    Name of the plugin used by shared volume
                             plugin to create internal volumes
+   etcd:                    Object of the KV store interface
 */
 
 // VolumeDriver - Contains vars specific to this driver
@@ -352,8 +360,78 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 // Remove - removes individual volume. Docker would call it only if is not using it anymore
 func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
+	var msg string
+	var volRecord VolumeMetadata
 
-	log.Errorf("VolumeDriver Remove to be implemented")
+	// Cannot remove volumes till plugin completely initializes
+	// because we don't know if it is being used or not
+	if d.RefCounts.IsInitialized() != true {
+		msg = fmt.Sprintf(plugin_utils.PluginInitError+" Cannot remove volume %s",
+			r.Name)
+		log.Error(msg)
+		return volume.Response{Err: msg}
+	}
+
+	// Docker is supposed to block 'remove' command if the volume is used.
+	// Check on the local refcount first
+	if d.GetRefCount(r.Name) != 0 {
+		msg = fmt.Sprintf("Remove failed: Containers on this host VM are still using volume %s.",
+			r.Name)
+		log.Error(msg)
+		return volume.Response{Err: msg}
+	}
+
+	// Test and set status to Deleting
+	if !d.etcd.CompareAndPutStateOrBusywait(etcdPrefixState+r.Name,
+		string(volStateReady),
+		string(volStateDeleting)) {
+		clientFetchSucceeded := true
+		// Get a list of host VMs using this volume, if any
+		keys := []string{
+			etcdPrefixInfo + r.Name,
+		}
+		entries, err := d.etcd.ReadVolMetadata(keys)
+		if err != nil {
+			clientFetchSucceeded = false
+			log.Warningf("Failed to check which host VMs are using volume %s", r.Name)
+		}
+		// Unmarshal Info key
+		err = json.Unmarshal([]byte(entries[0].value), &volRecord)
+		if err != nil {
+			clientFetchSucceeded = false
+			log.Warningf("Failed to unmarshal data. %v", err)
+		}
+
+		msg = fmt.Sprintf("Remove failed: Failed to set volume state to deleting.")
+		if clientFetchSucceeded {
+			msg += fmt.Sprintf(" Containers on other host VM are still using volume %s.",
+				r.Name)
+			msg += fmt.Sprintf(" Host VMs using this volume: %s",
+				strings.Join(volRecord.ClientList, ","))
+		}
+		log.Warningf(msg)
+		return volume.Response{Err: msg}
+	}
+
+	// Delete internal volume
+	log.Infof("Attempting to delete internal volume for %s", r.Name)
+	internalVolname := internalVolumePrefix + r.Name
+	err := d.dockerd.VolumeRemove(context.Background(), internalVolname)
+	if err != nil {
+		msg = fmt.Sprintf("Failed to remove internal volume %s. Reason: %v", r.Name, err)
+		msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
+		log.Warningf(msg)
+		return volume.Response{Err: msg}
+	}
+
+	// Delete metadata associated with this volume
+	log.Infof("Attempting to delete volume metadata for %s", r.Name)
+	err = d.etcd.DeleteVolMetadata(r.Name)
+	if err != nil {
+		msg = fmt.Sprintf("Failed to delete volume metadata for %s. Reason: %v", r.Name, err)
+		return volume.Response{Err: msg}
+	}
+
 	return volume.Response{Err: ""}
 }
 
