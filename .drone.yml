@@ -104,7 +104,7 @@ build:
       - GOVC_PASSWORD=$GOVC_PASSWORD_ESX
       - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - #
-      - echo "=> Build and push vDVS managed plugin" `date` > /dev/null
+      - echo "=> Building and pushing vDVS managed plugin" `date` > /dev/null
       - #
       - export GOVC_URL=$GOVC_URL_6_5
       - export VM1=`$GOVC_GET_IP photon.vmfs`
@@ -118,7 +118,7 @@ build:
       - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh pluginSanityCheck $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER installbuilds < /dev/null
       - #
-      - echo "=> Running tests on ESX_6.5" `date` > /dev/null
+      - echo "=> Running tests on VMFS ESX_6.5" `date` > /dev/null
       - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
@@ -128,11 +128,16 @@ build:
       - export VM2=$WORKER2
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
+      - echo "=> Building and running tests for Windows vDVS plugin on VMFS" `date` > /dev/null
+      - #
+      - export WIN_VM1=`$GOVC_GET_IP windows`
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh winplugin $GOVC_URL_6_5 < /dev/null
+      - #
       - echo "=> Capturing coverage on ESX_6.5" `date` > /dev/null
       - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh coverage $GOVC_URL_6_5 < /dev/null
       - #
-      - echo "=> Running tests on ESX_6.0" `date` > /dev/null
+      - echo "=> Running tests on VMFS ESX_6.0" `date` > /dev/null
       - #
       - export GOVC_URL=$GOVC_URL_6_0
       - export VM1=`$GOVC_GET_IP photon.ga.vmfs`
