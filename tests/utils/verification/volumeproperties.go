@@ -35,7 +35,7 @@ import (
 // GetVMAttachedToVolUsingDockerCli returns attached to vm field of volume using docker cli
 // TODO: make this private member after finishing refactoring of volmprop_test.go and remove this TODO
 func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
-	cmd := dockercli.InspectVolume + " --format '{{index .Status \"attached to VM\"}}' " + volName
+	cmd := dockercli.InspectVolume + " --format \"{{index .Status \\\"attached to VM\\\"}}\" " + volName
 	op, _ := ssh.InvokeCommand(hostname, cmd)
 	if op == "" {
 		log.Fatal("Null value is returned by docker cli when looking for attached to vm field for volume. Output: ", op)
@@ -133,7 +133,7 @@ func VerifyAttachedStatus(name, hostName, esxName string) bool {
 
 // getVolumeStatusHost - get the volume status on a given host
 func getVolumeStatusHost(name, hostName string) string {
-	cmd := dockercli.InspectVolume + " --format '{{index .Status.status}}' " + name
+	cmd := dockercli.InspectVolume + " --format \"{{index .Status.status}}\" " + name
 	// ignoring the error here, helper is part of polling util
 	// error most likely to be "unable to reach host [ssh:255 error]"
 	// VerifyDetachedStatus takes care of retry mechanism

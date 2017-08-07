@@ -79,17 +79,8 @@ const (
 	// RunCmdInContainer run a command in a running container
 	RunCmdInContainer = docker + "exec -t "
 
-	// ContainerImage busybox container image
-	ContainerImage = " busybox "
-
-	// TestContainer test busybox container that keeps running
-	TestContainer = ContainerImage + " tail -f /dev/null "
-
 	// QueryContainer checks whether container exists or not
 	QueryContainer = docker + "ps -aq --filter name="
-
-	// ContainerMountPoint mount point where a volume is mounted inside a container
-	ContainerMountPoint = "/vol"
 
 	// ListContainers list all running docker containers
 	ListContainers = docker + "ps "

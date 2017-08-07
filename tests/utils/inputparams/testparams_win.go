@@ -21,6 +21,7 @@ package inputparams
 import (
 	"log"
 	"os"
+	"strings"
 )
 
 // volNameCharset is the valid set of characters for volume name generation.
@@ -35,4 +36,9 @@ func getDockerHosts() []string {
 		log.Fatal("A windows docker host is needed to run tests.")
 	}
 	return dockerHosts
+}
+
+// normalizeVolumeName returns a lower-case form of the given name.
+func normalizeVolumeName(name string) string {
+	return strings.ToLower(name)
 }

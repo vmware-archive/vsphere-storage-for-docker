@@ -75,7 +75,7 @@ func GetUniqueVmgroupName(vmgroupName string) string {
 
 // GetUniqueVolumeName prepares unique volume name with a random generated number
 func GetUniqueVolumeName(volName string) string {
-	return volName + "_volume_" + GetRandomNumber()
+	return normalizeVolumeName(volName + "_volume_" + GetRandomNumber())
 }
 
 // GetVolumeNameOfSize returns a random volume name of required length

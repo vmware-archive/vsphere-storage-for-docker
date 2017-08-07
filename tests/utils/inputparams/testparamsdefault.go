@@ -37,3 +37,8 @@ func getDockerHosts() []string {
 	}
 	return dockerHosts
 }
+
+// normalizeVolumeName returns the name as-is.
+func normalizeVolumeName(name string) string {
+	return name
+}
