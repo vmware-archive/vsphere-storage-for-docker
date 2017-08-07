@@ -12,43 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package shared
+// ETCD implementation for KV Store interface
+
+package etcdops
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	etcdClient "github.com/coreos/etcd/clientv3"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/swarm"
 	"os/exec"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	etcdClient "github.com/coreos/etcd/clientv3"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/dockerops"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore"
 )
 
 /*
-   etcdClientPort:             On which port do etcd clients talk to
-                               the peers?
-   etcdPeerPort:               On which port do etcd peers talk to
-                               each other?
+   etcdClientPort:             port for etcd clients to talk to the peers
+   etcdPeerPort:               port for etcd peers talk to each other
    etcdClusterToken:           ID of the cluster to create/join
-   etcdListenURL:              On which interface is etcd listening?
+   etcdListenURL:              etcd listening interface
    etcdScheme:                 Protocol used for communication
    etcdClusterStateNew:        Used to indicate the formation of a new
                                cluster
    etcdClusterStateExisting:   Used to indicate that this node is joining
                                an existing etcd cluster
-   etcdPrefixState:            Each volume has three metadata keys. Each such
-                               key terminates in the name of the volume, but
-                               is preceded by a prefix. This is the prefix
-                               for "State" key
-   etcdPrefixGRef:             The prefix for GRef key (Global refcount)
-   etcdPrefixInfo:             The prefix for info key. This key holds all
-                               other metadata fields squashed into one
    requestTimeout:             After how long should an etcd request timeout
    etcdClientCreateError:      Error indicating failure to create etcd client
-   VolumeDoesNotExistError:    Error indicating that there is no such volume
    etcdSingleRef:              if global refcount 0 -> 1, start SMB server
    etcdNoRef:                  if global refcount 1 -> 0, shut down SMB server
 */
@@ -60,123 +53,98 @@ const (
 	etcdScheme               = "http://"
 	etcdClusterStateNew      = "new"
 	etcdClusterStateExisting = "existing"
-	etcdPrefixState          = "SVOLS_stat_"
-	etcdPrefixGRef           = "SVOLS_gref_"
-	etcdPrefixInfo           = "SVOLS_info_"
 	requestTimeout           = 5 * time.Second
 	checkSleepDuration       = time.Second
 	etcdClientCreateError    = "Failed to create etcd client"
-	VolumeDoesNotExistError  = "No such volume"
 	etcdSingleRef            = "1"
 	etcdNoRef                = "0"
 )
 
-// kvPair : Key Value pair holder
-type kvPair struct {
-	key   string
-	value string
-}
-
-type etcdKVS struct {
-	driver   *VolumeDriver
-	nodeID   string
-	nodeAddr string
-	client   *etcdClient.Client
+type EtcdKVS struct {
+	dockerOps *dockerops.DockerOps
+	nodeID    string
+	nodeAddr  string
+	client    *etcdClient.Client
 }
 
 // NewKvStore function: start or join ETCD cluster depending on the role of the node
-func NewKvStore(driver *VolumeDriver) *etcdKVS {
-	var e *etcdKVS
+func NewKvStore(dockerOps *dockerops.DockerOps) *EtcdKVS {
+	var e *EtcdKVS
 
-	ctx := context.Background()
-	dclient := driver.dockerd
-
-	// get NodeID from docker client
-	info, err := dclient.Info(ctx)
+	// get swarm info from docker client
+	nodeID, addr, isManager, err := dockerOps.GetSwarmInfo()
 	if err != nil {
 		log.WithFields(
 			log.Fields{"error": err},
-		).Error("Failed to get Info from docker client ")
+		).Error("Failed to get swarm Info from docker client ")
 		return nil
 	}
 
-	// get the swarmID and IP address of current node
-	if info.Swarm.LocalNodeState != swarm.LocalNodeStateActive {
-		log.WithFields(
-			log.Fields{"LocalNodeState": string(info.Swarm.LocalNodeState)},
-		).Errorf("Swarm node state is not active ")
-		return nil
+	e = &EtcdKVS{
+		dockerOps: dockerOps,
+		nodeID:    nodeID,
+		nodeAddr:  addr,
 	}
 
-	nodeID := info.Swarm.NodeID
-	addr := info.Swarm.NodeAddr
-
-	e = &etcdKVS{
-		driver:   driver,
-		nodeID:   nodeID,
-		nodeAddr: addr,
-	}
-
-	// worker just returns
-	if info.Swarm.ControlAvailable == false {
+	if !isManager {
 		log.WithFields(
 			log.Fields{"nodeID": nodeID},
-		).Info("Swarm node role: worker. No further action needed, return from NewKvStore ")
+		).Info("Swarm node role: worker. Return from NewKvStore ")
 		return e
 	}
 
 	// check my local role
-	node, _, err := dclient.NodeInspectWithRaw(ctx, nodeID)
+	isLeader, err := dockerOps.IsSwarmLeader(nodeID)
 	if err != nil {
-		log.WithFields(log.Fields{"nodeID": nodeID,
-			"error": err}).Error("Failed to inspect node ")
+		log.WithFields(
+			log.Fields{
+				"nodeID": nodeID,
+				"error":  err},
+		).Error("Failed to check swarm leader status from docker client ")
 		return nil
 	}
 
 	// if leader, proceed to start ETCD cluster
-	if node.ManagerStatus.Leader {
+	if isLeader {
 		log.WithFields(
 			log.Fields{"nodeID": nodeID},
-		).Info("Swarm node role: leader, start ETCD cluster")
+		).Info("Swarm node role: leader, start ETCD cluster ")
 		err = e.startEtcdCluster()
 		if err != nil {
-			log.WithFields(log.Fields{"nodeID": nodeID,
-				"error": err}).Error("Failed to start ETCD Cluster")
+			log.WithFields(
+				log.Fields{
+					"nodeID": nodeID,
+					"error":  err},
+			).Error("Failed to start ETCD Cluster ")
 			return nil
 		}
 		return e
 	}
 
 	// if manager, first find out who's leader, then proceed to join ETCD cluster
-	nodes, err := dclient.NodeList(ctx, types.NodeListOptions{})
+	leaderAddr, err := dockerOps.GetSwarmLeader()
 	if err != nil {
-		log.WithFields(log.Fields{"nodeID": nodeID,
-			"error": err}).Error("Failed to get NodeList from swarm manager")
+		log.WithFields(
+			log.Fields{
+				"nodeID": nodeID,
+				"error":  err},
+		).Error("Failed to get swarm leader address ")
 		return nil
 	}
-	for _, n := range nodes {
-		if n.ManagerStatus != nil && n.ManagerStatus.Leader == true {
-			log.WithFields(
-				log.Fields{"leader ID": n.ID,
-					"manager ID": nodeID},
-			).Info("Swarm node role: manager. Action: find leader ")
 
-			err = e.joinEtcdCluster(n.ManagerStatus.Addr)
-			if err != nil {
-				log.WithFields(log.Fields{"nodeID": nodeID,
-					"error": err}).Error("Failed to join ETCD Cluster")
-				return nil
-			}
-			return e
-		}
+	err = e.joinEtcdCluster(leaderAddr)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"nodeID": nodeID,
+			"error":  err},
+		).Error("Failed to join ETCD Cluster")
+		return nil
 	}
-
-	log.Errorf("Failed to get leader for swarm manager %s", nodeID)
-	return nil
+	return e
 }
 
 // startEtcdCluster function is called by swarm leader to start a ETCD cluster
-func (e *etcdKVS) startEtcdCluster() error {
+func (e *EtcdKVS) startEtcdCluster() error {
 	nodeID := e.nodeID
 	nodeAddr := e.nodeAddr
 	lines := []string{
@@ -198,7 +166,7 @@ func (e *etcdKVS) startEtcdCluster() error {
 }
 
 // joinEtcdCluster function is called by a non-leader swarm manager to join a ETCD cluster
-func (e *etcdKVS) joinEtcdCluster(leaderAddr string) error {
+func (e *EtcdKVS) joinEtcdCluster(leaderAddr string) error {
 	nodeAddr := e.nodeAddr
 	nodeID := e.nodeID
 
@@ -314,7 +282,7 @@ func etcdService(cmd []string) {
 
 // checkLocalEtcd function check if local ETCD endpoint is successfully started or not
 // if yes, start the watcher for volume global refcount
-func (e *etcdKVS) checkLocalEtcd() error {
+func (e *EtcdKVS) checkLocalEtcd() error {
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
 	timer := time.NewTimer(requestTimeout)
@@ -342,9 +310,9 @@ func (e *etcdKVS) checkLocalEtcd() error {
 }
 
 // etcdWatcher function sets up a watcher to monitor all the changes to global refcounts in the KV store
-func (e *etcdKVS) etcdWatcher() {
+func (e *EtcdKVS) etcdWatcher() {
 	// TODO: when the manager is demoted to worker, the watcher should be cancelled
-	watchCh := e.client.Watch(context.Background(), etcdPrefixGRef,
+	watchCh := e.client.Watch(context.Background(), kvstore.VolPrefixGRef,
 		etcdClient.WithPrefix(), etcdClient.WithPrevKV())
 	for wresp := range watchCh {
 		for _, ev := range wresp.Events {
@@ -354,18 +322,18 @@ func (e *etcdKVS) etcdWatcher() {
 }
 
 // etcdEventHandler function handles the returned event from etcd watcher of global refcount changes
-func (e *etcdKVS) etcdEventHandler(ev *etcdClient.Event) {
+func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 	log.WithFields(
 		log.Fields{"type": ev.Type},
 	).Infof("Watcher on global refcount returns event ")
 
-	nested := func(key string, fromState volStatus,
-		toState volStatus, interimState volStatus,
+	nested := func(key string, fromState kvstore.VolStatus,
+		toState kvstore.VolStatus, interimState kvstore.VolStatus,
 		fn func(string) bool) {
 		// watcher observes global refcount critical change
 		// transactional edit state first
-		volName := strings.TrimPrefix(key, etcdPrefixGRef)
-		succeeded := e.CompareAndPutStateOrBusywait(etcdPrefixState+volName,
+		volName := strings.TrimPrefix(key, kvstore.VolPrefixGRef)
+		succeeded := e.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+volName,
 			string(fromState), string(interimState))
 		if !succeeded {
 			// this handler doesn't get the right to start server
@@ -374,20 +342,20 @@ func (e *etcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 
 		if fn(volName) {
 			// server start/stop succeed, set desired state
-			if e.CompareAndPut(etcdPrefixState+volName,
+			if e.CompareAndPut(kvstore.VolPrefixState+volName,
 				string(interimState),
 				string(toState)) == false {
 				// Failed to set state to desired state
 				// set to state Error
-				e.CompareAndPut(etcdPrefixState+volName,
+				e.CompareAndPut(kvstore.VolPrefixState+volName,
 					string(interimState),
-					string(volStateError))
+					string(kvstore.VolStateError))
 			}
 		} else {
 			// failed to start/stop server, set to state Error
-			e.CompareAndPut(etcdPrefixState+volName,
+			e.CompareAndPut(kvstore.VolPrefixState+volName,
 				string(interimState),
-				string(volStateError))
+				string(kvstore.VolStateError))
 		}
 		return
 	}
@@ -399,16 +367,16 @@ func (e *etcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 			ev.PrevKv != nil &&
 			string(ev.PrevKv.Value) == etcdNoRef {
 			// Refcount went 0 -> 1
-			nested(string(ev.Kv.Key), volStateReady,
-				volStateMounted, volStateMounting,
-				e.driver.startSMBServer)
+			nested(string(ev.Kv.Key), kvstore.VolStateReady,
+				kvstore.VolStateMounted, kvstore.VolStateMounting,
+				e.dockerOps.StartSMBServer)
 		} else if string(ev.Kv.Value) == etcdNoRef &&
 			ev.PrevKv != nil &&
 			string(ev.PrevKv.Value) == etcdSingleRef {
 			// Refcount went 1 -> 0
-			nested(string(ev.Kv.Key), volStateMounted,
-				volStateReady, volStateUnmounting,
-				e.driver.stopSMBServer)
+			nested(string(ev.Kv.Key), kvstore.VolStateMounted,
+				kvstore.VolStateReady, kvstore.VolStateUnmounting,
+				e.dockerOps.StopSMBServer)
 		}
 	}
 	return
@@ -416,7 +384,7 @@ func (e *etcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 
 // CompareAndPut function: compare the value of the kay with oldVal
 // if equal, replace with newVal and return true; or else, return false.
-func (e *etcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
+func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 	txresp, err := e.client.Txn(context.TODO()).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
@@ -437,7 +405,7 @@ func (e *etcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 }
 
 //CompareAndPutOrFetch - Compare and put of get the current value of the key
-func (e *etcdKVS) CompareAndPutOrFetch(key string,
+func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 	oldVal string,
 	newVal string) (*etcdClient.TxnResponse, error) {
 	txresp, err := e.client.Txn(context.TODO()).If(
@@ -463,7 +431,7 @@ func (e *etcdKVS) CompareAndPutOrFetch(key string,
 // CompareAndPutStateOrBusywait function: compare the volume state with oldVal
 // if equal, replace with newVal and return true; or else, return false;
 // waits if volume is in a state from where it can reach the ready state
-func (e *etcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal string) bool {
+func (e *EtcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal string) bool {
 	var txresp *etcdClient.TxnResponse
 	var err error
 
@@ -483,8 +451,8 @@ func (e *etcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal
 			if txresp.Succeeded == false {
 				resp := txresp.Responses[0].GetResponseRange()
 				// Did we encounter states other than Unmounting or Creating?
-				if (string(resp.Kvs[0].Value) != string(volStateUnmounting)) &&
-					(string(resp.Kvs[0].Value) != string(volStateCreating)) {
+				if (string(resp.Kvs[0].Value) != string(kvstore.VolStateUnmounting)) &&
+					(string(resp.Kvs[0].Value) != string(kvstore.VolStateCreating)) {
 					log.Infof("Volume not in proper state for the operation: %s",
 						string(resp.Kvs[0].Value))
 					return false
@@ -501,18 +469,17 @@ func (e *etcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal
 	}
 }
 
-func (e *etcdKVS) createEtcdClient() *etcdClient.Client {
-	dclient := e.driver.dockerd
-
-	info, err := dclient.Info(context.Background())
+// createEtcdClient function creates an ETCD client according to swarm manager info
+func (e *EtcdKVS) createEtcdClient() *etcdClient.Client {
+	managers, err := e.dockerOps.GetSwarmManagers()
 	if err != nil {
 		log.WithFields(
 			log.Fields{"error": err},
-		).Error("Failed to get Info from docker client ")
+		).Error("Failed to get swarm managers ")
 		return nil
 	}
 
-	for _, manager := range info.Swarm.RemoteManagers {
+	for _, manager := range managers {
 		etcd, err := addrToEtcdClient(manager.Addr)
 		if err == nil {
 			return etcd
@@ -520,8 +487,8 @@ func (e *etcdKVS) createEtcdClient() *etcdClient.Client {
 	}
 
 	log.WithFields(
-		log.Fields{"Swarm ID": info.Swarm.NodeID,
-			"IP Addr": info.Swarm.NodeAddr},
+		log.Fields{"Swarm ID": e.nodeID,
+			"IP Addr": e.nodeAddr},
 	).Error("Failed to create ETCD client according to manager info ")
 	return nil
 }
@@ -550,9 +517,9 @@ func addrToEtcdClient(addr string) (*etcdClient.Client, error) {
 	return etcd, nil
 }
 
-// ListVolumeName function lists all the volume names associated with this KV store
-func (e *etcdKVS) ListVolumeName() ([]string, error) {
-	var volumes []string
+// List function lists all the different portion of keys with the given prefix
+func (e *EtcdKVS) List(prefix string) ([]string, error) {
+	var keys []string
 
 	etcd := e.createEtcdClient()
 	if etcd == nil {
@@ -560,25 +527,26 @@ func (e *etcdKVS) ListVolumeName() ([]string, error) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	resp, err := etcd.Get(ctx, etcdPrefixState, etcdClient.WithPrefix(),
+	resp, err := etcd.Get(ctx, prefix, etcdClient.WithPrefix(),
 		etcdClient.WithSort(etcdClient.SortByKey, etcdClient.SortDescend))
 	cancel()
 	if err != nil {
 		log.WithFields(
-			log.Fields{"error": err},
-		).Error("Failed to call ETCD Get for listing all volumes ")
+			log.Fields{"error": err,
+				"prefix": prefix},
+		).Error("Failed to call ETCD Get for listing all keys with prefix ")
 		return nil, err
 	}
 
 	for _, ev := range resp.Kvs {
-		volumes = append(volumes, strings.TrimPrefix(string(ev.Key), etcdPrefixState))
+		keys = append(keys, strings.TrimPrefix(string(ev.Key), prefix))
 	}
 
-	return volumes, nil
+	return keys, nil
 }
 
-// WriteVolMetadata - Update or Create volume metadata in KV store
-func (e *etcdKVS) WriteVolMetadata(entries []kvPair) error {
+// WriteMetaData - Update or Create metadata in KV store
+func (e *EtcdKVS) WriteMetaData(entries []kvstore.KvPair) error {
 
 	var ops []etcdClient.Op
 	var msg string
@@ -591,7 +559,7 @@ func (e *etcdKVS) WriteVolMetadata(entries []kvPair) error {
 	// ops contain multiple operations that will be done to etcd
 	// in a single revision
 	for _, elem := range entries {
-		ops = append(ops, etcdClient.OpPut(elem.key, elem.value))
+		ops = append(ops, etcdClient.OpPut(elem.Key, elem.Value))
 	}
 
 	// Lets write the metadata in a single transaction
@@ -610,9 +578,9 @@ func (e *etcdKVS) WriteVolMetadata(entries []kvPair) error {
 	return nil
 }
 
-// ReadVolMetadata - Read volume metadata in KV store
-func (e *etcdKVS) ReadVolMetadata(keys []string) ([]kvPair, error) {
-	var entries []kvPair
+// ReadMetaData - Read metadata in KV store
+func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
+	var entries []kvstore.KvPair
 	var ops []etcdClient.Op
 	var missedCount int
 
@@ -645,13 +613,13 @@ func (e *etcdKVS) ReadVolMetadata(keys []string) ([]kvPair, error) {
 			missedCount++
 			continue
 		}
-		entry := kvPair{key: elem, value: string(resp.Kvs[0].Value)}
+		entry := kvstore.KvPair{Key: elem, Value: string(resp.Kvs[0].Value)}
 		entries = append(entries, entry)
 	}
 
 	if missedCount == len(keys) {
 		// Volume does not exist
-		return nil, errors.New(VolumeDoesNotExistError)
+		return nil, errors.New(kvstore.VolumeDoesNotExistError)
 	} else if missedCount > 0 {
 		// This should not happen
 		// There is a volume but we couldn't read all its keys
@@ -662,8 +630,8 @@ func (e *etcdKVS) ReadVolMetadata(keys []string) ([]kvPair, error) {
 	return entries, nil
 }
 
-// DeleteVolMetadata - Delete volume metadata in KV store
-func (e *etcdKVS) DeleteVolMetadata(name string) error {
+// DeleteMetaData - Delete volume metadata in KV store
+func (e *EtcdKVS) DeleteMetaData(name string) error {
 
 	var msg string
 	var err error
@@ -675,9 +643,9 @@ func (e *etcdKVS) DeleteVolMetadata(name string) error {
 	// ops hold multiple operations that will be done to etcd
 	// in a single revision. Add all keys for this volname.
 	ops := []etcdClient.Op{
-		etcdClient.OpDelete(etcdPrefixState + name),
-		etcdClient.OpDelete(etcdPrefixGRef + name),
-		etcdClient.OpDelete(etcdPrefixInfo + name),
+		etcdClient.OpDelete(kvstore.VolPrefixState + name),
+		etcdClient.OpDelete(kvstore.VolPrefixGRef + name),
+		etcdClient.OpDelete(kvstore.VolPrefixInfo + name),
 	}
 
 	// Delete the metadata in a single transaction

@@ -23,15 +23,15 @@ package shared
 ///
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	dockerClient "github.com/docker/engine-api/client"
-	dockerTypes "github.com/docker/engine-api/types"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/dockerops"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore/etcdops"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
@@ -40,49 +40,21 @@ import (
 	"strings"
 )
 
-// volStatus: Datatype for keeping status of a shared volume
-type volStatus string
-
 /* Constants
    version:              Version of the shared plugin driver
-   dockerAPIVersion:     docker engine 1.24 and above support this api version
-   dockerUSocket:        Unix socket on which Docker engine is listening
    internalVolumePrefix: Prefix for the names of internal volumes. These
                          volumes are the actual vmdk backing the shared volumes.
    sambaImageName:       Name of the docker hub image we pull as samba server
    sambaUsername:        Default username for all accessing Samba servers
    sambaPassword:        Default password for accessing all Samba servers
-
-   volStateCreating:     Shared volume is being created. Not ready to be mounted.
-   volStateReady:        Shared volume is ready to be mounted but
-                         no Samba service running right now.
-   volStateMounted:      Samba service already running. Volume mounted
-                         on at least one host VM.
-   volStateMounting:     Volume is being mounted, File sharing service is being
-                         started for this volume.
-   volStateUnmounting:   Volume is being unmounted, File sharing service is being
-                         stopped for this volume.
-   volStateDeleting:     Shared volume is being deleted. Not ready to be mounted.
 */
 const (
 	version              = "vSphere Shared Volume Driver v0.2"
-	dockerAPIVersion     = "v1.24"
-	dockerUSocket        = "unix:///var/run/docker.sock"
 	internalVolumePrefix = "InternalVol"
 	// TODO Replace with our own samba later
-	sambaImageName               = "dperson/samba"
-	sambaUsername                = "root"
-	sambaPassword                = "badpass"
-	volStateCreating   volStatus = "Creating"
-	volStateReady      volStatus = "Ready"
-	volStateMounting   volStatus = "Mounting"
-	volStateMounted    volStatus = "Mounted"
-	volStateError      volStatus = "Error"
-	volStateUnmounting volStatus = "Unmounting"
-	volStateDeleting   volStatus = "Deleting"
-	stateIdx                     = 0
-	GRefIdx                      = 1
-	InfoIdx                      = 2
+	sambaImageName = "dperson/samba"
+	sambaUsername  = "root"
+	sambaPassword  = "badpass"
 )
 
 /* VolumeMetadata structure contains all the
@@ -101,28 +73,28 @@ const (
 
 // VolumeMetadata - Contains metadata of shared volumes
 type VolumeMetadata struct {
-	Status         volStatus `json:"-"` // Field won't be marshalled
-	GlobalRefcount int       `json:"-"` // Field won't be marshalled
-	Port           int       `json:"port,omitempty"`
-	ServiceName    string    `json:"serviceName,omitempty"`
-	Username       string    `json:"username,omitempty"`
-	Password       string    `json:"password,omitempty"`
-	ClientList     []string  `json:"clientList,omitempty"`
+	Status         kvstore.VolStatus `json:"-"` // Field won't be marshalled
+	GlobalRefcount int               `json:"-"` // Field won't be marshalled
+	Port           int               `json:"port,omitempty"`
+	ServiceName    string            `json:"serviceName,omitempty"`
+	Username       string            `json:"username,omitempty"`
+	Password       string            `json:"password,omitempty"`
+	ClientList     []string          `json:"clientList,omitempty"`
 }
 
 /* VolumeDriver - vsphere shared plugin volume driver struct
-   dockerd:                 Client used for talking to Docker
+   dockerOps:               Docker related methods and information
    internalVolumeDriver:    Name of the plugin used by shared volume
                             plugin to create internal volumes
-   etcd:                    Object of the KV store interface
+   kvStore:                 Key-value store related methods and information
 */
 
 // VolumeDriver - Contains vars specific to this driver
 type VolumeDriver struct {
 	utils.PluginDriver
-	dockerd              *dockerClient.Client
+	dockerOps            *dockerops.DockerOps
 	internalVolumeDriver string
-	etcd                 *etcdKVS
+	kvStore              kvstore.KvStore
 }
 
 // NewVolumeDriver creates driver instance
@@ -144,20 +116,17 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 		d.internalVolumeDriver = *internalVolumeParam
 	}
 
-	// create new docker client
-	cli, err := dockerClient.NewClient(dockerUSocket, dockerAPIVersion, nil, nil)
-	if err != nil {
-		log.WithFields(
-			log.Fields{"error": err},
-		).Error("Failed to create client for Docker ")
+	// create new docker operation client
+	d.dockerOps = dockerops.NewDockerOps()
+	if d.dockerOps == nil {
+		log.Errorf("Failed to create new DockerOps")
 		return nil
 	}
-	d.dockerd = cli
 
 	// initialize built-in etcd cluster
-	d.etcd = NewKvStore(&d)
-	if d.etcd == nil {
-		log.Errorf("Failed to create new etcd KV store")
+	d.kvStore = etcdops.NewKvStore(d.dockerOps)
+	if d.kvStore == nil {
+		log.Errorf("Failed to create new KV store")
 		return nil
 	}
 
@@ -183,7 +152,7 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 
 // List volumes known to the driver
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
-	volumes, err := d.etcd.ListVolumeName()
+	volumes, err := d.kvStore.List(kvstore.VolPrefixState)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
@@ -207,15 +176,15 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 
 	// The kv pairs we want from the KV store
 	keys := []string{
-		etcdPrefixState + name,
-		etcdPrefixGRef + name,
-		etcdPrefixInfo + name,
+		kvstore.VolPrefixState + name,
+		kvstore.VolPrefixGRef + name,
+		kvstore.VolPrefixInfo + name,
 	}
 
 	// KV pairs will be returned in same order in which they were requested
-	entries, err := d.etcd.ReadVolMetadata(keys)
+	entries, err := d.kvStore.ReadMetaData(keys)
 	if err != nil {
-		if err.Error() == VolumeDoesNotExistError {
+		if err.Error() == kvstore.VolumeDoesNotExistError {
 			log.Infof("Volume not found: %s", name)
 			return statusMap, err
 		}
@@ -225,10 +194,10 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 		return statusMap, errors.New(msg)
 	}
 
-	statusMap["Volume Status"] = entries[stateIdx].value
-	statusMap["Global Refcount"], _ = strconv.Atoi(entries[GRefIdx].value)
+	statusMap["Volume Status"] = entries[0].Value
+	statusMap["Global Refcount"], _ = strconv.Atoi(entries[1].Value)
 	// Unmarshal Info key
-	err = json.Unmarshal([]byte(entries[InfoIdx].value), &volRecord)
+	err = json.Unmarshal([]byte(entries[2].Value), &volRecord)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to unmarshal data. %v", err)
 		log.Warningf(msg)
@@ -258,33 +227,19 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.Infof("VolumeDriver Create: %s", r.Name)
 	var msg string
-	var entries []kvPair
-
-	// Ensure that the node running this command is a manager
-	info, err := d.dockerd.Info(context.Background())
-	if err != nil {
-		msg = fmt.Sprintf("Failed to get Info from docker client. Reason: %v", err)
-		log.Warningf(msg)
-		return volume.Response{Err: msg}
-	}
-	if info.Swarm.ControlAvailable == false {
-		msg = fmt.Sprintf("This node is not a swarm manager.")
-		msg += fmt.Sprintf(" Shared Volume creation is only possible from swarm manager nodes.")
-		log.Warningf(msg)
-		return volume.Response{Err: msg}
-	}
+	var entries []kvstore.KvPair
 
 	// Initialize volume metadata in KV store
 	volRecord := VolumeMetadata{
-		Status:         volStateCreating,
+		Status:         kvstore.VolStateCreating,
 		GlobalRefcount: 0,
 		Username:       sambaUsername,
 		Password:       sambaPassword,
 	}
 
 	// Append global refcount and status to kv pairs that will be written
-	entries = append(entries, kvPair{key: etcdPrefixGRef + r.Name, value: strconv.Itoa(volRecord.GlobalRefcount)})
-	entries = append(entries, kvPair{key: etcdPrefixState + r.Name, value: string(volRecord.Status)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixGRef + r.Name, Value: strconv.Itoa(volRecord.GlobalRefcount)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixState + r.Name, Value: string(volRecord.Status)})
 	// Append the rest of the metadata as one KV pair where the data is jsonified
 	byteRecord, err := json.Marshal(volRecord)
 	if err != nil {
@@ -292,10 +247,10 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		log.Warningf(msg)
 		return volume.Response{Err: msg}
 	}
-	entries = append(entries, kvPair{key: etcdPrefixInfo + r.Name, value: string(byteRecord)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixInfo + r.Name, Value: string(byteRecord)})
 
 	log.Infof("Attempting to write initial metadata entry for %s", r.Name)
-	err = d.etcd.WriteVolMetadata(entries)
+	err = d.kvStore.WriteMetaData(entries)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to create volume %s. Reason: %v",
 			r.Name, err)
@@ -306,19 +261,14 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	// Create traditional volume as backend to shared volume
 	log.Infof("Attempting to create internal volume for %s", r.Name)
 	internalVolname := internalVolumePrefix + r.Name
-	dockerVolOptions := dockerTypes.VolumeCreateRequest{
-		Driver:     d.internalVolumeDriver,
-		Name:       internalVolname,
-		DriverOpts: r.Options,
-	}
-	_, err = d.dockerd.VolumeCreate(context.Background(), dockerVolOptions)
+	err = d.dockerOps.VolumeCreate(d.internalVolumeDriver, internalVolname, r.Options)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to create internal volume %s. Reason: %v", r.Name, err)
 		msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
 		log.Warningf(msg)
 
 		// If failed, attempt to delete the metadata for this volume
-		err = d.etcd.DeleteVolMetadata(r.Name)
+		err = d.kvStore.DeleteMetaData(r.Name)
 		if err != nil {
 			log.Warningf("Failed to remove metadata entry for volume: %s. Reason: %v", r.Name, err)
 		}
@@ -328,15 +278,15 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	// Update metadata to indicate successful volume creation
 	log.Infof("Attempting to update volume state to ready for volume: %s", r.Name)
 	entries = nil
-	entries = append(entries, kvPair{key: etcdPrefixState + r.Name, value: string(volStateReady)})
-	err = d.etcd.WriteVolMetadata(entries)
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixState + r.Name, Value: string(kvstore.VolStateReady)})
+	err = d.kvStore.WriteMetaData(entries)
 	if err != nil {
 		outerMessage := fmt.Sprintf("Failed to set status of volume %s to ready. Reason: %v", r.Name, err)
 		log.Warningf(outerMessage)
 
 		// If failed, attempt to remove the backing trad volume
 		log.Infof("Attempting to delete internal volume")
-		err = d.dockerd.VolumeRemove(context.Background(), internalVolname)
+		err = d.dockerOps.VolumeRemove(internalVolname)
 		if err != nil {
 			msg = fmt.Sprintf(" Failed to remove internal volume. Reason %v.", err)
 			msg += fmt.Sprintf(" Please remove the volume manually. Volume: %s", internalVolname)
@@ -345,7 +295,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		}
 
 		// Attempt to delete the metadata for this volume
-		err = d.etcd.DeleteVolMetadata(r.Name)
+		err = d.kvStore.DeleteMetaData(r.Name)
 		if err != nil {
 			log.Warningf("Failed to remove metadata entry for volume: %s. Reason: %v", r.Name, err)
 		}
@@ -382,21 +332,21 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	}
 
 	// Test and set status to Deleting
-	if !d.etcd.CompareAndPutStateOrBusywait(etcdPrefixState+r.Name,
-		string(volStateReady),
-		string(volStateDeleting)) {
+	if !d.kvStore.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+r.Name,
+		string(kvstore.VolStateReady),
+		string(kvstore.VolStateDeleting)) {
 		clientFetchSucceeded := true
 		// Get a list of host VMs using this volume, if any
 		keys := []string{
-			etcdPrefixInfo + r.Name,
+			kvstore.VolPrefixInfo + r.Name,
 		}
-		entries, err := d.etcd.ReadVolMetadata(keys)
+		entries, err := d.kvStore.ReadMetaData(keys)
 		if err != nil {
 			clientFetchSucceeded = false
 			log.Warningf("Failed to check which host VMs are using volume %s", r.Name)
 		}
 		// Unmarshal Info key
-		err = json.Unmarshal([]byte(entries[0].value), &volRecord)
+		err = json.Unmarshal([]byte(entries[0].Value), &volRecord)
 		if err != nil {
 			clientFetchSucceeded = false
 			log.Warningf("Failed to unmarshal data. %v", err)
@@ -416,7 +366,7 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	// Delete internal volume
 	log.Infof("Attempting to delete internal volume for %s", r.Name)
 	internalVolname := internalVolumePrefix + r.Name
-	err := d.dockerd.VolumeRemove(context.Background(), internalVolname)
+	err := d.dockerOps.VolumeRemove(internalVolname)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to remove internal volume %s. Reason: %v", r.Name, err)
 		msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
@@ -426,7 +376,7 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 
 	// Delete metadata associated with this volume
 	log.Infof("Attempting to delete volume metadata for %s", r.Name)
-	err = d.etcd.DeleteVolMetadata(r.Name)
+	err = d.kvStore.DeleteMetaData(r.Name)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete volume metadata for %s. Reason: %v", r.Name, err)
 		return volume.Response{Err: msg}
@@ -466,16 +416,4 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 // Capabilities - Report plugin scope to Docker
 func (d *VolumeDriver) Capabilities(r volume.Request) volume.Response {
 	return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
-}
-
-// startSMBServer - Start SMB server
-func (d *VolumeDriver) startSMBServer(volName string) bool {
-	log.Errorf("startSMBServer to be implemented")
-	return true
-}
-
-// stopSMBServer - Stop SMB server
-func (d *VolumeDriver) stopSMBServer(volName string) bool {
-	log.Errorf("stopSMBServer to be implemented")
-	return true
 }
