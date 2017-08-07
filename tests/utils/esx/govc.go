@@ -146,3 +146,11 @@ func RemoveSnapshot(vm, snap string) (string, error) {
 	out, err := ssh.InvokeCommandLocally(cmd)
 	return out, err
 }
+
+// ResetVM - reset a VM
+func ResetVM(name string) string {
+	cmd := fmt.Sprintf(esx.ResetVM, name)
+	log.Printf("Reseting VM - %s", cmd)
+	out, _ := ssh.InvokeCommandLocally(cmd)
+	return out
+}

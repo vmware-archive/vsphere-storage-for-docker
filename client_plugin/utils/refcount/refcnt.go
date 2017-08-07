@@ -240,10 +240,12 @@ func (r *RefCountsMap) calculate(d drivers.VolumeDriver, mountDir string, name s
 	// RLocks the RefCountsMap
 	r.mtx.RLock()
 	defer r.mtx.RUnlock()
-	log.Infof("Discovered %d volumes in use.", len(r.refMap))
+	log.Infof("Discovered %d volumes that may be in use.", len(r.refMap))
 	for name, cnt := range r.refMap {
-		log.Infof("Volume name=%s count=%d mounted=%t device='%s'",
-			name, cnt.count, cnt.mounted, cnt.dev)
+		if cnt != nil {
+			log.Infof("Volume name=%s count=%d mounted=%t device='%s'",
+				name, cnt.count, cnt.mounted, cnt.dev)
+		}
 	}
 
 	log.Infof("Refcounting successfully completed")
@@ -447,10 +449,15 @@ func (r *RefCountsMap) syncMountsWithRefCounters(d drivers.VolumeDriver) {
 			}
 		} else {
 			if cnt.count == 0 {
-				// volume unmounted AND refcount 0.  We should NEVER get here
-				// since unmounted and recount==0 volumes should have no record
-				// in the map. Something went seriously wrong in the code.
-				log.WithFields(f).Panic("Internal failure: record should not exist. ")
+				// This volume may be attached to the VM but not mounted as no containers
+				// are using it. A detach is attempted and the entry under the mount root is
+				// removed.
+				err := d.DetachVolume(vol)
+				if err != nil {
+					log.Warning("Failed to detach volume %s - volume may be attached and manual recovery may be needed ", vol)
+				}
+				fs.Rmdir(strings.Join([]string{mountRoot, vol}, "/"))
+				delete(r.refMap, vol)
 			} else {
 				// No mounts, but Docker tells we have refcounts.
 				// It could happen when Docker runs a container with a volume
@@ -508,5 +515,21 @@ func (r *RefCountsMap) updateRefMap() error {
 		log.Debugf("Volume '%s' was found mounted, ref=(%#v)", volName, refInfo)
 	}
 
+	// Add volumes found under mountRoot, reset refMap entry
+	// for those that are present under mountRoot but aren't
+	// mounted.
+	volumes, err := fs.GetMountRootEntries(mountRoot)
+	if err != nil {
+		return err
+	}
+	for _, volName := range volumes {
+		refInfo := r.refMap[volName]
+		if refInfo == nil {
+			refInfo = newRefCount()
+			refInfo.mounted = false
+			refInfo.dev = ""
+			r.refMap[volName] = refInfo
+		}
+	}
 	return nil
 }

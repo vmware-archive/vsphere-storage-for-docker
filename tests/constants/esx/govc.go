@@ -54,6 +54,9 @@ const (
 	// ShutDownVM refers to govc cli (shut down vm)
 	ShutDownVM = govcCmd + "vm.power -s=true "
 
+	// ResetVM resets a Vm
+	ResetVM = govcCmd + "vm.power -reset=true %s"
+
 	// VMCreate refers to govc create vm
 	VMCreate = govcCmd + "vm.create -ds="
 

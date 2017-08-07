@@ -665,3 +665,9 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	}
 	return volume.Response{Err: ""}
 }
+
+// DetachVolume - detach a volume from the VM
+// do nothing for the Photon driver.
+func (d *VolumeDriver) DetachVolume(name string) error {
+	return nil
+}

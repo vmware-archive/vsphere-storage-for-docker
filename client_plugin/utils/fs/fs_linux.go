@@ -340,10 +340,13 @@ func getDevicePath(volDev *VolumeDevSpec) (string, error) {
 	return fmt.Sprintf("/dev/disk/by-path/pci-%s.0-scsi-0:0:%s:0", string(buf), volDev.Unit), nil
 }
 
-// GetMountInfo returns a map of mounted volumes and devices.
+// GetMountInfo returns a map of mounted volumes and devices if available. It creates a map
+// of all volumes that are in use or may have been in use earlier and creates the map of
+// volume to device.
 func GetMountInfo(mountRoot string) (map[string]string, error) {
 	volumeMountMap := make(map[string]string) // map [volume mount path] -> device
 
+	// Read current mounted filesystems
 	data, err := ioutil.ReadFile(linuxMountsFile)
 	if err != nil {
 		log.Errorf("Can't get info from %s (%v)", linuxMountsFile, err)

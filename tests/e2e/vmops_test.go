@@ -134,7 +134,7 @@ func (vm *VMOpsTest) TestVMSnapWithIndependentDisk(c *C) {
 	c.Assert(err, IsNil, Commentf("Failed to remove container %s with volume %s attached as independent disk\n", vm.testContainer, vm.volName2))
 
 	status = verification.VerifyDetachedStatus(vm.volName2, vm.config.DockerHosts[0], vm.config.EsxHost)
-	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", vm.volName1))
+	c.Assert(status, Equals, true, Commentf("Volume %s is still attached", vm.volName2))
 
 	// 4. Snapshot VM, should succeed
 	out, err = esx.TakeSnapshot(vm.config.DockerHostNames[0], "snap1")
@@ -146,3 +146,31 @@ func (vm *VMOpsTest) TestVMSnapWithIndependentDisk(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
+// TestVMReset - Verify volumes can be recovered and detached after a VM reset
+// 1. Run a container with a volume attached
+// 2. Verify the volume is attached
+// 3. Reset the VM
+// 4. Verify VM gets back to powered-on state
+// 5. Verify volume is detached
+func (vm *VMOpsTest) TestVMReset(c *C) {
+	misc.LogTestStart(c.TestName())
+	// 1. Run a container with a volume attached
+	out, err := dockercli.AttachVolume(vm.config.DockerHosts[0], vm.volName1, vm.testContainer)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 2. Verify the volume is attached
+	ok := verification.VerifyAttachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost)
+	c.Assert(ok, Equals, true, Commentf("Volume %s is not attached", vm.volName1))
+
+	// 3. Reset the VM
+	out = esx.ResetVM(vm.config.DockerHostNames[0])
+
+	// 4. Verify VM gets back to powered-on state
+	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(vm.config.DockerHosts[0], vm.config.DockerHostNames[0])
+	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", vm.volName1))
+
+	// 5. Verify volume is detached
+	ok = verification.PollDetachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost)
+	c.Assert(ok, Equals, true, Commentf("Volume %s is still attached", vm.volName1))
+	misc.LogTestEnd(c.TestName())
+}
