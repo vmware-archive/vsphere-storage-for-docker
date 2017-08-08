@@ -349,7 +349,7 @@ func GetMountInfo(mountRoot string) (map[string]string, error) {
 		log.Errorf("Can't get info from %s (%v)", linuxMountsFile, err)
 		return volumeMountMap, err
 	}
-	log.WithFields(log.Fields{"data": string(data)}).Info("Mounts read successfully")
+	log.WithFields(log.Fields{"data": string(data)}).Debug("Mounts read successfully: ")
 
 	for _, line := range strings.Split(string(data), lf) {
 		field := strings.Fields(line)
@@ -363,6 +363,6 @@ func GetMountInfo(mountRoot string) (map[string]string, error) {
 		volumeMountMap[filepath.Base(field[1])] = field[0]
 	}
 
-	log.WithFields(log.Fields{"map": volumeMountMap}).Info("Successfully retrieved mounts")
+	log.WithFields(log.Fields{"map": volumeMountMap}).Debug("Successfully retrieved mounts: ")
 	return volumeMountMap, nil
 }
