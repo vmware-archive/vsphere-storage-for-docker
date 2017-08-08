@@ -124,11 +124,12 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	}
 
 	// initialize built-in etcd cluster
-	d.kvStore = etcdops.NewKvStore(d.dockerOps)
-	if d.kvStore == nil {
+	etcdKVS := etcdops.NewKvStore(d.dockerOps)
+	if etcdKVS == nil {
 		log.Errorf("Failed to create new KV store")
 		return nil
 	}
+	d.kvStore = etcdKVS
 
 	log.WithFields(log.Fields{
 		"version": version,
