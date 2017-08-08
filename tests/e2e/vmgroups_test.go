@@ -366,6 +366,133 @@ func (vg *VmGroupTest) TestVmGroupVerifyMaxFileSizeOnVg(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
+// This test is to verify "volume_maxsize" and "volume_totalsize" can be set for "_VM_DS"
+// and verify volumes can be created correctly
+// 1. change the default datastore of vmTestVMgroup1 to "_VM_DS", then a full access
+// privilege to "_VM_DS" will be created automatically by system
+// 2. remove the access privilege to vg.config.Datastores[0], which is a real datastore
+// 3. change the access privilege to "_VM_DS" by setting the "volume_maxsize" to 500MB and
+// "volume_totalsize" to 1GB
+// 4. create the first volume with 500MB, which should succeed
+// 5. create the second volume with 500MB by specifying the full volume name, which should succeed
+// 6. create the third volume with 500MB, which should fail since the total storage used exceeds
+// "volume_totalsize"
+// 7. change the access privilege to "_VM_DS" by setting the "volume_maxsize" to 1GB and
+// "volume_totalsize" to 2GB
+// 8. create the third volume with 1024MB, which should succeed
+func (vg *VmGroupTest) TestVmGroupVerifyFileSizeForVmDs(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	// Change the default datastore for vgTestgroup1 to "_VM_DS"
+	out, err := adminutils.SetDefaultDatastoreForVMgroup(vg.config.EsxHost, vgTestVMgroup1, adminconst.VMDS)
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Remove access privilege to vg.config.Datastore[0]
+	out, err = adminutils.RemoveDatastoreFromVmgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	// Set the vol_maxsize to 500MB and vol_totalsize to 1GB for datastore "_VM_DS"
+	out, err = adminutils.SetVolumeSizeForVMgroup(vg.config.EsxHost, vgTestVMgroup1, adminconst.VMDS, "500MB", "1gb")
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName1, "-o size=500MB")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// vg.config.Datastore[0] is the "vm_datastore" for vg.config.DockerHosts[0]
+	// test volume create with full name
+	fullVolName := vg.volName2 + "@" + vg.config.Datastores[0]
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], fullVolName, "-o size=500MB")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// create the third volume, which should fail since it exceeds the vol_totalsize limit
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName3, "-o size=500mb")
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	out, err = adminutils.SetVolumeSizeForVMgroup(vg.config.EsxHost, vgTestVMgroup1, adminconst.VMDS, "1gb", "2gb")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 5. Try creating a volume of 1gb again, should succeed as totalsize is increased to 2gb
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName3, "-o size=1024mb")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// 6. Delete all volumes
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName1)
+	c.Assert(err, IsNil, Commentf(out))
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName2)
+	c.Assert(err, IsNil, Commentf(out))
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName3)
+
+	// revert the configuration
+	out, err = adminutils.SetDefaultDatastoreForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0])
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = adminutils.RemoveDatastoreFromVmgroup(vg.config.EsxHost, vgTestVMgroup1, adminconst.VMDS)
+	c.Assert(err, IsNil, Commentf(out))
+
+	misc.LogTestEnd(c.TestName())
+}
+
+// This test is to verify "volume_maxsize" and "volume_totalsize" can be set for "_ALL_DS"
+// and verify volumes can be created correctly
+// 1. create the access privilege to "_ALL_DS", and set "volume_maxsize" to 600MB and "volume_totalsize" to 1GB
+// 3. change the access privilege to default_datastore of vgTestVMgroup1 by setting the "volume_maxsize" to 500MB and
+// "volume_totalsize" to 1GB
+// 4. create the first volume on the default datastore with 500MB, which should succeed
+// 5. create the second volume on the default datastore with 1GB by specifying the full volume name, which should fail
+// 6. create the second volume on datastore other than default datastore with 1GB, which should fail
+// 7. change the second volume on datastore other than default datastore with 500MB, which should succeed
+// 8. create the third volume on datastore other then default datastore with 600MB, which should fail
+func (vg *VmGroupTest) TestVmGroupVerifyFileSizeForAllDs(c *C) {
+	misc.LogTestStart(c.TestName())
+
+	out, err := adminutils.AddCreateAccessForVMgroup(vg.config.EsxHost, vgTestVMgroup1, adminconst.ALLDS)
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = adminutils.SetVolumeSizeForVMgroup(vg.config.EsxHost, vgTestVMgroup1, adminconst.ALLDS, "600MB", "1GB")
+	c.Assert(err, IsNil, Commentf(out))
+
+	out, err = adminutils.SetVolumeSizeForVMgroup(vg.config.EsxHost, vgTestVMgroup1, vg.config.Datastores[0], "1GB", "1GB")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// create the first volume with 500MB on default datastore of vgTestVMgroup1, which is vg.config.Datastores[0]
+	// volume create should succeed
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], vg.volName1, "-o size=500MB")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// create the second volume with 1GB on vg.config.Datastores[0] by specifying the full volume name
+	// volume create should fail since the total storage used on this datastore exceeds the "volume_totalsize"
+	// which is set to 1GB
+	fullVolName2 := vg.volName2 + "@" + vg.config.Datastores[0]
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], fullVolName2, "-o size=1GB")
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// create second volume with size 1GB on vg.config.Datastore[1] by specifying the full volume name
+	// volume create should fail since the "volume_maxize" for "_ALL_DS" is set to 500MB
+	// no access privilege is added for datastore vg.config.Datastore[1], so the fall-back privilege
+	// to "_ALL_DS" will be matched here
+	fullVolName2 = vg.volName2 + "@" + vg.config.Datastores[1]
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], fullVolName2, "-o size=1GB")
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// create the second volume with size 500MB on vg.config.Datastore[1] by specifying the full volume name
+	// volume create should succeed
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], fullVolName2, "-o size=500MB")
+	c.Assert(err, IsNil, Commentf(out))
+
+	// create the second volume with size 500MB on vg.config.Datastore[1] by specifying the full volume name
+	// volume create should fail since the "volume_totalsize" for "_ALL_DS" is set to 1GB
+	fullVolName3 := vg.volName3 + "@" + vg.config.Datastores[1]
+	out, err = dockercli.CreateVolumeWithOptions(vg.config.DockerHosts[0], fullVolName3, "-o size=600MB")
+	c.Assert(err, Not(IsNil), Commentf(out))
+
+	// delete volumes
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], vg.volName1)
+	c.Assert(err, IsNil, Commentf(out))
+	out, err = dockercli.DeleteVolume(vg.config.DockerHosts[0], fullVolName2)
+
+	misc.LogTestEnd(c.TestName())
+}
+
 // TestVmGroupVolumeMobility - verify a VM with a volume
 // attached cannot move across vmgroups or be removed from
 // a vmgroup to default

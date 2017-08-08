@@ -407,8 +407,8 @@ optional arguments:
 #### Add
 Grants datastore access to a vmgroup.
 Valid value for "datastore" includes the name of valid datastores in the ESX host , special value "_VM_DS" or "_ALL_DS".
-When DS is set to _VM_DS, access to vm_datastore where vm lives is allowed for vms in vmgroup.
-When DS is set to _ALL_DS, access to all DS is allowed for vms in vmgroup.
+When DS is set to _VM_DS, access to datastore where vm lives is allowed for vms in vmgroup.
+When DS is set to _ALL_DS, access to any datastore which has not been granted access to explicitly is allowed for vms in vmgroup.
 Sample:
 
 ```bash
@@ -454,24 +454,32 @@ Datastore   Allow_create  Max_volume_size  Total_size
 datastore1  True          Unset            Unset
 datastore2  True          500.00MB         1.00GB
 ```
-For _VM_DS and _ALL_DS special DS names, --volume-totalzie has to be "Unset".
+For _VM_DS and _ALL_DS special DS names, "--volume-totalsize" can also be set.
+
+When "--volume-totalsize" is set for "_VM_DS", it means the total volume size on datastore where VM lives cannot exceed the value specified by "--volume-totalsize". For example, if "--volume-totalsize" is set to "1GB" for "_VM_DS" and VM lives in "datastore2", where the total volume size is already 800MB and user tries to create another volume with 500MB will not be allowed. However, if the VM is moved to "datastore3", where the total volume size is 500MB and user tries to create another volume with 500MB will be allowed.
+
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_VM_DS  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-Canont set volume-totalsize for _VM_DS
-[root@localhost:~]
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
-Canont set volume-totalsize for _VM_DS
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB  --allow-create
 vmgroup access add succeeded
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-_ALL_DS    True          500.00MB         Unset
 
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
+Datastore     Allow_create  Max_volume_size  Total_size
+------------  ------------  ---------------  ----------
+datastore1    True          Unset            Unset
+_VM_DS        True          500.00MB         1.00GB
+```
+
+When "--volume-totalsize" is set for "_ALL_DS", it means the total volume size on any datastore which has not been given access to explicitly cannot exceed the value specified by "--volume-totalsize". In the following example, "vmgroup1" has been given access to "datastore1" and "_ALL_DS". The "Total_size" for "datastore1" is "Unset", which means no limit. The "Total_size" for "_ALL_DS" is "1GB". So for "datastore1", there is no limit on the total volume size. However, for any datastore other than "datastore1", the total volume size on that datastore cannot exceed 1GB.
+
+```
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
+vmgroup access add succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
+Datastore     Allow_create  Max_volume_size  Total_size
+------------  ------------  ---------------  ----------
+datastore1    True          Unset            Unset
+_ALL_DS       True          500.00MB         1.00GB
 ```
 
 
@@ -580,7 +588,7 @@ Sample:
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  False         Unset            Unset
-_ALL_DS    True          500.00MB         Unset
+_ALL_DS     True          500.00MB         Unset
 
 [root@localhost:~]
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=datastore1 --allow-create=True  --volume-maxsize=1000MB --volume-totalsize=2GB
@@ -590,24 +598,33 @@ vmgroup access set succeeded
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  True          1000.00MB        2.00GB
-_ALL_DS    True          500.00MB         Unset
+_ALL_DS     True          500.00MB         Unset
 ```
 
-"-volume-totalsize" cannot be set to the value other than unlimit when add privilege for special value "_VM_DS" and "_ALL_DS".
+"--volume-totalsize" can also be set to the value other than unlimit when add privilege for special value "_VM_DS" and "_ALL_DS".
 ```
 [root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
 ----------  ------------  ---------------  ----------
 datastore1  True          1000.00MB        2.00GB
-_ALL_DS    True          500.00MB         Unset
-_VM_DS     True          Unset            Unset
+_ALL_DS     True          500.00MB         Unset
+_VM_DS      True          Unset            Unset
 
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=_VM_DS --volume-totalsize=1GB
-Canont set volume-totalsize for _VM_DS
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=_ALL_DS --volume-totalsize=1GB
-Canont set volume-totalsize for _ALL_DS
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=_VM_DS  --volume-maxsize=1GB --volume-totalsize=2GB
+vmgroup access set succeeded
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB --volume-totalsize=1GB
+vmgroup access set succeeded
+
+
+[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
+Datastore   Allow_create  Max_volume_size  Total_size
+----------  ------------  ---------------  ----------
+datastore1  True          1000.00MB        2.00GB
+_ALL_DS     True          500.00MB         1.00GB
+_VM_DS      True          1.00GB           2.00GB
+
 ```
 
 ##### Help

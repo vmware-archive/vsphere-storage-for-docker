@@ -555,7 +555,11 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
         error_info = tenant1.set_datastore_access_privileges(self.auth_mgr.conn, privileges)
         self.assertEqual(error_info, None)
         opts={u'size': u'100MB', u'fstype': u'ext4'}
-        error_info, tenant_uuid, tenant_name = auth.authorize(self.vm_uuid, self.datastore_url, auth.CMD_CREATE, opts)
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid=self.vm_uuid,
+                                                              datastore_url=self.datastore_url,
+                                                              cmd=auth.CMD_CREATE,
+                                                              opts=opts,
+                                                              privilege_ds_url=self.datastore_url)
         self.assertEqual(error_info, "No create privilege")
 
         # set "create_volume" privilege to true
@@ -566,7 +570,11 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
 
         error_info = tenant1.set_datastore_access_privileges(self.auth_mgr.conn, privileges)
         self.assertEqual(error_info, None)
-        error_info, tenant_uuid, tenant_name = auth.authorize(self.vm_uuid, self.datastore_url, auth.CMD_CREATE, opts)
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid=self.vm_uuid,
+                                                              datastore_url=self.datastore_url,
+                                                              cmd=auth.CMD_CREATE,
+                                                              opts=opts,
+                                                              privilege_ds_url=self.datastore_url)
         self.assertEqual(error_info, None)
 
         if not error_info:
@@ -574,12 +582,20 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
             self.assertEqual(error_info, None)
 
         opts={u'size': u'600MB', u'fstype': u'ext4'}
-        error_info, tenant_uuid, tenant_name = auth.authorize(self.vm_uuid, self.datastore_url, auth.CMD_CREATE, opts)
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid=self.vm_uuid,
+                                                              datastore_url=self.datastore_url,
+                                                              cmd=auth.CMD_CREATE,
+                                                              opts=opts,
+                                                              privilege_ds_url=self.datastore_url)
         # create a volume with 600MB which exceed the"max_volume_size", command should fail
         self.assertEqual(error_info, "Volume size exceeds the max volume size limit")
 
         opts={u'size': u'500MB', u'fstype': u'ext4'}
-        error_info, tenant_uuid, tenant_name = auth.authorize(self.vm_uuid, self.datastore_url, auth.CMD_CREATE, opts)
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid=self.vm_uuid,
+                                                              datastore_url=self.datastore_url,
+                                                              cmd=auth.CMD_CREATE,
+                                                              opts=opts,
+                                                              privilege_ds_url=self.datastore_url)
         self.assertEqual(error_info, None)
 
         if not error_info:
@@ -587,11 +603,19 @@ class VmdkAuthorizeTestCase(unittest.TestCase):
             self.assertEqual(error_info, None)
 
         opts={u'size': u'500MB', u'fstype': u'ext4'}
-        error_info, tenant_uuid, tenant_name = auth.authorize(self.vm_uuid, self.datastore_url, auth.CMD_CREATE, opts)
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid=self.vm_uuid,
+                                                              datastore_url=self.datastore_url,
+                                                              cmd=auth.CMD_CREATE,
+                                                              opts=opts,
+                                                              privilege_ds_url=self.datastore_url)
         self.assertEqual(error_info, "The total volume size exceeds the usage quota")
 
         # delete volume
-        error_info, tenant_uuid, tenant_name = auth.authorize(self.vm_uuid, self.datastore_url, auth.CMD_REMOVE, opts)
+        error_info, tenant_uuid, tenant_name = auth.authorize(vm_uuid=self.vm_uuid,
+                                                              datastore_url=self.datastore_url,
+                                                              cmd=auth.CMD_REMOVE,
+                                                              opts=opts,
+                                                              privilege_ds_url=self.datastore_url)
         self.assertEqual(error_info, None)
 
         # remove the tenant
@@ -927,8 +951,7 @@ class VmdkTenantTestCase(unittest.TestCase):
         self.assertEqual(None, error_info)
 
         # update access privileges to "_VM_DS"
-        # try to change the "usage_quota" which should fail
-        # since change "usage_quota" to "_VM_DS" and "_ALL_DS" is not allowed
+        # try to change the "usage_quota" which should succeed
         volume_maxsize_in_MB = convert.convert_to_MB("500MB")
         volume_totalsize_in_MB = convert.convert_to_MB("1GB")
         error_info = auth_api._tenant_access_set(name=self.tenant1_name,
@@ -936,7 +959,7 @@ class VmdkTenantTestCase(unittest.TestCase):
                                                  allow_create=True,
                                                  volume_maxsize_in_MB=volume_maxsize_in_MB,
                                                  volume_totalsize_in_MB=volume_totalsize_in_MB)
-        self.assertNotEqual(None, error_info)
+        self.assertEqual(None, error_info)
 
         # change "default_datastore" for tenant1 to self.datastore_name
         # a full access privilege to self.datastore will be created after this update

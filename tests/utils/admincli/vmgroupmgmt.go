@@ -268,3 +268,9 @@ func RenameVMgroup(esxIP, currentVmgroupName, newVmgroupName string) (string, er
 	log.Printf("Renaming a vmgroup [%s] to %s on esx [%s]\n", currentVmgroupName, newVmgroupName, esxIP)
 	return ssh.InvokeCommand(esxIP, admincli.UpdateVMgroup+currentVmgroupName+" --new-name="+newVmgroupName)
 }
+
+// RenameVMgroup method to update a vmgroup's name.
+func SetDefaultDatastoreForVMgroup(esxIP, VmgroupName, defaultDatastore string) (string, error) {
+	log.Printf("Set default datastore of a vmgroup [%s] to %s on esx [%s] to [%s]\n", VmgroupName, esxIP, defaultDatastore)
+	return ssh.InvokeCommand(esxIP, admincli.UpdateVMgroup+VmgroupName+" --default-datastore="+defaultDatastore)
+}

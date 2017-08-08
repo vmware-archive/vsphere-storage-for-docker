@@ -92,38 +92,6 @@ def get_default_tenant():
         logging.debug(err_msg)
         return None, None, None
 
-
-def get_all_ds_privileges(tenant_uuid):
-    """ Get _ALL_DS privilege from AuthDB. This privilege is 'catch-all' fallbacks for datastores not explicitly bound
-        to the given tenant_uuid'
-        Return value:
-        -- error_msg: return None on success or error info on failure
-        -- privileges: return a list of privileges on datastore "_ALL_DS"
-           return None on failure or the privilege does not exist
-    """
-    logging.debug("get_all_ds_privileges")
-    err_msg, _auth_mgr = get_auth_mgr()
-    if err_msg:
-        return err_msg, None
-
-    if _auth_mgr.allow_all_access():
-        return None, _auth_mgr.get_all_ds_privileges_dict()
-
-    privileges = []
-
-    try:
-        cur = _auth_mgr.conn.execute(
-            "SELECT * FROM privileges WHERE tenant_id = ? and datastore_url = ?",
-            (tenant_uuid, auth_data_const.ALL_DS_URL,)
-            )
-        privileges = cur.fetchone()
-    except sqlite3.Error as e:
-        error_msg = "Error {} when querying privileges table for all ds privilege for tenant_uuid {}".format(e, tenant_uuid)
-        logging.error(error_msg)
-        return str(e), None
-
-    return None, privileges
-
 def get_tenant(vm_uuid):
     """
         Get tenant which owns this VM by querying the auth DB.
@@ -201,6 +169,12 @@ def get_privileges(tenant_uuid, datastore_url):
     if err_msg:
         return err_msg, None
 
+    if _auth_mgr.allow_all_access():
+        if datastore_url == auth_data_const.ALL_DS_URL:
+            return None, _auth_mgr.get_all_ds_privileges_dict()
+        if datastore_url == auth_data_const.VM_DS_URL:
+            return None, _auth_mgr.get_vm_ds_privileges_dict()
+
     privileges = []
     try:
         cur = _auth_mgr.conn.execute(
@@ -212,12 +186,8 @@ def get_privileges(tenant_uuid, datastore_url):
         logging.error("Error %s when querying privileges table for tenant_id %s and datastore_url %s",
                       e, tenant_uuid, datastore_url)
         return str(e), None
-    if privileges:
-        return None, privileges
-    else:
-        # check if can get privileges on ALL_DS for this tenant
-        error_msg, privileges = get_all_ds_privileges(tenant_uuid)
-        return error_msg, privileges
+
+    return None, privileges
 
 def has_privilege(privileges, type=None):
     """ Check whether the param "privileges" has the specific type of privilege set.
@@ -267,7 +237,7 @@ def check_max_volume_size(vol_size_in_MB, privileges):
         # no privileges
         return True
 
-def get_total_storage_used(tenant_uuid, datastore_url):
+def get_total_storage_used(tenant_uuid, datastore_url, vm_datastore_url):
     """ Return total storage used by (tenant_uuid, datastore_url)
         by querying auth DB.
 
@@ -281,6 +251,10 @@ def get_total_storage_used(tenant_uuid, datastore_url):
     err_msg, _auth_mgr = get_auth_mgr()
     if err_msg:
         return err_msg, total_storage_used
+
+    if (datastore_url == auth_data_const.VM_DS_URL):
+        # datastore_url need to be set to the url of a real datastore
+        datastore_url = vm_datastore_url
 
     try:
         cur = _auth_mgr.conn.execute(
@@ -300,10 +274,10 @@ def get_total_storage_used(tenant_uuid, datastore_url):
 
     return None, total_storage_used
 
-def check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges):
+def check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges, vm_datastore_url):
     """ Check if the volume can be created without violating the quota. """
     if privileges:
-        error_msg, total_storage_used = get_total_storage_used(tenant_uuid, datastore_url)
+        error_msg, total_storage_used = get_total_storage_used(tenant_uuid, datastore_url, vm_datastore_url)
         if error_msg:
             # cannot get the total_storage_used, to be safe, return False
             return False
@@ -318,7 +292,7 @@ def check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges):
         # no privileges
         return True
 
-def check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges):
+def check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges, vm_datastore_url):
     """
         Check whether the (tenant_uuid, datastore) has the privileges to run
         the given command.
@@ -341,12 +315,12 @@ def check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileg
             return result
         vol_size_in_MB = convert.convert_to_MB(get_vol_size(opts))
         if vol_size_in_MB == 0:
-            result = error_code_to_message[ErrorCode.OPT_VOLUME_SIZE_INVALID] 
+            result = error_code_to_message[ErrorCode.OPT_VOLUME_SIZE_INVALID]
             return result
         if not check_max_volume_size(vol_size_in_MB, privileges):
             result = error_code_to_message[ErrorCode.PRIVILEGE_MAX_VOL_EXCEED]
             return result
-        if not check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges):
+        if not check_usage_quota(vol_size_in_MB, tenant_uuid, datastore_url, privileges, vm_datastore_url):
             result = error_code_to_message[ErrorCode.PRIVILEGE_USAGE_QUOTA_EXCEED]
             return result
 
@@ -412,8 +386,8 @@ def tables_exist():
 
     return None, True
 
-def authorize(vm_uuid, datastore_url, cmd, opts):
-    """ Check whether the command can be run on this VM.
+def authorize(vm_uuid, datastore_url, cmd, opts, privilege_ds_url, vm_datastore_url=None):
+    """ Check whether the command can be run on this VM on given datastore.
 
         Return value: result, tenant_uuid, tenant_name
 
@@ -424,8 +398,17 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         - tenant_name: If the VM belongs to a tenant, return tenant_name, otherwise, return
         None
     """
-    logging.debug("Authorize: cmd=%s opts=`%s' vm_uuid=%s, datastore_url=%s", cmd, opts, vm_uuid, datastore_url)
-    # The possible value of "datastore_url" can be url of real datastore or "_VM_DS://"
+    # "datastore_url" is the url of datastore which the volume to be created on
+    # The possible value of "datastore_url" can be url of a real datastore or "_VM_DS"
+    # "privilege_ds_url" is the url of datastore which we need to get the privilege of
+    # The possible value of "privilege_ds_url" can be url of a real datastore, "_VM_DS" or "_ALL_DS"
+    # Caller need to pass the url of real datastore name where VM lives as param "vm_datastore_url" if
+    # param "datastore_url" is the url of datastore "_VM_DS"
+
+    logging.debug("Authorize: cmd=%s opts=`%s' vm_uuid=%s, datastore_url=%s, privilege_ds_url=%s, "
+                  "vm_datastore_url=%s",
+                  cmd, opts, vm_uuid, datastore_url, privilege_ds_url, vm_datastore_url)
+
     error_msg, _auth_mgr = get_auth_mgr()
     if error_msg:
         return error_msg, None, None
@@ -452,13 +435,13 @@ def authorize(vm_uuid, datastore_url, cmd, opts):
         logging.debug(err_msg)
         return err_msg, None, None
     else:
-        error_msg, privileges = get_privileges(tenant_uuid, datastore_url)
+        error_msg, privileges = get_privileges(tenant_uuid, privilege_ds_url)
         if error_msg:
             return error_msg, None, None
 
-        result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges)
-        logging.debug("authorize: vmgroup_name=%s, datastore_url=%s, privileges=%s, result=%s",
-                      tenant_name, datastore_url, privileges, result)
+        result = check_privileges_for_command(cmd, opts, tenant_uuid, datastore_url, privileges, vm_datastore_url)
+        logging.debug("authorize: vmgroup_name=%s, datastore_url=%s, vm_datastore_url=%s, privileges=%s, result=%s",
+                      tenant_name, datastore_url, vm_datastore_url, privileges, result)
 
         if result is None:
             logging.info("db_mode='%s' cmd=%s opts=%s vmgroup=%s datastore_url=%s is allowed to execute",

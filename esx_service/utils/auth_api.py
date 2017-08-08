@@ -879,19 +879,6 @@ def check_privilege_parameters(privilege):
 
     return None
 
-def check_usage_quota(datastore, volume_totalsize_in_MB):
-    """
-        Check if the requested quota is valid in the given datastore
-        Return None if the usage_quota is valid
-        Return error_info if the usage_quota is invalid
-    """
-    # usage_quota on "_VM_DS" and "_ALL_DS" should be "Unset"
-    if datastore == auth_data_const.VM_DS or datastore == auth_data_const.ALL_DS:
-        if volume_totalsize_in_MB is not None:
-            error_info = generate_error_info(ErrorCode.PRIVILEGE_SET_TOTAL_VOLUME_SIZE_LIMIT_NOT_ALLOWED,
-                                             datastore)
-            return error_info
-
 @only_when_configured()
 def _tenant_access_add(name, datastore, allow_create=None,
                        volume_maxsize_in_MB=None, volume_totalsize_in_MB=None):
@@ -910,10 +897,6 @@ def _tenant_access_add(name, datastore, allow_create=None,
         return error_info
 
     error_info = check_datastore(datastore)
-    if error_info:
-        return error_info
-
-    error_info = check_usage_quota(datastore, volume_totalsize_in_MB)
     if error_info:
         return error_info
 
@@ -980,10 +963,6 @@ def _tenant_access_set(name, datastore, allow_create=None, volume_maxsize_in_MB=
         return error_info
 
     error_info = check_datastore(datastore)
-    if error_info:
-        return error_info
-
-    error_info = check_usage_quota(datastore, volume_totalsize_in_MB)
     if error_info:
         return error_info
 

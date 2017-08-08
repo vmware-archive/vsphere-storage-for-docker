@@ -103,4 +103,10 @@ const (
 
 	// GetDBMode get current DB config
 	GetDBMode = vmdkopsAdmin + "config status"
+
+	// VMDS is the special datastore tag "_VM_DS"
+	VMDS = "_VM_DS"
+
+	// ALLDS is the special datastore tag "_ALL_DS"
+	ALLDS = "_ALL_DS"
 )
