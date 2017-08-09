@@ -418,3 +418,9 @@ func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 func (d *VolumeDriver) Capabilities(r volume.Request) volume.Response {
 	return volume.Response{Capabilities: volume.Capability{Scope: "global"}}
 }
+
+// DetachVolume - detach a volume from the VM
+// do nothing for the shared driver.
+func (d *VolumeDriver) DetachVolume(name string) error {
+	return nil
+}

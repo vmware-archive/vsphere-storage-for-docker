@@ -18,6 +18,7 @@ package fs
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
@@ -51,4 +52,25 @@ func Mkdir(path string) error {
 		return fmt.Errorf(msg)
 	}
 	return nil
+}
+
+// Rmdir removes a directory identified by its path
+func Rmdir(path string) error {
+	return os.Remove(path)
+}
+
+// GetMountRootEntries returns the list of volumes under mountRoot
+func GetMountRootEntries(mountRoot string) ([]string, error) {
+	var vols []string
+	// Read entries in mountRoot for all volumes that are or were in use via the plugin
+	volumes, err := ioutil.ReadDir(mountRoot)
+	if err != nil {
+		log.Errorf("Unable to read entries from %s (%v)", mountRoot, err)
+		return vols, err
+	}
+
+	for _, vol := range volumes {
+		vols = append(vols, vol.Name())
+	}
+	return vols, nil
 }
