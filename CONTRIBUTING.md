@@ -16,17 +16,17 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * Add `[WIP]` or `[PREVIEW]` to the PR title to let reviewers know that the PR is not ready to be merged.
 
 #### Documentation PR
-Any changes to `[master]/docs` will not be promoted to `gh-pages` (document release branch). The process is not automated yet and you need to copy them manually. Please use following steps and generate the separate PR to merge changes to `gh-pages`.
+Changes to `[master]/docs` are not promoted to `gh-pages` (document release branch) by default, and it is to be done manually. Please follow these steps while generating PRs related to documentation.
 
-```
-1. Checkout the local gh-pages branch
-e.g. git checkout -b localdocs vmware/gh-pages
+1. Checkout a branch based off of the `master` branch.<br /><br />
+**E.g.** `git checkout -b doc-updates-master vmware/master`
 
-2. Copy markdown file changes to `gh-pages/jekyll-docs` respective markdown file.
-e.g. any changes to `[master]/docs/user-guide/admin-cli.md` should be copied to `gh-pages/jekyll-docs/admin-cli.md`
+2. Make documentation changes in your branch and send out a PR.
 
-3. When ready post a PR
-```
+3. Once the PR is merged, copy the updated content from `master` to respective files under `gh-pages/jekyll-docs` on another branch that's based off of the `gh-pages` branch. For example, any changes to `[master]/docs/user-guide/admin-cli.md` should be copied to `[gh-pages]/jekyll-docs/admin-cli.md`.<br /><br />
+**E.g.** `git checkout -b doc-updates-gh-pages vmware/gh-pages`
+
+4. Send out another PR with these changes. Once merged, your changes should get reflected on https://vmware.github.io/docker-volume-vsphere/documentation.
 
 **Note**: Make sure your code follows same style and convention as existing code.
 
