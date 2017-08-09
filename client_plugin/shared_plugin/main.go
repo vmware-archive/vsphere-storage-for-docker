@@ -40,7 +40,7 @@ func main() {
 	}
 
 	if cfg.Driver == config.SharedDriver {
-		driver = shared.NewVolumeDriver(cfg, config.MountRoot)
+		driver = shared.NewVolumeDriver(cfg, config.VSharedMountRoot)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", cfg.Driver)
 		os.Exit(1)

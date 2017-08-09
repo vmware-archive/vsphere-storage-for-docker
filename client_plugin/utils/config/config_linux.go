@@ -28,4 +28,7 @@ const (
 
 	// MountRoot is the path where VMDK and photon volumes are mounted
 	MountRoot = "/mnt/vmdk"
+
+	// VSharedMountRoot is the path where shared volumes are mounted
+	VSharedMountRoot = "/mnt/vshared"
 )

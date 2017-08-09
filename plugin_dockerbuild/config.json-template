@@ -4,7 +4,7 @@
 	"Entrypoint": ["/usr/bin/%BINARY%",
 					"--config", "/etc/%BINARY%.conf"
 	],
-	"PropagatedMount": "/mnt/vmdk",
+	"PropagatedMount": "/mnt/%MOUNTPOINT%",
 	"Mounts": [
 		{
 			"Description" : "The plugin uses dev to mount volumes and watch for attaches",
