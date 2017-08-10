@@ -64,7 +64,6 @@ type EtcdKVS struct {
 	dockerOps *dockerops.DockerOps
 	nodeID    string
 	nodeAddr  string
-	client    *etcdClient.Client
 }
 
 // NewKvStore function: start or join ETCD cluster depending on the role of the node
@@ -299,8 +298,7 @@ func (e *EtcdKVS) checkLocalEtcd() error {
 						"error": err},
 				).Warningf("Failed to get ETCD client, retry before timeout ")
 			} else {
-				e.client = cli
-				go e.etcdWatcher()
+				go e.etcdWatcher(cli)
 				return nil
 			}
 		case <-timer.C:
@@ -310,9 +308,9 @@ func (e *EtcdKVS) checkLocalEtcd() error {
 }
 
 // etcdWatcher function sets up a watcher to monitor all the changes to global refcounts in the KV store
-func (e *EtcdKVS) etcdWatcher() {
+func (e *EtcdKVS) etcdWatcher(cli *etcdClient.Client) {
 	// TODO: when the manager is demoted to worker, the watcher should be cancelled
-	watchCh := e.client.Watch(context.Background(), kvstore.VolPrefixGRef,
+	watchCh := cli.Watch(context.Background(), kvstore.VolPrefixGRef,
 		etcdClient.WithPrefix(), etcdClient.WithPrevKV())
 	for wresp := range watchCh {
 		for _, ev := range wresp.Events {
@@ -385,7 +383,14 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 // CompareAndPut function: compare the value of the kay with oldVal
 // if equal, replace with newVal and return true; or else, return false.
 func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
-	txresp, err := e.client.Txn(context.TODO()).If(
+	// Create a client to talk to etcd
+	etcdAPI := e.createEtcdClient()
+	defer etcdAPI.Close()
+	if etcdAPI == nil {
+                log.Warningf(etcdClientCreateError)
+		return false
+	}
+	txresp, err := etcdAPI.Txn(context.TODO()).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
 		etcdClient.OpPut(key, newVal),
@@ -408,7 +413,15 @@ func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 	oldVal string,
 	newVal string) (*etcdClient.TxnResponse, error) {
-	txresp, err := e.client.Txn(context.TODO()).If(
+
+	var txresp *etcdClient.TxnResponse
+	// Create a client to talk to etcd
+	etcdAPI := e.createEtcdClient()
+	defer etcdAPI.Close()
+	if etcdAPI == nil {
+		return txresp, errors.New(etcdClientCreateError)
+	}
+	txresp, err := etcdAPI.Txn(context.TODO()).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
 		etcdClient.OpPut(key, newVal),
@@ -555,6 +568,9 @@ func (e *EtcdKVS) WriteMetaData(entries []kvstore.KvPair) error {
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
 	defer etcdAPI.Close()
+	if etcdAPI == nil {
+		return errors.New(etcdClientCreateError)
+	}
 
 	// ops contain multiple operations that will be done to etcd
 	// in a single revision
@@ -587,6 +603,9 @@ func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
 	defer etcdAPI.Close()
+	if etcdAPI == nil {
+		return entries, errors.New(etcdClientCreateError)
+	}
 
 	// Lets build the request which will be executed
 	// in a single transaction
@@ -639,6 +658,9 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
 	defer etcdAPI.Close()
+	if etcdAPI == nil {
+		return errors.New(etcdClientCreateError)
+	}
 
 	// ops hold multiple operations that will be done to etcd
 	// in a single revision. Add all keys for this volname.
