@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title> | vSphere Docker Volume Service</title>
+<title>Interop with vSphere features | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Interop with vSphere features">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -379,7 +379,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main"></h1>
+   <h1 class="post-title-main">Interop with vSphere features</h1>
 </div>
 
 
@@ -416,166 +416,39 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//vmdkops-admin-cli-spec.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//Interop.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <p>[TOC]</p>
+  <h1 id="interop-with-vsphere-features">Interop with vSphere features</h1>
 
-<p>In order to manage the inventory of VMDKs created and used by multiple docker engines we must have
-an administrative CLI that lives on ESX. This administrative CLI can provide additional status such
-as access control, storage policies, and disk usage and capacity.</p>
+<p>The vDVS plugin works well with all vSphere features and deviations if any are as documented below:</p>
 
-<p>The admin cli itself is non-interactive. All commands are of the form <code class="highlighter-rouge">vmdkops-admin &lt;Cmd&gt; [Arg1, Arg2,...]</code></p>
+<p><strong>SvMotion/XvMotion</strong></p>
 
-<p>All output from the admin cli defaults to human readable formats. It will be made easily grepable.</p>
-
-<p>The majority of testing will be automated. We can ensure that parsing calls the right callbacks with
-the right information by generating representative input and mocking the callbacks to assert that
-the right information is parsed and delivered correctly. Additionally, and specifically for testing
-access control, we can create access control definition (vmgroups and privileges) 
-and then test that they act as expected by invoking vmdk_ops commmands on behalf of a fake VM.
-Unit
-tests for stateless logic can be fed mock input representing data from sidecar and the filesystem.
-These techniques should be sufficient enough to provide confidence in the implementation.</p>
-
-<p>The rest of this specification will detail the commands to be implemented in the admin cli. Note
-that the commands covered in this document only operate on a single ESX host.</p>
-
-<h1 id="ls">ls</h1>
-<p>List all volumes by reading the <code class="highlighter-rouge">dockvols</code> directories and metadata stored in Sidecar files.
-Volumes in all datastores will be shown with the volume name in the first column and the datastore
-in the second.</p>
-
-<p><code class="highlighter-rouge">ls</code> supports the following options:
-  * No options - List the names of all volumes
-  * <code class="highlighter-rouge">ls -l</code> - List all volumes and their corresponding metadata. Note that missing metadata will be
-    marked <code class="highlighter-rouge">N/A</code>.
-    * Created by (VM Name)
-    * Creation Time
-    * Last Attached Time
-    * Datastore
-    * Policy Name
-    * Capacity
-    * Used Space
-    * Attached To (VM Name)
-  * <code class="highlighter-rouge">ls -c [Column1, Column2, ...]</code> - List only the columns specified, implies <code class="highlighter-rouge">-l</code>
-  * <code class="highlighter-rouge">ls -f &lt;ColumnName Pattern Value&gt;</code> - Filter output by only including volumes whose columns match the
-                                         sort pattern (See below). Note that the priority is P2 on
-                                         this and it may be developed after the initial release
-                                         depending on timing/effort.</p>
-
-<p>Sort patterns are used for filtering. The argument, <code class="highlighter-rouge">X</code>, itself is of a type specific to the attribute. All dates are given in <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601 format</a></p>
+<p>SvMotion/XvMotion is not supported for VMs that use vDVS volumes.</p>
 
 <ul>
-  <li><code class="highlighter-rouge">&gt; X</code> The attribute is greater than X</li>
-  <li><code class="highlighter-rouge">&lt; X</code> The attribute is equal to X</li>
-  <li><code class="highlighter-rouge">= X</code> The attribute matches a Glob X</li>
+  <li>SvMotion/XvMotion causes vDVS volumes to be migrated out of the datastore location and hence causing the plugin to lose access to the volume. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1618">#1618</a></li>
 </ul>
 
-<p>Examples:
-<code class="highlighter-rouge">
-vmdkops-admin ls -c CreatedBy,CreationTime,Datastore,PolicyName
-vmdkops-admin ls -f 'LastAttachedTime &gt; 2016-03-11'
-vmdkops-admin ls -f 'AttachedTo = Test*'
-</code></p>
+<p><strong>Storage DRS</strong></p>
 
-<h1 id="policy">policy</h1>
-<p>Create, configure and show the vSAN policy names and their corresponding vSAN policies. Also show whether or not they are in use.</p>
+<p>Storage DRS is not supported for VMs that use vDVS volumes.</p>
 
-<p>Examples:
- * <code class="highlighter-rouge">vmdkops-admin policy create --name=myPolicy --content="string"</code> - Create a new policy
- * <code class="highlighter-rouge">vmdkops-admin policy rm myPolicy</code> - Remove the given policy
- * <code class="highlighter-rouge">vmdkops-admin policy ls</code> - List policies and the Volumes that are using that policy.
- * <code class="highlighter-rouge">vmdkops-admin policy update --name=myPolicy --content="string"</code> - Update an existing vSAN policy and
-   any volumes currently using that policy</p>
+<ul>
+  <li>Volume creation succeeds on a datastore which is in maintenance mode. Datastore maintenance mode is a VC feature and ESX is not aware of if any datastore is put in maintenance mode. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1651">#1651</a></li>
+  <li>Specifying “Datastore Cluster” name during volume creation is not supported. Datastore clusters (as a part of Storage DRS) is a VC feature and not available on an individual ESX. <a href="https://github.com/vmware/docker-volume-vsphere/issues/556">#556</a></li>
+  <li>Storage DRS doesn’t apply for VMs that have independent disks attached to it.</li>
+</ul>
 
-<p>Note that on volume creation from docker, a policy name will be passed with a <code class="highlighter-rouge">-o</code> option.</p>
+<p><strong>Snapshot</strong></p>
 
-<h1 id="vmgroup">vmgroup</h1>
-<p>Create, delete, configure and show access control settings for a vmgroup.
-A vmgroup is defined as a collection of VMs, so access control settings are assigned via a
-VM naming convention.
-<em>** The rest of section below needs rework as it represents obsolete “role” design **</em>
-An example will help clarify
-this. Let’s say that an administrator wants to allow any <code class="highlighter-rouge">Test</code> VM to create, delete and mount
-volumes, and only allow creation of volumes of a maximum size of 2TB. The admin would first create a
-<code class="highlighter-rouge">Test</code> role specifying these permissions, as well as a glob indicating the vm naming convention that
-the role should be applied to. In this instance the permissions in the role <code class="highlighter-rouge">Test</code> will be applied to any VM with a
-name ending in <code class="highlighter-rouge">Test</code>. Since the admin creates the VMs they can control the naming convention and
-permissions in a straightforward manner.</p>
+<p>Creating snapshots of a VM which has containers running is not supported.</p>
 
-<p><code class="highlighter-rouge">vmdkops-admin role create --name=Test --matches-vm=\*Test --volume-maxsize=2TB --rights=create,delete,mount</code></p>
-
-<p><code class="highlighter-rouge">role create</code> accepts the following options as shown in the prior example:
- * <code class="highlighter-rouge">--name=&lt;Name&gt;</code> - The name of the role to be created
- * <code class="highlighter-rouge">--matches-vm=&lt;Glob&gt;</code> - The glob that matches VM names where the role should be applied. This
-                           flag may be applied multiple times, where a VM matching any of the globs would
-                           apply.
- * <code class="highlighter-rouge">--rights=&lt;Perm1,Perm2,...&gt;</code> - The permissions granted to matching VMs. The list of applicable rights is:
-   * <code class="highlighter-rouge">create</code> - Allow volume creation. If the <code class="highlighter-rouge">--volume-maxsize</code> parameter is given it applies to create, otherwise size is unlimited.
-   * <code class="highlighter-rouge">rm</code> - Allow volume deletion
-   * <code class="highlighter-rouge">mount</code> - Allow volume mounting</p>
-
-<p>Currently the idea is to allow volume deletion and mounting of any volume if the rights are granted.
-However it may make sense to limit these to specific volumes, perhaps via a glob match.</p>
-
-<p>Note that the <code class="highlighter-rouge">--volume-maxsize</code> parameter is human readable and given in the following format: <code class="highlighter-rouge">MB | GB | TB</code>.</p>
-
-<p>Besides <code class="highlighter-rouge">role create</code>, there are 4 other commands with regards to roles. Roles can be deleted with
-<code class="highlighter-rouge">role rm</code> and listed with <code class="highlighter-rouge">role ls</code>. Listing of roles will show all roles and the VMs they apply
-to. <code class="highlighter-rouge">role set</code> takes identical paramters to role create, except it will update an existing role
-only. Finally, there needs to be a way to check permissions. This can be performed with the <code class="highlighter-rouge">role
-get</code> command. <code class="highlighter-rouge">role get</code> takes a VM name and returns both a list of the rights granted to the VM and
-the roles that the VM matches on separate lines.</p>
-
-<p>Examples are provided below.
-<code class="highlighter-rouge">
- vmdkops-admin role create --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=2TB --rights=create,delete,mount
- vmdkops-admin role rm myrole
- vmdkops-admin role ls
- vmdkops-admin role set --name=myrole --matches-vm="glob expression over vm names" --volume-maxsize=4TB --rights=create,mount
- vmdkops-admin role get &lt;VmName&gt;
-</code></p>
-
-<p>Role information is stored in a flat file, for lack of a better solution. The format of the file
-is JSON, but the schema is currently undefined. Permission checking will need to be performed at
-runtime by the ESX service, using the information provided by <code class="highlighter-rouge">vmdkops-admin role get &lt;VmName&gt;</code>. It
-does seem inefficient to call out to a separate command to perform the check, but this allows the
-simplest implementation and isolation of admin information inside a single script.</p>
-
-<h1 id="status">Status</h1>
-<p>Show any interesting information about the service. This includes file paths of config files, version
-information, and PID of running service. A simple example is shown here, although it’s possible
-that the exact format may be somewhat different.</p>
-
-<h1 id="set">Set</h1>
-<p>Modify attribute settings on a given volume. The volume is identified by its name and datastore, 
-for example if the volume name is <code class="highlighter-rouge">container-vol</code> then the volume is specified as “container-vol@datastore-name”.
-The attributes to set/modify are specified as a comma separated list as “<attr1>=<value>, <attr2>=<value>....". For example,
-a command line would look like this.</value></attr2></value></attr1></p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>$ vmdkops-admin set --volume=&lt;volume@datastore&gt; --options="&lt;attr1&gt;=&lt;value&gt;, &lt;attr2&gt;=&lt;value&gt;, ..."
-</code></pre>
-</div>
-
-<p>The volume attributes are set and take effect only the next time the volume attached to a VM. The changes do not impact any VM
-thats currently using the volume. For the present, only the “access” attribute is supported to be modified via this command, and
-can be set to either of the allowed values “read-only” or “read-write”.</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
-Version: 1.0.0-0.0.1
-Status: Running
-Pid: 73114
-Port: 1019
-LogConfigFile: /etc/vmware/vmdkops/log_config.json
-LogFile: /var/log/vmware/vmdk_ops.log
-LogLevel: INFO
-</code></pre>
-</div>
-
-<h1 id="help">help</h1>
-<p>Show help as described in this doc.</p>
+<ul>
+  <li>If a container is running and a snapshot is taken then if the container exits, the volume is not detached. VC shows an error that the volume is part of a snapshot and hence can’t be removed from the VM config. For this reason, snapshotting a VM after starting one or more containers isn’t supported as it leaves the volume attached to the VM. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1649">#1649</a></li>
+</ul>
 
   
 
