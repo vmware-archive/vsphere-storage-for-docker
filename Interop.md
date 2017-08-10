@@ -6,13 +6,13 @@ The vDVS plugin works well with all vSphere features and deviations if any are a
 
 SvMotion/XvMotion is not supported for VMs that use vDVS volumes.
 
-- SvMotion/XvMotion causes vDVS volumes to be migrated out of the datastore location and hence causing the plugin to loose access to the volume. [#1618](https://github.com/vmware/docker-volume-vsphere/issues/1618)
+- SvMotion/XvMotion causes vDVS volumes to be migrated out of the datastore location and hence causing the plugin to lose access to the volume. [#1618](https://github.com/vmware/docker-volume-vsphere/issues/1618)
 
 **Storage DRS**
 
 Storage DRS is not supported for VMs that use vDVS volumes. 
 
-- Volume creation succeeds on a datastore which is in maintenance mode. Datastore maintenance mode is a VC feature and ESX is not aware if any datastore is put in maintenance mode. [#1651](https://github.com/vmware/docker-volume-vsphere/issues/1651)
+- Volume creation succeeds on a datastore which is in maintenance mode. Datastore maintenance mode is a VC feature and ESX is not aware of if any datastore is put in maintenance mode. [#1651](https://github.com/vmware/docker-volume-vsphere/issues/1651)
 - Specifying "Datastore Cluster" name during volume creation is not supported. Datastore clusters (as a part of Storage DRS) is a VC feature and not available on an individual ESX. [#556](https://github.com/vmware/docker-volume-vsphere/issues/556)
 - Storage DRS doesn't apply for VMs that have independent disks attached to it.
 
