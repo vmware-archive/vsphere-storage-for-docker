@@ -385,11 +385,11 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
-	defer etcdAPI.Close()
 	if etcdAPI == nil {
                 log.Warningf(etcdClientCreateError)
 		return false
 	}
+	defer etcdAPI.Close()
 	txresp, err := etcdAPI.Txn(context.TODO()).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
@@ -417,10 +417,10 @@ func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 	var txresp *etcdClient.TxnResponse
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
-	defer etcdAPI.Close()
 	if etcdAPI == nil {
 		return txresp, errors.New(etcdClientCreateError)
 	}
+	defer etcdAPI.Close()
 	txresp, err := etcdAPI.Txn(context.TODO()).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
@@ -567,10 +567,10 @@ func (e *EtcdKVS) WriteMetaData(entries []kvstore.KvPair) error {
 
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
-	defer etcdAPI.Close()
 	if etcdAPI == nil {
 		return errors.New(etcdClientCreateError)
 	}
+	defer etcdAPI.Close()
 
 	// ops contain multiple operations that will be done to etcd
 	// in a single revision
@@ -602,10 +602,10 @@ func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
 
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
-	defer etcdAPI.Close()
 	if etcdAPI == nil {
 		return entries, errors.New(etcdClientCreateError)
 	}
+	defer etcdAPI.Close()
 
 	// Lets build the request which will be executed
 	// in a single transaction
@@ -657,10 +657,10 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
-	defer etcdAPI.Close()
 	if etcdAPI == nil {
 		return errors.New(etcdClientCreateError)
 	}
+	defer etcdAPI.Close()
 
 	// ops hold multiple operations that will be done to etcd
 	// in a single revision. Add all keys for this volname.
