@@ -363,7 +363,8 @@ func GetMountInfo(mountRoot string) (map[string]string, error) {
 		if filepath.Dir(field[1]) != mountRoot {
 			continue
 		}
-		volumeMountMap[filepath.Base(field[1])] = field[0]
+		vname := strings.Replace(filepath.Base(field[1]), "\\040", " ", -1)
+		volumeMountMap[vname] = field[0]
 	}
 
 	log.WithFields(log.Fields{"map": volumeMountMap}).Debug("Successfully retrieved mounts: ")
