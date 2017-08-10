@@ -359,6 +359,7 @@ test:
 testasroot:
 	$(log_target)
 	$(GO) test $(PLUGIN)/drivers/vmdk/vmdkops -cover -v
+	$(GO) test $(PLUGIN)/drivers/shared -cover -v
 	$(GO) test $(PLUGIN)/utils/config -cover -v
 
 # does sanity check of create/remove docker volume on the guest
@@ -407,25 +408,35 @@ test-e2e-windows:
 	$(log_target)
 	$(BUILD) test-e2e-runonce-windows
 
+# An end-to-end target for vSphere Shared Docker Volume Driver
+test-e2e-shared:
+	$(log_target)
+	$(BUILD) test-e2e-runonce-shared
+
 #
 # E2E test target to control test run on CI.
 # We have 2 ESXs on CI testbed and 2 datastore type each (VMFS/VSAN).
 # test-e2e-runalways: makes sure to run test always
 # test-e2e-runonce: makes sure to run test *once per ESX*
 # test-e2e-runonce-windows: makes sure to run windows tests *once per ESX*
+# test-e2e-runonce-shared: makes sure to run vsphere shared tests *once per ESX*
 #
 .PHONY: test-e2e-runalways test-e2e-runonce test-e2e-runonce-windows
 test-e2e-runalways:
 	$(log_target)
-	$(GO) test -v -timeout 40m -tags runalways $(E2E_Tests)
+	$(GO) test -v -timeout 40m -tags "runalways" $(E2E_Tests)
 
 test-e2e-runonce:
 	$(log_target)
-	$(GO) test -v -timeout 40m -tags runonce $(E2E_Tests)
+	$(GO) test -v -timeout 40m -tags "runonce" $(E2E_Tests)
 
 test-e2e-runonce-windows:
 	$(log_target)
 	$(GO) test -v -timeout 40m -tags "runoncewin winutil" $(E2E_Tests)
+
+test-e2e-runonce-shared:
+	$(log_target)
+	$(GO) test -v -timeout 40m -tags "runonceshared" $(E2E_Tests)
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:

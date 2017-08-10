@@ -47,6 +47,18 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 	return ssh.InvokeCommand(ip, dockercli.CreateVolume+"--name="+name+" "+options)
 }
 
+// CreateSharedVolume is going to create docker volume with given name using vsphere shared driver.
+func CreateSharedVolume(ip, name string) (string, error) {
+	log.Printf("Creating shared volume [%s] on VM [%s]\n", name, ip)
+	return ssh.InvokeCommand(ip, dockercli.CreateSharedVolume+" --name= "+name)
+}
+
+// CreateSharedVolumeWithOptions is going to create docker volume with given name using vshpere shared driver.
+func CreateSharedVolumeWithOptions(ip, name, options string) (string, error) {
+	log.Printf("Creating shared volume [%s] with options [%s] on VM [%s]\n", name, options, ip)
+	return ssh.InvokeCommand(ip, dockercli.CreateSharedVolume+"--name="+name+" "+options)
+}
+
 // AttachVolume - attach volume to container on given host
 func AttachVolume(ip, volName, containerName string) (string, error) {
 	log.Printf("Attaching volume [%s] on VM [%s]\n", volName, ip)

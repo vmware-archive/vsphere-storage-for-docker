@@ -141,6 +141,15 @@ func getVolumeStatusHost(name, hostName string) string {
 	return out
 }
 
+// GetSharedVolumeStatusHost - get the volume status on a given host, the volume is created by
+// vsphere shared driver
+func GetSharedVolumeStatusHost(name, hostName string) string {
+	cmd := dockercli.InspectVolume + " --format \"{{index .Status \\\"Volume Status\\\"}}\" " + name
+	log.Printf("GetSharedVolumeStatusHost: cmd[]", cmd)
+	out, _ := ssh.InvokeCommand(hostName, cmd)
+	return out
+}
+
 // VerifyDetachedStatus - check if the status gets detached within the timeout.
 // The name of the volume MUST be a shorter name without @datastore suffix.
 // Use this util in test scenarios where the test expects instant change of status to detached.
