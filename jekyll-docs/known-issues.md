@@ -8,6 +8,4 @@ This section lists the major known issues with vSphere Docker Volume Service. Fo
 
 -  Full volume name with format like "volume@datastore" cannot be specified in the compose file for stack deployment. [#1315](https://github.com/vmware/docker-volume-vsphere/issues/1315). It is a docker compose issue and a workaround has been provided in the issue.
 
--  Specifying "Datastore Cluster" name during volume creation is not supported. Datastore clusters (as a part of Storage DRS) is a VC feature and not available on individual ESX. [#556](https://github.com/vmware/docker-volume-vsphere/issues/556)
-
 -  Volume creation using VFAT filesystem is not working currently. [#1327](https://github.com/vmware/docker-volume-vsphere/issues/1327)

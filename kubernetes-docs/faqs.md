@@ -21,11 +21,11 @@ Yes as long as laptop supports nested virtualization you can try it on your lapt
 vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. Please refer this [section.](/docker-volume-vsphere/kubernetes/prereq.html)  
  
 ## Can we deploy multiple Kubernetes Cluster on one vCenter? 
-Yes. Please refer this [section.](/docker-volume-vsphere/kubernetes/existing.html)  
+Yes. Using resource pool and maintaining the VMs from each Kubernetes cluster in their respective VM folder you can run multiple Kubernetes cluster on vCenter.  
  
  
 ## Can Kubernetes Cluster access storage from another vCenter? 
-Yes. Please refer this [section.](/docker-volume-vsphere/kubernetes/existing.html)
+Yes. vSphere supports shared storage across multiple vCenters. User can use shared storage in multiple Kubernetes Clusters.
  
 ## Which Operating System are supported ? 
 We support Photon, Ubuntu, Core OS, please check this section for [details](/docker-volume-vsphere/kubernetes/prereq.html)
