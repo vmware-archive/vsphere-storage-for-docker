@@ -105,6 +105,7 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
 	volumes, err := d.ops.List()
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("Failed to get volume list ")
 		return volume.Response{Err: err.Error()}
 	}
 	responseVolumes := make([]*volume.Volume, 0, len(volumes))
@@ -123,7 +124,11 @@ func (d *VolumeDriver) List(r volume.Request) volume.Response {
 
 // GetVolume - return volume meta-data.
 func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
-	return d.ops.Get(name)
+	mdata, err := d.ops.Get(name)
+	if err != nil {
+		log.WithFields(log.Fields{"name": name, "error": err}).Error("Failed to get volume meta-data ")
+	}
+	return mdata, err
 }
 
 // MountVolume - Request attach and them mounts the volume.
@@ -216,7 +221,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	// get volume metadata if required
 	volumeMeta := volumeInfo.VolumeMeta
 	if volumeMeta == nil {
-		if volumeMeta, err = d.ops.Get(r.Name); err != nil {
+		if volumeMeta, err = d.GetVolume(r.Name); err != nil {
 			d.DecrRefCount(r.Name)
 			return volume.Response{Err: err.Error()}
 		}
