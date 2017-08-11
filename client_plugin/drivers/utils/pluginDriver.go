@@ -19,8 +19,10 @@ package utils
 //
 
 import (
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
+	"os"
 	"path/filepath"
+
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 )
 
 // PluginDriver - helper struct to hold common utilities for driver interface
@@ -32,7 +34,7 @@ type PluginDriver struct {
 
 // GetMountPoint returns the mount point based on MountRoot and volume name
 func (u *PluginDriver) GetMountPoint(volName string) string {
-	return filepath.Join(u.MountRoot, volName)
+	return filepath.Join(u.MountRoot, volName) + string(os.PathSeparator)
 }
 
 // In following three operations on refcount, if refcount
