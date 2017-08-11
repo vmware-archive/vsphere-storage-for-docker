@@ -86,4 +86,14 @@ type KvStore interface {
 
 	// List - List all the different portion of keys with a given prefix
 	List(prefix string) ([]string, error)
+
+	// AtomicIncr - Increase a key value by one
+	AtomicIncr(key string) error
+
+	// AtomicDecr - Decrease a key value by one
+	AtomicDecr(key string) error
+
+	// BlockingWaitAndGet - Blocking wait until a key value becomes equal to a specific value
+	// then read the value of another key
+	BlockingWaitAndGet(key string, value string, newKey string) (string, error)
 }

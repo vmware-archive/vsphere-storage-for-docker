@@ -27,6 +27,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os/exec"
+	"strconv"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/dockerops"
@@ -34,10 +38,9 @@ import (
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore/etcdops"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
-	"strconv"
-	"strings"
 )
 
 /* Constants
@@ -55,6 +58,8 @@ const (
 	sambaImageName = "dperson/samba"
 	sambaUsername  = "root"
 	sambaPassword  = "badpass"
+	fileShareName  = "public"
+	fsType         = "cifs"
 )
 
 /* VolumeMetadata structure contains all the
@@ -143,6 +148,7 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 	log.Infof("VolumeDriver Get: %s", r.Name)
 	status, err := d.GetVolume(r.Name)
 	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to get volume meta-data ")
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -155,6 +161,7 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
 	volumes, err := d.kvStore.List(kvstore.VolPrefixState)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("Failed to get volume list ")
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -211,13 +218,6 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	return statusMap, nil
 }
 
-// MountVolume - Request attach and them mounts the volume.
-func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
-	log.Errorf("VolumeDriver MountVolume to be implemented")
-	mountpoint := d.GetMountPoint(name)
-	return mountpoint, nil
-}
-
 // UnmountVolume - Unmounts the volume and then requests detach
 func (d *VolumeDriver) UnmountVolume(name string) error {
 	log.Errorf("VolumeDriver UnmountVolume to be implemented")
@@ -234,6 +234,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	volRecord := VolumeMetadata{
 		Status:         kvstore.VolStateCreating,
 		GlobalRefcount: 0,
+		Port:           1445,
 		Username:       sambaUsername,
 		Password:       sambaPassword,
 	}
@@ -402,8 +403,175 @@ func (d *VolumeDriver) Path(r volume.Request) volume.Response {
 func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
 
-	log.Errorf("VolumeDriver Mount to be implemented")
-	return volume.Response{Err: ""}
+	// lock the state
+	d.RefCounts.StateMtx.Lock()
+	defer d.RefCounts.StateMtx.Unlock()
+
+	// checked by refcounting thread until refmap initialized
+	// useless after that
+	d.RefCounts.MarkDirty()
+
+	return d.processMount(r)
+}
+
+// processMount -  process a mount request
+func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
+	d.MountIDtoName[r.ID] = r.Name
+
+	// If the volume is already mounted , just increase the refcount.
+	// Note: for new keys, GO maps return zero value, so no need for if_exists.
+	refcnt := d.IncrRefCount(r.Name) // save map traversal
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
+	if refcnt > 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: d.GetMountPoint(r.Name)}
+	}
+
+	if plugin_utils.AlreadyMounted(r.Name, d.MountRoot) {
+		log.WithFields(log.Fields{"name": r.Name}).Info("Already mounted, skipping mount. ")
+		return volume.Response{Mountpoint: d.GetMountPoint(r.Name)}
+	}
+
+	mountpoint, err := d.MountVolume(r.Name, "", "", false, true)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": r.Name,
+				"error": err},
+		).Error("Failed to mount ")
+
+		refcnt, _ := d.DecrRefCount(r.Name)
+		if refcnt == 0 {
+			log.Infof("Detaching %s - it is not used anymore", r.Name)
+			// TODO: umount here
+		}
+		return volume.Response{Err: err.Error()}
+	}
+
+	return volume.Response{Mountpoint: mountpoint}
+}
+
+// MountVolume - Request attach and then mounts the volume.
+func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
+	mountpoint := d.GetMountPoint(name)
+	// First, make sure  that mountpoint exists.
+	err := fs.Mkdir(mountpoint)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name,
+				"dir": mountpoint},
+		).Error("Failed to make directory for volume mount ")
+		return mountpoint, err
+	}
+
+	// Increase GRef
+	log.Infof("Before AtomicIncr")
+	err = d.kvStore.AtomicIncr(kvstore.VolPrefixGRef + name)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": err},
+		).Error("Failed to increase global refcount when processMount ")
+		return "", err
+	}
+
+	// Blocking wait until the state of volume becomes Mounted
+	// the change of global refcount will trigger one watcher on manager nodes
+	// watchers should start event handler to transit the state of volumes
+	info, err := d.kvStore.BlockingWaitAndGet(kvstore.VolPrefixState+name,
+		string(kvstore.VolStateMounted), kvstore.VolPrefixInfo+name)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to blocking wait for Mounted state. Error: %v.", err)
+		err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
+		if err != nil {
+			msg += fmt.Sprintf(" Also failed to decrease global refcount. Error: %v.", err)
+		}
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": msg}).Error("")
+		return "", errors.New(msg)
+	}
+
+	// Start mounting
+	log.Infof("Volume state mounted, prepare to mounting locally")
+	var volRecord VolumeMetadata
+	// Unmarshal Info key
+	err = json.Unmarshal([]byte(info), &volRecord)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": err},
+		).Error("Failed to unmarshal info data ")
+		return "", err
+	}
+
+	log.WithFields(
+		log.Fields{"name": name,
+			"Port":        volRecord.Port,
+			"ServiceName": volRecord.ServiceName,
+		}).Info("Get info for mounting ")
+	err = d.mountSharedVolume(name, mountpoint, &volRecord)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to mount shared volume. Error: %v.", err)
+		// AtomicDecr decreases global refcount by one
+		// if global refcount reduces from 1 to 0, a watcher event is triggered on manager nodes
+		err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
+		if err != nil {
+			msg += fmt.Sprintf(" Also failed to decrease global refcount. Error: %v.", err)
+		}
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": msg}).Error("")
+		return "", errors.New(msg)
+	}
+
+	return mountpoint, nil
+}
+
+// mountSharedVolume - mount the shared volume according to volume metadata
+func (d *VolumeDriver) mountSharedVolume(volName string, mountpoint string, volRecord *VolumeMetadata) error {
+	// Build mount command as follows:
+	//   mount [-t $fstype] [-o $options] [$source] $target
+	mountArgs := []string{}
+	mountArgs = append(mountArgs, "-t", fsType)
+
+	options := []string{
+		"username=" + volRecord.Username,
+		"password=" + volRecord.Password,
+		"port=" + strconv.Itoa(volRecord.Port),
+		"vers=3.0",
+	}
+	mountArgs = append(mountArgs, "-o", strings.Join(options, ","))
+
+	_, addr, _, err := d.dockerOps.GetSwarmInfo()
+	if err != nil {
+		log.WithFields(
+			log.Fields{"volume name": volName,
+				"error": err,
+			}).Error("Failed to get IP address from docker swarm ")
+		return err
+	}
+	source := "//" + addr + "/" + fileShareName
+	mountArgs = append(mountArgs, source)
+	mountArgs = append(mountArgs, mountpoint)
+
+	log.WithFields(
+		log.Fields{"volume name": volName,
+			"arguments": mountArgs,
+		}).Info("Mounting volume with options ")
+	command := exec.Command("mount", mountArgs...)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		log.WithFields(
+			log.Fields{"volume name": volName,
+				"output": string(output),
+				"error":  err,
+			}).Error("Mount failed: ")
+		return err
+	}
+
+	return nil
 }
 
 // Unmount request from Docker. If mount refcount is drop to 0.

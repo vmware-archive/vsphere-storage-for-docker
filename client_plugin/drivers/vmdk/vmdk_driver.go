@@ -131,7 +131,7 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	return mdata, err
 }
 
-// MountVolume - Request attach and them mounts the volume.
+// MountVolume - Request attach and then mounts the volume.
 // Actual mount - send attach to ESX and do the in-guest magic
 // Returns mount point and  error (or nil)
 func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
@@ -141,21 +141,27 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	err := fs.Mkdir(mountpoint)
 	if err != nil {
 		log.WithFields(
-			log.Fields{"name": name, "dir": mountpoint},
+			log.Fields{"name": name,
+				"dir": mountpoint},
 		).Error("Failed to make directory for volume mount ")
 		return mountpoint, err
 	}
 
 	waitCtx, errWait := fs.DevAttachWaitPrep()
 	if errWait != nil {
-		log.WithFields(log.Fields{"name": name,
-			"error": errWait}).Warning("Failed to initialize wait context, continuing however.. ")
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": errWait},
+		).Warning("Failed to initialize wait context, continuing however.. ")
 	}
 
 	if d.useMockEsx {
 		dev, err := d.ops.RawAttach(name, nil)
 		if err != nil {
-			log.WithFields(log.Fields{"name": name, "error": err}).Error("Failed to attach volume ")
+			log.WithFields(
+				log.Fields{"name": name,
+					"error": err},
+			).Error("Failed to attach volume ")
 			return mountpoint, err
 		}
 		return mountpoint, fs.MountByDevicePath(mountpoint, fstype, string(dev[:]), false)
@@ -163,7 +169,10 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 
 	volDev, err := d.ops.Attach(name, nil)
 	if err != nil {
-		log.WithFields(log.Fields{"name": name, "error": err}).Error("Attach volume failed ")
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": err},
+		).Error("Attach volume failed ")
 		return mountpoint, err
 	}
 
@@ -429,7 +438,8 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	err := d.ops.Remove(r.Name, r.Options)
 	if err != nil {
 		log.WithFields(
-			log.Fields{"name": r.Name, "error": err},
+			log.Fields{"name": r.Name,
+				"error": err},
 		).Error("Failed to remove volume ")
 		return volume.Response{Err: err.Error()}
 	}
