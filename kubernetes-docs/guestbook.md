@@ -35,7 +35,7 @@ vmkfstools -c 2G redis-master.vmdk
 In this example we will provision PVs and Guestbook pods will claim these PVs
  
 
-Download all files in the PVC PV Demo from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook)
+Download all files in the PVC PV Demo from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook/guestbook-pvc)
 						
 
 						
@@ -78,7 +78,7 @@ kubectl create -f guestbook-all-in-one.yaml
 ## Guestbook Application with Dynamic Provisioning
 					
 						
-Download the yaml files for storage class based guestbook from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook)
+Download the yaml files for storage class based guestbook from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook/guestbook-storageclass)
  
 Create the storage class
 
@@ -146,7 +146,7 @@ To check the attach status of VMDKs on ESX head to vCenter (Settings page or Rec
 					
 			
 		
-## Lifecycle of volume  independent of Pod
+## Lifecycle of volume independent Pod
 						
 To test the persistence, delete the guestbook and recreate it using the same volumes, the old messages on the guest book should show up. 
 					

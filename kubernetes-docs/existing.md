@@ -4,9 +4,13 @@ title: Configurations on Existing Kubernetes Cluster
 
 If a Kubernetes cluster has not been deployed using Kubernetes-Anywhere, follow the instructions below to enable the vSphere Cloud Provider. These steps are not needed when using Kubernetes-Anywhere, they will be done as part of the deployment.
 
-**Step-1** [Create a VM folder](https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.vcenterhost.doc/GUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html) and move Kubernetes Node VMs to this folder.
+## Create a VM folder for Node VMs
 
-**Step-2** Make sure Node VM names must comply with the regex `[a-z](([-0-9a-z]+)?[0-9a-z])?(\.[a-z0-9](([-0-9a-z]+)?[0-9a-z])?)*` If Node VMs does not comply with this regex, rename them and make it compliant to this regex.
+Create a VM folder. Follow instructions mentioned in this [link](https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.vcenterhost.doc/GUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html) and move Kubernetes Node VMs to this folder.
+
+## Make sure node VM names are compliant
+
+Make sure Node VM names must comply with the regex `[a-z](([-0-9a-z]+)?[0-9a-z])?(\.[a-z0-9](([-0-9a-z]+)?[0-9a-z])?)*` If Node VMs does not comply with this regex, rename them and make it compliant to this regex.
 
   Node VM names constraints:
 
@@ -14,7 +18,7 @@ If a Kubernetes cluster has not been deployed using Kubernetes-Anywhere, follow 
   * VM names can not have capital letters, any special characters except `.` and `-`.
   * VM names can not be shorter than 3 chars and longer than 63
 
-**Step-3** Enable disk UUID on Node virtual machines
+## Enable disk UUID on Node virtual machines
 
 The disk.EnableUUID parameter must be set to "TRUE" for each Node VM. This step is necessary so that the VMDK always presents a consistent UUID to the VM, thus allowing the disk to be mounted properly. 
 
@@ -37,7 +41,7 @@ For each of the virtual machine nodes that will be participating in the cluster,
 
 Note: If Kubernetes Node VMs are created from template VM then `disk.EnableUUID=1` can be set on the template VM. VMs cloned from this template, will automatically inherit this property.
 
-**Step-4** Create and assign Roles to the vSphere Cloud Provider user and vSphere entities.
+## Create Roles, add Privileges to Roles and assign them to the vSphere Cloud Provider user and vSphere entities
 
 Note: if you want to use Administrator account then this step can be skipped.
 
@@ -141,7 +145,9 @@ Below is summary of supported parameters in the `vsphere.conf` file
 
         datastore = "DatastoreStorageFolder/datastore1"
 
-**Step-6** Add flags to controller-manager, API server and Kubelet to enable vSphere Cloud Provider.
+## Add flags to controller-manager, API server and Kubelet
+
+Add flags to controller-manager, API server and Kubelet to enable vSphere Cloud Provider.
 * Add following flags to kubelet running on every node and to the controller-manager and API server pods manifest files. 
 
 ```
@@ -151,10 +157,9 @@ Below is summary of supported parameters in the `vsphere.conf` file
 
 Manifest files for API server and controller-manager are generally located at `/etc/kubernetes`
 
-**Step-7** Restart Kubelet on all nodes.
+## Restart Kubelet on all nodes
+
 * Reload kubelet systemd unit file using ```systemctl daemon-reload```
 * Restart kubelet service using ```systemctl restart kubelet.service```
 
 Note: After enabling the vSphere Cloud Provider, Node names will be set to the VM names from the vCenter Inventory.
-
- 
