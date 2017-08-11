@@ -87,7 +87,7 @@ func (vg *VmGroupTest) SetUpSuite(c *C) {
 
 	cmd = adminconst.ListVMgroups
 	out, err = ssh.InvokeCommand(vg.config.EsxHost, cmd)
-	log.Printf(out)
+	//log.Printf(out)
 
 	log.Printf("Done creating vmgroups test config.")
 }
@@ -113,7 +113,7 @@ func (vg *VmGroupTest) TearDownSuite(c *C) {
 
 	cmd := adminconst.ListVMgroups
 	out, err = ssh.InvokeCommand(vg.config.EsxHost, cmd)
-	log.Printf(out)
+	// log.Printf(out)
 
 	// Remove Config DB
 	adminutils.ConfigRemove(vg.config.EsxHost)
@@ -135,9 +135,8 @@ func (vg *VmGroupTest) createVolumes(c *C, name string) {
 	c.Assert(err, IsNil, Commentf(out))
 
 	// 2. Verify the volume is created on the default vm group
-	val, err := dockercli.ListVolumes(vg.config.DockerHosts[0])
-	c.Assert(err, IsNil, Commentf(val))
-	c.Assert(strings.Contains(val, name), Equals, true, Commentf("Volume %s not found in default vmgroup", name))
+	isAvailable := verification.CheckVolumeAvailability(vg.config.DockerHosts[0], name)
+	c.Assert(isAvailable, Equals, true, Commentf("Volume %s not found in default vmgroup", name))
 }
 
 // TestVmGroupVolumeCreate - Verify that volumes can be created on the
@@ -699,7 +698,7 @@ func (vg *VmGroupTest) TestVmgroupRemoveWithRemoveVol(c *C) {
 // 3. Repeat (2) without the VM list and verify that the default vmgroup is created.
 func (vg *VmGroupTest) TestVMListForDefaultGroup(c *C) {
 	misc.LogTestStart(c.TestName())
-	
+
 	// 1. Delete the _DEFAULT vmgroup
 	out, err := adminutils.DeleteVMgroup(vg.config.EsxHost, adminconst.DefaultVMgroup, false)
 	c.Assert(err, IsNil, Commentf(out))

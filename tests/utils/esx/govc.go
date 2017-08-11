@@ -85,12 +85,17 @@ func ShutDownVM(vmName string) string {
 	return out
 }
 
-// GetDatastoreList returns a list of datastore names available
+// GetDatastoreList returns a list of datastore names available.
 func GetDatastoreList() []string {
 	// log.Printf("Finding Datastores available on ESX")
 	cmd := esx.DatastoreInfo + esxcliJSON + esx.DatastoreList
 	out, _ := ssh.InvokeCommandLocally(cmd)
-	return strings.Fields(out)
+	val := strings.SplitAfter(out, "\n")
+	for i := 0; i < len(val); i++ {
+		dsName := strings.TrimRight(val[i], "\n")
+		val[i] = "'" + dsName + "'"
+	}
+	return val
 }
 
 // GetDatastoreByType returns the datastore name of type specified
