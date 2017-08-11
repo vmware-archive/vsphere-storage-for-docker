@@ -192,13 +192,13 @@
                     
                     
                     
-                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    <li><a href="kubernetes-volumes.html">Volumes</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
                     
                     
                     
@@ -222,14 +222,14 @@
             
             
             
-            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -244,14 +244,14 @@
             
             
             
-            <li><a href="prereq.html">Prerequistes</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
@@ -377,7 +377,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//faqs.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//faqs.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -387,8 +387,11 @@ $('#toc').on('click', 'a', function() {
 <h2 id="what-is-the-biggest-kubernetes-cluster-it-has-been-tested-for-">What is the biggest Kubernetes cluster it has been tested for ?</h2>
 <p>It has been tested on eight node cluster so far.</p>
 
+<h2 id="where-can-i-find-required-roles-and-privileges-for-the-vcenter-user-for-vsphere-cloud-provider-">Where can I find required Roles and Privileges for the vCenter User for vSphere Cloud Provider ?</h2>
+<p>Please refer to this <a href="/docker-volume-vsphere/kubernetes/existing.html#create-roles-add-privileges-to-roles-and-assign-them-to-the-vsphere-cloud-provider-user-and-vsphere-entities">section</a>.</p>
+
 <h2 id="where-can-i-find-the-list-of-vsan-vmfs-and-nfs-features-supported-by-vsphere-cloud-provider-">Where can I find the list of vSAN, VMFS and NFS features supported by vSphere Cloud Provider ?</h2>
-<p>Please refer to this <a href="/spbm.html">section</a>. Please report in case you find any features are missing.</p>
+<p>Please refer to this <a href="/docker-volume-vsphere/kubernetes/policy-based-mgmt.html">section</a>. Please report in case you find any features are missing.</p>
 
 <h2 id="how-is-running-containers-on-vsphere-integrated-containers-different-from-running-them-on-kubernetes-on-vsphere-">How is running containers on vSphere Integrated Containers different from running them on Kubernetes on vSphere ?</h2>
 <p>VIC is infrastructure platform to run containerized workloads alongside traditional applications whereas vSphere Cloud provider provides an interface to run and take advantage of vSphere storage for workloads running on Kubernetes</p>
@@ -397,19 +400,19 @@ $('#toc').on('click', 'a', function() {
 <p>Yes as long as laptop supports nested virtualization you can try it on your laptop.</p>
 
 <h2 id="which-kubernetes-distribution-is-supported-">Which Kubernetes distribution is supported ?</h2>
-<p>vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. Please refer this <a href="/prereq.html">section.</a></p>
+<p>vSphere Cloud Provider is available in vanilla Kubernetes and all distributions using Kubernetes v1.5 and above should support it. Please refer this <a href="/docker-volume-vsphere/kubernetes/prereq.html">section.</a></p>
 
 <h2 id="can-we-deploy-multiple-kubernetes-cluster-on-one-vcenter">Can we deploy multiple Kubernetes Cluster on one vCenter?</h2>
-<p>Yes. Please refer this <a href="/existing.html">section.</a></p>
+<p>Yes. Using resource pool and maintaining the VMs from each Kubernetes cluster in their respective VM folder you can run multiple Kubernetes cluster on vCenter.</p>
 
 <h2 id="can-kubernetes-cluster-access-storage-from-another-vcenter">Can Kubernetes Cluster access storage from another vCenter?</h2>
-<p>Yes. Please refer this <a href="/existing.html">section.</a></p>
+<p>Yes. vSphere supports shared storage across multiple vCenters. User can use shared storage in multiple Kubernetes Clusters.</p>
 
 <h2 id="which-operating-system-are-supported-">Which Operating System are supported ?</h2>
-<p>We support Photon, Ubuntu, Core OS, please check this section for <a href="/prereq.html">details</a></p>
+<p>We support Photon, Ubuntu, Core OS, please check this section for <a href="/docker-volume-vsphere/kubernetes/prereq.html">details</a></p>
 
 <h2 id="how-kubernetes-volumes-can-be-made-resilient-to-failures-on-vsan-datastore">How Kubernetes volumes can be made resilient to failures on vSAN datastore?</h2>
-<p>Please check the HA section for <a href="/ha.html">details.</a></p>
+<p>Please check the HA section for <a href="/docker-volume-vsphere/kubernetes/ha.html">details.</a></p>
 
 <h2 id="can-i-enable-sdrs-on-vms-hosting-kubernetes-cluster">Can I enable SDRS on VMs hosting kubernetes cluster?</h2>
 <p>No.</p>
@@ -451,7 +454,7 @@ Customize hardware -&gt; VM Options -&gt; Configuration Parameters -&gt; Edit Co
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

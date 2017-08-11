@@ -192,13 +192,13 @@
                     
                     
                     
-                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    <li><a href="kubernetes-volumes.html">Volumes</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
                     
                     
                     
@@ -222,14 +222,14 @@
             
             
             
-            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -244,14 +244,14 @@
             
             
             
-            <li><a href="prereq.html">Prerequistes</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
@@ -377,7 +377,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//guestbook.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//guestbook.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -412,7 +412,7 @@ vmkfstools -c 2G redis-master.vmdk
 
 <p>In this example we will provision PVs and Guestbook pods will claim these PVs</p>
 
-<p>Download all files in the PVC PV Demo from <a href="https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook">here</a></p>
+<p>Download all files in the PVC PV Demo from <a href="https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook/guestbook-pvc">here</a></p>
 
 <p>Create the persistent volume</p>
 
@@ -451,7 +451,7 @@ redis-slave-pv 2Gi    RWO         Retain    Bound     default/redis-slave-claim 
 
 <h2 id="guestbook-application-with-dynamic-provisioning">Guestbook Application with Dynamic Provisioning</h2>
 
-<p>Download the yaml files for storage class based guestbook from <a href="https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook">here</a></p>
+<p>Download the yaml files for storage class based guestbook from <a href="https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook/guestbook-storageclass">here</a></p>
 
 <p>Create the storage class</p>
 
@@ -514,7 +514,7 @@ Addresses: 10.20.105.59
 http://10.20.105.59:31531 ). Try out the app and leave a few messages.
 To check the attach status of VMDKs on ESX head to vCenter (Settings page or Recent Tasks window)</p>
 
-<h2 id="lifecycle-of-volume--independent-of-pod">Lifecycle of volume  independent of Pod</h2>
+<h2 id="lifecycle-of-volume-independent-pod">Lifecycle of volume independent Pod</h2>
 
 <p>To test the persistence, delete the guestbook and recreate it using the same volumes, the old messages on the guest book should show up.</p>
 
@@ -552,7 +552,7 @@ NodePort:      &lt;unset&gt; 32400/TCP
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
