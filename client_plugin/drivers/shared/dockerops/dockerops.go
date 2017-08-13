@@ -28,7 +28,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/docker/engine-api/client"
 	dockerTypes "github.com/docker/engine-api/types"
+	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/swarm"
+	"io"
+	"os"
+	"time"
 )
 
 const (
@@ -36,6 +40,31 @@ const (
 	dockerAPIVersion = "v1.24"
 	// dockerUSocket: Unix socket on which Docker engine is listening
 	dockerUSocket = "unix:///var/run/docker.sock"
+	// Postfix added to names of Samba services for volumes
+	serviceNamePostfix = "fileServer"
+	// Path where the file server image resides in plugin
+	fileServerPath = "/usr/lib/vmware/samba.tar"
+	// Driver for the network which Samba services will use
+	// for communicating to clients
+	networkDriver = "overlay"
+	// Name of the Samba server docker image
+	sambaImageName = "dperson/samba"
+	// Name of the Samba share used to expose a volume
+	FileShareName = "share1"
+	// Default username for all accessing Samba server mounts
+	SambaUsername = "root"
+	// Default password for all accessing Samba server mounts
+	SambaPassword = "badpass"
+	// Port number inside Samba container on which
+	// Samba service listens
+	defaultSambaPort = 445
+	// Time between successive checks for Samba service
+	// status to see if service container was launched
+	checkDuration = 5 * time.Second
+	// Timeout to mark Samba service launch as unsuccessful
+	sambaRequestTimeout = 30 * time.Second
+	// Prefix for internal volume names
+	internalVolumePrefix = "InternalVol"
 )
 
 // DockerOps is the interface for docker host related operations
@@ -142,13 +171,208 @@ func (d *DockerOps) VolumeRemove(volName string) error {
 }
 
 // StartSMBServer - Start SMB server
-func (d *DockerOps) StartSMBServer(volName string) bool {
-	log.Errorf("startSMBServer to be implemented")
-	return true
+// Input - Name of the volume for which SMB has to be started
+// Output
+//      int:     The overlay network port number on which the
+//               newly created SMB server listens. This port
+//               is opened on every host VM in the swarm.
+//      string:  Name of the SMB service started
+//      bool:    Indicated success/failure of the function. If
+//               false, ignore other output values.
+func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
+	var service swarm.ServiceSpec
+	var options dockerTypes.ServiceCreateOptions
+
+	// Name of the service
+	service.Name = volName + serviceNamePostfix
+	// The Docker image to run in this service
+	service.TaskTemplate.ContainerSpec.Image = sambaImageName
+
+	/* Args which will be passed to the service. These options are
+	   * used by the Samba container, not Docker API.
+	   * -s: Share related info: Name of the share,
+	                             Path in the Samba container that will be shared,
+	                             Browsable (yes),
+	                             Read only (no),
+	                             Guest access allowed by default (no),
+	                             Which users can access (all),
+	                             Which users are admins? (root)
+	                             Writelist: If RO, who can write on the share (root)
+	   * -u: Username and Password
+	*/
+	containerArgs := []string{"-s",
+		FileShareName + ";/mount;yes;no;no;all;" +
+			SambaUsername + ";" + SambaUsername,
+		"-u",
+		SambaUsername + ";" + SambaPassword}
+	service.TaskTemplate.ContainerSpec.Args = containerArgs
+
+	// Mount a volume on service containers at mount point "/mount"
+	var mountInfo []swarm.Mount
+	mountInfo = append(mountInfo, swarm.Mount{
+		Type:   swarm.MountType("volume"),
+		Source: internalVolumePrefix + volName,
+		Target: "/mount"})
+	service.TaskTemplate.ContainerSpec.Mounts = mountInfo
+
+	// How many containers of this service should be running at a time?
+	// Service mode can be Replicated or Global
+	var uintContainerNum uint64
+	uintContainerNum = 1
+	numContainers := swarm.ReplicatedService{Replicas: &uintContainerNum}
+	service.Mode = swarm.ServiceMode{Replicated: &numContainers}
+
+	/* Ports that the service wants to expose
+	   * Protocol: Samba operates on TCP
+	   * TargetPort: The port within the container that we wish to expose.
+	                 Port on host VM will get self assigned.
+	*/
+	var exposedPorts []swarm.PortConfig
+	exposedPorts = append(exposedPorts, swarm.PortConfig{
+		Protocol:   swarm.PortConfigProtocolTCP,
+		TargetPort: defaultSambaPort,
+	})
+
+	// service.EndpointSpec is an input for service create.
+	// It carries the previous data structure as well as Mode.
+
+	// Mode here is the mode we want to use for service discovery.
+	// Outside clients do not know on which node is the service
+	// running or how many containers are running inside or their
+	// IP addresses. Service discovery mechanisms like Virtual IPs
+	// or DNS round robin are used to route packets from
+	// 127.0.0.1:port to the service container.
+
+	// swarm.ResolutionModeVIP implies that we want to use
+	// virtual IPs for service resolution.
+	service.EndpointSpec = &swarm.EndpointSpec{
+		Mode:  swarm.ResolutionModeVIP,
+		Ports: exposedPorts,
+	}
+
+	//Start the service
+	resp, err := d.Dockerd.ServiceCreate(context.Background(),
+		service, options)
+	if err != nil {
+		log.Warningf("Failed to create file server for volume %s. Reason: %v",
+			volName, err)
+		return 0, "", false
+	}
+
+	// Wait till service container starts
+	ticker := time.NewTicker(checkDuration)
+	defer ticker.Stop()
+	timer := time.NewTimer(sambaRequestTimeout)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			log.Infof("Checking status of file server container...")
+			port, isRunning := d.isFileServiceRunning(resp.ID, volName)
+			if isRunning {
+				return int(port), volName + serviceNamePostfix, isRunning
+			}
+		case <-timer.C:
+			log.Warningf("Timeout reached while waiting for file server container for volume %s",
+				volName)
+			return 0, "", false
+		}
+	}
+}
+
+// isFileServiceRunning - Checks if a file service container is running
+// It takes some time from service being brought up to a
+// container for that service to be running.
+// Input
+//      servID:  ID of the service for which we want to check
+//               number of running containers.
+//      volName: Volume for which the service was run.
+// Output
+//      uint32:  Port number of overlay networking which is open on
+//               every host VM and on which the service container
+//               listens.
+//      bool:    Indicates if the service container is actually
+//               running or not. If false, ignore the port number.
+func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32, bool) {
+	var port uint32
+	// Grep the samba service running for this volume using service ID
+	serviceFilters := filters.NewArgs()
+	serviceFilters.Add("id", servID)
+	services, err := d.Dockerd.ServiceList(context.Background(),
+		dockerTypes.ServiceListOptions{Filter: serviceFilters})
+	if err != nil {
+		log.Warningf("Failed to check if file server for volume %s was started. %v", volName, err)
+		return port, false
+	}
+	if len(services) < 1 {
+		log.Warningf("No service returned for volume %s. Service not started properly.", volName)
+		return port, false
+	}
+
+	port = services[0].Endpoint.Ports[0].PublishedPort
+	if port == 0 {
+		log.Warning("Bad port number assigned to file service for volume %s", volName)
+		return port, false
+	}
+
+	// Grep all tasks for the service returned and verify that their states are running
+	taskFilter := filters.NewArgs()
+	for _, service := range services {
+		taskFilter.Add("service", service.ID)
+	}
+	tasks, err := d.Dockerd.TaskList(context.Background(),
+		dockerTypes.TaskListOptions{Filter: taskFilter})
+	if err != nil {
+		log.Warningf("Failed to get task list for file service for volume %s. %v", volName, err)
+		return port, false
+	}
+	for _, task := range tasks {
+		if task.Status.State != swarm.TaskStateRunning {
+			log.Infof("File server not running for volume %s", volName)
+			return port, false
+		}
+	}
+	return port, true
 }
 
 // StopSMBServer - Stop SMB server
-func (d *DockerOps) StopSMBServer(volName string) bool {
+// The return values are just to maintain parity with StartSMBServer()
+// as both these functions are passed to a nested function as args.
+// Input
+//      volName: Name of the volume for which the SMB service has to
+//               be stopped.
+// Output
+//      int:     Port number on which the SMB server is listening.
+//               Set this to 0 as cleanup.
+//      string:  Name of the SMB service. Set to empty.
+//      bool:    The result of the operation. True if the service was
+//               successfully stopped.
+func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
 	log.Errorf("stopSMBServer to be implemented")
+	return 0, "", true
+}
+
+// loadFileServerImage - Load the file server image present
+// in the plugin to Docker images
+func (d *DockerOps) LoadFileServerImage() bool {
+	file, err := os.Open(fileServerPath)
+	if err != nil {
+		log.Errorf("Failed to open file server tarball")
+		return false
+	}
+	// ImageLoad takes the tarball as an open file, and a bool
+	// value for silently loading the image
+	resp, err := d.Dockerd.ImageLoad(context.Background(),
+		io.Reader(file),
+		true)
+	if err != nil {
+		log.Errorf("Failed to load file server image: %v", err)
+		return false
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		log.Errorf("Failed to close the file server tarball: %v", err)
+		return false
+	}
 	return true
 }

@@ -18,6 +18,7 @@ package etcdops
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -42,6 +43,8 @@ import (
    etcdClusterStateExisting:   Used to indicate that this node is joining
                                an existing etcd cluster
    requestTimeout:             After how long should an etcd request timeout
+   checkSleepDuration:         How long to wait in any busy waiting situation
+                               before checking again
    etcdClientCreateError:      Error indicating failure to create etcd client
    etcdSingleRef:              if global refcount 0 -> 1, start SMB server
    etcdNoRef:                  if global refcount 1 -> 0, shut down SMB server
@@ -65,6 +68,15 @@ type EtcdKVS struct {
 	dockerOps *dockerops.DockerOps
 	nodeID    string
 	nodeAddr  string
+}
+
+// sharedVolConnectivityData - Contains metadata of shared volumes
+type sharedVolConnectivityData struct {
+	Port        int      `json:"port,omitempty"`
+	ServiceName string   `json:"serviceName,omitempty"`
+	Username    string   `json:"username,omitempty"`
+	Password    string   `json:"password,omitempty"`
+	ClientList  []string `json:"clientList,omitempty"`
 }
 
 // NewKvStore function: start or join ETCD cluster depending on the role of the node
@@ -328,7 +340,8 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 
 	nested := func(key string, fromState kvstore.VolStatus,
 		toState kvstore.VolStatus, interimState kvstore.VolStatus,
-		fn func(string) bool) {
+		fn func(string) (int, string, bool)) {
+
 		// watcher observes global refcount critical change
 		// transactional edit state first
 		volName := strings.TrimPrefix(key, kvstore.VolPrefixGRef)
@@ -339,12 +352,87 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 			return
 		}
 
-		if fn(volName) {
-			// server start/stop succeed, set desired state
-			if e.CompareAndPut(kvstore.VolPrefixState+volName,
+		port, servName, succeeded := fn(volName)
+		if succeeded {
+			// Either starting or stopping SMB
+			// server succeeded.
+			// Update volume metadata to reflect
+			// port number and file service name.
+			var entries []kvstore.KvPair
+			var writeEntries []kvstore.KvPair
+			var volRecord sharedVolConnectivityData
+
+			// Port, Server name, Client list, Samba
+			// username/password are in the same key.
+			// Must fetch this key to know the value
+			// of other fields before rewriting them.
+			keys := []string{
+				kvstore.VolPrefixInfo + volName,
+			}
+			entries, err := e.ReadMetaData(keys)
+			if err != nil {
+				// Failed to fetch existing metadata on the volume
+				// Set volume state to error as we cannot
+				// proceed
+				log.Warningf("Failed to read volume metadata before updating port information: %v",
+					err)
+				e.CompareAndPut(kvstore.VolPrefixState+volName,
+					string(interimState),
+					string(kvstore.VolStateError))
+				return
+			}
+			err = json.Unmarshal([]byte(entries[0].Value), &volRecord)
+			if err != nil {
+				// Failed to unmarshal record from JSON
+				// Set volume state to error as we cannot
+				// proceed
+				log.Warningf("Failed to unmarshal JSON for reading existing metadata: %v",
+					err)
+				e.CompareAndPut(kvstore.VolPrefixState+volName,
+					string(interimState),
+					string(kvstore.VolStateError))
+				return
+			}
+			// Rewrite the port number and service name
+			// then marshal the data structure to JSON again.
+			volRecord.Port = port
+			volRecord.ServiceName = servName
+			byteRecord, err := json.Marshal(volRecord)
+			if err != nil {
+				// Failed to marshal record as JSON
+				// Set volume state to error as we cannot
+				// proceed
+				log.Warningf("Failed to marshal JSON for writing metadata: %v",
+					err)
+				e.CompareAndPut(kvstore.VolPrefixState+volName,
+					string(interimState),
+					string(kvstore.VolStateError))
+				return
+			}
+			writeEntries = append(writeEntries, kvstore.KvPair{
+				Key:   kvstore.VolPrefixInfo + volName,
+				Value: string(byteRecord)})
+
+			log.Infof("Updating port and file service name for %s", volName)
+			err = e.WriteMetaData(writeEntries)
+			if err != nil {
+				// Failed to write metadata.
+				// Set volume state to error as we cannot
+				// proceed
+				log.Warningf("Failed to write metadata for volume %s",
+					volName)
+				e.CompareAndPut(kvstore.VolPrefixState+volName,
+					string(interimState),
+					string(kvstore.VolStateError))
+				return
+			}
+
+			// server start/stop succeed. Set desired state on volume.
+			stateUpdateResult := e.CompareAndPut(kvstore.VolPrefixState+volName,
 				string(interimState),
-				string(toState)) == false {
-				// Failed to set state to desired state
+				string(toState))
+			if stateUpdateResult == false {
+				// Could not set desired state on volume
 				// set to state Error
 				e.CompareAndPut(kvstore.VolPrefixState+volName,
 					string(interimState),
@@ -787,7 +875,9 @@ func (e *EtcdKVS) BlockingWaitAndGet(key string, value string, newKey string) (s
 
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(2 * requestTimeout)
+	// This call is used to block and wait for long
+	// running functions. Larger timeout is justified.
+	timer := time.NewTimer(8 * requestTimeout)
 	defer timer.Stop()
 
 	for {

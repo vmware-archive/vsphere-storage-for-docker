@@ -44,23 +44,33 @@ import (
 )
 
 /* Constants
-   version:              Version of the shared plugin driver
-   internalVolumePrefix: Prefix for the names of internal volumes. These
-                         volumes are the actual vmdk backing the shared volumes.
-   sambaImageName:       Name of the docker hub image we pull as samba server
-   sambaUsername:        Default username for all accessing Samba servers
-   sambaPassword:        Default password for accessing all Samba servers
+   version:                 Version of the shared plugin driver
+   internalVolumePrefix:    Prefix for names of internal volumes
+                            which serve as backend stores for shared
+                            volumes
+   fsType:                  Type of file system that will be presented
+                            in the shared volume
 */
 const (
 	version              = "vSphere Shared Volume Driver v0.2"
 	internalVolumePrefix = "InternalVol"
-	// TODO Replace with our own samba later
-	sambaImageName = "dperson/samba"
-	sambaUsername  = "root"
-	sambaPassword  = "badpass"
-	fileShareName  = "public"
-	fsType         = "cifs"
+	fsType               = "cifs"
 )
+
+/* VolumeDriver - vsphere shared plugin volume driver struct
+   dockerOps:               Docker related methods and information
+   internalVolumeDriver:    Name of the plugin used by shared volume
+                            plugin to create internal volumes
+   kvStore:                 Key-value store related methods and information
+*/
+
+// VolumeDriver - Contains vars specific to this driver
+type VolumeDriver struct {
+	utils.PluginDriver
+	dockerOps            *dockerops.DockerOps
+	internalVolumeDriver string
+	kvStore              kvstore.KvStore
+}
 
 /* VolumeMetadata structure contains all the
    metadata about a volume that will be put in etcd
@@ -85,21 +95,6 @@ type VolumeMetadata struct {
 	Username       string            `json:"username,omitempty"`
 	Password       string            `json:"password,omitempty"`
 	ClientList     []string          `json:"clientList,omitempty"`
-}
-
-/* VolumeDriver - vsphere shared plugin volume driver struct
-   dockerOps:               Docker related methods and information
-   internalVolumeDriver:    Name of the plugin used by shared volume
-                            plugin to create internal volumes
-   kvStore:                 Key-value store related methods and information
-*/
-
-// VolumeDriver - Contains vars specific to this driver
-type VolumeDriver struct {
-	utils.PluginDriver
-	dockerOps            *dockerops.DockerOps
-	internalVolumeDriver string
-	kvStore              kvstore.KvStore
 }
 
 // NewVolumeDriver creates driver instance
@@ -127,6 +122,12 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 		log.Errorf("Failed to create new DockerOps")
 		return nil
 	}
+
+	// Load the file server image
+	if d.dockerOps.LoadFileServerImage() == false {
+		return nil
+	}
+	log.Infof("Loaded file server image")
 
 	// initialize built-in etcd cluster
 	etcdKVS := etcdops.NewKvStore(d.dockerOps)
@@ -234,9 +235,9 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	volRecord := VolumeMetadata{
 		Status:         kvstore.VolStateCreating,
 		GlobalRefcount: 0,
-		Port:           1445,
-		Username:       sambaUsername,
-		Password:       sambaPassword,
+		Port:           0,
+		Username:       dockerops.SambaUsername,
+		Password:       dockerops.SambaPassword,
 	}
 
 	// Append global refcount and status to kv pairs that will be written
@@ -266,7 +267,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	err = d.dockerOps.VolumeCreate(d.internalVolumeDriver, internalVolname, r.Options)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to create internal volume %s. Reason: %v", r.Name, err)
-		msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
+		msg += fmt.Sprintf(". Check the status of the volumes belonging to driver \"%s\".", d.internalVolumeDriver)
 		log.Warningf(msg)
 
 		// If failed, attempt to delete the metadata for this volume
@@ -370,8 +371,8 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	internalVolname := internalVolumePrefix + r.Name
 	err := d.dockerOps.VolumeRemove(internalVolname)
 	if err != nil {
-		msg = fmt.Sprintf("Failed to remove internal volume %s. Reason: %v", r.Name, err)
-		msg += fmt.Sprintf(" Check the status of the volumes belonging to driver %s", d.internalVolumeDriver)
+		msg = fmt.Sprintf("Failed to remove internal volume %s. Reason: %v", internalVolname, err)
+		msg += fmt.Sprintf(". Check the status of the volumes belonging to driver \"%s\". ", d.internalVolumeDriver)
 		log.Warningf(msg)
 		return volume.Response{Err: msg}
 	}
@@ -552,7 +553,7 @@ func (d *VolumeDriver) mountSharedVolume(volName string, mountpoint string, volR
 			}).Error("Failed to get IP address from docker swarm ")
 		return err
 	}
-	source := "//" + addr + "/" + fileShareName
+	source := "//" + addr + "/" + dockerops.FileShareName
 	mountArgs = append(mountArgs, source)
 	mountArgs = append(mountArgs, mountpoint)
 

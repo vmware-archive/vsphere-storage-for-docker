@@ -17,5 +17,9 @@ mv etcd-v3.2.3-linux-amd64/etcd* /bin/ && \
 apk del --purge tar openssl && \
 rm -Rf etcd-v3.2.3-linux-amd64* /var/cache/apk/*
 RUN mkdir -p /mnt/vshared
+RUN mkdir -p /usr/lib/vmware
+RUN apk add --update ca-certificates openssl tar && \
+wget https://storage.googleapis.com/kubernetes-anywhere-for-vsphere-cna-storage/samba.tar && \
+cp samba.tar /usr/lib/vmware
 COPY vsphere-shared /usr/bin
 CMD ["/usr/bin/vsphere-shared"]
