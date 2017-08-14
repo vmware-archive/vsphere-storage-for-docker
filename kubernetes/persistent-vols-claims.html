@@ -4,8 +4,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
-<meta name="keywords" content=" news, blog, updates, release notes, announcements">
-<title>News | Kubernetes vSphere Cloud Provider</title>
+<meta name="keywords" content=" ">
+<title>Persistent Volumes & Persistent Volumes Claims | Kubernetes vSphere Cloud Provider</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -121,7 +121,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="News">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Persistent Volumes & Persistent Volumes Claims">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -192,13 +192,13 @@
                     
                     
                     
-                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    <li><a href="kubernetes-volumes.html">Volumes</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    <li class="active"><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
                     
                     
                     
@@ -222,14 +222,14 @@
             
             
             
-            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -244,14 +244,14 @@
             
             
             
-            <li><a href="prereq.html">Prerequistes</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
@@ -340,7 +340,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">News</h1>
+   <h1 class="post-title-main">Persistent Volumes & Persistent Volumes Claims</h1>
 </div>
 
 
@@ -350,79 +350,181 @@
    
 
     
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
 
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs/news/news.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//persistent-vols-claims.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <div class="home">
+  <p>In case of Kubernetes Volumes we know that once the Pod is deleted the specification of the volume in the Pod is also lost. Even though VMDK file persists but from Kubernetes perspective the volume is deleted.</p>
 
-    <div class="post-list">
-        
+<p>Persistent Volumes API resource solves this problem where PVs have lifecycle independent of the Pods and not created when Pod is run. PVs are unit of storage which we provision in advance, they are Kubernetes objects backed by some storage, vSphere in this case. PVs are created, deleted using kubectl commands.</p>
 
+<p>In order to use these PVs user needs to create PersistentVolumeClaims which is nothing but a request for PVs. A claim must specify the access mode and storage capacity, once a claim is created PV is automatically bound to this claim. Kubernetes will bind a PV to PVC based on access mode and storage capacity but claim can also mention volume name, selectors and volume class for a better match.
+This design of PV-PVCs not only abstract storage provisioning and consumption but also ensures security through access control.</p>
 
-    <h2><a class="post-link" href="samplepost.html">Sample post</a></h2>
-        <span class="post-meta">Feb 26, 2016 /
-            
+<p><strong>Note:</strong></p>
 
-                <a href="tag_news.html">news</a>, 
+<p>All the example yamls can be found <a href="https://github.com/Kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
 
-                
+<p>Here is an example of how to use PV and PVC to add persistent storage to your Pods.</p>
 
-                <a href="tag_getting_started.html">getting_started</a>
+<p><strong>Create VMDK</strong></p>
 
-                </span>
-        <p> Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries... </p>
+<p>First ssh into ESX and then use following command to create vmdk,</p>
 
-        
+<div class="highlighter-rouge"><pre class="highlight"><code>vmkfstools -c 2G /vmfs/volumes/datastore1/volumes/myDisk.vmdk
+</code></pre>
+</div>
 
+<p><strong>Create Persistent Volume</strong></p>
 
-    <h2><a class="post-link" href="myupdate.html">Welcome to Jekyll!</a></h2>
-        <span class="post-meta">Feb 24, 2016 /
-            
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pv.yaml
 
-                <a href="tag_news.html">news</a>
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0001
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  vsphereVolume:
+    volumePath: "[datastore1] volumes/myDisk"
+    fsType: ext4
+</code></pre>
+</div>
 
-                </span>
-        <p> Theme updates:
+<p>In the above example datastore1 is located in the root folder. If datastore is member of Datastore Cluster or located in sub folder, the folder path needs to be provided in the VolumePath as below.</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>vsphereVolume:
+    VolumePath:	"[DatastoreCluster/datastore1] volumes/myDisk"
+</code></pre>
+</div>
 
-  Permalinks
-  Kramdown
-  URL specified in config file
-  removed PDF output
-  removed some of the alternative layouts
-  added blog feature
-  sidebars configurable per page
+<p><strong>Create the persistent volume</strong></p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pv.yaml
+</code></pre>
+</div>
 
- </p>
+<p><strong>Verify persistent volume is created</strong></p>
 
-        
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pv pv0001
+Name:		pv0001
+Labels:		&lt;none&gt;
+Status:		Available
+Claim:
+Reclaim Policy:	Retain
+Access Modes:	RWO
+Capacity:	2Gi
+Message:
+Source:
+    Type:	vSphereVolume (a Persistent Disk resource in vSphere)
+    VolumePath:	[datastore1] volumes/myDisk
+    FSType:	ext4
+No events.
+</code></pre>
+</div>
 
+<p><strong>Create Persistent Volume Claim</strong></p>
 
-    <h2><a class="post-link" href="test-post-from-last-year.html">Test post from last year</a></h2>
-        <span class="post-meta">Apr 12, 2015 /
-            
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pvc.yaml
 
-                <a href="tag_news.html">news</a>
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc0001
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+</code></pre>
+</div>
 
-                </span>
-        <p> This is just a test post from the previous year.
+<p><strong>Create the persistent volume claim</strong></p>
 
- </p>
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvc.yaml
+</code></pre>
+</div>
 
-        
+<p><strong>Verify persistent volume claim is created</strong></p>
 
-        <p><a href="feed.xml"" class="btn btn-primary navbar-btn cursorNorm" role="button">RSS Subscribe</a></p>
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl describe pvc pvc0001
+Name:		pvc0001
+Namespace:	default
+Status:		Bound
+Volume:		pv0001
+Labels:		&lt;none&gt;
+Capacity:	2Gi
+Access Modes:	RWO
+No events.
+</code></pre>
+</div>
 
-<hr />
-        <p>See more posts from the <a href="news_archive.html">News Archive</a>. </p>
+<p><strong>Create Pod which uses Persistent Volume Claim</strong></p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>#vpshere-volume-pvcpod.yaml
 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvpod
+spec:
+  containers:
+  - name: test-container
+    image: gcr.io/google_containers/test-webserver
+    volumeMounts:
+    - name: test-volume
+      mountPath: /test-vmdk
+  volumes:
+  - name: test-volume
+    persistentVolumeClaim:
+      claimName: pvc0001
+</code></pre>
+</div>
+
+<p><strong>Create the pod</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pvcpod.yaml
+</code></pre>
+</div>
+
+<p><strong>Verify pod is created</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl get pod pvpod
+NAME      READY     STATUS    RESTARTS   AGE
+pvpod       1/1     Running   0          48m
+</code></pre>
 </div>
 
   
@@ -441,7 +543,7 @@
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

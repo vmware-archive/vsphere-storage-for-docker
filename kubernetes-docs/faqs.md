@@ -7,9 +7,12 @@ vSphere Cloud Provider is still in beta.
  
 ## What is the biggest Kubernetes cluster it has been tested for ?
 It has been tested on eight node cluster so far.
- 
+
+## Where can I find required Roles and Privileges for the vCenter User for vSphere Cloud Provider ?
+ Please refer to this [section](/docker-volume-vsphere/kubernetes/existing.html#create-roles-add-privileges-to-roles-and-assign-them-to-the-vsphere-cloud-provider-user-and-vsphere-entities).
+
 ## Where can I find the list of vSAN, VMFS and NFS features supported by vSphere Cloud Provider ?
-Please refer to this [section](/spbm.html). Please report in case you find any features are missing.
+Please refer to this [section](/docker-volume-vsphere/kubernetes/policy-based-mgmt.html). Please report in case you find any features are missing.
  
 ## How is running containers on vSphere Integrated Containers different from running them on Kubernetes on vSphere ? 
 VIC is infrastructure platform to run containerized workloads alongside traditional applications whereas vSphere Cloud provider provides an interface to run and take advantage of vSphere storage for workloads running on Kubernetes

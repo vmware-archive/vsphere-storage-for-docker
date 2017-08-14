@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title> | Kubernetes vSphere Cloud Provider</title>
+<title>Kubernetes Anywhere | Kubernetes vSphere Cloud Provider</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -121,7 +121,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Kubernetes Anywhere">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -192,13 +192,13 @@
                     
                     
                     
-                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    <li><a href="kubernetes-volumes.html">Volumes</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
                     
                     
                     
@@ -222,14 +222,14 @@
             
             
             
-            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -244,14 +244,14 @@
             
             
             
-            <li><a href="prereq.html">Prerequistes</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            <li class="active"><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
@@ -340,7 +340,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main"></h1>
+   <h1 class="post-title-main">Kubernetes Anywhere</h1>
 </div>
 
 
@@ -377,21 +377,20 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//intro.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//kubernetes-anywhere.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <p>Introduction
-Containers have changed the way applications are packaged and deployed. Not only containers are efficient from infrastructure utilization point of view, they also provide strong isolation between process on same host. They are lightweight and once packaged can run anywhere. Kubernetes is the most commonly used container orchestration framework and this user guide outlines how vSphere is compatible with Kubernetes</p>
+  <p>There are several deployment mechanisms available to deploy Kubernetes. Kubernetes-Anywhere is one of them. Please refer this <a href="https://github.com/Kubernetes/Kubernetes-anywhere">link</a></p>
 
-<p>Persistent Storage in Container World
-Although it is relatively easy to run stateless Microservices using container technology, stateful applications require slightly different treatment. There are multiple factors which need to be considered when you think about handling persistent data using containers such as:
-Containers are ephemeral by nature, so the data that needs to be persisted has to survive through the restart/re-scheduling of a container.
-When containers are re-scheduled, they can die on one host and might get scheduled on a different host. In such a case the storage should also be shifted and made available on new host for the container to start gracefully.
-The application should not have to worry about the volume/data and underlying infrastructure should handle the complexity of unmounting and mounting etc.
-Certain applications have a strong sense of identity (For example. Kafka, Elastic etc.) and the disk used by a container with certain identity is tied to it. It is important that if a container with a certain ID gets re-scheduled for some reason then the disk only associated with that ID is re-attached on a new host.</p>
+<p>We have simplified deployment with creating pre-build Kubernetes-Anywhere <a href="https://hub.docker.com/r/cnastorage/kubernetes-anywhere/">docker image</a></p>
 
-<p>Kubernetes provides various API resources like PersistentVolume, PersistenVolumesClaim and StorageClass to provision, categorize and consume the storage. These abstractions ensure that the storage details are separated from allocation and usage of storage. Please refer Kubernetes  documentation for details.</p>
+<p>User can just pull this image and run a container with this image to get into deployment wizard. User can fill in the questionnaires, Kubernetes-Anywhere will create a terraform deployment script to install Kubernetes cluster on vSphere.
+After the cluster is deployed, cluster config file is available at /opt/Kubernetes-anywhere/phase1/vsphere/.tmp/kubeconfig.json</p>
+
+<p>Make sure to copy this file, before stopping the deployment container. This file is used to access Kubernetes cluster using kubectl.</p>
+
+<p>Please refer installation steps mentioned in the getting started guide for deploying Kubernetes using <a href="https://github.com/Kubernetes/Kubernetes-anywhere/blob/master/phase1/vsphere/README.md#prerequisites">Kubernete-Anywhere</a></p>
 
 
   
@@ -410,7 +409,7 @@ Certain applications have a strong sense of identity (For example. Kafka, Elasti
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

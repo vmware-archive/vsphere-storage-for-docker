@@ -1,5 +1,5 @@
 ---
-title: Running  MongoDB on vSphere Cloud Provider 
+title: Deploying Sharded MongoDB Cluster
 --- 
 				
 This section describes the steps to create persistent storage for containers to be consumed by MongoDB services on vSAN. After these steps are completed, Cloud Provider will create the virtual disks (volumes in Kubernetes) and mount them to the Kubernetes nodes automatically. The virtual disks are created with the vSAN default policy. 
@@ -67,22 +67,47 @@ spec:
 
 Storage was created and provisioned from vSAN for containers for the MongoDB service by using dynamic provisioning in YAML files. Storage volumes were claimed as persistent ones to preserve the data on the volumes. All mongo servers are combined into one Kubernetes pod per node.
 
-In Kubernetes, as each pod gets one IP address assigned, each service within a pod must have a distinct port. As the mongos are the services by which you access your shard from other applications, the standard MongoDB port 27017 is assigned to them. 				
-	
-		 	 	 		
-			
-			
-						 					
-				
-			
-		
-				
-			
-		
-			
-			
-		
- 
-					 					
-				
-	
+In Kubernetes, as each pod gets one IP address assigned, each service within a pod must have a distinct port. As the mongos are the services by which you access your shard from other applications, the standard MongoDB port 27017 is assigned to them.
+
+
+Please refer this [Reference Architecture](https://storagehub.vmware.com/#!/vmware-vsan/vmware-vsan-tm-as-persistent-storage-for-mongodb-in-containers) for detailed understanding of how persistent storage for containers is consumed by MongoDB services on vSAN.
+
+
+Download the yaml files for deploying MondoDB on Kubernetes with vSphere Cloud Provider from [here](https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook/guestbook-storageclass)
+
+To understand the configuration mentioned in these YAMLs please refer this [link](https://storagehub.vmware.com/#!/vmware-vsan/vmware-vsan-tm-as-persistent-storage-for-mongodb-in-containers/mongodb-deployment)  
+
+Execute following commands to deploy Sharded MongoDB Cluster on Kubernetes with vSphere Cloud Provider.
+
+**Create StaogeClass**
+
+```
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/storageclass.yaml
+```
+
+**Create Storage Volumes for Shared MondoDB Cluster**
+
+```
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node01.yaml
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node02.yaml
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node03.yaml
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node03.yaml
+```
+
+**Create Mongo DB pods**
+
+```
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node01-deployment.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node02-deployment.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node03-deployment.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node03-deployment.yaml
+```	
+
+**Create Services**
+
+```
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node01-service.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node02-service.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node03-service.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node04-service.yaml
+```

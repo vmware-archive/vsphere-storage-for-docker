@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Running  MongoDB on vSphere Cloud Provider | Kubernetes vSphere Cloud Provider</title>
+<title>Deploying Sharded MongoDB Cluster | Kubernetes vSphere Cloud Provider</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -121,7 +121,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Running  MongoDB on vSphere Cloud Provider">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Deploying Sharded MongoDB Cluster">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -192,13 +192,13 @@
                     
                     
                     
-                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    <li><a href="kubernetes-volumes.html">Volumes</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
                     
                     
                     
@@ -222,14 +222,14 @@
             
             
             
-            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -244,14 +244,14 @@
             
             
             
-            <li><a href="prereq.html">Prerequistes</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
@@ -340,7 +340,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Running  MongoDB on vSphere Cloud Provider</h1>
+   <h1 class="post-title-main">Deploying Sharded MongoDB Cluster</h1>
 </div>
 
 
@@ -377,7 +377,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//mongodb.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//mongodb.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
@@ -445,6 +445,46 @@ storage: 128Gi
 
 <p>In Kubernetes, as each pod gets one IP address assigned, each service within a pod must have a distinct port. As the mongos are the services by which you access your shard from other applications, the standard MongoDB port 27017 is assigned to them.</p>
 
+<p>Please refer this <a href="https://storagehub.vmware.com/#!/vmware-vsan/vmware-vsan-tm-as-persistent-storage-for-mongodb-in-containers">Reference Architecture</a> for detailed understanding of how persistent storage for containers is consumed by MongoDB services on vSAN.</p>
+
+<p>Download the yaml files for deploying MondoDB on Kubernetes with vSphere Cloud Provider from <a href="https://github.com/vmware/kubernetes/tree/kube-examples/kube-examples/guestbook/guestbook-storageclass">here</a></p>
+
+<p>To understand the configuration mentioned in these YAMLs please refer this <a href="https://storagehub.vmware.com/#!/vmware-vsan/vmware-vsan-tm-as-persistent-storage-for-mongodb-in-containers/mongodb-deployment">link</a></p>
+
+<p>Execute following commands to deploy Sharded MongoDB Cluster on Kubernetes with vSphere Cloud Provider.</p>
+
+<p><strong>Create StaogeClass</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/storageclass.yaml
+</code></pre>
+</div>
+
+<p><strong>Create Storage Volumes for Shared MondoDB Cluster</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node01.yaml
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node02.yaml
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node03.yaml
+kubectl create -f https://github.com/vmware/kubernetes/blob/kube-examples/kube-examples/mongodb-shards/storage-volumes-node03.yaml
+</code></pre>
+</div>
+
+<p><strong>Create Mongo DB pods</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node01-deployment.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node02-deployment.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node03-deployment.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node03-deployment.yaml
+</code></pre>
+</div>
+
+<p><strong>Create Services</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node01-service.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node02-service.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node03-service.yaml
+kubectl create -f https://raw.githubusercontent.com/vmware/kubernetes/kube-examples/kube-examples/mongodb-shards/node04-service.yaml
+</code></pre>
+</div>
 
   
 
@@ -462,7 +502,7 @@ storage: 128Gi
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

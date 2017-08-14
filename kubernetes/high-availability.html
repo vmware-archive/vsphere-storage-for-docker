@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title> | Kubernetes vSphere Cloud Provider</title>
+<title>High Availability of Kubernetes Cluster | Kubernetes vSphere Cloud Provider</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -121,7 +121,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="High Availability of Kubernetes Cluster">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -192,13 +192,13 @@
                     
                     
                     
-                    <li><a href="k8s-vols.html">Volumes</a></li>
+                    <li><a href="kubernetes-volumes.html">Volumes</a></li>
                     
                     
                     
                     
                     
-                    <li><a href="pv-pvc.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
                     
                     
                     
@@ -222,14 +222,14 @@
             
             
             
-            <li><a href="spbm.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="ha.html">High Availability of Kubernetes Cluster</a></li>
+            <li class="active"><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -244,14 +244,14 @@
             
             
             
-            <li><a href="prereq.html">Prerequistes</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="k8sanywhere.html">Kubernetes Anywhere</a></li>
+            <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
@@ -340,7 +340,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main"></h1>
+   <h1 class="post-title-main">High Availability of Kubernetes Cluster</h1>
 </div>
 
 
@@ -377,15 +377,57 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//pages/product1/datastores.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//high-availability.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <p>** Consuming multiple data stores **</p>
+  <p>Kubernetes ensures that all the the Pods are restarted in case the node goes down. The persistent storage API objects ensure that same PVs are mounted back to the new Pods on restart or if they are recreated.</p>
 
-<p>The service by default creates a volume in the datastore that hosts the VM. Optionally Docker volumes can be provisioned on a specific datastore by directly addressing the datastore when specifying the name in the format &lt;volume name&gt;@&lt;datastore name&gt;</p>
+<p>But what happens if the node/host is the VM and the physical host fails? vSphere HA  leverages multiple ESXi hosts configured as a cluster to provide rapid recovery from outages and cost-effective high availability for applications running in virtual machines. vSphere HA provides a base level of protection for your virtual machines by restarting virtual machines in the event of a host failure</p>
 
-<script type="text/javascript" src="https://asciinema.org/a/80428.js" id="asciicast-80428" async=""></script>
+<p>Applications running on Kubernetes on vSphere can take advantage of vSphere Availability ensuring resilient and highly available applications.</p>
+
+<p><strong>Node VM Failure:</strong>
+Node VM failure will cause Kubernetes to recreate a new pod to run the containers. vSphere Cloud Provider will mount the disk to a live node and unmount disk from the dead node automatically. The validation description is as follows:</p>
+
+<ul>
+  <li>Shutdown one Kubernetes node VM. This will cause Kubernetes to remove the node VM from the Kubernetes cluster.</li>
+  <li>
+    <p>The Kubernetes cluster will recreate the pod on an idle node in the original cluster after the simulated node failure. Kubernetes vSphere Cloud Provider will:</p>
+
+    <ul>
+      <li>Mount the disks from the shutdown node VM to the idle node.</li>
+      <li>Unmount the disks from the powered off node VM.</li>
+    </ul>
+  </li>
+  <li>Fix the issue of the node VM (if any) and power it on. Kubernetes will add the node back to the original cluster and it will be available for new pod creation.</li>
+</ul>
+
+<p><strong>Physical Host Failure:</strong>
+Powering off one of the ESXi hosts will cause the vSphere Availability to restart the node on one of the running ESXi servers. The node in Kubernetes cluster will temporarily change to UNKNOWN. After less than two minutes, the node will be available in the cluster. No pod recreation is required.</p>
+
+<table class="table table-striped table-hover ">
+  <thead>
+    <tr>
+      <th>Failure Components</th>
+      <th>Recovery Time</th>
+      <th>Result and Behavior</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Kubernetes node shutdown or corruption</td>
+      <td> &lt; 1 min</td>
+      <td>The pod is recreated, and Kubernetes vSphere Cloud Provider automatically unmounts/mounts the disk to standby node. The standby node changes to working node</td>
+    </tr>
+    <tr>
+      <td>ESXi host failure or powered off</td>
+      <td> &lt; 2 mins</td>
+      <td>vSphere Availability restarted the Kubernetes node on another ESXi host; no node recreation required.</td>
+    </tr>
+</tbody>
+</table>
+<p>Please note the recovery time is dependent upon the hardware. For additional details please refer this <a href="https://blogs.vmware.com/virtualblocks/2017/06/13/recipe-vmware-vsan-persistent-storage-mongodb-containers/">blog.</a></p>
 
 
   
@@ -404,7 +446,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

@@ -3,9 +3,9 @@
     <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="This is just a sample topic...">
-<meta name="keywords" content=" sample">
-<title>Sample 5 Topic | Kubernetes vSphere Cloud Provider</title>
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Volumes | Kubernetes vSphere Cloud Provider</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -121,7 +121,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Sample 5 Topic">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Volumes">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -157,19 +157,17 @@
 
 
 <ul id="mysidebar" class="nav">
-    <li class="sidebarTitle">Product2 1.0</li>
+    <li class="sidebarTitle">Menu </li>
     
     
-    
-        
     
     <li>
-        <a href="#">Introduction</a>
+        <a href="#">Get Started</a>
         <ul>
             
             
             
-            <li><a href="p2_landing_page.html">Overview</a></li>
+            <li><a href="index.html">Introduction</a></li>
             
             
             
@@ -179,40 +177,59 @@
         
     
     <li>
-        <a href="#">Simple Workflow</a>
+        <a href="#">vSphere Cloud Provider</a>
         <ul>
             
             
             
-            <li><a href="p2_sample1.html">Sample 1</a></li>
+            <li><a href="overview.html">Overview</a></li>
+            
+            
+            
+            <li class="subfolders">
+                <a href="#">Kubernetes Storage Support</a>
+                <ul>
+                    
+                    
+                    
+                    <li class="active"><a href="kubernetes-volumes.html">Volumes</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
+                    
+                    
+                    
+                    
+                    
+                    <li><a href="statefulsets.html">StatefulSets</a></li>
+                    
+                    
+                    
+                </ul>
+            </li>
             
             
             
             
             
             
-            <li><a href="p2_sample2.html">Sample 2</a></li>
+            <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample3.html">Sample 3</a></li>
-            
-            
-            
-            
-            
-            
-            <li><a href="p2_sample4.html">Sample 4</a></li>
-            
-            
-            
-            
-            
-            
-            <li class="active"><a href="p2_sample5.html">Sample 5</a></li>
+            <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
             
             
             
@@ -222,68 +239,84 @@
         
     
     <li>
-        <a href="#">Complex Workflow</a>
+        <a href="#">Deployment</a>
         <ul>
             
             
             
-            <li><a href="p2_sample6.html">Sample 6</a></li>
+            <li><a href="prerequisites.html">Prerequistes</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample7.html">Sample 7</a></li>
+            <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample8.html">Sample 8</a></li>
+            <li><a href="existing.html">Configurations on existing Kubernetes Cluster</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample9.html">Sample 9</a></li>
+            <li><a href="bestpractices.html">Best Practices</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Applications & Examples</a>
+        <ul>
+            
+            
+            
+            <li><a href="guestbook.html">Running Stateful application - Guestbook app</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample10.html">Sample 10</a></li>
+            <li><a href="mongodb.html">Running MongoDB on vSphere</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample11.html">Sample 11</a></li>
+            <li><a href="minio.html">Deploying S3 Stateful containers - Minio</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Miscellaneous</a>
+        <ul>
+            
+            
+            
+            <li><a href="faqs.html">FAQs</a></li>
             
             
             
             
             
             
-            <li><a href="p2_sample12.html">Sample 12</a></li>
-            
-            
-            
-            
-            
-            
-            <li><a href="p2_sample13.html">Sample 13</a></li>
-            
-            
-            
-            
-            
-            
-            <li><a href="p2_sample14.html">Sample 14</a></li>
+            <li><a href="known-issues.html">Known Issues</a></li>
             
             
             
@@ -307,39 +340,13 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Sample 5 Topic</h1>
+   <h1 class="post-title-main">Volumes</h1>
 </div>
-
-
-
-<script>
-    $(document).ready ( function(){
-        $('.box5').addClass('active');
-    });
-</script>
-
-
-<div id="userMap">
-<div class="content"><a href="p2_sample1.html"><div class="box box1">Connect to ADB</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample2.html"><div class="box box2">Download and Build the Starter Kit</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample3.html"><div class="box box3">Take a Tour</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample4.html"><div class="box box4">Load Your Widgets</div></a></div>
-<div class="arrow">→</div>
-<div class="content"><a href="p2_sample5.html"><div class="box box5">Query for Something</div></a></div>
-<div class="clearfix"></div>
-
-</div>
-
 
 
 
 <div class="post-content">
 
-   
-    <div class="summary">This is just a sample topic...</div>
    
 
     
@@ -370,23 +377,61 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs/product2/p2_sample5.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//kubernetes-volumes.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <h2 id="sample-content">Sample Content</h2>
+  <p>A Pod can specify vsphereVolume as Kubernetes Volumes and then vSphere VMDK is mounted as Volume into your Pod. The contents of a volume are preserved when it is unmounted. It supports both VMFS and VSAN datastores.</p>
 
-<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+<p>All the example yamls can be found <a href="https://github.com/kubernetes/kubernetes/tree/master/examples/volumes/vsphere">here</a> unless otherwise specified. Please download these examples.</p>
 
-<p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using ‘Content here, content here’, making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for ‘lorem ipsum’ will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
+<p>Here is an example of how to create a VMDK file and how a Pod can use it.</p>
 
-<h2 id="more-sample-content">More sample content</h2>
+<p><strong>Create VMDK</strong></p>
 
-<p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of “de Finibus Bonorum et Malorum” (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, “Lorem ipsum dolor sit amet..”, comes from a line in section 1.10.32.</p>
+<p>First ssh into ESX and then use following command to create vmdk on datastore1</p>
 
-<p>The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from “de Finibus Bonorum et Malorum” by Cicero are also reproduced in their exact original form, accompanied by English versions from the 1914 translation by H. Rackham.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>vmkfstools -c 2G /vmfs/volumes/datastore1/volumes/myDisk.vmdk
+</code></pre>
+</div>
 
-<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don’t look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn’t anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet. It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free from repetition, injected humour, or non-characteristic words etc.</p>
+<p><strong>Create Pod which uses vSphere Volume ‘myDisk.vmdk’</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pod.yaml
+
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: test-vmdk
+  spec:
+    containers:
+    - image: gcr.io/google_containers/test-webserver
+      name: test-container
+      volumeMounts:
+      - mountPath: /test-vmdk
+        name: test-volume
+    volumes:
+    - name: test-volume
+      # This VMDK volume must already exist.
+      vsphereVolume:
+        volumePath: "[datastore1] volumes/myDisk"
+        fsType: ext4
+</code></pre>
+</div>
+
+<p><strong>Create the pod</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl create -f vsphere-volume-pod.yaml
+</code></pre>
+</div>
+
+<p><strong>Verify that pod is running</strong></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ kubectl get pods test-vmdk
+NAME      READY     STATUS    RESTARTS   AGE
+test-vmdk   1/1     Running   0          48m
+</code></pre>
+</div>
 
 
   
@@ -405,7 +450,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Jun 30, 2017 <br />
+ Site last generated: Aug 11, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
