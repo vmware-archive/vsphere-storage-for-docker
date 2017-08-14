@@ -157,11 +157,16 @@ logging config format for content details.
 
 **Docker**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
 
+# Dependencies
+
+The plugin uses VMCI (Virtual Machine Communication Interface) and vSockets to contact the service on ESX. The associated Linux kernel drivers are installed via the VMware Tools and its open version, namely [open-vm-tools](https://github.com/vmware/open-vm-tools), packages. Either one of these packages must hence be installed in the guest OS. It's recommended to install the most uptodate version of either of these packages as available.
+
 # Known Issues
 
 -  Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) [#1191](https://github.com/vmware/docker-volume-vsphere/issues/1191). It's an ESX issue and will be available in the next vSphere release.
 -  Full volume name with format like "volume@datastore" cannot be specified in the compose file for stack deployment. [#1315](https://github.com/vmware/docker-volume-vsphere/issues/1315). It is a docker compose issue and a workaround has been provided in the issue.
 -  Volume creation using VFAT filesystem is not working currently. [#1327](https://github.com/vmware/docker-volume-vsphere/issues/1327)
+-  Plugin fails to create volumes after installation on VM running boot2docker Linux. This is because open-vm-tools available for boot2docker doesn't install the vSockets driver and hence the plugin is unable to contact the ESX service. [#1744](https://github.com/vmware/docker-volume-vsphere/issues/1744)
 
 ## Contact us
 
