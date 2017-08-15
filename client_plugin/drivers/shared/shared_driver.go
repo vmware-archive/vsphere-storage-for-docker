@@ -124,10 +124,8 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	}
 
 	// Load the file server image
-	if d.dockerOps.LoadFileServerImage() == false {
-		return nil
-	}
-	log.Infof("Loaded file server image")
+	go d.dockerOps.LoadFileServerImage()
+	log.Infof("Started loading file server image")
 
 	// initialize built-in etcd cluster
 	etcdKVS := etcdops.NewKvStore(d.dockerOps)

@@ -354,11 +354,11 @@ func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
 
 // loadFileServerImage - Load the file server image present
 // in the plugin to Docker images
-func (d *DockerOps) LoadFileServerImage() bool {
+func (d *DockerOps) LoadFileServerImage() {
 	file, err := os.Open(fileServerPath)
 	if err != nil {
 		log.Errorf("Failed to open file server tarball")
-		return false
+		return
 	}
 	// ImageLoad takes the tarball as an open file, and a bool
 	// value for silently loading the image
@@ -367,12 +367,12 @@ func (d *DockerOps) LoadFileServerImage() bool {
 		true)
 	if err != nil {
 		log.Errorf("Failed to load file server image: %v", err)
-		return false
+		return
 	}
 	err = resp.Body.Close()
 	if err != nil {
 		log.Errorf("Failed to close the file server tarball: %v", err)
-		return false
+		return
 	}
-	return true
+	return
 }
