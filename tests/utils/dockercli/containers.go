@@ -111,8 +111,10 @@ func ReadFromContainer(ip, containerName, volPath, fileName string) (string, err
 
 // GetVolumeStatus returns a property map for a volume
 func GetVolumeStatus(hostName, volumeName string) (map[string]string, error) {
-	formatStr1 := " --format '{{index .Status.access}} {{index .Status \"attach-as\"}} {{index .Status.capacity.allocated}} {{index .Status.capacity.size}} {{index .Status \"clone-from\"}}"
-	formatStr2 := " {{index .Status \"created by VM\"}} {{index .Status.datastore}} {{index .Status.diskformat}} {{index .Status.fstype}} {{index .Status.status}} {{index .Status \"attached to VM\"}}'"
+	const volmPropertyDelimiter = " // "
+
+	formatStr1 := " --format \"{{index .Status.access}} // {{index .Status \\\"attach-as\\\"}} // {{index .Status.capacity.allocated}} // {{index .Status.capacity.size}} // {{index .Status \\\"clone-from\\\"}}"
+	formatStr2 := " // {{index .Status \\\"created by VM\\\"}} // '{{index .Status.datastore}}' // {{index .Status.diskformat}} // {{index .Status.fstype}} // {{index .Status.status}} // {{index .Status \\\"attached to VM\\\"}} // \""
 
 	cmd := dockercli.InspectVolume + volumeName + formatStr1 + formatStr2
 	out, err := ssh.InvokeCommand(hostName, cmd)
@@ -122,7 +124,10 @@ func GetVolumeStatus(hostName, volumeName string) (map[string]string, error) {
 	}
 
 	status := make(map[string]string)
-	val := strings.Fields(out)
+	val := strings.Split(out, volmPropertyDelimiter)
+	for i := 0; i < len(val); i++ {
+		val[i] = strings.TrimRight(val[i], volmPropertyDelimiter)
+	}
 
 	for i := 0; i < len(dockercli.VolumeStatusFields); i++ {
 		status[dockercli.VolumeStatusFields[i]] = val[i]

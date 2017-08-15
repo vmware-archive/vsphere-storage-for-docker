@@ -74,11 +74,11 @@ func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
 	if err != nil {
 		return false
 	}
-
 	//TODO: add more detailed verification here, e.g. checking volume driver name
 
 	// check if each volume name is present in the output of docker volume ls
 	for _, name := range reqVolList {
+		name = strings.Replace(name, "'", "", -1)
 		name = strings.Replace(name, "\"", "", -1)
 		if strings.Contains(volumes, name) != true {
 			return false
@@ -93,7 +93,7 @@ func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
 func GetFullVolumeName(hostName string, volumeName string) string {
 	log.Printf("Fetching full name for volume [%s] from VM [%s]\n", volumeName, hostName)
 
-	cmd := dockercli.ListVolumes + "--filter name='" + volumeName + "' --format '{{.Name}}'"
+	cmd := dockercli.ListVolumes + "--filter name='" + volumeName + "' --format \"'{{.Name}}'\""
 	fullName, err := ssh.InvokeCommand(hostName, cmd)
 	if err != nil {
 		log.Printf("Error: %s\n", err)
@@ -182,6 +182,7 @@ func PollDetachedStatus(name, hostName, esxName string) bool {
 
 	//TODO: Need to implement generic polling logic for better reuse
 	const maxAttempt = 60
+	name = "'" + name + "'"
 	for attempt := 0; attempt < maxAttempt; attempt++ {
 		if VerifyDetachedStatus(name, hostName, esxName) {
 			return true

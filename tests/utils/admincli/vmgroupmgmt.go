@@ -211,11 +211,10 @@ func AddDatastoreToVmgroup(ip, name, datastore string) (string, error) {
 // IsDSAccessibleForVMgroup - Verifies if vmgroup has access rights to a datastore
 func IsDSAccessibleForVMgroup(ip, name, datastore string) bool {
 	log.Printf("Getting vmgroup's [%s] access rights to datastore %s ,  on esx [%s] \n", name, datastore, ip)
-	cmd := admincli.GetAccessForVMgroup + name + " 2>/dev/null | awk -v OFS='\t' '{print $1, $2}' | grep " + datastore
-	out, _ := ssh.InvokeCommand(ip, cmd)
-	accessRights := strings.Fields(out)
-	log.Printf("Access rights to datastore %s for vmgroup - %s are: %s . ", datastore, name, accessRights)
-	if len(accessRights) > 1 && accessRights[1] == "True" {
+	out, _ := ssh.InvokeCommand(ip, admincli.GetAccessForVMgroup+name+" 2>/dev/null | grep "+datastore)
+
+	if strings.Contains(out, "True") {
+		log.Printf("Access rights to datastore %s for vmgroup - %s is: True. ", datastore, name)
 		return true
 	}
 	return false
