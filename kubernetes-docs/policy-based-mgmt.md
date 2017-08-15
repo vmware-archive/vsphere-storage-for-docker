@@ -53,7 +53,7 @@ Vsphere Infrastructure(VI) Admins will have the ability to specify custom Virtua
 
 The official vSAN policy documentation describes in detail about each of the individual storage capabilities that are supported by vSAN. The user can specify these storage capabilities as part of storage class definition based on his application needs.
  
-For vSAN policies you can few additional parameters in StorageClass can be specified:
+For vSAN policies few additional parameters in StorageClass can be specified:
 
 * **cacheReservation:** Flash capacity reserved as read cache for the container object. Specified as a percentage of the logical size of the virtual machine disk (vmdk) object. Reserved flash capacity cannot be used by other objects. Unreserved flash is shared fairly among all objects. Use this option only to address specific performance issues.
 

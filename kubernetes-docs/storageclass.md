@@ -14,7 +14,8 @@ vSphere is one of the provisioners and it allows following parameters:
 * **datastore** is an optional field which can be VMFSDatastore or VSANDatastore. This allows user to select the datastore to provision PV from, if not specified the default datastore from vSphere config file is used.
 
 * **storagePolicyName** is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.
-vSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these vSAN storage capabilities configured with it. There are additional parameters which are covered in [Storage Policy Management section](/docker-volume-vsphere/kubernetes/policy-based-mgmt.html).
+
+* **VSAN Storage Capability Parameters** (cacheReservation, diskStripes, forceProvisioning, hostFailuresToTolerate, iopsLimit and objectSpaceReservation) are supported by vSphere provisioner for vSAN storage. The persistent volume created with these parameters will have these vSAN storage capabilities configured with it. For more detail about these parameters go to [Storage Policy Management section](/docker-volume-vsphere/kubernetes/policy-based-mgmt.html).
 
 **Note:**
 
