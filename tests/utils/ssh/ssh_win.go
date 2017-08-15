@@ -20,20 +20,31 @@ package ssh
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
 
-// sshTemplate is the ssh command template for Windows hosts.
-const sshTemplate = "/usr/bin/ssh -q -o StrictHostKeyChecking=no root@%s '%s'; exit"
+const (
+	// sshTemplate is the ssh command template for Windows hosts.
+	sshTemplate = "/usr/bin/ssh %s -q -o StrictHostKeyChecking=no root@%s '%s'; exit"
+
+	// defaultSshKeyOpt is a ssh option to provide key from the default location.
+	defaultSshKeyOpt = "-i /root/.ssh/id_rsa"
+)
 
 // InvokeCommand invokes the given command on the given host via ssh.
 func InvokeCommand(ip, cmdStr string) (string, error) {
+	sshKeyOpt := os.Getenv("SSH_KEY_OPT")
+	if len(sshKeyOpt) == 0 {
+		sshKeyOpt = defaultSshKeyOpt
+	}
+
 	// OpenSSH sessions terminate sporadically when a pty isn't allocated.
 	// The -t flag doesn't work with OpenSSH on Windows, so we wrap the ssh call
 	// within a bash session as a workaround, so that a pty is created.
 	cmd := exec.Command("/bin/bash")
-	cmd.Stdin = strings.NewReader(fmt.Sprintf(sshTemplate, ip, cmdStr))
+	cmd.Stdin = strings.NewReader(fmt.Sprintf(sshTemplate, sshKeyOpt, ip, cmdStr))
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out[:])), err
 }

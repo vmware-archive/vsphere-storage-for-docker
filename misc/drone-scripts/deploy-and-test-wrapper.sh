@@ -115,7 +115,7 @@ coverage)
         TARGET=" coverage"
         ;;
 winplugin)
-        TARGET=" build-windows-plugin deploy-windows-plugin"
+        TARGET=" build-windows-plugin deploy-windows-plugin test-e2e-runonce-windows"
         ;;
 esac
 
