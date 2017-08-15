@@ -124,7 +124,7 @@ func GetVolumeStatus(hostName, volumeName string) (map[string]string, error) {
 	}
 
 	status := make(map[string]string)
-	val := strings.SplitAfter(out, volmPropertyDelimiter)
+	val := strings.Split(out, volmPropertyDelimiter)
 	for i := 0; i < len(val); i++ {
 		val[i] = strings.TrimRight(val[i], volmPropertyDelimiter)
 	}

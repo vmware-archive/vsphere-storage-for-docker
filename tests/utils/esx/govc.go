@@ -90,10 +90,9 @@ func GetDatastoreList() []string {
 	// log.Printf("Finding Datastores available on ESX")
 	cmd := esx.DatastoreInfo + esxcliJSON + esx.DatastoreList
 	out, _ := ssh.InvokeCommandLocally(cmd)
-	val := strings.SplitAfter(out, "\n")
+	val := strings.Split(out, "\n")
 	for i := 0; i < len(val); i++ {
-		dsName := strings.TrimRight(val[i], "\n")
-		val[i] = "'" + dsName + "'"
+		val[i] = "'" + val[i] + "'"
 	}
 	return val
 }

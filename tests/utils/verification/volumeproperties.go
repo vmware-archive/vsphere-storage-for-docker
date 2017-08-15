@@ -145,6 +145,7 @@ func getVolumeStatusHost(name, hostName string) string {
 // vsphere shared driver
 func GetSharedVolumeStatusHost(name, hostName string) string {
 	cmd := dockercli.InspectVolume + " --format \"{{index .Status \\\"Volume Status\\\"}}\" " + name
+	log.Printf("GetSharedVolumeStatusHost: cmd[]", cmd)
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return out
 }
