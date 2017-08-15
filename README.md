@@ -100,6 +100,26 @@ $ docker volume rm MyVolume
 $ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
 ```
 
+## Upgrade Instructions
+
+User's data is not impacted during driver or plugin upgrade.
+vDVS managed plugin is taking care of the control path (management layer) and doesn't deal with data path. So during the upgrade process, only management related operations will be affected and data will be intact. Management operations like attach/detach/create/delete volume using vDVS driver may run into an error for the time being until the upgrade process is finished.
+
+Steps for safe upgrade:
+1. Uninstall VIB (vDVS driver)
+```esxcli software vib remove -n esx-vmdkops-service```
+2. Download and install the latest VIB from the vDVS release page
+```esxcli software vib install -v /tmp/<vib_name>.vib```
+3. Uninstall the managed plugin from the docker host
+```docker plugin rm -f <plugin name>```
+4. Install the latest release of vDVS managed plugin
+```docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest```
+
+We do not require user to stop containers to do plugin upgrade.
+If plugin upgrade was done while volume was still mounted to a container, user may not see the attached volume after upgrade. Docker restart will fix the issue and all volumes will start getting listed.[Issue #1753](https://github.com/vmware/docker-volume-vsphere/issues/1753)
+
+Similarly, no change in behavior of vmgroup operations is expected due to vDVS driver upgrade.
+
 ## Logging
 The relevant logging for debugging consists of the following:
 * Docker Logs
