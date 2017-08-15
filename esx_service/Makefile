@@ -40,6 +40,9 @@ PY_VMODL := $(filter-out %_test.py, $(wildcard vmodl/*.py))
 PY_CLI   := $(filter-out %_test.py, $(wildcard cli/[a-z]*.py))
 PY_UTILS := $(filter-out %_test.py, $(wildcard utils/*.py))
 
+# xml based esxcli extension file
+ESXCLI_XML = cli/vmdkops_admin.xml
+
 C_SRC  := vmci/vmci_server.c
 
 # Build both a 32-bit and a 64-bit library for vmci.
@@ -79,6 +82,7 @@ VMDKOPS_PY2     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/Python/2
 VMDKOPS_LIB     := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib
 VMDKOPS_LIB64   := $(VMDKOPS_PAYLOAD)$(ESX_LOC)/lib64
 VMDKOPS_INITD   := $(VMDKOPS_PAYLOAD)/etc/init.d
+VMDKOPS_CLI_XML := $(VMDKOPS_PAYLOAD)/usr/lib/vmware/esxcli/ext
 
 # build the docker-volume-plugin
 
@@ -97,6 +101,7 @@ TO_ESX_BIN := $(PY_SRC) $(PY_CLI)
 TO_ESX_PY  := $(PY_UTILS)
 TO_ESX_LIB := $(VMCI_SRV_LIBS)
 TO_ESX_INITD := $(INIT_SCRIPT)
+TO_ESXCLI_EXT := $(ESXCLI_XML)
 
 
 # SQLITE python libs. We need that on ESX before 6.0 U2
@@ -109,9 +114,9 @@ VMODL_PY := $(shell find ../esx_service/vmodl -name '*.py')
 $(VIB_BIN): $(TO_WDIR) $(TO_ESX_BIN) $(TO_ESX_PY) $(TO_ESX_LIB) $(TO_ESX_INITD)  $(VMODL_PY) $(PY_SQLITE) $(SO_SQLITE)
 	@echo Staging in $(PAYLOAD)
 ifeq ($(INCLUDE_UI), true)
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(UI_TO)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(VMDKOPS_CLI_XML) $(UI_TO)
 else
-	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD)
+	@mkdir -p $(VMDKOPS_BIN) $(VMDKOPS_PY) $(VMDKOPS_PY2) $(VMDKOPS_LIB) $(VMDKOPS_LIB64) $(VMDKOPS_INITD) $(VMDKOPS_CLI_XML)
 endif
 	@chmod -R u+w $(PAYLOAD)
 	cp $(TO_ESX_BIN) $(VMDKOPS_BIN)
@@ -124,6 +129,7 @@ endif
 	cp $(VMCI_SRV_LIB) $(VMDKOPS_LIB)/$(VMCI_SRV_LIB_NAME)
 	cp $(VMCI_SRV_LIB64) $(VMDKOPS_LIB64)/$(VMCI_SRV_LIB_NAME)
 	cp $(TO_ESX_INITD) $(VMDKOPS_INITD)
+	cp $(TO_ESXCLI_EXT) $(VMDKOPS_CLI_XML)
 	VMDKOPS_PAYLOAD=$(VMDKOPS_PAYLOAD) $(MAKE)  --directory=vmodl copy_to_payload
 	@chmod -R u+x $(VMDKOPS_BIN)
 	@sed "s/   <version>1.0.0-0.0.1<\/version>/   <version>$(PKG_VERSION)-$(RELEASE_VERSION)<\/version>/g" $(TO_WDIR) > $(WDIR)/$(DESCRIPTOR)

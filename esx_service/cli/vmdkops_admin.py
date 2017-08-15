@@ -30,6 +30,7 @@ sys.path.insert(0, vmdk_ops.PY_LOC)
 
 import volume_kv as kv
 import cli_table
+import cli_xml
 import vsan_policy
 import vmdk_utils
 import vsan_info
@@ -527,10 +528,29 @@ def commands():
         }
     }
 
+def printList(output_format, header, rows):
+    """
+    Prints the output generated from header and rows
+    in specified format
+    """
+    if output_format == "xml":
+        print(cli_xml.create(header, rows))
+    else:
+        print(cli_table.create(header, rows))
+
+def printMessage(output_format, message):
+    """
+    Prints the message in specified output format
+    """
+    if output_format == "xml":
+        print(cli_xml.createMessage(message))
+    else:
+        print(message)
 
 def create_parser():
     """ Create a CLI parser via argparse based on the dictionary returned from commands() """
     parser = argparse.ArgumentParser(description='vSphere Docker Volume Service admin CLI')
+    parser.add_argument('--output-format', help='Specify output format. Supported format : xml. Default one is plaintext')
     add_subparser(parser, commands(), title='Manage VMDK-based Volumes for Docker')
     return parser
 
@@ -609,7 +629,7 @@ def ls(args):
     else:
         header = all_ls_headers()
         rows = generate_ls_rows(tenant_reg)
-    print(cli_table.create(header, rows))
+    printList(args.output_format, header, rows)
 
 
 def ls_dash_c(columns, tenant_reg):
@@ -778,7 +798,7 @@ def policy_create(args):
     if output:
         return err_out(output)
     else:
-        print('Successfully created policy: {0}'.format(args.name))
+        printMessage(args.output_format, 'Successfully created policy: {0}'.format(args.name))
 
 
 def policy_rm(args):
@@ -786,7 +806,7 @@ def policy_rm(args):
     if output:
         return err_out(output)
     else:
-        print('Successfully removed policy: {0}'.format(args.name))
+        printMessage(args.output_format, 'Successfully removed policy: {0}'.format(args.name))
 
 
 def policy_ls(args):
@@ -809,7 +829,7 @@ def policy_ls(args):
             active = 'Unused'
         rows.append([name, content.strip(), active])
 
-    print(cli_table.create(header, rows))
+    printList(args.output_format, header, rows)
 
 
 def policy_update(args):
@@ -817,7 +837,7 @@ def policy_update(args):
     if output:
         return err_out(output)
     else:
-        print('Successfully updated policy: {0}'.format(args.name))
+        printMessage(args.output_format, 'Successfully updated policy {0}'.format(args.name))
 
 
 def status(args):
@@ -838,9 +858,12 @@ def status(args):
     result.append({"LogLevel": log_config.get_log_level()})
     result.append({"=== Authorization Config DB": ""})
     result += config_db_get_status()
-    for r in result:
-        print("{}: {}".format(list(r.keys())[0], list(r.values())[0]))
 
+    output_list = []
+    for r in result:
+        output_list.append("{}: {}".format(list(r.keys())[0], list(r.values())[0]))
+
+    printMessage(args.output_format,"\n".join(output_list))
     return None
 
 
@@ -848,7 +871,7 @@ def set_vol_opts(args):
     try:
         set_ok = vmdk_ops.set_vol_opts(args.volume, args.vmgroup, args.options)
         if set_ok:
-            print('Successfully updated settings for : {0}'.format(args.volume))
+            printMessage(args.output_format, 'Successfully updated settings for {0}'.format(args.volume))
         else:
             return err_out('Failed to update {0} for {1}.'.format(args.options, args.volume))
     except Exception as ex:
@@ -959,9 +982,9 @@ def tenant_create(args):
     if error_info:
         return err_out(error_info.msg)
     elif args.name != auth_data_const.DEFAULT_TENANT:
-        print("vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.".format(args.name))
+        printMessage(args.output_format, "vmgroup '{}' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.".format(args.name))
     else:
-        print("vmgroup '{}' is created.".format(args.name))
+        printMessage(args.output_format, "vmgroup '{}' is created.".format(args.name))
 
 def tenant_update(args):
     """ Handle tenant update command """
@@ -976,7 +999,7 @@ def tenant_update(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup modify succeeded")
+        printMessage(args.output_format, "vmgroup modify succeeded")
 
 def tenant_rm(args):
     """ Handle tenant rm command """
@@ -984,7 +1007,6 @@ def tenant_rm(args):
     # If args "remove_volumes" is not specified in CLI
     # args.remove_volumes will be None
     if args.remove_volumes:
-        print("All Volumes will be removed")
         remove_volumes = True
 
     error_info = auth_api._tenant_rm(args.name, remove_volumes)
@@ -992,7 +1014,8 @@ def tenant_rm(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup rm succeeded")
+        msg = "vmgroup rm succeeded"
+        printMessage(args.output_format, "All Volumes will be removed. " + msg if remove_volumes else msg)
 
 def tenant_ls(args):
     """ Handle tenant ls command """
@@ -1005,7 +1028,7 @@ def tenant_ls(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print(cli_table.create(header, rows))
+        printList(args.output_format, header, rows)
 
 def tenant_vm_add(args):
     """ Handle tenant vm add command """
@@ -1014,7 +1037,7 @@ def tenant_vm_add(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup vm add succeeded")
+        printMessage(args.output_format, "vmgroup vm add succeeded")
 
 def tenant_vm_rm(args):
     """ Handle tenant vm rm command """
@@ -1023,7 +1046,7 @@ def tenant_vm_rm(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup vm rm succeeded")
+        printMessage(args.output_format, "vmgroup vm rm succeeded")
 
 def tenant_vm_replace(args):
     """ Handle tenant vm replace command """
@@ -1032,7 +1055,7 @@ def tenant_vm_replace(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup vm replace succeeded")
+        printMessage(args.output_format, "vmgroup vm replace succeeded")
 
 def tenant_vm_ls_headers():
     """ Return column names for tenant vm ls command """
@@ -1066,7 +1089,7 @@ def tenant_vm_ls(args):
 
     header = tenant_vm_ls_headers()
     rows = generate_tenant_vm_ls_rows(vms)
-    print(cli_table.create(header, rows))
+    printList(args.output_format, header, rows)
 
 
 def tenant_access_add(args):
@@ -1088,7 +1111,7 @@ def tenant_access_add(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup access add succeeded")
+        printMessage(args.output_format, "vmgroup access add succeeded")
 
 def tenant_access_set(args):
     """ Handle tenant access set command """
@@ -1108,7 +1131,7 @@ def tenant_access_set(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup access set succeeded")
+        printMessage(args.output_format, "vmgroup access set succeeded")
 
 def tenant_access_rm(args):
     """ Handle tenant access rm command """
@@ -1116,7 +1139,7 @@ def tenant_access_rm(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print("vmgroup access rm succeeded")
+        printMessage(args.output_format, "vmgroup access rm succeeded")
 
 def tenant_access_ls_headers():
     """ Return column names for tenant access ls command """
@@ -1157,7 +1180,7 @@ def tenant_access_ls(args):
     if error_info:
         return err_out(error_info.msg)
     else:
-        print(cli_table.create(header, rows))
+        printList(args.output_format, header, rows)
 
 # ==== CONFIG DB manipulation functions ====
 
@@ -1205,15 +1228,16 @@ def err_out(_msg, _info=None):
     A helper to print an error message with (optional) info if the vmdkops admin command fails.
     Returns the message.
     """
-    print(_msg)
+    _msg = ("ERROR:" + _msg)
     if _info:
-        print("Additional information: {}".format(_info))
+        _msg = _msg + (". Additional information: {}".format(_info))
+    print(_msg)
     return _msg
 
 
 def err_override(_msg, _info):
-    """A helper to print messates with extra help about --force flag"""
-    new_msg = "Error: {}".format(_msg) + " . Add '--force' flag to force the request execution"
+    """A helper to print messages with extra help about --force flag"""
+    new_msg = "{}".format(_msg) + " . Add '--force' flag to force the request execution"
     return err_out(new_msg, _info)
 
 
@@ -1255,7 +1279,10 @@ def config_init(args):
     if err:
         return err
 
-    print("Warning: this feature is EXPERIMENTAL")
+    output_list = []
+
+    output_list.append("Warning: this feature is EXPERIMENTAL")
+
     if args.datastore:
         ds_name = args.datastore
         db_path = auth_data.AuthorizationDataManager.ds_to_db_path(ds_name)
@@ -1278,7 +1305,7 @@ def config_init(args):
     elif mode == auth_data.DBMode.MultiNode or mode == auth_data.DBMode.SingleNode:
         return err_out(DB_REF + " is already initialized. Use 'rm --local' or 'rm --unlink' to reset", info)
     else:
-        raise Exception("Fatal: Internal error - unknown mode: {}".format(mode))
+        return err_out("Fatal: Internal error - unknown mode: {}".format(mode))
 
     if args.datastore:
         # Check that the target datastore is NOT local VMFS, bail out if it is (--force to overide).
@@ -1292,7 +1319,7 @@ def config_init(args):
                                 other_ds_config)
 
     if not os.path.exists(db_path):
-        print("Creating new DB at {}".format(db_path))
+        output_list.append("Creating new DB at {}".format(db_path))
         auth = auth_data.AuthorizationDataManager(db_path)
         err = auth.new_db()
         if err:
@@ -1300,13 +1327,15 @@ def config_init(args):
 
     # Almost done -  just create link and refresh the service
     if args.local:
-        print("Warning: Local configuration will not survive ESXi reboot." +
+        output_list.append("Warning: Local configuration will not survive ESXi reboot." +
               " See KB2043564 for details")
     else:
-        print("Creating a symlink to {} at {}".format(db_path, link_path))
+        output_list.append("Creating a symlink to {} at {}".format(db_path, link_path))
         create_db_symlink(db_path, link_path)
-        print("Updating {}".format(local_sh.LOCAL_SH_PATH))
+        output_list.append("Updating {}".format(local_sh.LOCAL_SH_PATH))
         local_sh.update_symlink_info(args.datastore)
+
+    printMessage(args.output_format, "\n".join(output_list))
 
     return None
 
@@ -1347,7 +1376,7 @@ def config_rm(args):
             mode = auth.mode # for usage outside of the 'with'
         except auth_data.DbAccessError as ex:
             # the DB is broken and is being asked to be removed, so let's oblige
-            print("Received error - removing comfiguration anyways. Err: \"{}\"".format(str(ex)))
+            printMessage(args.output_format, "Received error - removing comfiguration anyways. Err: \"{}\"".format(str(ex)))
             try:
                 os.remove(auth_data.AUTH_DB_PATH)
             except:
@@ -1360,7 +1389,7 @@ def config_rm(args):
 
     # mode is NotConfigured, path does not exist
     if mode == auth_data.DBMode.NotConfigured:
-        print("Nothing to do - Mode={}.".format(str(mode)))
+        printMessage(args.output_format, "Nothing to do - Mode={}.".format(str(mode)))
 
     link_path = auth_data.AUTH_DB_PATH # local DB or link
     if not os.path.lexists(link_path):
@@ -1371,12 +1400,15 @@ def config_rm(args):
             return err_out("'rm --local' is not supported when " + DB_REF + "is in MultiNode mode."
                            " Use 'rm --unlink' to remove the local link to shared DB.")
         else:
+            output_list = []
             try:
                 os.remove(link_path)
-                print("Removed link {}".format(link_path))
+                output_list.append("Removed link {}".format(link_path))
             except Exception as ex:
-                print(" Failed to remove {}: {}".format(link_path, ex))
-            print("Updating {}".format(local_sh.LOCAL_SH_PATH))
+                output_list.append("Failed to remove {}: {}".format(link_path, ex))
+
+            output_list.append("Updating {}".format(local_sh.LOCAL_SH_PATH))
+            printMessage(args.output_format, "\n".join(output_list))
             local_sh.update_symlink_info(add=False)
             return None
 
@@ -1387,12 +1419,12 @@ def config_rm(args):
                            " Use 'rm --local' to remove local DB configuration.")
         else:
             if not args.no_backup:
-                print("Moved {} to backup file {}".format(link_path,
+                printMessage(args.output_format, "Moved {} to backup file {}".format(link_path,
                                                           db_move_to_backup(link_path)))
             return None
 
     # All other cases
-    print("Nothing to do - Mode={}.".format(str(mode)))
+    printMessage(args.output_format, "Nothing to do - Mode={}.".format(str(mode)))
 
 def config_mv(args):
     """[Not Supported Yet]
@@ -1412,7 +1444,7 @@ def config_mv(args):
     # need --dryrun or --confirm
     # issue: works really with discovery only , as others need to find it out
 
-    print("Sorry, configuration move ('config mv' command) is not supported yet")
+    printMessage(args.output_format, "Sorry, configuration move ('config mv' command) is not supported yet")
     return None
 
 
@@ -1431,8 +1463,11 @@ def config_db_get_status():
 
 def config_status(args):
     """A subset of 'config' command - prints the DB config only"""
+    output_list = []
     for r in config_db_get_status():
-        print("{}: {}".format(list(r.keys())[0], list(r.values())[0]))
+        output_list.append("{}: {}".format(list(r.keys())[0], list(r.values())[0]))
+
+    printMessage(args.output_format, "\n".join(output_list))
     return None
 
 
