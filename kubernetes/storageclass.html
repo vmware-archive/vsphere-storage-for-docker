@@ -396,8 +396,10 @@ Provisioner could be AWS EBS, vSphere, OpenStack and so on.</p>
     <p><strong>datastore</strong> is an optional field which can be VMFSDatastore or VSANDatastore. This allows user to select the datastore to provision PV from, if not specified the default datastore from vSphere config file is used.</p>
   </li>
   <li>
-    <p><strong>storagePolicyName</strong> is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.
-vSAN storage capability parameters which you can specify explicitly. The newly created persistent volume will have these vSAN storage capabilities configured with it. There are additional parameters which are covered in <a href="/docker-volume-vsphere/kubernetes/policy-based-mgmt.html">Storage Policy Management section</a>.</p>
+    <p><strong>storagePolicyName</strong> is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.</p>
+  </li>
+  <li>
+    <p><strong>VSAN Storage Capability Parameters</strong> (cacheReservation, diskStripes, forceProvisioning, hostFailuresToTolerate, iopsLimit and objectSpaceReservation) are supported by vSphere provisioner for vSAN storage. The persistent volume created with these parameters will have these vSAN storage capabilities configured with it. For more detail about these parameters go to <a href="/docker-volume-vsphere/kubernetes/policy-based-mgmt.html">Storage Policy Management section</a>.</p>
   </li>
 </ul>
 
@@ -583,7 +585,7 @@ pvpod       1/1      Running   0          48m
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 11, 2017 <br />
+ Site last generated: Aug 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

@@ -399,23 +399,24 @@ $('#toc').on('click', 'a', function() {
 
 <div class="highlighter-rouge"><pre class="highlight"><code>#vsphere-volume-pod.yaml
 
-  apiVersion: v1
-  kind: Pod
-  metadata:
-    name: test-vmdk
-  spec:
-    containers:
-    - image: gcr.io/google_containers/test-webserver
-      name: test-container
-      volumeMounts:
-      - mountPath: /test-vmdk
-        name: test-volume
-    volumes:
-    - name: test-volume
-      # This VMDK volume must already exist.
-      vsphereVolume:
-        volumePath: "[datastore1] volumes/myDisk"
-        fsType: ext4
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-vmdk
+spec:
+  containers:
+  - image: gcr.io/google_containers/test-webserver
+    name: test-container
+    volumeMounts:
+    - mountPath: /test-vmdk
+      name: test-volume
+  volumes:
+  - name: test-volume
+    # This VMDK volume must already exist.
+    vsphereVolume:
+      volumePath: "[datastore1] volumes/myDisk"
+      fsType: ext4
+
 </code></pre>
 </div>
 
@@ -450,7 +451,7 @@ test-vmdk   1/1     Running   0          48m
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 11, 2017 <br />
+ Site last generated: Aug 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
