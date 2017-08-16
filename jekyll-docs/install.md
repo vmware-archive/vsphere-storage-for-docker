@@ -50,12 +50,12 @@ Note: We have discontinued the DEB/RPM based installation of the Docker plugin.
 * **To install the plugin**
 
 ```
-~# docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
-latest: Pulling from vmware/docker-volume-vsphere
+~# docker plugin install --grant-all-permissions --alias vsphere vmware/vsphere-storage-for-docker:latest
+latest: Pulling from vmware/vsphere-storage-for-docker
 f07d34084e57: Download complete
 Digest: sha256:e1028b8570f37f374e8987d1a5b418e3c591e2cad155cc3b750e5e5ac643fb31
-Status: Downloaded newer image for vmware/docker-volume-vsphere:latest
-Installed plugin vmware/docker-volume-vsphere:latest
+Status: Downloaded newer image for vmware/vsphere-storage-for-docker:latest
+Installed plugin vmware/vsphere-storage-for-docker:latest
 ```
 
 * **To verify that it was installed and is listed**

@@ -2,11 +2,11 @@
 title: Dynamic Provisioning and StorageClass API
 ---
 
-With PV and PVCs one can only provision storage statically i.e. PVs first needs to be created before a Pod claims it. However with StorageClass API Kubernetes enables dynamic volume provisioning which is very unique to Kubernetes. This avoids pre-provisioning of storage and storage is provisioned automatically when a user requests it. 
- 
+With PV and PVCs one can only provision storage statically i.e. PVs first needs to be created before a Pod claims it. However with StorageClass API Kubernetes enables dynamic volume provisioning which is very unique to Kubernetes. This avoids pre-provisioning of storage and storage is provisioned automatically when a user requests it.
+
 StorageClass API object specifies a provisioner and parameters  which are used to decide which volume plugin to be used and provisioner specific parameters.
 Provisioner could be AWS EBS, vSphere, OpenStack and so on.
- 
+
 vSphere is one of the provisioners and it allows following parameters:
 
 * **diskformat** which can be thin(default), zeroedthick and eagerzeroedthick
@@ -15,7 +15,7 @@ vSphere is one of the provisioners and it allows following parameters:
 
 * **storagePolicyName** is an optional field which is the name of the SPBM policy to be applied. The newly created persistent volume will have the SPBM policy configured with it.
 
-* **VSAN Storage Capability Parameters** (cacheReservation, diskStripes, forceProvisioning, hostFailuresToTolerate, iopsLimit and objectSpaceReservation) are supported by vSphere provisioner for vSAN storage. The persistent volume created with these parameters will have these vSAN storage capabilities configured with it. For more detail about these parameters go to [Storage Policy Management section](/docker-volume-vsphere/kubernetes/policy-based-mgmt.html).
+* **VSAN Storage Capability Parameters** (cacheReservation, diskStripes, forceProvisioning, hostFailuresToTolerate, iopsLimit and objectSpaceReservation) are supported by vSphere provisioner for vSAN storage. The persistent volume created with these parameters will have these vSAN storage capabilities configured with it. For more detail about these parameters go to [Storage Policy Management section](/vsphere-storage-for-docker/kubernetes/policy-based-mgmt.html).
 
 **Note:**
 
@@ -70,7 +70,7 @@ $ kubectl create -f examples/volumes/vsphere/vsphere-volume-sc-fast.yaml
 **Verifying storage class is created**
 
 ```
-$ kubectl describe storageclass fast 
+$ kubectl describe storageclass fast
 Name:           fast
 IsDefaultClass: No
 Annotations:    <none>
@@ -118,7 +118,7 @@ Access Modes:   RWO
 Events:
   FirstSeen LastSeen Count  From        SubObjectPath   Type  Reason Message
   -----------------------------------------------------------
-  1m          1m      1   persistentvolume-controller  Normal  Provisioning Succeeded   
+  1m          1m      1   persistentvolume-controller  Normal  Provisioning Succeeded
 
   Successfully provisioned volume pvc-83295256-f8e0-11e6-8263-005056b2349c using Kubernetes.io/vsphere-volume
 ```

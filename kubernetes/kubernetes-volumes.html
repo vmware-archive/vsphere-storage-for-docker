@@ -74,7 +74,7 @@
             $('[data-toggle="tooltip"]').tooltip()
         })
     </script>
-    
+
 
 </head>
 <body>
@@ -93,21 +93,21 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
                 <!-- entries without drop-downs appear here -->
-                
-                
-                
+
+
+
                 <li><a href="index.html">Home</a></li>
-                
-                
-                
+
+
+
                 <li><a href="faqs.html">FAQs</a></li>
-                
-                
-                
+
+
+
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
-                
-                
+
+
                 <!--comment out this block if you want to hide search-->
                 <li>
                     <!--start search-->
@@ -143,7 +143,7 @@
         <!-- Sidebar Column -->
         <div class="col-md-3">
 
-          
+
 
 
 
@@ -158,173 +158,173 @@
 
 <ul id="mysidebar" class="nav">
     <li class="sidebarTitle">Menu </li>
-    
-    
-    
+
+
+
     <li>
         <a href="#">Get Started</a>
         <ul>
-            
-            
-            
+
+
+
             <li><a href="index.html">Introduction</a></li>
-            
-            
-            
-            
+
+
+
+
         </ul>
-        
-        
-    
+
+
+
     <li>
         <a href="#">vSphere Cloud Provider</a>
         <ul>
-            
-            
-            
+
+
+
             <li><a href="overview.html">Overview</a></li>
-            
-            
-            
+
+
+
             <li class="subfolders">
                 <a href="#">Kubernetes Storage Support</a>
                 <ul>
-                    
-                    
-                    
+
+
+
                     <li class="active"><a href="kubernetes-volumes.html">Volumes</a></li>
-                    
-                    
-                    
-                    
-                    
+
+
+
+
+
                     <li><a href="persistent-vols-claims.html">Persistent Volumes & Persistent Volumes Claims</a></li>
-                    
-                    
-                    
-                    
-                    
+
+
+
+
+
                     <li><a href="storageclass.html">Dynamic Provisioning & Storage Class</a></li>
-                    
-                    
-                    
-                    
-                    
+
+
+
+
+
                     <li><a href="statefulsets.html">StatefulSets</a></li>
-                    
-                    
-                    
+
+
+
                 </ul>
             </li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="policy-based-mgmt.html">Storage Policy Based Management for Dynamic Provisioning</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="high-availability.html">High Availability of Kubernetes Cluster</a></li>
-            
-            
-            
-            
+
+
+
+
         </ul>
-        
-        
-    
+
+
+
     <li>
         <a href="#">Deployment</a>
         <ul>
-            
-            
-            
+
+
+
             <li><a href="prerequisites.html">Prerequistes</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="kubernetes-anywhere.html">Kubernetes Anywhere</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="existing.html">Configurations on existing Kubernetes Cluster</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="bestpractices.html">Best Practices</a></li>
-            
-            
-            
-            
+
+
+
+
         </ul>
-        
-        
-    
+
+
+
     <li>
         <a href="#">Applications & Examples</a>
         <ul>
-            
-            
-            
+
+
+
             <li><a href="guestbook.html">Running Stateful application - Guestbook app</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="mongodb.html">Running MongoDB on vSphere</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="minio.html">Deploying S3 Stateful containers - Minio</a></li>
-            
-            
-            
-            
+
+
+
+
         </ul>
-        
-        
-    
+
+
+
     <li>
         <a href="#">Miscellaneous</a>
         <ul>
-            
-            
-            
+
+
+
             <li><a href="faqs.html">FAQs</a></li>
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             <li><a href="known-issues.html">Known Issues</a></li>
-            
-            
-            
-            
+
+
+
+
         </ul>
-        
-        
-        
+
+
+
         <!-- if you aren't using the accordion, uncomment this block:
            <p class="external">
                <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
@@ -347,10 +347,10 @@
 
 <div class="post-content">
 
-   
 
-    
-    
+
+
+
 <!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
 <script>
 $( document ).ready(function() {
@@ -366,20 +366,20 @@ $('#toc').on('click', 'a', function() {
   $(window).scrollTop(scroll_target - 10);
   return false
 })
-  
+
 });
 </script>
 
 <div id="toc"></div>
 
-    
 
 
-    
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//kubernetes-volumes.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
-    
+
+    <a target="_blank" href="https://github.com/vmware/vsphere-storage-for-docker/edit/gh-pages/kubernetes-docs//kubernetes-volumes.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+
 
   <p>A Pod can specify vsphereVolume as Kubernetes Volumes and then vSphere VMDK is mounted as Volume into your Pod. The contents of a volume are preserved when it is unmounted. It supports both VMFS and VSAN datastores.</p>
 
@@ -435,13 +435,13 @@ test-vmdk   1/1     Running   0          48m
 </div>
 
 
-  
+
 
     <div class="tags">
-        
+
     </div>
 
-    
+
 
 </div>
 

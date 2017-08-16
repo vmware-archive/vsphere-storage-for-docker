@@ -52,14 +52,14 @@ The configurations used by a driver while performing operations are read from a 
 
 ## Plugin Configuration
 
-The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations. The default location where it looks for plugin config is at /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
+The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations. The default location where it looks for plugin config is at /etc/vsphere-storage-for-docker.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
 
 ```
 {
     "Driver": "vsphere",
     "MaxLogAgeDays": 28,
     "MaxLogSizeMb": 100,
-    "LogPath": "/var/log/docker-volume-vsphere.log",
+    "LogPath": "/var/log/vsphere-storage-for-docker.log",
     "LogLevel": "info"
 }
 ```

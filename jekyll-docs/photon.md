@@ -6,11 +6,11 @@ Docker volumes on [Photon platform](https://vmware.github.io/photon-controller) 
 
 ## vDVS with Photon Platform
 
-The docker volume plugin also supports Photon platform. The plugin supports all volume provisioning and managenment operations, defined by the Docker Volume plugin interface, on both platforms (vSphere and Photon).Creation of volumes in photon platform is done via the open Photon platform API using the Photon controller. 
+The docker volume plugin also supports Photon platform. The plugin supports all volume provisioning and managenment operations, defined by the Docker Volume plugin interface, on both platforms (vSphere and Photon).Creation of volumes in photon platform is done via the open Photon platform API using the Photon controller.
 
 ## Configuration: Photon Plugin
 
-The configurations used by a plugin while performing operations are read from a JSON file and the default location where it looks for it /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file. You need following configurations for plugin with driver type photon in the configuration file.
+The configurations used by a plugin while performing operations are read from a JSON file and the default location where it looks for it /etc/vsphere-storage-for-docker.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file. You need following configurations for plugin with driver type photon in the configuration file.
 
 ```
 {
@@ -55,7 +55,7 @@ The configurations used by a plugin while performing operations are read from a 
   <div class="panel-body">
      The project and VM IDs mentioned above can be obtained via the “photon” CLI, see https://github.com/vmware/photon-controller/wiki/Compile-Photon-Controller-CLI.
   </div>
-</div> 
+</div>
 
 ## Using the Service in Docker
 
