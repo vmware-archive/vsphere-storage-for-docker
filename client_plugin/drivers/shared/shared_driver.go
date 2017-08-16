@@ -336,32 +336,50 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	if !d.kvStore.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+r.Name,
 		string(kvstore.VolStateReady),
 		string(kvstore.VolStateDeleting)) {
-		clientFetchSucceeded := true
+		// Failed to change state from Ready to Deleting
+		// 1. Volume is in Mounted state -> get clients and return error
+		// 2. Volume is already in Deleting state and timeout -> continue delete
+		// 3. Volume is in other states -> return error
+
 		// Get a list of host VMs using this volume, if any
 		keys := []string{
+			kvstore.VolPrefixState + r.Name,
 			kvstore.VolPrefixInfo + r.Name,
 		}
 		entries, err := d.kvStore.ReadMetaData(keys)
 		if err != nil {
-			clientFetchSucceeded = false
-			log.Warningf("Failed to check which host VMs are using volume %s", r.Name)
-		}
-		// Unmarshal Info key
-		err = json.Unmarshal([]byte(entries[0].Value), &volRecord)
-		if err != nil {
-			clientFetchSucceeded = false
-			log.Warningf("Failed to unmarshal data. %v", err)
+			msg = fmt.Sprintf("Remove failed: cannot read metadata of volume %s", r.Name)
+			log.Errorf(msg)
+			return volume.Response{Err: msg}
 		}
 
-		msg = fmt.Sprintf("Remove failed: Failed to set volume state to deleting.")
-		if clientFetchSucceeded {
-			msg += fmt.Sprintf(" Containers on other host VM are still using volume %s.",
-				r.Name)
+		state := entries[0].Value
+		switch state {
+		case string(kvstore.VolStateDeleting):
+			msg = fmt.Sprintf("Volume already in deleting state after timeout. Continue deleting")
+			log.Warningf(msg)
+		case string(kvstore.VolStateError):
+			msg = fmt.Sprintf("Volume in error state. Continue deleting")
+			log.Warningf(msg)
+		case string(kvstore.VolStateMounted):
+			// Unmarshal Info key
+			err = json.Unmarshal([]byte(entries[1].Value), &volRecord)
+			if err != nil {
+				msg = fmt.Sprintf("Remove failed: cannot unmarshal info data. %v", err)
+				log.Errorf(msg)
+				return volume.Response{Err: msg}
+			}
+
+			msg = fmt.Sprintf("Remove failed: volume state is Mounted.")
 			msg += fmt.Sprintf(" Host VMs using this volume: %s",
 				strings.Join(volRecord.ClientList, ","))
+			log.Errorf(msg)
+			return volume.Response{Err: msg}
+		default:
+			msg = fmt.Sprintf("Remove failed: cannot delete from current state %s.", state)
+			log.Errorf(msg)
+			return volume.Response{Err: msg}
 		}
-		log.Warningf(msg)
-		return volume.Response{Err: msg}
 	}
 
 	// Delete internal volume
@@ -369,10 +387,18 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	internalVolname := internalVolumePrefix + r.Name
 	err := d.dockerOps.VolumeRemove(internalVolname)
 	if err != nil {
-		msg = fmt.Sprintf("Failed to remove internal volume %s. Reason: %v", internalVolname, err)
-		msg += fmt.Sprintf(". Check the status of the volumes belonging to driver \"%s\". ", d.internalVolumeDriver)
+		msg = fmt.Sprintf("Failed to remove internal volume from driver \"%s\" for volume %s. Reason: %v.",
+			d.internalVolumeDriver, r.Name, err)
+
+		// check the internal volume state:
+		err = d.dockerOps.VolumeInspect(internalVolname)
+		if err == nil {
+			// volume exists, return error to stop deleting
+			return volume.Response{Err: msg}
+		}
+		msg += fmt.Sprintf(" Failed to inspect internal volume too. Error: %v.", err)
+		msg += fmt.Sprintf(" Continue delete the metadata.")
 		log.Warningf(msg)
-		return volume.Response{Err: msg}
 	}
 
 	// Delete metadata associated with this volume

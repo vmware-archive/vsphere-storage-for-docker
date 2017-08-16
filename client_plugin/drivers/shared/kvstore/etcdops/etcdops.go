@@ -348,7 +348,7 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 		succeeded := e.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+volName,
 			string(fromState), string(interimState))
 		if !succeeded {
-			// this handler doesn't get the right to start server
+			// this handler doesn't get the right to start/stop server
 			return
 		}
 

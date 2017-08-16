@@ -170,6 +170,12 @@ func (d *DockerOps) VolumeRemove(volName string) error {
 	return d.Dockerd.VolumeRemove(context.Background(), volName)
 }
 
+// VolumeInspect - inspect volume from docker host, if failed, return error
+func (d *DockerOps) VolumeInspect(volName string) error {
+	_, err := d.Dockerd.VolumeInspect(context.Background(), volName)
+	return err
+}
+
 // StartSMBServer - Start SMB server
 // Input - Name of the volume for which SMB has to be started
 // Output
