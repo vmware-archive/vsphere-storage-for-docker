@@ -18,10 +18,11 @@ package vmdkops_test
 // Does not communicate over VMCI
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk/vmdkops"
-	testparams "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vmdk/vmdkops"
+	testparams "github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
 )
 
 func TestCommands(t *testing.T) {

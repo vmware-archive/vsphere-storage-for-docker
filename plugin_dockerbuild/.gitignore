@@ -1,4 +1,4 @@
-docker-volume-vsphere
+vsphere-storage-for-docker
 vsphere-shared
 Dockerfile
 config.json

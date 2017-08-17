@@ -47,7 +47,7 @@ DISK_LIB64 = "/lib64/libvmsnapshot.so"
 DISK_LIB = "/lib/libvmsnapshot.so"
 lib = None
 use_sidecar_create = False
-DVOL_KEY = "docker-volume-vsphere"
+DVOL_KEY = "vsphere-storage-for-docker"
 
 # Volume attributes
 VOL_SIZE = 'size'

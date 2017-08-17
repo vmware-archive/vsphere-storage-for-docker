@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # To sanity test on the same VM using managed plugin
-# More information https://github.com/vmware/docker-volume-vsphere/issues/1020#issue-213470358
+# More information https://github.com/vmware/vsphere-storage-for-docker/issues/1020#issue-213470358
 
 echo "plugin_sanity_test: [INFO] Running plugin_sanity_test on the clean test setup..."
 

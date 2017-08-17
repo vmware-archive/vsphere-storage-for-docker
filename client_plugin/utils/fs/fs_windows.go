@@ -78,7 +78,7 @@ const (
 	// mountListScript is a PowerShell script that lists disk numbers and their access paths.
 	// Sample output:
 	//   0 \\?\Volume{1cca2a47-0000-0000-0000-100000000000}\
-	//   1 C:\Users\Administrator\AppData\Local\docker-volume-vsphere\mounts\volName\ \\?\Volume{145c5662-0000-0000-0000-100000000000}\
+	//   1 C:\Users\Administrator\AppData\Local\vsphere-storage-for-docker\mounts\volName\ \\?\Volume{145c5662-0000-0000-0000-100000000000}\
 	mountListScript = `
 		Get-Partition |
 		ForEach-Object { Write-Host $_.DiskNumber, $_.AccessPaths }

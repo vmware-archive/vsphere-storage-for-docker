@@ -23,7 +23,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/natefinch/lumberjack"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/log_formatter"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/log_formatter"
 	"io/ioutil"
 	"os"
 	"runtime"

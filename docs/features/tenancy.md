@@ -136,4 +136,4 @@ Remember we have set default datastore as "datastore3" which as “--allow-creat
 
 ## References
 
-- [Design Spec for tenancy](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md)
+- [Design Spec for tenancy](https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md)

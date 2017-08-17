@@ -28,8 +28,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/dockerops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/shared/dockerops"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/shared/kvstore"
 )
 
 /*

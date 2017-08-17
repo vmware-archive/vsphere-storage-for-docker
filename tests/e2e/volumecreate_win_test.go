@@ -18,7 +18,7 @@
 
 package e2e
 
-import "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+import "github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
 
 var (
 	// invalidVolNameList is a slice of volume names for the TestInvalidName test.

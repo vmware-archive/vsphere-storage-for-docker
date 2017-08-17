@@ -1,6 +1,6 @@
 ## Code Contribution guidelines
 ### Dev Setup and debugging help
-Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
+Read the [FAQ on the Wiki](https://github.com/vmware/vsphere-storage-for-docker/wiki#faq)
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
    * Branch should be suffixed with github user id: `(branch name).(github user id)` Example: `mydevbranch.kerneltime`
@@ -132,7 +132,7 @@ The prerequisite to build and deploy the plugin is to have a DockerHub account. 
   - `MANAGER1` - swarm cluster manager node IP
   - `WORKER1` & `WORKER2` - swarm cluster worker node IP
 
-**Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/docker-volume-vsphere/pull/1163), our build/deployment script start using managed plugin approach.
+**Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/vsphere-storage-for-docker/pull/1163), our build/deployment script start using managed plugin approach.
 
 Examples:
 ```
@@ -177,7 +177,7 @@ Standard invocation on ESX:
 python -B /usr/lib/vmware/vmdkops/bin/vmdk_ops.py
 
 Standard invocation on VM: (as root)
-/usr/local/bin/docker-volume-vsphere
+/usr/local/bin/vsphere-storage-for-docker
 ```
 
 To remove the code from the testbed, use the same steps as above (i.e define
@@ -275,7 +275,7 @@ COVERAGE_PROCESS_START DEFAULT=/coverage.rc
 
 ## CI/CD System
 
-The CI/CD system is based on [Drone platform](https://drone.io/) and the server is  https://ci.vmware.run/. More information is found at our [CI.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CI.md)
+The CI/CD system is based on [Drone platform](https://drone.io/) and the server is  https://ci.vmware.run/. More information is found at our [CI.md](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CI.md)
 
 ## Cutting a new release guidelines
 
@@ -298,7 +298,7 @@ Check to see if the new release shows up on GitHub and the CI build has started.
 
 ### Generate the change log
 ```
-docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
+docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p vsphere-storage-for-docker -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
 ```
 
 Manually eye ball the list to make sure Issues are relevant to the release (Some times labels such as wontfix have not been applied to an Issue)
@@ -310,7 +310,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 2. Remove VIB/DEB/RPMs from the ```Downloads``` sections
 3. Perform steps from internal Confluence page to sign the VIB.
 
-**Note**: Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release and check changes to `[vmware/master]/docs/misc/vDVS_bulletin.xml` (see below to update the content per release)
+**Note**: Update [vDVS_bulletin.xml](https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release and check changes to `[vmware/master]/docs/misc/vDVS_bulletin.xml` (see below to update the content per release)
 
 ```
 <id>vDVS_driver-0.15</id> (0.15 refers to version)
@@ -320,7 +320,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 
 4. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB
 5. Push managed plugin to docker store
-6. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
+6. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/vsphere-storage-for-docker/releases/tag/0.13) as the reference
 
 ### Publish vDVS managed plugin to Docker Store
 **Note**: not automated as of 04/04/17
@@ -341,12 +341,12 @@ Update documentation following steps listed below.
 ## Documentation
 
 Documentation is published to [GitHub
-Pages](https://vmware.github.io/docker-volume-vsphere/) using
+Pages](https://vmware.github.io/vsphere-storage-for-docker/) using
 [jekyll](https://jekyllrb.com/).
 
 1. Documentation is updated each time a release is tagged.
 2. The latest documentation for the master can be found in
-   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs) in
+   [docs](https://github.com/vmware/vsphere-storage-for-docker/tree/master/docs) in
    markdown format
 
 To update documentation
@@ -364,9 +364,9 @@ docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll buil
 rm -rvf ../documentation
 mv _site ../documentation
 
-# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md 
+# 5.Search for "Edit me" and ensure href is https://github.com/vmware/vsphere-storage-for-docker/edit/gh-pages/jekyll-docs//index.md
 #Bug in jekyll template does not render the name "index"
-vi ../documentation/index.html 
+vi ../documentation/index.html
 
 # 6. Push to GitHub
 git add documentation

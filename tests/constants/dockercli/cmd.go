@@ -47,7 +47,7 @@ const (
 	VDVSPluginName = "vsphere "
 
 	// VDVSName name of the vDVS service
-	VDVSName = "docker-volume-vsphere"
+	VDVSName = "vsphere-storage-for-docker"
 
 	// GetVDVSPlugin gets vDVS plugin info
 	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + VDVSPluginName

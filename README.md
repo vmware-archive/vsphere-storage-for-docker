@@ -1,26 +1,26 @@
-[![Build Status](https://ci.vmware.run/api/badges/vmware/docker-volume-vsphere/status.svg)](https://ci.vmware.run/vmware/docker-volume-vsphere)
-[![Go Report Card](https://goreportcard.com/badge/github.com/vmware/docker-volume-vsphere)](https://goreportcard.com/report/github.com/vmware/docker-volume-vsphere)
-[![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description) [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
+[![Build Status](https://ci.vmware.run/api/badges/vmware/vsphere-storage-for-docker/status.svg)](https://ci.vmware.run/vmware/vsphere-storage-for-docker)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vmware/vsphere-storage-for-docker)](https://goreportcard.com/report/github.com/vmware/vsphere-storage-for-docker)
+[![Join the chat at https://gitter.im/vmware/vsphere-storage-for-docker](https://badges.gitter.im/vmware/vsphere-storage-for-docker.svg)](https://gitter.im/vmware/vsphere-storage-for-docker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description) [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
 
 
 # vSphere Docker Volume Service
 
 vSphere Docker Volume Service (vDVS) enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS) to stateful containers using Docker.
 
-[<img src="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vDVS is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
+[<img src="https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vDVS is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
 To read more about code development and testing please read
-[CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md)
 as well as the
-[FAQ on the project site](http://vmware.github.io/docker-volume-vsphere/documentation/faq.html).
+[FAQ on the project site](http://vmware.github.io/vsphere-storage-for-docker/documentation/faq.html).
 
 ## Detailed documentation
 
-Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
+Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/vsphere-storage-for-docker/documentation/).
 
 ## Download
 
-**[Click here to download from Github releases](https://github.com/vmware/docker-volume-vsphere/releases)**
+**[Click here to download from Github releases](https://github.com/vmware/vsphere-storage-for-docker/releases)**
 
 The download consists of 2 parts:
 
@@ -31,11 +31,11 @@ Pick the latest release and use the same version of vDVS plugin (on Docker host 
 
 ## Demos
 
-The demos are located on the project [site](https://vmware.github.io/docker-volume-vsphere/documentation) and [wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Demos)
+The demos are located on the project [site](https://vmware.github.io/vsphere-storage-for-docker/documentation) and [wiki](https://github.com/vmware/vsphere-storage-for-docker/wiki/Demos)
 
 ## Project Website
 
-Project page is located @ [https://vmware.github.io/docker-volume-vsphere/](https://vmware.github.io/docker-volume-vsphere). Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere/documentation](https://vmware.github.io/docker-volume-vsphere/documentation)
+Project page is located @ [https://vmware.github.io/vsphere-storage-for-docker/](https://vmware.github.io/vsphere-storage-for-docker). Documentation, FAQ and other content can be found @ [https://vmware.github.io/vsphere-storage-for-docker/documentation](https://vmware.github.io/vsphere-storage-for-docker/documentation)
 
 ## Supported Platform
 
@@ -60,8 +60,8 @@ Make sure you provide the **absolute path** to the `.vib` file or the install wi
 #### Managed Plugin
 1. Please make sure to uninstall older releases of DEB/RPM using following commands.
 ```
-sudo dpkg -r docker-volume-vsphere # Ubuntu or deb based distros
-sudo rpm -e docker-volume-vsphere # Photon or rpm based distros
+sudo dpkg -r vsphere-storage-for-docker # Ubuntu or deb based distros
+sudo rpm -e vsphere-storage-for-docker # Photon or rpm based distros
 ```
 2. Docker service needs to be restarted until [Issue #32635](https://github.com/docker/docker/issues/32635) is resolved.
 ```
@@ -70,7 +70,7 @@ systemctl restart docker
 
 **For Docker 1.13 and above**, install managed plugin from Docker Store.
 ```
-docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
+docker plugin install --grant-all-permissions --alias vsphere vmware/vsphere-storage-for-docker:latest
 ```
 
 #### Using DEB/RPM
@@ -83,7 +83,7 @@ sudo rpm -ivh <name>.rpm # Photon or rpm based distros
 
 ## Using Docker CLI
 Refer to [tenancy
-documentation](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html) for setting up tenants.
+documentation](http://vmware.github.io/vsphere-storage-for-docker/documentation/tenancy.html) for setting up tenants.
 ```
 # To select datastore use --name=MyVolume@<Datastore Name>
 $ docker volume create --driver=vsphere --name=MyVolume -o size=10gb
@@ -114,14 +114,14 @@ journalctl -fu docker.service # Journalctl/Systemd
 
 **VM (Docker-side) Plugin logs**
 
-* Log location: `/var/log/docker-volume-vsphere.log`
-* Config file location: `/etc/docker-volume-vsphere.conf`.
+* Log location: `/var/log/vsphere-storage-for-docker.log`
+* Config file location: `/etc/vsphere-storage-for-docker.conf`.
  * This JSON-formatted file controls logs retention, size for rotation
  and log location. Example:
 ```
  {"MaxLogAgeDays": 28,
  "MaxLogSizeMb": 100,
- "LogPath": "/var/log/docker-volume-vsphere.log"}
+ "LogPath": "/var/log/vsphere-storage-for-docker.log"}
 ```
 * **Turning on debug logging**:
 
@@ -131,7 +131,7 @@ journalctl -fu docker.service # Journalctl/Systemd
 
       e.g.
       ```
-      docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug
+      docker plugin install --grant-all-permissions --alias vsphere vmware/vsphere-storage-for-docker:latest VDVS_LOG_LEVEL=debug
       ```
 
 **ESX Plugin logs**
@@ -172,8 +172,8 @@ The plugin uses VMCI (Virtual Machine Communication Interface) and vSockets to c
 
 ### Public
 * [containers@vmware.com](containers@vmware.com)
-* [Issues](https://github.com/vmware/docker-volume-vsphere/issues)
-* [![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+* [Issues](https://github.com/vmware/vsphere-storage-for-docker/issues)
+* [![Join the chat at https://gitter.im/vmware/vsphere-storage-for-docker](https://badges.gitter.im/vmware/vsphere-storage-for-docker.svg)](https://gitter.im/vmware/vsphere-storage-for-docker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 * [VMware Docker Slack](https://vmware.slack.com/messages/docker/) channel
 
 # Blogs
