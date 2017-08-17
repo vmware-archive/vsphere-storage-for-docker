@@ -356,6 +356,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/gorillalabs/go-powershell",
+			"repository": "https://github.com/gorillalabs/go-powershell",
+			"vcs": "git",
+			"revision": "8a975e1f46d292e02c8825f112090196bbc20ac1",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/grpc-ecosystem/grpc-gateway/runtime",
 			"repository": "https://github.com/grpc-ecosystem/grpc-gateway",
 			"vcs": "git",
@@ -371,6 +379,14 @@
 			"revision": "a5c7982c02e20b0d22f1f50ff20fbb85aa30433a",
 			"branch": "master",
 			"path": "/utilities",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/juju/errors",
+			"repository": "https://github.com/juju/errors",
+			"vcs": "git",
+			"revision": "c7d06af17c68cd34c835053720b21f6549d9b0ee",
+			"branch": "master",
 			"notests": true
 		},
 		{
