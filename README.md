@@ -70,7 +70,7 @@ systemctl restart docker
 
 **For Docker 1.13 and above**, install managed plugin from Docker Store.
 ```
-docker plugin install --grant-all-permissions --alias vsphere vmware/vsphere-storage-for-docker:latest
+docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
 ```
 
 #### Using DEB/RPM
