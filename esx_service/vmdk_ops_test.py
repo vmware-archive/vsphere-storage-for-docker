@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2016 VMware, Inc. All Rights Reserved.
+# Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ class VolumeNamingTestCase(unittest.TestCase):
         """checks name parsing and error checks
         'volume[@datastore]' -> volume and datastore"""
         testInfo = [
-            #  [ full_name. expected_vol_name, expected_datastore_name,  expected_success? ]
+            #  [ full_name, expected_vol_name, expected_datastore_name,  expected_success? ]
             ["MyVolume123_a_.vol@vsanDatastore_11", "MyVolume123_a_.vol", "vsanDatastore_11", True],
             ["a1@x",                            "a1",                  "x",             True],
             ["a1",                              "a1",                  None,            True],
@@ -88,6 +88,7 @@ class VolumeNamingTestCase(unittest.TestCase):
                            "Just100Chars0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567", None, True],
             ["Volume.123@dots.dot",              "Volume.123",        "dots.dot",       True],
             ["simple_volume",                    "simple_volume",      None,            True],
+            ["spacesindatastore@local   .3 -   0", "spacesindatastore", "local   .3 -   0", True],
         ]
         for unit in testInfo:
             full_name, expected_vol_name, expected_ds_name, expected_result = unit

@@ -47,18 +47,18 @@ const (
 			$instanceId = $_
 			$uiNum = (
 				Get-PnpDeviceProperty -InstanceId $instanceId -KeyName 'DEVPKEY_Device_UINumber' |
-				Select -expand Data -erroraction 'silentlycontinue'
+				Select -Expand Data -ErrorAction 'SilentlyContinue'
 			)
 			$addr = (
 				Get-PnpDeviceProperty -InstanceId $instanceId -KeyName 'DEVPKEY_Device_Address' |
-				Select -expand Data -erroraction 'silentlycontinue'
+				Select -Expand Data -ErrorAction 'SilentlyContinue'
 			)
 			If ($uiNum -eq '%s' -And $addr -eq '%s') {
 				Write-Host ""
 				Get-WmiObject Win32_DiskDrive |
 				Where-Object { $_.PNPDeviceId -eq $instanceId } |
 				Select-Object -ExpandProperty Index
-				exit
+				Exit
 			}
 		}
 		Write-Host ""
@@ -100,7 +100,7 @@ const (
 				$diskNum = $_.DiskNumber
 				Remove-PartitionAccessPath -DiskNumber $diskNum -PartitionNumber 1 -AccessPath "%s"
 				Write-Host $diskNum
-				exit
+				Exit
 			}
 		}
 		Write-Host "DiskNotFound"
@@ -275,11 +275,11 @@ func GetMountInfo(mountRoot string) (map[string]string, error) {
 	log.WithFields(log.Fields{"out": string(out)}).Info("List mounts script executed")
 
 	for _, line := range strings.Split(string(out), lf) {
-		fields := strings.Fields(line)
+		fields := strings.SplitN(line, " ", 2)
 		if len(fields) < 2 {
 			continue // skip empty line and lines too short to have our mount
 		}
-		for _, path := range fields[1:] {
+		for _, path := range strings.SplitN(fields[1], `\ `, -1) {
 			path = filepath.Clean(path) // remove trailing slash
 			if filepath.Dir(path) == mountRoot {
 				volumeMountMap[filepath.Base(path)] = fields[0]
