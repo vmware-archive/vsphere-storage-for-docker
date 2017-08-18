@@ -91,3 +91,30 @@ vsphere
 ID                  NAME                DESCRIPTION         ENABLED
 ```
 
+## Upgrade Instructions
+
+The volume driver can be upgraded or reinstalled any time with no impact to the user data. User data in volumes existing before an upgrade of the volume driver is retained as it is and is accessible post an upgrade.
+
+Our volume managed plugin is taking care of the control path (management layer) and doesn't deal with data path. So during the upgrade process, only management related operations will be affected and data will be intact. Management operations like create/attach/detach/delete volume using driver may run into an error for the time being until the upgrade process is finished.
+If the plugin is removed while volume is still attached to a vm, then volume will remain attached.
+
+We do not require user to stop containers to do plugin upgrade.
+
+Similarly, no change in behavior of vmgroup operations is expected due to volume driver upgrade.
+
+An upgrade shouldn't have to always require un-install and install of both driver or plugin. At times only one may change.
+But it is recommended to stay on the latest same versions.
+
+ESX Driver upgrade:
+1. Uninstall VIB (driver)
+```esxcli software vib remove -n esx-vmdkops-service```
+2. Download and install the latest VIB from the vsphere-storage-for-docker release page
+```esxcli software vib install -v /<vib_name>.vib```
+
+To verify Admin CLI service for vDVS is running after upgrade, please run the command `/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status` and verify status is running.
+
+Plugin upgrade:
+1. Uninstall the managed plugin from the docker host
+```docker plugin rm -f <plugin name>```
+2. Install the latest release of vsphere-storage-for-docker managed plugin
+```docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest```
