@@ -20,9 +20,9 @@ package fs
 
 import (
 	"fmt"
-	"os/exec"
 
 	log "github.com/Sirupsen/logrus"
+	ps "github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/powershell"
 )
 
 const (
@@ -32,14 +32,15 @@ const (
 	// PowerShell script to register and wait for a Win32_DeviceChangeEvent.
 	// The script blocks until a Win32_DeviceChangeEvent occurs or the event times out.
 	devChangeWaitScript = `
-		Register-WmiEvent -Class Win32_DeviceChangeEvent -SourceIdentifier DeviceChangeEvent
-		$event = Wait-Event -SourceIdentifier DeviceChangeEvent -Timeout %d
+		Unregister-Event -SourceIdentifier DeviceChangeEvent -ErrorAction 'SilentlyContinue' -Force -Confirm:$false;
+		Register-WmiEvent -Class Win32_DeviceChangeEvent -SourceIdentifier DeviceChangeEvent;
+		$event = Wait-Event -SourceIdentifier DeviceChangeEvent -Timeout %d;
 		If ($event) {
-			Write-Host "DeviceChangeEvent"
+			Write-Host "DeviceChangeEvent";
 		}
 		Else {
-			Write-Host "EventTimedOut"
-		}
+			Write-Host "EventTimedOut";
+		};
 	`
 )
 
@@ -74,20 +75,23 @@ func (w *DeviceWatcher) Init() {
 // awaitEventAndEmit awaits and emits a device change event or an error.
 func (w *DeviceWatcher) awaitEventAndEmit() {
 	script := fmt.Sprintf(devChangeWaitScript, devChangeTimeoutSec)
-	out, err := exec.Command(powershell, script).CombinedOutput()
+	stdout, stderr, err := ps.Exec(script)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err, "out": string(out)}).Error("Failed to watch device event ")
+		log.WithFields(log.Fields{"err": err, "stdout": stdout,
+			"stderr": stderr}).Error("Failed to watch device event ")
 		select {
 		case w.Error <- err:
-			log.WithFields(log.Fields{"err": err, "out": string(out)}).Info("Successfully emitted error ")
+			log.WithFields(log.Fields{"err": err, "stdout": stdout,
+				"stderr": stderr}).Info("Successfully emitted error ")
 		default:
-			log.WithFields(log.Fields{"err": err, "out": string(out)}).Warn("Couldn't emit error, continuing.. ")
+			log.WithFields(log.Fields{"err": err, "stdout": stdout,
+				"stderr": stderr}).Warn("Couldn't emit error, continuing.. ")
 		}
 		return
 	}
 
-	log.WithFields(log.Fields{"out": string(out)}).Info("Watcher script executed ")
-	event := tailSegment(out, lf, 2)
+	log.WithFields(log.Fields{"stdout": stdout}).Info("Watcher script executed ")
+	event := tailSegment(stdout, lf, 2)
 	select {
 	case w.Event <- event:
 		log.WithFields(log.Fields{"event": event}).Info("Successfully emitted event ")

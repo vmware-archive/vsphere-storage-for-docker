@@ -19,60 +19,70 @@ package fs
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	ps "github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/powershell"
 )
 
 const (
 	// FstypeDefault specifies the default FS to be used when not specified by the user.
 	FstypeDefault = ntfs
 
-	maxDiskAttachWaitSec = 10 * time.Second // Max time to wait for a disk to be attached
-	ntfs                 = "ntfs"
-	powershell           = "powershell"
-	diskNotFound         = "DiskNotFound"
+	// maxDiskAttachWaitSec is the max time to wait for a disk to be attached.
+	// TODO: Reduce disk attach wait time once parallel disk identification is
+	// implemented. Currently, fs.getDiskNum(..) blocks during parallel execution
+	// due to synchronized access to ps.Exec(..). Therefore, parallel volume
+	// creation in e2e tests block in fs.DevAttachWait(..) for a while and so we
+	// allow a long delay here.
+	maxDiskAttachWaitSec = 60 * time.Second
+
+	ntfs         = "ntfs"
+	diskNotFound = "DiskNotFound"
 
 	// Using a PowerShell script here due to lack of a functional Go WMI library.
 	// PowerShell script to identify the disk number given a scsi controller
 	// number and a unit number. The script returns an integer if the disk was
 	// found, else it returns DiskNotFound.
 	scsiAddrToDiskNumScript = `
+		$found = $false;
 		Get-PnpDevice -FriendlyName 'VMware Virtual disk SCSI Disk Device' |
 		Select-Object -ExpandProperty InstanceId |
 		ForEach-Object {
-			$instanceId = $_
-			$uiNum = (
+			$instanceId = $_;
+			$uiNum = $(
 				Get-PnpDeviceProperty -InstanceId $instanceId -KeyName 'DEVPKEY_Device_UINumber' |
-				Select -Expand Data -ErrorAction 'SilentlyContinue'
-			)
-			$addr = (
+				Select -Expand Data -ErrorAction 'SilentlyContinue';
+			);
+			$addr = $(
 				Get-PnpDeviceProperty -InstanceId $instanceId -KeyName 'DEVPKEY_Device_Address' |
-				Select -Expand Data -ErrorAction 'SilentlyContinue'
-			)
+				Select -Expand Data -ErrorAction 'SilentlyContinue';
+			);
 			If ($uiNum -eq '%s' -And $addr -eq '%s') {
-				Write-Host ""
+				$found = $true;
+				Write-Host "";
 				Get-WmiObject Win32_DiskDrive |
 				Where-Object { $_.PNPDeviceId -eq $instanceId } |
-				Select-Object -ExpandProperty Index
-				Exit
-			}
-		}
-		Write-Host ""
-		Write-Host "DiskNotFound"
+				Select-Object -ExpandProperty Index;
+				Return;
+			};
+		};
+		If (-Not $found) {
+			Write-Host "";
+			Write-Host "DiskNotFound";
+		};
 	`
 
 	// PowerShell script to format a disk with a filesystem.
 	// Note: -Confirm:$false suppresses the confirmation prompt.
 	formatDiskScript = `
-		Set-Disk -Number %s -IsOffline $false
-		Set-Disk -Number %s -IsReadOnly $false
+		Set-Disk -Number %s -IsOffline $false;
+		Set-Disk -Number %s -IsReadOnly $false;
 		Initialize-Disk -Number %s -PartitionStyle MBR -PassThru |
 		New-Partition -UseMaximumSize |
-		Format-Volume -FileSystem %s -NewFileSystemLabel "%s" -Confirm:$false
+		Format-Volume -FileSystem %s -NewFileSystemLabel "%s" -Confirm:$false;
 	`
 
 	// mountListScript is a PowerShell script that lists disk numbers and their access paths.
@@ -81,29 +91,33 @@ const (
 	//   1 C:\Users\Administrator\AppData\Local\docker-volume-vsphere\mounts\volName\ \\?\Volume{145c5662-0000-0000-0000-100000000000}\
 	mountListScript = `
 		Get-Partition |
-		ForEach-Object { Write-Host $_.DiskNumber, $_.AccessPaths }
+		ForEach-Object { Write-Host $_.DiskNumber, $_.AccessPaths };
 	`
 
 	// mountDiskScript is a PowerShell script that sets the disk's mode to RO if
 	// needed, and then mounts its first partition at the given mountpoint.
 	mountDiskScript = `
-		Set-Disk -Number %s -IsReadOnly $%t
-		Add-PartitionAccessPath -DiskNumber %s -PartitionNumber 1 -AccessPath "%s"
+		Set-Disk -Number %s -IsReadOnly $%t;
+		Add-PartitionAccessPath -DiskNumber %s -PartitionNumber 1 -AccessPath "%s";
 	`
 
 	// unmountDiskScript is a PowerShell script that identifies the disk mounted
 	// at the given mountpoint, and then unmounts it.
 	unmountDiskScript = `
+		$found = $false;
 		Get-Partition |
 		ForEach-Object {
 			If ($_.AccessPaths -contains "%s") {
-				$diskNum = $_.DiskNumber
-				Remove-PartitionAccessPath -DiskNumber $diskNum -PartitionNumber 1 -AccessPath "%s"
-				Write-Host $diskNum
-				Exit
-			}
-		}
-		Write-Host "DiskNotFound"
+				$found = $true;
+				$diskNum = $_.DiskNumber;
+				Remove-PartitionAccessPath -DiskNumber $diskNum -PartitionNumber 1 -AccessPath "%s";
+				Write-Host $diskNum;
+				Return;
+			};
+		};
+		If (-Not $found) {
+			Write-Host "DiskNotFound";
+		};
 	`
 )
 
@@ -172,14 +186,14 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 	}
 
 	script := fmt.Sprintf(formatDiskScript, diskNum, diskNum, diskNum, fstype, label)
-	out, err := exec.Command(powershell, script).CombinedOutput()
+	stdout, stderr, err := ps.Exec(script)
 	if err != nil {
-		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "err": err, "out": string(out)}).Error("Format disk script failed ")
+		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev, "diskNum": diskNum,
+			"err": err, "stdout": stdout, "stderr": stderr}).Error("Format disk script failed ")
 		return err
 	} else {
-		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "out": string(out)}).Info("Format disk script executed successfully ")
+		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev, "diskNum": diskNum,
+			"stdout": stdout}).Info("Format disk script executed successfully ")
 		return nil
 	}
 }
@@ -194,16 +208,16 @@ func Mount(mountpoint string, fstype string, volDev *VolumeDevSpec, isReadOnly b
 	}
 
 	script := fmt.Sprintf(mountDiskScript, diskNum, isReadOnly, diskNum, mountpoint)
-	out, err := exec.Command(powershell, script).CombinedOutput()
+	stdout, stderr, err := ps.Exec(script)
 	if err != nil {
 		log.WithFields(log.Fields{"mountpoint": mountpoint, "fstype": fstype,
 			"volDev": *volDev, "isReadOnly": isReadOnly, "diskNum": diskNum,
-			"err": err, "out": string(out)}).Error("Failed to mount disk ")
+			"err": err, "stdout": stdout, "stderr": stderr}).Error("Failed to mount disk ")
 		return err
 	}
 
 	log.WithFields(log.Fields{"mountpoint": mountpoint, "fstype": fstype, "volDev": *volDev,
-		"isReadOnly": isReadOnly, "diskNum": diskNum}).Info("Disk successfully mounted ")
+		"isReadOnly": isReadOnly, "diskNum": diskNum, "stdout": stdout}).Info("Disk successfully mounted ")
 	return nil
 }
 
@@ -215,18 +229,18 @@ func Unmount(mountpoint string) error {
 	}
 
 	script := fmt.Sprintf(unmountDiskScript, mountpoint, mountpoint)
-	out, err := exec.Command(powershell, script).CombinedOutput()
+	stdout, stderr, err := ps.Exec(script)
 	if err != nil {
 		log.WithFields(log.Fields{"mountpoint": mountpoint, "err": err,
-			"out": string(out)}).Error("Failed to unmount disk ")
+			"stdout": stdout, "stderr": stderr}).Error("Failed to unmount disk ")
 		return err
-	} else if tailSegment(out, lf, 2) == diskNotFound {
+	} else if tailSegment(stdout, lf, 2) == diskNotFound {
 		msg := fmt.Sprintf("Failed to unmount disk from '%s'", mountpoint)
-		log.WithField("out", string(out)).Error(msg)
+		log.WithField("stdout", stdout).Error(msg)
 		return errors.New(msg)
 	}
 	log.WithFields(log.Fields{"mountpoint": mountpoint,
-		"out": string(out)}).Info("Disk unmounted ")
+		"stdout": stdout}).Info("Disk unmounted ")
 	return nil
 }
 
@@ -234,16 +248,16 @@ func Unmount(mountpoint string) error {
 // failing to identify the disk.
 func getDiskNum(volDev *VolumeDevSpec) (string, error) {
 	script := fmt.Sprintf(scsiAddrToDiskNumScript, volDev.ControllerPciSlotNumber, volDev.Unit)
-	out, err := exec.Command(powershell, script).CombinedOutput()
+	stdout, stderr, err := ps.Exec(script)
 	if err != nil {
-		log.WithFields(log.Fields{"volDev": *volDev,
-			"err": err, "out": string(out)}).Error("Failed to execute the disk mapping script ")
+		log.WithFields(log.Fields{"volDev": *volDev, "err": err, "stdout": stdout,
+			"stderr": stderr}).Error("Failed to execute the disk mapping script ")
 		return "", err
 	}
 	log.WithFields(log.Fields{"volDev": *volDev,
-		"out": string(out)}).Info("Disk mapping script executed ")
+		"stdout": stdout}).Info("Disk mapping script executed ")
 
-	diskNum := strings.Replace(tailSegment(out, lf, 2), cr, "", -1)
+	diskNum := strings.Replace(tailSegment(stdout, lf, 2), cr, "", -1)
 	if diskNum == diskNotFound {
 		msg := fmt.Sprintf("Could not identify disk for controller = %s, unit = %s",
 			volDev.ControllerPciSlotNumber, volDev.Unit)
@@ -256,8 +270,8 @@ func getDiskNum(volDev *VolumeDevSpec) (string, error) {
 }
 
 // tailSegment returns the nth to last segment of a string delimited with delim.
-func tailSegment(b []byte, delim string, n int) string {
-	segments := strings.Split(string(b), delim)
+func tailSegment(out string, delim string, n int) string {
+	segments := strings.Split(out, delim)
 	segment := segments[len(segments)-n]
 	return segment
 }
@@ -266,15 +280,15 @@ func tailSegment(b []byte, delim string, n int) string {
 func GetMountInfo(mountRoot string) (map[string]string, error) {
 	volumeMountMap := make(map[string]string)
 
-	out, err := exec.Command(powershell, mountListScript).CombinedOutput()
+	stdout, stderr, err := ps.Exec(mountListScript)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err,
-			"out": string(out)}).Error("Couldn't execute script to list mounts")
+		log.WithFields(log.Fields{"err": err, "stdout": stdout,
+			"stderr": stderr}).Error("Couldn't execute script to list mounts")
 		return volumeMountMap, err
 	}
-	log.WithFields(log.Fields{"out": string(out)}).Info("List mounts script executed")
+	log.WithFields(log.Fields{"stdout": stdout}).Info("List mounts script executed")
 
-	for _, line := range strings.Split(string(out), lf) {
+	for _, line := range strings.Split(stdout, lf) {
 		fields := strings.SplitN(line, " ", 2)
 		if len(fields) < 2 {
 			continue // skip empty line and lines too short to have our mount
