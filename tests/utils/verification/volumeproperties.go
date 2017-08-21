@@ -150,6 +150,22 @@ func GetSharedVolumeStatusHost(name, hostName string) string {
 	return out
 }
 
+// GetSharedVolumeGlobalRefcount - get the global refcount of a shared volume.
+// This is the number of host VMs on which the volume is presently mounted.
+// Input
+//          name:       name of the shared volume
+//          hostName:   host VM on which to check
+// Output
+//          string:     String containing global refcount
+func GetSharedVolumeGlobalRefcount(name, hostName string) string {
+	cmd := dockercli.InspectVolume +
+                " --format \"{{index .Status \\\"Global Refcount\\\"}}\" " +
+                name
+	log.Printf("GetSharedVolumeGlobalRefcount: cmd[]", cmd)
+	out, _ := ssh.InvokeCommand(hostName, cmd)
+	return out
+}
+
 // VerifyDetachedStatus - check if the status gets detached within the timeout.
 // The name of the volume MUST be a shorter name without @datastore suffix.
 // Use this util in test scenarios where the test expects instant change of status to detached.

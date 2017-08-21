@@ -66,6 +66,13 @@ func AttachVolume(ip, volName, containerName string) (string, error) {
 		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.TestContainer)
 }
 
+// AttachSharedVolume - attach a shared volume to container on given host
+func AttachSharedVolume(ip, volName, containerName string) (string, error) {
+	log.Printf("Attaching shared volume [%s] on VM [%s]\n", volName, ip)
+	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -d -v "+volName+
+		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.TestContainer)
+}
+
 // InspectVolume - fetch the named volume's properties
 func InspectVolume(ip, volName string) (string, error) {
 	log.Printf("Inspecting volume [%s] on VM [%s]\n", volName, ip)
