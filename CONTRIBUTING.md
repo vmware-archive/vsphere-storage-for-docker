@@ -360,16 +360,42 @@ cd jekyll-docs
 # 3. Build the jekyll site
 docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
 
-# 4. Remove the old site and copy the new one.
-rm -rvf ../documentation
+# 4. Archive the old site with release number xxx and copy the new one.
+mv ../documentation ../documentation-xxx
 mv _site ../documentation
 
-# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md 
+# 5.Search for "Edit me" text in ../documentation/index.html and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md 
 #Bug in jekyll template does not render the name "index"
 vi ../documentation/index.html 
 
 # 6. Push to GitHub
 git add documentation
+git commit
+git push origin gh-pages
+```
+
+To update vSphere Cloud Provider documentation
+
+```
+# 1. Checkout the gh-pages branch
+git checkout gh-pages
+
+# 2. Go to kubernetes-docs directory
+cd kubernetes-docs
+
+# 3. Build the jekyll site
+docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
+
+# 4. Archive the old site with release number xxx and copy the new one.
+mv ../kubernetes ../kubernetes-xxx
+mv _site ../kubernetes
+
+# 5.Search for "Edit me" text in ../kubernetes/index.html and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/kubernetes-docs//index.md 
+#Bug in jekyll template does not render the name "index"
+vi ../kubernetes/index.html 
+
+# 6. Push to GitHub
+git add kubernetes
 git commit
 git push origin gh-pages
 ```
