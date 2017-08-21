@@ -4,31 +4,31 @@
     <!-- esxcli extension syntax version -->
     <version>1.0.0</version>
     <namespaces>
-        <namespace path="storage.vdvs">
-            <description>Admin commands to manage volumes consumed by vdvs</description>
+        <namespace path="storage.guestvol">
+            <description>Admin commands to manage volumes consumed by containers running on guest VM </description>
         </namespace>
-        <namespace path="storage.vdvs.volume">
+        <namespace path="storage.guestvol.volume">
             <description>Manage vDVS volumes</description>
         </namespace>
-        <namespace path="storage.vdvs.policy">
+        <namespace path="storage.guestvol.policy">
             <description>Configure and display storage policy information</description>
         </namespace>
-        <namespace path="storage.vdvs.vmgroup">
+        <namespace path="storage.guestvol.vmgroup">
             <description>Administer and monitor volume access control</description>
         </namespace>
-        <namespace path="storage.vdvs.vmgroup.vm">
+        <namespace path="storage.guestvol.vmgroup.vm">
             <description>Add, removes, replaces and lists VMs in a vmgroup</description>
         </namespace>
-        <namespace path="storage.vdvs.vmgroup.access">
+        <namespace path="storage.guestvol.vmgroup.access">
             <description>Add or remove Datastore access and quotas for a vmgroup</description>
         </namespace>
-        <namespace path="storage.vdvs.config">
+        <namespace path="storage.guestvol.config">
             <description>Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]</description>
         </namespace>
     </namespaces>
     <commands>
         <!-- Volume commands -->
-        <command path="storage.vdvs.volume.ls">
+        <command path="storage.guestvol.volume.ls">
             <description>List volumes</description>
             <input-spec>
                 <parameter name="vmgroup" type="string" required="false">
@@ -85,9 +85,68 @@
                 <formatter>table</formatter>
                 <format-parameter name="fields:vdvs">Volume,Datastore,VMGroup,Capacity,Used,Filesystem,Policy,Disk Format,Attached-to,Access,Attach-as,Created By,Created Date</format-parameter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml volume ls $if{vmgroup, --vmgroup $val{vmgroup}}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml volume ls $if{vmgroup, --vmgroup '$val{vmgroup}'}</execute>
         </command>
-        <command path="storage.vdvs.volume.set">
+        <command path="storage.guestvol.volume.shortls">
+            <description>List volumes with limited information</description>
+            <input-spec>
+                <parameter name="vmgroup" type="string" required="false">
+                    <description>Displays volumes for a given vmgroup</description>
+                </parameter>
+            </input-spec>
+            <output-spec>
+                <list type="structure">
+                    <structure typeName="vdvs">
+                        <field name="Volume">
+                            <string/>
+                        </field>
+                        <field name="Datastore">
+                            <string/>
+                        </field>
+                        <field name="VMGroup">
+                            <string/>
+                        </field>
+                        <field name="Capacity">
+                            <string/>
+                        </field>
+                        <field name="Used">
+                            <string/>
+                        </field>
+                        <field name="Filesystem">
+                            <string/>
+                        </field>
+                        <field name="Policy">
+                            <string/>
+                        </field>
+                        <field name="Disk Format">
+                            <string/>
+                        </field>
+                        <field name="Attached-to">
+                            <string/>
+                        </field>
+                        <field name="Access">
+                            <string/>
+                        </field>
+                        <field name="Attach-as">
+                            <string/>
+                        </field>
+                        <field name="Created By">
+                            <string/>
+                        </field>
+                        <field name="Created Date">
+                            <string/>
+                        </field>
+                    </structure>
+                </list>
+            </output-spec>
+            <has-updates value="true"/>
+            <format-parameters>
+                <formatter>table</formatter>
+                <format-parameter name="fields:vdvs">Volume,Capacity,Disk Format,Attached-to</format-parameter>
+            </format-parameters>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml volume ls $if{vmgroup, --vmgroup '$val{vmgroup}'}</execute>
+        </command>
+        <command path="storage.guestvol.volume.set">
             <description>Edit settings for a given volume</description>
             <input-spec>
                 <parameter name="volume" type="string" required="true">
@@ -106,10 +165,10 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml volume set --vmgroup=$val{vmgroup} --volume=$val{volume} --options=$val{options}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml volume set --vmgroup='$val{vmgroup}' --volume='$val{volume}' --options=$val{options}</execute>
         </command>
         <!-- Policy commands -->
-        <command path="storage.vdvs.policy.create">
+        <command path="storage.guestvol.policy.create">
             <description>Create a storage policy</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -125,9 +184,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy create --name=$val{name} --content='$val{content}'</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy create --name='$val{name}' --content='$val{content}'</execute>
         </command>
-        <command path="storage.vdvs.policy.rm">
+        <command path="storage.guestvol.policy.rm">
             <description>Remove a storage policy</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -140,9 +199,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy rm --name=$val{name}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy rm --name='$val{name}'</execute>
         </command>
-        <command path="storage.vdvs.policy.ls">
+        <command path="storage.guestvol.policy.ls">
             <description>List storage policies and volumes using those policies</description>
             <input-spec></input-spec>
             <output-spec>
@@ -167,7 +226,7 @@
             </format-parameters>
             <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy ls</execute>
         </command>
-        <command path="storage.vdvs.policy.update">
+        <command path="storage.guestvol.policy.update">
             <description>Update the definition of a storage policy and all VSAN objects using that policy</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -183,10 +242,10 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy update --name=$val{name} --content='$val{content}'</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml policy update --name='$val{name}' --content='$val{content}'</execute>
         </command>
         <!-- vmgroup commands -->
-        <command path="storage.vdvs.vmgroup.create">
+        <command path="storage.guestvol.vmgroup.create">
             <description>Create a new vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -209,9 +268,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup create --name=$val{name} --default-datastore=$val{default-datastore} $if{description, --description='$val{description}}' $if{vm-list, --vm-list=$val{vm-list}} </execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup create --name='$val{name}' --default-datastore='$val{default-datastore}' $if{description, --description='$val{description}'} $if{vm-list, --vm-list=$val{vm-list}} </execute>
         </command>
-        <command path="storage.vdvs.vmgroup.update">
+        <command path="storage.guestvol.vmgroup.update">
             <description>Update a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -234,15 +293,15 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml  vmgroup update --name=$val{name} $if{new-name, --new-name=$val{new-name}} $if{description, --description='$val{description}}' $if{vm-list, --vm-list=$val{vm-list}}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml  vmgroup update --name='$val{name}' $if{new-name, --new-name='$val{new-name}'} $if{description, --description='$val{description}'} $if{vm-list, --vm-list=$val{vm-list}}  $if{default-datastore, --default-datastore='$val{default-datastore}'}</execute>
         </command>
-        <command path="storage.vdvs.vmgroup.rm">
+        <command path="storage.guestvol.vmgroup.rm">
             <description>Delete a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
                     <description>The name of the vmgroup</description>
                 </parameter>
-                <parameter name="remove-volumes" type="bool" required="false">
+                <parameter name="remove-volumes" type="flag" required="false">
                     <description>BE CAREFUL: Removes this vmgroup volumes when removing a vmgroup</description>
                 </parameter>
             </input-spec>
@@ -253,9 +312,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup rm --name=$val{name} $if{remove-volumes, --remove-volumes=$val{remove-volumes}}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup rm --name=$val{name} $if{remove-volumes, --remove-volumes}</execute>
         </command>
-        <command path="storage.vdvs.vmgroup.ls">
+        <command path="storage.guestvol.vmgroup.ls">
             <description>List vmgroups and the VMs they are applied to</description>
             <input-spec></input-spec>
             <output-spec>
@@ -287,7 +346,7 @@
             <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup ls</execute>
         </command>
         <!-- vmgroup vm commands -->
-        <command path="storage.vdvs.vmgroup.vm.add">
+        <command path="storage.guestvol.vmgroup.vm.add">
             <description>Add VM(s) to a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -304,9 +363,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm add --name=$val{name} --vm-list=$val{vm-list}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm add --name='$val{name}' --vm-list=$val{vm-list}</execute>
         </command>
-        <command path="storage.vdvs.vmgroup.vm.rm">
+        <command path="storage.guestvol.vmgroup.vm.rm">
             <description>Remove VM(s) from a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -323,9 +382,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm rm --name=$val{name} --vm-list=$val{vm-list}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm rm --name='$val{name}' --vm-list=$val{vm-list}</execute>
         </command>
-        <command path="storage.vdvs.vmgroup.vm.replace">
+        <command path="storage.guestvol.vmgroup.vm.replace">
             <description>Replace VM(s) for a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -342,9 +401,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm replace --name=$val{name} --vm-list=$val{vm-list}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm replace --name='$val{name}' --vm-list=$val{vm-list}</execute>
         </command>
-        <command path="storage.vdvs.vmgroup.vm.ls">
+        <command path="storage.guestvol.vmgroup.vm.ls">
             <description>list VMs in a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -368,10 +427,10 @@
                 <formatter>table</formatter>
                 <format-parameter name="fields:vdvs">Uuid, Name</format-parameter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm ls --name=$val{name}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup vm ls --name='$val{name}'</execute>
         </command>
         <!-- vmgroup access commands -->
-        <command path="storage.vdvs.vmgroup.access.add">
+        <command path="storage.guestvol.vmgroup.access.add">
             <description>Add a datastore access for a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -396,9 +455,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access add --name=$val{name} --datastore=$val{datastore} $if{allow-create, --allow-create} $if{volume-maxsize, --volume-maxsize=$val{volume-maxsize}} $if{volume-totalsize, --volume-totalsize=$val{volume-totalsize}} </execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access add --name='$val{name}' --datastore='$val{datastore}' $if{allow-create, --allow-create} $if{volume-maxsize, --volume-maxsize=$val{volume-maxsize}} $if{volume-totalsize, --volume-totalsize=$val{volume-totalsize}} </execute>
         </command>
-        <command path="storage.vdvs.vmgroup.access.set">
+        <command path="storage.guestvol.vmgroup.access.set">
             <description>Modify datastore access for a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -424,9 +483,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access set --name=$val{name} --datastore=$val{datastore} $if{allow-create, --allow-create=$val{allow-create}} $if{volume-maxsize, --volume-maxsize=$val{volume-maxsize}} $if{volume-totalsize, --volume-totalsize=$val{volume-totalsize}} </execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access set --name=$val{name} --datastore='$val{datastore}' $if{allow-create, --allow-create=$val{allow-create}} $if{volume-maxsize, --volume-maxsize=$val{volume-maxsize}} $if{volume-totalsize, --volume-totalsize=$val{volume-totalsize}} </execute>
         </command>
-        <command path="storage.vdvs.vmgroup.access.rm">
+        <command path="storage.guestvol.vmgroup.access.rm">
             <description>Remove datastore access for a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -443,9 +502,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access rm --name=$val{name} --datastore=$val{datastore}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access rm --name='$val{name}' --datastore='$val{datastore}'</execute>
         </command>
-        <command path="storage.vdvs.vmgroup.access.ls">
+        <command path="storage.guestvol.vmgroup.access.ls">
             <description>List access for a vmgroup</description>
             <input-spec>
                 <parameter name="name" type="string" required="true">
@@ -475,10 +534,10 @@
                 <formatter>table</formatter>
                 <format-parameter name="fields:vdvs">Datastore, Allow_create, Max_volume_size, Total_size</format-parameter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access ls --name=$val{name}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml vmgroup access ls --name='$val{name}'</execute>
         </command>
         <!-- vmgroup config commands -->
-        <command path="storage.vdvs.status">
+        <command path="storage.guestvol.status">
             <description>Status of vdvs service</description>
             <input-spec>
                 <parameter name="fast" type="flag" required="false">
@@ -493,7 +552,7 @@
             </format-parameters>
             <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml status $if{fast, --fast}</execute>
         </command>
-        <command path="storage.vdvs.config.init">
+        <command path="storage.guestvol.config.init">
             <description>Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]</description>
             <input-spec>
                 <parameter name="datastore" type="string" required="false">
@@ -512,9 +571,9 @@
             <format-parameters>
                 <formatter>simple</formatter>
             </format-parameters>
-            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml config init $if{datastore, --datastore=$val{datastore}} $if{local, --local} $if{force, --force}</execute>
+            <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml config init $if{datastore, --datastore='$val{datastore}'} $if{local, --local} $if{force, --force}</execute>
         </command>
-        <command path="storage.vdvs.config.rm">
+        <command path="storage.guestvol.config.rm">
             <description>Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]</description>
             <input-spec>
                 <parameter name="unlink" type="flag" required="false">
@@ -538,7 +597,7 @@
             </format-parameters>
             <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml config rm $if{local, --local} $if{unlink, --unlink} $if{no-backup, --no-backup} $if{confirm, --confirm}</execute>
         </command>
-        <command path="storage.vdvs.config.mv">
+        <command path="storage.guestvol.config.mv">
             <description>Relocate config file from its current location [NOT SUPPORTED YET]</description>
             <input-spec>
                 <parameter name="to" type="string" required="true">
@@ -556,7 +615,7 @@
             </format-parameters>
             <execute>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py --output-format=xml config mv --to=$val{to} $if{force, --force}</execute>
         </command>
-        <command path="storage.vdvs.config.status">
+        <command path="storage.guestvol.config.status">
             <description>Show the status of the Config DB</description>
             <input-spec></input-spec>
             <output-spec>

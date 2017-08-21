@@ -177,7 +177,7 @@ func (s *VsanTestSuite) TestDeleteVsanPolicyAlreadyInUse(c *C) {
 
 	out, err = admincli.RemovePolicy(s.config.EsxHost, adminclicon.PolicyName)
 	log.Printf("Remove vsanPolicy \"%s\" returns with %s", adminclicon.PolicyName, out)
-	c.Assert(out, Matches, "ERROR:Cannot remove.*", Commentf("vsanPolicy is still used by volumes and cannot be removed"))
+	c.Assert(out, Matches, "Cannot remove.*", Commentf("vsanPolicy is still used by volumes and cannot be removed"))
 
 	misc.LogTestEnd(c.TestName())
 

@@ -45,18 +45,19 @@ func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
 
 // GetVMAttachedToVolUsingAdminCli returns attached to vm field of volume using admin cli
 func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
-	cmd := admincli.ListVolumes + "-c volume,attached-to 2>/dev/null | grep " + volName
+	cmd := admincli.ShortListVolumes + " 2>/dev/null | grep " + volName
 	op, _ := ssh.InvokeCommand(hostname, cmd)
 	volProps := strings.Fields(op)
 	if op == "" {
 		log.Printf("Null value is returned by admin cli when looking for attached to vm field for volume %s ", volName)
 		return op
 	}
-	if len(volProps) != 2 {
-		log.Fatalf("Admin cli output is expected to consist of two elements only - "+
-			"volume name and attached-to-vm status. Actual output %s ", op)
+	if len(volProps) != 4 {
+		log.Fatalf("Admin cli volume shortls output is expected to consist of four elements only"+
+			"Actual output %s ", op)
 	}
-	return volProps[1]
+	// Fourth string is the attached VM name
+	return volProps[3]
 }
 
 // CheckVolumeAvailability returns true if the given volume is available
@@ -222,7 +223,7 @@ func GetAssociatedPolicyName(hostname string, volName string) (string, error) {
 // GetVMGroupForVolume returns vmgroup field of volume using admin cli
 // If the volume does not exist, err will be filled with "exit status 1"
 func GetVMGroupForVolume(hostName string, volName string) (string, error) {
-	cmd := admincli.ListVolumes + "-c volume,vmgroup 2>/dev/null | grep " + volName
+	cmd := admincli.ListVolumes + " 2>/dev/null | awk -v OFS='\t' '{print $1, $3}' | grep " + volName
 	op, err := ssh.InvokeCommand(hostName, cmd)
 	if err != nil {
 		log.Printf("GetVMGroupForVolume return with err: %s", err.Error())

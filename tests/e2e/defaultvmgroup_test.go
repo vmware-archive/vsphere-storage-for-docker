@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	vgErrorMsg = "ERROR:This feature is not supported for vmgroup _DEFAULT."
+	vgErrorMsg = "This feature is not supported for vmgroup _DEFAULT."
 )
 
 type DefaultVMGroupTestSuite struct {
