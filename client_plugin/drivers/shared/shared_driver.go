@@ -217,12 +217,6 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	return statusMap, nil
 }
 
-// UnmountVolume - Unmounts the volume and then requests detach
-func (d *VolumeDriver) UnmountVolume(name string) error {
-	log.Errorf("VolumeDriver UnmountVolume to be implemented")
-	return nil
-}
-
 // Create - create a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.Infof("VolumeDriver Create: %s", r.Name)
@@ -603,8 +597,82 @@ func (d *VolumeDriver) mountSharedVolume(volName string, mountpoint string, volR
 func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
-	log.Errorf("VolumeDriver Unmount to be implemented")
+	// lock the state
+	d.RefCounts.StateMtx.Lock()
+	defer d.RefCounts.StateMtx.Unlock()
+
+	if d.RefCounts.IsInitialized() != true {
+		// if refcounting hasn't been succesful,
+		// no refcounting, no unmount. All unmounts are delayed
+		// until we succesfully populate the refcount map
+		d.RefCounts.MarkDirty()
+		return volume.Response{Err: ""}
+	}
+
+	return d.processUnmount(r)
+}
+
+// processUnMount -  process a unmount request
+func (d *VolumeDriver) processUnmount(r volume.UnmountRequest) volume.Response {
+	if fullVolName, exist := d.MountIDtoName[r.ID]; exist {
+		r.Name = fullVolName
+		delete(d.MountIDtoName, r.ID) //cleanup the map
+	} else {
+		msg := fmt.Sprintf("Unable to find volume %v.", r.Name)
+		return volume.Response{Err: msg}
+	}
+
+	// if refcount has been succcessful, Normal flow
+	// if the volume is still used by other containers, just return OK
+	refcnt, err := d.DecrRefCount(r.Name)
+	if err != nil {
+		// something went wrong - yell, but still try to unmount
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Error("Refcount error - still trying to unmount...")
+	}
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
+	if refcnt >= 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Still in use, skipping unmount request. ")
+		return volume.Response{Err: ""}
+	}
+
+	// and if nobody needs it, unmount and detach
+	err = d.UnmountVolume(r.Name)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": r.Name, "error": err.Error()},
+		).Error("Failed to unmount ")
+		return volume.Response{Err: err.Error()}
+	}
 	return volume.Response{Err: ""}
+}
+
+// UnmountVolume - Request detach and then unmount the volume.
+func (d *VolumeDriver) UnmountVolume(name string) error {
+	mountpoint := d.GetMountPoint(name)
+	err := fs.Unmount(mountpoint)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"mountpoint": mountpoint, "error": err},
+		).Error("Failed to unmount volume. Now trying to detach... ")
+		// Do not return error. Continue with detach.
+	}
+
+	// Decrease GRef
+	log.Infof("Before AtomicDecr")
+	err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": err},
+		).Error("Failed to derease global refcount when processUnmount ")
+		return err
+	}
+
+	return nil
 }
 
 // Capabilities - Report plugin scope to Docker

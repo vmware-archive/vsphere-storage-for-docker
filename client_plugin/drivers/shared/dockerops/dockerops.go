@@ -25,14 +25,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/docker/engine-api/client"
 	dockerTypes "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/swarm"
-	"io"
-	"os"
-	"time"
 )
 
 const (
@@ -65,6 +66,8 @@ const (
 	sambaRequestTimeout = 30 * time.Second
 	// Prefix for internal volume names
 	internalVolumePrefix = "InternalVol"
+	// Error returned when no Samba service for that volume exists
+	noSambaServiceError = "No file service exists"
 )
 
 // DockerOps is the interface for docker host related operations
@@ -341,6 +344,43 @@ func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32,
 	return port, true
 }
 
+// getServiceIDAndPort - return the file service ID and port for given volume
+// Input
+//      volName: Volume for which the service was run.
+// Output
+//		string:  service ID
+//      uint32:  Port number of overlay networking which is open on
+//               every host VM and on which the service container
+//               listens.
+//      error:   error returned when it can not can service ID and port number
+func (d *DockerOps) getServiceIDAndPort(volName string) (string, uint32, error) {
+	// Grep the samba service running using service name
+	serviceName := volName + serviceNamePostfix
+	serviceFilters := filters.NewArgs()
+	serviceFilters.Add("name", serviceName)
+	services, err := d.Dockerd.ServiceList(context.Background(),
+		dockerTypes.ServiceListOptions{Filter: serviceFilters})
+	if err != nil {
+		msg := fmt.Sprintf("Failed to find service %v. %v", volName, err)
+		log.Warningf(msg)
+		return "", 0, errors.New(msg)
+	}
+	if len(services) < 1 {
+		msg := fmt.Sprintf("No service returned with name %s.", volName)
+		log.Warningf(msg)
+		return "", 0, errors.New(noSambaServiceError)
+	}
+
+	port := services[0].Endpoint.Ports[0].PublishedPort
+	if port == 0 {
+		msg := fmt.Sprintf("Bad port number assigned to file service for volume %s", volName)
+		log.Warning(msg)
+		return "", 0, errors.New(msg)
+	}
+
+	return services[0].ID, port, nil
+}
+
 // StopSMBServer - Stop SMB server
 // The return values are just to maintain parity with StartSMBServer()
 // as both these functions are passed to a nested function as args.
@@ -354,8 +394,42 @@ func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32,
 //      bool:    The result of the operation. True if the service was
 //               successfully stopped.
 func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
-	log.Errorf("stopSMBServer to be implemented")
-	return 0, "", true
+	serviceID, _, err := d.getServiceIDAndPort(volName)
+	if err != nil {
+		return 0, "", false
+	}
+
+	//Stop the service
+	err = d.Dockerd.ServiceRemove(context.Background(), serviceID)
+	if err != nil {
+		log.Warningf("Failed to remove file server for volume %s. Reason: %v",
+			volName, err)
+		return 0, "", false
+	}
+
+	// Wait till service container stops
+	ticker := time.NewTicker(checkDuration)
+	defer ticker.Stop()
+	timer := time.NewTimer(sambaRequestTimeout)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			log.Infof("Checking status of file server container...")
+			serviceID, _, err := d.getServiceIDAndPort(volName)
+			if err != nil && err.Error() != noSambaServiceError {
+				return 0, "", false
+			}
+			// service is removed successfully
+			if serviceID == "" {
+				return 0, "", true
+			}
+		case <-timer.C:
+			log.Warningf("Timeout reached while waiting for file server container for volume %s to stop",
+				volName)
+			return 0, "", false
+		}
+	}
 }
 
 // loadFileServerImage - Load the file server image present
