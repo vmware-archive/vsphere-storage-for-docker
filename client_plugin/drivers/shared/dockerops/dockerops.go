@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -42,7 +43,7 @@ const (
 	// dockerUSocket: Unix socket on which Docker engine is listening
 	dockerUSocket = "unix:///var/run/docker.sock"
 	// Postfix added to names of Samba services for volumes
-	serviceNamePostfix = "fileServer"
+	serviceNamePrefix = "vSharedServer"
 	// Path where the file server image resides in plugin
 	fileServerPath = "/usr/lib/vmware/samba.tar"
 	// Driver for the network which Samba services will use
@@ -62,6 +63,8 @@ const (
 	// Time between successive checks for Samba service
 	// status to see if service container was launched
 	checkDuration = 5 * time.Second
+	// Time between successive checks for deleting a volume
+	checkSleepDuration = time.Second
 	// Timeout to mark Samba service launch as unsuccessful
 	sambaRequestTimeout = 30 * time.Second
 	// Prefix for internal volume names
@@ -193,7 +196,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 	var options dockerTypes.ServiceCreateOptions
 
 	// Name of the service
-	service.Name = volName + serviceNamePostfix
+	service.Name = serviceNamePrefix + volName
 	// The Docker image to run in this service
 	service.TaskTemplate.ContainerSpec.Image = sambaImageName
 
@@ -279,7 +282,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 			log.Infof("Checking status of file server container...")
 			port, isRunning := d.isFileServiceRunning(resp.ID, volName)
 			if isRunning {
-				return int(port), volName + serviceNamePostfix, isRunning
+				return int(port), serviceNamePrefix + volName, isRunning
 			}
 		case <-timer.C:
 			log.Warningf("Timeout reached while waiting for file server container for volume %s",
@@ -355,7 +358,7 @@ func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32,
 //      error:   error returned when it can not can service ID and port number
 func (d *DockerOps) getServiceIDAndPort(volName string) (string, uint32, error) {
 	// Grep the samba service running using service name
-	serviceName := volName + serviceNamePostfix
+	serviceName := serviceNamePrefix + volName
 	serviceFilters := filters.NewArgs()
 	serviceFilters.Add("name", serviceName)
 	services, err := d.Dockerd.ServiceList(context.Background(),
@@ -379,6 +382,84 @@ func (d *DockerOps) getServiceIDAndPort(volName string) (string, uint32, error) 
 	}
 
 	return services[0].ID, port, nil
+}
+
+// ListVolumesFromServices - List shared volumes according to current docker services
+func (d *DockerOps) ListVolumesFromServices() ([]string, error) {
+	var volumes []string
+	// Get all the samba service for vShared plugin
+	filter := filters.NewArgs()
+	filter.Add("name", serviceNamePrefix)
+	services, err := d.Dockerd.ServiceList(context.Background(),
+		dockerTypes.ServiceListOptions{Filter: filter})
+	if err != nil {
+		log.Errorf("Failed to get a list of docker services. Error: %v", err)
+		return volumes, err
+	}
+
+	for _, service := range services {
+		volumes = append(volumes,
+			strings.TrimPrefix(service.Spec.Name, serviceNamePrefix))
+	}
+
+	return volumes, nil
+}
+
+// ListVolumesFromInternalVol - List shared volumes according to current internal volumes
+func (d *DockerOps) ListVolumesFromInternalVol() ([]string, error) {
+	var volumes []string
+	filter := filters.NewArgs()
+	filter.Add("name", internalVolumePrefix)
+	volumeResponse, err := d.Dockerd.VolumeList(context.Background(),
+		filter)
+	if err != nil {
+		log.Errorf("Failed to get a list of internal volumes. Error: %v", err)
+		return volumes, err
+	}
+
+	for _, volume := range volumeResponse.Volumes {
+		volumes = append(volumes,
+			strings.TrimPrefix(volume.Name, internalVolumePrefix))
+	}
+
+	return volumes, nil
+}
+
+// DeleteVolume - delete the internal volume
+func (d *DockerOps) DeleteInternalVolume(volName string) {
+	internalVolname := internalVolumePrefix + volName
+	ticker := time.NewTicker(checkSleepDuration)
+	defer ticker.Stop()
+	// timeout set to sambaRequestTimeout because the internal volume maybe
+	// still in use due to stop of SMB server in progress
+	timer := time.NewTimer(sambaRequestTimeout)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			err := d.VolumeRemove(internalVolname)
+			if err != nil {
+				msg := fmt.Sprintf("Failed to remove internal volume for volume %s. Reason: %v.",
+					volName, err)
+
+				err = d.VolumeInspect(internalVolname)
+				if err != nil {
+					msg += fmt.Sprintf(" Failed to inspect internal volume. Error: %v.", err)
+					log.Warningf(msg)
+					return
+				}
+				// volume exists, continue waiting and retry removing
+				msg += fmt.Sprintf(" Internal volume still in use. Wait and retry before timeout.")
+				log.Warningf(msg)
+			}
+		case <-timer.C:
+			// The deletion of internal volume will be handled by garbage collector
+			log.Warningf("Timeout to remove internal volume for volume %s.",
+				volName)
+			return
+		}
+	}
 }
 
 // StopSMBServer - Stop SMB server

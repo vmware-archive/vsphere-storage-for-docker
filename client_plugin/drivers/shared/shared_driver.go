@@ -332,7 +332,7 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 		string(kvstore.VolStateDeleting)) {
 		// Failed to change state from Ready to Deleting
 		// 1. Volume is in Mounted state -> get clients and return error
-		// 2. Volume is already in Deleting state and timeout -> continue delete
+		// 2. Volume is already in Deleting/Error/Creating/Unmounting and timeout -> continue delete
 		// 3. Volume is in other states -> return error
 
 		// Get a list of host VMs using this volume, if any
@@ -350,11 +350,18 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 		state := entries[0].Value
 		switch state {
 		case string(kvstore.VolStateDeleting):
-			msg = fmt.Sprintf("Volume already in deleting state after timeout. Continue deleting")
-			log.Warningf(msg)
+			log.Warningf("Remove: volume in Deleting state after timeout. Continue deleting.")
 		case string(kvstore.VolStateError):
-			msg = fmt.Sprintf("Volume in error state. Continue deleting")
-			log.Warningf(msg)
+		case string(kvstore.VolStateCreating):
+		case string(kvstore.VolStateUnmounting):
+			log.Warningf("Remove: volume in %s state after timeout. Continue deleting", state)
+			if !d.kvStore.CompareAndPut(kvstore.VolPrefixState+r.Name,
+				state, string(kvstore.VolStateDeleting)) {
+				msg = fmt.Sprintf("Remove: Volume state changed unexpected. Please retry later")
+				log.Errorf(msg)
+				return volume.Response{Err: msg}
+
+			}
 		case string(kvstore.VolStateMounted):
 			// Unmarshal Info key
 			err = json.Unmarshal([]byte(entries[1].Value), &volRecord)
@@ -378,26 +385,11 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 
 	// Delete internal volume
 	log.Infof("Attempting to delete internal volume for %s", r.Name)
-	internalVolname := internalVolumePrefix + r.Name
-	err := d.dockerOps.VolumeRemove(internalVolname)
-	if err != nil {
-		msg = fmt.Sprintf("Failed to remove internal volume from driver \"%s\" for volume %s. Reason: %v.",
-			d.internalVolumeDriver, r.Name, err)
-
-		// check the internal volume state:
-		err = d.dockerOps.VolumeInspect(internalVolname)
-		if err == nil {
-			// volume exists, return error to stop deleting
-			return volume.Response{Err: msg}
-		}
-		msg += fmt.Sprintf(" Failed to inspect internal volume too. Error: %v.", err)
-		msg += fmt.Sprintf(" Continue delete the metadata.")
-		log.Warningf(msg)
-	}
+	d.dockerOps.DeleteInternalVolume(r.Name)
 
 	// Delete metadata associated with this volume
 	log.Infof("Attempting to delete volume metadata for %s", r.Name)
-	err = d.kvStore.DeleteMetaData(r.Name)
+	err := d.kvStore.DeleteMetaData(r.Name)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete volume metadata for %s. Reason: %v", r.Name, err)
 		return volume.Response{Err: msg}

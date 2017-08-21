@@ -45,6 +45,7 @@ import (
    requestTimeout:             After how long should an etcd request timeout
    checkSleepDuration:         How long to wait in any busy waiting situation
                                before checking again
+   gcTicker:                   ticker for garbage collector to run a collection
    etcdClientCreateError:      Error indicating failure to create etcd client
    etcdSingleRef:              if global refcount 0 -> 1, start SMB server
    etcdNoRef:                  if global refcount 1 -> 0, shut down SMB server
@@ -59,6 +60,7 @@ const (
 	etcdClusterStateExisting = "existing"
 	requestTimeout           = 5 * time.Second
 	checkSleepDuration       = time.Second
+	gcTicker                 = 30 * time.Second
 	etcdClientCreateError    = "Failed to create etcd client"
 	etcdSingleRef            = "1"
 	etcdNoRef                = "0"
@@ -312,6 +314,7 @@ func (e *EtcdKVS) checkLocalEtcd() error {
 				).Warningf("Failed to get ETCD client, retry before timeout ")
 			} else {
 				go e.etcdWatcher(cli)
+				go e.serviceAndVolumeGC(cli)
 				return nil
 			}
 		case <-timer.C:
@@ -328,6 +331,63 @@ func (e *EtcdKVS) etcdWatcher(cli *etcdClient.Client) {
 	for wresp := range watchCh {
 		for _, ev := range wresp.Events {
 			e.etcdEventHandler(ev)
+		}
+	}
+}
+
+// serviceAndVolumeGC: garbage collector for orphan services or volumes
+func (e *EtcdKVS) serviceAndVolumeGC(cli *etcdClient.Client) {
+	ticker := time.NewTicker(gcTicker)
+	quit := make(chan struct{})
+
+	for {
+		select {
+		case <-ticker.C:
+			// find all the vShared volume services
+			volumesToVerify, err := e.dockerOps.ListVolumesFromServices()
+			if err != nil {
+				log.Warningf("Failed to get vShared volumes according to docker services")
+			} else {
+				e.cleanOrphanServiceAndVolume(volumesToVerify, true)
+			}
+
+			// find all the internal volumes for vShared volume
+			volumesToVerify, err = e.dockerOps.ListVolumesFromInternalVol()
+			if err != nil {
+				log.Warningf("Failed to get internal volumes from docker")
+			} else {
+				e.cleanOrphanServiceAndVolume(volumesToVerify, false)
+			}
+		case <-quit:
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+// trimVolName: trim the volume name if there is special split characters existing in the name
+func trimVolName(volName string) string {
+	// Currently we only take @ as the split character
+	// TODO: need to take care of volumes with same name but on different datastores
+	s := strings.Split(volName, "@")
+	return s[0]
+}
+
+// cleanOrphanServiceAndVolume: stop orphan services and delete orphan internal volumes
+func (e *EtcdKVS) cleanOrphanServiceAndVolume(volumesToVerify []string, stopService bool) {
+	volStates := e.kvMapFromPrefix(string(kvstore.VolPrefixState))
+	for _, volName := range volumesToVerify {
+		volName = trimVolName(volName)
+		state, found := volStates[string(kvstore.VolPrefixState)+volName]
+		if !found ||
+			state == string(kvstore.VolStateDeleting) {
+			if stopService {
+				log.Warningf("The service for vShared volume %s needs to be shutdown.", volName)
+				e.dockerOps.StopSMBServer(volName)
+			}
+
+			log.Warningf("The internal volume of vShared volume %s needs to be removed.", volName)
+			e.dockerOps.DeleteInternalVolume(volName)
 		}
 	}
 }
@@ -646,6 +706,32 @@ func (e *EtcdKVS) List(prefix string) ([]string, error) {
 	}
 
 	return keys, nil
+}
+
+// kvMapFromPrefix -  Create key-value pairs according to a given prefix
+func (e *EtcdKVS) kvMapFromPrefix(prefix string) map[string]string {
+	m := make(map[string]string)
+
+	client := e.createEtcdClient()
+	if client == nil {
+		log.Errorf(etcdClientCreateError)
+		return nil
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	resp, err := client.Get(ctx, prefix, etcdClient.WithPrefix(),
+		etcdClient.WithSort(etcdClient.SortByKey, etcdClient.SortDescend))
+	cancel()
+	if err != nil {
+		return nil
+	}
+
+	for _, ev := range resp.Kvs {
+		m[string(ev.Key)] = string(ev.Value)
+	}
+
+	return m
 }
 
 // WriteMetaData - Update or Create metadata in KV store
