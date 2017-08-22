@@ -27,4 +27,4 @@ Creating snapshots of a VM which has containers running is not supported.
 
 User created vmgroup is not supported with SRM.
 
-- SRM does not replicate the vmgroup configuration to the recovery site. As a result, after disaster recovery finishes, all VMs that were part of user created vmgroup will loose access to volumes of user created vmgroup. Those VMs now become part of `_DEFAULT` vmgroup and will have access to volumes of `_DEFAULT` vmgroup - in short, VMs loose the volumes that were part of user created vmgroup and gain access to volumes of `_DEFAULT vmgroup`. [#1786](https://github.com/vmware/docker-volume-vsphere/issues/1786)
+- SRM does not replicate the vmgroup configuration to the recovery site. As a result, after disaster recovery finishes, all VMs that were part of user created vmgroup will lose access to volumes of user created vmgroup. Those VMs now become part of `_DEFAULT` vmgroup and will have access to volumes of `_DEFAULT` vmgroup - in short, VMs lose the volumes that were part of user created vmgroup and gain access to volumes of `_DEFAULT vmgroup`. [#1786](https://github.com/vmware/docker-volume-vsphere/issues/1786)
