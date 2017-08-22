@@ -842,6 +842,7 @@ def parse_vol_name(full_vol_name):
             raise ValidationError("Volume name contains illegal characters: {0}".format(c))
 
     # Check if the datastore name is too long
+    logging.info("DS name: %s", ds_name)
     if ds_name:
         if len(ds_name) > MAX_DS_NAME_LEN:
             raise ValidationError("Datastore name is too long (max len is {0})".format(MAX_DS_NAME_LEN))
