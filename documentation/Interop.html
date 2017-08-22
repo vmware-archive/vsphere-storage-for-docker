@@ -450,6 +450,14 @@ $('#toc').on('click', 'a', function() {
   <li>If a container is running and a snapshot is taken then if the container exits, the volume is not detached. VC shows an error that the volume is part of a snapshot and hence can’t be removed from the VM config. For this reason, snapshotting a VM after starting one or more containers isn’t supported as it leaves the volume attached to the VM. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1649">#1649</a></li>
 </ul>
 
+<p><strong>Site Recovery Manager[SRM]</strong></p>
+
+<p>User created vmgroup is not supported with SRM.</p>
+
+<ul>
+  <li>SRM does not replicate the vmgroup configuration to the recovery site. As a result, after disaster recovery finishes, all VMs that were part of user created vmgroup will lose access to volumes of user created vmgroup. Those VMs now become part of <code class="highlighter-rouge">_DEFAULT</code> vmgroup and will have access to volumes of <code class="highlighter-rouge">_DEFAULT</code> vmgroup - in short, VMs lose the volumes that were part of user created vmgroup and gain access to volumes of <code class="highlighter-rouge">_DEFAULT vmgroup</code>. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1786">#1786</a></li>
+</ul>
+
   
 
     <div class="tags">
@@ -466,7 +474,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 21, 2017 <br />
+ Site last generated: Aug 22, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
