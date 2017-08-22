@@ -56,6 +56,11 @@ esxcli software vib install -v /tmp/<vib_name>.vib
 
 Make sure you provide the **absolute path** to the `.vib` file or the install will fail.
 
+**Note**: To make admin commandset available on ESX host, please restart hostd after vib installation.
+```
+/etc/init.d/hostd restart
+```
+
 ### On Docker Host (VM)
 #### Managed Plugin
 1. Please make sure to uninstall older releases of DEB/RPM using following commands.
@@ -97,7 +102,7 @@ $ docker volume rm MyVolume
 
 ## Using ESXi Admin CLI
 ```
-$ /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
+$ esxcli storage guestvol volume ls
 ```
 
 ## Logging
