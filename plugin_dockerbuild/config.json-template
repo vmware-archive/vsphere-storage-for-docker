@@ -1,5 +1,5 @@
 {
-	"Description": "VMWare vSphere Docker Volume plugin",
+	"Description": "VMWare %NAME% Docker Volume plugin",
 	"Documentation": "http://vmware.github.io/docker-volume-vsphere/documentation",
 	"Entrypoint": ["/usr/bin/%BINARY%",
 					"--config", "/etc/%BINARY%.conf"

@@ -37,7 +37,7 @@ SCRIPTS     := ../misc/scripts
 
 # Packaging variables
 PLUGNAME  := docker-volume-vsphere
-SHARED_PLUGNAME  := vsphere-shared
+VFILE_PLUGNAME  := vfile
 GOPATH_PLUGNAME := $(PLUGNAME)/client_plugin
 INSTRUMENTED_PLUGIN_BIN := vdvs-instrumented
 GOPATH_ORG :=vmware
@@ -70,7 +70,7 @@ VMCI_SRC    := $(ESX_SRC)/vmci/*.h $(ESX_SRC)/vmci/vmci_client.c
 
 #  binaries location
 PLUGIN_BIN = $(BIN)/$(PLUGNAME)
-SHARED_PLUGIN_BIN = $(BIN)/$(SHARED_PLUGNAME)
+VFILE_PLUGIN_BIN = $(BIN)/$(VFILE_PLUGNAME)
 
 # all binaries for VMs - plugin and tests
 # PLUGIN_BIN - vDVS plugin binary
@@ -78,7 +78,7 @@ SHARED_PLUGIN_BIN = $(BIN)/$(SHARED_PLUGNAME)
 # $(BIN)/$(PLUGNAME).test - Running sanity test
 # $(BIN)/$(INSTRUMENTED_PLUGIN_BIN) - Instrumented vDVS plugin binary for capturing code coverage
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test $(BIN)/$(INSTRUMENTED_PLUGIN_BIN)
-SHARED_VM_BINS = $(SHARED_PLUGIN_BIN)
+VFILE_VM_BINS = $(VFILE_PLUGIN_BIN)
 
 VIBFILE := vmware-esx-vmdkops-$(PKG_VERSION).vib
 VIB_BIN := $(BIN)/$(VIBFILE)
@@ -106,9 +106,9 @@ COMMON_SRC = utils/log_formatter/log_formatter.go \
 VMDK_PLUGIN_SRC = vmdk_plugin/main.go vmdk_plugin/main_linux.go \
 	drivers/photon/photon_driver.go drivers/vmdk/vmdk_driver.go
 
-SHARED_PLUGIN_SRC = shared_plugin/main.go drivers/shared/shared_driver.go \
-	drivers/shared/kvstore/kvstore.go drivers/shared/kvstore/etcdops/etcdops.go \
-	drivers/shared/dockerops/dockerops.go
+VFILE_PLUGIN_SRC = vfile_plugin/main.go drivers/vfile/vfile_driver.go \
+	drivers/vfile/kvstore/kvstore.go drivers/vfile/kvstore/etcdops/etcdops.go \
+	drivers/vfile/dockerops/dockerops.go
 
 TEST_SRC = ../tests/utils/inputparams/testparams.go
 
@@ -122,7 +122,7 @@ define log_target
 endef
 
 # The default build is using a prebuilt docker image that has all dependencies.
-.PHONY: dockerbuild build-all dockerbuild-shared
+.PHONY: dockerbuild build-all dockerbuild-vfile
 build-all: dockerbuild package
 
 dockerbuild:
@@ -130,9 +130,9 @@ dockerbuild:
 	$(BUILD) pylint
 	$(BUILD) build
 
-dockerbuild-shared:
+dockerbuild-vfile:
 	@$(CHECK) dockerbuild
-	$(BUILD) build-shared
+	$(BUILD) build-vfile
 
 # The non docker build.
 .PHONY: build pylint
@@ -140,7 +140,7 @@ build: prereqs .code_verify $(VM_BINS)
 	$(MAKE)  --directory=$(ESX_SRC) $@
 pylint:
 	$(MAKE)  --directory=$(ESX_SRC) $@
-build-shared: prereqs .code_verify $(SHARED_VM_BINS)
+build-vfile: prereqs .code_verify $(VFILE_VM_BINS)
 
 .PHONY: gvt
 gvt:
@@ -164,9 +164,9 @@ $(BIN)/$(VMDKOPS_TEST_MODULE).test: $(VMDKOPS_MODULE_SRC) $(TEST_SRC) $(VMDKOPS_
 $(BIN)/$(PLUGNAME).test: $(COMMON_SRC) $(VMDK_PLUGIN_SRC) $(TEST_SRC) $(VMDK_PLUGIN_TEST_SRC)
 	$(GO) test -c -o $@ $(PLUGIN)/vmdk_plugin -cover -tags sanity
 
-$(SHARED_PLUGIN_BIN): $(COMMON_SRC) $(SHARED_PLUGIN_SRC)
+$(VFILE_PLUGIN_BIN): $(COMMON_SRC) $(VFILE_PLUGIN_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
-	$(GO) build --ldflags '-extldflags "-static"' -o $(SHARED_PLUGIN_BIN) $(PLUGIN)/shared_plugin
+	$(GO) build --ldflags '-extldflags "-static"' -o $(VFILE_PLUGIN_BIN) $(PLUGIN)/vfile_plugin
 
 # vDVS binary to capture code coverage
 $(BIN)/$(INSTRUMENTED_PLUGIN_BIN): $(COMMON_SRC) $(VMDKOPS_MODULE_SRC) $(VMDK_PLUGIN_TEST_SRC)
@@ -183,8 +183,8 @@ clean-as-root: pkg-post
 
 # GO Code quality checks.
 
-DIRS_TO_VERIFY := vmdk_plugin shared_plugin \
-	utils/fs utils/config drivers/photon drivers/vmdk drivers/shared drivers/vmdk/vmdkops ../tests/e2e \
+DIRS_TO_VERIFY := vmdk_plugin vfile_plugin \
+	utils/fs utils/config drivers/photon drivers/vmdk drivers/vfile drivers/vmdk/vmdkops ../tests/e2e \
 	../tests/utils/dockercli ../tests/utils/inputparams ../tests/utils/verification ../tests/constants/admincli \
 	../tests/constants/dockercli ../tests/utils/ssh ../tests/utils/misc ../tests/constants/vm
 
@@ -359,7 +359,7 @@ test:
 testasroot:
 	$(log_target)
 	$(GO) test $(PLUGIN)/drivers/vmdk/vmdkops -cover -v
-	$(GO) test $(PLUGIN)/drivers/shared -cover -v
+	$(GO) test $(PLUGIN)/drivers/vfile -cover -v
 	$(GO) test $(PLUGIN)/utils/config -cover -v
 
 # does sanity check of create/remove docker volume on the guest
@@ -408,10 +408,10 @@ test-e2e-windows:
 	$(log_target)
 	$(BUILD) test-e2e-runonce-windows
 
-# An end-to-end target for vSphere Shared Docker Volume Driver
-test-e2e-shared:
+# An end-to-end target for vFile Docker Volume Driver
+test-e2e-vfile:
 	$(log_target)
-	$(BUILD) test-e2e-runonce-shared
+	$(BUILD) test-e2e-runonce-vfile
 
 #
 # E2E test target to control test run on CI.
@@ -419,7 +419,7 @@ test-e2e-shared:
 # test-e2e-runalways: makes sure to run test always
 # test-e2e-runonce: makes sure to run test *once per ESX*
 # test-e2e-runonce-windows: makes sure to run windows tests *once per ESX*
-# test-e2e-runonce-shared: makes sure to run vsphere shared tests *once per ESX*
+# test-e2e-runonce-vfile: makes sure to run vfile tests *once per ESX*
 #
 .PHONY: test-e2e-runalways test-e2e-runonce test-e2e-runonce-windows
 test-e2e-runalways:
@@ -434,9 +434,9 @@ test-e2e-runonce-windows:
 	$(log_target)
 	$(GO) test -v -timeout 50m -tags "runoncewin winutil" $(E2E_Tests)
 
-test-e2e-runonce-shared:
+test-e2e-runonce-vfile:
 	$(log_target)
-	$(GO) test -v -timeout 50m -tags "runonceshared" $(E2E_Tests)
+	$(GO) test -v -timeout 50m -tags "runoncevfile" $(E2E_Tests)
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:

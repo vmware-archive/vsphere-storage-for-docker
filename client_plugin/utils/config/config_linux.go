@@ -21,14 +21,14 @@ const (
 	DefaultVMDKPluginConfigPath = "/etc/docker-volume-vsphere.conf"
 	// DefaultVMDKPluginLogPath is the default location of log (trace) file
 	DefaultVMDKPluginLogPath = "/var/log/docker-volume-vsphere.log"
-	// DefaultSharedPluginConfigPath is the default location of Log configuration file for shared plugin
-	DefaultSharedPluginConfigPath = "/etc/vsphere-shared.conf"
-	// DefaultSharedPluginLogPath is the default location of log (trace) file for shared plugin
-	DefaultSharedPluginLogPath = "/var/log/vsphere-shared.log"
+	// DefaultVFilePluginConfigPath is the default location of Log configuration file for vFile plugin
+	DefaultVFilePluginConfigPath = "/etc/vfile.conf"
+	// DefaultVFilePluginLogPath is the default location of log (trace) file for vFile plugin
+	DefaultVFilePluginLogPath = "/var/log/vfile.log"
 
 	// MountRoot is the path where VMDK and photon volumes are mounted
 	MountRoot = "/mnt/vmdk"
 
-	// VSharedMountRoot is the path where shared volumes are mounted
-	VSharedMountRoot = "/mnt/vshared"
+	// VFileMountRoot is the path where vFile volumes are mounted
+	VFileMountRoot = "/mnt/vfile"
 )

@@ -18,13 +18,13 @@
 
 package kvstore
 
-// VolStatus: Datatype for keeping status of a shared volume
+// VolStatus: Datatype for keeping status of a vFile volume
 type VolStatus string
 
 /*
    Constants:
-   VolStateCreating:     Shared volume is being created. Not ready to be mounted.
-   VolStateReady:        Shared volume is ready to be mounted but
+   VolStateCreating:     vFile volume is being created. Not ready to be mounted.
+   VolStateReady:        vFile volume is ready to be mounted but
                          no Samba service running right now.
    VolStateMounted:      Samba service already running. Volume mounted
                          on at least one host VM.
@@ -32,8 +32,8 @@ type VolStatus string
                          started for this volume.
    VolStateUnmounting:   Volume is being unmounted, File sharing service is being
                          stopped for this volume.
-   VolStateDeleting:     Shared volume is being deleted. Not ready to be mounted.
-   VolStateError:        Shared volume in error state.
+   VolStateDeleting:     vFile volume is being deleted. Not ready to be mounted.
+   VolStateError:        vFile volume in error state.
 
    VolPrefixState:       Each volume has three metadata keys. Each such
                          key terminates in the name of the volume, but

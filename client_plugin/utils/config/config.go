@@ -36,8 +36,8 @@ const (
 	VMDKDriver = "vmdk"
 	// VSphereDriver is the driver to handle single attach vmdk-based in vSphere/vCenter 6.0+
 	VSphereDriver = "vsphere"
-	// SharedDriver is a shared plugin driver
-	SharedDriver = "shared"
+	// VFileDriver is a file sharing volume plugin driver
+	VFileDriver = "vfile"
 
 	// DefaultPort is the default ESX service port.
 	DefaultPort = 1019

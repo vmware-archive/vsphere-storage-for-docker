@@ -44,7 +44,7 @@ const (
 	// dockerUSocket: Unix socket on which Docker engine is listening
 	dockerUSocket = "unix:///var/run/docker.sock"
 	// Postfix added to names of Samba services for volumes
-	serviceNamePrefix = "vSharedServer"
+	serviceNamePrefix = "vFileServer"
 	// Path where the file server image resides in plugin
 	fileServerPath = "/usr/lib/vmware/samba.tar"
 	// Driver for the network which Samba services will use
@@ -395,10 +395,10 @@ func (d *DockerOps) getServiceIDAndPort(volName string) (string, uint32, error) 
 	return services[0].ID, port, nil
 }
 
-// ListVolumesFromServices - List shared volumes according to current docker services
+// ListVolumesFromServices - List vFile volumes according to current docker services
 func (d *DockerOps) ListVolumesFromServices() ([]string, error) {
 	var volumes []string
-	// Get all the samba service for vShared plugin
+	// Get all the samba service for vFile plugin
 	filter := filters.NewArgs()
 	filter.Add("name", serviceNamePrefix)
 	services, err := d.Dockerd.ServiceList(context.Background(),
@@ -416,7 +416,7 @@ func (d *DockerOps) ListVolumesFromServices() ([]string, error) {
 	return volumes, nil
 }
 
-// ListVolumesFromInternalVol - List shared volumes according to current internal volumes
+// ListVolumesFromInternalVol - List vFile volumes according to current internal volumes
 func (d *DockerOps) ListVolumesFromInternalVol() ([]string, error) {
 	var volumes []string
 	filter := filters.NewArgs()

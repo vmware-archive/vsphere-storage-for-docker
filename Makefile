@@ -42,10 +42,10 @@ build-all: dockerized-build-ui
 	$(MAKE) --directory=client_plugin $@
 	$(MAKE) --directory=plugin_dockerbuild all
 
-# build shared plugin
-build-shared: dockerized-build-ui
-	$(MAKE) $(MAKEFLAGS) --directory=client_plugin dockerbuild-shared
-	$(MAKE) $(MAKEFLAGS) --directory=plugin_dockerbuild shared-all
+# build vfile plugin
+build-vfile: dockerized-build-ui
+	$(MAKE) $(MAKEFLAGS) --directory=client_plugin dockerbuild-vfile
+	$(MAKE) $(MAKEFLAGS) --directory=plugin_dockerbuild vfile-all
 
 # clean inside docker run to avoid sudo make clean
 # dev builds are inside docker which creates folders

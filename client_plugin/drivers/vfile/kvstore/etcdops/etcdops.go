@@ -28,8 +28,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/dockerops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/dockerops"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore"
 )
 
 /*
@@ -53,7 +53,7 @@ import (
 const (
 	etcdClientPort           = ":2379"
 	etcdPeerPort             = ":2380"
-	etcdClusterToken         = "vsphere-shared-etcd-cluster"
+	etcdClusterToken         = "vfile-etcd-cluster"
 	etcdListenURL            = "0.0.0.0"
 	etcdScheme               = "http://"
 	etcdClusterStateNew      = "new"
@@ -72,8 +72,8 @@ type EtcdKVS struct {
 	nodeAddr  string
 }
 
-// sharedVolConnectivityData - Contains metadata of shared volumes
-type sharedVolConnectivityData struct {
+// vFileVolConnectivityData - Contains metadata of vFile volumes
+type vFileVolConnectivityData struct {
 	Port        int      `json:"port,omitempty"`
 	ServiceName string   `json:"serviceName,omitempty"`
 	Username    string   `json:"username,omitempty"`
@@ -343,15 +343,15 @@ func (e *EtcdKVS) serviceAndVolumeGC(cli *etcdClient.Client) {
 	for {
 		select {
 		case <-ticker.C:
-			// find all the vShared volume services
+			// find all the vFile volume services
 			volumesToVerify, err := e.dockerOps.ListVolumesFromServices()
 			if err != nil {
-				log.Warningf("Failed to get vShared volumes according to docker services")
+				log.Warningf("Failed to get vFile volumes according to docker services")
 			} else {
 				e.cleanOrphanServiceAndVolume(volumesToVerify, true)
 			}
 
-			// find all the internal volumes for vShared volume
+			// find all the internal volumes for vFile volume
 			volumesToVerify, err = e.dockerOps.ListVolumesFromInternalVol()
 			if err != nil {
 				log.Warningf("Failed to get internal volumes from docker")
@@ -382,11 +382,11 @@ func (e *EtcdKVS) cleanOrphanServiceAndVolume(volumesToVerify []string, stopServ
 		if !found ||
 			state == string(kvstore.VolStateDeleting) {
 			if stopService {
-				log.Warningf("The service for vShared volume %s needs to be shutdown.", volName)
+				log.Warningf("The service for vFile volume %s needs to be shutdown.", volName)
 				e.dockerOps.StopSMBServer(volName)
 			}
 
-			log.Warningf("The internal volume of vShared volume %s needs to be removed.", volName)
+			log.Warningf("The internal volume of vFile volume %s needs to be removed.", volName)
 			e.dockerOps.DeleteInternalVolume(volName)
 		}
 	}
@@ -420,7 +420,7 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 			// port number and file service name.
 			var entries []kvstore.KvPair
 			var writeEntries []kvstore.KvPair
-			var volRecord sharedVolConnectivityData
+			var volRecord vFileVolConnectivityData
 
 			// Port, Server name, Client list, Samba
 			// username/password are in the same key.
