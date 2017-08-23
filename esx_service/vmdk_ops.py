@@ -854,7 +854,11 @@ def parse_vol_name(full_vol_name):
 
         # Found exactly one match
         if len(matching_datastores) == 1:
+            # On Linux this is a redundant op, but on Windows it corrects the case
             ds_name = matching_datastores[0]
+
+        # If len(matching_datastores) == 0, it means the ds_name is invalid.
+        # This will be taken care of by follow-up validation logic.
 
     # Return qualified volume name and datastore name
     return vol_name, ds_name
@@ -863,12 +867,7 @@ def find_matching_datastores(ds_name):
     """
     Returns a case-insensitive match for the given datastore name
     """
-    matching_datastores = []
-    for name in get_datastore_names_list():
-        if name.lower() == ds_name.lower():
-            matching_datastores.append(name)
-
-    return matching_datastores
+    return [d for d in get_datastore_names_list() if d.lower() == ds_name.lower()]
 
 def get_full_vol_name(vmdk_name, datastore):
     """
