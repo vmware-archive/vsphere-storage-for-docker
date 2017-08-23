@@ -316,20 +316,13 @@ func (r *RefCountsMap) Decr(vol string) (uint, error) {
 }
 
 // check if volume with source as mount_source belongs to vmdk plugin
-func isVMDKMount(mount_source string) bool {
-	managedPluginMountStart := "/var/lib/docker/plugins/"
+func isVMDKMount(driver string) bool {
+	pluginDriver := "vsphere"
 
 	// if plugin is used as a service
-	if strings.HasPrefix(mount_source, mountRoot) {
+	if strings.HasPrefix(driver, pluginDriver) {
 		return true
 	}
-	// if plugin is used as managed plugin
-	// managed plugin has mount source in format:
-	// '/var/lib/docker/plugins/{plugin uuid}/rootfs/mnt/vmdk/{volume name}'
-	if strings.HasPrefix(mount_source, managedPluginMountStart) && strings.Contains(mount_source, mountRoot) {
-		return true
-	}
-
 	// mounted volume doesn't belong to vmdk_plugin
 	return false
 }
@@ -387,7 +380,7 @@ func (r *RefCountsMap) discoverAndSync(c *client.Client, d drivers.VolumeDriver)
 		log.Debugf("  Mounts for %v", ct.Names)
 		for _, mount := range containerJSONInfo.Mounts {
 			// check if the mount location belongs to vmdk plugin
-			if isVMDKMount(mount.Source) != true {
+			if isVMDKMount(mount.Driver) != true {
 				continue
 			}
 
