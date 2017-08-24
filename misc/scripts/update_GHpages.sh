@@ -1,38 +1,53 @@
 #!/bin/bash
+
 # Following script copies the markdown files from vmware:master to gh-pages
+# Local copy of vDVS project is needed before running this script (git clone https://github.com/vmware/docker-volume-vsphere.git)
+# Script has to be run from the docker-volume-vsphere/
+# e.g. ./misc/scripts/updateGHpages.sh
 
-# get latest changes from master
-git pull
+BACKUP_DIR=/tmp/backup
+TARGET_REPO=origin
+SOURCE_REPO=vmware
+DOCUMENT_BRANCH=gh-pages
+LOCAL_MASTER=master
 
+# get latest changes from vmware:master
+git pull $SOURCE_REPO $LOCAL_MASTER
+
+#Create Temp directory to store .md files
+mkdir $BACKUP_DIR
+
+#listing md files only from docs directory
+cd docs/
 #list files with .md file type
 list_files=$( git ls-files "*.md" )
 
-#Create Temp directory to store .md files
-mkdir ~/backup
-echo $list_files
+#copying md files to backup dir
 while IFS=' ' read -ra arr; do
       for i in "${arr[@]}"; do
-          # process "$i"
-          echo $i
-          echo "Copying file"
-          cp $i ~/backup/
+          echo "Copying file $i"
+          cp $i $BACKUP_DIR
       done
  done <<< "$list_files"
 
 #Creating branch gh-pages
-git checkout -b gh-pages origin/gh-pages
+git checkout -b $DOCUMENT_BRANCH $SOURCE_REPO/$DOCUMENT_BRANCH
+
+cd ..
 
 #copying md files from backup to jekyll-docs directory
-cp -r ~/backup/* jekyll-docs/
+cp -a $BACKUP_DIR/. jekyll-docs/
 
-# adding the files to commit
+rm -fr docs
+
+# adding the md files to commit and pushing the changes to gh-pages branch
 git add ./\*.md
 git commit -m "Copying changes to gh-pages branch from vmware:master"
-git push vmware HEAD:gh-pages
+git push $SOURCE_REPO HEAD:$DOCUMENT_BRANCH
 
 #Delete backup directory which had .md files
-rm -rf ~/backup
+rm -rf $BACKUP_DIR
 
 #Deleting gh-pages branch
-git checkout master
-git branch -D gh-pages
+git checkout $LOCAL_MASTER
+git branch -D $DOCUMENT_BRANCH
