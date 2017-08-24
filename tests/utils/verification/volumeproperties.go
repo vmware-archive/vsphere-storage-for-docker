@@ -81,7 +81,7 @@ func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
 	for _, name := range reqVolList {
 		name = strings.Replace(name, "'", "", -1)
 		name = strings.Replace(name, "\"", "", -1)
-		if strings.Contains(volumes, name) != true {
+		if strings.Contains(strings.ToLower(volumes), strings.ToLower(name)) != true {
 			return false
 		}
 	}
@@ -160,8 +160,8 @@ func GetSharedVolumeStatusHost(name, hostName string) string {
 //          string:     String containing global refcount
 func GetSharedVolumeGlobalRefcount(name, hostName string) string {
 	cmd := dockercli.InspectVolume +
-                " --format \"{{index .Status \\\"Global Refcount\\\"}}\" " +
-                name
+		" --format \"{{index .Status \\\"Global Refcount\\\"}}\" " +
+		name
 	log.Printf("GetSharedVolumeGlobalRefcount: cmd[]", cmd)
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return out
