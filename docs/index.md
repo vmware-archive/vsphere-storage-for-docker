@@ -1,22 +1,39 @@
-** vSphere Docker Volume Service - Introduction **
+---
+title: vSphere Docker Volume Service
+---
+![Image](images/docker-cert.jpeg)
 
-vSphere Docker Volume Service enables you to run stateful containerized applications on top of VMware vSphere. 
+## Introduction 
 
-It is designed to meet the needs of Enterprise IT and application developers and offers the following benefits:
+Containers have changed the way applications are packaged and deployed. Not only containers are efficient from infrastructure utilization point of view, they also provide strong isolation between process on same host. They are lightweight and once packaged can run anywhere. Docker is the most commonly used container runtime technology and this user guide outlines how vSphere is compatible with Docker ecosystem. 
 
-- **Provide proven persistent shared storage:** You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS, etc. 
-- **Enable Multitenancy, Security and Access Control:** vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location
-- **Operational Consistency and Simplicity:** Zero Configuration, zero credential management. It as easy to deploy and manage
-- **Self-service Operations**: Use docker APIs to manage volume lifecycle while maintaining admin control over consumption 
+## Persistent Storage in Container World
+
+Although it is relatively easy to run stateless Microservices using container technology, stateful applications require slightly different treatment. There are multiple factors which need to be considered when you think about handling persistent data using containers such as:
+
+* Containers are ephemeral by nature, so the data that needs to be persisted has to survive through the restart/re-scheduling of a container.
+* When containers are re-scheduled, they can die on one host and might get scheduled on a different host. In such a case the storage should also be shifted and made available on new host for the container to start gracefully.
+* The application should not have to worry about the volume/data and underlying infrastructure should handle the complexity of unmounting and mounting etc.
+* Certain applications have a strong sense of identity (For example. Kafka, Elastic etc.) and the disk used by a container with certain identity is tied to it. It is important that if a container with a certain ID gets re-scheduled for some reason then the disk only associated with that ID is re-attached on a new host.
+
+## vSphere Docker Volume Service (vDVS)
+
+![Image](images/vSphereDatastore.jpg)
+
+vSphere Docker Volume Service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. vDVS which works with proven storage technologies from VMWare and is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.
+
+Some of key features of vDVS are:
+
+* **Enterprise class storage**: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc. 
+* **Security & RBAC**: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.
+* **Simple to use**: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.
+* **Docker Compatibility**: vSphere Docker Volume Service is 100% Docker compatible and integrates with Docker Swarm to extend High Availability feature provided by Swarm
+* **Storage Policy Management**: vSphere Docker Volume Service brings vSphere's advanced storage feature like policy management to Docker ecosystem.
 
 This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). It does not need credential management or configuration management. 
- 
-<script type="text/javascript" src="https://asciinema.org/a/80417.js" id="asciicast-80417" async></script>
 
-** Feedback **
+vDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment
 
-On going work and feature requests are tracked using [GitHub Issues](https://github.com/vmware/docker-volume-vsphere/issues). Please feel free to file [issues](https://github.com/vmware/docker-volume-vsphere/issues) or email [containers@vmware.com](mailto:containers@vmware.com)
+## Documentation Version
 
-** Documentation Version **
-
-The documentation here is for the latest release. The current master documentation can be found in markdown format in the [documentation folder](https://github.com/vmware/docker-volume-vsphere/tree/master/docs). For older releases, browse to [releases](https://github.com/vmware/docker-volume-vsphere/releases) select the release, click on the tag for the release and browse the docs folder.
+The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in [jekyll-docs folder](https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs). For older releases, browse to [releases](https://github.com/vmware/docker-volume-vsphere/releases) select the release, click on the tag for the release and browse the docs folder.
