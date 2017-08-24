@@ -737,7 +737,7 @@ def apply_action_VMDK(action, vmdk_path, vm_name, bios_uuid, vc_uuid):
     return action(vmdk_path, vm)
 
 
-def get_vol_path(datastore, tenant_name=None):
+def get_vol_path(datastore, tenant_name=None, create=True):
     """
     Check existence (and create if needed) the path for docker volume VMDKs
     Returns either path to tenant-specific folder (if tenant name is passed)
@@ -773,6 +773,11 @@ def get_vol_path(datastore, tenant_name=None):
             logging.warning("Internal: Tenant name symlink not found for path %s", readable_path)
             logging.debug("Found %s, returning", path)
             return path, None
+
+    if not create:
+        # Return the readable path to caller without creating it.
+        logging.debug("Returning %s, path isn't created yet.", readable_path)
+        return readable_path, None
 
     if not os.path.isdir(dock_vol_path):
         # The osfs tools are usable for DOCK_VOLS_DIR on all datastores.

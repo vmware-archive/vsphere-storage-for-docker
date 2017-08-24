@@ -90,7 +90,7 @@ def init_datastoreCache(force=False):
         tmp_ds = []
 
         for datastore in ds_objects:
-            dockvols_path, err = vmdk_ops.get_vol_path(datastore.info.name)
+            dockvols_path, err = vmdk_ops.get_vol_path(datastore=datastore.info.name, create=False)
             if err:
                 logging.error(" datastore %s is being ignored as the dockvol path can't be created on it", datastore.info.name)
                 continue
