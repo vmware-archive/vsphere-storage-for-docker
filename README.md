@@ -93,9 +93,6 @@ sudo rpm -ivh <name>.rpm # Photon or rpm based distros
 
 Please refer the [Installation Guide](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/user-guide/install.md#installation-on-windows-docker-hosts) for instructions.
 
-## Upgrade Instructions
-Refer to [Installation documentation](https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/user-guide/install.md) for instructions regarding safe upgrade of plugin or driver.
-
 ## Using Docker CLI
 Refer to [tenancy
 documentation](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html) for setting up tenants.

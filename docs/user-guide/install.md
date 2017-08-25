@@ -161,7 +161,7 @@ PS C:\> Set-ExecutionPolicy Unrestricted -Scope Process -Force
 
 ## Upgrade Instructions
 
-The volume driver can be upgraded or reinstalled any time with no impact to the user data. User data in volumes existing before an upgrade of the volume driver is retained as it is and is accessible post an upgrade.
+The volume driver can be upgraded or reinstalled any time with no impact to the user data. User data in the volumes stays intact and remains accessible post upgrade.
 
 An upgrade shouldn't have to always require un-install and install of both driver or plugin. At times only one may change.
 But it is recommended to stay on the latest same versions.
@@ -173,7 +173,7 @@ No change in behavior of vmgroup operations is expected due to driver or plugin 
 **ESX Driver upgrade:**
 1. Uninstall VIB (driver)
 ```esxcli software vib remove -n esx-vmdkops-service```
-2. Download and install the latest VIB from the vsphere-storage-for-docker release page
+2. Download and install the latest VIB from the docker-volume-vspher release page
 ```esxcli software vib install -v /<vib_name>.vib```
 
 To verify Admin CLI service for vDVS is running after upgrade, please run the command `esxcli storage guestvol status` and verify status is running.
