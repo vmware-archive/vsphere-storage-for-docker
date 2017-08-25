@@ -176,7 +176,7 @@ func IsVolumeExistInVmgroup(esxIP, vmgroupName, volName string) bool {
 // from the specified vmgroup; false otherwise.
 func IsVolumeListExistInVmgroup(esxIP, vmgroupName string, volList []string) bool {
 	log.Printf("Checking if volumes [%s] belongs to vmgroup [%s] from esx [%s] \n", volList, vmgroupName, esxIP)
-	cmd := admincli.ListVolumes + " -c volume,vmgroup 2>/dev/null | awk -v OFS='\t' '{print $1, $2}' | sed '1,2d' "
+	cmd := admincli.ListVolumes + " 2>/dev/null | awk -v OFS='\t' '{print $1, $3}' | sed '1,2d' "
 	out, _ := ssh.InvokeCommand(esxIP, cmd)
 
 	vgValues := strings.Fields(out)

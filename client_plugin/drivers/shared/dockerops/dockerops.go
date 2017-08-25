@@ -25,14 +25,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strings"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/docker/engine-api/client"
 	dockerTypes "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/swarm"
-	"io"
-	"os"
-	"time"
 )
 
 const (
@@ -41,7 +43,7 @@ const (
 	// dockerUSocket: Unix socket on which Docker engine is listening
 	dockerUSocket = "unix:///var/run/docker.sock"
 	// Postfix added to names of Samba services for volumes
-	serviceNamePostfix = "fileServer"
+	serviceNamePrefix = "vSharedServer"
 	// Path where the file server image resides in plugin
 	fileServerPath = "/usr/lib/vmware/samba.tar"
 	// Driver for the network which Samba services will use
@@ -61,10 +63,14 @@ const (
 	// Time between successive checks for Samba service
 	// status to see if service container was launched
 	checkDuration = 5 * time.Second
+	// Time between successive checks for deleting a volume
+	checkSleepDuration = time.Second
 	// Timeout to mark Samba service launch as unsuccessful
 	sambaRequestTimeout = 30 * time.Second
 	// Prefix for internal volume names
 	internalVolumePrefix = "InternalVol"
+	// Error returned when no Samba service for that volume exists
+	noSambaServiceError = "No file service exists"
 )
 
 // DockerOps is the interface for docker host related operations
@@ -170,6 +176,12 @@ func (d *DockerOps) VolumeRemove(volName string) error {
 	return d.Dockerd.VolumeRemove(context.Background(), volName)
 }
 
+// VolumeInspect - inspect volume from docker host, if failed, return error
+func (d *DockerOps) VolumeInspect(volName string) error {
+	_, err := d.Dockerd.VolumeInspect(context.Background(), volName)
+	return err
+}
+
 // StartSMBServer - Start SMB server
 // Input - Name of the volume for which SMB has to be started
 // Output
@@ -184,7 +196,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 	var options dockerTypes.ServiceCreateOptions
 
 	// Name of the service
-	service.Name = volName + serviceNamePostfix
+	service.Name = serviceNamePrefix + volName
 	// The Docker image to run in this service
 	service.TaskTemplate.ContainerSpec.Image = sambaImageName
 
@@ -270,7 +282,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 			log.Infof("Checking status of file server container...")
 			port, isRunning := d.isFileServiceRunning(resp.ID, volName)
 			if isRunning {
-				return int(port), volName + serviceNamePostfix, isRunning
+				return int(port), serviceNamePrefix + volName, isRunning
 			}
 		case <-timer.C:
 			log.Warningf("Timeout reached while waiting for file server container for volume %s",
@@ -335,6 +347,121 @@ func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32,
 	return port, true
 }
 
+// getServiceIDAndPort - return the file service ID and port for given volume
+// Input
+//      volName: Volume for which the service was run.
+// Output
+//		string:  service ID
+//      uint32:  Port number of overlay networking which is open on
+//               every host VM and on which the service container
+//               listens.
+//      error:   error returned when it can not can service ID and port number
+func (d *DockerOps) getServiceIDAndPort(volName string) (string, uint32, error) {
+	// Grep the samba service running using service name
+	serviceName := serviceNamePrefix + volName
+	serviceFilters := filters.NewArgs()
+	serviceFilters.Add("name", serviceName)
+	services, err := d.Dockerd.ServiceList(context.Background(),
+		dockerTypes.ServiceListOptions{Filter: serviceFilters})
+	if err != nil {
+		msg := fmt.Sprintf("Failed to find service %v. %v", volName, err)
+		log.Warningf(msg)
+		return "", 0, errors.New(msg)
+	}
+	if len(services) < 1 {
+		msg := fmt.Sprintf("No service returned with name %s.", volName)
+		log.Warningf(msg)
+		return "", 0, errors.New(noSambaServiceError)
+	}
+
+	port := services[0].Endpoint.Ports[0].PublishedPort
+	if port == 0 {
+		msg := fmt.Sprintf("Bad port number assigned to file service for volume %s", volName)
+		log.Warning(msg)
+		return "", 0, errors.New(msg)
+	}
+
+	return services[0].ID, port, nil
+}
+
+// ListVolumesFromServices - List shared volumes according to current docker services
+func (d *DockerOps) ListVolumesFromServices() ([]string, error) {
+	var volumes []string
+	// Get all the samba service for vShared plugin
+	filter := filters.NewArgs()
+	filter.Add("name", serviceNamePrefix)
+	services, err := d.Dockerd.ServiceList(context.Background(),
+		dockerTypes.ServiceListOptions{Filter: filter})
+	if err != nil {
+		log.Errorf("Failed to get a list of docker services. Error: %v", err)
+		return volumes, err
+	}
+
+	for _, service := range services {
+		volumes = append(volumes,
+			strings.TrimPrefix(service.Spec.Name, serviceNamePrefix))
+	}
+
+	return volumes, nil
+}
+
+// ListVolumesFromInternalVol - List shared volumes according to current internal volumes
+func (d *DockerOps) ListVolumesFromInternalVol() ([]string, error) {
+	var volumes []string
+	filter := filters.NewArgs()
+	filter.Add("name", internalVolumePrefix)
+	volumeResponse, err := d.Dockerd.VolumeList(context.Background(),
+		filter)
+	if err != nil {
+		log.Errorf("Failed to get a list of internal volumes. Error: %v", err)
+		return volumes, err
+	}
+
+	for _, volume := range volumeResponse.Volumes {
+		volumes = append(volumes,
+			strings.TrimPrefix(volume.Name, internalVolumePrefix))
+	}
+
+	return volumes, nil
+}
+
+// DeleteVolume - delete the internal volume
+func (d *DockerOps) DeleteInternalVolume(volName string) {
+	internalVolname := internalVolumePrefix + volName
+	ticker := time.NewTicker(checkSleepDuration)
+	defer ticker.Stop()
+	// timeout set to sambaRequestTimeout because the internal volume maybe
+	// still in use due to stop of SMB server in progress
+	timer := time.NewTimer(sambaRequestTimeout)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			err := d.VolumeRemove(internalVolname)
+			if err != nil {
+				msg := fmt.Sprintf("Failed to remove internal volume for volume %s. Reason: %v.",
+					volName, err)
+
+				err = d.VolumeInspect(internalVolname)
+				if err != nil {
+					msg += fmt.Sprintf(" Failed to inspect internal volume. Error: %v.", err)
+					log.Warningf(msg)
+					return
+				}
+				// volume exists, continue waiting and retry removing
+				msg += fmt.Sprintf(" Internal volume still in use. Wait and retry before timeout.")
+				log.Warningf(msg)
+			}
+		case <-timer.C:
+			// The deletion of internal volume will be handled by garbage collector
+			log.Warningf("Timeout to remove internal volume for volume %s.",
+				volName)
+			return
+		}
+	}
+}
+
 // StopSMBServer - Stop SMB server
 // The return values are just to maintain parity with StartSMBServer()
 // as both these functions are passed to a nested function as args.
@@ -348,8 +475,42 @@ func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32,
 //      bool:    The result of the operation. True if the service was
 //               successfully stopped.
 func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
-	log.Errorf("stopSMBServer to be implemented")
-	return 0, "", true
+	serviceID, _, err := d.getServiceIDAndPort(volName)
+	if err != nil {
+		return 0, "", false
+	}
+
+	//Stop the service
+	err = d.Dockerd.ServiceRemove(context.Background(), serviceID)
+	if err != nil {
+		log.Warningf("Failed to remove file server for volume %s. Reason: %v",
+			volName, err)
+		return 0, "", false
+	}
+
+	// Wait till service container stops
+	ticker := time.NewTicker(checkDuration)
+	defer ticker.Stop()
+	timer := time.NewTimer(sambaRequestTimeout)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			log.Infof("Checking status of file server container...")
+			serviceID, _, err := d.getServiceIDAndPort(volName)
+			if err != nil && err.Error() != noSambaServiceError {
+				return 0, "", false
+			}
+			// service is removed successfully
+			if serviceID == "" {
+				return 0, "", true
+			}
+		case <-timer.C:
+			log.Warningf("Timeout reached while waiting for file server container for volume %s to stop",
+				volName)
+			return 0, "", false
+		}
+	}
 }
 
 // loadFileServerImage - Load the file server image present

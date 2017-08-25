@@ -217,12 +217,6 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	return statusMap, nil
 }
 
-// UnmountVolume - Unmounts the volume and then requests detach
-func (d *VolumeDriver) UnmountVolume(name string) error {
-	log.Errorf("VolumeDriver UnmountVolume to be implemented")
-	return nil
-}
-
 // Create - create a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.Infof("VolumeDriver Create: %s", r.Name)
@@ -336,48 +330,66 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	if !d.kvStore.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+r.Name,
 		string(kvstore.VolStateReady),
 		string(kvstore.VolStateDeleting)) {
-		clientFetchSucceeded := true
+		// Failed to change state from Ready to Deleting
+		// 1. Volume is in Mounted state -> get clients and return error
+		// 2. Volume is already in Deleting/Error/Creating/Unmounting and timeout -> continue delete
+		// 3. Volume is in other states -> return error
+
 		// Get a list of host VMs using this volume, if any
 		keys := []string{
+			kvstore.VolPrefixState + r.Name,
 			kvstore.VolPrefixInfo + r.Name,
 		}
 		entries, err := d.kvStore.ReadMetaData(keys)
 		if err != nil {
-			clientFetchSucceeded = false
-			log.Warningf("Failed to check which host VMs are using volume %s", r.Name)
-		}
-		// Unmarshal Info key
-		err = json.Unmarshal([]byte(entries[0].Value), &volRecord)
-		if err != nil {
-			clientFetchSucceeded = false
-			log.Warningf("Failed to unmarshal data. %v", err)
+			msg = fmt.Sprintf("Remove failed: cannot read metadata of volume %s", r.Name)
+			log.Errorf(msg)
+			return volume.Response{Err: msg}
 		}
 
-		msg = fmt.Sprintf("Remove failed: Failed to set volume state to deleting.")
-		if clientFetchSucceeded {
-			msg += fmt.Sprintf(" Containers on other host VM are still using volume %s.",
-				r.Name)
+		state := entries[0].Value
+		switch state {
+		case string(kvstore.VolStateDeleting):
+			log.Warningf("Remove: volume in Deleting state after timeout. Continue deleting.")
+		case string(kvstore.VolStateError):
+		case string(kvstore.VolStateCreating):
+		case string(kvstore.VolStateUnmounting):
+			log.Warningf("Remove: volume in %s state after timeout. Continue deleting", state)
+			if !d.kvStore.CompareAndPut(kvstore.VolPrefixState+r.Name,
+				state, string(kvstore.VolStateDeleting)) {
+				msg = fmt.Sprintf("Remove: Volume state changed unexpected. Please retry later")
+				log.Errorf(msg)
+				return volume.Response{Err: msg}
+
+			}
+		case string(kvstore.VolStateMounted):
+			// Unmarshal Info key
+			err = json.Unmarshal([]byte(entries[1].Value), &volRecord)
+			if err != nil {
+				msg = fmt.Sprintf("Remove failed: cannot unmarshal info data. %v", err)
+				log.Errorf(msg)
+				return volume.Response{Err: msg}
+			}
+
+			msg = fmt.Sprintf("Remove failed: volume state is Mounted.")
 			msg += fmt.Sprintf(" Host VMs using this volume: %s",
 				strings.Join(volRecord.ClientList, ","))
+			log.Errorf(msg)
+			return volume.Response{Err: msg}
+		default:
+			msg = fmt.Sprintf("Remove failed: cannot delete from current state %s.", state)
+			log.Errorf(msg)
+			return volume.Response{Err: msg}
 		}
-		log.Warningf(msg)
-		return volume.Response{Err: msg}
 	}
 
 	// Delete internal volume
 	log.Infof("Attempting to delete internal volume for %s", r.Name)
-	internalVolname := internalVolumePrefix + r.Name
-	err := d.dockerOps.VolumeRemove(internalVolname)
-	if err != nil {
-		msg = fmt.Sprintf("Failed to remove internal volume %s. Reason: %v", internalVolname, err)
-		msg += fmt.Sprintf(". Check the status of the volumes belonging to driver \"%s\". ", d.internalVolumeDriver)
-		log.Warningf(msg)
-		return volume.Response{Err: msg}
-	}
+	d.dockerOps.DeleteInternalVolume(r.Name)
 
 	// Delete metadata associated with this volume
 	log.Infof("Attempting to delete volume metadata for %s", r.Name)
-	err = d.kvStore.DeleteMetaData(r.Name)
+	err := d.kvStore.DeleteMetaData(r.Name)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete volume metadata for %s. Reason: %v", r.Name, err)
 		return volume.Response{Err: msg}
@@ -577,8 +589,82 @@ func (d *VolumeDriver) mountSharedVolume(volName string, mountpoint string, volR
 func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
 
-	log.Errorf("VolumeDriver Unmount to be implemented")
+	// lock the state
+	d.RefCounts.StateMtx.Lock()
+	defer d.RefCounts.StateMtx.Unlock()
+
+	if d.RefCounts.IsInitialized() != true {
+		// if refcounting hasn't been succesful,
+		// no refcounting, no unmount. All unmounts are delayed
+		// until we succesfully populate the refcount map
+		d.RefCounts.MarkDirty()
+		return volume.Response{Err: ""}
+	}
+
+	return d.processUnmount(r)
+}
+
+// processUnMount -  process a unmount request
+func (d *VolumeDriver) processUnmount(r volume.UnmountRequest) volume.Response {
+	if fullVolName, exist := d.MountIDtoName[r.ID]; exist {
+		r.Name = fullVolName
+		delete(d.MountIDtoName, r.ID) //cleanup the map
+	} else {
+		msg := fmt.Sprintf("Unable to find volume %v.", r.Name)
+		return volume.Response{Err: msg}
+	}
+
+	// if refcount has been succcessful, Normal flow
+	// if the volume is still used by other containers, just return OK
+	refcnt, err := d.DecrRefCount(r.Name)
+	if err != nil {
+		// something went wrong - yell, but still try to unmount
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Error("Refcount error - still trying to unmount...")
+	}
+	log.Debugf("volume name=%s refcnt=%d", r.Name, refcnt)
+	if refcnt >= 1 {
+		log.WithFields(
+			log.Fields{"name": r.Name, "refcount": refcnt},
+		).Info("Still in use, skipping unmount request. ")
+		return volume.Response{Err: ""}
+	}
+
+	// and if nobody needs it, unmount and detach
+	err = d.UnmountVolume(r.Name)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": r.Name, "error": err.Error()},
+		).Error("Failed to unmount ")
+		return volume.Response{Err: err.Error()}
+	}
 	return volume.Response{Err: ""}
+}
+
+// UnmountVolume - Request detach and then unmount the volume.
+func (d *VolumeDriver) UnmountVolume(name string) error {
+	mountpoint := d.GetMountPoint(name)
+	err := fs.Unmount(mountpoint)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"mountpoint": mountpoint, "error": err},
+		).Error("Failed to unmount volume. Now trying to detach... ")
+		// Do not return error. Continue with detach.
+	}
+
+	// Decrease GRef
+	log.Infof("Before AtomicDecr")
+	err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": err},
+		).Error("Failed to derease global refcount when processUnmount ")
+		return err
+	}
+
+	return nil
 }
 
 // Capabilities - Report plugin scope to Docker

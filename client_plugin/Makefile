@@ -424,19 +424,19 @@ test-e2e-shared:
 .PHONY: test-e2e-runalways test-e2e-runonce test-e2e-runonce-windows
 test-e2e-runalways:
 	$(log_target)
-	$(GO) test -v -timeout 40m -tags "runalways" $(E2E_Tests)
+	$(GO) test -v -timeout 50m -tags "runalways" $(E2E_Tests)
 
 test-e2e-runonce:
 	$(log_target)
-	$(GO) test -v -timeout 40m -tags "runonce" $(E2E_Tests)
+	$(GO) test -v -timeout 50m -tags "runonce" $(E2E_Tests)
 
 test-e2e-runonce-windows:
 	$(log_target)
-	$(GO) test -v -timeout 40m -tags "runoncewin winutil" $(E2E_Tests)
+	$(GO) test -v -timeout 50m -tags "runoncewin winutil" $(E2E_Tests)
 
 test-e2e-runonce-shared:
 	$(log_target)
-	$(GO) test -v -timeout 40m -tags "runonceshared" $(E2E_Tests)
+	$(GO) test -v -timeout 50m -tags "runonceshared" $(E2E_Tests)
 
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:

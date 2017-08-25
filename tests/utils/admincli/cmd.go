@@ -60,7 +60,7 @@ func UpdateVolumeAccess(ip, volName, vmgroup, access string) (string, error) {
 // properties - capacity, attached-to-vm and disk-format.
 func GetAllVolumeProperties(hostName string) map[string][]string {
 	log.Printf("Getting size, disk-format and attached-to-vm for all volumes from ESX [%s].", hostName)
-	cmd := admincli.ListVolumes + "-c volume,capacity,disk-format,attached-to 2>/dev/null | awk -v OFS='\t' '{print $1, $2, $3, $4}' | sed '1,2d'  "
+	cmd := admincli.ShortListVolumes + " 2>/dev/null | awk -v OFS='\t' '{print $1, $2, $3, $4}' | sed '1,2d' "
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	admincliValues := strings.Fields(out)
 	adminCliMap := make(map[string][]string)
@@ -75,7 +75,7 @@ func GetAllVolumeProperties(hostName string) map[string][]string {
 // Properties returned - capacity, attached-to-vm and disk-format field
 func GetVolumeProperties(volumeName, hostName string) []string {
 	log.Printf("Getting size, disk-format and attached-to-vm for volume [%s] from ESX [%s]. \n", volumeName, hostName)
-	cmd := admincli.ListVolumes + "-c volume,capacity,disk-format,attached-to 2>/dev/null | grep " + volumeName + " | awk -v OFS='\t' '{print $2, $3, $4}' "
+	cmd := admincli.ShortListVolumes + " 2>/dev/null | grep " + volumeName + " | awk -v OFS='\t' '{print $2, $3, $4}' "
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return strings.Fields(out)
 }
@@ -83,7 +83,7 @@ func GetVolumeProperties(volumeName, hostName string) []string {
 // IsVolumeAvailableOnESX returns true if the given volume is available
 // on the specified ESX
 func IsVolumeAvailableOnESX(hostName string, reqVol string) bool {
-	cmd := admincli.ListVolumes + "-c volume"
+	cmd := admincli.ShortListVolumes + " 2>/dev/null | awk -v OFS='\t' '{print $1}' | sed '1,2d' "
 	op, _ := ssh.InvokeCommand(hostName, cmd)
 
 	if strings.Contains(op, reqVol) != true {

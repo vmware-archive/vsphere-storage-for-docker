@@ -45,18 +45,19 @@ func GetVMAttachedToVolUsingDockerCli(volName string, hostname string) string {
 
 // GetVMAttachedToVolUsingAdminCli returns attached to vm field of volume using admin cli
 func GetVMAttachedToVolUsingAdminCli(volName string, hostname string) string {
-	cmd := admincli.ListVolumes + "-c volume,attached-to 2>/dev/null | grep " + volName
+	cmd := admincli.ShortListVolumes + " 2>/dev/null | grep " + volName
 	op, _ := ssh.InvokeCommand(hostname, cmd)
 	volProps := strings.Fields(op)
 	if op == "" {
 		log.Printf("Null value is returned by admin cli when looking for attached to vm field for volume %s ", volName)
 		return op
 	}
-	if len(volProps) != 2 {
-		log.Fatalf("Admin cli output is expected to consist of two elements only - "+
-			"volume name and attached-to-vm status. Actual output %s ", op)
+	if len(volProps) != 4 {
+		log.Fatalf("Admin cli volume shortls output is expected to consist of four elements only"+
+			"Actual output %s ", op)
 	}
-	return volProps[1]
+	// Fourth string is the attached VM name
+	return volProps[3]
 }
 
 // CheckVolumeAvailability returns true if the given volume is available
@@ -80,7 +81,7 @@ func CheckVolumeListAvailability(hostName string, reqVolList []string) bool {
 	for _, name := range reqVolList {
 		name = strings.Replace(name, "'", "", -1)
 		name = strings.Replace(name, "\"", "", -1)
-		if strings.Contains(volumes, name) != true {
+		if strings.Contains(strings.ToLower(volumes), strings.ToLower(name)) != true {
 			return false
 		}
 	}
@@ -150,6 +151,22 @@ func GetSharedVolumeStatusHost(name, hostName string) string {
 	return out
 }
 
+// GetSharedVolumeGlobalRefcount - get the global refcount of a shared volume.
+// This is the number of host VMs on which the volume is presently mounted.
+// Input
+//          name:       name of the shared volume
+//          hostName:   host VM on which to check
+// Output
+//          string:     String containing global refcount
+func GetSharedVolumeGlobalRefcount(name, hostName string) string {
+	cmd := dockercli.InspectVolume +
+		" --format \"{{index .Status \\\"Global Refcount\\\"}}\" " +
+		name
+	log.Printf("GetSharedVolumeGlobalRefcount: cmd[]", cmd)
+	out, _ := ssh.InvokeCommand(hostName, cmd)
+	return out
+}
+
 // VerifyDetachedStatus - check if the status gets detached within the timeout.
 // The name of the volume MUST be a shorter name without @datastore suffix.
 // Use this util in test scenarios where the test expects instant change of status to detached.
@@ -206,7 +223,7 @@ func GetAssociatedPolicyName(hostname string, volName string) (string, error) {
 // GetVMGroupForVolume returns vmgroup field of volume using admin cli
 // If the volume does not exist, err will be filled with "exit status 1"
 func GetVMGroupForVolume(hostName string, volName string) (string, error) {
-	cmd := admincli.ListVolumes + "-c volume,vmgroup 2>/dev/null | grep " + volName
+	cmd := admincli.ListVolumes + " 2>/dev/null | awk -v OFS='\t' '{print $1, $3}' | grep " + volName
 	op, err := ssh.InvokeCommand(hostName, cmd)
 	if err != nil {
 		log.Printf("GetVMGroupForVolume return with err: %s", err.Error())

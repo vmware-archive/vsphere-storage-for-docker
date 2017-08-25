@@ -18,13 +18,16 @@ package admincli
 
 const (
 	// location of the vmdkops binary
-	vmdkopsAdmin = "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py "
+	vmdkopsAdmin = "esxcli storage guestvol "
 
 	// vmdkops_admin volume
 	vmdkopsAdminVolume = vmdkopsAdmin + "volume "
 
 	// ListVolumes referring to vmdkops_admin volume ls
 	ListVolumes = vmdkopsAdminVolume + "ls "
+
+	// ShortListVolumes referring to vmdkops_admin volume shortls listing Volume, Capacity, Disk Format, Attached-to
+	ShortListVolumes = vmdkopsAdminVolume + "shortls "
 
 	// SetVolumeAccess set volume access
 	SetVolumeAccess = vmdkopsAdminVolume + " set "

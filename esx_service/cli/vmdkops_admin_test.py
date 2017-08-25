@@ -1011,7 +1011,7 @@ class TestTenant(unittest.TestCase):
 
             args = self.parser.parse_args(command.split())
             error_info = vmdkops_admin.tenant_access_set(args)
-            expected_message = "Invalid value {0} for allow-create option".format(val)
+            expected_message = "ERROR:Invalid value {0} for allow-create option".format(val)
             self.assertEqual(expected_message, error_info)
 
         if self.datastore1_name:

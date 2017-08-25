@@ -115,7 +115,6 @@ def update_vsan_objects_with_policy(name, content):
     update_count = 0
     failed_updates = []
     dockvols_path = vsan_info.get_vsan_dockvols_path()
-    print("This operation may take a while. Please be patient.")
     for v in list_volumes_and_policies():
         if v['policy'] == name:
             volume_name = v['volume']
@@ -204,12 +203,12 @@ def delete(name):
 
     vmdk = policy_in_use(path, name)
     if vmdk:
-        return 'Error: Cannot remove. Policy is in use by {0}'.format(vmdk)
+        return 'Cannot remove. Policy is in use by {0}'.format(vmdk)
     try:
         os.remove(policy_path(name))
     except:
         logging.exception("Failed to remove %s policy file", name)
-        return 'Error: {0} does not exist'.format(name)
+        return 'Policy {0} does not exist'.format(name)
 
     return None
 

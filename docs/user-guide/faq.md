@@ -13,6 +13,12 @@ Please see README.md in the for the release by clicking on the tag for the relea
 ### How do I run the setup on my laptop?
 Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack)
 
+### How do I bind a volume to a particular container host?
+This can be achieved via [Tenancy](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html).
+
+### Can I migrate data between Linux and Windows containers?
+Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vSphere Storage for Docker plugin doesn't support such cases, nor does it provide any explicit help.
+
 ## Troubleshooting
 
 ### Docker Service to ESX Backend Communication.
@@ -64,7 +70,7 @@ After installing the new build, type command “vmgroup ls”
 Check for failure to connect to auth DB.
 
 ```
-/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+esxcli storage guestvol vmgroup ls
 Failed to connect auth DB(DB connection error /etc/vmware/vmdkops/auth-db)
 ```
 
@@ -91,7 +97,7 @@ Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
 
 Step 2: Verify “vmgroup ls” command
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name       Description                 Default_datastore  VM_list
 ------------------------------------  ---------  --------------------------  -----------------  -------
 11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup
@@ -122,7 +128,7 @@ Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
 Step 3: Verify “vmgroup ls” command, now only  ```_DEFAULT``` should be listed.
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                 Default_datastore  VM_list
 ------------------------------------  --------  --------------------------  -----------------  -------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
@@ -135,10 +141,10 @@ Step 4: Recreate the vmgroup configuration with new name “new-vmgroup1” (ass
 ***Note: Please DO NOT create the vmgroup with the old name “vmgroup1”!!!***
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=new-vmgroup1  --vm-list=photon-6 --default-datastore=datastore1
+[root@localhost:~] esxcli storage guestvol vmgroup create --name=new-vmgroup1  --vm-list=photon-6 --default-datastore=datastore1
 vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name           Description                 Default_datastore  VM_list
 ------------------------------------  -------------  --------------------------  -----------------  --------
 11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vmgroup
@@ -163,8 +169,7 @@ vsphere             new-vol1@datastore1
 Volume “vol1” which was created before still exists, and can be seen from the following AdminCLI command
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
+[root@localhost:~] esxcli storage guestvol volume ls
 Volume    Datastore   VMGroup       Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
 --------  ----------  ------------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
 vol1      datastore1  N/A           100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Wed Sep 14 16:20:30 2016

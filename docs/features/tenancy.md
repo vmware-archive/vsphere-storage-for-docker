@@ -26,7 +26,7 @@ Vmgroups can be created and managed via the [Admin CLI](/docs/user-guide/admin-c
 When a VM which does not belong to any vmgroup issues a request to vmdk_ops, this VM will be assumed to be in _DEFAULT vmgroup, and will get privileges associated with this vmgroup. \_DEFAULT vmgroup will be automatically created by system post install, so by default vmdk_ops will support request from any VM , thus maintaining backward compatibility and simplicity of installation.An admin can remove this vmgroup or modify privileges, thus locking down vmdk_ops to serve only explicitly configured VMs.
 
 ```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=_DEFAULT
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name _DEFAULT
 Datastore  Allow_create  Max_volume_size  Total_size
 ---------  ------------  ---------------  ----------
 _ALL_DS   True          Unset            Unset
@@ -44,21 +44,21 @@ When a VM addresses the volume using short notation (volume_name, without @datas
 Let's consider a sample use case where there are 2 teams – Dev and Test working on Product1. Lets create separate vmgroups (namely Product1Dev and Product1Test) for each of the teams where we can put restriction on datastore consumption.
 
 ```
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Dev --default-datastore=datastore3
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup create --name=Product1Dev --default-datastore=datastore3
 vmgroup 'Product1Dev' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create --name=Product1Test --default-datastore=datastore3
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup create --name=Product1Test --default-datastore=datastore3
 vmgroup 'Product1Test' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 ```
 The full access privilege to default datastore("datastore3" in this example) has been created after creating vmgroup.
 
 ```
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Dev
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup access ls --name=Product1Dev
 Datastore     Allow_create  Max_volume_size  Total_size
 ------------  ------------  ---------------  ----------
 datastore3    True          Unset            Unset
 
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Test
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup access ls --name=Product1Test
 Datastore     Allow_create  Max_volume_size  Total_size
 ------------  ------------  ---------------  ----------
 datastore3    True          Unset            Unset
@@ -67,10 +67,10 @@ datastore3    True          Unset            Unset
 Then we removed _DEFAULT vmgroup to lock down vmdk_ops to serve only explicitly configured VMs.
 
 ```
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm --name=_DEFAULT
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup rm --name=_DEFAULT
 vmgroup rm succeeded
 
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name          Description  Default_datastore  VM_list
 ------------------------------------  ------------  -----------  -----------------  ------------
 ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev                datastore3
@@ -80,13 +80,13 @@ f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test               datastore3
 Lets add VMs (docker hosts) in respective VM groups.
 
 ```
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add --vm-list=Photon1,Photon2,Photon3 --name=Product1Dev
+#esxcli storage guestvol vmgroup vm add --vm-list=Photon1,Photon2,Photon3 --name=Product1Dev
 vmgroup vm add succeeded
 
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add --vm-list=Photon4,Photon5,Photon6 --name=Product1Test
+#esxcli storage guestvol vmgroup vm add --vm-list=Photon4,Photon5,Photon6 --name=Product1Test
 vmgroup vm add succeeded
 
-#/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+#esxcli storage guestvol vmgroup ls
 Uuid                                  Name          Description  Default_datastore  VM_list
 ------------------------------------  ------------  -----------  -----------------  -----------------------
 ac4b7167-94b3-470e-b932-5b32f2bfa273  Product1Dev                datastore3         Photon1,Photon2,Photon3
@@ -97,22 +97,22 @@ f15c1f6d-5df5-4a00-8f20-77c8e7a7af11  Product1Test               datastore3     
 Lets limit dev team to create volumes of total 20 Gb each not exceeding size of 1 GB. Similarly for QA team, lets put restriction of total 40 GB consumption with each volume size not exceeding 1 GB.
 
 ```
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=Product1Dev --datastore=datastore3  --volume-maxsize=1GB --volume-totalsize=20GB
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup access set --name=Product1Dev --datastore=datastore3  --volume-maxsize=1GB --volume-totalsize=20GB
 vmgroup access set succeeded
 
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set --name=Product1Test --datastore=datastore3  --volume-maxsize=1GB --volume-totalsize=40GB
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup access set --name=Product1Test --datastore=datastore3  --volume-maxsize=1GB --volume-totalsize=40GB
 vmgroup access set succeeded
 
 ```
 Lets verify that storage restrictions have been set properly.
 
 ```
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Dev
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup access ls --name=Product1Dev
 Datastore     Allow_create  Max_volume_size  Total_size
 ------------  ------------  ---------------  ----------
 datastore3    True          1.00GB           20.00GB
 
-[root@sc-rdops-vm17-dhcp-3-236:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=Product1Test
+[root@sc-rdops-vm17-dhcp-3-236:~] esxcli storage guestvol vmgroup access ls --name=Product1Test
 Datastore     Allow_create  Max_volume_size  Total_size
 ------------  ------------  ---------------  ----------
 datastore3    True          1.00GB           40.00GB

@@ -12,5 +12,10 @@ Install with with something like this:
   > esxcli software vib install --no-sig-check -v `pwd`/<vib_name>
 ```
 
+To make admin commandset available on ESX host, please restart hostd after vib installation.
+This needs to be because hostd reads available extensions for esxcli only during startup.
+```
+/etc/init.d/hostd restart
+```
 On client side, ../client_plugin/vmdkops is a Go client module
 

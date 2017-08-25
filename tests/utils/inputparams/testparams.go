@@ -78,6 +78,14 @@ func GetUniqueVolumeName(volName string) string {
 	return normalizeVolumeName(volName + "_volume_" + GetRandomNumber())
 }
 
+// GetSharedVolumeName prepares unique volume name that is DNS compliant
+// Shared volumes launch docker service. Name of such a service must be
+// DNS compliant, hence volname should also be DNS compliant.
+func GetSharedVolumeName() string {
+	return normalizeVolumeName("sharedvolume" + GetRandomNumber())
+}
+
+
 // GetVolumeNameOfSize returns a random volume name of required length
 func GetVolumeNameOfSize(size int) string {
 	result := make([]byte, size)
