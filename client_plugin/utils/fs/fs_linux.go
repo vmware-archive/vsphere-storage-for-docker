@@ -81,6 +81,18 @@ func DevAttachWait(watcher *inotify.Watcher, volDev *VolumeDevSpec) error {
 		log.WithFields(log.Fields{"volDev": *volDev, "err": err}).Error("Failed to get device path ")
 		return err
 	}
+
+	// This file is created after a device is attached to VM
+	// and removed when device is detached.
+	// If file already present, do not wait for attach
+	_, err = os.Stat(device)
+	if err == nil {
+		log.WithFields(
+			log.Fields{"device": device},
+		).Info("Device file found. ")
+		return nil
+	}
+
 	devAttachWait(watcher, device)
 	return nil
 }

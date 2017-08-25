@@ -483,6 +483,9 @@ func (r *RefCountsMap) syncMountsWithRefCounters(d drivers.VolumeDriver) {
 							isReadOnly = true
 						}
 					}
+					// It could be possible that volume (device) is just namespace mounted for the container and not
+					// under plugin rootfs. We trigger a mount, and if the device is already attached, vmdkops service on esx host
+					// returns proper device ids and we just mount it under plugin rootfs
 					_, err = d.MountVolume(vol, status["fstype"].(string), id, isReadOnly, false)
 					if err != nil {
 						log.Warning("Failed to mount - manual recovery may be needed")
