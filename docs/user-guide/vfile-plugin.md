@@ -9,7 +9,7 @@ For example, currently users cannot mount the same persistent volume which is cr
 vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.
 
 This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
-However, setting up and maintaining those distributed file systems for docker persistent data usage is not a trivial work.
+However, setting up and maintaining enterprise storage offerings for Cloud Native usecases is not a trivial work.
 Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.
 
 __vFile volume plugin for Docker__ provides simultanous persistent volume access between hosts in the
@@ -131,4 +131,4 @@ When you see somthing like the following in the log
 ```
 2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
 ```
-Please make sure the volume you used is a valid volume name, only ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]``` is allowed.
+Please make sure the volume you used is a valid volume name. A valid volume name consists of ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]```.
