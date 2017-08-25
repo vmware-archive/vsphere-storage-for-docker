@@ -173,16 +173,25 @@ Similarly, no change in behavior of vmgroup operations is expected due to volume
 An upgrade shouldn't have to always require un-install and install of both driver or plugin. At times only one may change.
 But it is recommended to stay on the latest same versions.
 
-ESX Driver upgrade:
+**ESX Driver upgrade:**
 1. Uninstall VIB (driver)
 ```esxcli software vib remove -n esx-vmdkops-service```
 2. Download and install the latest VIB from the vsphere-storage-for-docker release page
 ```esxcli software vib install -v /<vib_name>.vib```
 
-To verify Admin CLI service for vDVS is running after upgrade, please run the command `/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status` and verify status is running.
+To verify Admin CLI service for vDVS is running after upgrade, please run the command `esxcli storage guestvol status` and verify status is running.
 
-Plugin upgrade:
-1. Uninstall the managed plugin from the docker host
-```docker plugin rm -f <plugin name>```
-2. Install the latest release of vsphere-storage-for-docker managed plugin
-```docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest```
+**Plugin upgrade:**
+1. Disable the managed plugin from the docker host
+```
+docker plugin disable -f vsphere
+```
+2. Upgrade the latest release of vsphere-storage-for-docker managed plugin
+```
+docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:latest
+```
+3. Enable the managed plugin from the docker host
+```
+docker plugin enable vsphere
+```
+Note: If you have used a different alias during existing installation of plugin, use that instead of ```vsphere``` in the steps above
