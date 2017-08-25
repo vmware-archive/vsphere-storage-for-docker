@@ -22,14 +22,14 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 
 ## Download
 
-**[Click here to download from Github releases](https://github.com/vmware/docker-volume-vsphere/releases)**
+** Download releases from [Github releases](https://github.com/vmware/docker-volume-vsphere/releases) page**
 
 The download consists of 2 parts:
 
 1. VIB (vDVS driver): The ESX code is packaged as [a vib or an offline depot](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
 2. Managed plugin (vDVS plugin): Plugin is available on [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
-Please [click here](http://vmware.github.io/docker-volume-vsphere/documentation/install.html) for vDVS driver's & plugin's installation instruction. Pick the latest release and use the same version of vDVS plugin (on Docker host VM) and driver (on ESX).
+Please check [vDVS Installation User Guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html) to get started. To ensure compatibility, make sure to use the same version of vDVS driver and managed plugin.
 
 ## Supported Platform
 
@@ -80,7 +80,7 @@ journalctl -fu docker.service # Journalctl/Systemd
 logging config format for content details.
 * **Turning on debug logging**: replace all 'INFO' with 'DEBUG' in config file, restart the service
 
-Detailed information regarding vDVS configuration is found at [vDVS configuration page](http://vmware.github.io/docker-volume-vsphere/documentation/configuration.html).
+Please refer [vDVS configuration page](http://vmware.github.io/docker-volume-vsphere/documentation/configuration.html) for detailed steps.
 
 ## Tested on
 
@@ -99,13 +99,10 @@ Detailed information regarding vDVS configuration is found at [vDVS configuratio
 **Docker (Linux)**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
 **Docker (Windows)**: 1.13/17.03
 
-## Known Issues
+## Reference
 
-If you are running into any issue, please check out [vDVS known issue page](http://vmware.github.io/docker-volume-vsphere/documentation/known-issues.html) related with vSphere docker volume service before raising a new issue.
+* **Known Issues**: Please check [vDVS known issue page](http://vmware.github.io/docker-volume-vsphere/documentation/known-issues.html) to find out about known issues.
 
-## Contact us
-Please reach us out for any questions or problem you are facing with respect to vDVS. Please [click here](http://vmware.github.io/docker-volume-vsphere/documentation/contactus.html) to get contact detail.
+* **Contact us**: Please [click here](http://vmware.github.io/docker-volume-vsphere/documentation/contactus.html) for requesting any feature or reporting a product issue.
 
-## Blogs
-
-List of blogs related to vSphere Docker Volume Service are found at [vDVS Blogs](http://vmware.github.io/docker-volume-vsphere/documentation/blogs.html).
+ * **Blogs**: Please check our [vDVS blog page](http://vmware.github.io/docker-volume-vsphere/documentation/blogs.html).
