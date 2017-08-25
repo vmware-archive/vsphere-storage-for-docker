@@ -24,7 +24,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	ps "github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/powershell"
+	ps "github.com/vmware/docker-volume-vsphere/client_plugin/utils/powershell"
 )
 
 const (
@@ -37,7 +37,7 @@ const (
 	// due to synchronized access to ps.Exec(..). Therefore, parallel volume
 	// creation in e2e tests block in fs.DevAttachWait(..) for a while and so we
 	// allow a long delay here.
-	maxDiskAttachWaitSec = 60 * time.Second
+	maxDiskAttachWaitSec = 120 * time.Second
 
 	ntfs         = "ntfs"
 	diskNotFound = "DiskNotFound"

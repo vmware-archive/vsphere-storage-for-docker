@@ -842,12 +842,27 @@ def parse_vol_name(full_vol_name):
             raise ValidationError("Volume name contains illegal characters: {0}".format(c))
 
     # Check if the datastore name is too long
-    if ds_name and len(ds_name) > MAX_DS_NAME_LEN:
-        raise ValidationError("Datastore name is too long (max len is {0})".format(MAX_DS_NAME_LEN))
+    if ds_name:
+        if len(ds_name) > MAX_DS_NAME_LEN:
+            raise ValidationError("Datastore name is too long (max len is {0})".format(MAX_DS_NAME_LEN))
+
+        # Find case-insensitive match for the datastore
+        matching_datastores = [d for d in get_datastore_names_list() if d.lower() == ds_name.lower()]
+
+        # Return error if more than one datastores found
+        if len(matching_datastores) > 1:
+            raise ValidationError("Found multiple datastores with same name (ignoring case difference): {0}".format(matching_datastores))
+
+        # Found exactly one match
+        if len(matching_datastores) == 1:
+            # On Linux this is a redundant op, but on Windows it corrects the case
+            ds_name = matching_datastores[0]
+
+        # If len(matching_datastores) == 0, it means the ds_name is invalid.
+        # This will be taken care of by follow-up validation logic.
 
     # Return qualified volume name and datastore name
     return vol_name, ds_name
-
 
 def get_full_vol_name(vmdk_name, datastore):
     """

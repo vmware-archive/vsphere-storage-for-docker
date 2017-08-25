@@ -25,7 +25,7 @@ import (
 	"github.com/Microsoft/go-winio"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	ps "github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/powershell"
+	ps "github.com/vmware/docker-volume-vsphere/client_plugin/utils/powershell"
 )
 
 const (
