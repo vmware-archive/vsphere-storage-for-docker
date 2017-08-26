@@ -3,14 +3,14 @@ title: vFile volume plugin for Docker
 
 ---
 ## Overview
-Depending on the underlying block storage device system, it might not be possible to access the same 
+Depending on the underlying block storage device system, it might not be possible to access the same
 persistent volume across different hosts/nodes simultanously.
 For example, currently users cannot mount the same persistent volume which is created through
 vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.
 
 This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
-However, setting up and maintaining those distributed file systems for docker persistent data usage is not a trivial work. 
-Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing. 
+However, setting up and maintaining enterprise storage offerings for Cloud Native usecases is not a trivial work.
+Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.
 
 __vFile volume plugin for Docker__ provides simultanous persistent volume access between hosts in the
 same Docker Swarm cluster for the base volume plugin service such as vDVS, with zero configuration effort,
@@ -49,6 +49,7 @@ $ docker volume inspect SharedVol
 Options for creation will be the same for the base volume plugin.
 Please refer to the base volume plugin for more options.
 Note: vFile volume plugin doesn't support filesystem type options.
+Note: The valid volume name can only be ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]```.
 
 #### Mounting this volume to a container running on the first host
 ```
@@ -93,7 +94,7 @@ Users can choose the base volume plugin for vFile plugin, by setting configurati
 }
 ```
 
-The user can override the default configuration by providing a different configuration file, 
+The user can override the default configuration by providing a different configuration file,
 via the `--config` option, specifying the full path of the file.
 
 ### Options for logging
@@ -124,3 +125,10 @@ docker service create --replicas 1 -p 8080:80 --name web nginx
 ```
 Then on each host, make sure there is valid return of `curl 127.0.0.1:8080`.
 `Connection refused` error means the routing mesh of this Docker Swarm cluster is broken and needs to be fixed.
+
+### Mounting volume failed and I saw "name must be valid as a DNS name component" error in the log when mounting a vFile volume to a container.
+When you see somthing like the following in the log
+```
+2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
+```
+Please make sure the volume you used is a valid volume name. A valid volume name consists of ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]```.
