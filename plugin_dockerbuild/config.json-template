@@ -58,6 +58,12 @@
 		"description": "Client protocol version used in test",
 		"value": "",
 		"Settable": [ "value"]
+	},
+	{
+		"name": "-test.coverprofile",
+		"description": "Client protocol version used in test",
+		"value": "/tmp/neal",
+		"Settable": [ "value"]
 	}
 	]
 }
