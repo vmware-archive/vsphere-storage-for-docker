@@ -160,29 +160,24 @@ PS C:\> Set-ExecutionPolicy Unrestricted -Scope Process -Force
 ```
 
 ## Upgrade Instructions
+Upgrade of volume managed plugin or ESX driver has no impact on data path and running containers. It is recommended to have both of them from same release. However, it is not mandatory and both of them are backward compatible upto one prior release version.
 
-The volume driver can be upgraded or reinstalled any time with no impact to the user data. User data in the volumes stays intact and remains accessible post upgrade.
-
-An upgrade shouldn't have to always require un-install and install of both driver or plugin. At times only one may change.
-But it is recommended to stay on the latest same versions.
-The order of upgrade of driver or plugin doesn't matter.
-
-We do not require user to stop containers to do the driver or plugin upgrade.
-No change in behavior of vmgroup operations is expected due to driver or plugin upgrade.
 
 **ESX Driver upgrade:**
 1. Uninstall VIB (driver)
-```esxcli software vib remove -n esx-vmdkops-service```
+```
+esxcli software vib remove -n esx-vmdkops-service
+```
 2. Download and install the latest VIB from the docker-volume-vsphere release page
-```esxcli software vib install -v /<vib_name>.vib```
-
-To verify Admin CLI service for vDVS is running after upgrade, please run the command `esxcli storage guestvol status` and verify status is running.
-
-Note: If the container using volumes exits during the upgrade of ESX driver (i.e. after vib remove but before vib install), the volumes may remain attached to VM. In such a case, please disable and then enable (restart) the volume plugin to ensure volumes are properly detached.
+```
+esxcli software vib install -v /<vib_name>.vib
+```
+3. Verify the status
+```
+esxcli storage guestvol status
+```
 
 **Plugin upgrade:**
-The volume plugin is taking care of the control path (management layer) and doesn't deal with data path. So during the upgrade process, only management related operations will be affected and data will be intact. Management operations like create/attach/detach/delete volume may fail until the upgrade process is finished. If the plugin is removed while a volume is still attached to a vm, then volume will remain attached.
-
 **Note**: If you have used a different alias for existing plugin installation, use that instead of ```vsphere``` in the steps above
 
 1. Disable the managed plugin from the docker host
@@ -199,13 +194,31 @@ docker plugin enable vsphere
 ```
 
 ## Downgrade to a previous version
-The steps to downgrade to a previous version are exactly the same as the upgrade with following note:
-1. In case of ESX driver the vib_name is the complete path to vib you want to downgrade to. For example, to downgrade the driver to 0.16 release.
+**ESX Driver downgrade:**
+1. Uninstall VIB (driver)
 ```
-esxcli software vib install -v /tmp/VMWare_bootbank_esx-vmdkops-service_0.16.af85e2f-0.0.1.vib
+esxcli software vib remove -n esx-vmdkops-service
+```
+2. Download and install the required VIB from the docker-volume-vsphere release page
+```
+esxcli software vib install -v /<vib_name>.vib
+```
+3. Verify the status
+```
+esxcli storage guestvol status
 ```
 
-2. In case of Plugin, use the release tag in the docker upgrade command. For example, to downgrade the plugin 0.16 release.
+**Plugin downgrade:**
+
+1. Disable the managed plugin from the docker host
 ```
-docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:0.16
+docker plugin disable -f vsphere
+```
+2. Using docker plugin upgrade, you can downgrade to required release of docker-volume-vsphere managed plugin
+```
+docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:<required_release_version>
+```
+3. Enable the managed plugin from the docker host
+```
+docker plugin enable vsphere
 ```
