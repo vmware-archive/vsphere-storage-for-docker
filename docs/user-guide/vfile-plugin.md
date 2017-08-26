@@ -9,14 +9,10 @@ For example, currently users cannot mount the same persistent volume which is cr
 vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.
 
 This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
-<<<<<<< HEAD
 However, setting up and maintaining enterprise storage offerings for Cloud Native usecases is not a trivial work.
-=======
-However, setting up and maintaining those distributed file systems for docker persistent data usage is not a trivial work.
->>>>>>> Update user guide.
 Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.
 
-__vFile volume plugin for Docker__ provides simultanous persistent volume access between hosts in the
+__vFile volume plugin for Docker__ provides simultaneous persistent volume access between hosts in the
 same Docker Swarm cluster for the base volume plugin service such as vDVS, with zero configuration effort,
 along with high availability, scalability, and load balancing support.
 
