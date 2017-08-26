@@ -22,95 +22,20 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 
 ## Download
 
-**[Click here to download from Github releases](https://github.com/vmware/docker-volume-vsphere/releases)**
+** Download releases from [Github releases](https://github.com/vmware/docker-volume-vsphere/releases) page**
 
 The download consists of 2 parts:
 
 1. VIB (vDVS driver): The ESX code is packaged as [a vib or an offline depot](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
 2. Managed plugin (vDVS plugin): Plugin is available on [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
-Pick the latest release and use the same version of vDVS plugin (on Docker host VM) and driver (on ESX).
-
-## Demos
-
-The demos are located on the project [site](https://vmware.github.io/docker-volume-vsphere/documentation) and [wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Demos)
-
-## Project Website
-
-Project page is located @ [https://vmware.github.io/docker-volume-vsphere/](https://vmware.github.io/docker-volume-vsphere). Documentation, FAQ and other content can be found @ [https://vmware.github.io/docker-volume-vsphere/documentation](https://vmware.github.io/docker-volume-vsphere/documentation)
+Please check [vDVS Installation User Guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html) to get started. To ensure compatibility, make sure to use the same version of vDVS driver (on ESX) and managed plugin (on Docker host VM).
 
 ## Supported Platform
 
 **ESXi:** 6.0 and above<br />
 **Docker (Linux):** 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)<br />
 **Docker (Windows):** 1.13/17.03 and above (Windows containers mode only)
-
-## Installation Instructions
-
-### On ESX
-
-Install vSphere Installation Bundle (VIB).  [Please refer to
-vSphere documentation.](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
-
-Install using localcli on an ESX node
-```
-esxcli software vib install -v /tmp/<vib_name>.vib
-```
-
-Make sure you provide the **absolute path** to the `.vib` file or the install will fail.
-
-**Note**: To make admin commandset available on ESX host, please restart hostd after vib installation.
-```
-/etc/init.d/hostd restart
-```
-
-### On Linux Docker Host (VM)
-#### Managed Plugin
-1. Please make sure to uninstall older releases of DEB/RPM using following commands.
-```
-sudo dpkg -r docker-volume-vsphere # Ubuntu or deb based distros
-sudo rpm -e docker-volume-vsphere # Photon or rpm based distros
-```
-2. Docker service needs to be restarted until [Issue #32635](https://github.com/docker/docker/issues/32635) is resolved.
-```
-systemctl restart docker
-```
-
-**For Docker 1.13 and above**, install managed plugin from Docker Store.
-```
-docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
-```
-
-#### Using DEB/RPM
-**For Docker 1.12 and earlier**, use DEB or RPM package.
-```
-sudo dpkg -i <name>.deb # Ubuntu or deb based distros
-sudo rpm -ivh <name>.rpm # Photon or rpm based distros
-```
-**Note**: DEB/RPM packages will be deprecated going forward and will not be available.
-
-### On Windows Docker Host (VM)
-
-Please refer the [Installation Guide](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/user-guide/install.md#installation-on-windows-docker-hosts) for instructions.
-
-## Using Docker CLI
-Refer to [tenancy
-documentation](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html) for setting up tenants.
-```
-# To select datastore use --name=MyVolume@<Datastore Name>
-$ docker volume create --driver=vsphere --name=MyVolume -o size=10gb
-$ docker volume ls
-$ docker volume inspect MyVolume
-# To select datastore use MyVolume@<Datastore Name>
-$ docker run --rm -it -v MyVolume:/mnt/myvol busybox
-$ cd /mnt/myvol # to access volume inside container, exit to quit
-$ docker volume rm MyVolume
-```
-
-## Using ESXi Admin CLI
-```
-$ esxcli storage guestvol volume ls
-```
 
 ## Logging
 The relevant logging for debugging consists of the following:
@@ -124,7 +49,7 @@ The relevant logging for debugging consists of the following:
 journalctl -fu docker.service # Journalctl/Systemd
 ```
 
-**VM (Docker-side) Plugin logs**
+**vDVS Plugin logs**
 
 * Log location (Linux): `/var/log/docker-volume-vsphere.log`
 * Log location (Windows): `C:\Windows\System32\config\systemprofile\AppData\Local\docker-volume-vsphere\logs\docker-volume-vsphere.log`
@@ -148,13 +73,14 @@ journalctl -fu docker.service # Journalctl/Systemd
       docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug
       ```
 
-**ESX Plugin logs**
+**vDVS Driver logs**
 
 * Log location: `/var/log/vmware/vmdk_ops.log`
 * Config file location: `/etc/vmware/vmdkops/log_config.json`  See Python
 logging config format for content details.
 * **Turning on debug logging**: replace all 'INFO' with 'DEBUG' in config file, restart the service
 
+Please refer [vDVS configuration page](http://vmware.github.io/docker-volume-vsphere/documentation/configuration.html) for detailed steps.
 
 ## Tested on
 
@@ -173,46 +99,10 @@ logging config format for content details.
 **Docker (Linux)**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
 **Docker (Windows)**: 1.13/17.03
 
-## Dependencies
+## Reference
 
-The plugin uses VMCI (Virtual Machine Communication Interface) and vSockets to contact the service on ESX. The associated Linux kernel drivers are installed via the VMware Tools and its open version, namely [open-vm-tools](https://github.com/vmware/open-vm-tools), packages. Either one of these packages must hence be installed in the guest OS. It's recommended to install the most uptodate version of either of these packages as available.
+* **Known Issues**: Please check [vDVS known issue page](http://vmware.github.io/docker-volume-vsphere/documentation/known-issues.html) to find out about known issues.
 
-## Known Issues
+* **Contact us**: Please [click here](http://vmware.github.io/docker-volume-vsphere/documentation/contactus.html) for requesting any feature or reporting a product issue.
 
--  Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) [#1191](https://github.com/vmware/docker-volume-vsphere/issues/1191). It's an ESX issue and will be available in the next vSphere release.
--  Full volume name with format like "volume@datastore" cannot be specified in the compose file for stack deployment. [#1315](https://github.com/vmware/docker-volume-vsphere/issues/1315). It is a docker compose issue and a workaround has been provided in the issue.
--  Volume creation using VFAT filesystem is not working currently. [#1327](https://github.com/vmware/docker-volume-vsphere/issues/1327)
--  Plugin fails to create volumes after installation on VM running boot2docker Linux. This is because open-vm-tools available for boot2docker doesn't install the vSockets driver and hence the plugin is unable to contact the ESX service. [#1744](https://github.com/vmware/docker-volume-vsphere/issues/1744)
--  Currently "vmdk-opsd stop" just stops (exits) the service forcefully. If there are operations in flight it could kill them in the middle of execution. This can potentially create inconsistencies in VM attachement, KV files or auth-db. [#1073](https://github.com/vmware/docker-volume-vsphere/issues/1073)
--  Admin CLI volume ls command is slow to list all the volumes if the setup has more than hundreds of volumes. [#1083](https://github.com/vmware/docker-volume-vsphere/issues/1083)
-
-## Known Differences Between Linux And Windows Plugin
-- Docker, by default, converts volume names to lower-case on Windows. Therefore, volume operations involving case-sensitive names will always be handled in lower case.
-
-## Contact us
-
-### Public
-* [containers@vmware.com](containers@vmware.com)
-* [Issues](https://github.com/vmware/docker-volume-vsphere/issues)
-* [![Join the chat at https://gitter.im/vmware/docker-volume-vsphere](https://badges.gitter.im/vmware/docker-volume-vsphere.svg)](https://gitter.im/vmware/docker-volume-vsphere?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-* [VMware Docker Slack](https://vmwarecode.slack.com/messages/docker/) channel
-
-# Blogs
-
-- Cormac Hogan
-    - Overview
-        - [Docker Volume Driver for vSphere](http://cormachogan.com/2016/06/01/docker-volume-driver-vsphere/)
-        - [Docker Volume Driver for vSphere – short video](http://cormachogan.com/2016/06/03/docker-volume-driver-vsphere-short-video/)
-    - Docker + VSAN
-        - [Docker Volume Driver for vSphere on Virtual SAN](http://cormachogan.com/2016/06/09/docker-volume-driver-vsphere-virtual-san-vsan/)
-        - [Using vSphere docker volume driver to run Project Harbor on VSAN](http://cormachogan.com/2016/07/29/using-vsphere-docker-volume-driver-run-project-harbor-vsan/)
-        - [Docker Volume Driver for vSphere using policies on VSAN](http://cormachogan.com/2016/09/26/docker-volume-driver-vsphere-using-policies-vsan-short-video/)
-    - 0.7 Release Overview
-        - [Some nice enhancements to Docker Volume Driver for vSphere v0.7](http://cormachogan.com/2016/10/06/nice-enhancements-docker-volume-driver-vsphere-v0-7/)
-- William Lam
-    - [Getting Started with Tech Preview of Docker Volume Driver for vSphere - updated](http://www.virtuallyghetto.com/2016/05/getting-started-with-tech-preview-of-docker-volume-driver-for-vsphere.html)
-- Virtual Blocks
-    - [vSphere Docker Volume Driver Brings Benefits of vSphere Storage to Containers](https://blogs.vmware.com/virtualblocks/2016/06/20/vsphere-docker-volume-driver-brings-benefits-of-vsphere-storage-to-containers/)
-    - [vSphere Docker Volume Service is now Docker Certified!](https://blogs.vmware.com/virtualblocks/2017/03/29/vsphere-docker-volume-service-now-docker-certified/)
-- Ryan Kelly
-    - [How to use the Docker Volume Driver for vSphere with Photon OS](http://www.vmtocloud.com/how-to-use-the-docker-volume-driver-for-vsphere-with-photon-os/)
+ * **Blogs**: Please check our [vDVS blog page](http://vmware.github.io/docker-volume-vsphere/documentation/blogs.html).
