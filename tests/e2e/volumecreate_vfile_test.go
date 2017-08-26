@@ -14,7 +14,7 @@
 
 // This test is going to cover various volume creation test cases
 
-// +build runonceshared
+// +build runoncevfile
 
 package e2e
 
@@ -31,7 +31,7 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type VolumeCreateSharedTestSuite struct {
+type VolumeCreateVFileTestSuite struct {
 	config     *inputparams.TestConfig
 	volumeList []string
 }
@@ -60,7 +60,7 @@ var (
 // 6. contains multiple '@'
 // 7. contains unicode character
 // 8. contains space
-func (s *VolumeCreateSharedTestSuite) validVolNames() []string {
+func (s *VolumeCreateVFileTestSuite) validVolNames() []string {
 	return []string{
 		// for each volume volname, an internal volume with name with prefix "InternalVolvolname"
 		// will be created by vsphere driver
@@ -75,14 +75,14 @@ func (s *VolumeCreateSharedTestSuite) validVolNames() []string {
 	}
 }
 
-func (s *VolumeCreateSharedTestSuite) SetUpSuite(c *C) {
+func (s *VolumeCreateVFileTestSuite) SetUpSuite(c *C) {
 	s.config = inputparams.GetTestConfig()
 	if s.config == nil {
-		c.Skip("Unable to retrieve test config, skipping volume create tests for shared plugin")
+		c.Skip("Unable to retrieve test config, skipping volume create tests for vfile plugin")
 	}
 }
 
-func (s *VolumeCreateSharedTestSuite) TearDownTest(c *C) {
+func (s *VolumeCreateVFileTestSuite) TearDownTest(c *C) {
 	volList := strings.Join(s.volumeList, " ")
 
 	if volList != "" {
@@ -94,17 +94,17 @@ func (s *VolumeCreateSharedTestSuite) TearDownTest(c *C) {
 	s.volumeList = s.volumeList[:0]
 }
 
-var _ = Suite(&VolumeCreateSharedTestSuite{})
+var _ = Suite(&VolumeCreateVFileTestSuite{})
 
 // create volume and do valid/invalid assertion
-func (s *VolumeCreateSharedTestSuite) createVolCheck(name, option string, valid bool, c *C) {
+func (s *VolumeCreateVFileTestSuite) createVolCheck(name, option string, valid bool, c *C) {
 	var out string
 	var err error
 
 	if option == "" {
-		out, err = dockercli.CreateSharedVolume(s.config.DockerHosts[0], name)
+		out, err = dockercli.CreateVFileVolume(s.config.DockerHosts[0], name)
 	} else {
-		out, err = dockercli.CreateSharedVolumeWithOptions(s.config.DockerHosts[0], name, option)
+		out, err = dockercli.CreateVFileVolumeWithOptions(s.config.DockerHosts[0], name, option)
 	}
 
 	// if creation is successful, add it to the list so that it gets cleaned later
@@ -123,7 +123,7 @@ func (s *VolumeCreateSharedTestSuite) createVolCheck(name, option string, valid 
 }
 
 // loop over volume names to parallely create volumes
-func (s *VolumeCreateSharedTestSuite) parallelCreateByName(names []string, valid bool, c *C) {
+func (s *VolumeCreateVFileTestSuite) parallelCreateByName(names []string, valid bool, c *C) {
 	var wg sync.WaitGroup
 	for _, volName := range names {
 		wg.Add(1)
@@ -136,7 +136,7 @@ func (s *VolumeCreateSharedTestSuite) parallelCreateByName(names []string, valid
 }
 
 // loop over volume options to parallely create volumes
-func (s *VolumeCreateSharedTestSuite) parallelCreateByOption(options []string, valid bool, c *C) {
+func (s *VolumeCreateVFileTestSuite) parallelCreateByOption(options []string, valid bool, c *C) {
 	var wg sync.WaitGroup
 	for _, volOption := range options {
 		wg.Add(1)
@@ -149,13 +149,13 @@ func (s *VolumeCreateSharedTestSuite) parallelCreateByOption(options []string, v
 	wg.Wait()
 }
 
-func (s *VolumeCreateSharedTestSuite) accessCheck(hostIP string, volList []string, c *C) {
+func (s *VolumeCreateVFileTestSuite) accessCheck(hostIP string, volList []string, c *C) {
 	isAvailable := verification.CheckVolumeListAvailability(hostIP, volList)
 	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", volList))
 }
 
 // Valid volume names test
-func (s *VolumeCreateSharedTestSuite) TestValidName(c *C) {
+func (s *VolumeCreateVFileTestSuite) TestValidName(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	s.parallelCreateByName(s.validVolNames(), true, c)
@@ -165,7 +165,7 @@ func (s *VolumeCreateSharedTestSuite) TestValidName(c *C) {
 }
 
 // Invalid volume names test
-func (s *VolumeCreateSharedTestSuite) TestInvalidName(c *C) {
+func (s *VolumeCreateVFileTestSuite) TestInvalidName(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	s.parallelCreateByName(invalidVolNameList, false, c)
@@ -179,9 +179,9 @@ func (s *VolumeCreateSharedTestSuite) TestInvalidName(c *C) {
 // 3. attach-as (persistent, independent_persistent)
 // 4. fstype ext4 for linux
 // 5. access (read-write, read-only)
-// TODO: Right now, only -o size option is supported by vsphere shared volume
+// TODO: Right now, only -o size option is supported by vFile volume
 // all other options are not supported yet
-func (s *VolumeCreateSharedTestSuite) TestValidOptions(c *C) {
+func (s *VolumeCreateVFileTestSuite) TestValidOptions(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	validVolOpts := []string{
@@ -207,9 +207,9 @@ func (s *VolumeCreateSharedTestSuite) TestValidOptions(c *C) {
 // 2. Wrong volume size
 // 3. Wrong fs types
 // 4. Wrong access types
-// TODO: Right now, only -o size option is supported by vsphere shared volume
+// TODO: Right now, only -o size option is supported by vFile volume
 // all other options are not supported yet
-func (s *VolumeCreateSharedTestSuite) TestInvalidOptions(c *C) {
+func (s *VolumeCreateVFileTestSuite) TestInvalidOptions(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	invalidVolOpts := []string{

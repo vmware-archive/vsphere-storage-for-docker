@@ -14,7 +14,7 @@
 
 package main
 
-// A vSphere Shared Docker Data Volume plugin - main
+// vFile Docker Data Volume plugin - main
 
 import (
 	"os"
@@ -22,7 +22,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_server"
 )
@@ -32,15 +32,15 @@ import (
 func main() {
 	var driver volume.Driver
 
-	cfg, err := config.InitConfig(config.DefaultSharedPluginConfigPath, config.DefaultSharedPluginLogPath,
-		config.SharedDriver, "")
+	cfg, err := config.InitConfig(config.DefaultVFilePluginConfigPath, config.DefaultVFilePluginLogPath,
+		config.VFileDriver, "")
 	if err != nil {
-		log.Warning("Failed to initialize config variables for shared plugin")
+		log.Warning("Failed to initialize config variables for vfile plugin")
 		os.Exit(1)
 	}
 
-	if cfg.Driver == config.SharedDriver {
-		driver = shared.NewVolumeDriver(cfg, config.VSharedMountRoot)
+	if cfg.Driver == config.VFileDriver {
+		driver = vfile.NewVolumeDriver(cfg, config.VFileMountRoot)
 	} else {
 		log.Warning("Unknown driver or invalid/missing driver options, exiting - ", cfg.Driver)
 		os.Exit(1)

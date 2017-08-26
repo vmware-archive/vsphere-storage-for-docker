@@ -15,7 +15,7 @@
 // This test suite includes test cases to verify basic functionality
 // before upgrade for upgrade test
 
-// +build runonceshared
+// +build runoncevfile
 
 package e2e
 
@@ -29,7 +29,7 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type BasicSharedTestSuite struct {
+type BasicVFileTestSuite struct {
 	config        *inputparams.TestConfig
 	esx           string
 	vm1           string
@@ -41,10 +41,10 @@ type BasicSharedTestSuite struct {
 	containerName string
 }
 
-func (s *BasicSharedTestSuite) SetUpSuite(c *C) {
+func (s *BasicVFileTestSuite) SetUpSuite(c *C) {
 	s.config = inputparams.GetTestConfig()
 	if s.config == nil {
-		c.Skip("Unable to retrieve test config, skipping basic sharedtests")
+		c.Skip("Unable to retrieve test config, skipping basic vfile tests")
 	}
 
 	s.esx = s.config.EsxHost
@@ -56,13 +56,13 @@ func (s *BasicSharedTestSuite) SetUpSuite(c *C) {
 	}
 }
 
-func (s *BasicSharedTestSuite) SetUpTest(c *C) {
+func (s *BasicVFileTestSuite) SetUpTest(c *C) {
 	s.volName1 = inputparams.GetUniqueVolumeName(c.TestName())
 	s.volName2 = inputparams.GetUniqueVolumeName(c.TestName())
 	s.containerName = inputparams.GetUniqueContainerName(c.TestName())
 }
 
-var _ = Suite(&BasicSharedTestSuite{})
+var _ = Suite(&BasicVFileTestSuite{})
 
 // All VMs are created in a shared datastore
 // Test steps:
@@ -76,11 +76,11 @@ var _ = Suite(&BasicSharedTestSuite{})
 // 8. Remove the volume
 // 9. Verify the volume is unavailable
 // TODO: step 3-7 currently is not available since volume mount/unmount is not available yet
-func (s *BasicSharedTestSuite) TestVolumeLifecycle(c *C) {
+func (s *BasicVFileTestSuite) TestVolumeLifecycle(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	for _, host := range s.config.DockerHosts {
-		out, err := dockercli.CreateSharedVolume(host, s.volName1)
+		out, err := dockercli.CreateVFileVolume(host, s.volName1)
 		c.Assert(err, IsNil, Commentf(out))
 
 		accessible := verification.CheckVolumeAvailability(host, s.volName1)
@@ -100,8 +100,8 @@ func (s *BasicSharedTestSuite) TestVolumeLifecycle(c *C) {
 
 		// status = verification.VerifyDetachedStatus(s.volName1, host, s.esx)
 		// c.Assert(status, Equals, true, Commentf("Volume %s is still attached", s.volName1))
-		out = verification.GetSharedVolumeStatusHost(s.volName1, host)
-		log.Println("GetSharedVolumeStatusHost return out[%s] for volume %s", out, s.volName1)
+		out = verification.GetVFileVolumeStatusHost(s.volName1, host)
+		log.Println("GetVFileVolumeStatusHost return out[%s] for volume %s", out, s.volName1)
 		c.Assert(out, Equals, "Ready", Commentf("Volume %s status is expected to be [Ready], actual status is [%s]",
 			s.volName1, out))
 

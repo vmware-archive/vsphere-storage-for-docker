@@ -112,8 +112,8 @@ const (
 	// ErrorVolumeCreate Error string prefix when volume creation fails
 	ErrorVolumeCreate = "Error response from daemon: create"
 
-	// CreateSharedVolume create a volume with vshared driver
-	CreateSharedVolume = dockerVol + " create --driver=vshared "
+	// CreateVFileVolume create a volume with vfile driver
+	CreateVFileVolume = dockerVol + " create --driver=vfile "
 )
 
 // VolumeStatusFields properties returned for a volume by inspecting it

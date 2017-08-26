@@ -47,16 +47,16 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 	return ssh.InvokeCommand(ip, dockercli.CreateVolume+"--name="+name+" "+options)
 }
 
-// CreateSharedVolume is going to create docker volume with given name using vsphere shared driver.
-func CreateSharedVolume(ip, name string) (string, error) {
-	log.Printf("Creating shared volume [%s] on VM [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, dockercli.CreateSharedVolume+" --name= "+name)
+// CreateVFileVolume is going to create docker volume with given name using vfile driver.
+func CreateVFileVolume(ip, name string) (string, error) {
+	log.Printf("Creating vFile volume [%s] on VM [%s]\n", name, ip)
+	return ssh.InvokeCommand(ip, dockercli.CreateVFileVolume+" --name= "+name)
 }
 
-// CreateSharedVolumeWithOptions is going to create docker volume with given name using vshpere shared driver.
-func CreateSharedVolumeWithOptions(ip, name, options string) (string, error) {
-	log.Printf("Creating shared volume [%s] with options [%s] on VM [%s]\n", name, options, ip)
-	return ssh.InvokeCommand(ip, dockercli.CreateSharedVolume+"--name="+name+" "+options)
+// CreateVFileVolumeWithOptions is going to create docker volume with given name using vfile driver.
+func CreateVFileVolumeWithOptions(ip, name, options string) (string, error) {
+	log.Printf("Creating vFile volume [%s] with options [%s] on VM [%s]\n", name, options, ip)
+	return ssh.InvokeCommand(ip, dockercli.CreateVFileVolume+"--name="+name+" "+options)
 }
 
 // AttachVolume - attach volume to container on given host
@@ -66,9 +66,9 @@ func AttachVolume(ip, volName, containerName string) (string, error) {
 		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.TestContainer)
 }
 
-// AttachSharedVolume - attach a shared volume to container on given host
-func AttachSharedVolume(ip, volName, containerName string) (string, error) {
-	log.Printf("Attaching shared volume [%s] on VM [%s]\n", volName, ip)
+// AttachVFileVolume - attach a vFile volume to container on given host
+func AttachVFileVolume(ip, volName, containerName string) (string, error) {
+	log.Printf("Attaching vFile volume [%s] on VM [%s]\n", volName, ip)
 	return ssh.InvokeCommand(ip, dockercli.RunContainer+" -d -v "+volName+
 		":"+dockercli.ContainerMountPoint+" --name "+containerName+dockercli.TestContainer)
 }

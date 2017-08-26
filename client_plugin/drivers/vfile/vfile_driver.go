@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package shared
+package vfile
 
 //
-// VMWare vSphere Shared Docker Data Volume plugin version.
+// VMWare vFile Docker Data Volume plugin version.
 //
-// Provide support for --driver=shared in Docker, when Docker VM is running under ESX.
+// Provide support for --driver=vfile in Docker
 //
-// Serves requests from Docker Engine related to vsphere shared volume operations.
+// Serves requests from Docker Engine related to vFile volume operations.
 ///
 
 import (
@@ -33,10 +33,10 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/dockerops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/shared/kvstore/etcdops"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/dockerops"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore/etcdops"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
@@ -44,22 +44,21 @@ import (
 )
 
 /* Constants
-   version:                 Version of the shared plugin driver
+   version:                 Version of the vFile plugin driver
    internalVolumePrefix:    Prefix for names of internal volumes
-                            which serve as backend stores for shared
-                            volumes
+                            which serve as backend stores for vFile volumes
    fsType:                  Type of file system that will be presented
-                            in the shared volume
+                            in the vFile volume
 */
 const (
-	version              = "vSphere Shared Volume Driver v0.2"
+	version              = "vFile Volume Driver v0.2"
 	internalVolumePrefix = "InternalVol"
 	fsType               = "cifs"
 )
 
-/* VolumeDriver - vsphere shared plugin volume driver struct
+/* VolumeDriver - vFile plugin volume driver struct
    dockerOps:               Docker related methods and information
-   internalVolumeDriver:    Name of the plugin used by shared volume
+   internalVolumeDriver:    Name of the plugin used by vFile volume
                             plugin to create internal volumes
    kvStore:                 Key-value store related methods and information
 */
@@ -75,7 +74,7 @@ type VolumeDriver struct {
 /* VolumeMetadata structure contains all the
    metadata about a volume that will be put in etcd
 
-   status:          What state is the shared volume currently in?
+   status:          What state is the vFile volume currently in?
    globalRefcount:  How many host VMs are accessing this volume?
    port:            On which port is the Samba service listening?
    serviceName:     What is the name of the Samba service for this volume?
@@ -83,10 +82,10 @@ type VolumeDriver struct {
    password:        Local Samba username and password
 	            Only default values for now, later can be used
                     for multi tenancy.
-   clientList:      List of all host VMs using this shared volume
+   clientList:      List of all host VMs using this vFile volume
 */
 
-// VolumeMetadata - Contains metadata of shared volumes
+// VolumeMetadata - Contains metadata of vFile volumes
 type VolumeMetadata struct {
 	Status         kvstore.VolStatus `json:"-"` // Field won't be marshalled
 	GlobalRefcount int               `json:"-"` // Field won't be marshalled
@@ -137,7 +136,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 
 	log.WithFields(log.Fields{
 		"version": version,
-	}).Info("vSphere shared plugin started ")
+	}).Info("vFile plugin started ")
 
 	return &d
 }
@@ -253,7 +252,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: msg}
 	}
 
-	// Create traditional volume as backend to shared volume
+	// Create traditional volume as backend to vFile volume
 	log.Infof("Attempting to create internal volume for %s", r.Name)
 	internalVolname := internalVolumePrefix + r.Name
 	err = d.dockerOps.VolumeCreate(d.internalVolumeDriver, internalVolname, r.Options)
@@ -522,9 +521,9 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 			"Port":        volRecord.Port,
 			"ServiceName": volRecord.ServiceName,
 		}).Info("Get info for mounting ")
-	err = d.mountSharedVolume(name, mountpoint, &volRecord)
+	err = d.mountVFileVolume(name, mountpoint, &volRecord)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to mount shared volume. Error: %v.", err)
+		msg := fmt.Sprintf("Failed to mount vFile volume. Error: %v.", err)
 		// AtomicDecr decreases global refcount by one
 		// if global refcount reduces from 1 to 0, a watcher event is triggered on manager nodes
 		err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
@@ -540,8 +539,8 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	return mountpoint, nil
 }
 
-// mountSharedVolume - mount the shared volume according to volume metadata
-func (d *VolumeDriver) mountSharedVolume(volName string, mountpoint string, volRecord *VolumeMetadata) error {
+// mountVFileVolume - mount the vFile volume according to volume metadata
+func (d *VolumeDriver) mountVFileVolume(volName string, mountpoint string, volRecord *VolumeMetadata) error {
 	// Build mount command as follows:
 	//   mount [-t $fstype] [-o $options] [$source] $target
 	mountArgs := []string{}
@@ -673,7 +672,7 @@ func (d *VolumeDriver) Capabilities(r volume.Request) volume.Response {
 }
 
 // DetachVolume - detach a volume from the VM
-// do nothing for the shared driver.
+// do nothing for the vFile driver.
 func (d *VolumeDriver) DetachVolume(name string) error {
 	return nil
 }

@@ -142,27 +142,27 @@ func getVolumeStatusHost(name, hostName string) string {
 	return out
 }
 
-// GetSharedVolumeStatusHost - get the volume status on a given host, the volume is created by
-// vsphere shared driver
-func GetSharedVolumeStatusHost(name, hostName string) string {
+// GetVFileVolumeStatusHost - get the volume status on a given host, the volume is created by
+// vfile driver
+func GetVFileVolumeStatusHost(name, hostName string) string {
 	cmd := dockercli.InspectVolume + " --format \"{{index .Status \\\"Volume Status\\\"}}\" " + name
-	log.Printf("GetSharedVolumeStatusHost: cmd[]", cmd)
+	log.Printf("GetVFileVolumeStatusHost: cmd[]", cmd)
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return out
 }
 
-// GetSharedVolumeGlobalRefcount - get the global refcount of a shared volume.
+// GetVFileVolumeGlobalRefcount - get the global refcount of a vFile volume.
 // This is the number of host VMs on which the volume is presently mounted.
 // Input
-//          name:       name of the shared volume
+//          name:       name of the vFile volume
 //          hostName:   host VM on which to check
 // Output
 //          string:     String containing global refcount
-func GetSharedVolumeGlobalRefcount(name, hostName string) string {
+func GetVFileVolumeGlobalRefcount(name, hostName string) string {
 	cmd := dockercli.InspectVolume +
 		" --format \"{{index .Status \\\"Global Refcount\\\"}}\" " +
 		name
-	log.Printf("GetSharedVolumeGlobalRefcount: cmd[]", cmd)
+	log.Printf("GetVFileVolumeGlobalRefcount: cmd[]", cmd)
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return out
 }
