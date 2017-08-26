@@ -963,7 +963,7 @@ func (e *EtcdKVS) BlockingWaitAndGet(key string, value string, newKey string) (s
 	defer ticker.Stop()
 	// This call is used to block and wait for long
 	// running functions. Larger timeout is justified.
-	timer := time.NewTimer(8 * requestTimeout)
+	timer := time.NewTimer(dockerops.GetServiceStartTimeout() + 2*requestTimeout)
 	defer timer.Stop()
 
 	for {

@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,13 +66,23 @@ const (
 	checkDuration = 5 * time.Second
 	// Time between successive checks for deleting a volume
 	checkSleepDuration = time.Second
-	// Timeout to mark Samba service launch as unsuccessful
-	sambaRequestTimeout = 30 * time.Second
+	// default Timeout to mark Samba service launch as unsuccessful
+	defaultSvcStartTimeoutSec = 30
 	// Prefix for internal volume names
 	internalVolumePrefix = "InternalVol"
 	// Error returned when no Samba service for that volume exists
 	noSambaServiceError = "No file service exists"
 )
+
+// get service start timeout
+func GetServiceStartTimeout() time.Duration {
+	timeOutSec, err := strconv.Atoi(os.Getenv("VFILE_TIMEOUT_IN_SECOND"))
+	if err != nil {
+		timeOutSec = defaultSvcStartTimeoutSec
+	}
+	log.WithFields(log.Fields{"value": timeOutSec}).Info("Service start timeout")
+	return time.Duration(timeOutSec) * time.Second
+}
 
 // DockerOps is the interface for docker host related operations
 type DockerOps struct {
@@ -274,7 +285,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 	// Wait till service container starts
 	ticker := time.NewTicker(checkDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(sambaRequestTimeout)
+	timer := time.NewTimer(GetServiceStartTimeout())
 	defer timer.Stop()
 	for {
 		select {
@@ -430,9 +441,9 @@ func (d *DockerOps) DeleteInternalVolume(volName string) {
 	internalVolname := internalVolumePrefix + volName
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
-	// timeout set to sambaRequestTimeout because the internal volume maybe
+	// timeout set to the service start timeout because the internal volume maybe
 	// still in use due to stop of SMB server in progress
-	timer := time.NewTimer(sambaRequestTimeout)
+	timer := time.NewTimer(GetServiceStartTimeout())
 	defer timer.Stop()
 
 	for {
@@ -491,7 +502,7 @@ func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
 	// Wait till service container stops
 	ticker := time.NewTicker(checkDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(sambaRequestTimeout)
+	timer := time.NewTimer(GetServiceStartTimeout())
 	defer timer.Stop()
 	for {
 		select {

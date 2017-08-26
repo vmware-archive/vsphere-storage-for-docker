@@ -58,6 +58,12 @@
 		"description": "Client protocol version used in test",
 		"value": "",
 		"Settable": [ "value"]
+	},
+	{
+		"name": "VFILE_TIMEOUT_IN_SECOND",
+		"description": "Timeout value in second used by vFILE plugin",
+		"value": "",
+		"Settable": [ "value"]
 	}
 	]
 }

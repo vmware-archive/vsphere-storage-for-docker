@@ -3,13 +3,17 @@ title: vFile volume plugin for Docker
 
 ---
 ## Overview
-Depending on the underlying block storage device system, it might not be possible to access the same
+Depending on the underlying block storage system, it might not be possible to access the same
 persistent volume across different hosts/nodes simultanously.
 For example, currently users cannot mount the same persistent volume which is created through
 vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.
 
 This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
+<<<<<<< HEAD
 However, setting up and maintaining enterprise storage offerings for Cloud Native usecases is not a trivial work.
+=======
+However, setting up and maintaining those distributed file systems for docker persistent data usage is not a trivial work.
+>>>>>>> Update user guide.
 Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.
 
 __vFile volume plugin for Docker__ provides simultanous persistent volume access between hosts in the
@@ -132,3 +136,11 @@ When you see somthing like the following in the log
 2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
 ```
 Please make sure the volume you used is a valid volume name. A valid volume name consists of ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]```.
+
+### I got " VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete.." when mounting a volume.
+We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it's better free up some disk space. You can also try to increase the service start timeout value, controlled by ```VFILE_TIMEOUT_IN_SECOND``` env variable:
+```
+docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+```
+This will increase timeout to 90 sec, from default of 30 sec.
+
