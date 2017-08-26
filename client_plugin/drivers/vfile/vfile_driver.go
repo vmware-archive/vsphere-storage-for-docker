@@ -54,6 +54,7 @@ const (
 	version              = "vFile Volume Driver v0.2"
 	internalVolumePrefix = "InternalVol"
 	fsType               = "cifs"
+	initError            = "vFile volume driver is not fully initialized yet."
 )
 
 /* VolumeDriver - vFile plugin volume driver struct
@@ -69,6 +70,7 @@ type VolumeDriver struct {
 	dockerOps            *dockerops.DockerOps
 	internalVolumeDriver string
 	kvStore              kvstore.KvStore
+	isInitialized        bool
 }
 
 /* VolumeMetadata structure contains all the
@@ -104,6 +106,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	d.RefCounts.Init(&d, mountDir, cfg.Driver)
 	d.MountIDtoName = make(map[string]string)
 	d.MountRoot = mountDir
+	d.isInitialized = false
 
 	// Read flag from CLI. If not provided, use cfg value
 	internalVolumeParam := flag.String("InternalDriver", "",
@@ -115,24 +118,8 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 		d.internalVolumeDriver = *internalVolumeParam
 	}
 
-	// create new docker operation client
-	d.dockerOps = dockerops.NewDockerOps()
-	if d.dockerOps == nil {
-		log.Errorf("Failed to create new DockerOps")
-		return nil
-	}
-
-	// Load the file server image
-	go d.dockerOps.LoadFileServerImage()
-	log.Infof("Started loading file server image")
-
-	// initialize built-in etcd cluster
-	etcdKVS := etcdops.NewKvStore(d.dockerOps)
-	if etcdKVS == nil {
-		log.Errorf("Failed to create new KV store")
-		return nil
-	}
-	d.kvStore = etcdKVS
+	// Use go routine due to the timeout for plugin initialization
+	go d.backgroundInitTasks()
 
 	log.WithFields(log.Fields{
 		"version": version,
@@ -141,9 +128,39 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	return &d
 }
 
+// backgroundInitTasks: create new dockerOps, load server image, and start key-value store
+func (d *VolumeDriver) backgroundInitTasks() {
+	// create new docker operation client
+	d.dockerOps = dockerops.NewDockerOps()
+	if d.dockerOps == nil {
+		log.Errorf("Failed to create new DockerOps")
+		return
+	}
+
+	// Load the file server image
+	go d.dockerOps.LoadFileServerImage()
+	log.Infof("Started loading file server image")
+
+	// initialize built-in etcd cluster
+	for {
+		// keep retry start kvstore, since managers may have plugin started before leader
+		etcdKVS := etcdops.NewKvStore(d.dockerOps)
+		if etcdKVS != nil {
+			d.kvStore = etcdKVS
+			d.isInitialized = true
+			return
+		}
+		log.Warningf("Failed to create new KV store. Retry")
+	}
+}
+
 // Get info about a single volume
 func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 	log.Infof("VolumeDriver Get: %s", r.Name)
+	if !d.isInitialized {
+		return volume.Response{Err: initError}
+	}
+
 	status, err := d.GetVolume(r.Name)
 	if err != nil {
 		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to get volume meta-data ")
@@ -157,6 +174,10 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 
 // List volumes known to the driver
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
+	if !d.isInitialized {
+		return volume.Response{Err: initError}
+	}
+
 	volumes, err := d.kvStore.List(kvstore.VolPrefixState)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("Failed to get volume list ")
@@ -219,6 +240,10 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 // Create - create a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.Infof("VolumeDriver Create: %s", r.Name)
+	if !d.isInitialized {
+		return volume.Response{Err: initError}
+	}
+
 	var msg string
 	var entries []kvstore.KvPair
 
@@ -304,6 +329,10 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 // Remove - removes individual volume. Docker would call it only if is not using it anymore
 func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Removing volume ")
+	if !d.isInitialized {
+		return volume.Response{Err: initError}
+	}
+
 	var msg string
 	var volRecord VolumeMetadata
 
@@ -412,6 +441,9 @@ func (d *VolumeDriver) Path(r volume.Request) volume.Response {
 //
 func (d *VolumeDriver) Mount(r volume.MountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Mounting volume ")
+	if !d.isInitialized {
+		return volume.Response{Err: initError}
+	}
 
 	// lock the state
 	d.RefCounts.StateMtx.Lock()
@@ -587,6 +619,9 @@ func (d *VolumeDriver) mountVFileVolume(volName string, mountpoint string, volRe
 // Unmount request from Docker. If mount refcount is drop to 0.
 func (d *VolumeDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name}).Info("Unmounting Volume ")
+	if !d.isInitialized {
+		return volume.Response{Err: initError}
+	}
 
 	// lock the state
 	d.RefCounts.StateMtx.Lock()

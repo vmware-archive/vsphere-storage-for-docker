@@ -61,11 +61,8 @@ const (
 	// Port number inside Samba container on which
 	// Samba service listens
 	defaultSambaPort = 445
-	// Time between successive checks for Samba service
-	// status to see if service container was launched
-	checkDuration = 5 * time.Second
-	// Time between successive checks for deleting a volume
-	checkSleepDuration = time.Second
+	// Time between successive checks for general checking
+	checkTicker = time.Second
 	// default Timeout to mark Samba service launch as unsuccessful
 	defaultSvcStartTimeoutSec = 30
 	// Prefix for internal volume names
@@ -283,7 +280,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 	}
 
 	// Wait till service container starts
-	ticker := time.NewTicker(checkDuration)
+	ticker := time.NewTicker(checkTicker)
 	defer ticker.Stop()
 	timer := time.NewTimer(GetServiceStartTimeout())
 	defer timer.Stop()
@@ -439,7 +436,7 @@ func (d *DockerOps) ListVolumesFromInternalVol() ([]string, error) {
 // DeleteVolume - delete the internal volume
 func (d *DockerOps) DeleteInternalVolume(volName string) {
 	internalVolname := internalVolumePrefix + volName
-	ticker := time.NewTicker(checkSleepDuration)
+	ticker := time.NewTicker(checkTicker)
 	defer ticker.Stop()
 	// timeout set to the service start timeout because the internal volume maybe
 	// still in use due to stop of SMB server in progress
@@ -500,7 +497,7 @@ func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
 	}
 
 	// Wait till service container stops
-	ticker := time.NewTicker(checkDuration)
+	ticker := time.NewTicker(checkTicker)
 	defer ticker.Stop()
 	timer := time.NewTimer(GetServiceStartTimeout())
 	defer timer.Stop()
