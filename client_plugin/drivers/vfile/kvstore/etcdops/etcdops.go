@@ -60,7 +60,7 @@ const (
 	etcdClusterStateExisting = "existing"
 	requestTimeout           = 5 * time.Second
 	checkSleepDuration       = time.Second
-	gcTicker                 = 30 * time.Second
+	gcTicker                 = 5 * time.Second
 	etcdClientCreateError    = "Failed to create etcd client"
 	etcdSingleRef            = "1"
 	etcdNoRef                = "0"
