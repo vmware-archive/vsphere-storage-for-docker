@@ -64,7 +64,7 @@ const (
 	// Time between successive checks for general checking
 	checkTicker = time.Second
 	// default Timeout to mark Samba service launch as unsuccessful
-	defaultSvcStartTimeoutSec = 30
+	defaultSvcStartTimeoutSec = 45
 	// Prefix for internal volume names
 	internalVolumePrefix = "InternalVol"
 	// Error returned when no Samba service for that volume exists
