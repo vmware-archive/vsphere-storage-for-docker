@@ -34,7 +34,7 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 ## Installing
 The recommended way to install vFile plugin is from docker cli:
 ```
-docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest
 ```
 Note: please make sure the base volume plugin is already installed!
 
@@ -136,7 +136,7 @@ Please make sure the volume you used is a valid volume name. A valid volume name
 ### I got " VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete.." when mounting a volume.
 We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it's better free up some disk space. You can also try to increase the service start timeout value, controlled by ```VFILE_TIMEOUT_IN_SECOND``` env variable:
 ```
-docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 ```
 This will increase timeout to 90 sec, from default of 30 sec.
 
