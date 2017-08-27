@@ -319,7 +319,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 ```
 
 4. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB
-5. Push managed plugin to docker store
+5. Push vDVS & vFile managed plugin to docker store and windows plugin to bintray
 6. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
 
 ### Publish vDVS managed plugin to Docker Store
@@ -336,8 +336,20 @@ DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make all
 2. Upload files at newly created version page
 3. Publish the newly uploaded VIB by marking it ```public```
 
-Update documentation following steps listed below.
 
+## Cutting release steps for windows plugin
+### Build windows plugin
+Windows plugin needs to be built on a windows environment
+1. export WIN_VM1=[Valid Windows VM IP]
+2. make build-windows-plugin
+3. rename the build/windows/vdvs-bin.zip to /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
+
+### Upload files to bintray
+Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/vDVS_Windows
+
+Following are their paths (with respect to vDVS root working directory)
+1. install-vdvs.ps1
+2. /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
 
 ## Cutting release steps for vFile plugin
 ### Publish vFile managed plugin to Docker Store
@@ -346,6 +358,8 @@ To push plugin image
 DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile
 DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-vfile
 ```
+
+Update documentation following steps listed below.
 
 ## Documentation
 
@@ -373,9 +387,9 @@ docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll buil
 rm -rvf ../documentation
 mv _site ../documentation
 
-# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md 
+# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md
 #Bug in jekyll template does not render the name "index"
-vi ../documentation/index.html 
+vi ../documentation/index.html
 
 # 6. Push to GitHub
 git add documentation
