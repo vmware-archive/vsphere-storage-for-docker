@@ -13,6 +13,12 @@ Please see README.md in the for the release by clicking on the tag for the relea
 ### How do I run the setup on my laptop?
 Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack)
 
+### How do I bind a volume to a particular container host?
+This can be achieved via [Tenancy](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html).
+
+### Can I migrate data between Linux and Windows containers?
+Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vSphere Storage for Docker plugin doesn't support such cases, nor does it provide any explicit help.
+
 ## Troubleshooting
 
 ### Docker Service to ESX Backend Communication.
@@ -38,6 +44,9 @@ It occurs if the Docker volume service cannot communicate to the ESX back end. T
 97 is a standard linux error (```#define EAFNOSUPPORT    97      /* Address family not supported by protocol */```)
 
 It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read ["What is VMCI and vSock and why is it needed?"](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed) above.
+
+#### Volume remains attached to the VM after upgrading vDVS ESX driver
+If the container using volumes exits during the upgrade of ESX driver (i.e. after vib remove but before vib install), the volumes may remain attached to VM. In such a case, please disable and then enable (restart) the volume plugin to ensure volumes are properly detached.
 
 #### I'm not able to create volume after upgrading to vDVS managed plugin, what is the cause?
 ```
