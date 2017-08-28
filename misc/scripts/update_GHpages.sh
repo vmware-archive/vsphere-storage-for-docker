@@ -54,7 +54,7 @@ docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll buil
 rm -rvf ../documentation
 mv _site ../documentation
 
-#updating documentation.html
+#updating documentation/index.html
 sed -i -e 's/\/gh-pages\/jekyll-docs\/\/.md/\/gh-pages\/jekyll-docs\/\/index.md/g' ../documentation/index.html
 
 cd ..
