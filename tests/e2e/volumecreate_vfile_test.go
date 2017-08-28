@@ -62,7 +62,7 @@ var (
 // 8. contains space
 func (s *VolumeCreateVFileTestSuite) validVolNames() []string {
 	return []string{
-		// for each volume volname, an internal volume with name with prefix "InternalVolvolname"
+		// for each volume volname, an internal volume with name with prefix "_vF_volname"
 		// will be created by vsphere driver
 		inputparams.GetVolumeNameOfSize(89),
 		"Volume-0000000-****-###",
