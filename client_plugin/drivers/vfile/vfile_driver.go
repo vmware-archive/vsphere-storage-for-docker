@@ -52,7 +52,7 @@ import (
 */
 const (
 	version              = "vFile Volume Driver v0.2"
-	internalVolumePrefix = "InternalVol"
+	internalVolumePrefix = "_vF_"
 	fsType               = "cifs"
 	initError            = "vFile volume driver is not fully initialized yet."
 )

@@ -66,7 +66,7 @@ const (
 	// default Timeout to mark Samba service launch as unsuccessful
 	defaultSvcStartTimeoutSec = 45
 	// Prefix for internal volume names
-	internalVolumePrefix = "InternalVol"
+	internalVolumePrefix = "_vF_"
 	// Error returned when no Samba service for that volume exists
 	noSambaServiceError = "No file service exists"
 )
