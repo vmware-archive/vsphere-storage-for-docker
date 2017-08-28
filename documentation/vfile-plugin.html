@@ -439,27 +439,15 @@ along with high availability, scalability, and load balancing support.</p>
 
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-  <li>Docker version 1.30/17.06.0 is required.</li>
-  <li>To use vFile plugin, hosts must be running in Swarm mode.
-    <ul>
-      <li><a href="https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/">How to create a swarm</a></li>
-      <li><a href="https://docs.docker.com/engine/swarm/swarm-tutorial/add-nodes/">How to add nodes to the swarm</a></li>
-    </ul>
-  </li>
-  <li>Please follow the following <a href="https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes">recommendations for the Swarm manager nodes setup</a>:
-    <ol>
-      <li>Run the swarm cluster with a single manager only for testing purpose.</li>
-      <li>An <code class="highlighter-rouge">N</code> manager cluster will tolerate the loss of at most <code class="highlighter-rouge">(N-1)/2</code> managers.</li>
-      <li>Docker recommends a maximum of seven manager nodes for a swarm.</li>
-    </ol>
-  </li>
-  <li>Base docker volume plugin (e.g. <a href="https://github.com/vmware/docker-volume-vsphere">vSphere Docker Volume Service</a>)</li>
+  <li>Docker version: 17.06.0 or newer</li>
+  <li>Base docker volume plugin: <a href="https://github.com/vmware/docker-volume-vsphere">vSphere Docker Volume Service</a></li>
+  <li>All hosts running in <a href="https://docs.docker.com/engine/swarm/swarm-tutorial/">Swarm mode</a></li>
 </ul>
 
 <h2 id="installing">Installing</h2>
 <p>The recommended way to install vFile plugin is from docker cli:
 <code class="highlighter-rouge">
-docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest
 </code>
 Note: please make sure the base volume plugin is already installed!</p>
 
@@ -564,9 +552,20 @@ Please make sure the volume you used is a valid volume name. A valid volume name
 <h3 id="i-got--volumedrivermount-failed-to-blocking-wait-for-mounted-state-error-timeout-reached-blockingwait-is-not-complete-when-mounting-a-volume">I got “ VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete..” when mounting a volume.</h3>
 <p>We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it’s better free up some disk space. You can also try to increase the service start timeout value, controlled by <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> env variable:
 <code class="highlighter-rouge">
-docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 </code>
 This will increase timeout to 90 sec, from default of 30 sec.</p>
+
+<h3 id="i-got-docker-volume-ls-operation-very-slow-and-docker-volume-rmcreate-a-vfile-volume-hang-forever">I got “docker volume ls” operation very slow and “docker volume rm/create” a vFile volume hang forever</h3>
+<p>Please check the log at <code class="highlighter-rouge">/var/log/vfile.log</code> and look up if there are error message about swarm status as follow:
+<code class="highlighter-rouge">The swarm does not have a leader. It's possible that too few managers are online. Make sure more than half of the managers are online.</code></p>
+
+<p>This error message indicates the swarm cluster is not in a healthy status.</p>
+
+<p>Please follow the following <a href="https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes">recommendations for the Swarm manager nodes setup</a>:
+    1. Run the swarm cluster with a single manager only for testing purpose.
+    2. An <code class="highlighter-rouge">N</code> manager cluster will tolerate the loss of at most <code class="highlighter-rouge">(N-1)/2</code> managers.
+    3. Docker recommends a maximum of seven manager nodes for a swarm.</p>
 
 
   
