@@ -4,8 +4,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
-<meta name="keywords" content="news,  ">
-<title>Test post from last year | vSphere Docker Volume Service</title>
+<meta name="keywords" content=" ">
+<title>Releases and Branching. | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Test post from last year">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Releases and Branching.">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -378,38 +378,74 @@
 
     <!-- Content Column -->
     <div class="col-md-9">
-        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
-
-    <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">Test post from last year</h1>
-        <p class="post-meta"><time datetime="2015-04-12T00:00:00-05:00" itemprop="datePublished">Apr 12, 2015</time> /
-            
-            
-            
-            <a href="tag_news.html">news</a>
-            
-            
-            
-
-        </p>
+        <div class="post-header">
+   <h1 class="post-title-main">Releases and Branching.</h1>
+</div>
 
 
-    </header>
 
-    <div class="post-content" itemprop="articleBody">
+<div class="post-content">
 
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//BRANCHING.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <h1 id="releases-and-branching">Releases and Branching.</h1>
+
+<ul>
+  <li>Developer branches should follow the scheme <branch name="">.<github user=""></github></branch></li>
+  <li>Releases are based on version tags.
+    <ul>
+      <li>Each public release will be tagged. Tags for releases are the version number Ex: 0.1.0, 0.1.tp
+        <ul>
+          <li>The versions consist of &lt;major number&gt;.&lt;minor number&gt;.&lt;patch&gt;</li>
+        </ul>
+      </li>
+      <li>Tags are used to set the version information in the packages.</li>
+    </ul>
+  </li>
+  <li>Hot fixes for a release will be developed and tested on a branch created off the tag for the release.</li>
+</ul>
+
+  
+
+    <div class="tags">
         
-
-        <p>This is just a test post from the previous year.</p>
-
-
     </div>
 
+    
 
-
-</article>
-
-
+</div>
 
 <hr class="shaded"/>
 
@@ -417,7 +453,7 @@
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 22, 2017 <br />
+ Site last generated: Aug 28, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

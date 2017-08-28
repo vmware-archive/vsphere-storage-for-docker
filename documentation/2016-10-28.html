@@ -3,9 +3,9 @@
     <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="This is some summary frontmatter for my sample post.">
-<meta name="keywords" content="newsgetting_started,  ">
-<title>Sample post | vSphere Docker Volume Service</title>
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>0.8.1 Release | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Sample post">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="0.8.1 Release">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -378,50 +378,80 @@
 
     <!-- Content Column -->
     <div class="col-md-9">
-        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
-
-    <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">Sample post</h1>
-        <p class="post-meta"><time datetime="2016-02-26T00:00:00-06:00" itemprop="datePublished">Feb 26, 2016</time> /
-            
-            
-            
-            <a href="tag_news.html">news</a>, 
-            
-            
-            
-            <a href="tag_getting_started.html">getting_started</a>
-            
-            
-            
-
-        </p>
+        <div class="post-header">
+   <h1 class="post-title-main">0.8.1 Release</h1>
+</div>
 
 
-    </header>
 
-    <div class="post-content" itemprop="articleBody">
+<div class="post-content">
 
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//2016-10-28.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <h1 id="081-release">0.8.1 Release</h1>
+
+<p>October release is <a href="https://github.com/vmware/docker-volume-vsphere/releases">out and updated to 0.8.1</a>
+This release includes</p>
+
+<ul>
+  <li>Multi tenancy tech preview</li>
+  <li>Multi threaded ESX backend service</li>
+  <li>Numerous bug fixes</li>
+</ul>
+
+<h2 id="vmgroup">Vmgroup</h2>
+<ul>
+  <li><a href="/features/tenancy">Feature
+Overview</a></li>
+  <li><a href="/user-guide/admin-cli/">Tenancy
+CLI</a></li>
+</ul>
+
+<h1 id="containers-and-persistent-storage-meetup">Containers and persistent storage meetup.</h1>
+
+<p>Docker volume plugin was presented at the <a href="https://www.meetup.com/Containers-and-persistent-storage/events/232635184/">first meetup</a> of the (Containers and persistent storage meetup group](https://www.meetup.com/Containers-and-persistent-storage/)</p>
+
+  
+
+    <div class="tags">
         
-        <div class="summary">This is some summary frontmatter for my sample post.</div>
-        
-
-        <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries</p>
-
-<h2 id="heading">Heading</h2>
-
-<p>but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
-
-<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries</p>
-
-
     </div>
 
+    
 
-
-</article>
-
-
+</div>
 
 <hr class="shaded"/>
 
@@ -429,7 +459,7 @@
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 22, 2017 <br />
+ Site last generated: Aug 28, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

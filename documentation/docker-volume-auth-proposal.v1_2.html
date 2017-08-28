@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -542,23 +542,20 @@ $('#toc').on('click', 'a', function() {
 <p>The following example is illustrated via CLI commands from a hypothetical program called <code class="highlighter-rouge">auth_config</code>. <code class="highlighter-rouge">auth_config</code> is not tied to any specific implementation but is expected to display the workflow of managing authorization configuration.</p>
 
 <ol>
-  <li>
-    <p><strong>Create a tenant named <code class="highlighter-rouge">tenant1</code> consisting of 3 VMs</strong>
-<code class="highlighter-rouge">
-auth_config tenant create tenant1 --vms vm1,vm2,vm3
-</code></p>
+  <li><strong>Create a tenant named <code class="highlighter-rouge">tenant1</code> consisting of 3 VMs</strong>
+    <div class="highlighter-rouge"><pre class="highlight"><code>auth_config tenant create tenant1 --vms vm1,vm2,vm3
+</code></pre>
+    </div>
   </li>
-  <li>
-    <p><strong>Assigning create, mount and delete privileges to a datastore for a tenant</strong>
-<code class="highlighter-rouge">
-auth_config tenant set privileges --tenant tenant1 --datastore datastore1 --privileges create,mount,delete
-</code></p>
+  <li><strong>Assigning create, mount and delete privileges to a datastore for a tenant</strong>
+    <div class="highlighter-rouge"><pre class="highlight"><code>auth_config tenant set privileges --tenant tenant1 --datastore datastore1 --privileges create,mount,delete
+</code></pre>
+    </div>
   </li>
-  <li>
-    <p><strong>Commit the configuration</strong>
-<code class="highlighter-rouge">
-auth_config commit
-</code></p>
+  <li><strong>Commit the configuration</strong>
+    <div class="highlighter-rouge"><pre class="highlight"><code>auth_config commit
+</code></pre>
+    </div>
   </li>
 </ol>
 
@@ -694,7 +691,7 @@ Vol1@datastore2
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 22, 2017 <br />
+ Site last generated: Aug 28, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

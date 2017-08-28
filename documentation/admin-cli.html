@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -428,56 +428,33 @@ volume service to create and delete virtual disks (VMDKs), as well as mounts the
 volumes. These virtual disks may live on any datastore accessible to the ESXi host and are managed
 by the Docker user via the Docker CLI. However, the Docker CLI is limited in what visibility it can
 provide to the user. Furthermore, it is desirable that an administrator be able to get a global view
-of all virtual disks created and in use on the host.  For these reasons, an admin CLI has been
-created that runs on the ESXi host and that provides access to information not visible from the
+of all virtual disks created and in use on the host. For these reasons, an admin CLI is provided through
+esxcli that runs on the ESXi host and that provides access to information not visible from the
 Docker CLI.</p>
 
 <p>The admin CLI also enables ESX admins to implement access control and basic storage quotas.</p>
 
-<p>Admin CLI is located at <code class="highlighter-rouge">/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py</code>. It supports <code class="highlighter-rouge">--help</code>  at
-every command and sub-command. e.g.</p>
+<p>Admin CLI commandset as documented below is located under namespace <code class="highlighter-rouge">esxcli storage guestvol</code>. It supports <code class="highlighter-rouge">--help</code>  at
+every command and sub-command.</p>
+
+<p>The entire commandset is also available for use with <code class="highlighter-rouge">/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py </code>.
+You need to make use of <code class="highlighter-rouge">/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py</code> instead of <code class="highlighter-rouge">esxcli storage guestvol</code>.</p>
 
 <p><strong>NOTE</strong> Access control is not supported for Stateless ESXi , as the code relies on Authorization Config DB (aka “Config DB”), or symlink to the Confg DB, being in /etc/vmware/vmdksops/auth-db.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] alias vmdkops_admin=/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py
-[root@localhost:~] vmdkops_admin --help
-usage: vmdkops_admin.py [-h] {volume,policy,status,config,vmgroup} ...
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol --help
+Usage: esxcli storage guestvol {cmd} [cmd options]
 
-vSphere Docker Volume Service admin CLI
+Available Namespaces:
+  vmgroup               Administer and monitor volume access control
+  config                Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]
+  policy                Configure and display storage policy information
+  volume                Manage vDVS volumes
 
-optional arguments:
-  -h, --help            show this help message and exit
-
-Manage VMDK-based Volumes for Docker:
-
-  {volume,policy,status,config,vmgroup}
-                        action
-    volume              Manipulate volumes
-    policy              Configure and display storage policy information
-    status              Show the status of the vmdk_ops service
-    config              Init and manage Config DB which enables quotas and
-                        access control
-    vmgroup            Administer and monitor volume access control
-[root@localhost:~] vmdkops_admin volume --help
-usage: vmdkops_admin.py volume [-h] {set,ls} ...
-
-optional arguments:
-  -h, --help  show this help message and exit
-
-Manipulate volumes:
-
-  {set,ls}    action
-    set       Edit settings for a given volume
-    ls        List volumes
+Available Commands:
+  status                Status of vdvs service
 </code></pre>
 </div>
-
-<p>It also prompts for available choices, e.g.
-<code class="highlighter-rouge">
-[root@localhost:~] vmdkops_admin volume hm
-usage: vmdkops_admin.py volume [-h] {set,ls} ...
-vmdkops_admin.py volume: error: invalid choice: 'hm' (choose from 'set', 'ls')
-</code></p>
 
 <p>The remainder of this document will describe each admin CLI command and provide examples
 of their usage.</p>
@@ -487,43 +464,40 @@ of their usage.</p>
 <p>vmgroups allow placing access control restrictions on all Docker storage requests issued from a group of VMs. Administrator can create a vmgroup, place a set of VMs in it (<code class="highlighter-rouge">create</code> and <code class="highlighter-rouge">vm add</code> subcommands, and then associate this group with a specific set of Datastores and access privileges (<code class="highlighter-rouge">access</code> and <code class="highlighter-rouge">update</code> subcommands).</p>
 
 <h3 id="help">Help</h3>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup -h
-usage: vmdkops_admin.py vmgroup <span class="o">[</span>-h] <span class="o">{</span>create,vm,update,access,ls,rm<span class="o">}</span> ...
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup --help
+Usage: esxcli storage guestvol vmgroup <span class="o">{</span>cmd<span class="o">}</span> <span class="o">[</span>cmd options]
 
-positional arguments:
-  <span class="o">{</span>create,vm,update,access,ls,rm<span class="o">}</span>
-    create              Create a new vmgroup
-    vm                  Add, removes and lists VMs <span class="k">in </span>a vmgroup
-    update              Update an existing vmgroup
-    access              Add or remove Datastore access and quotas <span class="k">for </span>a vm-
-                        group
-    ls                  List vmgroups and the VMs they are applied to
-    rm                  Delete a vmgroup
+Available Namespaces:
+  access                Add or remove Datastore access and quotas <span class="k">for </span>a vmgroup
+  vm                    Add, removes, replaces and lists VMs <span class="k">in </span>a vmgroup
 
-optional arguments:
-  -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
+Available Commands:
+  create                Create a new vmgroup
+  ls                    List vmgroups and the VMs they are applied to
+  rm                    Delete a vmgroup
+  update                Update a vmgroup
 </code></pre>
 </div>
 
 <h3 id="create">Create</h3>
-<p>A vmgroup named “_DEFAULT” will be created automatically post install.
-<code class="highlighter-rouge">
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>A vmgroup named “_DEFAULT” will be created automatically post install.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
 ------------------------------------  --------  -------------------------  -----------------  -------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-</code></p>
+</code></pre>
+</div>
 
 <p>The “Default_datastore” field is set to “_VM_DS” for “_DEFAULT” vmgroup. Any volume create from VM which belongs to “_DEFAULT” vmgroup will be created on the datastore where VM resides.</p>
 
-<p>When configuration is initialized with ‘config init’, the access to _ALL_DS and _VM_DS for all VMs is automatically enabled.
-<code class="highlighter-rouge">
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=_DEFAULT
+<p>When configuration is initialized with ‘config init’, the access to _ALL_DS and _VM_DS for all VMs is automatically enabled.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=_DEFAULT
 Datastore  Allow_create  Max_volume_size  Total_size
 ---------  ------------  ---------------  ----------
-_ALL_DS   True          Unset            Unset
-_VM_DS    True          Unset            Unset
-</code></p>
+_ALL_DS    True          Unset            Unset
+_VM_DS     True          Unset            Unset
+</code></pre>
+</div>
 
 <p>Creates a new named vmgroup and optionally assigns VMs. Valid vmgroup name is only allowed to be “[a-zA-Z0-9<em>][a-zA-Z0-9</em>.-]*”</p>
 
@@ -534,156 +508,143 @@ After default_datastore is set, all VMs in the group have full access to it. Als
 will be placed on this datastore.
 Users can modify this privilege using <code class="highlighter-rouge">vmgroup access</code> subcommands.</p>
 
-<p>Sample:
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup1 –default-datastore=datastore1
-vmgroup ‘vmgroup1’ is created. Do not forget to run ‘vmgroup vm add’ to add vm to vmgroup.
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<p>Sample:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup1 --default-datastore=vsanDatastore
+vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-————————————  ——–  ————————-  —————–  ——-
+------------------------------------  --------  -------------------------  -----------------  -------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-9de84179-6894-44ad-b444-470e8619a5ed  vmgroup1                             datastore1</p>
+5d43cc7b-1e34-4b86-af2e-d595e86a1cfa  vmgroup1                             vsanDatastore
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
-datastore1  True          Unset            Unset
-```</p>
-
-<p>The “default_datastore” can be also set to a special value “_VM_DS” during vmgroup create.
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name      Description                  Default_datastore  VM_list
-————————————  ——–  —————————  —————–  ——-
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is the default vmgroup  _VM_DS</p>
-
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup1 –default-datastore=”_VM_DS”
-vmgroup ‘vmgroup1’ is created. Do not forget to run ‘vmgroup vm add’ to add vm to vmgroup.
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name      Description                  Default_datastore  VM_list
-————————————  ——–  —————————  —————–  ——-
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is the default vmgroup  _VM_DS
-30545fdc-20e0-409a-8330-6ebe027fcc34  vmgroup1                               _VM_DS</p>
-
-<p>[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
-Datastore  Allow_create  Max_volume_size  Total_size
-———  ————  —————  ———-
-_VM_DS    True          Unset            Unset</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>
-"Default_datastore" cannot be set to "_ALL_DS". An attempt to do so will generate an error"
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup2 –default-datastore=”_ALL_DS”
+
+<p>The “default_datastore” can be also set to a special value “_VM_DS” during vmgroup create.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup2 --default-datastore="_VM_DS"
+vmgroup 'vmgroup2' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
+[root@localhost:~] esxcli storage guestvol vmgroup ls
+Uuid                                  Name      Description                Default_datastore  VM_list
+------------------------------------  --------  -------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
+4aaee5c9-9778-4299-9eb9-4c59f20a519b  vmgroup2                             _VM_DS
+
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup2
+Datastore  Allow_create  Max_volume_size  Total_size
+---------  ------------  ---------------  ----------
+_VM_DS     True          Unset            Unset
+
+</code></pre>
+</div>
+
+<p>“Default_datastore” cannot be set to “_ALL_DS”. An attempt to do so will generate an error”</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup3 --default-datastore="_ALL_DS"
 Cannot use _ALL_DS as default datastore. Please use specific datastore name or _VM_DS special datastore
-```</p>
+</code></pre>
+</div>
 
 <p>The vmgroup to VM association can be done at create time.</p>
 
-<p>Sample:
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create –name=vmgroup1 –default-datastore=datastore1 –vm-list=photon7
-vmgroup ‘vmgroup1’ is created. Do not forget to run ‘vmgroup vm add’ to add vm to vmgroup.</p>
+<p>Sample:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup1 --default-datastore=vsanDatastore --vm-list=ubuntu-VM0.0
+vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-————————————  ——–  ————————-  —————–  ——-
+------------------------------------  --------  -------------------------  -----------------  ------------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-04423382-efa4-4525-b0a6-16b98ce38f0f  vmgroup1                             datastore1         photon7</p>
+f68c315d-2690-4b63-94c4-f0db09ad458f  vmgroup1                             vsanDatastore      ubuntu-VM0.0
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-#### Help
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup create -h
-usage: vmdkops_admin.py vmgroup create [-h] –name NAME –default-datastore
-                                       DEFAULT_DATASTORE
-                                       [–description DESCRIPTION]
-                                       [–vm-list vm1, vm2, …]</p>
 
-<p>optional arguments:
-  -h, –help            show this help message and exit
-  –name NAME           The name of the vmgroup
-  –default-datastore DEFAULT_DATASTORE
-                        Datastore to be used by default for volumes placement
-  –description DESCRIPTION
-                        The description of the vmgroup
-  –vm-list vm1, vm2, …
-                        A list of VM names to place in this vmgroup</p>
+<h4 id="help-1">Help</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup create --help
+Usage: esxcli storage guestvol vmgroup create [cmd options]
 
-<div class="highlighter-rouge"><pre class="highlight"><code>### List
-List existing vmgroups, the datastores vmgroups have access to and the VMs assigned.
+Description:
+  create                Create a new vmgroup
+
+Cmd options:
+  --default-datastore=&lt;str&gt;
+                        Datastore to be used by default for volumes placement (required)
+  --description=&lt;str&gt;   The description of the vmgroup
+  --name=&lt;str&gt;          The name of the vmgroup (required)
+  --vm-list=&lt;str&gt;       A list of VM names to place in this vmgroup
+
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+<h3 id="list">List</h3>
+<p>List existing vmgroups, the datastores vmgroups have access to and the VMs assigned.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-————————————  ——–  ————————-  —————–  ——-
+------------------------------------  --------  -------------------------  -----------------  ------------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-04423382-efa4-4525-b0a6-16b98ce38f0f  vmgroup1                             datastore1         photon7</p>
+f68c315d-2690-4b63-94c4-f0db09ad458f  vmgroup1                             vsanDatastore      ubuntu-VM0.0
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-#### Help
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls -h
-usage: vmdkops_admin.py vmgroup ls [-h]</p>
 
-<p>optional arguments:
-  -h, –help  show this help message and exit
-```</p>
+<h4 id="help-2">Help</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup ls --help
+Usage: esxcli storage guestvol vmgroup ls [cmd options]
+
+Description:
+  ls                    List vmgroups and the VMs they are applied to
+</code></pre>
+</div>
 
 <h3 id="update">Update</h3>
 <p>Update existing vmgroup. This command allows to update “Description” and “Default_datastore” fields, or rename an existing vmgroup.
 “Default_datastore” is either a valid datastore name or a special value “_VM_DS”.
 After changing the “default_datastore” for a vmgroup, a full access privilege to the new “default_datastore” will be created automatically, and the existing access privilege to old “default_datastore” will remain. User can remove the access privilege to old “default_datastore” if not needed using <code class="highlighter-rouge">vmgroup access rm</code> subcommands.
-Sample:
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Sample:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-————————————  ——–  ————————-  —————–  ——-
+------------------------------------  --------  -------------------------  -----------------  ------------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-0767f5f8-73de-4382-8c38-1935bb636ef4  vmgroup1                             datastore1         photon7</p>
+f68c315d-2690-4b63-94c4-f0db09ad458f  vmgroup1                             vsanDatastore      ubuntu-VM0.0
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
-datastore1  True          Unset            Unset</p>
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup update –name=vmgroup1 –description=”New description of vmgroup1” –new-name=new-vmgroup1 –default-datastore=datastore2
-vmgroup modify succeeded</p>
+[root@localhost:~] esxcli storage guestvol vmgroup update --name=vmgroup1 --description="New description of vmgroup1" --new-name=new-vmgroup1 --defau
+lt-datastore=sharedVmfs-0
+vmgroup modify succeeded
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+[root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name          Description                  Default_datastore  VM_list
-————————————  ————  —————————  —————–  ——-
+------------------------------------  ------------  ---------------------------  -----------------  ------------
 11111111-1111-1111-1111-111111111111  _DEFAULT      This is a default vmgroup    _VM_DS
-0767f5f8-73de-4382-8c38-1935bb636ef4  new-vmgroup1  New description of vmgroup1  datastore2         photon7</p>
+f68c315d-2690-4b63-94c4-f0db09ad458f  new-vmgroup1  New description of vmgroup1  sharedVmfs-0       ubuntu-VM0.0
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=new-vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+sharedVmfs-0   True          Unset            Unset
+vsanDatastore  True          Unset            Unset
+</code></pre>
+</div>
+<p>Please use the test suggested above, for “create”.</p>
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=new-vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
-datastore1  True          Unset            Unset
-datastore2  True          Unset            Unset
-```
-Please use the test suggested above, for “create”.</p>
+<h4 id="help-3">Help</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup update --help
+Usage: esxcli storage guestvol vmgroup update [cmd options]
 
-<h4 id="help-1">Help</h4>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup  update -h
-usage: vmdkops_admin.py vmgroup update [-h] --name NAME
-                                        [--default-datastore DEFAULT_DATASTORE]
-                                        [--description DESCRIPTION]
-                                        [--new-name NEW_NAME]
+Description:
+  update                Update a vmgroup
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --name NAME           The name of the vmgroup
-  --default-datastore DEFAULT_DATASTORE
-                        The name of the datastore to be used by default for
-                        volumes placement
-  --description DESCRIPTION
-                        The new description of the vmgroup
-  --new-name NEW_NAME   The new name of the vmgroup
+Cmd options:
+  --default-datastore=&lt;str&gt;
+                        Datastore to be used by default for volumes placement
+  --description=&lt;str&gt;   The new description of the vmgroup
+  --name=&lt;str&gt;          The name of the vmgroup (required)
+  --new-name=&lt;str&gt;      The new name of the vmgroup
 
 </code></pre>
 </div>
@@ -691,111 +652,105 @@ optional arguments:
 <h3 id="remove">Remove</h3>
 <p>Remove a vmgroup, optionally all volumes for a vmgroup can be removed as well.</p>
 
-<p>Sample:
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm –name=vmgroup1 –remove-volumes
-All Volumes will be removed
-vmgroup rm succeeded</p>
+<p>Sample:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup rm --name=new-vmgroup1 --remove-volumes
+All Volumes will be removed. vmgroup rm succeeded
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name      Description                 Default_datastore  VM_list
-————————————  ——–  ————————–  —————–  ——-
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
-```</p>
+[root@localhost:~] esxcli storage guestvol vmgroup ls
+Uuid                                  Name      Description                Default_datastore  VM_list
+------------------------------------  --------  -------------------------  -----------------  -------
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
+</code></pre>
+</div>
 
 <p>In MultiNode mode, VMs from different hosts can be a part of a vmgroup.
 When in this mode, vmgroup which has member VMs in it cannot be directly deleted.
 First remove the VMs individually from the vmgroup using admin cli
 on the same host on which the VM resides.
-Then remove the vmgroup.
-#### Help
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup rm -h
-usage: vmdkops_admin.py vmgroup rm [-h] –name NAME [–remove-volumes]</p>
+Then remove the vmgroup.</p>
+<h4 id="help-4">Help</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup rm --help
+Usage: esxcli storage guestvol vmgroup rm [cmd options]
 
-<p>optional arguments:
-  -h, –help        show this help message and exit
-  –name NAME       The name of the vmgroup
-  –remove-volumes  BE CAREFUL: Removes this vmgroup volumes when removing a
-                    vmgroup</p>
+Description:
+  rm                    Delete a vmgroup
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-### Virtual Machine
-
-#### Add
-Add a VM to a vmgroup. A VM can only access the datastores for the vmgroup it is assigned to.
-VMs can be assigned to only one vmgroup at a time.
+Cmd options:
+  --name=&lt;str&gt;          The name of the vmgroup (required)
+  --remove-volumes      BE CAREFUL: Removes this vmgroup volumes when removing a vmgroup
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
-Uuid                                  Name       Description                 Default_datastore  VM_list
-————————————  ———  ————————–  —————–  ——–
-11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup
-6d810c66-ffc7-47c8-8870-72114f86c2cf  vmgroup1                                                 photon6</p>
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm add –name=vmgroup1 –vm-list=photon7
-vmgroup vm add succeeded</p>
+<h3 id="virtual-machine">Virtual Machine</h3>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-#### List
+<h4 id="add">Add</h4>
+<p>Add a VM to a vmgroup. A VM can only access the datastores for the vmgroup it is assigned to.
+VMs can be assigned to only one vmgroup at a time.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup vm add --name=vmgroup1 --vm-list=ubuntu-VM1.0
+vmgroup vm add succeeded
+[root@localhost:~] esxcli storage guestvol vmgroup ls
+Uuid                                  Name      Description                Default_datastore  VM_list
+------------------------------------  --------  -------------------------  -----------------  -------------------------
+11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
+443583f6-afd0-4fa7-bfa7-9116384431f3  vmgroup1                             vsanDatastore      ubuntu-VM0.0,ubuntu-VM1.0
+
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
+
+<h4 id="list-1">List</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup vm ls --name vmgroup1
 Uuid                                  Name
-————————————  ——–
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6
-564d99a2-4097-9966-579f-3dc4082b10c9  photon7
-```</p>
+------------------------------------  ------------
+564d9bc4-bfd6-b648-935b-6353fb6dc1e7  ubuntu-VM0.0
+564d171f-2de0-95b7-f9b8-9d9c42841b7a  ubuntu-VM1.0
+</code></pre>
+</div>
 
 <h4 id="remove-1">Remove</h4>
-<p>Remove a VM from a vmgroup’s list of VMs. VM will no longer be able to access the volumes created for the vmgroup.
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm rm –name=vmgroup1 –vm-list=photon7
+<p>Remove a VM from a vmgroup’s list of VMs. VM will no longer be able to access the volumes created for the vmgroup.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup vm rm --name=vmgroup1 --vm-list=ubuntu-VM1.0
 vmgroup vm rm succeeded
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
+[root@localhost:~] esxcli storage guestvol vmgroup vm ls --name vmgroup1
 Uuid                                  Name
-————————————  ——–
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6</p>
+------------------------------------  ------------
+564d9bc4-bfd6-b648-935b-6353fb6dc1e7  ubuntu-VM0.0
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-### Replace
-Replace VMs from a vmgroup's list of VMs. VMs which are replaced will no longer be able to access the volumes created for the vmgroup.
 </code></pre>
 </div>
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
-Uuid                                  Name
-————————————  ——–
-564d5849-b135-1259-cc73-d2d3aa1d9b8c  photon6</p>
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm replace –name=vmgroup1 –vm-list=photon7
-vmgroup vm replace succeeded</p>
-
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm ls –name=vmgroup1
+<h3 id="replace">Replace</h3>
+<p>Replace VMs from a vmgroup’s list of VMs. VMs which are replaced will no longer be able to access the volumes created for the vmgroup.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup vm ls --name vmgroup1
 Uuid                                  Name
-————————————  ——–
-564d99a2-4097-9966-579f-3dc4082b10c9  photon7
-```</p>
+------------------------------------  ------------
+564d9bc4-bfd6-b648-935b-6353fb6dc1e7  ubuntu-VM0.0
+[root@localhost:~] esxcli storage guestvol vmgroup vm replace --name=vmgroup1 --vm-list=ubuntu-VM1.0
+vmgroup vm replace succeeded
+[root@localhost:~] esxcli storage guestvol vmgroup vm ls --name vmgroup1
+Uuid                                  Name
+------------------------------------  ------------
+564d171f-2de0-95b7-f9b8-9d9c42841b7a  ubuntu-VM1.0
+</code></pre>
+</div>
 
 <p>Note: If the VMs have volumes attached (containers running), their membership change i.e. changing the vmgroup to which
 they belong is not permitted. Make sure no volumes are attached.
-To do so:
-1. Get the list of containers running. (docker ps)
-2. If the container has any vDVS volume mounted (docker inspect container_name), stop the container.
-3. Ensure that the dvs volumes have status detached (docker volume inspect)</p>
+To do so:</p>
+<ol>
+  <li>Get the list of containers running. (docker ps)</li>
+  <li>If the container has any vDVS volume mounted (docker inspect container_name), stop the container.</li>
+  <li>Ensure that the dvs volumes have status detached (docker volume inspect)</li>
+</ol>
 
-<h4 id="help-2">Help</h4>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup vm -h
-usage: vmdkops_admin.py vmgroup vm [-h] {rm,add,ls,replace} ...
+<h4 id="help-5">Help</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup vm --help
+Usage: esxcli storage guestvol vmgroup vm {cmd} [cmd options]
 
-positional arguments:
-  {rm,add,ls,replace}
-    rm                 Remove VM(s) from a vmgroup
-    add                Add a VM(s) to a vmgroup
-    ls                 list VMs in a vmgroup
-    replace            Replace VM(s) for a vmgroup
-
-optional arguments:
-  -h, --help           show this help message and exit
+Available Commands:
+  add                   Add VM(s) to a vmgroup
+  ls                    list VMs in a vmgroup
+  replace               Replace VM(s) for a vmgroup
+  rm                    Remove VM(s) from a vmgroup
 
 </code></pre>
 </div>
@@ -804,120 +759,112 @@ optional arguments:
 <p>Change the access control for a vmgroup.
 This includes ability to grant privileges &amp; set resource consumption limits for a datastore.</p>
 
-<h4 id="help-3">Help</h4>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access -h
-usage: vmdkops_admin.py vmgroup access <span class="o">[</span>-h] <span class="o">{</span>rm,add,set,ls<span class="o">}</span> ...
+<h4 id="help-6">Help</h4>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access --help
+Usage: esxcli storage guestvol vmgroup access <span class="o">{</span>cmd<span class="o">}</span> <span class="o">[</span>cmd options]
 
-positional arguments:
-  <span class="o">{</span>rm,add,set,ls<span class="o">}</span>
-    rm             Remove all access to a datastore <span class="k">for </span>a vmgroup
-    add            Add a datastore access <span class="k">for </span>a vmgroup
-    <span class="nb">set            </span>Modify datastore access <span class="k">for </span>a vmgroup
-    ls             List all access info <span class="k">for </span>a vmgroup
-
-optional arguments:
-  -h, --help       show this <span class="nb">help </span>message and <span class="nb">exit</span>
+Available Commands:
+  add                   Add a datastore access <span class="k">for </span>a vmgroup
+  ls                    List access <span class="k">for </span>a vmgroup
+  rm                    Remove datastore access <span class="k">for </span>a vmgroup
+  <span class="nb">set                   </span>Modify datastore access <span class="k">for </span>a vmgroup
 
 </code></pre>
 </div>
 
-<h4 id="add">Add</h4>
+<h4 id="add-1">Add</h4>
 <p>Grants datastore access to a vmgroup.
 Valid value for “datastore” includes the name of valid datastores in the ESX host , special value “_VM_DS” or “_ALL_DS”.
-When DS is set to _VM_DS, access to vm_datastore where vm lives is allowed for vms in vmgroup.
-When DS is set to _ALL_DS, access to all DS is allowed for vms in vmgroup.
+When DS is set to _VM_DS, access to datastore where vm lives is allowed for vms in vmgroup.
+When DS is set to _ALL_DS, access to any datastore which has not been granted access to explicitly is allowed for vms in vmgroup.
 Sample:</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
 
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>datastore2  --volume-maxsize<span class="o">=</span>500MB --volume-totalsize<span class="o">=</span>1GB
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access add --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>sharedVmfs-0  --volume-maxsize<span class="o">=</span>500MB --volume-totalsize<span class="o">=</span>1GB
 vmgroup access add succeeded
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-datastore2  False         500.00MB         1.00GB
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+sharedVmfs-0   False         500.00MB         1.00GB
+vsanDatastore  True          Unset            Unset
 
 </code></pre>
 </div>
 
 <p>By default no “allow_create” right is given</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>datastore2  --volume-maxsize<span class="o">=</span>500MB --volume-totalsize<span class="o">=</span>1GB
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access add --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>sharedVmfs-0  --volume-maxsize<span class="o">=</span>500MB --volume-totalsize<span class="o">=</span>1GB
 vmgroup access add succeeded
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-datastore2  False         500.00MB         1.00GB
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+sharedVmfs-0   False         500.00MB         1.00GB
+vsanDatastore  True          Unset            Unset
 </code></pre>
 </div>
 
-<p>“allow_create” right is given when you run the command with “–allow-create” flag.
-<code class="highlighter-rouge">bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add --name=vmgroup1 --datastore=datastore2  --volume-maxsize=500MB --volume-totalsize=1GB --allow-create
+<p>“allow_create” right is given when you run the command with “–allow-create” flag.</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access add --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>sharedVmfs-0  --volume-maxsize<span class="o">=</span>500MB --volume-totalsize<span class="o">=</span>1GB
+ --allow-create
 vmgroup access add succeeded
-[root@localhost:~]
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-datastore2  True          500.00MB         1.00GB
-</code>
-For _VM_DS and _ALL_DS special DS names, –volume-totalzie has to be “Unset”.
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add –name=vmgroup1 –datastore=_VM_DS  –volume-maxsize=500MB –volume-totalsize=1GB –allow-create
-Canont set volume-totalsize for _VM_DS
-[root@localhost:~]
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add –name=vmgroup1 –datastore=_ALL_DS  –volume-maxsize=500MB –volume-totalsize=1GB –allow-create
-Canont set volume-totalsize for _VM_DS
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add –name=vmgroup1 –datastore=_ALL_DS  –volume-maxsize=500MB  –allow-create
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+sharedVmfs-0   True          500.00MB         1.00GB
+vsanDatastore  True          Unset            Unset
+</code></pre>
+</div>
+<p>For _VM_DS and _ALL_DS special DS names, “–volume-totalsize” can also be set.</p>
+
+<p>When “–volume-totalsize” is set for “_VM_DS”, it means the total volume size on datastore where VM lives cannot exceed the value specified by “–volume-totalsize”. For example, if “–volume-totalsize” is set to “1GB” for “_VM_DS” and VM lives in “datastore2”, where the total volume size is already 800MB and user tries to create another volume with 500MB will not be allowed. However, if the VM is moved to “datastore3”, where the total volume size is 500MB and user tries to create another volume with 500MB will be allowed.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup access add --name=vmgroup1 --datastore=_VM_DS  --volume-maxsize=500MB --volume-totalsize=1GB --all
+ow-create
 vmgroup access add succeeded
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
-datastore1  True          Unset            Unset
-_ALL_DS    True          500.00MB         Unset</p>
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
+_VM_DS         True          500.00MB         1.00GB
+</code></pre>
+</div>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
+<p>When “–volume-totalsize” is set for “_ALL_DS”, it means the total volume size on any datastore which has not been given access to explicitly cannot exceed the value specified by “–volume-totalsize”. In the following example, “vmgroup1” has been given access to “datastore1” and “_ALL_DS”. The “Total_size” for “datastore1” is “Unset”, which means no limit. The “Total_size” for “_ALL_DS” is “1GB”. So for “datastore1”, there is no limit on the total volume size. However, for any datastore other than “datastore1”, the total volume size on that datastore cannot exceed 1GB.</p>
 
-##### Help
-```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access add -h
-usage: vmdkops_admin.py vmgroup access add [-h]
-                                           [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
-                                           --name NAME
-                                           [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                           [--allow-create] --datastore
-                                           DATASTORE
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup access add --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB --volume-totalsize=1GB --al
+low-create
+vmgroup access add succeeded
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
+_ALL_DS        True          500.00MB         1.00GB
+</code></pre>
+</div>
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
-                        Maximum total size of all volume that can be created
-                        on the datastore for this vmgroup
-  --name NAME           The name of the vmgroup
-  --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
+<h5 id="help-7">Help</h5>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access add --help
+Usage: esxcli storage guestvol vmgroup access add <span class="o">[</span>cmd options]
+
+Description:
+  add                   Add a datastore access <span class="k">for </span>a vmgroup
+
+Cmd options:
+  --allow-create        Allow create and delete on datastore <span class="k">if </span><span class="nb">set</span>
+  --datastore<span class="o">=</span>&lt;str&gt;     Datastore name <span class="o">(</span>required<span class="o">)</span>
+  --name<span class="o">=</span>&lt;str&gt;          The name of the vmgroup <span class="o">(</span>required<span class="o">)</span>
+  --volume-maxsize<span class="o">=</span>&lt;str&gt;
                         Maximum size of the volume that can be created
-  --allow-create        Allow create and delete on datastore if set
-  --datastore DATASTORE
-                        Datastore which access is controlled
-
-
+  --volume-totalsize<span class="o">=</span>&lt;str&gt;
+                        Maximum total size of all volume that can be created on the datastore <span class="k">for </span>this vmgroup
 </code></pre>
 </div>
 
-<h4 id="list">List</h4>
+<h4 id="list-2">List</h4>
 <p>List the current access control granted to a vmgroup.</p>
 
 <p>When displaying the result keep in mind:</p>
@@ -926,65 +873,64 @@ optional arguments:
   <li>For capacity Unset indicates no limits</li>
 </ul>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          Unset            Unset
-datastore2  True          500.00MB         1.00GB
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
+_ALL_DS        True          500.00MB         1.00GB
 </code></pre>
 </div>
 
-<h5 id="help-4">Help</h5>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls -h
-usage: vmdkops_admin.py vmgroup access ls <span class="o">[</span>-h] --name NAME
+<h5 id="help-8">Help</h5>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --help
+Usage: esxcli storage guestvol vmgroup access ls <span class="o">[</span>cmd options]
 
-optional arguments:
-  -h, --help   show this <span class="nb">help </span>message and <span class="nb">exit</span>
-  --name NAME  The name of the vmgroup
+Description:
+  ls                    List access <span class="k">for </span>a vmgroup
 
+Cmd options:
+  --name<span class="o">=</span>&lt;str&gt;          Vmgroup name <span class="o">(</span>required<span class="o">)</span>
 </code></pre>
 </div>
 
 <h4 id="remove-2">Remove</h4>
 <p>Remove access to a datastore for a vmgroup.
-Removing of access privilege to “default_datastore” is not suported
-```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup ls
+Removing of access privilege to “default_datastore” is not suported</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
-————————————  ——–  ————————-  —————–  ——-
+------------------------------------  --------  -------------------------  -----------------  ------------
 11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup  _VM_DS
-2a97fef4-30cd-4a50-bf31-3dbc7d130be2  vmgroup1                             datastore1         photon7</p>
+443583f6-afd0-4fa7-bfa7-9116384431f3  vmgroup1                             vsanDatastore      ubuntu-VM1.0
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
-datastore1  True          Unset            Unset
-datastore2  True          500.00MB         1.00GB</p>
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
+_ALL_DS        True          500.00MB         1.00GB
 
-<p>[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access rm –name=vmgroup1 –datastore=datastore1
-Removing of access privilege to “default_datastore” is not supported
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access rm –name=vmgroup1 –datastore=datastore2
+<span class="o">[</span>root@localhost:~]
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access rm --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>vsanDatastore
+Removing of access privilege to <span class="s1">'default_datastore'</span> is not supported
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access rm --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>_ALL_DS
 vmgroup access rm succeeded
-[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
-datastore1  True          Unset            Unset</p>
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-##### Help
-```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup  access rm -h
-usage: vmdkops_admin.py vmgroup access rm [-h] --name NAME --datastore
-                                           DATASTORE
+</code></pre>
+</div>
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --name NAME           The name of the vmgroup
-  --datastore DATASTORE
-                        Datstore which access is controlled
+<h5 id="help-9">Help</h5>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup  access rm --help
+Usage: esxcli storage guestvol vmgroup access rm <span class="o">[</span>cmd options]
+
+Description:
+  rm                    Remove datastore access <span class="k">for </span>a vmgroup
+
+Cmd options:
+  --datastore<span class="o">=</span>&lt;str&gt;     Datastore name <span class="o">(</span>required<span class="o">)</span>
+  --name<span class="o">=</span>&lt;str&gt;          The name of the vmgroup <span class="o">(</span>required<span class="o">)</span>
 
 </code></pre>
 </div>
@@ -994,92 +940,83 @@ optional arguments:
 
 <p>Sample:</p>
 
-<div class="language-shell highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  False         Unset            Unset
-_ALL_DS    True          500.00MB         Unset
-
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access <span class="nb">set</span> --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>datastore1 --allow-create<span class="o">=</span>True  --volume-maxsize<span class="o">=</span>1000MB --volume-totalsize<span class="o">=</span>2GB
+<div class="language-shell highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          Unset            Unset
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access <span class="nb">set</span> --name<span class="o">=</span>vmgroup1 --datastore<span class="o">=</span>vsanDatastore --allow-create<span class="o">=</span>True  --volume-maxsize<span class="o">=</span>1000MB
 vmgroup access <span class="nb">set </span>succeeded
-<span class="o">[</span>root@localhost:~]
-<span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls --name<span class="o">=</span>vmgroup1
-Datastore   Allow_create  Max_volume_size  Total_size
-----------  ------------  ---------------  ----------
-datastore1  True          1000.00MB        2.00GB
-_ALL_DS    True          500.00MB         Unset
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol vmgroup access ls --name<span class="o">=</span>vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          1000.00MB        Unset
 </code></pre>
 </div>
 
-<p>“-volume-totalsize” cannot be set to the value other than unlimit when add privilege for special value “_VM_DS” and “_ALL_DS”.
-```
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access ls –name=vmgroup1
+<p>”–volume-totalsize” can also be set to the value other than unlimit when add privilege for special value “_VM_DS” and “_ALL_DS”.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
-———-  ————  —————  ———-
+----------  ------------  ---------------  ----------
 datastore1  True          1000.00MB        2.00GB
-_ALL_DS    True          500.00MB         Unset
-_VM_DS     True          Unset            Unset</p>
+_ALL_DS     True          500.00MB         Unset
+_VM_DS      True          Unset            Unset
 
-<p>[root@localhost:~]
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set –name=vmgroup1 –datastore=_VM_DS –volume-totalsize=1GB
-Canont set volume-totalsize for _VM_DS</p>
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set –name=vmgroup1 –datastore=_ALL_DS –volume-totalsize=1GB
-Canont set volume-totalsize for _ALL_DS
-```</p>
+[root@localhost:~] esxcli storage guestvol vmgroup access set --name=vmgroup1 --datastore=_VM_DS  --volume-maxsize=1GB --volume-totalsize=2GB
+vmgroup access set succeeded
+[root@localhost:~] esxcli storage guestvol vmgroup access set --name=vmgroup1 --datastore=_ALL_DS  --volume-maxsize=500MB --volume-totalsize=1GB
+vmgroup access set succeeded
+[root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
+Datastore      Allow_create  Max_volume_size  Total_size
+-------------  ------------  ---------------  ----------
+vsanDatastore  True          1000.00MB        Unset
+_ALL_DS        True          500.00MB         1.00GB
+_VM_DS         True          1.00GB           2.00GB
 
-<h5 id="help-5">Help</h5>
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py vmgroup access set -h
-usage: vmdkops_admin.py vmgroup access set [-h]
-                                            [--volume-totalsize Num{MB,GB,TB} - e.g. 2TB]
-                                            --name NAME
-                                            [--volume-maxsize Num{MB,GB,TB} - e.g. 2TB]
-                                            [--allow-create Value{True|False} - e.g. True]
-                                            --datastore DATASTORE
+</code></pre>
+</div>
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --volume-totalsize Num{MB,GB,TB} - e.g. 2TB
-                        Maximum total size of all volume that can be created
-                        on the datastore for this vmgroup
-  --name NAME           The name of the vmgroup
-  --volume-maxsize Num{MB,GB,TB} - e.g. 2TB
+<h5 id="help-10">Help</h5>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol vmgroup access set --help
+Usage: esxcli storage guestvol vmgroup access set [cmd options]
+
+Description:
+  set                   Modify datastore access for a vmgroup
+
+Cmd options:
+  --allow-create        Allow create and delete on datastore if set to True. This value can also be set to False by user.
+  --datastore=&lt;str&gt;     Datastore name (required)
+  --name=&lt;str&gt;          The name of the vmgroup (required)
+  --volume-maxsize=&lt;str&gt;
                         Maximum size of the volume that can be created
-  --allow-create Value{True|False} - e.g. True
-                        Allow create and delete on datastore if set to True;
-                        disallow create and delete on datastore if set to
-                        False
-  --datastore DATASTORE
-                        Datastore name
+  --volume-totalsize=&lt;str&gt;
+                        Maximum total size of all volume that can be created on the datastore for this vmgroup
 
 </code></pre>
 </div>
 
 <h2 id="volume">Volume</h2>
 
-<h4 id="help-6">Help</h4>
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls -h
-usage: vmdkops_admin.py volume ls <span class="o">[</span>-h] <span class="o">[</span>-c Col1,Col2,...]
+<h4 id="help-11">Help</h4>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol volume ls --help
+Usage: esxcli storage guestvol volume ls <span class="o">[</span>cmd options]
 
-optional arguments:
-  -h, --help        show this <span class="nb">help </span>message and <span class="nb">exit</span>
-  -c Col1,Col2,...  Display selected columns: Choices <span class="o">=</span> <span class="o">[</span><span class="s1">'volume'</span>,
-                    <span class="s1">'datastore'</span>, <span class="s1">'created-by'</span>, <span class="s1">'created'</span>, <span class="s1">'attached-to'</span>,
-                    <span class="s1">'policy'</span>, <span class="s1">'capacity'</span>, <span class="s1">'used'</span><span class="o">]</span>
+Description:
+  ls                    List volumes
+
+Cmd options:
+  --vmgroup<span class="o">=</span>&lt;str&gt;       Displays volumes <span class="k">for </span>a given vmgroup
 </code></pre>
 </div>
 
 <h4 id="list-all">List All</h4>
 <p>List all properties for all Docker volumes that exist on datastores accessible to the host.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
-Volume  Datastore   VMGroup   Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
-------  ----------  ---------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
-vol1    datastore1  _DEFAULT   100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
-vol12   datastore1  _DEFAULT   100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
-vol1    datastore1  vmgroup1  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
-vol2    datastore1  vmgroup1  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol volume ls
+Volume  Datastore     VMGroup   Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
+------  ------------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
+vol1    sharedVmfs-0  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:08 2017
+vol2    sharedVmfs-0  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:12 2017
 </code></pre>
 </div>
 
@@ -1089,30 +1026,28 @@ policy and show up as `N/A’.</p>
 
 <p>Note that the <code class="highlighter-rouge">VMGroup</code> column shows the vmgroup by which the volume was created. If the vmgroup which created the volume has been removed, the <code class="highlighter-rouge">VMGroup</code> column shows up as ‘N/A’. See the following example:</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
-Volume  Datastore   VMGroup  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
-------  ----------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
-vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
-vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
-vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
-vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     <span class="nb">read</span>-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol volume ls
+Volume  Datastore      VMGroup   Capacity  Used  Filesystem  Policy          Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
+------  -------------  --------  --------  ----  ----------  --------------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
+vol1    sharedVmfs-0   _DEFAULT  100MB     13MB  ext4        N/A             thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:08 2017
+vol2    sharedVmfs-0   _DEFAULT  100MB     13MB  ext4        N/A             thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:12 2017
+vol3    vsanDatastore  N/A       100MB     80MB  ext4        <span class="o">[</span>VSAN default]  thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM1.0  Mon Aug 21 04:38:06 2017
+vol4    vsanDatastore  N/A       100MB     80MB  ext4        <span class="o">[</span>VSAN default]  thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM1.0  Mon Aug 21 04:38:10 2017
 </code></pre>
 </div>
 
-<h4 id="list-selected-columns">List selected columns</h4>
+<h4 id="list-limited-information-about-volumes">List limited information about volumes</h4>
 
-<p>Show only the selected columns.</p>
-
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls -c volume,datastore,attached-to
-Volume     Datastore   Attached To VM
----------  ----------  --------------
-large-vol  datastore1  detached
-vol        datastore1  detached
+<p>Only shows Volume, Capacity, Disk Format and Attached-to fields</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol volume shortls
+Volume  Capacity  Disk Format  Attached-to
+------  --------  -----------  -----------
+vol1    100MB     thin         detached
+vol2    100MB     thin         detached
+vol3    100MB     thin         detached
+vol4    100MB     thin         detached
 </code></pre>
 </div>
-
-<p>Note that the that the choices are given in a comma separated list with no spaces, and are shown in
-the help given above with <code class="highlighter-rouge">vmdkops_admin ls -h</code>.</p>
 
 <h3 id="set-1">Set</h3>
 <p>Modify attribute settings on a given volume. The volume is identified by its name, vmgroup_name which the volume belongs to and datastore,
@@ -1120,7 +1055,7 @@ for example if the volume name is <code class="highlighter-rouge">container-vol<
 The attributes to set/modify are specified as a comma separated list as “<attr1>=<value>, <attr2>=<value>....". For example,
 a command line would look like this.</value></attr2></value></attr1></p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="gp">$ </span>vmdkops-admin <span class="nb">set</span> --volume<span class="o">=</span>&lt;volume@datastore&gt; --vmgroup<span class="o">=</span>&lt;vmgroup_name&gt; --options<span class="o">=</span><span class="s2">"&lt;attr1&gt;=&lt;value&gt;, &lt;attr2&gt;=&lt;value&gt;, ..."</span>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="gp">$ </span>esxcli storage guestvol volume <span class="nb">set</span> --volume<span class="o">=</span>&lt;volume@datastore&gt; --vmgroup<span class="o">=</span>&lt;vmgroup_name&gt; --options<span class="o">=</span><span class="s2">"&lt;attr1&gt;=&lt;value&gt;, &lt;attr2&gt;=&lt;value&gt;, ..."</span>
 </code></pre>
 </div>
 
@@ -1142,48 +1077,40 @@ This removes the need to depend on <a href="https://docs.docker.com/engine/tutor
 
 <p>The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.</p>
 
-<p>Example:
-```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
-Volume  Datastore   VMGroup  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
-——  ———-  ——–  ——–  —-  ———-  ——  ———–  ———–  ———-  ———————-  ———-  ————————
-vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
-vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
-vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
-vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016</p>
+<p>Example:</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol volume ls
+Volume  Datastore      VMGroup   Capacity  Used  Filesystem  Policy          Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
+------  -------------  --------  --------  ----  ----------  --------------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
+vol1    sharedVmfs-0   _DEFAULT  100MB     13MB  ext4        N/A             thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:08 2017
+vol2    sharedVmfs-0   _DEFAULT  100MB     13MB  ext4        N/A             thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:12 2017
+vol3    vsanDatastore  N/A       100MB     80MB  ext4        <span class="o">[</span>VSAN default]  thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM1.0  Mon Aug 21 04:38:06 2017
+vol4    vsanDatastore  N/A       100MB     80MB  ext4        <span class="o">[</span>VSAN default]  thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM1.0  Mon Aug 21 04:38:10 2017
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol volume <span class="nb">set</span> --volume<span class="o">=</span>vol1@sharedVmfs-0 --vmgroup<span class="o">=</span>_DEFAULT --options<span class="o">=</span><span class="s2">"access=read-only"</span>
+Successfully updated settings <span class="k">for </span>vol1@sharedVmfs-0
+<span class="o">[</span>root@localhost:~] esxcli storage guestvol volume ls
+Volume  Datastore      VMGroup   Capacity  Used  Filesystem  Policy          Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
+------  -------------  --------  --------  ----  ----------  --------------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
+vol1    sharedVmfs-0   _DEFAULT  100MB     13MB  ext4        N/A             thin         detached     <span class="nb">read</span>-only   independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:08 2017
+vol2    sharedVmfs-0   _DEFAULT  100MB     13MB  ext4        N/A             thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:12 2017
+vol3    vsanDatastore  N/A       100MB     80MB  ext4        <span class="o">[</span>VSAN default]  thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM1.0  Mon Aug 21 04:38:06 2017
+vol4    vsanDatastore  N/A       100MB     80MB  ext4        <span class="o">[</span>VSAN default]  thin         detached     <span class="nb">read</span>-write  independent_persistent  ubuntu-VM1.0  Mon Aug 21 04:38:10 2017
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume set –volume=vol1@datastore1 –vmgroup=_DEFAULT –options=”access=read-only”
-Successfully updated settings for : vol1@datastore1</p>
+</code></pre>
+</div>
 
-<p>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py volume ls
-Volume  Datastore   VMGroup  Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
-——  ———-  ——–  ——–  —-  ———-  ——  ———–  ———–  ———-  ———————-  ———-  ————————
-vol1    datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-only   independent_persistent  photon-6    Sun Sep 11 21:36:13 2016
-vol12   datastore1  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:29:39 2016
-vol1    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:13 2016
-vol2    datastore1  N/A       100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Sun Sep 11 22:48:23 2016</p>
+<h2 id="policy">Policy</h2>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
+<p>Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.</p>
 
-## Policy
+<h4 id="help-12">Help</h4>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol policy --help
+Usage: esxcli storage guestvol policy <span class="o">{</span>cmd<span class="o">}</span> <span class="o">[</span>cmd options]
 
-Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.
-
-#### Help
-```bash
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy -h
-usage: vmdkops_admin.py policy [-h] {rm,create,ls,update} ...
-
-positional arguments:
-  {rm,create,ls,update}
-    rm                  Remove a storage policy
-    create              Create a storage policy
-    ls                  List storage policies and volumes using those policies
-    update              Update the definition of a storage policy and all VSAN
-                        objects using that policy
-
-optional arguments:
-  -h, --help            show this help message and exit
+Available Commands:
+  create                Create a storage policy
+  ls                    List storage policies and volumes using those policies
+  rm                    Remove a storage policy
+  update                Update the definition of a storage policy and all VSAN objects using that policy
 </code></pre>
 </div>
 
@@ -1191,7 +1118,7 @@ optional arguments:
 
 <p>Create a VSAN storage policy.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name some-policy --content <span class="s1">'(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'</span>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol policy create --name some-policy --content <span class="s1">'(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'</span>
 Successfully created policy: some-policy
 </code></pre>
 </div>
@@ -1200,12 +1127,12 @@ Successfully created policy: some-policy
 string.  Please refer to the <a href="https://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.vcli.ref.doc%2Fesxcli_vsan.html">VSAN documentation</a>
 for storage policy options.</p>
 
-<h4 id="list-1">List</h4>
+<h4 id="list-3">List</h4>
 
 <p>List all VSAN storage policies.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
-Policy Name  Policy Content                                             Active
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol policy ls
+Policy Name  Policy Content                                              Active
 -----------  ----------------------------------------------------------  ------
 some-policy  <span class="o">((</span><span class="s2">"proportionalCapacity"</span> i0<span class="o">)(</span><span class="s2">"hostFailuresToTolerate"</span> i0<span class="o">))</span>  Unused
 </code></pre>
@@ -1224,9 +1151,8 @@ the command fails, the number of virtual disks that were successfully updated an
 failed to update will be shown. The names of the virtual disks that failed to update will be logged
 so that manual action can be taken.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name some-policy --content <span class="s1">'(("proportionalCapacity" i1))'</span>
-This operation may take a <span class="k">while</span>. Please be patient.
-Successfully updated policy: some-policy
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol policy update --name some-policy --content <span class="s1">'(("proportionalCapacity" i1))'</span>
+Successfully updated policy some-policy
 </code></pre>
 </div>
 
@@ -1239,7 +1165,7 @@ by one or more virtual disks.</p>
 for a virtual disk, and reset virtual disks to the default storage policy is a necessary
 enhancement tracked <a href="https://github.com/vmware/docker-volume-vsphere/issues/577">here</a>.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name<span class="o">=</span>some-policy
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] esxcli storage guestvol policy rm --name<span class="o">=</span>some-policy
 Successfully removed policy: some-policy
 </code></pre>
 </div>
@@ -1248,11 +1174,11 @@ Successfully removed policy: some-policy
 
 <p><strong>THIS FEATURE IS EXPERIMENTAL</strong></p>
 
-<p>Creates, removes, moves and reports on status of Authorization config DB (referred to as <code class="highlighter-rouge">Config DB</code>). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
-<code class="highlighter-rouge">
-[root@localhost:~] vmdkops_admin vmgroup create --name MY
+<p>Creates, removes, moves and reports on status of Authorization config DB (referred to as <code class="highlighter-rouge">Config DB</code>). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] vmdkops_admin vmgroup create --name MY
 Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
-</code></p>
+</code></pre>
+</div>
 
 <p>If the Config DB is not initialized, Docker Volume Service will use  “Config DB NotConfigured” Mode, when any request to create, remove, mount or unmount Docker volume is accepted.</p>
 
@@ -1268,16 +1194,16 @@ Internal Error(Error: Please init configuration in vmdkops_admin before trying t
 
 <p>Before configuring access control or quotas, the config needs to be inited to either SingleNode (<code class="highlighter-rouge">init --local</code>) or MultiNode (<code class="highlighter-rouge">init --datastore=ds_name</code>) mode.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] vmdkops_admin config init -h
-usage: vmdkops_admin.py config init [-h] [--local] [--force]
-                                    [--datastore DATASTORE]
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol config init --help
+Usage: esxcli storage guestvol config init [cmd options]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --local               Allows local (SingleNode) Init
+Description:
+  init                  Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]
+
+Cmd options:
+  --datastore=&lt;str&gt;     Config file will be placed on a datastore
   --force               Force operation, ignore warnings
-  --datastore DATASTORE
-                        Config DB will be placed on a shared datastore
+  --local               Allows local (SingleNode) Init
 </code></pre>
 </div>
 
@@ -1303,17 +1229,20 @@ vmdkops-opsd is not running
 Starting vmdkops-opsd
 vmdkops-opsd is running pid=5979684
 
-[root@localhost:~] vmdkops_admin status
-Version: 0.12.fea683a-0.0.1
+[root@localhost:~] esxcli storage guestvol status
+=== Service:
+Version: 0.14.ff1d8d4-0.0.1
 Status: Running
-DB_LocalPath: /etc/vmware/vmdkops/auth-db
-DB_SharedLocation: /etc/vmware/vmdkops/auth-db
-DB_Mode: SingleNode (local DB exists)    &lt;==== LOCAL configuration
-Pid: 5979684
+Pid: 607737
 Port: 1019
 LogConfigFile: /etc/vmware/vmdkops/log_config.json
 LogFile: /var/log/vmware/vmdk_ops.log
-LogLevel: DEBUG
+LogLevel: INFO
+=== Authorization Config DB:
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+DB_Mode: SingleNode (local DB exists)     &lt;==== LOCAL configuration
+DB_SharedLocation: N/A
+
 </code></pre>
 </div>
 
@@ -1321,21 +1250,25 @@ LogLevel: DEBUG
 
 <p>Allows to remove local configuration DB. Since this is a destructive operation, admin needs to type both <code class="highlighter-rouge">--local</code> flag (to confirm it’s local only operation and does not impact shared database, if any) , and <code class="highlighter-rouge">--confirm</code> flag to confirm that she actually wants to delete the local Config DB.</p>
 
-<p>Running <code class="highlighter-rouge">vmdkops_admin config rm</code> with no flags prints an explanation on how to remove the shared config DB, if any.</p>
+<p>Running <code class="highlighter-rouge">esxcli storage guestvol config rm</code> with no flags prints an explanation on how to remove the shared config DB, if any.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>usage: vmdkops_admin.py config rm [-h] [--local] [--no-backup] [--confirm]
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol config rm --help
+Usage: esxcli storage guestvol config rm [cmd options]
 
-optional arguments:
-  -h, --help   show this help message and exit
-  --local      Remove only local link or local DB
-  --no-backup  Do not create DB backup before removing
-  --confirm    Explicitly confirm the operation
+Description:
+  rm                    Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]
+
+Cmd options:
+  --confirm             Explicitly confirm the operation
+  --local               Remove only local link or local DB
+  --no-backup           Do not create DB backup before removing
+  --unlink              Remove the local link to shared DB
 </code></pre>
 </div>
 
 <h4 id="status">Status</h4>
 
-<p>To get config DB  status, use  <code class="highlighter-rouge">/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status</code> command.</p>
+<p>To get config DB  status, use  <code class="highlighter-rouge">esxcli storage guestvol status</code> command.</p>
 
 <h4 id="move-config-mv">Move (<code class="highlighter-rouge">config mv</code>)</h4>
 
@@ -1345,50 +1278,53 @@ optional arguments:
 
 <p>Show config and run-time information about the service.</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status  -h
-usage: vmdkops_admin.py status [-h] [--fast]
+<div class="highlighter-rouge"><pre class="highlight"><code>[root@localhost:~] esxcli storage guestvol status --help
+Usage: esxcli storage guestvol status [cmd options]
 
-optional arguments:
-  -h, --help  show this help message and exit
-  --fast      SKip some of the data collection (port, version)
-  ```
+Description:
+  status                Status of vdvs service
 
+Cmd options:
+  --fast                Skip some of the data collection (port, version)
+</code></pre>
+</div>
 
-```bash
-[root@localhost:~] time /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status
-Version: 0.12.0afa0ec-0.0.1
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] <span class="nb">time </span>esxcli storage guestvol status
+<span class="o">===</span> Service:
+Version: 0.14.ff1d8d4-0.0.1
 Status: Running
-DB_LocalPath: /etc/vmware/vmdkops/auth-db
-DB_SharedLocation: N/A
-DB_Mode: SingleNode (local DB exists)
-Pid: 6298936
+Pid: 607737
 Port: 1019
 LogConfigFile: /etc/vmware/vmdkops/log_config.json
 LogFile: /var/log/vmware/vmdk_ops.log
-LogLevel: DEBUG
-
-real	0m 2.01s
-user	0m 0.59s
+LogLevel: INFO
+<span class="o">===</span> Authorization Config DB:
+DB_Mode: SingleNode <span class="o">(</span><span class="nb">local </span>DB exists<span class="o">)</span>
+DB_SharedLocation: N/A
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+real	0m 2.67s
+user	0m 0.31s
 sys	0m 0.00s
 </code></pre>
 </div>
 
 <p>Some of the information retrieval may be slow (e.g. VIB version (<code class="highlighter-rouge">Version</code> field) # or VMCI port number (<code class="highlighter-rouge">Port</code> field). <code class="highlighter-rouge">--fast</code> flag skips slow data collection and prints <code class="highlighter-rouge">?</code> for fields with no information.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] <span class="nb">time</span> /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py status --fast
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>root@localhost:~] <span class="nb">time </span>esxcli storage guestvol status --fast
+<span class="o">===</span> Service:
 Version: ?
 Status: Running
-DB_LocalPath: /etc/vmware/vmdkops/auth-db
-DB_SharedLocation: N/A
-DB_Mode: SingleNode <span class="o">(</span><span class="nb">local </span>DB exists<span class="o">)</span>
-Pid: 6298936
+Pid: 607737
 Port: ?
 LogConfigFile: /etc/vmware/vmdkops/log_config.json
 LogFile: /var/log/vmware/vmdk_ops.log
-LogLevel: DEBUG
-
-real	0m 0.72s
-user	0m 0.51s
+LogLevel: INFO
+<span class="o">===</span> Authorization Config DB:
+DB_LocalPath: /etc/vmware/vmdkops/auth-db
+DB_SharedLocation: N/A
+DB_Mode: SingleNode <span class="o">(</span><span class="nb">local </span>DB exists<span class="o">)</span>
+real	0m 0.95s
+user	0m 0.34s
 sys	0m 0.00s
 </code></pre>
 </div>
@@ -1409,7 +1345,7 @@ sys	0m 0.00s
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 22, 2017 <br />
+ Site last generated: Aug 28, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

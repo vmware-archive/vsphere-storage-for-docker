@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -457,9 +457,20 @@ Installation Result
 </code></pre>
 </div>
 
-<h2 id="installation-on-docker-hosts">Installation on Docker Hosts</h2>
+<p><strong>Note</strong>: To make admin commandset available on ESX host, please restart hostd after vib installation.</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>/etc/init.d/hostd restart
+</code></pre>
+</div>
 
-<p>vDVS plugin can be installed on Docker hosts like any docker plugin installation. You will need docker version <strong>1.13/17.03 or above</strong> on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.</p>
+<h2 id="installation-on-linux-docker-hosts">Installation on Linux Docker Hosts</h2>
+
+<p>vDVS plugin can be installed on Linux Docker hosts like any docker plugin installation. You will need docker version <strong>1.13/17.03 or above</strong> on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.</p>
+
+<h3 id="dependencies">Dependencies</h3>
+
+<p>The plugin uses VMCI (Virtual Machine Communication Interface) and vSockets to contact the service on ESX. The associated Linux kernel drivers are installed via the VMware Tools and its open version, namely <a href="https://github.com/vmware/open-vm-tools">open-vm-tools</a>, packages. Either one of these packages must be installed in the guest OS. It’s recommended to install the most up-to-date version of either of these packages as available.</p>
+
+<h3 id="installation-instruction">Installation instruction</h3>
 
 <p>The plugin is available as a docker image on the public docker registry but if you are using a private registry, you will have to point to the appropriate URL of the image.</p>
 
@@ -519,6 +530,159 @@ ID                  NAME                DESCRIPTION         ENABLED
 </code></pre>
 </div>
 
+<h2 id="installation-on-windows-docker-hosts">Installation on Windows Docker Hosts</h2>
+
+<p>vSphere Storage for Docker can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version <strong>1.13/17.03 or above</strong> (with Windows containers mode enabled) on the VM.</p>
+
+<p>First, start an instance of PowerShell with the “Run as administrator” option.</p>
+
+<ul>
+  <li><strong>To download the plugin installer</strong></li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PS C:\&gt; Invoke-WebRequest -Uri https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/install-vdvs.ps1 -Out install-vdvs.ps1
+</code></pre>
+</div>
+
+<ul>
+  <li><strong>To install the plugin</strong></li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PS C:\&gt; .\install-vdvs.ps1 &lt;windows_plugin_binary_url&gt;
+</code></pre>
+</div>
+
+<p>For example, the vSphere Storage for Docker 0.16 developer preview binary could be installed as shown below.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PS C:\&gt; .\install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere_windows_developer-preview.zip
+Downloading from https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere_windows_developer-preview.zip...
+Extracting docker-volume-vsphere.zip into C:\Program Files\VMware\vmdkops...
+Deleting docker-volume-vsphere.zip...
+Installing Windows service vdvs from C:\Program Files\VMware\vmdkops\vdvs.exe...
+
+Status   Name               DisplayName
+------   ----               -----------
+Stopped  vdvs               vSphere Docker Volume Service
+Starting Windows service vdvs...
+Running  vdvs               vSphere Docker Volume Service
+Windows service vdvs installed successfully!
+</code></pre>
+</div>
+
+<ul>
+  <li><strong>To verify that the plugin was installed</strong></li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PS C:\&gt; Get-Service vdvs
+
+Status   Name               DisplayName
+------   ----               -----------
+Running  vdvs               vSphere Docker Volume Service
+</code></pre>
+</div>
+
+<ul>
+  <li><strong>To uninstall the plugin</strong></li>
+</ul>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PS C:\&gt; .\install-vdvs.ps1 -Uninstall
+Do you really want to uninstall vdvs [Y/N]?: Y
+Stopping Windows service vdvs...
+Deleting Windows service vdvs...
+[SC] DeleteService SUCCESS
+Deleting C:\Program Files\VMware\vmdkops...
+Windows service vdvs uninstalled successfully!
+</code></pre>
+</div>
+
+<p><strong>Note:</strong> In case of a failure due to an UnauthorizedAccess error, please unblock the script using the following command and retry.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PS C:\&gt; Set-ExecutionPolicy Unrestricted -Scope Process -Force
+</code></pre>
+</div>
+
+<h2 id="upgrade-instructions">Upgrade Instructions</h2>
+<p>Upgrade of volume managed plugin or ESX driver has no impact on data path and running containers. It is recommended to have both of them from same release. However, it is not mandatory and both of them are backward compatible upto one prior release version.</p>
+
+<p><strong>ESX Driver upgrade:</strong></p>
+<ol>
+  <li>Uninstall VIB (driver)
+    <div class="highlighter-rouge"><pre class="highlight"><code>esxcli software vib remove -n esx-vmdkops-service
+</code></pre>
+    </div>
+  </li>
+  <li>Download and install the latest VIB from the docker-volume-vsphere release page
+    <div class="highlighter-rouge"><pre class="highlight"><code>esxcli software vib install -v /&lt;vib_name&gt;.vib
+</code></pre>
+    </div>
+  </li>
+  <li>Verify the status
+    <div class="highlighter-rouge"><pre class="highlight"><code>esxcli storage guestvol status
+</code></pre>
+    </div>
+  </li>
+</ol>
+
+<p><strong>Plugin upgrade:</strong>
+<strong>Note</strong>: If you have used a different alias for existing plugin installation, use that instead of <code class="highlighter-rouge">vsphere</code> in the steps above</p>
+
+<ol>
+  <li>Disable the managed plugin from the docker host
+    <div class="highlighter-rouge"><pre class="highlight"><code>docker plugin disable -f vsphere
+</code></pre>
+    </div>
+  </li>
+  <li>Upgrade the latest release of docker-volume-vsphere managed plugin
+    <div class="highlighter-rouge"><pre class="highlight"><code>docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:latest
+</code></pre>
+    </div>
+  </li>
+  <li>Enable the managed plugin from the docker host
+    <div class="highlighter-rouge"><pre class="highlight"><code>docker plugin enable vsphere
+</code></pre>
+    </div>
+  </li>
+</ol>
+
+<h2 id="downgrade-to-a-previous-version">Downgrade to a previous version</h2>
+<p><strong>ESX Driver downgrade:</strong></p>
+<ol>
+  <li>Uninstall VIB (driver)
+    <div class="highlighter-rouge"><pre class="highlight"><code>esxcli software vib remove -n esx-vmdkops-service
+</code></pre>
+    </div>
+  </li>
+  <li>Download and install the required VIB from the docker-volume-vsphere release page
+    <div class="highlighter-rouge"><pre class="highlight"><code>esxcli software vib install -v /&lt;vib_name&gt;.vib
+</code></pre>
+    </div>
+  </li>
+  <li>Verify the status
+    <div class="highlighter-rouge"><pre class="highlight"><code>esxcli storage guestvol status
+</code></pre>
+    </div>
+  </li>
+</ol>
+
+<p><strong>Plugin downgrade:</strong></p>
+
+<ol>
+  <li>Disable the managed plugin from the docker host
+    <div class="highlighter-rouge"><pre class="highlight"><code>docker plugin disable -f vsphere
+</code></pre>
+    </div>
+  </li>
+  <li>Using docker plugin upgrade, you can downgrade to required release of docker-volume-vsphere managed plugin
+    <div class="highlighter-rouge"><pre class="highlight"><code>docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:&lt;required_release_version&gt;
+</code></pre>
+    </div>
+  </li>
+  <li>Enable the managed plugin from the docker host
+    <div class="highlighter-rouge"><pre class="highlight"><code>docker plugin enable vsphere
+</code></pre>
+    </div>
+  </li>
+</ol>
 
   
 
@@ -536,7 +700,7 @@ ID                  NAME                DESCRIPTION         ENABLED
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 22, 2017 <br />
+ Site last generated: Aug 28, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

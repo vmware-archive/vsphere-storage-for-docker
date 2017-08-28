@@ -4,8 +4,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
-<meta name="keywords" content="news,  ">
-<title>Welcome to Jekyll! | vSphere Docker Volume Service</title>
+<meta name="keywords" content=" ">
+<title>0.7 Release | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="" href="http://idratherbewriting.comfeed.xml">
+<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Welcome to Jekyll!">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="0.7 Release">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -378,48 +378,110 @@
 
     <!-- Content Column -->
     <div class="col-md-9">
-        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
-
-    <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">Welcome to Jekyll!</h1>
-        <p class="post-meta"><time datetime="2016-02-24T00:00:00-06:00" itemprop="datePublished">Feb 24, 2016</time> /
-            
-            
-            
-            <a href="tag_news.html">news</a>
-            
-            
-            
-
-        </p>
+        <div class="post-header">
+   <h1 class="post-title-main">0.7 Release</h1>
+</div>
 
 
-    </header>
 
-    <div class="post-content" itemprop="articleBody">
+<div class="post-content">
 
-        
+   
 
-        <p>Theme updates:</p>
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//2016-9-28.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+
+    
+
+  <h1 id="07-release">0.7 Release</h1>
+<p>We continue our monthly release cycle with our <a href="https://github.com/vmware/docker-volume-vsphere/releases/tag/0.7">September release</a></p>
+
+<p>Thanks to <a href="https://github.com/brunotm">Bruno Moura’s</a> <a href="https://github.com/vmware/docker-volume-vsphere/pull/597">work</a>, Docker volume plugin for vSphere now supports selection of file system format when creating a new docker volume.</p>
+
+<p>Ability to set a volume <a href="https://github.com/vmware/docker-volume-vsphere/issues/274">read-only</a> is now supported by the plugin. The <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/admin-cli/#set">admin cli</a> allows the admin to set a volume to be read only.</p>
+
+<h1 id="coming-up">Coming up</h1>
+
+<p>One of the major features in the pipeline is multi-tenancy and vCenter integration. More about that soon..</p>
+
+<h1 id="external-blog-entries">External Blog entries</h1>
 
 <ul>
-  <li>Permalinks</li>
-  <li>Kramdown</li>
-  <li>URL specified in config file</li>
-  <li>removed PDF output</li>
-  <li>removed some of the alternative layouts</li>
-  <li>added blog feature</li>
-  <li>sidebars configurable per page</li>
+  <li>Cormac Hogan
+    <ul>
+      <li>Overview
+        <ul>
+          <li><a href="http://cormachogan.com/2016/06/01/docker-volume-driver-vsphere/">Docker Volume Driver for vSphere</a></li>
+          <li><a href="http://cormachogan.com/2016/06/03/docker-volume-driver-vsphere-short-video/">Docker Volume Driver for vSphere – short video</a></li>
+        </ul>
+      </li>
+      <li>Docker + VSAN
+        <ul>
+          <li><a href="http://cormachogan.com/2016/06/09/docker-volume-driver-vsphere-virtual-san-vsan/">Docker Volume Driver for vSphere on Virtual SAN</a></li>
+          <li><a href="http://cormachogan.com/2016/07/29/using-vsphere-docker-volume-driver-run-project-harbor-vsan/">Using vSphere docker volume driver to run Project Harbor on VSAN</a></li>
+          <li><a href="http://cormachogan.com/2016/09/26/docker-volume-driver-vsphere-using-policies-vsan-short-video/">Docker Volume Driver for vSphere using policies on VSAN</a></li>
+        </ul>
+      </li>
+      <li>0.7 Release Overview
+        <ul>
+          <li><a href="http://cormachogan.com/2016/10/06/nice-enhancements-docker-volume-driver-vsphere-v0-7/">Some nice enhancements to Docker Volume Driver for vSphere v0.7</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>William Lam
+    <ul>
+      <li><a href="http://www.virtuallyghetto.com/2016/05/getting-started-with-tech-preview-of-docker-volume-driver-for-vsphere.html">Getting Started with Tech Preview of Docker Volume Driver for vSphere - updated</a></li>
+    </ul>
+  </li>
+  <li>Virtual Blocks
+    <ul>
+      <li><a href="https://blogs.vmware.com/virtualblocks/2016/06/20/vsphere-docker-volume-driver-brings-benefits-of-vsphere-storage-to-containers/">vSphere Docker Volume Driver Brings Benefits of vSphere Storage to Containers</a></li>
+    </ul>
+  </li>
+  <li>Ryan Kelly
+    <ul>
+      <li><a href="http://www.vmtocloud.com/how-to-use-the-docker-volume-driver-for-vsphere-with-photon-os/">How to use the Docker Volume Driver for vSphere with Photon OS</a></li>
+    </ul>
+  </li>
 </ul>
 
+  
 
+    <div class="tags">
+        
     </div>
 
+    
 
-
-</article>
-
-
+</div>
 
 <hr class="shaded"/>
 
@@ -427,7 +489,7 @@
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 22, 2017 <br />
+ Site last generated: Aug 28, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

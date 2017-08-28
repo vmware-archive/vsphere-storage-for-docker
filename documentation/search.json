@@ -168,8 +168,6 @@
 
 
 
-
-
 {
 "title": "vSphere Docker Volume Service",
 "tags": "",
@@ -271,8 +269,6 @@
 
 
 
-
-
 {
 "title": "Multi-Tenancy using VMGroups",
 "tags": "",
@@ -295,7 +291,14 @@
 
 
 
-
+{
+"title": "vFile volume plugin for Docker",
+"tags": "",
+"keywords": "",
+"url": "vfile-plugin.html",
+"summary": ""
+}
+,
 
 
 
@@ -326,6 +329,50 @@
 "tags": "",
 "keywords": "",
 "url": "vsphere-overview.html",
+"summary": ""
+}
+,
+
+
+
+{
+"title": "0.8.1 Release",
+"tags": "",
+"keywords": "",
+"url": "2016-10-28.html",
+"summary": ""
+}
+,
+
+
+
+{
+"title": "0.7 Release",
+"tags": "",
+"keywords": "",
+"url": "2016-9-28.html",
+"summary": ""
+}
+,
+
+
+
+{
+"title": "Releases and Branching.",
+"tags": "",
+"keywords": "",
+"url": "BRANCHING.html",
+"summary": ""
+}
+,
+
+
+
+{
+"title": "vDVS Authorization Config DB state machine",
+"tags": "",
+"keywords": "",
+"url": "ConfigDB_state.html",
 "summary": ""
 }
 ,
@@ -377,7 +424,7 @@
 
 
 {
-"title": "",
+"title": "=======",
 "tags": "",
 "keywords": "",
 "url": "docker-volume.html",
@@ -388,7 +435,7 @@
 
 
 {
-"title": "",
+"title": "[WIP]",
 "tags": "",
 "keywords": "",
 "url": "empty.html",
@@ -454,7 +501,7 @@
 
 
 {
-"title": "",
+"title": "vCenter Integration",
 "tags": "",
 "keywords": "",
 "url": "vcenter.html",
@@ -471,39 +518,9 @@
 "url": "vmdkops-admin-cli-spec.html",
 "summary": ""
 }
-,
 
 
 
-
-
-{
-"title": "Sample post",
-"tags": "newsgetting_started",
-"keywords": "",
-"url": "samplepost.html",
-"summary": "This is some summary frontmatter for my sample post."
-}
-,
-
-
-{
-"title": "Welcome to Jekyll!",
-"tags": "news",
-"keywords": "",
-"url": "myupdate.html",
-"summary": ""
-}
-,
-
-
-{
-"title": "Test post from last year",
-"tags": "news",
-"keywords": "",
-"url": "test-post-from-last-year.html",
-"summary": ""
-}
 
 
 

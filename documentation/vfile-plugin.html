@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title> | vSphere Docker Volume Service</title>
+<title>vFile volume plugin for Docker | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="vFile volume plugin for Docker">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -379,7 +379,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main"></h1>
+   <h1 class="post-title-main">vFile volume plugin for Docker</h1>
 </div>
 
 
@@ -416,11 +416,161 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//links.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//vfile-plugin.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  
+  <h2 id="overview">Overview</h2>
+<p>Depending on the underlying block storage system, it might not be possible to access the same
+persistent volume across different hosts/nodes simultanously.
+For example, currently users cannot mount the same persistent volume which is created through
+vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.</p>
+
+<p>This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
+However, setting up and maintaining enterprise storage offerings for Cloud Native usecases is not a trivial work.
+Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.</p>
+
+<p><strong>vFile volume plugin for Docker</strong> provides simultaneous persistent volume access between hosts in the
+same Docker Swarm cluster for the base volume plugin service such as vDVS, with zero configuration effort,
+along with high availability, scalability, and load balancing support.</p>
+
+<h2 id="detailed-documentation">Detailed documentation</h2>
+<p>Detailed documentation can be found on our <a href="http://vmware.github.io/docker-volume-vsphere/documentation/">GitHub Documentation Page</a>.</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+  <li>Docker version 1.30/17.06.0 is required.</li>
+  <li>To use vFile plugin, hosts must be running in Swarm mode.
+    <ul>
+      <li><a href="https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/">How to create a swarm</a></li>
+      <li><a href="https://docs.docker.com/engine/swarm/swarm-tutorial/add-nodes/">How to add nodes to the swarm</a></li>
+    </ul>
+  </li>
+  <li>Please follow the following <a href="https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes">recommendations for the Swarm manager nodes setup</a>:
+    <ol>
+      <li>Run the swarm cluster with a single manager only for testing purpose.</li>
+      <li>An <code class="highlighter-rouge">N</code> manager cluster will tolerate the loss of at most <code class="highlighter-rouge">(N-1)/2</code> managers.</li>
+      <li>Docker recommends a maximum of seven manager nodes for a swarm.</li>
+    </ol>
+  </li>
+  <li>Base docker volume plugin (e.g. <a href="https://github.com/vmware/docker-volume-vsphere">vSphere Docker Volume Service</a>)</li>
+</ul>
+
+<h2 id="installing">Installing</h2>
+<p>The recommended way to install vFile plugin is from docker cli:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest
+</code></pre>
+</div>
+<p>Note: please make sure the base volume plugin is already installed!</p>
+
+<h2 id="usage-examples">Usage examples</h2>
+
+<h4 id="creating-a-persistent-volume-from-vfile-plugin">Creating a persistent volume from vFile plugin</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>$ docker volume create --driver=vfile --name=SharedVol -o size=10gb
+$ docker volume ls
+$ docker volume inspect SharedVol
+</code></pre>
+</div>
+<p>Options for creation will be the same for the base volume plugin.
+Please refer to the base volume plugin for more options.
+Note: vFile volume plugin doesn’t support filesystem type options.
+Note: The valid volume name can only be <code class="highlighter-rouge">[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]</code>.</p>
+
+<h4 id="mounting-this-volume-to-a-container-running-on-the-first-host">Mounting this volume to a container running on the first host</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code># ssh to node1
+$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node1 busybox
+/ # cd /mnt/myvol
+# read/write data into mounted vFile volume
+</code></pre>
+</div>
+
+<h4 id="mounting-this-volume-to-a-container-running-on-the-second-host">Mounting this volume to a container running on the second host</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code># ssh to node2
+$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node2 busybox
+/ # cd /mnt/myvol
+# read/write data from mounted vFile volume
+</code></pre>
+</div>
+
+<h4 id="stopping-the-two-containers-on-each-host">Stopping the two containers on each host</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code># docker stop busybox-on-node1
+# docker stop busybox-on-node2
+</code></pre>
+</div>
+
+<h4 id="removing-the-vfile-volume">Removing the vFile volume</h4>
+<div class="highlighter-rouge"><pre class="highlight"><code>$ docker volume rm SharedVol
+</code></pre>
+</div>
+
+<h2 id="configuration">Configuration</h2>
+<h3 id="options-for-vfile-plugin">Options for vFile plugin</h3>
+<p>Users can choose the base volume plugin for vFile plugin, by setting configuration during install process.
+&lt;!—</p>
+<ul>
+  <li>
+    <p>Through CLI flag can only be done through non-managed plugin.
+—&gt;</p>
+  </li>
+  <li>Default config file location: <code class="highlighter-rouge">/etc/vfile.conf</code>.</li>
+  <li>Default base volume plugin: vSphere Docker Volume Service</li>
+  <li>Sample config file:
+    <div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="w">
+      </span><span class="nt">"InternalDriver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vsphere"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+    </div>
+  </li>
+</ul>
+
+<p>The user can override the default configuration by providing a different configuration file,
+via the <code class="highlighter-rouge">--config</code> option, specifying the full path of the file.</p>
+
+<h3 id="options-for-logging">Options for logging</h3>
+<ul>
+  <li>Default log location: <code class="highlighter-rouge">/var/log/vfile.log</code>.</li>
+  <li>Logs retention, size for rotation and log location can be set in the config file too:
+    <div class="highlighter-rouge"><pre class="highlight"><code><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="nt">"MaxLogAgeDays"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"LogPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log/vfile.log"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+    </div>
+  </li>
+</ul>
+
+<h2 id="qa">Q&amp;A</h2>
+
+<h3 id="how-to-install-and-use-the-driver">How to install and use the driver?</h3>
+<p>Please see README.md in the for the release by clicking on the tag for the release. Example: TBD.</p>
+
+<h3 id="can-i-use-another-base-volume-plugin-other-than-vdvs">Can I use another base volume plugin other than vDVS?</h3>
+<p>Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.</p>
+
+<h3 id="i-got-operation-now-in-progress-error-when-mounting-a-vfile-volume-to-a-container">I got “Operation now in progress” error when mounting a vFile volume to a container.</h3>
+<p>Please make sure the routing mesh of Docker Swarm cluster is working properly.
+Use the following way to verify:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>docker service create --replicas 1 -p 8080:80 --name web nginx
+</code></pre>
+</div>
+<p>Then on each host, make sure there is valid return of <code class="highlighter-rouge">curl 127.0.0.1:8080</code>.
+<code class="highlighter-rouge">Connection refused</code> error means the routing mesh of this Docker Swarm cluster is broken and needs to be fixed.</p>
+
+<h3 id="mounting-volume-failed-and-i-saw-name-must-be-valid-as-a-dns-name-component-error-in-the-log-when-mounting-a-vfile-volume-to-a-container">Mounting volume failed and I saw “name must be valid as a DNS name component” error in the log when mounting a vFile volume to a container.</h3>
+<p>When you see somthing like the following in the log</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
+</code></pre>
+</div>
+<p>Please make sure the volume you used is a valid volume name. A valid volume name consists of <code class="highlighter-rouge">[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]</code>.</p>
+
+<h3 id="i-got--volumedrivermount-failed-to-blocking-wait-for-mounted-state-error-timeout-reached-blockingwait-is-not-complete-when-mounting-a-volume">I got “ VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete..” when mounting a volume.</h3>
+<p>We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it’s better free up some disk space. You can also try to increase the service start timeout value, controlled by <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> env variable:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+</code></pre>
+</div>
+<p>This will increase timeout to 90 sec, from default of 30 sec.</p>
+
 
   
 
