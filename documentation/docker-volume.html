@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>======= | vSphere Docker Volume Service</title>
+<title> | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="=======">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -379,7 +379,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">=======</h1>
+   <h1 class="post-title-main"></h1>
 </div>
 
 
@@ -420,7 +420,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <h2>=======</h2>
+  <h2 id="section">=======</h2>
 <p>title: Docker Volume
 —</p>
 
@@ -435,46 +435,46 @@ db_data
 </code></pre>
 </div>
 
-<p>To list all volumes:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code># docker volume ls
+<p>To list all volumes:
+```
+# docker volume ls
 DRIVER              VOLUME NAME
 vsphere:latest      db_data@datastore3
-vsphere:latest      wordpress_db_data@datastore3
+vsphere:latest      wordpress_db_data@datastore3</p>
 
+<div class="highlighter-rouge"><pre class="highlight"><code>
+You can also inspect the volume:
 </code></pre>
 </div>
-
-<p>You can also inspect the volume:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code># docker volume inspect db_data
+<p># docker volume inspect db_data
 [
     {
-        "Driver": "vsphere:latest",
-        "Labels": {},
-        "Mountpoint": "/mnt/vmdk/db_data",
-        "Name": "db_data",
-        "Options": {
-            "size": "1Gb"
+        “Driver”: “vsphere:latest”,
+        “Labels”: {},
+        “Mountpoint”: “/mnt/vmdk/db_data”,
+        “Name”: “db_data”,
+        “Options”: {
+            “size”: “1Gb”
         },
-        "Scope": "global",
-        "Status": {
-            "access": "read-write",
-            "attach-as": "independent_persistent",
-            "capacity": {
-                "allocated": "39MB",
-                "size": "1GB"
+        “Scope”: “global”,
+        “Status”: {
+            “access”: “read-write”,
+            “attach-as”: “independent_persistent”,
+            “capacity”: {
+                “allocated”: “39MB”,
+                “size”: “1GB”
             },
-            "clone-from": "None",
-            "created": "Tue Apr 11 12:24:37 2017",
-            "created by VM": "Photon6",
-            "datastore": "datastore3",
-            "diskformat": "thin",
-            "fstype": "ext4",
-            "status": "detached"
+            “clone-from”: “None”,
+            “created”: “Tue Apr 11 12:24:37 2017”,
+            “created by VM”: “Photon6”,
+            “datastore”: “datastore3”,
+            “diskformat”: “thin”,
+            “fstype”: “ext4”,
+            “status”: “detached”
         }
     }
 ]
-</code></pre>
-</div>
+```</p>
 
 <div class="panel panel-info">
   <div class="panel-heading">
@@ -485,11 +485,11 @@ vsphere:latest      wordpress_db_data@datastore3
   </div>
 </div>
 
-<p>You can remove the volume with following command</p>
-<div class="highlighter-rouge"><pre class="highlight"><code># docker volume rm db_data
+<p>You can remove the volume with following command
+<code class="highlighter-rouge">
+# docker volume rm db_data
 db_data
-</code></pre>
-</div>
+</code></p>
 
   
 

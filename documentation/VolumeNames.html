@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -451,15 +451,15 @@ uniquely identify the volume.</p>
 
 <p>Note that <code class="highlighter-rouge">docker volume ls</code> command will strip datastore name from the volumes on the Docker VM datastore. For example, if the Docker VM runs on <code class="highlighter-rouge">datastore266</code>
 and there are 2 volumes on this datastore, and there are also 2 volumes with the same names on vsanDatastore, then ‘docker volume ls’ will show
-the following:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>$ docker volume ls
+the following:
+<code class="highlighter-rouge">
+$ docker volume ls
 DRIVER       VOLUME NAME
 vsphere         volume1
 vsphere         volume2
 vsphere         volume1@vsanDatastore
 vsphere         volume2@vsanDatastore
-</code></pre>
-</div>
+</code></p>
 
 <h2 id="volume-name-usage">Volume name usage</h2>
 <p>volume@datastore can be used anywhere where <code class="highlighter-rouge">volume name</code> is needed - i.e. in ‘docker run -v <strong>volume</strong>:/path …’ ,

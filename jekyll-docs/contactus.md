@@ -1,5 +1,5 @@
 ---
-Contact Us
+title: Contact Us
 ---
 
 You can reach us via:

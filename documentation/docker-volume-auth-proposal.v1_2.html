@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -542,20 +542,23 @@ $('#toc').on('click', 'a', function() {
 <p>The following example is illustrated via CLI commands from a hypothetical program called <code class="highlighter-rouge">auth_config</code>. <code class="highlighter-rouge">auth_config</code> is not tied to any specific implementation but is expected to display the workflow of managing authorization configuration.</p>
 
 <ol>
-  <li><strong>Create a tenant named <code class="highlighter-rouge">tenant1</code> consisting of 3 VMs</strong>
-    <div class="highlighter-rouge"><pre class="highlight"><code>auth_config tenant create tenant1 --vms vm1,vm2,vm3
-</code></pre>
-    </div>
+  <li>
+    <p><strong>Create a tenant named <code class="highlighter-rouge">tenant1</code> consisting of 3 VMs</strong>
+<code class="highlighter-rouge">
+auth_config tenant create tenant1 --vms vm1,vm2,vm3
+</code></p>
   </li>
-  <li><strong>Assigning create, mount and delete privileges to a datastore for a tenant</strong>
-    <div class="highlighter-rouge"><pre class="highlight"><code>auth_config tenant set privileges --tenant tenant1 --datastore datastore1 --privileges create,mount,delete
-</code></pre>
-    </div>
+  <li>
+    <p><strong>Assigning create, mount and delete privileges to a datastore for a tenant</strong>
+<code class="highlighter-rouge">
+auth_config tenant set privileges --tenant tenant1 --datastore datastore1 --privileges create,mount,delete
+</code></p>
   </li>
-  <li><strong>Commit the configuration</strong>
-    <div class="highlighter-rouge"><pre class="highlight"><code>auth_config commit
-</code></pre>
-    </div>
+  <li>
+    <p><strong>Commit the configuration</strong>
+<code class="highlighter-rouge">
+auth_config commit
+</code></p>
   </li>
 </ol>
 

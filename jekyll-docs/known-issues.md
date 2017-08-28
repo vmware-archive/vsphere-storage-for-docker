@@ -1,5 +1,5 @@
 ---
-Known Issues
+title: Known Issues
 ---
 
 This section lists the major known issues with vSphere Docker Volume Service. For a complete list of issues, please check our Github issues(https://github.com/vmware/docker-volume-vsphere/issues) page. If you notice an issue not listed in Github issues page, please do file a bug on the [Github repo](https://github.com/vmware/docker-volume-vsphere/issues)

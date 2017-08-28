@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -510,22 +510,14 @@ On the node where the operation happened, the admin CLI will refresh the vDVS se
 
 <p><strong>The key use case</strong> is initial configuration, where all nodes start with NotConfigured. On one of the nodes, admin (manually or via automation) configures a shared Config DB on a datastore visible to all nodes. Then discovery kicks in on all nodes, finds out there is a fresh Config DB on a shared store, and configures the node to use this DB. This way Admin only need to do configuration on one node and the rest pick it up . See Issue https://github.com/vmware/docker-volume-vsphere/issues/1086 for details.</p>
 
-<p>The only state transition supported by Discovery is NotConfigured -&gt; MultiNode.</p>
-<ul>
-  <li>Note - once defined, the DB becomes a single point of failure, and the only way to remove it is to run local CLI <code class="highlighter-rouge">config rm --local</code> on each ESX.</li>
-  <li>To clarify <code class="highlighter-rouge">config rm --local</code> removes al <code class="highlighter-rouge">local knowledge</code> about Config DB - be it the symlink or the actual DB.</li>
-  <li>The Config DB will contain a list of ESX nodes allowed to participate in the discovery (FQDN, FQDN regexp, IPv4 IP or regexp).
-    <ul>
-      <li>Default fot the list is ‘*’ (all allowed).</li>
-    </ul>
-  </li>
-  <li>The service will be periodically checking for new DB on shared datastores, and if 1 (and only one) shows up there, will check for current ESX being allowed, and then change local config to use shared DB .
-    <ul>
-      <li>it will also register ESX node in “nodes using the DB” table for audit and troubleshooting</li>
-    </ul>
-  </li>
-  <li>when a shared DB is discovered, the service will perform <code class="highlighter-rouge">config init --datastore=DS</code> operation which will in turn refresh the service to use the new configuration. This will switch the service Config DB mode to MultiNode.</li>
-</ul>
+<p>The only state transition supported by Discovery is NotConfigured -&gt; MultiNode.
+*  Note - once defined, the DB becomes a single point of failure, and the only way to remove it is to run local CLI <code class="highlighter-rouge">config rm --local</code> on each ESX.
+  * To clarify <code class="highlighter-rouge">config rm --local</code> removes al <code class="highlighter-rouge">local knowledge</code> about Config DB - be it the symlink or the actual DB.
+* The Config DB will contain a list of ESX nodes allowed to participate in the discovery (FQDN, FQDN regexp, IPv4 IP or regexp).
+  * Default fot the list is ‘*’ (all allowed).
+* The service will be periodically checking for new DB on shared datastores, and if 1 (and only one) shows up there, will check for current ESX being allowed, and then change local config to use shared DB .
+  * it will also register ESX node in “nodes using the DB” table for audit and troubleshooting
+* when a shared DB is discovered, the service will perform <code class="highlighter-rouge">config init --datastore=DS</code> operation which will in turn refresh the service to use the new configuration. This will switch the service Config DB mode to MultiNode.</p>
 
 <p>*** END OF DOCUMENT **</p>
 

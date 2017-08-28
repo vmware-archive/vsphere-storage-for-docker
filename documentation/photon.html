@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -515,8 +515,8 @@ vsphere                minio2@vsanDatastore
 photon                 redis-data@vsanDatastore
 </code></pre>
 </div>
-<h3 id="inspect-volumes">Inspect Volumes</h3>
-<p>You can use <code class="highlighter-rouge">docker volume inspect</code> command to see attributes of a particular volume.</p>
+<p>### Inspect Volumes
+You can use <code class="highlighter-rouge">docker volume inspect</code> command to see attributes of a particular volume.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>#docker volume create —driver=photon —name=MyVolume -o size=2gb -o vsan-policy-name=myPolicy -o fstype=xfs
 

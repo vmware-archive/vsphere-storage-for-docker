@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -457,11 +457,11 @@ along with high availability, scalability, and load balancing support.</p>
 </ul>
 
 <h2 id="installing">Installing</h2>
-<p>The recommended way to install vFile plugin is from docker cli:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest
-</code></pre>
-</div>
-<p>Note: please make sure the base volume plugin is already installed!</p>
+<p>The recommended way to install vFile plugin is from docker cli:
+<code class="highlighter-rouge">
+docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest
+</code>
+Note: please make sure the base volume plugin is already installed!</p>
 
 <h2 id="usage-examples">Usage examples</h2>
 
@@ -504,23 +504,21 @@ $ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node2 busybox
 </div>
 
 <h2 id="configuration">Configuration</h2>
-<h3 id="options-for-vfile-plugin">Options for vFile plugin</h3>
-<p>Users can choose the base volume plugin for vFile plugin, by setting configuration during install process.
-&lt;!—</p>
+<p>### Options for vFile plugin
+Users can choose the base volume plugin for vFile plugin, by setting configuration during install process.
+<!---
+* Through CLI flag can only be done through non-managed plugin.
+---></p>
+
 <ul>
-  <li>
-    <p>Through CLI flag can only be done through non-managed plugin.
-—&gt;</p>
-  </li>
   <li>Default config file location: <code class="highlighter-rouge">/etc/vfile.conf</code>.</li>
   <li>Default base volume plugin: vSphere Docker Volume Service</li>
   <li>Sample config file:
-    <div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="w">
+<code class="highlighter-rouge"><span class="w">
+</span><span class="p">{</span><span class="w">
       </span><span class="nt">"InternalDriver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vsphere"</span><span class="w">
 </span><span class="p">}</span><span class="w">
-</span></code></pre>
-    </div>
-  </li>
+</span></code></li>
 </ul>
 
 <p>The user can override the default configuration by providing a different configuration file,
@@ -530,14 +528,13 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 <ul>
   <li>Default log location: <code class="highlighter-rouge">/var/log/vfile.log</code>.</li>
   <li>Logs retention, size for rotation and log location can be set in the config file too:
-    <div class="highlighter-rouge"><pre class="highlight"><code><span class="w"> </span><span class="p">{</span><span class="w">
+<code class="highlighter-rouge"><span class="w">
+ </span><span class="p">{</span><span class="w">
   </span><span class="nt">"MaxLogAgeDays"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">
   </span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
   </span><span class="nt">"LogPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log/vfile.log"</span><span class="w">
 </span><span class="p">}</span><span class="w">
-</span></code></pre>
-    </div>
-  </li>
+</span></code></li>
 </ul>
 
 <h2 id="qa">Q&amp;A</h2>
@@ -550,26 +547,26 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 
 <h3 id="i-got-operation-now-in-progress-error-when-mounting-a-vfile-volume-to-a-container">I got “Operation now in progress” error when mounting a vFile volume to a container.</h3>
 <p>Please make sure the routing mesh of Docker Swarm cluster is working properly.
-Use the following way to verify:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>docker service create --replicas 1 -p 8080:80 --name web nginx
-</code></pre>
-</div>
-<p>Then on each host, make sure there is valid return of <code class="highlighter-rouge">curl 127.0.0.1:8080</code>.
+Use the following way to verify:
+<code class="highlighter-rouge">
+docker service create --replicas 1 -p 8080:80 --name web nginx
+</code>
+Then on each host, make sure there is valid return of <code class="highlighter-rouge">curl 127.0.0.1:8080</code>.
 <code class="highlighter-rouge">Connection refused</code> error means the routing mesh of this Docker Swarm cluster is broken and needs to be fixed.</p>
 
 <h3 id="mounting-volume-failed-and-i-saw-name-must-be-valid-as-a-dns-name-component-error-in-the-log-when-mounting-a-vfile-volume-to-a-container">Mounting volume failed and I saw “name must be valid as a DNS name component” error in the log when mounting a vFile volume to a container.</h3>
-<p>When you see somthing like the following in the log</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
-</code></pre>
-</div>
-<p>Please make sure the volume you used is a valid volume name. A valid volume name consists of <code class="highlighter-rouge">[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]</code>.</p>
+<p>When you see somthing like the following in the log
+<code class="highlighter-rouge">
+2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
+</code>
+Please make sure the volume you used is a valid volume name. A valid volume name consists of <code class="highlighter-rouge">[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]</code>.</p>
 
 <h3 id="i-got--volumedrivermount-failed-to-blocking-wait-for-mounted-state-error-timeout-reached-blockingwait-is-not-complete-when-mounting-a-volume">I got “ VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete..” when mounting a volume.</h3>
-<p>We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it’s better free up some disk space. You can also try to increase the service start timeout value, controlled by <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> env variable:</p>
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
-</code></pre>
-</div>
-<p>This will increase timeout to 90 sec, from default of 30 sec.</p>
+<p>We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it’s better free up some disk space. You can also try to increase the service start timeout value, controlled by <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> env variable:
+<code class="highlighter-rouge">
+docker plugin install --grant-all-permissions --alias vfile cnastorage/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+</code>
+This will increase timeout to 90 sec, from default of 30 sec.</p>
 
 
   

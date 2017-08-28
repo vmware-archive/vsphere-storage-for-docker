@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -475,11 +475,9 @@ volumes:
 </code></pre>
 </div>
 
-<p>This will create 2 vSphere volumes:</p>
-<ul>
-  <li>minio_export: Used to store data</li>
-  <li>minio_config: Used to store configuration</li>
-</ul>
+<p>This will create 2 vSphere volumes:
+- minio_export: Used to store data
+- minio_config: Used to store configuration</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>docker volume ls -f driver=vsphere
 DRIVER              VOLUME NAME

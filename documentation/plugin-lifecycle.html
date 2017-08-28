@@ -35,7 +35,7 @@
 <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 <![endif]-->
 
-<link rel="alternate" type="application/rss+xml" title="docker-volume-vsphere" href="feed.xml">
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
         $(document).ready(function() {
@@ -487,22 +487,20 @@ InUse 	 -&gt; InUse       # RefCount++
 
 <ul>
   <li>Docker engine crashes: Docker has not sent any unmount request to the plugin.
-    <div class="highlighter-rouge"><pre class="highlight"><code>States: Volumes are either in Init or in Mounted state. 
+<code class="highlighter-rouge">
+States: Volumes are either in Init or in Mounted state. 
 Recovery: Mounted state needs recovery.
-</code></pre>
-    </div>
-    <p>. Plugin crashes (Plugin accidentally restarted is considered a crash, install and upgrade require docker to be stopped, as mentioned above).</p>
-    <div class="highlighter-rouge"><pre class="highlight"><code>States: Volumes can be in any state and plugin needs to rebuild volume state. 
+</code>
+. Plugin crashes (Plugin accidentally restarted is considered a crash, install and upgrade require docker to be stopped, as mentioned above).
+ <code class="highlighter-rouge">
+States: Volumes can be in any state and plugin needs to rebuild volume state. 
 Recovery: The end goal is to insure volumes are in Init, or InUse.
-</code></pre>
-    </div>
-  </li>
+</code></li>
   <li>VM Crashes and starts up: Docker has not consumed any volume and plugin has no refcount.
-    <div class="highlighter-rouge"><pre class="highlight"><code>States: Volumes can be in Init or Attached state. 
+<code class="highlighter-rouge">
+States: Volumes can be in Init or Attached state. 
 Recovery: In the absence of docker engine consuming volumes all volumes need to return to Init state.
-</code></pre>
-    </div>
-  </li>
+</code></li>
 </ul>
 
 <p>Note: The manual/automated stopping and starting of docker covers the installation and upgrade case.</p>
