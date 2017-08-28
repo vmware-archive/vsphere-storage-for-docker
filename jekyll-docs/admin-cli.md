@@ -599,8 +599,8 @@ vol1    sharedVmfs-0  _DEFAULT  100MB     13MB  ext4        N/A     thin        
 vol2    sharedVmfs-0  _DEFAULT  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  ubuntu-VM0.0  Mon Aug 21 04:36:12 2017
 ```
 
-Note that the `Policy` column shows the named VSAN storage policy created with the same tool
-(vmdkops_admin.py).  Since these example virtual disks live on a VMFS datastore they do not have a storage
+Note that the `Policy` column shows the named VSAN storage policy created with the same commandset
+(esxcli storage guestvol).  Since these example virtual disks live on a VMFS datastore they do not have a storage
 policy and show up as `N/A'.
 
 Note that the `VMGroup` column shows the vmgroup by which the volume was created. If the vmgroup which created the volume has been removed, the `VMGroup` column shows up as 'N/A'. See the following example:
@@ -754,8 +754,8 @@ Successfully removed policy: some-policy
 
 Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
 ```
-[root@localhost:~] vmdkops_admin vmgroup create --name MY
-Internal Error(Error: Please init configuration in vmdkops_admin before trying to change it)
+[root@localhost:~] esxcli storage guestvol vmgroup create --name MY
+Configuration not found. Please init configuration with 'esxcli storage guestvol config init'.
 ```
 
 If the Config DB is not initialized, Docker Volume Service will use  "Config DB NotConfigured" Mode, when any request to create, remove, mount or unmount Docker volume is accepted.
@@ -788,7 +788,7 @@ Cmd options:
 Example:
 
 ```
-[root@localhost:~] vmdkops_admin status
+[root@localhost:~] esxcli storage guestvol status
 Version: 0.12.fea683a-0.0.1
 Status: Running
 DB_LocalPath: /etc/vmware/vmdkops/auth-db
@@ -800,7 +800,7 @@ LogConfigFile: /etc/vmware/vmdkops/log_config.json
 LogFile: /var/log/vmware/vmdk_ops.log
 LogLevel: DEBUG
 
-[root@localhost:~] vmdkops_admin config init --local
+[root@localhost:~] esxcli storage guestvol config init --local
 Creating new DB at /etc/vmware/vmdkops/auth-db
 Restarting the vmdkops service to pick up new configuration
 Stopping vmdkops-opsd with PID=5979199
