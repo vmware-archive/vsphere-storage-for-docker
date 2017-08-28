@@ -20,16 +20,9 @@ along with high availability, scalability, and load balancing support.
 Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
 
 ## Prerequisites
-* Docker version 1.30/17.06.0 is required.
-* To use vFile plugin, hosts must be running in Swarm mode.
-    * [How to create a swarm](https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/)
-    * [How to add nodes to the swarm](https://docs.docker.com/engine/swarm/swarm-tutorial/add-nodes/)
-* Please follow the following [recommendations for the Swarm manager nodes setup](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes):
-    1. Run the swarm cluster with a single manager only for testing purpose.
-    2. An `N` manager cluster will tolerate the loss of at most `(N-1)/2` managers.
-    3. Docker recommends a maximum of seven manager nodes for a swarm.
-
-* Base docker volume plugin (e.g. [vSphere Docker Volume Service](https://github.com/vmware/docker-volume-vsphere))
+* Docker version: 17.06.0 or newer
+* Base docker volume plugin: [vSphere Docker Volume Service](https://github.com/vmware/docker-volume-vsphere)
+* All hosts running in [Swarm mode](https://docs.docker.com/engine/swarm/swarm-tutorial/)
 
 ## Installing
 The recommended way to install vFile plugin is from docker cli:
@@ -116,7 +109,6 @@ Please see README.md in the for the release by clicking on the tag for the relea
 ### Can I use another base volume plugin other than vDVS?
 Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.
 
-
 ### I got "Operation now in progress" error when mounting a vFile volume to a container.
 Please make sure the routing mesh of Docker Swarm cluster is working properly.
 Use the following way to verify:
@@ -139,4 +131,16 @@ We see this issue only on platform where the space is low. When available disk s
 docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 ```
 This will increase timeout to 90 sec, from default of 30 sec.
+
+
+### I got "docker volume ls" operation very slow and "docker volume rm/create" a vFile volume hang forever
+Please check the log at `/var/log/vfile.log` and look up if there are error message about swarm status as follow:
+`The swarm does not have a leader. It's possible that too few managers are online. Make sure more than half of the managers are online.`
+
+This error message indicates the swarm cluster is not in a healthy status.
+
+Please follow the following [recommendations for the Swarm manager nodes setup](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes):
+    1. Run the swarm cluster with a single manager only for testing purpose.
+    2. An `N` manager cluster will tolerate the loss of at most `(N-1)/2` managers.
+    3. Docker recommends a maximum of seven manager nodes for a swarm.
 
