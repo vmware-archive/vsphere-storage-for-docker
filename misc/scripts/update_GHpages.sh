@@ -48,6 +48,20 @@ git push $SOURCE_REPO HEAD:$DOCUMENT_BRANCH
 #Delete backup directory which had .md files
 rm -rf $BACKUP_DIR
 
+echo "Performing steps to generate customer facing document"
+cd jekyll-docs/
+docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
+rm -rvf ../documentation
+mv _site ../documentation
+
+#updating documentation/index.html
+sed -i -e 's/\/gh-pages\/jekyll-docs\/\/.md/\/gh-pages\/jekyll-docs\/\/index.md/g' ../documentation/index.html
+
+cd ..
+git add documentation
+git commit -m "Generating the customer facing document"
+git push $SOURCE_REPO HEAD:$DOCUMENT_BRANCH
+
 #Deleting gh-pages branch
 git checkout $LOCAL_MASTER
 git branch -D $DOCUMENT_BRANCH
