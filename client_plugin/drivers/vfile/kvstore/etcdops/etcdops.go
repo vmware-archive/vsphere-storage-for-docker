@@ -375,7 +375,13 @@ func trimVolName(volName string) string {
 
 // cleanOrphanServiceAndVolume: stop orphan services and delete orphan internal volumes
 func (e *EtcdKVS) cleanOrphanServiceAndVolume(volumesToVerify []string, stopService bool) {
-	volStates := e.kvMapFromPrefix(string(kvstore.VolPrefixState))
+	volStates, err := e.kvMapFromPrefix(string(kvstore.VolPrefixState))
+	if err != nil {
+		// if ETCD is not functionaing correctly, stop and return
+		log.Warningf("Failed to get volume states from ETCD due to error %v.", err)
+		return
+	}
+
 	for _, volName := range volumesToVerify {
 		volName = trimVolName(volName)
 		state, found := volStates[string(kvstore.VolPrefixState)+volName]
@@ -709,13 +715,12 @@ func (e *EtcdKVS) List(prefix string) ([]string, error) {
 }
 
 // kvMapFromPrefix -  Create key-value pairs according to a given prefix
-func (e *EtcdKVS) kvMapFromPrefix(prefix string) map[string]string {
+func (e *EtcdKVS) kvMapFromPrefix(prefix string) (map[string]string, error) {
 	m := make(map[string]string)
 
 	client := e.createEtcdClient()
 	if client == nil {
-		log.Errorf(etcdClientCreateError)
-		return nil
+		return m, errors.New(etcdClientCreateError)
 	}
 	defer client.Close()
 
@@ -724,14 +729,14 @@ func (e *EtcdKVS) kvMapFromPrefix(prefix string) map[string]string {
 		etcdClient.WithSort(etcdClient.SortByKey, etcdClient.SortDescend))
 	cancel()
 	if err != nil {
-		return nil
+		return m, err
 	}
 
 	for _, ev := range resp.Kvs {
 		m[string(ev.Key)] = string(ev.Value)
 	}
 
-	return m
+	return m, nil
 }
 
 // WriteMetaData - Update or Create metadata in KV store
