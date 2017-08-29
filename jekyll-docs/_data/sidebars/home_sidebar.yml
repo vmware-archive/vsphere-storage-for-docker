@@ -30,6 +30,9 @@ entries:
       - title: Docker Volume Management
         url: /docker-volume-cli.html
         output: web
+      - title: vFile Volume Plugin for Docker
+        url: /vfile-plugin.html
+        output: web
       - title: Docker Compatibility
         url: /docker-compatibility.html
         output: web
