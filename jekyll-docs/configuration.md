@@ -73,7 +73,7 @@ The configuration for  Docker volume plugin require the driver type which can be
   <tbody>
     <tr>
       <td>driver</td>
-      <td>The name of Driver – vsphere for vSphere driver. Possible values are vsphere/vmdk/photon.</td>
+      <td>The name of the driver – vsphere</td>
     </tr>
     <tr>
       <td>MaxLogAgeDays</td>
