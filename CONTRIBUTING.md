@@ -285,12 +285,12 @@ Typical steps followed.
 
 ### Tag a release
 ```
-git tag -a -m "0.11 Release for Jan 2017" 0.11
+git tag -a -m "0.15 Release for June 2017" 0.15
 ```
 
 Push the tag
 ```
-git push origin 0.11
+git push origin 0.15
 ```
 
 Check to see if the new release shows up on GitHub and the CI build has started.
@@ -327,8 +327,8 @@ Head to GitHub and author a new release add the changelog for the tag created.
 
 To push plugin image
 ```
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make all
 DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make all
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make all
 ```
 
 ### Publish signed VIB to Bintray
@@ -355,8 +355,8 @@ Following are their paths (with respect to vDVS root working directory)
 ### Publish vFile managed plugin to Docker Store
 To push plugin image
 ```
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile
 DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-vfile
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile
 ```
 
 Update documentation following steps listed below.
