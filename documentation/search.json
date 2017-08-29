@@ -224,17 +224,6 @@
 
 
 {
-"title": "Photon Platform Integration",
-"tags": "",
-"keywords": "",
-"url": "photon.html",
-"summary": ""
-}
-,
-
-
-
-{
 "title": "Storage Policy Based Management",
 "tags": "",
 "keywords": "",
@@ -472,17 +461,6 @@
 "tags": "",
 "keywords": "",
 "url": "links.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Docker volumes on Photon platform",
-"tags": "",
-"keywords": "",
-"url": "photon-overview.html",
 "summary": ""
 }
 ,

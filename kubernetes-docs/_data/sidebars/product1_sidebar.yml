@@ -53,8 +53,3 @@ entries:
     - title: install
       url: /install.html
       output: web, pdf
-
-    - title: Photon Overview
-      url: /photon-overview.html
-      output: web, pdf
-
