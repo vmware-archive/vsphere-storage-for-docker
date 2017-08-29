@@ -34,6 +34,16 @@ This service is integrated with [Docker Volume Plugin framework](https://docs.do
 
 vDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment
 
+## vFile volume plugin for Docker
+
+vFile volume plugin for Docker provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as vDVS.
+vFile allows users to utilize vFile volumes with no extra configuration effort. The user experience of vFile volumes is the same as any other type of docker volumes.
+Furthermore, vFile volume plugin comes with high availability, scalability, and load balancing support.
+
+Same as vDVS, vFile volume plugin is also integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
+
+More details about the usage of vFile can be found at [vFile userguide](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/user-guide/vfile-plugin.md).
+
 ## Documentation Version
 
 The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in [jekyll-docs folder](https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs). For older releases, browse to [releases](https://github.com/vmware/docker-volume-vsphere/releases) select the release, click on the tag for the release and browse the docs folder.
