@@ -15,23 +15,9 @@ Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#
 * We don't have formal coding conventions at this point.
 * Add `[WIP]` or `[PREVIEW]` to the PR title to let reviewers know that the PR is not ready to be merged.
 
-#### Documentation PR
-Any changes to `[master]/docs` will not be promoted to `gh-pages` (document release branch). The process is not automated yet and you need to copy them manually. Please use following steps and generate the separate PR to merge changes to `gh-pages`.
-
-```
-1. Checkout the local gh-pages branch
-e.g. git checkout -b localdocs vmware/gh-pages
-
-2. Copy markdown file changes to `gh-pages/jekyll-docs` respective markdown file.
-e.g. any changes to `[master]/docs/user-guide/admin-cli.md` should be copied to `gh-pages/jekyll-docs/admin-cli.md`
-
-3. When ready post a PR
-```
-
-**Note**: Make sure your code follows same style and convention as existing code.
+**Note:** Make sure your code follows same style and convention as existing code.
 
 See  [Typical Developer Workflow](#typical-developer-workflow) to get started.
-
 
 ### Merge Approvals:
 * Pull request requires a minimum of 2 approvals, given via "Ship it",
@@ -372,27 +358,9 @@ Pages](https://vmware.github.io/docker-volume-vsphere/) using
    [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs) in
    markdown format
 
-To update documentation
+To copy documentation changes from vmware:master to gh-pages, run the following script
 ```
-# 1. Checkout the gh-pages branch
-git checkout gh-pages
-
-# 2. Go to jekyll-docs directory
-cd jekyll-docs
-
-# 3. Build the jekyll site
-docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
-
-# 4. Remove the old site and copy the new one.
-rm -rvf ../documentation
-mv _site ../documentation
-
-# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md
-#Bug in jekyll template does not render the name "index"
-vi ../documentation/index.html
-
-# 6. Push to GitHub
-git add documentation
-git commit
-git push origin gh-pages
+# Run the script misc/scripts/update_GHpages.sh
+./misc/scripts/update_GHpages.sh
 ```
+Script also generates the customer facing document, so each time a release is cut, we need to run the same script.
