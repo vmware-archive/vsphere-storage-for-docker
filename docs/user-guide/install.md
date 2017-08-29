@@ -170,15 +170,19 @@ Upgrade of volume managed plugin or ESX driver has no impact on data path and ru
 
 
 **ESX Driver upgrade:**
+
 1. Uninstall VIB (driver)
 ```
 esxcli software vib remove -n esx-vmdkops-service
 ```
+
 2. Download and install the latest VIB from the docker-volume-vsphere release page
 ```
 esxcli software vib install -v /<vib_name>.vib
 ```
+
 3. Verify the status
+
 ```
 esxcli storage guestvol status
 ```
@@ -187,14 +191,19 @@ esxcli storage guestvol status
 **Note**: If you have used a different alias for existing plugin installation, use that instead of ```vsphere``` in the steps above
 
 1. Disable the managed plugin from the docker host
+
 ```
 docker plugin disable -f vsphere
 ```
+
 2. Upgrade the latest release of docker-volume-vsphere managed plugin
+
 ```
 docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:latest
 ```
+
 3. Enable the managed plugin from the docker host
+
 ```
 docker plugin enable vsphere
 ```
@@ -202,14 +211,19 @@ docker plugin enable vsphere
 ## Downgrade to a previous version
 **ESX Driver downgrade:**
 1. Uninstall VIB (driver)
+
 ```
 esxcli software vib remove -n esx-vmdkops-service
 ```
+
 2. Download and install the required VIB from the docker-volume-vsphere release page
+
 ```
 esxcli software vib install -v /<vib_name>.vib
 ```
+
 3. Verify the status
+
 ```
 esxcli storage guestvol status
 ```
@@ -217,14 +231,19 @@ esxcli storage guestvol status
 **Plugin downgrade:**
 
 1. Disable the managed plugin from the docker host
+
 ```
 docker plugin disable -f vsphere
 ```
+
 2. Using docker plugin upgrade, you can downgrade to required release of docker-volume-vsphere managed plugin
+
 ```
 docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:<required_release_version>
 ```
+
 3. Enable the managed plugin from the docker host
+
 ```
 docker plugin enable vsphere
 ```
