@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Storage Policy Based Management | vSphere Docker Volume Service</title>
+<title>vSphere Docker Volume Service | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Storage Policy Based Management">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="vSphere Docker Volume Service">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -290,7 +290,7 @@
             
             
             
-            <li class="active"><a href="policy-based-management.html">Storage Policy Based Management</a></li>
+            <li><a href="policy-based-management.html">Storage Policy Based Management</a></li>
             
             
             
@@ -379,7 +379,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Storage Policy Based Management</h1>
+   <h1 class="post-title-main">vSphere Docker Volume Service</h1>
 </div>
 
 
@@ -416,150 +416,50 @@ $('#toc').on('click', 'a', function() {
 
     
 
-    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//policy-based-management.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+    <a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <h2 id="introduction">Introduction</h2>
-<p>Storage Policy Based Management(SPBM) is one of the important features of VMware vSphere which allows IT administrators to deal with challenges of provisioning. Policy based approach enables provisioning of datastore at scale and avoid per VM allocations. Lack of policies leads to over provisioning and wastage.</p>
+  <p><img src="images/docker-cert.jpeg" alt="Image" /></p>
 
-<p>Storage Policies capture storage requirements, such as performance and availability, for persistent volumes. These policies determine how the container volume storage objects are provisioned and allocated within the datastore to guarantee the requested Quality of Service. Storage policies are composed of storage capabilities, typically represented by a key-value pair. The key is a specific property that the datastore can offer and the value is a metric, or a range, that the datastore guarantees for a provisioned object, such as a container volume backed by a virtual disk.</p>
+<h2 id="introduction">Introduction</h2>
 
-<h2 id="benefits-of-storage-policy-based-management">Benefits of Storage Policy Based Management</h2>
-<ul>
-  <li>Helps in avoiding problem of overprovisioning of storage</li>
-  <li>Allows defining application specific storage requirements</li>
-  <li>Reduces wastage of storage and efficient use of storage tiers</li>
-</ul>
+<p>Containers have changed the way applications are packaged and deployed. Not only containers are efficient from infrastructure utilization point of view, they also provide strong isolation between process on same host. They are lightweight and once packaged can run anywhere. Docker is the most commonly used container runtime technology and this user guide outlines how vSphere is compatible with Docker ecosystem.</p>
 
-<h2 id="vsan-overview">vSAN Overview</h2>
-<p>vSAN is a distributed layer of software that runs natively as a part of the ESXi hypervisor. vSAN aggregates local or direct-attached capacity devices of a host cluster and creates a single storage pool shared across all hosts in the vSAN cluster. While supporting VMware features that require shared storage, such as HA, vMotion, and DRS, vSAN eliminates the need for external shared storage and simplifies storage configuration and virtual machine provisioning activities. vSAN works with virtual machine storage policies to support a virtual machine-centric storage approach. When provisioning a virtual machine, if there is no explicit assignment of a storage policy to the virtual machine, a generic system defined storage policy, called the vSAN Default Storage Policy is automatically applied to the virtual machine.</p>
+<h2 id="persistent-storage-in-container-world">Persistent Storage in Container World</h2>
 
-<p>As described in <a href="https://pubs.vmware.com/vsphere-65/index.jsp?topic=%2Fcom.vmware.vsphere.virtualsan.doc%2FGUID-08911FD3-2462-4C1C-AE81-0D4DBC8F7990.html">official documentation</a>, vSAN exposes multiple storage capabilities.</p>
-
-<h2 id="using-storage-policies-in-vsphere-docker-volume-service">Using Storage Policies in vSphere Docker Volume Service</h2>
-<p>We will now illustrate how this policy based management approach can be applied to container volumes as well.</p>
-
-<p>With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom vSAN Policies that can then be specified during Docker Volume creations. When vSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the vSAN datastore in the form of virtual disks. This is why the vSAN Policies can be applied seamlessly to the volumes created by vDVS.</p>
-
-<p>To create a new vSAN Policy, you will need to specify the name of the policy and provide the set of vSAN capabilities formatted using the same syntax found in esxcli vsan policy getdefault command. For example: ((“hostFailuresToTolerate” i1) (“forceProvisioning” i1)). Here is a list of storage capabilities supported by vSAN (for more detailed information, please refer to official Virtual SAN documentation):</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>vSAN Capability</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>hostFailuresToTolerate</td>
-      <td>Number of failures to tolerate</td>
-    </tr>
-    <tr>
-      <td>stripeWidth</td>
-      <td>Number of disk stripes per object</td>
-    </tr>
-    <tr>
-      <td>forceProvisioning</td>
-      <td>Force provisioning</td>
-    </tr>
-    <tr>
-      <td>proportionalCapacity</td>
-      <td>Object space reservation</td>
-    </tr>
-    <tr>
-      <td>cacheReservation</td>
-      <td>Flash read cache reservation</td>
-    </tr>
-    <tr>
-      <td>checksumDisabled</td>
-      <td>Disable object checksum</td>
-    </tr>
-    <tr>
-      <td>replicaPreference</td>
-      <td>Failure tolerance method</td>
-    </tr>
-    <tr>
-      <td>iopsLimit</td>
-      <td>IOPS limit for object</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Here’s a step-by-step guide to create and use vSAN Storage Policies for Docker Volumes:</p>
+<p>Although it is relatively easy to run stateless Microservices using container technology, stateful applications require slightly different treatment. There are multiple factors which need to be considered when you think about handling persistent data using containers such as:</p>
 
 <ul>
-  <li>Create a “gold” and a “silver” storage policies</li>
+  <li>Containers are ephemeral by nature, so the data that needs to be persisted has to survive through the restart/re-scheduling of a container.</li>
+  <li>When containers are re-scheduled, they can die on one host and might get scheduled on a different host. In such a case the storage should also be shifted and made available on new host for the container to start gracefully.</li>
+  <li>The application should not have to worry about the volume/data and underlying infrastructure should handle the complexity of unmounting and mounting etc.</li>
+  <li>Certain applications have a strong sense of identity (For example. Kafka, Elastic etc.) and the disk used by a container with certain identity is tied to it. It is important that if a container with a certain ID gets re-scheduled for some reason then the disk only associated with that ID is re-attached on a new host.</li>
 </ul>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name gold --content '(("hostFailuresToTolarate" i0)("forceProvisioning" i1))'
-Successfully created policy: gold
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy create --name silver --content '(("hostFailuresToTolarate" i1)("forceProvisioning" i1))'
-Successfully created policy: silver
-[root@localhost:~] /usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
-Policy Name  Policy Content                                           Active
------------  -------------------------------------------------------  ------
-gold         (("hostFailuresToTolarate" i0)("forceProvisioning" i1))  Unused
-silver       (("hostFailuresToTolarate" i1)("forceProvisioning" i1))  Unused
-</code></pre>
-</div>
+<h2 id="vsphere-docker-volume-service-vdvs">vSphere Docker Volume Service (vDVS)</h2>
+
+<p><img src="images/vSphereDatastore.jpg" alt="Image" /></p>
+
+<p>vSphere Docker Volume Service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. vDVS which works with proven storage technologies from VMWare and is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.</p>
+
+<p>Some of key features of vDVS are:</p>
 
 <ul>
-  <li>Create 2 Docker Volume using above policies</li>
+  <li><strong>Enterprise class storage</strong>: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc.</li>
+  <li><strong>Security &amp; RBAC</strong>: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.</li>
+  <li><strong>Simple to use</strong>: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.</li>
+  <li><strong>Docker Compatibility</strong>: vSphere Docker Volume Service is 100% Docker compatible and integrates with Docker Swarm to extend High Availability feature provided by Swarm</li>
+  <li><strong>Storage Policy Management</strong>: vSphere Docker Volume Service brings vSphere’s advanced storage feature like policy management to Docker ecosystem.</li>
 </ul>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>#docker volume create -d vsphere --name gold_volume@vsanDatastore -o size=1Gb -o vsan-policy-name=go
-ld
-gold_volume@vsanDatastore
-#docker volume create -d vsphere --name silver_volume@vsanDatastore -o size=1Gb -o vsan-policy-name=
-silver
-silver_volume@vsanDatastore
-#docker volume ls
-vsphere:latest      gold_volume@vsanDatastore
-vsphere:latest      silver_volume@vsanDatastore
-</code></pre>
-</div>
+<p>This service is integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>. It does not need credential management or configuration management.</p>
 
-<ul>
-  <li>Verify if the policies are being used by the volumes</li>
-</ul>
+<p>vDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy ls
-Policy Name  Policy Content                                           Active
------------  -------------------------------------------------------  -------------------
-silver       (("hostFailuresToTolarate" i1)("forceProvisioning" i1))  In use by 1 volumes
-gold         (("hostFailuresToTolarate" i0)("forceProvisioning" i1))  In use by 1 volumes
-</code></pre>
-</div>
+<h2 id="documentation-version">Documentation Version</h2>
 
-<ul>
-  <li>Update one policy content</li>
-</ul>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy update --name silver --content '(("hostFailuresToTolarate" i2)("forceProvisioning" i1))'
-This operation may take a while. Please be patient.
-Successfully updated policy: silver
-</code></pre>
-</div>
-
-<ul>
-  <li>Remove the volume before removing policy</li>
-</ul>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>docker volume rm gold_volume@vsanDatastore
-gold_volume@vsanDatastore
-</code></pre>
-</div>
-
-<ul>
-  <li>Remove the policy</li>
-</ul>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py policy rm --name gold
-Successfully removed policy: gold
-</code></pre>
-</div>
+<p>The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in <a href="https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs">jekyll-docs folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
 
   
 
