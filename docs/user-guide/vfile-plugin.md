@@ -35,6 +35,8 @@ Note: please make sure the base volume plugin is already installed!
 
 ## Usage examples
 
+### Steps for create/use/delete a vFile volume
+
 #### Creating a persistent volume from vFile plugin
 
 ```
