@@ -42,11 +42,13 @@ import (
                                cluster
    etcdClusterStateExisting:   Used to indicate that this node is joining
                                an existing etcd cluster
-   requestTimeout:             After how long should an etcd request timeout
+   etcdRequestTimeout:         After how long should an etcd request timeout
+   etcdUpdateTimeout:          Timeout for waiting etcd server change status
    checkSleepDuration:         How long to wait in any busy waiting situation
                                before checking again
    gcTicker:                   ticker for garbage collector to run a collection
    etcdClientCreateError:      Error indicating failure to create etcd client
+   swarmUnhealthyErrorMsg:     Message indicating swarm cluster is unhealthy
    etcdSingleRef:              if global refcount 0 -> 1, start SMB server
    etcdNoRef:                  if global refcount 1 -> 0, shut down SMB server
 */
@@ -58,10 +60,12 @@ const (
 	etcdScheme               = "http://"
 	etcdClusterStateNew      = "new"
 	etcdClusterStateExisting = "existing"
-	requestTimeout           = 5 * time.Second
+	etcdRequestTimeout       = 2 * time.Second
+	etcdUpdateTimeout        = 10 * time.Second
 	checkSleepDuration       = time.Second
 	gcTicker                 = 5 * time.Second
 	etcdClientCreateError    = "Failed to create etcd client"
+	swarmUnhealthyErrorMsg   = "Swarm cluster maybe unhealthy"
 	etcdSingleRef            = "1"
 	etcdNoRef                = "0"
 )
@@ -192,9 +196,12 @@ func (e *EtcdKVS) joinEtcdCluster(leaderAddr string) error {
 				"nodeID":     nodeID},
 		).Error("Failed to join ETCD cluster on manager ")
 	}
+	defer etcd.Close()
 
 	// list all current ETCD members, check if this node is already added as a member
-	lresp, err := etcd.MemberList(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	lresp, err := etcd.MemberList(ctx)
+	cancel()
 	if err != nil {
 		log.WithFields(
 			log.Fields{"leaderAddr": leaderAddr,
@@ -227,7 +234,9 @@ func (e *EtcdKVS) joinEtcdCluster(leaderAddr string) error {
 						"peerAddr": peerAddr},
 				).Info("Already joined as a ETCD member and started. Action: remove self before re-join ")
 
-				_, err = etcd.MemberRemove(context.Background(), member.ID)
+				ctx, cancel = context.WithTimeout(context.Background(), etcdRequestTimeout)
+				_, err = etcd.MemberRemove(ctx, member.ID)
+				cancel()
 				if err != nil {
 					log.WithFields(
 						log.Fields{"peerAddr": peerAddr,
@@ -244,7 +253,9 @@ func (e *EtcdKVS) joinEtcdCluster(leaderAddr string) error {
 	initCluster := ""
 	if !existing {
 		peerAddrs := []string{peerAddr}
-		aresp, err := etcd.MemberAdd(context.Background(), peerAddrs)
+		ctx, cancel = context.WithTimeout(context.Background(), etcdRequestTimeout)
+		aresp, err := etcd.MemberAdd(ctx, peerAddrs)
+		cancel()
 		if err != nil {
 			log.WithFields(
 				log.Fields{"leaderAddr": leaderAddr,
@@ -299,7 +310,7 @@ func etcdService(cmd []string) {
 func (e *EtcdKVS) checkLocalEtcd() error {
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(requestTimeout)
+	timer := time.NewTimer(etcdUpdateTimeout)
 	defer timer.Stop()
 
 	for {
@@ -545,11 +556,14 @@ func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 		return false
 	}
 	defer etcdAPI.Close()
-	txresp, err := etcdAPI.Txn(context.TODO()).If(
+
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	txresp, err := etcdAPI.Txn(ctx).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
 		etcdClient.OpPut(key, newVal),
 	).Commit()
+	cancel()
 
 	if err != nil {
 		log.WithFields(
@@ -576,13 +590,16 @@ func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 		return txresp, errors.New(etcdClientCreateError)
 	}
 	defer etcdAPI.Close()
-	txresp, err := etcdAPI.Txn(context.TODO()).If(
+
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	txresp, err := etcdAPI.Txn(ctx).If(
 		etcdClient.Compare(etcdClient.Value(key), "=", oldVal),
 	).Then(
 		etcdClient.OpPut(key, newVal),
 	).Else(
 		etcdClient.OpGet(key),
 	).Commit()
+	cancel()
 
 	if err != nil {
 		// There was some error
@@ -605,7 +622,7 @@ func (e *EtcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal
 
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(2 * requestTimeout)
+	timer := time.NewTimer(etcdUpdateTimeout)
 	defer timer.Stop()
 	for {
 		select {
@@ -670,15 +687,12 @@ func addrToEtcdClient(addr string) (*etcdClient.Client, error) {
 	s := strings.Split(addr, ":")
 	endpoint := s[0] + etcdClientPort
 	cfg := etcdClient.Config{
-		Endpoints: []string{endpoint},
+		Endpoints:   []string{endpoint},
+		DialTimeout: etcdRequestTimeout,
 	}
 
 	etcd, err := etcdClient.New(cfg)
 	if err != nil {
-		log.WithFields(
-			log.Fields{"endpoint": endpoint,
-				"error": err},
-		).Error("Failed to create ETCD Client ")
 		return nil, err
 	}
 
@@ -695,7 +709,7 @@ func (e *EtcdKVS) List(prefix string) ([]string, error) {
 	}
 	defer client.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
 	resp, err := client.Get(ctx, prefix, etcdClient.WithPrefix(),
 		etcdClient.WithSort(etcdClient.SortByKey, etcdClient.SortDescend))
 	cancel()
@@ -724,7 +738,7 @@ func (e *EtcdKVS) kvMapFromPrefix(prefix string) (map[string]string, error) {
 	}
 	defer client.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
 	resp, err := client.Get(ctx, prefix, etcdClient.WithPrefix(),
 		etcdClient.WithSort(etcdClient.SortByKey, etcdClient.SortDescend))
 	cancel()
@@ -761,14 +775,19 @@ func (e *EtcdKVS) WriteMetaData(entries []kvstore.KvPair) error {
 
 	// Lets write the metadata in a single transaction
 	// Use a transaction if more than one entries are to be written
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
 	if len(entries) > 1 {
-		_, err = client.Txn(context.TODO()).Then(ops...).Commit()
+		_, err = client.Txn(ctx).Then(ops...).Commit()
 	} else {
-		_, err = client.Do(context.TODO(), ops[0])
+		_, err = client.Do(ctx, ops[0])
 	}
+	cancel()
 
 	if err != nil {
-		msg = fmt.Sprintf("Failed to write metadata. Reason: %v", err)
+		msg = fmt.Sprintf("Failed to write metadata: %v.", err)
+		if err == context.DeadlineExceeded {
+			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+		}
 		log.Warningf(msg)
 		return errors.New(msg)
 	}
@@ -796,10 +815,16 @@ func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
 	}
 
 	// Read all requested keys in one transaction
-	getresp, err := client.Txn(context.TODO()).Then(ops...).Commit()
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	getresp, err := client.Txn(ctx).Then(ops...).Commit()
+	cancel()
 	if err != nil {
-		log.Warningf("Transactional metadata read failed: %v", err)
-		return entries, err
+		msg := fmt.Sprintf("Transactional metadata read failed: %v.", err)
+		if err == context.DeadlineExceeded {
+			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+		}
+		log.Warningf(msg)
+		return entries, errors.New(msg)
 	}
 
 	// Check responses and append them in entries[]
@@ -852,9 +877,14 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 	}
 
 	// Delete the metadata in a single transaction
-	_, err = client.Txn(context.TODO()).Then(ops...).Commit()
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	_, err = client.Txn(ctx).Then(ops...).Commit()
+	cancel()
 	if err != nil {
-		msg = fmt.Sprintf("Failed to delete metadata for volume %s. Reason: %v", name, err)
+		msg = fmt.Sprintf("Failed to delete metadata for volume %s: %v", name, err)
+		if err == context.DeadlineExceeded {
+			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+		}
 		log.Warningf(msg)
 		return errors.New(msg)
 	}
@@ -872,13 +902,13 @@ func (e *EtcdKVS) AtomicIncr(key string) error {
 
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(requestTimeout)
+	timer := time.NewTimer(etcdUpdateTimeout)
 	defer timer.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
 			resp, err := client.Get(ctx, key)
 			cancel()
 			if err != nil {
@@ -917,13 +947,13 @@ func (e *EtcdKVS) AtomicDecr(key string) error {
 
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
-	timer := time.NewTimer(requestTimeout)
+	timer := time.NewTimer(etcdUpdateTimeout)
 	defer timer.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
 			resp, err := client.Get(ctx, key)
 			cancel()
 			if err != nil {
@@ -968,17 +998,19 @@ func (e *EtcdKVS) BlockingWaitAndGet(key string, value string, newKey string) (s
 	defer ticker.Stop()
 	// This call is used to block and wait for long
 	// running functions. Larger timeout is justified.
-	timer := time.NewTimer(dockerops.GetServiceStartTimeout() + 2*requestTimeout)
+	timer := time.NewTimer(dockerops.GetServiceStartTimeout() + etcdUpdateTimeout)
 	defer timer.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			txresp, err := client.Txn(context.TODO()).If(
+			ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+			txresp, err := client.Txn(ctx).If(
 				etcdClient.Compare(etcdClient.Value(key), "=", value),
 			).Then(
 				etcdClient.OpGet(newKey),
 			).Commit()
+			cancel()
 
 			if err != nil {
 				log.WithFields(
