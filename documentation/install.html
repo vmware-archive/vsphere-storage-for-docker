@@ -606,102 +606,56 @@ Windows service vdvs uninstalled successfully!
 
 <p><strong>ESX Driver upgrade:</strong></p>
 
-<ol>
-  <li>
-    <p>Uninstall VIB (driver)
-<code class="highlighter-rouge">
+<div class="highlighter-rouge"><pre class="highlight"><code>#1. Uninstall VIB (driver)
 esxcli software vib remove -n esx-vmdkops-service
-</code></p>
-  </li>
-  <li>
-    <p>Download and install the latest VIB from the docker-volume-vsphere release page
-<code class="highlighter-rouge">
-esxcli software vib install -v /&lt;vib_name&gt;.vib
-</code></p>
-  </li>
-  <li>
-    <p>Verify the status</p>
-  </li>
-</ol>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>esxcli storage guestvol status
+#2. Download and install the latest VIB from the docker-volume-vsphere release page
+esxcli software vib install -v /&lt;vib_name&gt;.vib
+
+#3. Verify the status
+esxcli storage guestvol status
 </code></pre>
 </div>
 
 <p><strong>Plugin upgrade:</strong>
 <strong>Note</strong>: If you have used a different alias for existing plugin installation, use that instead of <code class="highlighter-rouge">vsphere</code> in the steps above</p>
 
-<ol>
-  <li>Disable the managed plugin from the docker host</li>
-</ol>
+<div class="highlighter-rouge"><pre class="highlight"><code>#1. Disable the managed plugin from the docker host
+docker plugin disable -f vsphere
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin disable -f vsphere
-</code></pre>
-</div>
+#2. Upgrade the latest release of docker-volume-vsphere managed plugin
+docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:latest
 
-<ol>
-  <li>Upgrade the latest release of docker-volume-vsphere managed plugin</li>
-</ol>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:latest
-</code></pre>
-</div>
-
-<ol>
-  <li>Enable the managed plugin from the docker host</li>
-</ol>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin enable vsphere
+#3. Enable the managed plugin from the docker host
+docker plugin enable vsphere
 </code></pre>
 </div>
 
 <h2 id="downgrade-to-a-previous-version">Downgrade to a previous version</h2>
-<p><strong>ESX Driver downgrade:</strong>
-1. Uninstall VIB (driver)</p>
+<p><strong>ESX Driver downgrade:</strong></p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>esxcli software vib remove -n esx-vmdkops-service
-</code></pre>
-</div>
+<div class="highlighter-rouge"><pre class="highlight"><code>#1. Uninstall VIB (driver)
+esxcli software vib remove -n esx-vmdkops-service
 
-<ol>
-  <li>Download and install the required VIB from the docker-volume-vsphere release page</li>
-</ol>
+#2. Download and install the required VIB from the docker-volume-vsphere release page
+esxcli software vib install -v /&lt;vib_name&gt;.vib
 
-<div class="highlighter-rouge"><pre class="highlight"><code>esxcli software vib install -v /&lt;vib_name&gt;.vib
-</code></pre>
-</div>
+#3. Verify the status
+esxcli storage guestvol status
 
-<ol>
-  <li>Verify the status</li>
-</ol>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>esxcli storage guestvol status
 </code></pre>
 </div>
 
 <p><strong>Plugin downgrade:</strong></p>
 
-<ol>
-  <li>Disable the managed plugin from the docker host</li>
-</ol>
+<div class="highlighter-rouge"><pre class="highlight"><code>#1. Disable the managed plugin from the docker host
+docker plugin disable -f vsphere
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin disable -f vsphere
-</code></pre>
-</div>
+#2. Using docker plugin upgrade, you can downgrade to required release of docker-volume-vsphere managed plugin
+docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:&lt;required_release_version&gt;
 
-<ol>
-  <li>Using docker plugin upgrade, you can downgrade to required release of docker-volume-vsphere managed plugin</li>
-</ol>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:&lt;required_release_version&gt;
-</code></pre>
-</div>
-
-<ol>
-  <li>Enable the managed plugin from the docker host</li>
-</ol>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin enable vsphere
+#3. Enable the managed plugin from the docker host
+docker plugin enable vsphere
 </code></pre>
 </div>
 
