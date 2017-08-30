@@ -263,6 +263,24 @@ COVERAGE_PROCESS_START DEFAULT=/coverage.rc
 
 The CI/CD system is based on [Drone platform](https://drone.io/) and the server is  https://ci.vmware.run/. More information is found at our [CI.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CI.md)
 
+## Release naming convention
+The following is the plan for GA and post GA releases. Before GA, the release name format remains the same e.g. 0.XX (existing release tag)
+
+### Type of Release:
+We plan to have two types of releases: edge release and stable release.
+
+Edge release: A monthly release with new features and bug fixes.
+
+Stable release: A quarterly release with reliable/stable updates.
+
+### Nomenclature for release:
+
+The nomenclature for release will follow the format ```major-version.minor-version.build-version.release-type```.
+
+“Major-version” will be the major version number which starts from 1. "Major-version" will be bumped up when some significant changes are being introduced. “minor-version” will be the minor version number which will be bumped up for each monthly release. “build-version” by default is 0. If we decide to cut one more release in that month (maybe some patch releases), we can increase the “build-version” by 1 for that release. “release-type” has two possible values: “stable” to mark a stable release and “edge” to mark an edge release.
+
+For Example, assume we plan to cut the first release for GA in August, the release number will be “1.0.0.stable”. Then the monthly edge release in September will be “1.1.0.edge”, the monthly release in October will be “1.2.0.edge” and the stable release in November will be “1.3.0.stable”, etc.
+
 ## Cutting a new release guidelines
 
 Once a release has been tagged, the CI system will start a build and push the binaries to GitHub Releases page. Creating the release on GitHub is a manual process but the binaries for it will be auto generated.
@@ -360,7 +378,31 @@ Pages](https://vmware.github.io/docker-volume-vsphere/) using
 
 To copy documentation changes from vmware:master to gh-pages, run the following script
 ```
+<<<<<<< HEAD
 # Run the script misc/scripts/update_GHpages.sh
 ./misc/scripts/update_GHpages.sh
+=======
+# 1. Checkout the gh-pages branch
+git checkout gh-pages
+
+# 2. Go to jekyll-docs directory
+cd jekyll-docs
+
+# 3. Build the jekyll site
+docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
+
+# 4. Remove the old site and copy the new one.
+rm -rvf ../documentation
+mv _site ../documentation
+
+# 5.Search for "Edit me" and ensure href is https://github.com/vmware/docker-volume-vsphere/edit/gh-pages/jekyll-docs//index.md
+#Bug in jekyll template does not render the name "index"
+vi ../documentation/index.html
+
+# 6. Push to GitHub
+git add documentation
+git commit
+git push origin gh-pages
+>>>>>>> Add documment about releases for GA and post GA.
 ```
 Script also generates the customer facing document, so each time a release is cut, we need to run the same script.
