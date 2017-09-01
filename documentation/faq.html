@@ -437,6 +437,15 @@ $('#toc').on('click', 'a', function() {
 <h3 id="can-i-migrate-data-between-linux-and-windows-containers">Can I migrate data between Linux and Windows containers?</h3>
 <p>Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vSphere Storage for Docker plugin doesn’t support such cases, nor does it provide any explicit help.</p>
 
+<h3 id="which-release-i-should-use">Which release I should use?</h3>
+<p>You can choose release based on your needs. There will be two types of releases: edge release and stable release.</p>
+
+<p>Edge release: A monthly release with new features and bug fixes.</p>
+
+<p>Stable release: A quarterly release with reliable/stable updates.</p>
+
+<p>Please refer <a href="https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention">release convention</a> for more details.</p>
+
 <h2 id="troubleshooting">Troubleshooting</h2>
 
 <h3 id="docker-service-to-esx-backend-communication">Docker Service to ESX Backend Communication.</h3>
@@ -619,7 +628,7 @@ The path which stores this new volume is “/vmfs/volumes/datastore1/dockvols/ne
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Aug 29, 2017 <br />
+ Site last generated: Sep 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
