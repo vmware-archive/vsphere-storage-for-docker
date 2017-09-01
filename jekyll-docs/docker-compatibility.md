@@ -23,4 +23,3 @@ Docker service is used to deploy applications that can run on docker engine in s
 ## Docker Stack
 
 A stack in docker terms is a collection of services. A stack can be used to define a complete application composed of multiple services. Docker stack enables defining dependencies between services, configuration parameters in one place for a complete application. vDVS is fully compatible with docker stack commands and working examples and details can be found [Docker Service with vSphere volumes page](http://vmware.github.io/docker-volume-vsphere/documentation/docker-stacks.html)
-

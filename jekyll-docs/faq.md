@@ -19,6 +19,15 @@ This can be achieved via [Tenancy](http://vmware.github.io/docker-volume-vsphere
 ### Can I migrate data between Linux and Windows containers?
 Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vSphere Storage for Docker plugin doesn't support such cases, nor does it provide any explicit help.
 
+### Which release I should use?
+You can choose release based on your needs. There will be two types of releases: edge release and stable release.
+
+Edge release: A monthly release with new features and bug fixes.
+
+Stable release: A quarterly release with reliable/stable updates.
+
+Please refer [release convention](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention) for more details.
+
 ## Troubleshooting
 
 ### Docker Service to ESX Backend Communication.
