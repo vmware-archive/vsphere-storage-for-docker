@@ -29,6 +29,8 @@ OBJTOOL = '/usr/lib/vmware/osfs/bin/objtool '
 OBJTOOL_SET_POLICY = OBJTOOL + "setPolicy -u {0} -p '{1}'"
 OBJTOOL_GET_ATTR = OBJTOOL + "getAttr -u {0} --format=json"
 
+# VSAN datastore
+_vsan_ds = None
 
 def get_vsan_datastore():
     """Returns Datastore management object for vsanDatastore, or None"""
@@ -56,11 +58,13 @@ def get_vsan_dockvols_path():
 
 def is_on_vsan(vmdk_path):
     """Returns True if path is on VSAN datastore, False otherwise"""
-    ds = get_vsan_datastore()
-    if not ds:
-        return False
+    global _vsan_ds
+    if not _vsan_ds:
+        _vsan_ds = get_vsan_datastore()
+        if not _vsan_ds:
+            return False
     return os.path.realpath(vmdk_path).startswith(os.path.realpath(
-        ds.info.url))
+        _vsan_ds.info.url))
 
 
 def set_policy(vmdk_path, policy_string):
