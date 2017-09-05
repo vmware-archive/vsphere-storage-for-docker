@@ -1,10 +1,21 @@
 #!/bin/bash
+set -e
+: '
+Following script copies the markdown files from vmware:master to gh-pages
+Local copy of vDVS project is needed before running this script (git clone https://github.com/vmware/docker-volume-vsphere.git)
+Script has to be run from the docker-volume-vsphere/
+e.g. ./misc/scripts/updateGHpages.sh
 
-# Following script copies the markdown files from vmware:master to gh-pages
-# Local copy of vDVS project is needed before running this script (git clone https://github.com/vmware/docker-volume-vsphere.git)
-# Script has to be run from the docker-volume-vsphere/
-# e.g. ./misc/scripts/updateGHpages.sh
-
+Before executing this script, its important to have two git remotes : origin and vmware
+bash-3.2$ git remote -v
+origin	https://github.com/ashahi1/docker-volume-vsphere.git (fetch)
+origin	https://github.com/ashahi1/docker-volume-vsphere.git (push)
+vmware	https://github.com/vmware/docker-volume-vsphere.git (fetch)
+vmware	https://github.com/vmware/docker-volume-vsphere.git (push)
+bash-3.2$
+bash-3.2$ git fetch --all
+bash-3.2$
+'
 BACKUP_DIR=/tmp/backup
 TARGET_REPO=origin
 SOURCE_REPO=vmware
@@ -34,6 +45,7 @@ while IFS=' ' read -ra arr; do
 git checkout -b $DOCUMENT_BRANCH $SOURCE_REPO/$DOCUMENT_BRANCH
 
 cd ..
+rm -fr jekyll-docs/*.md
 
 #copying md files from backup to jekyll-docs directory
 cp -a $BACKUP_DIR/. jekyll-docs/
@@ -50,6 +62,7 @@ rm -rf $BACKUP_DIR
 
 echo "Performing steps to generate customer facing document"
 cd jekyll-docs/
+
 docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
 rm -rvf ../documentation
 mv _site ../documentation
