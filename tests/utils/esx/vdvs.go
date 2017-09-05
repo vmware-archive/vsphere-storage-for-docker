@@ -29,7 +29,7 @@ import (
 // if VDVS is up and running to be able to run docker volume commands.
 func IsVDVSRunning(ip string) bool {
 	log.Printf("Verifying if vDVS is running on vm: %s", ip)
-	maxAttempt := 30
+	maxAttempt := 60
 	waitTime := 3
 	for attempt := 0; attempt < maxAttempt; attempt++ {
 		misc.SleepForSec(waitTime)
