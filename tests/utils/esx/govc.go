@@ -46,8 +46,8 @@ func RetrieveVMNameFromIP(ip string) string {
 	noVMName := "govc: no such VM"
 	maxAttempt := 20
 	waitTime := 2
+	cmd := esx.VMInfoByIP + ip + esxcliJSON + esx.VMName
 	for attempt := 0; attempt < maxAttempt; attempt++ {
-		cmd := esx.VMInfoByIP + ip + esxcliJSON + esx.VMName
 		dockerHostName, _ = ssh.InvokeCommandLocally(cmd)
 		if len(dockerHostName) > 0 && dockerHostName != noVMName {
 			log.Printf("VM name is: %s", dockerHostName)
