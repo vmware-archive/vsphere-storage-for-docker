@@ -31,18 +31,18 @@ SOURCE_REPO=vmware
 DOCUMENT_BRANCH=gh-pages
 LOCAL_MASTER=master
 
-# get latest changes from vmware:master
+# Get latest changes from vmware:master
 git pull $SOURCE_REPO $LOCAL_MASTER
 
-#Create Temp directory to store .md files
+# Create Temp directory to store .md files
 mkdir $BACKUP_DIR
 
-#listing md files only from docs directory
+# Listing md files only from docs directory
 cd docs/
-#list files with .md file type
+# List files with .md file type
 list_files=$( git ls-files "*.md" )
 
-#copying md files to backup dir
+# Copying md files to backup dir
 while IFS=' ' read -ra arr; do
       for i in "${arr[@]}"; do
           echo "Copying file $i"
@@ -50,7 +50,7 @@ while IFS=' ' read -ra arr; do
       done
  done <<< "$list_files"
 
-#Creating branch gh-pages
+# Creating branch gh-pages
 git checkout -b $DOCUMENT_BRANCH $SOURCE_REPO/$DOCUMENT_BRANCH
 
 # First removing all the md files from jekyll-docs so that md files removed from vmware/master
@@ -63,23 +63,23 @@ cp -a $BACKUP_DIR/. jekyll-docs/
 
 rm -fr docs
 
-# adding the md files to commit and pushing the changes to gh-pages branch
+# Adding the md files to commit and pushing the changes to gh-pages branch
 git add ./\*.md
 git commit -m "Copying changes to gh-pages branch from vmware:master"
 git push $SOURCE_REPO HEAD:$DOCUMENT_BRANCH
 
-#Delete backup directory which had .md files
+# Delete backup directory which had .md files
 rm -rf $BACKUP_DIR
 
 echo "Performing steps to generate customer facing document"
 cd jekyll-docs/
 
-# generating the html pages
+# Generating the html pages
 docker run --rm --volume=$(pwd):/srv/jekyll -it jekyll/jekyll:stable jekyll build
 rm -rvf ../documentation
 mv _site ../documentation
 
-# updating documentation/index.html
+# Updating documentation/index.html
 sed -i -e 's/\/gh-pages\/jekyll-docs\/\/.md/\/gh-pages\/jekyll-docs\/\/index.md/g' ../documentation/index.html
 
 cd ..
@@ -89,6 +89,6 @@ git add documentation
 git commit -m "Generating the customer facing document"
 git push $SOURCE_REPO HEAD:$DOCUMENT_BRANCH
 
-#Deleting the gh-pages branch
+# Deleting the gh-pages branch
 git checkout $LOCAL_MASTER
 git branch -D $DOCUMENT_BRANCH
