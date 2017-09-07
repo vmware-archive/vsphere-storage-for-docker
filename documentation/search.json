@@ -1,8 +1,6 @@
 [
 
 
-
-
 {
 "title": "Update from Release 0.11",
 "tags": "",
@@ -213,17 +211,6 @@
 
 
 {
-"title": "Operations At Scale",
-"tags": "",
-"keywords": "",
-"url": "operations.html",
-"summary": ""
-}
-,
-
-
-
-{
 "title": "Storage Policy Based Management",
 "tags": "",
 "keywords": "",
@@ -259,17 +246,6 @@
 
 
 {
-"title": "Multi-Tenancy using VMGroups",
-"tags": "",
-"keywords": "",
-"url": "tenancy-eg.html",
-"summary": ""
-}
-,
-
-
-
-{
 "title": "Tenancy",
 "tags": "",
 "keywords": "",
@@ -292,65 +268,10 @@
 
 
 {
-"title": "Video Illustration",
-"tags": "",
-"keywords": "",
-"url": "videos.html",
-"summary": ""
-}
-,
-
-
-
-{
 "title": "vSan Policy",
 "tags": "",
 "keywords": "",
 "url": "vsan-policy.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Docker volumes on ESX",
-"tags": "",
-"keywords": "",
-"url": "vsphere-overview.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "0.8.1 Release",
-"tags": "",
-"keywords": "",
-"url": "2016-10-28.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "2016-9-28.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Releases and Branching.",
-"tags": "",
-"keywords": "",
-"url": "BRANCHING.html",
 "summary": ""
 }
 ,
@@ -369,98 +290,10 @@
 
 
 {
-"title": "Interop with vSphere features",
-"tags": "",
-"keywords": "",
-"url": "Interop.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "demo-mongo-app.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "demo-mongo-swarm.html",
-"summary": ""
-}
-,
-
-
-
-{
 "title": "",
 "tags": "",
 "keywords": "",
 "url": "docker-volume-auth-proposal.v1_2.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "docker-volume.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "empty.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "integration-kube.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "integration-vcenter.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "links.html",
 "summary": ""
 }
 ,
