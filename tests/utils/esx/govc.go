@@ -42,9 +42,21 @@ const (
 //govc vm.info -vm.ip=10.20.104.62 -json | jq -r .VirtualMachines[].Name
 func RetrieveVMNameFromIP(ip string) string {
 	// log.Printf("Finding VM name from IP Address [%s]\n", ip)
+	var dockerHostName string
+	noVMName := "govc: no such VM"
+	maxAttempt := 20
+	waitTime := 2
 	cmd := esx.VMInfoByIP + ip + esxcliJSON + esx.VMName
-	out, _ := ssh.InvokeCommandLocally(cmd)
-	return out
+	for attempt := 0; attempt < maxAttempt; attempt++ {
+		dockerHostName, _ = ssh.InvokeCommandLocally(cmd)
+		if len(dockerHostName) > 0 && dockerHostName != noVMName {
+			log.Printf("VM name is: %s", dockerHostName)
+			return dockerHostName
+		}
+		misc.SleepForSec(waitTime)
+	}
+	log.Println("Failed to get vm name")
+	return dockerHostName
 }
 
 // GetVMPowerState util retrieves VM's current power state

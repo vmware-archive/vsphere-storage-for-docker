@@ -428,7 +428,7 @@ test-e2e-runalways:
 
 test-e2e-runonce:
 	$(log_target)
-	$(GO) test -v -timeout 50m -tags "runonce" $(E2E_Tests)
+	$(GO) test -v -timeout 60m -tags "runonce" $(E2E_Tests)
 
 test-e2e-runonce-windows:
 	$(log_target)
