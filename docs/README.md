@@ -14,7 +14,6 @@ best practice for editing and publishing documentation.
 
 ## Layout
 The documentation layout is as follows
-- [User guide and CLI documentation](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/user-guide)
-- [Feature Overview](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/features)
-- [Team Blog](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/blog)
-- [Other project docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/misc)
+- [User guide, CLI documentation and blogs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/external)
+- [Feature Overview](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/internal)
+- [Project related images](https://github.com/vmware/docker-volume-vsphere/tree/master/docs/misc)

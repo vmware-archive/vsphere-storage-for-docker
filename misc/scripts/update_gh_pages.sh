@@ -37,25 +37,14 @@ git pull $SOURCE_REPO $LOCAL_MASTER
 # Create Temp directory to store .md files
 mkdir $BACKUP_DIR
 
-# Listing md files only from docs directory
-cd docs/
-# List files with .md file type
-list_files=$( git ls-files "*.md" )
-
-# Copying md files to backup dir
-while IFS=' ' read -ra arr; do
-      for i in "${arr[@]}"; do
-          echo "Copying file $i"
-          cp $i $BACKUP_DIR
-      done
- done <<< "$list_files"
+# Copying md files from external folder to backup directory
+cp -a docs/external/. $BACKUP_DIR
 
 # Creating branch gh-pages
 git checkout -b $DOCUMENT_BRANCH $SOURCE_REPO/$DOCUMENT_BRANCH
 
 # First removing all the md files from jekyll-docs so that md files removed from vmware/master
 # are also removed from gh-pages
-cd ..
 rm -fr jekyll-docs/*.md
 
 # Copying md files from backup to jekyll-docs directory
