@@ -17,7 +17,7 @@ vmgroup
 
 ## Admin CLI
 
-Vmgroups can be created and managed via the [Admin CLI](/docs/user-guide/admin-cli.md/#vmgroup)
+Vmgroups can be created and managed via the [Admin CLI](/docs/external/admin-cli.md/#vmgroup)
 
 ## Multitenancy concepts
 
