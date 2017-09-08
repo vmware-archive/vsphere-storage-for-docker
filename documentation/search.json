@@ -2,28 +2,6 @@
 
 
 {
-"title": "Update from Release 0.11",
-"tags": "",
-"keywords": "",
-"url": "UpgradeFrom_Pre0.11.1.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Short Volume names",
-"tags": "",
-"keywords": "",
-"url": "VolumeNames.html",
-"summary": ""
-}
-,
-
-
-
-{
 "title": "Admin CLI Reference",
 "tags": "",
 "keywords": "",
@@ -105,17 +83,6 @@
 "tags": "",
 "keywords": "",
 "url": "docker-compatibility.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Overview",
-"tags": "",
-"keywords": "",
-"url": "docker-plugin-drivers.html",
 "summary": ""
 }
 ,
@@ -268,65 +235,10 @@
 
 
 {
-"title": "vSan Policy",
+"title": "Interop with vSphere features",
 "tags": "",
 "keywords": "",
-"url": "vsan-policy.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "vDVS Authorization Config DB state machine",
-"tags": "",
-"keywords": "",
-"url": "ConfigDB_state.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "docker-volume-auth-proposal.v1_2.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Docker Volume Plugin Lifecycle.",
-"tags": "",
-"keywords": "",
-"url": "plugin-lifecycle.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "vCenter Integration",
-"tags": "",
-"keywords": "",
-"url": "vcenter.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "",
-"tags": "",
-"keywords": "",
-"url": "vmdkops-admin-cli-spec.html",
+"url": "Interop.html",
 "summary": ""
 }
 
