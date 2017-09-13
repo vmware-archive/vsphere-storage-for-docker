@@ -20,12 +20,13 @@
 package e2e
 
 import (
+	"strconv"
+
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 	. "gopkg.in/check.v1"
-	"strconv"
 )
 
 const (
@@ -117,7 +118,6 @@ func (s *AdvancedVFileTestSuite) TestVFileVolumeLifecycle(c *C) {
 	grefc, _ = strconv.Atoi(out)
 	c.Assert(grefc, Equals, 0, Commentf("Expected volume global refcount to be 0, found %s", out))
 
-	// delete the volume // Will uncomment after unmount() code is done
 	out, err = dockercli.DeleteVolume(s.worker1, s.volName1)
 	c.Assert(err, IsNil, Commentf(out))
 

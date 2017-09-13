@@ -50,7 +50,7 @@ func CreateVolumeWithOptions(ip, name, options string) (string, error) {
 // CreateVFileVolume is going to create docker volume with given name using vfile driver.
 func CreateVFileVolume(ip, name string) (string, error) {
 	log.Printf("Creating vFile volume [%s] on VM [%s]\n", name, ip)
-	return ssh.InvokeCommand(ip, dockercli.CreateVFileVolume+" --name= "+name)
+	return ssh.InvokeCommand(ip, dockercli.CreateVFileVolume+" --name="+name)
 }
 
 // CreateVFileVolumeWithOptions is going to create docker volume with given name using vfile driver.
