@@ -117,6 +117,9 @@ coverage)
 winplugin)
         TARGET=" build-windows-plugin deploy-windows-plugin test-e2e-runonce-windows"
         ;;
+vfileplugin)
+        TARGET=" build-plugin build-vfile-plugin deploy-vm deploy-vfile-plugin test-e2e-runonce-vfile"
+        ;;
 esac
 
 if make -s $TARGET $PARAMETER;

@@ -59,6 +59,7 @@ VFILE_PLUGIN_NAME = $(DOCKER_HUB_REPO)/vfile
 
 # Managed plugin alias name
 MANAGED_PLUGIN_NAME := "vsphere:latest"
+VFILE_MANAGED_PLUGIN_NAME := "vfile:latest"
 
 # build places binaries here:
 BIN := ../build
