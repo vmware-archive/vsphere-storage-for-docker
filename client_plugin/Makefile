@@ -49,6 +49,9 @@ DOCKER_PACKAGE_PHOTON := docker
 AFTER_INSTALL  := $(SCRIPTS)/install/after-install.sh
 BEFORE_REMOVE  := $(SCRIPTS)/install/before-remove.sh
 AFTER_REMOVE   := $(SCRIPTS)/install/after-remove.sh
+VFILE_PREFIX := vfile-
+PLUGIN_ALIAS := vsphere
+VFILE_PLUGIN_ALIAS := $(VFILE_PLUGNAME)
 
 #
 # Scripts to deploy and control services - used from Makefile and from Drone CI
@@ -330,7 +333,7 @@ VMS= $(VM1) $(VM2) $(WORKER2) $(CI_NODE4)
 WIN_VMS= $(WIN_VM1)
 
 deploy-vm: clean-vm
-	$(DEPLOY_VM_SH) "$(VMS)" $(PLUGIN_NAME):$(PLUGIN_TAG)
+	$(DEPLOY_VM_SH) "$(VMS)" $(PLUGIN_NAME):$(PLUGIN_TAG) $(PLUGIN_ALIAS) $(PLUGNAME)
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 build-plugin:
@@ -339,6 +342,11 @@ build-windows-plugin:
 	$(BUILD_WINDOWS_PLUGIN_SH) $(WIN_VM1)
 deploy-windows-plugin:
 	$(DEPLOY_WINDOWS_PLUGIN_SH) "$(WIN_VMS)"
+build-vfile-plugin:
+	$(BUILD_PLUGIN_SH) "$(VM2)" $(VFILE_PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG) $(VFILE_PREFIX)
+deploy-vfile-plugin:
+	$(DEPLOY_VM_SH) "$(VMS)" $(VFILE_PLUGIN_NAME):$(PLUGIN_TAG) $(VFILE_PLUGIN_ALIAS) $(VFILE_PLUGNAME)
+
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all

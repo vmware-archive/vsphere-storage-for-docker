@@ -91,9 +91,9 @@ function buildplugin {
             esac
 
         fi
-        $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make info clean plugin"
+        $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make ${PREFIX}info ${PREFIX}clean ${PREFIX}plugin"
         managedPluginSanityCheck
-        $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make push clean"
+        $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make ${PREFIX}push ${PREFIX}clean"
     done
 }
 
@@ -167,7 +167,7 @@ function setupVMType {
 
 function installManagedPlugin {
     log "installManagedPlugin: Installing vDVS plugin [$MANAGED_PLUGIN_NAME]"
-    $SSH $TARGET "docker plugin install --grant-all-permissions --alias vsphere $MANAGED_PLUGIN_NAME"
+    $SSH $TARGET "docker plugin install --grant-all-permissions --alias $PLUGIN_ALIAS $MANAGED_PLUGIN_NAME"
 }
 
 function deployVMPost {
@@ -414,9 +414,11 @@ cleanesx)
         ;;
 deployvm)
         MANAGED_PLUGIN_NAME="$2"
-        if [ -z "$MANAGED_PLUGIN_NAME" ]
+        PLUGIN_ALIAS="$3"
+        PLUGIN_NAME="$4"
+        if [ -z "$MANAGED_PLUGIN_NAME" -o -z "$PLUGIN_ALIAS" ]
         then
-            usage "Missing params: managed_plugin_name"
+            usage "Missing params: managed_plugin_name|plugin_alias"
         fi
         deployvm
         ;;
@@ -444,6 +446,7 @@ buildplugin)
         DOCKER_HUB_REPO="$5"
         VERSION_TAG="$6"
         EXTRA_TAG="$7"
+        PREFIX="$8"
         if [ -z "$PLUGIN_BIN" -o -z "$MANAGED_PLUGIN_SRC" -o -z "$SCRIPTS" ]
         then
             usage "Missing params: plugin/binary/script folder"
