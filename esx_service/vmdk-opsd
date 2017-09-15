@@ -107,10 +107,12 @@ start() {
 }
 
 get_ops_count() {
+   # TODO: this approach does not work as expected - the call to vmdk_ops.get_ops_count() cannot really interact with the vmdk_ops.py dameon
    echo $(python -c "import sys; sys.path.append('/usr/lib/vmware/vmdkops/bin'); import vmdk_ops; print(vmdk_ops.get_ops_count())");
 }
 
 send_stop_request() {
+   # TODO: this approach does not work as expected - the call to vmdk_ops.stop() cannot really interact with the vmdk_ops.py dameon
    $(python -c "import sys; sys.path.append('/usr/lib/vmware/vmdkops/bin'); import vmdk_ops; vmdk_ops.stop()")
 }
 
