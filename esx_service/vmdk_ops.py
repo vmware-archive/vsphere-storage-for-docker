@@ -138,6 +138,15 @@ lib = None
 # For managing resource locks.
 lockManager = threadutils.LockManager()
 
+# Flag indicating whether stop has been requested
+STOP_REQUESTED = False
+
+# Counter of operations in flight
+INFLIGHT_OPS_COUNT = 0
+
+# Lock for INFLIGHT_OPS_COUNT
+INFLIGHT_OPS_LOCK = 'INFLIGHT_OPS_LOCK'
+
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
 def RunCommand(cmd):
@@ -1698,6 +1707,12 @@ def send_vmci_reply(client_socket, reply_string):
                         os.strerror(errno), errno)
 
 def execRequestThread(client_socket, cartel, request):
+    global INFLIGHT_OPS_COUNT
+
+    # Increase the in-flight ops counter
+    with lockManager.get_lock(INFLIGHT_OPS_LOCK):
+        INFLIGHT_OPS_COUNT += 1
+
     '''
     Execute requests in a thread context with a per volume locking.
     '''
@@ -1757,6 +1772,16 @@ def execRequestThread(client_socket, cartel, request):
         reply_string = err("Server returned an error: {0}".format(repr(ex_thr)))
         send_vmci_reply(client_socket, reply_string)
 
+    #TODO: To be removed - it's for manunal testing & debugging
+    logging.debug("-------------------INFLIGHT_OPS_COUNT=%s", INFLIGHT_OPS_COUNT)
+    time.sleep(10)
+
+    # Decrease the in-flight ops counter
+    with lockManager.get_lock(INFLIGHT_OPS_LOCK):
+        INFLIGHT_OPS_COUNT -= 1
+
+    logging.debug("-------------------INFLIGHT_OPS_COUNT=%s", INFLIGHT_OPS_COUNT)
+
 # code to grab/release VMCI listening socket
 g_vmci_listening_socket = None
 
@@ -1786,8 +1811,15 @@ def handleVmciRequests(port):
     cartel = c_int32()
     vmci_grab_listening_socket(port)
 
-
     while True:
+        # Check the flag and the counter - exit the loop if flag is set and counter equals 0
+        if STOP_REQUESTED:
+            with lockManager.get_lock(INFLIGHT_OPS_LOCK):
+                if INFLIGHT_OPS_COUNT == 0:
+                    logging.info("All operations in flight are completed")
+                    break;
+
+        # Listening on VMCI socket
         c = lib.vmci_get_one_op(g_vmci_listening_socket, byref(cartel), txt, c_int(bsize))
         logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
                       c, txt.value)
@@ -1809,6 +1841,13 @@ def handleVmciRequests(port):
             skip_count = MAX_SKIP_COUNT  # reset the counter, just in case
 
         client_socket = c # Bind to avoid race conditions.
+
+        # Check the flag - if set, fail new incoming requests
+        if STOP_REQUESTED:
+            svc_stop_err = 'Service is being stopped. Declining the operation'
+            logging.warning(svc_stop_err)
+            send_vmci_reply(client_socket, err(svc_stop_err))
+            continue
 
         if not get_si():
             svc_connect_err = 'Service is presently unavailable, ensure the ESXi Host Agent is running on this host'
@@ -1861,6 +1900,12 @@ def main():
     except Exception as e:
         logging.exception(e)
 
+def stop():
+    global STOP_REQUESTED
+    STOP_REQUESTED = True
+
+def get_ops_count():
+    return INFLIGHT_OPS_COUNT
 
 def getTaskList(prop_collector, tasks):
     # Create filter

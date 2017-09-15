@@ -7,6 +7,7 @@
 # This script supports:
 # * start   : Start the python based daemon
 # * stop    : Stop the python based daemon
+# * shutdown: Shutdown the python based daemon
 # * restart : Stop and start the daemon.
 # * status  : status of the daemon
 #
@@ -105,7 +106,43 @@ start() {
    exit $?
 }
 
+get_ops_count() {
+   echo $(python -c "import sys; sys.path.append('/usr/lib/vmware/vmdkops/bin'); import vmdk_ops; print(vmdk_ops.get_ops_count())");
+}
+
+send_stop_request() {
+   $(python -c "import sys; sys.path.append('/usr/lib/vmware/vmdkops/bin'); import vmdk_ops; vmdk_ops.stop()")
+}
+
 stop() {
+   local ops_count=$(get_ops_count)
+   local wait=${NUM_RETRY}
+
+   if [ ${ops_count} -gt 0 ]; then
+      send_stop_request
+
+      while [ $((wait--)) -gt 0 ]; do
+          echo "${OPSD_TAG} is being stopped. Waiting for completion of ${ops_count} operations in flight..."
+          sleep 1
+
+          ops_count=$(get_ops_count)
+          if [ ${ops_count} -eq 0 ]; then
+            break
+          fi
+      done
+   fi
+
+   if [ ${ops_count} -eq 0 ]; then
+      echo "All in-flight operations are completed. Shutting down ${OPSD_TAG}..."
+   else
+      echo "In-flight operations are taking too long to complete. Force shutting down ${OPSD_TAG}..."
+   fi
+
+   # Shutdown vmdk-opsd daemon
+   shutdown
+}
+
+shutdown() {
    ${WATCHDOG} -n -k ${OPSD_TAG}
 
    local PID=$(getpid)
@@ -165,6 +202,9 @@ case $1 in
    "stop")
       stop
       ;;
+   "shutdown")
+      shutdown
+      ;;
    "status")
       status
       ;;
@@ -177,7 +217,7 @@ case $1 in
       ;;
     *)
       echo "$1 unsupported"
-      echo "$0 start|stop|status"
+      echo "$0 start|stop|restart|status|shutdown"
       exit 1
       ;;
 esac
