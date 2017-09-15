@@ -261,6 +261,7 @@ Description:
 Cmd options:
   --name=<str>          The name of the vmgroup (required)
   --remove-volumes      BE CAREFUL: Removes this vmgroup volumes when removing a vmgroup
+  --force               Force operation, ignore warnings
 ```
 
 ### Virtual Machine
