@@ -54,8 +54,6 @@ rm -fr docs
 
 # Adding the md files to commit and pushing the changes to gh-pages branch
 git add ./\*.md
-git commit -m "Copying changes to gh-pages branch from vmware:master"
-git push $SOURCE_REPO HEAD:$DOCUMENT_BRANCH
 
 # Delete backup directory which had .md files
 rm -rf $BACKUP_DIR
@@ -69,7 +67,7 @@ rm -rvf ../documentation
 mv _site ../documentation
 
 # Updating documentation/index.html
-sed -i -e 's/\/gh-pages\/jekyll-docs\/\/.md/\/gh-pages\/jekyll-docs\/\/index.md/g' ../documentation/index.html
+sed -i -e 's/\/\/.md/\/\/index.md/g' ../documentation/index.html
 
 cd ..
 git add documentation
