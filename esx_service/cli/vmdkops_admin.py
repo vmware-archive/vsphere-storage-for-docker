@@ -297,6 +297,10 @@ def commands():
                       '--remove-volumes': {
                         'help': 'BE CAREFUL: Removes this vmgroup volumes when removing a vmgroup',
                         'action': 'store_true'
+                      },
+                      '--force': {
+                        'help': 'Force operation, ignore warnings',
+                        'action': 'store_true'
                       }
                     }
                 },
@@ -1010,7 +1014,7 @@ def tenant_rm(args):
     if args.remove_volumes:
         remove_volumes = True
 
-    error_info = auth_api._tenant_rm(args.name, remove_volumes)
+    error_info = auth_api._tenant_rm(args.name, remove_volumes, args.force)
 
     if error_info:
         return err_out(error_info.msg)

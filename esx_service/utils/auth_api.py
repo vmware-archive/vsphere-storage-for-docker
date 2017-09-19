@@ -558,7 +558,7 @@ def _tenant_update(name, new_name=None, description=None, default_datastore=None
     return None
 
 @only_when_configured()
-def _tenant_rm(name, remove_volumes=False):
+def _tenant_rm(name, remove_volumes=False, force=False):
     """ API to remove a tenant """
     logging.debug("_tenant_rm: name=%s remove_volumes=%s", name, remove_volumes)
     error_info, tenant = get_tenant_from_db(name)
@@ -569,14 +569,20 @@ def _tenant_rm(name, remove_volumes=False):
         error_info = generate_error_info(ErrorCode.TENANT_NOT_EXIST, name)
         return error_info
 
-    if tenant.vms:
-        error_info = generate_error_info(ErrorCode.TENANT_NOT_EMPTY, name)
-        logging.error(error_info.msg)
-        return error_info
-
     error_info, auth_mgr = get_auth_mgr_object()
     if error_info:
         return error_info
+
+    if tenant.vms:
+        if not force:
+            error_info = generate_error_info(ErrorCode.TENANT_NOT_EMPTY, name)
+            logging.error(error_info.msg)
+            return error_info
+        else:
+            error_msg = tenant.remove_vms(auth_mgr.conn, tenant.vms)
+            if error_msg:
+                error_info = generate_error_info(ErrorCode.INTERNAL_ERROR, error_msg)
+                return error_info
 
     error_msg = auth_mgr.remove_tenant(tenant.id, remove_volumes)
     if error_msg:
