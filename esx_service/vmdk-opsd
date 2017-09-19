@@ -106,42 +106,36 @@ start() {
    exit $?
 }
 
-get_ops_count() {
-   # TODO: this approach does not work as expected - the call to vmdk_ops.get_ops_count() cannot really interact with the vmdk_ops.py dameon
-   echo $(python -c "import sys; sys.path.append('/usr/lib/vmware/vmdkops/bin'); import vmdk_ops; print(vmdk_ops.get_ops_count())");
-}
-
-send_stop_request() {
-   # TODO: this approach does not work as expected - the call to vmdk_ops.stop() cannot really interact with the vmdk_ops.py dameon
-   $(python -c "import sys; sys.path.append('/usr/lib/vmware/vmdkops/bin'); import vmdk_ops; vmdk_ops.stop()")
-}
-
 stop() {
-   local ops_count=$(get_ops_count)
-   local wait=${NUM_RETRY}
+   ${WATCHDOG} -n -k ${OPSD_TAG}
 
-   if [ ${ops_count} -gt 0 ]; then
-      send_stop_request
+   local PID=$(getpid)
+   if [ -n "${PID}" ]; then
+      echo "Stopping $OPSD_TAG with PID=${PID}"
+      kill -$SIGTERM ${PID}
 
-      while [ $((wait--)) -gt 0 ]; do
-          echo "${OPSD_TAG} is being stopped. Waiting for completion of ${ops_count} operations in flight..."
-          sleep 1
-
-          ops_count=$(get_ops_count)
-          if [ ${ops_count} -eq 0 ]; then
+      local COUNT=0
+      while kill -0 ${PID} > /dev/null 2>&1; do
+         echo "Waiting for operations in flight to complete, please do not interrupt..."
+         sleep ${WAIT_KILL_SEC};
+         if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
+            echo "Kill -${SIGTERM} did not stop ${PID}"
             break
-          fi
+         fi
       done
    fi
 
-   if [ ${ops_count} -eq 0 ]; then
-      echo "All in-flight operations are completed. Shutting down ${OPSD_TAG}..."
-   else
-      echo "In-flight operations are taking too long to complete. Force shutting down ${OPSD_TAG}..."
+   cleanup_resource
+   if [ $? -ne 0 ]; then
+      exit $?
    fi
 
-   # Shutdown vmdk-opsd daemon
-   shutdown
+   check_running_status
+   if [ $? -eq 0 ]; then
+      echo "Failed to stop $OPSD_TAG. Please try shutdown to force kill the process"
+      exit 6
+   fi
+   return 0
 }
 
 shutdown() {
@@ -149,34 +143,35 @@ shutdown() {
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Stopping $OPSD_TAG with PID=${PID}"
-      kill -$SIGTERM ${PID}
-      local COUNT=0
-      while kill -0 ${PID} > /dev/null 2>&1; do
-         sleep ${WAIT_KILL_SEC};
-         if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
-            echo "Sending kill -${SIGKILL} to ${PID} after kill -${SIGTERM} did not stop ${PID}"
-            kill -${SIGKILL} ${PID}
-            break
-         fi
-      done
+      echo "Shutting down $OPSD_TAG with PID=${PID}"
+      kill -${SIGKILL} ${PID}
    fi
 
+   cleanup_resource
+   if [ $? -ne 0 ]; then
+      exit $?
+   fi
+
+   check_running_status
+   if [ $? -eq 0 ]; then
+      echo "Failed to shut down $OPSD_TAG"
+      exit 7
+   fi
+
+   return 0
+}
+
+cleanup_resource() {
    ${LOCAL_CLI_SCHED} list --group-path=${OPSD_GROUP} &> /dev/null
    if [ $? -eq 0 ]; then
       ${LOCAL_CLI_SCHED} delete --group-path=${OPSD_GROUP}
       if [ $? -ne 0 ]; then
          echo "Failed to delete resource pool=${OPSD_SCHED_PARAM}"
          check_running_status
-         exit 4
+         return 4
       fi
    fi
 
-   check_running_status
-   if [ $? -eq 0 ]; then
-      echo "Failed to stop $OPSD_TAG"
-      exit 5
-   fi
    return 0
 }
 
@@ -189,7 +184,7 @@ check_running_status () {
    fi
 
    echo "${OPSD_TAG} is not running"
-   return 6
+   return 5
 }
 
 status() {

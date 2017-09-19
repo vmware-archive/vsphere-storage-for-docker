@@ -78,6 +78,7 @@ sys.path.insert(0, PY_LOC)
 if sys.version_info.major == 2:
     sys.path.append(PY2_LOC)
 
+import threading
 import threadutils
 import log_config
 import volume_kv as kv
@@ -93,6 +94,8 @@ import error_code
 from error_code import ErrorCode
 from error_code import error_code_to_message
 import vm_listener
+import counter
+from counter import Counter
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -139,13 +142,14 @@ lib = None
 lockManager = threadutils.LockManager()
 
 # Flag indicating whether stop has been requested
-STOP_REQUESTED = False
+stopEvent = threading.Event()
 
 # Counter of operations in flight
-INFLIGHT_OPS_COUNT = 0
+opsCounter = Counter()
 
-# Lock for INFLIGHT_OPS_COUNT
-INFLIGHT_OPS_LOCK = 'INFLIGHT_OPS_LOCK'
+# Number of times and sleep time to retry on stop request
+STOP_RETRY_COUNT = 20
+STOP_RETRY_SLEEP = 1
 
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
@@ -1679,22 +1683,39 @@ def set_vol_opts(name, tenant_name, options):
 
     return False
 
+def wait_ops_in_flight():
+    global STOP_RETRY_COUNT
+
+    # Set the STOP flag to true
+    stopEvent.set()
+
+    # Wait until the in-flight ops counter goes down to zero
+    while ((opsCounter.value > 0) and (STOP_RETRY_COUNT > 0)):
+        logging.info("Service is being stopped. Waiting for completion of %d operations in flight...", opsCounter.value)
+        time.sleep(STOP_RETRY_SLEEP)
+        STOP_RETRY_COUNT -= 1
+
+    if (opsCounter.value == 0):
+        logging.info("All in-flight operations are completed. Exiting...")
+    else:
+        logging.info("In-flight operations are taking too long to complete")
+
 def msg_about_signal(signalnum, details="exiting"):
     logging.warn("Received signal num: %d, %s.", signalnum, details)
-    logging.warn("Operations in flight will be terminated")
+    wait_ops_in_flight()
 
 def signal_handler_stop(signalnum, frame):
     msg_about_signal(signalnum, "exiting")
     sys.exit(0)
 
 def load_vmci():
-   global lib
+    global lib
 
-   logging.info("Loading VMCI server lib.")
-   if sys.hexversion >= PYTHON64_VERSION:
-       lib = CDLL(os.path.join(LIB_LOC64, "libvmci_srv.so"), use_errno=True)
-   else:
-       lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
+    logging.info("Loading VMCI server lib.")
+    if sys.hexversion >= PYTHON64_VERSION:
+        lib = CDLL(os.path.join(LIB_LOC64, "libvmci_srv.so"), use_errno=True)
+    else:
+        lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
 
 
 def send_vmci_reply(client_socket, reply_string):
@@ -1707,11 +1728,9 @@ def send_vmci_reply(client_socket, reply_string):
                         os.strerror(errno), errno)
 
 def execRequestThread(client_socket, cartel, request):
-    global INFLIGHT_OPS_COUNT
-
     # Increase the in-flight ops counter
-    with lockManager.get_lock(INFLIGHT_OPS_LOCK):
-        INFLIGHT_OPS_COUNT += 1
+    opsCounter.incr()
+    logging.debug("execRequestThread: opsCounter=%d", opsCounter.value)
 
     '''
     Execute requests in a thread context with a per volume locking.
@@ -1773,14 +1792,11 @@ def execRequestThread(client_socket, cartel, request):
         send_vmci_reply(client_socket, reply_string)
 
     #TODO: To be removed - it's for manunal testing & debugging
-    logging.debug("-------------------INFLIGHT_OPS_COUNT=%s", INFLIGHT_OPS_COUNT)
-    time.sleep(10)
+    time.sleep(15)
 
     # Decrease the in-flight ops counter
-    with lockManager.get_lock(INFLIGHT_OPS_LOCK):
-        INFLIGHT_OPS_COUNT -= 1
-
-    logging.debug("-------------------INFLIGHT_OPS_COUNT=%s", INFLIGHT_OPS_COUNT)
+    opsCounter.decr()
+    logging.debug("execRequestThread: opsCounter=%d", opsCounter.value)
 
 # code to grab/release VMCI listening socket
 g_vmci_listening_socket = None
@@ -1813,16 +1829,14 @@ def handleVmciRequests(port):
 
     while True:
         # Check the flag and the counter - exit the loop if flag is set and counter equals 0
-        if STOP_REQUESTED:
-            with lockManager.get_lock(INFLIGHT_OPS_LOCK):
-                if INFLIGHT_OPS_COUNT == 0:
-                    logging.info("All operations in flight are completed")
-                    break;
+        if (stopEvent.isSet() and (opsCounter.value == 0)):
+            logging.info("Stopping service: no operations in flight.")
+            break;
 
         # Listening on VMCI socket
+        logging.debug("lib.vmci_get_one_op: waiting for new request...")
         c = lib.vmci_get_one_op(g_vmci_listening_socket, byref(cartel), txt, c_int(bsize))
-        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
-                      c, txt.value)
+        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'", c, txt.value)
 
         errno = get_errno()
         if errno == ECONNABORTED:
@@ -1843,8 +1857,8 @@ def handleVmciRequests(port):
         client_socket = c # Bind to avoid race conditions.
 
         # Check the flag - if set, fail new incoming requests
-        if STOP_REQUESTED:
-            svc_stop_err = 'Service is being stopped. Declining the operation'
+        if stopEvent.isSet():
+            svc_stop_err = 'Service is being stopped: operation declined!'
             logging.warning(svc_stop_err)
             send_vmci_reply(client_socket, err(svc_stop_err))
             continue
@@ -1899,13 +1913,6 @@ def main():
 
     except Exception as e:
         logging.exception(e)
-
-def stop():
-    global STOP_REQUESTED
-    STOP_REQUESTED = True
-
-def get_ops_count():
-    return INFLIGHT_OPS_COUNT
 
 def getTaskList(prop_collector, tasks):
     # Create filter
