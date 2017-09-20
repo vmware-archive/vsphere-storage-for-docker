@@ -116,8 +116,8 @@ stop() {
 
       local COUNT=0
       while kill -0 ${PID} > /dev/null 2>&1; do
-         echo "Waiting for operations in flight to complete, please do not interrupt..."
          sleep ${WAIT_KILL_SEC};
+         echo "Waiting for operations in flight to complete, please do not interrupt..."
          if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
             echo "Kill -${SIGTERM} did not stop ${PID}"
             break
