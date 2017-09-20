@@ -1791,9 +1791,6 @@ def execRequestThread(client_socket, cartel, request):
         reply_string = err("Server returned an error: {0}".format(repr(ex_thr)))
         send_vmci_reply(client_socket, reply_string)
 
-    #TODO: To be removed - it's for manunal testing & debugging
-    time.sleep(15)
-
     # Decrease the in-flight ops counter
     opsCounter.decr()
     logging.debug("execRequestThread: opsCounter=%d", opsCounter.value)
