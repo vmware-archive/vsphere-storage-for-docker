@@ -29,16 +29,16 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 	esxutil "github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 )
 
 const (
 	restartHostd = "/etc/init.d/hostd restart"
-	killHostd = "kill -9 `pidof hostd`"
+	killHostd    = "kill -9 `pidof hostd`"
 )
 
 type VMListenerTestParams struct {
@@ -100,6 +100,9 @@ func (s *VMListenerTestParams) TestServiceRestart(c *C) {
 	// Restart vmdkops service
 	out, err = admincli.RestartVmdkopsService(s.esx)
 	c.Assert(err, IsNil, Commentf(out))
+
+	// Give some time for vmdkops service initialization
+	misc.SleepForSec(5)
 
 	// Make sure volume stays attached after vmdkopsd restart
 	status = verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
