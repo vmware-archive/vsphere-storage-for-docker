@@ -707,7 +707,7 @@ def findVmByUuidChoice(bios_uuid, vc_uuid):
     return vm
 
 def vm_uuid2name(vm_uuid):
-    vm = findVmByUuid(vm_uuid)
+    vm = findVmByUuidChoice(vm_uuid, vm_uuid)
     if not vm or not vm.config:
         return None
     return vm.config.name
@@ -1522,8 +1522,12 @@ def disk_attach(vmdk_path, vm):
         # Use metadata (KV) for extra logging
         if kv_status_attached:
             # KV  claims we are attached to a different VM'.
+            cur_vm = vm_uuid2name(kv_uuid)
+
+            if not cur_vm:
+                cur_vm = attached_vm_name
             msg += " disk {0} already attached to VM={1}".format(vmdk_path,
-                                                                 kv_uuid)
+                                                                 cur_vm)
             if kv_uuid == vm.config.uuid:
                 msg += "(Current VM)"
         return err(msg)
