@@ -15,6 +15,7 @@
 
 # A counter implementation that can be shared by multiple threads.
 
+import logging
 import threading
 
 class Counter:
@@ -31,14 +32,18 @@ class Counter:
         Increment the counter with locking
         '''
         with Counter._lock:
+            logging.debug("Before incr: counter.value=%d", self._value)
             self._value += delta
+            logging.debug("After incr: counter.value=%d", self._value)
 
     def decr(self, delta = 1):
         '''
         Decrement the counter with locking
         '''
         with Counter._lock:
+            logging.debug("Before decr: counter.value=%d", self._value)
             self._value -= delta
+            logging.debug("After decr: counter.value=%d", self._value)
 
     @property
     def value(self):

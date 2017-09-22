@@ -147,9 +147,9 @@ stopEvent = threading.Event()
 # Counter of operations in flight
 opsCounter = Counter()
 
-# Number of times and sleep time to retry on stop request
-STOP_RETRY_COUNT = 20
-STOP_RETRY_SLEEP = 1
+# Number of times and sleep interval to wait on stop process
+WAIT_STOP_COUNT = 20
+WAIT_STOP_INTERVAL = 1
 
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
@@ -1684,16 +1684,16 @@ def set_vol_opts(name, tenant_name, options):
     return False
 
 def wait_ops_in_flight():
-    global STOP_RETRY_COUNT
+    global WAIT_STOP_COUNT
 
     # Set the STOP flag to true
     stopEvent.set()
 
     # Wait until the in-flight ops counter goes down to zero
-    while ((opsCounter.value > 0) and (STOP_RETRY_COUNT > 0)):
+    while ((opsCounter.value > 0) and (WAIT_STOP_COUNT > 0)):
         logging.info("Service is being stopped. Waiting for completion of %d operations in flight...", opsCounter.value)
-        time.sleep(STOP_RETRY_SLEEP)
-        STOP_RETRY_COUNT -= 1
+        time.sleep(WAIT_STOP_INTERVAL)
+        WAIT_STOP_COUNT -= 1
 
     if (opsCounter.value == 0):
         logging.info("All in-flight operations are completed. Exiting...")
@@ -1702,7 +1702,12 @@ def wait_ops_in_flight():
 
 def msg_about_signal(signalnum, details="exiting"):
     logging.warn("Received signal num: %d, %s.", signalnum, details)
+
+    # Wait for ops in flight to drain
     wait_ops_in_flight()
+
+    # Release VMCI listening socket
+    vmci_release_listening_socket()
 
 def signal_handler_stop(signalnum, frame):
     msg_about_signal(signalnum, "exiting")
@@ -1728,10 +1733,6 @@ def send_vmci_reply(client_socket, reply_string):
                         os.strerror(errno), errno)
 
 def execRequestThread(client_socket, cartel, request):
-    # Increase the in-flight ops counter
-    opsCounter.incr()
-    logging.debug("execRequestThread: opsCounter=%d", opsCounter.value)
-
     '''
     Execute requests in a thread context with a per volume locking.
     '''
@@ -1793,7 +1794,6 @@ def execRequestThread(client_socket, cartel, request):
 
     # Decrease the in-flight ops counter
     opsCounter.decr()
-    logging.debug("execRequestThread: opsCounter=%d", opsCounter.value)
 
 # code to grab/release VMCI listening socket
 g_vmci_listening_socket = None
@@ -1825,9 +1825,9 @@ def handleVmciRequests(port):
     vmci_grab_listening_socket(port)
 
     while True:
-        # Check the flag and the counter - exit the loop if flag is set and counter equals 0
-        if (stopEvent.isSet() and (opsCounter.value == 0)):
-            logging.info("Stopping service: no operations in flight.")
+        # Check the STOP flag - exit the loop if the flag is set
+        if stopEvent.isSet():
+            logging.info("Received stop request - stop processing new request")
             break;
 
         # Listening on VMCI socket
@@ -1866,11 +1866,15 @@ def handleVmciRequests(port):
             send_vmci_reply(client_socket, err(svc_connect_err))
             continue
 
+        # Increase the in-flight ops counter
+        opsCounter.incr()
+
         # Fire a thread to execute the request
         threadutils.start_new_thread(
             target=execRequestThread,
             args=(client_socket, cartel.value, txt.value))
 
+    # Note: This never gets triggered during normal service stop, because the signal handler will exit directly
     vmci_release_listening_socket() # close listening socket when the loop is over
 
 def usage():

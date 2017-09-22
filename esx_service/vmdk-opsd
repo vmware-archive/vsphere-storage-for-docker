@@ -7,7 +7,7 @@
 # This script supports:
 # * start   : Start the python based daemon
 # * stop    : Stop the python based daemon
-# * shutdown: Shutdown the python based daemon
+# * kill    : Kill the python based daemon
 # * restart : Stop and start the daemon.
 # * status  : status of the daemon
 #
@@ -132,18 +132,18 @@ stop() {
 
    check_running_status
    if [ $? -eq 0 ]; then
-      echo "Failed to stop $OPSD_TAG. Please try shutdown to force kill the process"
+      echo "Failed to stop $OPSD_TAG. Please try to force kill the process"
       exit 6
    fi
    return 0
 }
 
-shutdown() {
+force_kill() {
    ${WATCHDOG} -n -k ${OPSD_TAG}
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Shutting down $OPSD_TAG with PID=${PID}"
+      echo "Killing $OPSD_TAG with PID=${PID}"
       kill -${SIGKILL} ${PID}
    fi
 
@@ -154,7 +154,7 @@ shutdown() {
 
    check_running_status
    if [ $? -eq 0 ]; then
-      echo "Failed to shut down $OPSD_TAG"
+      echo "Failed to kill $OPSD_TAG"
       exit 7
    fi
 
@@ -199,8 +199,8 @@ case $1 in
    "stop")
       stop
       ;;
-   "shutdown")
-      shutdown
+   "kill")
+      force_kill
       ;;
    "status")
       status
@@ -214,7 +214,7 @@ case $1 in
       ;;
     *)
       echo "$1 unsupported"
-      echo "$0 start|stop|restart|status|shutdown"
+      echo "$0 start|stop|restart|status|kill"
       exit 1
       ;;
 esac
