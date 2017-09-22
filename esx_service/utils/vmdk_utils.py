@@ -309,7 +309,10 @@ def get_vm_uuid_by_name(vm_name):
 
 
 def get_vm_name_by_uuid(vm_uuid):
-    """ Returns vm_name for given vm_uuid, or None """
+    """
+    Returns vm_name for given vm_uuid, or None
+    TODO: Need to refactor further (can be a redundant method)
+    """
     si = vmdk_ops.get_si()
     try:
         return vmdk_ops.vm_uuid2name(vm_uuid)
