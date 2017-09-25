@@ -24,8 +24,8 @@ build:
       - GOVC_GET_IP=govc vm.ip -a -v4
       - KEY=$$KEY
       - DOCKER_HUB_REPO=cnastorage
-      - VERSION_TAG=latest
-      - EXTRA_TAG=-CI
+      - VERSION_TAG=build-
+      - EXTRA_TAG=$$BUILD_NUMBER
       - ESX_6_0=$$CI_ESX_NAME_6_0
       - ESX_6_5=$$CI_ESX_NAME_6_5
     commands: &serialize_cmd
