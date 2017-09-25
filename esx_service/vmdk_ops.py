@@ -1684,34 +1684,36 @@ def set_vol_opts(name, tenant_name, options):
     return False
 
 def wait_ops_in_flight():
-    global WAIT_STOP_COUNT
-
-    # Set the STOP flag to true
-    stopEvent.set()
+    stop_count = WAIT_STOP_COUNT
 
     # Wait until the in-flight ops counter goes down to zero
-    while ((opsCounter.value > 0) and (WAIT_STOP_COUNT > 0)):
+    while ((opsCounter.value > 0) and (stop_count > 0)):
         logging.info("Service is being stopped. Waiting for completion of %d operations in flight...", opsCounter.value)
         time.sleep(WAIT_STOP_INTERVAL)
-        WAIT_STOP_COUNT -= 1
+        stop_count -= 1
 
     if (opsCounter.value == 0):
         logging.info("All in-flight operations are completed. Exiting...")
+        sys.exit(0)
     else:
-        logging.info("In-flight operations are taking too long to complete")
+        logging.warn("In-flight operations are taking too long to complete - abandoning wait")
 
-def msg_about_signal(signalnum, details="exiting"):
+def handle_signal(signalnum, details="exiting"):
     logging.warn("Received signal num: %d, %s.", signalnum, details)
 
-    # Wait for ops in flight to drain
-    wait_ops_in_flight()
+    if (opsCounter.value == 0):
+        logging.info("No in-flight operations. Exiting...")
+        sys.exit(0)
+    else:
+        # Set the STOP flag to true
+        logging.debug("Setting STOP event flag to True")
+        stopEvent.set()
 
-    # Release VMCI listening socket
-    vmci_release_listening_socket()
+        # Fire a thread to wait for ops in flight to drain
+        threadutils.start_new_thread(target=wait_ops_in_flight)
 
 def signal_handler_stop(signalnum, frame):
-    msg_about_signal(signalnum, "exiting")
-    sys.exit(0)
+    handle_signal(signalnum, "exiting")
 
 def load_vmci():
     global lib
@@ -1831,9 +1833,9 @@ def handleVmciRequests(port):
             break;
 
         # Listening on VMCI socket
-        logging.debug("lib.vmci_get_one_op: waiting for new request...")
+        logging.info("lib.vmci_get_one_op: waiting for new request...")
         c = lib.vmci_get_one_op(g_vmci_listening_socket, byref(cartel), txt, c_int(bsize))
-        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'", c, txt.value)
+        logging.info("lib.vmci_get_one_op returns %d, buffer '%s'", c, txt.value)
 
         errno = get_errno()
         if errno == ECONNABORTED:
@@ -1874,8 +1876,9 @@ def handleVmciRequests(port):
             target=execRequestThread,
             args=(client_socket, cartel.value, txt.value))
 
-    # Note: This never gets triggered during normal service stop, because the signal handler will exit directly
-    vmci_release_listening_socket() # close listening socket when the loop is over
+    # Close listening socket when the loop is over
+    logging.info("Closing VMCI listening socket...")
+    vmci_release_listening_socket()
 
 def usage():
     print("Usage: %s -p <vSocket Port to listen on>" % sys.argv[0])
