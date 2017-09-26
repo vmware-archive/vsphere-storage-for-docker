@@ -143,11 +143,8 @@ lockManager = threadutils.LockManager()
 # Barrier indicating whether stop has been requested
 stopBarrier = False
 
-# Event indicating whether all in-flight ops are drained
-opsDrained = threading.Event()
-
 # Counter of operations in flight
-opsCounter = counter.Counter()
+opsCounter = counter.OpsCounter()
 
 # Timeout setting for waiting all in-flight ops drained
 WAIT_OPS_TIMEOUT = 20
@@ -1686,7 +1683,7 @@ def set_vol_opts(name, tenant_name, options):
 
 def wait_ops_in_flight():
     # Wait for the event indicating all in-flight ops are drained
-    eventReceived = opsDrained.wait(WAIT_OPS_TIMEOUT)
+    eventReceived = opsCounter.wait(WAIT_OPS_TIMEOUT)
     if (eventReceived):
         logging.info("All in-flight operations are completed. Exiting...")
         sys.exit(0)
@@ -1789,9 +1786,6 @@ def execRequestThread(client_socket, cartel, request):
         send_vmci_reply(client_socket, reply_string)
     finally:
         opsCounter.decr()
-        if (opsCounter.value == 0):
-            logging.debug("Setting opsDrained event")
-            opsDrained.set()
 
 # code to grab/release VMCI listening socket
 g_vmci_listening_socket = None
@@ -1865,8 +1859,6 @@ def handleVmciRequests(port):
             continue
 
         opsCounter.incr()
-        logging.debug("Clearing opsDrained event")
-        opsDrained.clear()
 
         # Fire a thread to execute the request
         threadutils.start_new_thread(

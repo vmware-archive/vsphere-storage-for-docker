@@ -13,19 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# A counter implementation that can be shared by multiple threads.
+# A counter implementation that can be shared by multiple threads to
+# keep track of the in-flight operations.
 
 import logging
 import threading
 
-class Counter:
+class OpsCounter:
     '''
-    A counter object that can be shared by multiple threads.
+    A counter object that can be shared by multiple threads to
+    keep track of the in-flight operations.
     '''
     _lock = threading.RLock()
 
     def __init__(self, initial_value = 0):
         self._value = initial_value
+        self._event = threading.Event()
 
     def incr(self, delta = 1):
         '''
@@ -35,6 +38,10 @@ class Counter:
             self._value += delta
             logging.debug("After incr: counter.value=%d", self._value)
 
+            if self._event.is_set():
+                logging.debug("Clearing event")
+                self._event.clear()
+
     def decr(self, delta = 1):
         '''
         Decrement the counter with locking
@@ -43,6 +50,19 @@ class Counter:
             self._value -= delta
             logging.debug("After decr: counter.value=%d", self._value)
 
+            if (self._value == 0):
+                logging.debug("Setting event")
+                self._event.set()
+
     @property
     def value(self):
+        '''
+        Return the current value of the counter
+        '''
         return self._value
+
+    def wait(self, timeout=None):
+        '''
+        Block until the counter value decreased to 0
+        '''
+        return self._event.wait(timeout)
