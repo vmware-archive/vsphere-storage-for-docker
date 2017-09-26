@@ -28,6 +28,9 @@ Stable release: A quarterly release with reliable/stable updates.
 
 Please refer [release convention](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention) for more details.
 
+### Can I use the full volume like "vol@datastore" in compose file with vDVS?
+Yes, it is supported starting from Docker 17.09-ce release and compose 3.4. Please refer to this [example](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/external/docker-stacks.md).
+
 ## Troubleshooting
 
 ### Docker Service to ESX Backend Communication.
