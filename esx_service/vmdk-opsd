@@ -49,6 +49,15 @@ NUM_RETRY=10
 WAIT_KILL_SEC=2
 WAIT_START_SEC=1
 
+ERR_INVALID_PARAM=1
+ERR_START_RUNNING=2
+ERR_START_FAILURE=3
+ERR_CREATE_RESOURCE=4
+ERR_DELETE_RESOURCE=5
+ERR_NOT_RUNNING=6
+ERR_STOP_SERVICE=7
+ERR_KILL_SERVICE=8
+
 getpid() {
    ps -uc| grep -v ${WATCHDOG}| grep -v grep | grep ${OPSD_BIN} | awk '{ print $1 }'
 }
@@ -63,7 +72,7 @@ start() {
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
       echo "Failed to start. $OPSD_TAG already running."
-      exit 1
+      exit ${ERR_START_RUNNING}
    fi
 
    echo "Starting ${OPSD_TAG}"
@@ -73,7 +82,7 @@ start() {
       ${LOCAL_CLI_SCHED} add --group-name=${OPSD_GROUP_NAME} --parent-path=${OPSD_GROUP_PATH}
       if [ $? -ne 0 ]; then
          echo "Failed to create resource pool $?"
-         exit 2
+         exit ${ERR_CREATE_RESOURCE}
       fi
    fi
 
@@ -86,7 +95,7 @@ start() {
    setsid ${OPSD_SCHED_PARAM} ${WATCHDOG} -q ${MAX_QUICK_FAILURES} -d -s ${OPSD_TAG} -t ${MAX_RETRY} "${OPSD_BIN} ${OPSD_PARAMS}" > /dev/null 2>&1
    if [ $? -ne 0 ]; then
       echo "Failed to start ${OPSD_TAG}: $?"
-      exit 3
+      exit ${ERR_START_FAILURE}
    fi
 
    local wait=${NUM_RETRY}
@@ -119,7 +128,7 @@ stop() {
          sleep ${WAIT_KILL_SEC};
          echo "Waiting for operations in flight to complete, please do not interrupt..."
          if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
-            echo "Kill -${SIGTERM} did not stop ${PID}"
+            echo "Kill -${SIGTERM} failed to stop ${PID}"
             break
          fi
       done
@@ -133,7 +142,7 @@ stop() {
    check_running_status
    if [ $? -eq 0 ]; then
       echo "Failed to stop $OPSD_TAG. Please try to force kill the process"
-      exit 6
+      exit ${ERR_STOP_SERVICE}
    fi
    return 0
 }
@@ -155,7 +164,7 @@ force_kill() {
    check_running_status
    if [ $? -eq 0 ]; then
       echo "Failed to kill $OPSD_TAG"
-      exit 7
+      exit ${ERR_KILL_SERVICE}
    fi
 
    return 0
@@ -168,7 +177,7 @@ cleanup_resource() {
       if [ $? -ne 0 ]; then
          echo "Failed to delete resource pool=${OPSD_SCHED_PARAM}"
          check_running_status
-         return 4
+         return ${ERR_DELETE_RESOURCE}
       fi
    fi
 
@@ -184,7 +193,7 @@ check_running_status () {
    fi
 
    echo "${OPSD_TAG} is not running"
-   return 5
+   return ${ERR_NOT_RUNNING}
 }
 
 status() {
@@ -213,8 +222,10 @@ case $1 in
       stop
       ;;
     *)
-      echo "$1 unsupported"
+      if [ "$1" ]; then
+        echo "$1 unsupported"
+      fi
       echo "$0 start|stop|restart|status|kill"
-      exit 1
+      exit ${ERR_INVALID_PARAM}
       ;;
 esac

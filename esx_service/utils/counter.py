@@ -31,8 +31,7 @@ class Counter:
         '''
         Increment the counter with locking
         '''
-        with Counter._lock:
-            logging.debug("Before incr: counter.value=%d", self._value)
+        with self._lock:
             self._value += delta
             logging.debug("After incr: counter.value=%d", self._value)
 
@@ -40,8 +39,7 @@ class Counter:
         '''
         Decrement the counter with locking
         '''
-        with Counter._lock:
-            logging.debug("Before decr: counter.value=%d", self._value)
+        with self._lock:
             self._value -= delta
             logging.debug("After decr: counter.value=%d", self._value)
 
