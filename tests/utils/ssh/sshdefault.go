@@ -19,6 +19,7 @@
 package ssh
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,6 +39,12 @@ func InvokeCommand(ip, cmd string) (string, error) {
 	}
 	sshIdentity := []string{sshKeyOpt[0], sshKeyOpt[1], "-q", "-kTax", "-o StrictHostKeyChecking=no"}
 
+	log.Printf("CMD is :%s", cmd)
+
 	out, err := exec.Command("/usr/bin/ssh", append(sshIdentity, "root@"+ip, cmd)...).CombinedOutput()
+	log.Printf("OUT is :%s", out)
+	if err != nil {
+		log.Printf("ERR is :%s", err.Error())
+	}
 	return strings.TrimSpace(string(out[:])), err
 }
