@@ -46,8 +46,7 @@ endif
 
 # Allow these vars to be suplied in environment
 DOCKER_HUB_REPO ?= $(shell whoami)
-# "git tag + 1" , so "0.11" becomes "0.12"
-VERSION_TAG ?= $(shell echo $(GIT_TAG) | awk -F. '{printf ("%d.%d", $$1, $$2+1)}' )
+VERSION_TAG ?= $(GIT_TAG).$(GIT_SHA)
 EXTRA_TAG ?= -dev
 
 # final tag

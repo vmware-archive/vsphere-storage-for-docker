@@ -53,6 +53,9 @@ VFILE_MOUNTPOINT := vfile
 NAME ?= vSphere
 VFILE_NAME := vFile
 
+# Version
+VDVS_VERSION = $(PLUGIN_TAG)
+
 # Tmp docker image used to construct rootfs + our binaries
 TMP_IMAGE = $(PLUGIN_NAME):rootfs
 # Tmp container used for exporting rootfs from it
@@ -89,7 +92,7 @@ vfile-clean:
 plugin: clean
 	@echo "== building Docker image, unpacking to ./rootfs and creating plugin..."
 	cp $(DOCKERFILE) Dockerfile
-	sed 's/\%NAME\%/$(NAME)/g;s/\%BINARY\%/$(BINARY)/g;s/\%NETWORKTYPE\%/$(NETWORK)/g;s/\%SOCKTYPE\%/$(SOCKTYPE)/g;s/\%MOUNTPOINT\%/$(MOUNTPOINT)/g' config.json-template > config.json
+	sed 's/\%NAME\%/$(NAME)/g;s/\%BINARY\%/$(BINARY)/g;s/\%NETWORKTYPE\%/$(NETWORK)/g;s/\%SOCKTYPE\%/$(SOCKTYPE)/g;s/\%MOUNTPOINT\%/$(MOUNTPOINT)/g;s/\%VDVS_VERSION\%/$(VDVS_VERSION)/g' config.json-template > config.json
 	cp $(BIN)/$(BINARY) .
 	docker build -q -t $(TMP_IMAGE) .
 	docker create --name $(TMP_CONTAINER) $(TMP_IMAGE)

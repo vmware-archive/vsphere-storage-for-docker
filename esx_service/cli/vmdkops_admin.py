@@ -850,7 +850,7 @@ def status(args):
     result = []
     # version is extracted from localcli... slow...
     result.append({"=== Service": ""})
-    version = "?" if args.fast else str(get_version())
+    version = "?" if args.fast else str(vmdk_utils.get_version())
     result.append({"Version": version})
     (service_status, pid) = get_service_status()
     result.append({"Status": str(service_status)})
@@ -918,14 +918,6 @@ def get_listening_port(pid):
     except:
         return NOT_AVAILABLE
 
-def get_version():
-    """ Return the version of the installed VIB """
-    try:
-        cmd = 'localcli software vib list | grep esx-vmdkops-service'
-        version_str = subprocess.check_output(cmd, shell=True).split()[1]
-        return version_str.decode('utf-8')
-    except:
-        return NOT_AVAILABLE
 
 def tenant_ls_headers():
     """ Return column names for tenant ls command """

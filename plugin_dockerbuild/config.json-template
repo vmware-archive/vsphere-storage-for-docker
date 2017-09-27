@@ -54,6 +54,12 @@
 		"Settable": [ "value"]
 	},
 	{
+		"name": "VDVS_VERSION",
+		"description": "Release version of vDVS plugin",
+		"value": "%VDVS_VERSION%",
+		"Settable": [ "value"]
+	},
+	{
 		"name": "VDVS_TEST_PROTOCOL_VERSION",
 		"description": "Client protocol version used in test",
 		"value": "",

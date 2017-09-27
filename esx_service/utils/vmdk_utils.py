@@ -21,6 +21,7 @@ import glob
 import re
 import logging
 import fnmatch
+import subprocess
 
 from pyVim import vmconfig
 from pyVmomi import vim
@@ -70,6 +71,8 @@ VOLUME_ROOT = "/vmfs/volumes/"
 # For managing resource locks.
 lockManager = threadutils.LockManager()
 
+# vmdkops vib name
+VIB_NAME = "esx-vmdkops-service"
 
 def init_datastoreCache(force=False):
     """
@@ -497,6 +500,14 @@ def get_datastore_url_from_config_path(config_path):
                   % (config_path, config_ds_url))
     return config_ds_url
 
+def get_version():
+    """ Return the version of the installed VIB """
+    try:
+        cmd = 'localcli software vib list | grep ' + VIB_NAME
+        version_str = subprocess.check_output(cmd, shell=True).split()[1]
+        return version_str.decode('utf-8')
+    except:
+        return 'N/A'
 
 def main():
     log_config.configure()

@@ -27,6 +27,7 @@ package vmdk
 import (
 	"flag"
 	"fmt"
+	"os"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -39,7 +40,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 )
 
-const version = "vSphere Volume Driver v0.5"
+const version = "VDVS_VERSION"
 
 // VolumeDriver - VMDK driver struct
 type VolumeDriver struct {
@@ -81,7 +82,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 	d.MountIDtoName = make(map[string]string)
 
 	log.WithFields(log.Fields{
-		"version":  version,
+		"version":  os.Getenv(version),
 		"port":     vmdkops.EsxPort,
 		"mock_esx": *useMockEsx,
 	}).Info("Docker VMDK plugin started ")

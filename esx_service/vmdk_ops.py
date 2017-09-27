@@ -1832,7 +1832,8 @@ def usage():
 
 def main():
     log_config.configure()
-    logging.info("==== Starting vmdkops service pid=%d ====", os.getpid())
+    logging.info("==== Starting vmdkops service ====")
+    logging.info("Version: %s , Pid: %d", vmdk_utils.get_version(), os.getpid() )
     signal.signal(signal.SIGINT, signal_handler_stop)
     signal.signal(signal.SIGTERM, signal_handler_stop)
     try:

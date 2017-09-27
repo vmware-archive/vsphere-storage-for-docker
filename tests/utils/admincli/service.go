@@ -21,11 +21,16 @@ import (
 	"log"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
 // RestartVmdkopsService - restarts vmdkops service
 func RestartVmdkopsService(ip string) (string, error) {
 	log.Printf("Restarting vmdkops service on ESX host [%s]\n", ip)
-	return ssh.InvokeCommand(ip, admincli.RestartService)
+	out, err := ssh.InvokeCommand(ip, admincli.RestartService)
+
+	misc.SleepForSec(6)
+
+	return out, err
 }
