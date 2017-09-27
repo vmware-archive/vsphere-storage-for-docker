@@ -39,7 +39,7 @@ class OpsCounter:
             logging.debug("After incr: counter.value=%d", self._value)
 
             if self._event.is_set():
-                logging.debug("Clearing event")
+                logging.debug("Clearing counter event")
                 self._event.clear()
 
     def decr(self, delta = 1):
@@ -51,7 +51,7 @@ class OpsCounter:
             logging.debug("After decr: counter.value=%d", self._value)
 
             if (self._value == 0):
-                logging.debug("Setting event")
+                logging.debug("Setting counter event")
                 self._event.set()
 
     @property

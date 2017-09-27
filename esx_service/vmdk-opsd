@@ -128,7 +128,7 @@ stop() {
          sleep ${WAIT_KILL_SEC};
          echo "Waiting for operations in flight to complete, please do not interrupt..."
          if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
-            echo "Kill -${SIGTERM} failed to stop ${PID}"
+            echo "Kill -${SIGTERM} failed to stop ${PID}, keeps running without watchdog"
             break
          fi
       done
