@@ -24,11 +24,11 @@ class OpsCounter:
     A counter object that can be shared by multiple threads to
     keep track of the in-flight operations.
     '''
-    _lock = threading.RLock()
 
     def __init__(self, initial_value = 0):
         self._value = initial_value
         self._event = threading.Event()
+        self._lock = threading.RLock()
 
     def incr(self, delta = 1):
         '''

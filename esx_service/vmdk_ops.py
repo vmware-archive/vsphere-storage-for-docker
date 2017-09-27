@@ -1687,8 +1687,12 @@ def wait_ops_in_flight():
     if (eventReceived):
         logging.info("All in-flight operations are completed. Exiting...")
         sys.exit(0)
-    else:
-        logging.warn("In-flight operations are taking too long to complete - abandoning wait")
+
+    logging.warn("In-flight operations are taking too long to complete - abandoning wait")
+
+    # Reset the stop barrier to false
+    logging.debug("Resetting stop barrier to false")
+    stopBarrier = False
 
 def signal_handler_stop(signalnum, frame):
     global stopBarrier
