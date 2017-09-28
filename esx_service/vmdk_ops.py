@@ -78,6 +78,7 @@ sys.path.insert(0, PY_LOC)
 if sys.version_info.major == 2:
     sys.path.append(PY2_LOC)
 
+import threading
 import threadutils
 import log_config
 import volume_kv as kv
@@ -93,6 +94,7 @@ import error_code
 from error_code import ErrorCode
 from error_code import error_code_to_message
 import vm_listener
+import counter
 
 # Python version 3.5.1
 PYTHON64_VERSION = 50659824
@@ -137,6 +139,15 @@ lib = None
 
 # For managing resource locks.
 lockManager = threadutils.LockManager()
+
+# Barrier indicating whether stop has been requested
+stopBarrier = False
+
+# Counter of operations in flight
+opsCounter = counter.OpsCounter()
+
+# Timeout setting for waiting all in-flight ops drained
+WAIT_OPS_TIMEOUT = 20
 
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
@@ -1674,22 +1685,39 @@ def set_vol_opts(name, tenant_name, options):
 
     return False
 
-def msg_about_signal(signalnum, details="exiting"):
-    logging.warn("Received signal num: %d, %s.", signalnum, details)
-    logging.warn("Operations in flight will be terminated")
+def wait_ops_in_flight():
+    # Wait for the event indicating all in-flight ops are drained
+    eventReceived = opsCounter.wait(WAIT_OPS_TIMEOUT)
+    if (eventReceived):
+        logging.info("All in-flight operations are completed - exiting")
+        os.kill(os.getpid(), signal.SIGKILL) # kill the main process
+    else:
+        logging.warn("In-flight operations are taking too long to complete - abandoning wait")
 
 def signal_handler_stop(signalnum, frame):
-    msg_about_signal(signalnum, "exiting")
-    sys.exit(0)
+    global stopBarrier
+
+    logging.warn("Received signal num: %d - exiting", signalnum)
+
+    if (opsCounter.value == 0):
+        logging.info("No in-flight operations - exiting")
+        sys.exit(0)
+
+    # Set the stop barrier to true
+    logging.debug("Setting stop barrier to true")
+    stopBarrier = True
+
+    # Fire a thread to wait for ops in flight to drain
+    threadutils.start_new_thread(target=wait_ops_in_flight)
 
 def load_vmci():
-   global lib
+    global lib
 
-   logging.info("Loading VMCI server lib.")
-   if sys.hexversion >= PYTHON64_VERSION:
-       lib = CDLL(os.path.join(LIB_LOC64, "libvmci_srv.so"), use_errno=True)
-   else:
-       lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
+    logging.info("Loading VMCI server lib.")
+    if sys.hexversion >= PYTHON64_VERSION:
+        lib = CDLL(os.path.join(LIB_LOC64, "libvmci_srv.so"), use_errno=True)
+    else:
+        lib = CDLL(os.path.join(LIB_LOC, "libvmci_srv.so"), use_errno=True)
 
 
 def send_vmci_reply(client_socket, reply_string):
@@ -1760,6 +1788,8 @@ def execRequestThread(client_socket, cartel, request):
         logging.exception("Unhandled Exception:")
         reply_string = err("Server returned an error: {0}".format(repr(ex_thr)))
         send_vmci_reply(client_socket, reply_string)
+    finally:
+        opsCounter.decr()
 
 # code to grab/release VMCI listening socket
 g_vmci_listening_socket = None
@@ -1790,11 +1820,11 @@ def handleVmciRequests(port):
     cartel = c_int32()
     vmci_grab_listening_socket(port)
 
-
     while True:
+        # Listening on VMCI socket
+        logging.debug("lib.vmci_get_one_op: waiting for new request...")
         c = lib.vmci_get_one_op(g_vmci_listening_socket, byref(cartel), txt, c_int(bsize))
-        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'",
-                      c, txt.value)
+        logging.debug("lib.vmci_get_one_op returns %d, buffer '%s'", c, txt.value)
 
         errno = get_errno()
         if errno == ECONNABORTED:
@@ -1814,18 +1844,29 @@ def handleVmciRequests(port):
 
         client_socket = c # Bind to avoid race conditions.
 
+        # Check the stop barrier - if set, fail new incoming requests and exit the loop
+        if stopBarrier:
+            svc_stop_err = 'Service is being stopped: operation declined!'
+            logging.warning(svc_stop_err)
+            send_vmci_reply(client_socket, err(svc_stop_err))
+            continue
+
         if not get_si():
             svc_connect_err = 'Service is presently unavailable, ensure the ESXi Host Agent is running on this host'
             logging.warning(svc_connect_err)
             send_vmci_reply(client_socket, err(svc_connect_err))
             continue
 
+        opsCounter.incr()
+
         # Fire a thread to execute the request
         threadutils.start_new_thread(
             target=execRequestThread,
             args=(client_socket, cartel.value, txt.value))
 
-    vmci_release_listening_socket() # close listening socket when the loop is over
+    # Close listening socket when the loop is over
+    logging.info("Closing VMCI listening socket...")
+    vmci_release_listening_socket()
 
 def usage():
     print("Usage: %s -p <vSocket Port to listen on>" % sys.argv[0])
@@ -1865,7 +1906,6 @@ def main():
 
     except Exception as e:
         logging.exception(e)
-
 
 def getTaskList(prop_collector, tasks):
     # Create filter

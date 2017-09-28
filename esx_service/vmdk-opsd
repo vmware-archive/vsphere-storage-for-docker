@@ -7,6 +7,7 @@
 # This script supports:
 # * start   : Start the python based daemon
 # * stop    : Stop the python based daemon
+# * kill    : Kill the python based daemon
 # * restart : Stop and start the daemon.
 # * status  : status of the daemon
 #
@@ -48,6 +49,15 @@ NUM_RETRY=10
 WAIT_KILL_SEC=2
 WAIT_START_SEC=1
 
+ERR_INVALID_PARAM=1
+ERR_START_RUNNING=2
+ERR_START_FAILURE=3
+ERR_CREATE_RESOURCE=4
+ERR_DELETE_RESOURCE=5
+ERR_NOT_RUNNING=6
+ERR_STOP_SERVICE=7
+ERR_KILL_SERVICE=8
+
 getpid() {
    ps -uc| grep -v ${WATCHDOG}| grep -v grep | grep ${OPSD_BIN} | awk '{ print $1 }'
 }
@@ -61,8 +71,8 @@ start() {
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Failed to start. $OPSD_TAG already running."
-      exit 1
+      echo "Failed to start. ${OPSD_TAG} already running."
+      exit ${ERR_START_RUNNING}
    fi
 
    echo "Starting ${OPSD_TAG}"
@@ -72,7 +82,7 @@ start() {
       ${LOCAL_CLI_SCHED} add --group-name=${OPSD_GROUP_NAME} --parent-path=${OPSD_GROUP_PATH}
       if [ $? -ne 0 ]; then
          echo "Failed to create resource pool $?"
-         exit 2
+         exit ${ERR_CREATE_RESOURCE}
       fi
    fi
 
@@ -85,7 +95,7 @@ start() {
    setsid ${OPSD_SCHED_PARAM} ${WATCHDOG} -q ${MAX_QUICK_FAILURES} -d -s ${OPSD_TAG} -t ${MAX_RETRY} "${OPSD_BIN} ${OPSD_PARAMS}" > /dev/null 2>&1
    if [ $? -ne 0 ]; then
       echo "Failed to start ${OPSD_TAG}: $?"
-      exit 3
+      exit ${ERR_START_FAILURE}
    fi
 
    local wait=${NUM_RETRY}
@@ -110,34 +120,72 @@ stop() {
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Stopping $OPSD_TAG with PID=${PID}"
+      echo "Stopping ${OPSD_TAG} with PID=${PID}"
       kill -$SIGTERM ${PID}
+
       local COUNT=0
       while kill -0 ${PID} > /dev/null 2>&1; do
          sleep ${WAIT_KILL_SEC};
-         if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
-            echo "Sending kill -${SIGKILL} to ${PID} after kill -${SIGTERM} did not stop ${PID}"
-            kill -${SIGKILL} ${PID}
+         echo "Waiting for operations in flight to complete, please do not interrupt..."
+         COUNT=$((COUNT+1))
+         if [ ${COUNT} -gt ${NUM_RETRY} ]; then
+            echo "${OPSD_TAG} did not stop in a timely fashion"
             break
          fi
       done
+
+      if [ ${COUNT} -le ${NUM_RETRY} ]; then
+         cleanup_resource
+         if [ $? -ne 0 ]; then
+            exit $?
+         fi
+      fi
    fi
 
+
+
+   check_running_status
+   if [ $? -eq 0 ]; then
+      echo "Failed to stop ${OPSD_TAG}. Please try to force kill the process"
+      exit ${ERR_STOP_SERVICE}
+   fi
+   return 0
+}
+
+force_kill() {
+   ${WATCHDOG} -n -k ${OPSD_TAG}
+
+   local PID=$(getpid)
+   if [ -n "${PID}" ]; then
+      echo "Killing ${OPSD_TAG} with PID=${PID}"
+      kill -${SIGKILL} ${PID}
+   fi
+
+   cleanup_resource
+   if [ $? -ne 0 ]; then
+      exit $?
+   fi
+
+   check_running_status
+   if [ $? -eq 0 ]; then
+      echo "Failed to kill ${OPSD_TAG}"
+      exit ${ERR_KILL_SERVICE}
+   fi
+
+   return 0
+}
+
+cleanup_resource() {
    ${LOCAL_CLI_SCHED} list --group-path=${OPSD_GROUP} &> /dev/null
    if [ $? -eq 0 ]; then
       ${LOCAL_CLI_SCHED} delete --group-path=${OPSD_GROUP}
       if [ $? -ne 0 ]; then
          echo "Failed to delete resource pool=${OPSD_SCHED_PARAM}"
          check_running_status
-         exit 4
+         return ${ERR_DELETE_RESOURCE}
       fi
    fi
 
-   check_running_status
-   if [ $? -eq 0 ]; then
-      echo "Failed to stop $OPSD_TAG"
-      exit 5
-   fi
    return 0
 }
 
@@ -150,7 +198,7 @@ check_running_status () {
    fi
 
    echo "${OPSD_TAG} is not running"
-   return 6
+   return ${ERR_NOT_RUNNING}
 }
 
 status() {
@@ -165,6 +213,9 @@ case $1 in
    "stop")
       stop
       ;;
+   "kill")
+      force_kill
+      ;;
    "status")
       status
       ;;
@@ -176,8 +227,10 @@ case $1 in
       stop
       ;;
     *)
-      echo "$1 unsupported"
-      echo "$0 start|stop|status"
-      exit 1
+      if [ "$1" ]; then
+        echo "$1 unsupported"
+      fi
+      echo "$0 start|stop|restart|status|kill"
+      exit ${ERR_INVALID_PARAM}
       ;;
 esac
