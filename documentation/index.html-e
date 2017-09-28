@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Contact Us | vSphere Docker Volume Service</title>
+<title>vSphere Docker Volume Service | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -104,7 +104,7 @@
                 
                 
                 
-                <li class="active"><a href="contactus.html">Contact Us</a></li>
+                <li><a href="contactus.html">Contact Us</a></li>
                 
                 
                 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Contact Us">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="vSphere Docker Volume Service">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -379,7 +379,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Contact Us</h1>
+   <h1 class="post-title-main">vSphere Docker Volume Service</h1>
 </div>
 
 
@@ -416,17 +416,60 @@ $('#toc').on('click', 'a', function() {
 
     
 
-<a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/master/docs/external//contactus.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
+<a target="_blank" href="https://github.com/vmware/docker-volume-vsphere/edit/master/docs/external//.md" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
 
     
 
-  <p>You can reach us via:</p>
+  <p><img src="images/docker-cert.jpeg" alt="Image" /></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Containers have changed the way applications are packaged and deployed. Not only containers are efficient from infrastructure utilization point of view, they also provide strong isolation between process on same host. They are lightweight and once packaged can run anywhere. Docker is the most commonly used container runtime technology and this user guide outlines how vSphere is compatible with Docker ecosystem.</p>
+
+<h2 id="persistent-storage-in-container-world">Persistent Storage in Container World</h2>
+
+<p>Although it is relatively easy to run stateless Microservices using container technology, stateful applications require slightly different treatment. There are multiple factors which need to be considered when you think about handling persistent data using containers such as:</p>
 
 <ul>
-  <li>Email us at <a href="containers@vmware.com">containers@vmware.com</a></li>
-  <li>Ping us on <a href="https://vmwarecode.slack.com/messages/docker/">Docker channel</a> on VMware Code slack</li>
-  <li>Report issues and feature request on <a href="https://github.com/vmware/docker-volume-vsphere/issues">Github</a></li>
+  <li>Containers are ephemeral by nature, so the data that needs to be persisted has to survive through the restart/re-scheduling of a container.</li>
+  <li>When containers are re-scheduled, they can die on one host and might get scheduled on a different host. In such a case the storage should also be shifted and made available on new host for the container to start gracefully.</li>
+  <li>The application should not have to worry about the volume/data and underlying infrastructure should handle the complexity of unmounting and mounting etc.</li>
+  <li>Certain applications have a strong sense of identity (For example. Kafka, Elastic etc.) and the disk used by a container with certain identity is tied to it. It is important that if a container with a certain ID gets re-scheduled for some reason then the disk only associated with that ID is re-attached on a new host.</li>
 </ul>
+
+<h2 id="vsphere-docker-volume-service-vdvs">vSphere Docker Volume Service (vDVS)</h2>
+
+<p><img src="images/vSphereDatastore.jpg" alt="Image" /></p>
+
+<p>vSphere Docker Volume Service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. vDVS which works with proven storage technologies from VMWare and is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.</p>
+
+<p>Some of key features of vDVS are:</p>
+
+<ul>
+  <li><strong>Enterprise class storage</strong>: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc.</li>
+  <li><strong>Security &amp; RBAC</strong>: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.</li>
+  <li><strong>Simple to use</strong>: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.</li>
+  <li><strong>Docker Compatibility</strong>: vSphere Docker Volume Service is 100% Docker compatible and integrates with Docker Swarm to extend High Availability feature provided by Swarm</li>
+  <li><strong>Storage Policy Management</strong>: vSphere Docker Volume Service brings vSphere’s advanced storage feature like policy management to Docker ecosystem.</li>
+</ul>
+
+<p>This service is integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>. It does not need credential management or configuration management.</p>
+
+<p>vDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment</p>
+
+<h2 id="vfile-volume-plugin-for-docker">vFile volume plugin for Docker</h2>
+
+<p>vFile volume plugin for Docker provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as vDVS.
+vFile allows users to utilize vFile volumes with no extra configuration effort. The user experience of vFile volumes is the same as any other type of docker volumes.
+Furthermore, vFile volume plugin comes with high availability, scalability, and load balancing support.</p>
+
+<p>Same as vDVS, vFile volume plugin is also integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>.</p>
+
+<p>More details about the usage of vFile can be found at <a href="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/external/vfile-plugin.md">vFile userguide</a>.</p>
+
+<h2 id="documentation-version">Documentation Version</h2>
+
+<p>The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in <a href="https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs">jekyll-docs folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
 
   
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Running an Example App with Docker Stacks on vSphere volume | vSphere Docker Volume Service</title>
+<title>Deploy stack with Docker Stacks on vSphere volume | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Running an Example App with Docker Stacks on vSphere volume">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Deploy stack with Docker Stacks on vSphere volume">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -379,7 +379,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Running an Example App with Docker Stacks on vSphere volume</h1>
+   <h1 class="post-title-main">Deploy stack with Docker Stacks on vSphere volume</h1>
 </div>
 
 
@@ -579,6 +579,95 @@ Removing network vote_voteapp
 </code></pre>
 </div>
 
+<p>Before Docker 17.09-ce release, volume name specified in compose file cannot contain special character like “@”. With this limitation, user cannot specify volume with a fullname like “vol@datastore” in the compose file when using the vSphere driver. This limitation has been fixed in Docker 17.09-ce release and Docker compose 3.4. With this fix, user can specify volume with a fullname in the compose file with vSphere driver.  Please see the following example for detail:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>services:
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_vol:/var/lib/data
+    environment:
+      - "POSTGRES_PASSWORD=secretpass"
+      - "PGDATA=/var/lib/data/db"
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == worker
+volumes:
+   postgres_vol:
+      name: "postgres_vol@sharedVmfs-1"
+      driver: "vsphere"
+      driver_opts:
+        size: "1GB"
+</code></pre>
+</div>
+<p>The above YAML file can be used to deploy a PostGres service, the volume used in this service is created by vSphere driver, and the name of the volume can be specified with fullname format.</p>
+
+<p>Now, let us deploy the stack using this YAML file:
+<code class="highlighter-rouge">
+root@sc-rdops-vm02-dhcp-52-237:~# docker stack deploy -c postgres.yml postgres
+Creating network postgres_default
+Creating service postgres_postgres
+</code></p>
+
+<p>After stack deploy, volume “postgres_vol@sharedVmfs-1” has been created by vSphere driver as expected.
+```
+root@sc-rdops-vm02-dhcp-52-237:~# docker volume ls
+DRIVER              VOLUME NAME
+vsphere:latest      postgres_vol@sharedVmfs-1</p>
+
+<p>root@sc-rdops-vm02-dhcp-52-237:~# docker volume inspect postgres_vol@sharedVmfs-1
+[
+    {
+        “CreatedAt”: “0001-01-01T00:00:00Z”,
+        “Driver”: “vsphere:latest”,
+        “Labels”: null,
+        “Mountpoint”: “/mnt/vmdk/postgres_vol@sharedVmfs-1/”,
+        “Name”: “postgres_vol@sharedVmfs-1”,
+        “Options”: {},
+        “Scope”: “global”,
+        “Status”: {
+            “access”: “read-write”,
+            “attach-as”: “independent_persistent”,
+            “attached to VM”: “worker2-VM2.0”,
+            “attachedVMDevice”: {
+                “ControllerPciSlotNumber”: “160”,
+                “Unit”: “0”
+            },
+            “capacity”: {
+                “allocated”: “79MB”,
+                “size”: “1GB”
+            },
+            “clone-from”: “None”,
+            “created”: “Mon Sep 25 21:35:24 2017”,
+            “created by VM”: “worker2-VM2.0”,
+            “datastore”: “sharedVmfs-1”,
+            “diskformat”: “thin”,
+            “fstype”: “ext4”,
+            “status”: “attached”
+        }
+    }
+]
+```</p>
+
+<p>Wait for a while, check the service, and the service start running successfully.
+```
+root@sc-rdops-vm02-dhcp-52-237:~# docker service ps postgres_postgres
+ID                  NAME                  IMAGE               NODE                        DESIRED STATE       CURRENT STATE            ERROR               PORTS
+vcqjxzyz9ff5        postgres_postgres.1   postgres:latest     sc-rdops-vm02-dhcp-52-237   Running             Running 24 seconds ago</p>
+
+<p>root@sc-rdops-vm02-dhcp-52-237:~#
+root@sc-rdops-vm02-dhcp-52-237:~# docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+2y5d7jfsd6cu        postgres_postgres   replicated          1/1                 postgres:latest     *:5432-&gt;5432/tcp</p>
+
+<p>```</p>
+
+
   
 
     <div class="tags">
@@ -595,7 +684,7 @@ Removing network vote_voteapp
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Sep 18, 2017 <br />
+ Site last generated: Sep 27, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
