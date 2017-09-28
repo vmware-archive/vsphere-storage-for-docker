@@ -71,7 +71,7 @@ start() {
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Failed to start. $OPSD_TAG already running."
+      echo "Failed to start. ${OPSD_TAG} already running."
       exit ${ERR_START_RUNNING}
    fi
 
@@ -120,28 +120,33 @@ stop() {
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Stopping $OPSD_TAG with PID=${PID}"
+      echo "Stopping ${OPSD_TAG} with PID=${PID}"
       kill -$SIGTERM ${PID}
 
       local COUNT=0
       while kill -0 ${PID} > /dev/null 2>&1; do
          sleep ${WAIT_KILL_SEC};
          echo "Waiting for operations in flight to complete, please do not interrupt..."
-         if [ $((COUNT++)) -gt ${NUM_RETRY} ]; then
-            echo "Kill -${SIGTERM} failed to stop ${PID}, keeps running without watchdog"
+         COUNT=$((COUNT+1))
+         if [ ${COUNT} -gt ${NUM_RETRY} ]; then
+            echo "${OPSD_TAG} did not stop in a timely fashion"
             break
          fi
       done
+
+      if [ ${COUNT} -le ${NUM_RETRY} ]; then
+         cleanup_resource
+         if [ $? -ne 0 ]; then
+            exit $?
+         fi
+      fi
    fi
 
-   cleanup_resource
-   if [ $? -ne 0 ]; then
-      exit $?
-   fi
+
 
    check_running_status
    if [ $? -eq 0 ]; then
-      echo "Failed to stop $OPSD_TAG. Please try to force kill the process"
+      echo "Failed to stop ${OPSD_TAG}. Please try to force kill the process"
       exit ${ERR_STOP_SERVICE}
    fi
    return 0
@@ -152,7 +157,7 @@ force_kill() {
 
    local PID=$(getpid)
    if [ -n "${PID}" ]; then
-      echo "Killing $OPSD_TAG with PID=${PID}"
+      echo "Killing ${OPSD_TAG} with PID=${PID}"
       kill -${SIGKILL} ${PID}
    fi
 
@@ -163,7 +168,7 @@ force_kill() {
 
    check_running_status
    if [ $? -eq 0 ]; then
-      echo "Failed to kill $OPSD_TAG"
+      echo "Failed to kill ${OPSD_TAG}"
       exit ${ERR_KILL_SERVICE}
    fi
 

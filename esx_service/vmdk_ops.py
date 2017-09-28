@@ -1685,14 +1685,10 @@ def wait_ops_in_flight():
     # Wait for the event indicating all in-flight ops are drained
     eventReceived = opsCounter.wait(WAIT_OPS_TIMEOUT)
     if (eventReceived):
-        logging.info("All in-flight operations are completed. Exiting...")
-        sys.exit(0)
-
-    logging.warn("In-flight operations are taking too long to complete - abandoning wait")
-
-    # Reset the stop barrier to false
-    logging.debug("Resetting stop barrier to false")
-    stopBarrier = False
+        logging.info("All in-flight operations are completed - exiting")
+        os.kill(os.getpid(), signal.SIGKILL) # kill the main process
+    else:
+        logging.warn("In-flight operations are taking too long to complete - abandoning wait")
 
 def signal_handler_stop(signalnum, frame):
     global stopBarrier
@@ -1700,7 +1696,7 @@ def signal_handler_stop(signalnum, frame):
     logging.warn("Received signal num: %d - exiting", signalnum)
 
     if (opsCounter.value == 0):
-        logging.info("No in-flight operations. Exiting...")
+        logging.info("No in-flight operations - exiting")
         sys.exit(0)
 
     # Set the stop barrier to true
@@ -1821,11 +1817,6 @@ def handleVmciRequests(port):
     vmci_grab_listening_socket(port)
 
     while True:
-        # Check the stop barrier - if set, exit the loop
-        if stopBarrier:
-            logging.info("The service is being stopped and does not accept client requests")
-            break;
-
         # Listening on VMCI socket
         logging.debug("lib.vmci_get_one_op: waiting for new request...")
         c = lib.vmci_get_one_op(g_vmci_listening_socket, byref(cartel), txt, c_int(bsize))
@@ -1854,7 +1845,7 @@ def handleVmciRequests(port):
             svc_stop_err = 'Service is being stopped: operation declined!'
             logging.warning(svc_stop_err)
             send_vmci_reply(client_socket, err(svc_stop_err))
-            break
+            continue
 
         if not get_si():
             svc_connect_err = 'Service is presently unavailable, ensure the ESXi Host Agent is running on this host'
