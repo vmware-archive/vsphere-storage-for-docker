@@ -6,7 +6,7 @@ This section enumerates the prerequisites like environments, packages required t
 
 ## vSphere Environment
 
-vSphere Docker Volume Service can be used with vSphere environment.
+vSphere Docker Volume Service can be used with vSphere environment. You will need ESXi version **6.0 or above**.
 
 ## vSphere Docker Volume Service
 On all the machines where you want to operate vDVS, you will need docker-engine installed. You can get the installable specific to your OS form Docker website.
