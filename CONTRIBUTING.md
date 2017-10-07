@@ -240,6 +240,7 @@ Use following information to setup Windows VM in order to contribute towards vDV
 2. Create a user named root.
 
 3. Ensure that "NT SERVICE\sshd" user has full access to C:\Users\root\.ssh and C:\Users\root\.ssh\authorized_keys
+
     a. Right click on C:\Users\root\.ssh[\authorized_keys], goto properties.
     b. Goto the Security tab > Edit > Add
     c. Enter "NT SERVICE\sshd" without quotes and hit OK.
@@ -252,8 +253,8 @@ Use following information to setup Windows VM in order to contribute towards vDV
 
 Add a multi-string key named Environment and add the following lines to it.
 
-GOPATH=C:\Users\root\go\
-PATH=C:\Program Files\mingw64\bin\;C:\Perl64\bin;C:\Python27;C:\Program Files (x86)\GnuWin32\bin;C:\Program Files\7-Zip;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Go\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\Docker;
+    GOPATH=C:\Users\root\go\
+    PATH=C:\Program Files\mingw64\bin\;C:\Perl64\bin;C:\Python27;C:\Program Files (x86)\GnuWin32\bin;C:\Program Files\7-Zip;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Go\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\Docker;
 ```
 
 ## Managing GO Dependencies
