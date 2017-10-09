@@ -839,7 +839,7 @@ class VmdkTenantTestCase(unittest.TestCase):
             self.assertEqual(len(result), 2)
             self.assertEqual(self.default_tenant_vol1_name + "@" + self.datastore_name, result[0]['Name'])
             self.assertEqual(self.default_tenant_vol2_name + "@" + self.datastore1_name, result[1]['Name'])
-            
+
             # deleting the volume "default_tenant_vol2"
             default_tenant_path = os.path.join(self.datastore1_path, auth_data_const.DEFAULT_TENANT_UUID)
             vmdk_path = vmdk_utils.get_vmdk_path(default_tenant_path, self.default_tenant_vol2_name)
@@ -887,6 +887,19 @@ class VmdkTenantTestCase(unittest.TestCase):
         # cannot remove it
         error_info = auth_api._tenant_access_rm(auth_data_const.DEFAULT_TENANT, auth_data_const.VM_DS)
         self.assertNotEqual(None, error_info)
+
+        # try to remove DEFAULT tenant with volumes in it, should fail
+        error_info = auth_api._tenant_rm(auth_data_const.DEFAULT_TENANT, False)
+        self.assertNotEqual(None, error_info)
+
+        # remove all volumes in default tenant
+        opts = {}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_REMOVE, self.default_tenant_vol1_name, opts)
+        self.assertEqual(None, error_info)
+
+        opts = {}
+        error_info = vmdk_ops.executeRequest(vm1_uuid, self.vm1_name, self.vm1_config_path, auth.CMD_REMOVE, self.default_tenant_vol3_name, opts)
+        self.assertEqual(None, error_info)
 
         # remove DEFAULT tenant, and run create command, which should fail
         error_info = auth_api._tenant_rm(auth_data_const.DEFAULT_TENANT, False)
