@@ -359,15 +359,7 @@ func (e *EtcdKVS) serviceAndVolumeGC(cli *etcdClient.Client) {
 			if err != nil {
 				log.Warningf("Failed to get vFile volumes according to docker services")
 			} else {
-				e.cleanOrphanServiceAndVolume(volumesToVerify, true)
-			}
-
-			// find all the internal volumes for vFile volume
-			volumesToVerify, err = e.dockerOps.ListVolumesFromInternalVol()
-			if err != nil {
-				log.Warningf("Failed to get internal volumes from docker")
-			} else {
-				e.cleanOrphanServiceAndVolume(volumesToVerify, false)
+				e.cleanOrphanService(volumesToVerify)
 			}
 		case <-quit:
 			ticker.Stop()
@@ -376,16 +368,8 @@ func (e *EtcdKVS) serviceAndVolumeGC(cli *etcdClient.Client) {
 	}
 }
 
-// trimVolName: trim the volume name if there is special split characters existing in the name
-func trimVolName(volName string) string {
-	// Currently we only take @ as the split character
-	// TODO: need to take care of volumes with same name but on different datastores
-	s := strings.Split(volName, "@")
-	return s[0]
-}
-
-// cleanOrphanServiceAndVolume: stop orphan services and delete orphan internal volumes
-func (e *EtcdKVS) cleanOrphanServiceAndVolume(volumesToVerify []string, stopService bool) {
+// cleanOrphanService: stop orphan services
+func (e *EtcdKVS) cleanOrphanService(volumesToVerify []string) {
 	volStates, err := e.kvMapFromPrefix(string(kvstore.VolPrefixState))
 	if err != nil {
 		// if ETCD is not functionaing correctly, stop and return
@@ -394,17 +378,11 @@ func (e *EtcdKVS) cleanOrphanServiceAndVolume(volumesToVerify []string, stopServ
 	}
 
 	for _, volName := range volumesToVerify {
-		volName = trimVolName(volName)
 		state, found := volStates[string(kvstore.VolPrefixState)+volName]
 		if !found ||
 			state == string(kvstore.VolStateDeleting) {
-			if stopService {
-				log.Warningf("The service for vFile volume %s needs to be shutdown.", volName)
-				e.dockerOps.StopSMBServer(volName)
-			}
-
-			log.Warningf("The internal volume of vFile volume %s needs to be removed.", volName)
-			e.dockerOps.DeleteInternalVolume(volName)
+			log.Warningf("The service for vFile volume %s needs to be shutdown.", volName)
+			e.dockerOps.StopSMBServer(volName)
 		}
 	}
 }
