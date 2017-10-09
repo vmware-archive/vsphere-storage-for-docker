@@ -216,6 +216,47 @@ This is done to make sure CI still passes.
 * Then merge the PR.
 * With any questions/issues about the steps, telegram to cna-storage
 
+## Windows plugin contribution guidelines
+
+Use following information to setup Windows VM in order to contribute towards vDVS plugin for Windows.
+
+### To configure a Windows VM
+1. Create/Deploy Windows 2016 Server or Windows 10 OS VM.
+2. Install Docker by following instructions mentioned [here](https://docs.docker.com/engine/installation/windows/docker-ee/#install-docker-ee).
+3. Install Go from [here](https://golang.org/dl/).
+4. Install [Git for Windows](https://git-scm.com/download/win).
+5. Install [MSVC 2015 Build Tools](http://landinghub.visualstudio.com/visual-cpp-build-tools).
+6. Download [MinGW-W64](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/7.1.0/threads-posix/seh/x86_64-7.1.0-release-posix-seh-rt_v5-rev0.7z/download), and extract it to the `C:\Program Files\MinGW-W64\` directory.
+7. Add MinGW-W64 bin directory to the %PATH% environment variable.
+8. Install [Open-SSH](https://winscp.net/eng/docs/guide_windows_openssh_server).
+```
+1. Update C:\Program Files\OpenSSH-Win64\sshd_config and set the following parameters.
+
+    a. PermitRootLogin yes
+    b. StrictModes no
+    c. RSAAuthentication yes
+    d. PubkeyAuthentication yes
+
+2. Create a user named root.
+
+3. Ensure that "NT SERVICE\sshd" user has full access to C:\Users\root\.ssh and C:\Users\root\.ssh\authorized_keys
+
+    a. Right click on C:\Users\root\.ssh[\authorized_keys], goto properties.
+    b. Goto the Security tab > Edit > Add
+    c. Enter "NT SERVICE\sshd" without quotes and hit OK.
+    d. Select sshd, check Full control and hit OK.
+```
+9. Open `regedit.exe` and edit the following keys.
+```
+    a. HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ssh-agent
+    b. HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\sshd
+
+Add a multi-string key named Environment and add the following lines to it.
+
+    GOPATH=C:\Users\root\go\
+    PATH=C:\Program Files\mingw64\bin\;C:\Perl64\bin;C:\Python27;C:\Program Files (x86)\GnuWin32\bin;C:\Program Files\7-Zip;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Go\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\Docker;
+```
+
 ## Managing GO Dependencies
 
 Use [gvt](https://github.com/FiloSottile/gvt) and check in the dependency.
