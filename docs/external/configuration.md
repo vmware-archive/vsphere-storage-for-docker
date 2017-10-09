@@ -52,7 +52,7 @@ The configurations used by a driver while performing operations are read from a 
 
 ## Plugin Configuration
 
-The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations. The default location where it looks for plugin config is at /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing --config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.
+The configuration for  Docker volume plugin can be provided via a JSON formatted configuration file and on the command line (only when the plugin is manually executed vs. as a managed plugin by docker). The plugin can be provided the driver type (which must be set to be "vsphere" (default)), log configuration and the group-id used to create the plugin socket file. The log configuration includes the log level and the location where the log file is located. The configuration file is by default located at /etc/docker-volume-vsphere.conf. The configuration file to use can also be specified by providing the --config option and the full path to the file. Finally the parameters passed on the commandline override those read from the configuration file.
 
 ```
 {
@@ -60,8 +60,11 @@ The configuration for  Docker volume plugin require the driver type which can be
     "MaxLogAgeDays": 28,
     "MaxLogSizeMb": 100,
     "LogPath": "/var/log/docker-volume-vsphere.log",
-    "LogLevel": "info"
+    "LogLevel": "info",
+    "GroupID": "root"  (default or alternatively use "docker" as the group ID)
 }
+
+The group ID is "root" by default and works fine with most Linux OS based Docker hosts, the alternative to use "docker" as the group ID is needed for coreOS hosts.
 ```
 <table class="table table-striped table-hover ">
   <thead>

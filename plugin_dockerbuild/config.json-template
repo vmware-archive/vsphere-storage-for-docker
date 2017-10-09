@@ -70,7 +70,14 @@
 		"description": "Timeout value in second used by vFILE plugin",
 		"value": "",
 		"Settable": [ "value"]
+	},
+	{
+		"name": "VDVS_SOCKET_GID",
+		"description": "Group ID of the socket file for the plugin",
+		"value": "root",
+		"Settable": [ "value"]
 	}
+
 	]
 }
 
