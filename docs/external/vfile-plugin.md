@@ -121,6 +121,9 @@ Please see README.md in the for the release by clicking on the tag for the relea
 ### Can I use another base volume plugin other than vDVS?
 Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.
 
+### Can I use default driver for local volumes as a base volume plugin?
+No, this is not supported by vFile plugin.
+
 ### I got "Operation now in progress" error when mounting a vFile volume to a container.
 Please make sure the routing mesh of Docker Swarm cluster is working properly.
 Use the following way to verify:
@@ -150,6 +153,29 @@ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest 
 
 This will increase timeout to 90 sec, from default of 30 sec.
 
+### Volume mount failed, retry mount with the same volume still failed.
+Check the "Volume Status" field of ``` docker volume inspect ```, if the "Volume Status" field shows "Error", which means volume is in error status, user should remove the volume manually.
+```
+docker volume inspect vol1
+[
+    {
+        "Driver": "vfile:latest",
+        "Labels": {},
+        "Mountpoint": "/mnt/vfile/vol1/",
+        "Name": "vol1",
+        "Options": {},
+        "Scope": "global",
+        "Status": {
+            "Clients": null,
+            "File server Port": 0,
+            "Global Refcount": 0,
+            "Service name": "",
+            "Volume Status": "Error"
+        }
+    }
+]
+```
+
 
 ### I got "docker volume ls" operation very slow and "docker volume rm/create" a vFile volume hang forever
 Please check the log at `/var/log/vfile.log` and look up if there are error message about swarm status as follow:
@@ -161,3 +187,29 @@ Please follow the following [recommendations for the Swarm manager nodes setup](
     1. Run the swarm cluster with a single manager only for testing purpose.
     2. An `N` manager cluster will tolerate the loss of at most `(N-1)/2` managers.
     3. Docker recommends a maximum of seven manager nodes for a swarm.
+
+
+### Does vFile plugin support multi-tenancy feature?
+No. vFile plugin does not support multi-tenency, which is currently an experimental feature for vDVS.
+Assume we have created a vmgroup ```vmgroup1``` and add VM "node1" to ```vmgroup1```. VM "node2" has not been added to any vmgroup and is considered belong to ```_DEFAULT``` vmgroup.
+Then create a volume "vol1" from "node2" and a volume "vol2" from "node1" using vFile plugin.
+
+On "node1", we are able to see both "vol1" and "vol2" which are created by vFile plugin.
+```
+vmware@ubuntu16:~$ docker volume ls
+DRIVER              VOLUME NAME
+vsphere:latest      _vF_vol2@vsanDatastore
+vfile:latest        vol1
+vfile:latest        vol2
+
+```
+
+On "node2", we are also able to see both "vol1" and "vol2".
+```
+vmware@ubuntu16:~$ docker volume ls
+DRIVER              VOLUME NAME
+vsphere:latest      _vF_vol1@vsanDatastore
+vfile:latest        vol1
+vfile:latest        vol2
+
+```
