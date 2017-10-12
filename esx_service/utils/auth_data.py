@@ -1179,7 +1179,7 @@ class AuthorizationDataManager:
 
         return None
 
-    def __remove_volumes_for_tenant(self, tenant_id):
+    def __remove_volumes_for_tenant(self, tenant_id, remove_volumes):
         """ Delete all volumes belongs to this tenant.
 
             Do not use it outside of removing a tenant.
@@ -1199,6 +1199,13 @@ class AuthorizationDataManager:
             logging.debug("remove_volumes_for_tenant: %s %s", tenant_id, result)
             tenant_name = result[0]
             vmdks = vmdk_utils.get_volumes(tenant_name)
+
+            # If volums exist for the tenant but user doesn't want to delete
+            # them then fail the tenant removal.
+            if vmdks and remove_volumes == False:
+                error_msg = "The vmgroup has volumes in it, these must be removed/migrated before deleting the vmgroup."
+                return error_msg
+
             # Delete all volumes for this tenant.
             dir_paths = set()
             for vmdk in vmdks:
@@ -1255,14 +1262,9 @@ class AuthorizationDataManager:
         if self.allow_all_access():
             return self.err_config_init_needed()
 
-        if remove_volumes:
-            error_msg = self.__remove_volumes_for_tenant(tenant_id)
-            if error_msg:
-                return error_msg
-        else:
-            error_msg = self.remove_symlink_for_tenant(tenant_id)
-            if error_msg:
-                return error_msg
+        error_msg = self.__remove_volumes_for_tenant(tenant_id, remove_volumes)
+        if error_msg:
+            return error_msg
 
         try:
             self.conn.execute(

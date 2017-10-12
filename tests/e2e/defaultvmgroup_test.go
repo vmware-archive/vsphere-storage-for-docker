@@ -116,7 +116,6 @@ func (s *DefaultVMGroupTestSuite) TestReplaceDefaultTenantVMs(c *C) {
 // 8. Verify volume from esx and docker host
 func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	misc.LogTestStart(c.TestName())
-	nullVmgroup := "N/A"
 	noVgErrorMsg := "VolumeDriver.Create: VM " + s.config.DockerHostNames[0] + " does not belong to any vmgroup"
 
 	// Verify default vmgroup is present
@@ -136,7 +135,7 @@ func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	c.Assert(isVolInVmgroup, Equals, true, Commentf("Volume [%s] does not belong to vmgroup [%s]", admincliconst.DefaultVMgroup, s.volumeNames[0]))
 
 	// Delete default vmgroup and verify it does not exist
-	admincli.DeleteVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup, false)
+	admincli.DeleteVMgroup(s.config.EsxHost, admincliconst.DefaultVMgroup, true)
 
 	isVmgroupAvailable = admincli.IsVmgroupPresent(s.config.EsxHost, admincliconst.DefaultVMgroup)
 	c.Assert(isVmgroupAvailable, Equals, false, Commentf("Failed to delete vmgroup %s .", admincliconst.DefaultVMgroup))
@@ -146,10 +145,6 @@ func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	c.Assert(err, Not(IsNil), Commentf(out))
 	c.Assert(strings.Contains(out, noVgErrorMsg), Equals, true, Commentf(out))
 
-	// Verify existing volume - volumeName1 does not belong to any vmgroup (N/A)
-	isVolInVmgroup = admincli.IsVolumeExistInVmgroup(s.config.EsxHost, nullVmgroup, s.volumeNames[0])
-	c.Assert(isVolInVmgroup, Equals, true, Commentf("Unexpected Behavior: Vmgroup for volume [%s] is not N/A. ", s.volumeNames[0]))
-
 	isVmgroupAvailable = admincli.CreateDefaultVmgroup(s.config.EsxHost)
 	c.Assert(isVmgroupAvailable, Equals, true, Commentf("Failed to create vmgroup %s .", admincliconst.DefaultVMgroup))
 
@@ -157,8 +152,14 @@ func (s *DefaultVMGroupTestSuite) TestDeleteDefaultVmgroup(c *C) {
 	out, err = dockercli.CreateVolume(s.config.DockerHosts[0], s.volumeNames[1])
 	c.Assert(err, IsNil, Commentf(out))
 
+	out, err = dockercli.CreateVolume(s.config.DockerHosts[0], s.volumeNames[0])
+	c.Assert(err, IsNil, Commentf(out))
+
 	// Check if volume was successfully created
 	isAvailable = verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeNames[1])
+	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", s.volumeNames[1]))
+
+	isAvailable = verification.CheckVolumeAvailability(s.config.DockerHosts[0], s.volumeNames[0])
 	c.Assert(isAvailable, Equals, true, Commentf("Volume %s is not available after creation", s.volumeNames[1]))
 
 	// Check volumes now again belong to default vmgroup
