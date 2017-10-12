@@ -42,6 +42,9 @@ const (
 	// DefaultPort is the default ESX service port.
 	DefaultPort = 1019
 
+	// Default group ID to use for the socket file
+	DefaultGroupID = "root"
+
 	// Local constants
 	defaultMaxLogSizeMb  = 100
 	defaultMaxLogAgeDays = 28
@@ -59,6 +62,7 @@ type Config struct {
 	Target         string `json:",omitempty"`
 	Project        string `json:",omitempty"`
 	Host           string `json:",omitempty"`
+	GroupID        string `json:",omitempty"`
 }
 
 // LogInfo stores parameters for setting up logs
@@ -68,6 +72,8 @@ type LogInfo struct {
 	DefaultLogFile string
 	ConfigFile     *string
 }
+
+var config Config
 
 // Load the configuration from a file and return a Config.
 func Load(path string) (Config, error) {
@@ -147,6 +153,8 @@ func LogInit(logInfo *LogInfo) bool {
 // InitConfig set up driver specific options
 func InitConfig(defaultConfigPath string, defaultLogPath string, defaultDriver string,
 	defaultWindowsDriver string) (Config, error) {
+	var err error
+
 	// Get options from ENV (where available), and from command line.
 	// ENV takes precedence, so we can modify it in Docker plugin install
 	logEnv := os.Getenv("VDVS_LOG_LEVEL")
@@ -156,11 +164,12 @@ func InitConfig(defaultConfigPath string, defaultLogPath string, defaultDriver s
 	}
 	configFile := flag.String("config", defaultConfigPath, "Configuration file path")
 	driverName := flag.String("driver", "", "Volume driver")
+	groupId := flag.String("group", "", "Plugin socket group id")
 
 	flag.Parse()
 
 	// Load the configuration if one was provided.
-	c, err := Load(*configFile)
+	config, err = Load(*configFile)
 	if err != nil {
 		log.Warningf("Failed to load config file %s: %v", *configFile, err)
 	}
@@ -173,36 +182,53 @@ func InitConfig(defaultConfigPath string, defaultLogPath string, defaultDriver s
 	}
 	LogInit(logInfo)
 
-	// If no driver provided on the command line, use the one in the
-	// config file or the default.
+	// If no driver provided on the command line,
+	// then use the one in the config file or lastly the default.
 	if *driverName != "" {
-		c.Driver = *driverName
-	} else if c.Driver == "" {
-		c.Driver = defaultDriver
+		config.Driver = *driverName
+	} else if config.Driver == "" {
+		config.Driver = defaultDriver
 	}
 
 	// If we couldn't read it from config file, set it
 	// to a default value. We will check the CLI param in
 	// our own driver code.
-	if c.InternalDriver == "" {
-		c.InternalDriver = VSphereDriver
+	if config.InternalDriver == "" {
+		config.InternalDriver = VSphereDriver
 	}
 
 	// The windows plugin only supports the vsphere driver.
-	if runtime.GOOS == "windows" && c.Driver != defaultWindowsDriver {
+	if runtime.GOOS == "windows" && config.Driver != defaultWindowsDriver {
 		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
-			defaultWindowsDriver, c.Driver)
+			defaultWindowsDriver, config.Driver)
 		log.Warning(msg)
 		fmt.Println(msg)
-		c.Driver = defaultWindowsDriver
+		config.Driver = defaultWindowsDriver
+	}
+
+	// If no driver provided on the command line, use the one in the
+	// environment and if thats not available then the one in the
+	// config file or lastly the default.
+	envGid := os.Getenv("VDVS_SOCKET_GID")
+	if *groupId != "" {
+		config.GroupID = *groupId
+	} else if envGid != "" {
+		config.GroupID = envGid
+	} else if config.GroupID == "" {
+		config.GroupID = DefaultGroupID
 	}
 
 	log.WithFields(log.Fields{
-		"driver":    c.Driver,
+		"driver":    config.Driver,
 		"log_level": *logLevel,
 		"config":    *configFile,
+		"group":     config.GroupID,
 	}).Info("Starting plugin ")
 
-	return c, nil
+	return config, nil
 
+}
+
+func GetConfig() Config {
+	return config
 }

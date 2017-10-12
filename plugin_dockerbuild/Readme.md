@@ -31,3 +31,7 @@ However, you can change the log level by passing `VDVS_LOG_LEVEL` key to `docker
  docker plugin install --grant-all-permissions \
    cnastorage/docker-volume-vsphere:0.12  VDVS_LOG_LEVEL=debug
  ```
+
+#### Socket group ID
+
+The group ID to use when creating the socket file (used to field requests) can be specified via an env. variable "VDVS_SOCKET_GID", either when installing the plugin or later via docker plugin <plugin-id> set "VDVS_SOCKET_GID=<group ID>".

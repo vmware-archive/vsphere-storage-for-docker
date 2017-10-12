@@ -23,6 +23,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 )
 
 // Unix sock for the plugin is maintained here
@@ -59,7 +60,8 @@ func (s *SockPluginServer) Init() {
 		"address": s.sockAddr,
 	}).Info("Going into ServeUnix - Listening on Unix socket ")
 
-	log.Info(handler.ServeUnix("root", s.sockAddr))
+	c := config.GetConfig()
+	log.Info(handler.ServeUnix(c.GroupID, s.sockAddr))
 }
 
 // Destroy removes the Docker plugin sock.

@@ -68,9 +68,11 @@ journalctl -fu docker.service # Journalctl/Systemd
 
    - **Managed plugin user**: You can change the log level by passing `VDVS_LOG_LEVEL` key to `docker plugin install`.
 
+   - **Managed plugin user**: Set the group ID to use for the plugin socket file via the VDVS_SOCKET_GID env. variable.
+
       e.g.
       ```
-      docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug
+      docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug VDVS_SOCKET_GID=<group name>
       ```
 
 **vDVS Driver logs**
