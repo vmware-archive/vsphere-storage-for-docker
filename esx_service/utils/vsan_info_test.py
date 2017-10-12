@@ -32,7 +32,7 @@ class TestVsanInfo(unittest.TestCase):
     """ Test VSAN Info API """
 
     VM_NAME = "test-vm"
-    VSAN_DS = "/vmfs/volumes/vsandatastore"
+    VSAN_DS = "/vmfs/volumes/"+vsan_info.get_vsan_datastore().info.name
     TEST_DIR = os.path.join(VSAN_DS, "vsan_info_test")
     TEST_VOL = "test_policy_vol"
     VMDK_PATH = os.path.join(TEST_DIR, TEST_VOL + ".vmdk")
@@ -48,6 +48,7 @@ class TestVsanInfo(unittest.TestCase):
     def setUp(self):
         """create a vmdk before each test (method) in this class"""
         si = vmdk_ops.get_si()
+
         # create VMDK
         err = vmdk_ops.createVMDK(vmdk_path=self.VMDK_PATH,
                                   vm_name=self.VM_NAME,
