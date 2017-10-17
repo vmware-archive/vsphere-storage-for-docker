@@ -84,7 +84,6 @@ type VolumeDriver struct {
    password:        Local Samba username and password
 	            Only default values for now, later can be used
                     for multi tenancy.
-   clientList:      List of all host VMs using this vFile volume
 */
 
 // VolumeMetadata - Contains metadata of vFile volumes
@@ -95,7 +94,6 @@ type VolumeMetadata struct {
 	ServiceName    string            `json:"serviceName,omitempty"`
 	Username       string            `json:"username,omitempty"`
 	Password       string            `json:"password,omitempty"`
-	ClientList     []string          `json:"clientList,omitempty"`
 }
 
 // NewVolumeDriver creates driver instance
@@ -195,6 +193,21 @@ func (d *VolumeDriver) List(r volume.Request) volume.Response {
 	return volume.Response{Volumes: responseVolumes}
 }
 
+// GetClientList - return client list which is mounted to volume
+func (d *VolumeDriver) GetClientList(name string) []string {
+	clientListMap, err := d.kvStore.KvMapFromPrefix(kvstore.VolPrefixClient + name)
+	var clientList []string
+	if err != nil {
+		log.Warnf("Failed to get client list for %s", name)
+		return clientList
+	}
+	for key, vmIP := range clientListMap {
+		clientList = append(clientList, vmIP)
+		log.Infof("GetClientList key=%s IP=%s", key, vmIP)
+	}
+	return clientList
+}
+
 // GetVolume - return volume meta-data.
 func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	var statusMap map[string]interface{}
@@ -232,7 +245,7 @@ func (d *VolumeDriver) GetVolume(name string) (map[string]interface{}, error) {
 	}
 	statusMap["File server Port"] = volRecord.Port
 	statusMap["Service name"] = volRecord.ServiceName
-	statusMap["Clients"] = volRecord.ClientList
+	statusMap["Clients"] = d.GetClientList(name)
 
 	return statusMap, nil
 }
@@ -401,7 +414,7 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 
 			msg = fmt.Sprintf("Remove failed: volume state is Mounted.")
 			msg += fmt.Sprintf(" Host VMs using this volume: %s",
-				strings.Join(volRecord.ClientList, ","))
+				strings.Join(d.GetClientList(r.Name), ","))
 			log.Errorf(msg)
 			return volume.Response{Err: msg}
 		default:
@@ -494,6 +507,33 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	return volume.Response{Mountpoint: mountpoint}
 }
 
+func (d *VolumeDriver) addVMToClientList(volName string, nodeID string, vmIP string) error {
+	log.Infof("Add VM[%s] with ID[%s] to ClientList for volume[%s]", vmIP, nodeID, volName)
+	var entries []kvstore.KvPair
+	clientKey := kvstore.VolPrefixClient + volName + "_" + nodeID
+	entries = append(entries, kvstore.KvPair{Key: clientKey, Value: vmIP})
+	err := d.kvStore.WriteMetaData(entries)
+	if err != nil {
+		// Failed to write metadata.
+		log.Warningf("Failed to add ClientList[%] on node[%s] for volume %s",
+			vmIP, nodeID, volName)
+		return err
+	}
+	return nil
+}
+
+func (d *VolumeDriver) removeVMFromClientList(volName string, nodeID string, vmIP string) error {
+	log.Infof("Remove VM[%s] with ID[%s] from ClientList for volume[%s]", vmIP, nodeID, volName)
+	err := d.kvStore.DeleteClientMetaData(volName, nodeID)
+	if err != nil {
+		// Failed to delete metadata.
+		log.Warningf("Failed to remove ClientList[%] on node[%s] for volume %s",
+			vmIP, nodeID, volName)
+		return err
+	}
+	return nil
+}
+
 // MountVolume - Request attach and then mounts the volume.
 func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
 	mountpoint := d.GetMountPoint(name)
@@ -535,6 +575,17 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		return "", errors.New(msg)
 	}
 
+	// add VM to ClientList
+	nodeID, addr, _, err := d.dockerOps.GetSwarmInfo()
+	err = d.addVMToClientList(name, nodeID, addr)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"volume name": name,
+				"error": err,
+			}).Error("Failed to add VM IP to ClientList")
+		return "", err
+	}
+
 	// Start mounting
 	log.Infof("Volume state mounted, prepare to mounting locally")
 	var volRecord VolumeMetadata
@@ -561,6 +612,11 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
 		if err != nil {
 			msg += fmt.Sprintf(" Also failed to decrease global refcount. Error: %v.", err)
+		}
+		// remmove VM IP from ClientList
+		err = d.removeVMFromClientList(name, nodeID, addr)
+		if err != nil {
+			msg += fmt.Sprintf(" Also failed to remove VM from ClientList. Error: %v.", err)
 		}
 		log.WithFields(
 			log.Fields{"name": name,
@@ -684,7 +740,7 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 		log.WithFields(
 			log.Fields{"mountpoint": mountpoint, "error": err},
 		).Error("Failed to unmount volume. Now trying to detach... ")
-		// Do not return error. Continue with detach.
+		return err
 	}
 
 	// Decrease GRef
@@ -698,6 +754,24 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 		return err
 	}
 
+	// remove VM from ClientList
+	nodeID, addr, _, err := d.dockerOps.GetSwarmInfo()
+	if err != nil {
+		log.WithFields(
+			log.Fields{"volume name": name,
+				"error": err,
+			}).Error("Failed to get IP address from docker swarm ")
+		return err
+	}
+
+	err = d.removeVMFromClientList(name, nodeID, addr)
+	if err != nil {
+		log.WithFields(
+			log.Fields{"volume name": name,
+				"error": err,
+			}).Error("Failed to remove VM IP from ClientList")
+		return err
+	}
 	return nil
 }
 

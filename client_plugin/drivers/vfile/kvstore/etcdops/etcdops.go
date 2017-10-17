@@ -76,13 +76,12 @@ type EtcdKVS struct {
 	nodeAddr  string
 }
 
-// vFileVolConnectivityData - Contains metadata of vFile volumes
-type vFileVolConnectivityData struct {
-	Port        int      `json:"port,omitempty"`
-	ServiceName string   `json:"serviceName,omitempty"`
-	Username    string   `json:"username,omitempty"`
-	Password    string   `json:"password,omitempty"`
-	ClientList  []string `json:"clientList,omitempty"`
+// VFileVolConnectivityData - Contains metadata of vFile volumes
+type VFileVolConnectivityData struct {
+	Port        int    `json:"port,omitempty"`
+	ServiceName string `json:"serviceName,omitempty"`
+	Username    string `json:"username,omitempty"`
+	Password    string `json:"password,omitempty"`
 }
 
 // NewKvStore function: start or join ETCD cluster depending on the role of the node
@@ -370,7 +369,7 @@ func (e *EtcdKVS) serviceAndVolumeGC(cli *etcdClient.Client) {
 
 // cleanOrphanService: stop orphan services
 func (e *EtcdKVS) cleanOrphanService(volumesToVerify []string) {
-	volStates, err := e.kvMapFromPrefix(string(kvstore.VolPrefixState))
+	volStates, err := e.KvMapFromPrefix(string(kvstore.VolPrefixState))
 	if err != nil {
 		// if ETCD is not functionaing correctly, stop and return
 		log.Warningf("Failed to get volume states from ETCD due to error %v.", err)
@@ -415,7 +414,7 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 			// port number and file service name.
 			var entries []kvstore.KvPair
 			var writeEntries []kvstore.KvPair
-			var volRecord vFileVolConnectivityData
+			var volRecord VFileVolConnectivityData
 
 			// Port, Server name, Client list, Samba
 			// username/password are in the same key.
@@ -706,8 +705,8 @@ func (e *EtcdKVS) List(prefix string) ([]string, error) {
 	return keys, nil
 }
 
-// kvMapFromPrefix -  Create key-value pairs according to a given prefix
-func (e *EtcdKVS) kvMapFromPrefix(prefix string) (map[string]string, error) {
+// KvMapFromPrefix -  Create key-value pairs according to a given prefix
+func (e *EtcdKVS) KvMapFromPrefix(prefix string) (map[string]string, error) {
 	m := make(map[string]string)
 
 	client := e.createEtcdClient()
@@ -860,6 +859,40 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 	cancel()
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete metadata for volume %s: %v", name, err)
+		if err == context.DeadlineExceeded {
+			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+		}
+		log.Warningf(msg)
+		return errors.New(msg)
+	}
+	return nil
+}
+
+// DeleteClientMetaData - Delete volume client metadata in KV store
+func (e *EtcdKVS) DeleteClientMetaData(name string, nodeID string) error {
+
+	var msg string
+	var err error
+
+	// Create a client to talk to etcd
+	client := e.createEtcdClient()
+	if client == nil {
+		return errors.New(etcdClientCreateError)
+	}
+	defer client.Close()
+
+	// ops hold multiple operations that will be done to etcd
+	// in a single revision. Add all keys for this volname.
+	ops := []etcdClient.Op{
+		etcdClient.OpDelete(kvstore.VolPrefixClient + name + "_" + nodeID),
+	}
+
+	// Delete the metadata in a single transaction
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	_, err = client.Txn(ctx).Then(ops...).Commit()
+	cancel()
+	if err != nil {
+		msg = fmt.Sprintf("Failed to delete client metadata for volume %s on node %s: %v", name, nodeID, err)
 		if err == context.DeadlineExceeded {
 			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
 		}

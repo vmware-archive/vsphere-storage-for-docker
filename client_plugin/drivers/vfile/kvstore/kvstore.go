@@ -56,6 +56,7 @@ const (
 	VolPrefixState                    = "SVOLS_stat_"
 	VolPrefixGRef                     = "SVOLS_gref_"
 	VolPrefixInfo                     = "SVOLS_info_"
+	VolPrefixClient                   = "SVOLS_client_"
 	VolumeDoesNotExistError           = "No such volume"
 )
 
@@ -96,4 +97,10 @@ type KvStore interface {
 	// BlockingWaitAndGet - Blocking wait until a key value becomes equal to a specific value
 	// then read the value of another key
 	BlockingWaitAndGet(key string, value string, newKey string) (string, error)
+
+	// KvMapFromPrefix -  Create key-value pairs according to a given prefix
+	KvMapFromPrefix(prefix string) (map[string]string, error)
+
+	// DeleteClientMetaData - Delete volume client metadata in KV store
+	DeleteClientMetaData(name string, nodeID string) error
 }
