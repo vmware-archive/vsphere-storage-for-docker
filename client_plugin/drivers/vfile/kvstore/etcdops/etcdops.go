@@ -63,7 +63,7 @@ const (
 	etcdRequestTimeout       = 2 * time.Second
 	etcdUpdateTimeout        = 10 * time.Second
 	checkSleepDuration       = time.Second
-	gcTicker                 = 5 * time.Second
+	gcTicker                 = 30 * time.Second
 	etcdClientCreateError    = "Failed to create etcd client"
 	swarmUnhealthyErrorMsg   = "Swarm cluster maybe unhealthy"
 	etcdSingleRef            = "1"

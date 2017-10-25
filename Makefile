@@ -43,7 +43,7 @@ build-all: dockerized-build-ui
 	$(MAKE) --directory=plugin_dockerbuild all
 
 # build vfile plugin
-build-vfile: dockerized-build-ui
+build-vfile-all: dockerized-build-ui
 	$(MAKE) $(MAKEFLAGS) --directory=client_plugin dockerbuild-vfile
 	$(MAKE) $(MAKEFLAGS) --directory=plugin_dockerbuild vfile-all
 
@@ -58,6 +58,10 @@ build:
 ifeq ($(INCLUDE_UI), true)
 	$(MAKE) --directory=ui $@
 endif
+	$(MAKE) --directory=client_plugin $@
+	$(MAKE) --directory=client_plugin build-vfile
+
+build-vfile:
 	$(MAKE) --directory=client_plugin $@
 
 # Forward to UI inside docker run

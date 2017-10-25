@@ -310,6 +310,7 @@ DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
 DEPLOY_ESX_FOR_UPGRADE := $(DEPLOY_TOOLS) deployesxForUpgrade
 CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
 CLEANESX_SH   := $(DEPLOY_TOOLS) cleanesx
+CLEANVFILE_SH    := $(DEPLOY_TOOLS) cleanvfile
 
 
 #
@@ -337,15 +338,15 @@ deploy-vm: clean-vm
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 build-plugin:
-	$(BUILD_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+	$(BUILD_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG) $(PLUGNAME)
 build-windows-plugin:
 	$(BUILD_WINDOWS_PLUGIN_SH) $(WIN_VM1)
 deploy-windows-plugin:
 	$(DEPLOY_WINDOWS_PLUGIN_SH) "$(WIN_VMS)"
 build-vfile-plugin:
-	$(BUILD_PLUGIN_SH) "$(VM2)" $(VFILE_PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG) $(VFILE_PREFIX)
+	$(BUILD_PLUGIN_SH) "$(VM2)" $(VFILE_PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG) $(VFILE_PLUGNAME) $(VFILE_PREFIX)
 deploy-vfile-plugin:
-	$(DEPLOY_VM_SH) "$(VMS)" $(VFILE_PLUGIN_NAME):$(PLUGIN_TAG) $(VFILE_PLUGIN_ALIAS) $(VFILE_PLUGNAME)
+	$(DEPLOY_VM_SH) "$(VM1) $(VM2)" $(VFILE_PLUGIN_NAME):$(PLUGIN_TAG) $(VFILE_PLUGIN_ALIAS) $(VFILE_PLUGNAME)
 
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
@@ -449,6 +450,9 @@ test-e2e-runonce-vfile:
 .PHONY:clean-vm clean-esx clean-all clean-docker
 clean-vm:
 	$(CLEANVM_SH) "$(VMS)" "$(MANAGED_PLUGIN_NAME)"
+
+clean-vfile:
+	$(CLEANVFILE_SH) "$(VMS)" "$(VFILE_MANAGED_PLUGIN_NAME)"
 
 clean-esx:
 	$(CLEANESX_SH) "$(ESX)" esx-vmdkops-service

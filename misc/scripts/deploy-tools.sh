@@ -30,6 +30,7 @@
 . ../misc/scripts/commands.sh
 
 PLUGIN_NAME=docker-volume-vsphere
+VFILE_PLUGNAME=vfile
 VIB_NAME=esx-vmdkops-service
 TMP_LOC=/tmp/$PLUGIN_NAME
 VMDK_OPS_UNITTEST=/tmp/vmdk_ops_unit*
@@ -92,7 +93,9 @@ function buildplugin {
 
         fi
         $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make ${PREFIX}info ${PREFIX}clean ${PREFIX}plugin"
+        if [ -z ${PREFIX} ]; then
         managedPluginSanityCheck
+        fi
         $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make ${PREFIX}push ${PREFIX}clean"
     done
 }
@@ -143,7 +146,7 @@ function deploywindowsplugin {
 
 function managedPluginSanityCheck {
     $SCP $SCRIPTS/plugin_sanity_test.sh $TARGET:$BUILD_LOC
-    $SSH $TARGET 'sh '  $BUILD_LOC/plugin_sanity_test.sh
+    $SSH $TARGET "sh $BUILD_LOC/plugin_sanity_test.sh \"$PLUGNAME\""
 }
 
 function setupVMType {
@@ -166,8 +169,14 @@ function setupVMType {
 }
 
 function installManagedPlugin {
-    log "installManagedPlugin: Installing vDVS plugin [$MANAGED_PLUGIN_NAME]"
-    $SSH $TARGET "docker plugin install --grant-all-permissions --alias $PLUGIN_ALIAS $MANAGED_PLUGIN_NAME"
+    if [ $PLUGIN_NAME == $VFILE_PLUGNAME ]
+    then
+        log "installManagedPlugin: Installing vfile plugin [$MANAGED_PLUGIN_NAME]"
+        $SSH $TARGET "docker plugin install --grant-all-permissions --alias $PLUGIN_ALIAS $MANAGED_PLUGIN_NAME VFILE_TIMEOUT_IN_SECOND=300"
+    else
+        log "installManagedPlugin: Installing vDVS plugin [$MANAGED_PLUGIN_NAME]"
+        $SSH $TARGET "docker plugin install --grant-all-permissions --alias $PLUGIN_ALIAS $MANAGED_PLUGIN_NAME"
+    fi
 }
 
 function deployVMPost {
@@ -286,6 +295,15 @@ function cleanvm {
     done
 }
 
+function cleanvfile {
+    set +e
+    for IP in $IP_LIST
+    do
+        TARGET=root@$IP
+        cleanupVFile
+    done
+}
+
 function cleanupVMPre {
     case $FILE_EXT in
     deb)
@@ -340,6 +358,10 @@ function cleanupVM {
         fi
         ;;
     esac
+    $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f > /dev/null 2>&1"
+}
+
+function cleanupVFile {
     $SSH $TARGET "docker plugin rm $MANAGED_PLUGIN_NAME -f > /dev/null 2>&1"
 }
 
@@ -439,6 +461,14 @@ cleanvm)
         fi
         cleanvm
         ;;
+cleanvfile)
+        MANAGED_PLUGIN_NAME="$2"
+        if [ -z "$MANAGED_PLUGIN_NAME" ]
+        then
+            usage "Missing params: managed_plugin_name"
+        fi
+        cleanvfile
+        ;;
 buildplugin)
         PLUGIN_BIN="$2"
         MANAGED_PLUGIN_SRC="$3"
@@ -446,7 +476,8 @@ buildplugin)
         DOCKER_HUB_REPO="$5"
         VERSION_TAG="$6"
         EXTRA_TAG="$7"
-        PREFIX="$8"
+        PLUGNAME="$8"
+        PREFIX="$9"
         if [ -z "$PLUGIN_BIN" -o -z "$MANAGED_PLUGIN_SRC" -o -z "$SCRIPTS" ]
         then
             usage "Missing params: plugin/binary/script folder"

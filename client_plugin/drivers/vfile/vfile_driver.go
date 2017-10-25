@@ -30,6 +30,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
@@ -55,6 +56,8 @@ const (
 	internalVolumePrefix = "_vF_"
 	fsType               = "cifs"
 	initError            = "vFile volume driver is not fully initialized yet."
+	mountError           = "exit status 255"
+	checkTicker          = time.Second
 )
 
 /* VolumeDriver - vFile plugin volume driver struct
@@ -642,15 +645,7 @@ func (d *VolumeDriver) mountVFileVolume(volName string, mountpoint string, volRe
 	}
 	mountArgs = append(mountArgs, "-o", strings.Join(options, ","))
 
-	_, addr, _, err := d.dockerOps.GetSwarmInfo()
-	if err != nil {
-		log.WithFields(
-			log.Fields{"volume name": volName,
-				"error": err,
-			}).Error("Failed to get IP address from docker swarm ")
-		return err
-	}
-	source := "//" + addr + "/" + dockerops.FileShareName
+	source := "//127.0.0.1/" + dockerops.FileShareName
 	mountArgs = append(mountArgs, source)
 	mountArgs = append(mountArgs, mountpoint)
 
@@ -658,18 +653,37 @@ func (d *VolumeDriver) mountVFileVolume(volName string, mountpoint string, volRe
 		log.Fields{"volume name": volName,
 			"arguments": mountArgs,
 		}).Info("Mounting volume with options ")
-	command := exec.Command("mount", mountArgs...)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		log.WithFields(
-			log.Fields{"volume name": volName,
-				"output": string(output),
-				"error":  err,
-			}).Error("Mount failed: ")
-		return err
-	}
 
-	return nil
+	// host can be slow which results in host unreachable error during mount
+	// retry the mounting before error out
+	ticker := time.NewTicker(checkTicker)
+	defer ticker.Stop()
+	timer := time.NewTimer(dockerops.GetServiceStartTimeout())
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			command := exec.Command("mount", mountArgs...)
+			output, err := command.CombinedOutput()
+			if err != nil {
+				log.WithFields(
+					log.Fields{"volume name": volName,
+						"output": string(output),
+						"error":  err,
+					}).Error("Mount failed: ")
+				if err.Error() != mountError {
+					return err
+				}
+			} else {
+				return nil
+			}
+		case <-timer.C:
+			msg := fmt.Sprintf("Failed to mount vFile volume %s after timeout", volName)
+			log.Errorf(msg)
+			return errors.New(msg)
+		}
+	}
 }
 
 // Unmount request from Docker. If mount refcount is drop to 0.

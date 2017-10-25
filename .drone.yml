@@ -122,10 +122,15 @@ build:
       - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
-      - echo "=> Running tests on VSAN ESX_6.5" `date` > /dev/null
+      - echo "=> Building and running tests for vFile plugin on VMFS ESX_6.5" `date` > /dev/null
+      - #
+      - ./misc/drone-scripts/deploy-and-test-wrapper.sh vfileplugin $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
       - export VM1=$CI_NODE4
       - export VM2=$WORKER2
+      - #
+      - echo "=> Running tests on VSAN ESX_6.5" `date` > /dev/null
+      - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
       - echo "=> Building and running tests for Windows vDVS plugin on VMFS" `date` > /dev/null

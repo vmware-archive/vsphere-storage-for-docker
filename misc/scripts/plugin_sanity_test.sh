@@ -20,7 +20,8 @@
 echo "plugin_sanity_test: [INFO] Running plugin_sanity_test on the clean test setup..."
 
 # get installed plugin name
-pluginName=`docker plugin ls | sed 1,1d | awk '{ print $2 }'`
+PLUGNAME=$1
+pluginName=`docker plugin ls | sed -n '/'$PLUGNAME'/p' | awk '{ print $2 }'`
 echo "plugin_sanity_test: [INFO] Installed plugin name is:$pluginName"
 
 # make sure plugin name is not empty

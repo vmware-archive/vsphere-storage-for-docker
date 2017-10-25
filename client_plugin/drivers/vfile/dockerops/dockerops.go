@@ -62,7 +62,7 @@ const (
 	// Samba service listens
 	defaultSambaPort = 445
 	// Time between successive checks for general checking
-	checkTicker = time.Second
+	checkTicker = 3 * time.Second
 	// default Timeout to mark Samba service launch as unsuccessful
 	defaultSvcStartTimeoutSec = 45
 	// Prefix for internal volume names
@@ -347,12 +347,12 @@ func (d *DockerOps) isFileServiceRunning(servID string, volName string) (uint32,
 		return port, false
 	}
 	for _, task := range tasks {
-		if task.Status.State != swarm.TaskStateRunning {
-			log.Infof("File server not running for volume %s", volName)
-			return port, false
+		if task.Status.State == swarm.TaskStateRunning {
+			return port, true
 		}
 	}
-	return port, true
+	log.Infof("File server not running for volume %s", volName)
+	return port, false
 }
 
 // getServiceIDAndPort - return the file service ID and port for given volume
