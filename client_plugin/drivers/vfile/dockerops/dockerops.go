@@ -123,7 +123,7 @@ func (d *DockerOps) GetSwarmInfo() (nodeID string, addr string, isManager bool, 
 	nodeID = info.Swarm.NodeID
 	addr = info.Swarm.NodeAddr
 	isManager = info.Swarm.ControlAvailable
-
+	log.Debugf("GetSwarmInfo: nodeID=%s addr=%s isManager=%s", nodeID, addr, isManager)
 	return
 }
 
@@ -203,6 +203,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 	var service swarm.ServiceSpec
 	var options dockerTypes.ServiceCreateOptions
 
+	log.Infof("StartSMBServer for vol %s", volName)
 	// Name of the service
 	service.Name = serviceNamePrefix + volName
 	// The Docker image to run in this service
@@ -290,6 +291,7 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 			log.Infof("Checking status of file server container...")
 			port, isRunning := d.isFileServiceRunning(resp.ID, volName)
 			if isRunning {
+				log.Infof("SMBServer for vol %s has been started successfully", volName)
 				return int(port), serviceNamePrefix + volName, isRunning
 			}
 		case <-timer.C:
@@ -435,6 +437,7 @@ func (d *DockerOps) ListVolumesFromInternalVol() ([]string, error) {
 
 // DeleteVolume - delete the internal volume
 func (d *DockerOps) DeleteInternalVolume(volName string) {
+	log.Infof("DeleteInternalVolume %s", volName)
 	internalVolname := internalVolumePrefix + volName
 	ticker := time.NewTicker(checkTicker)
 	defer ticker.Stop()
@@ -483,6 +486,7 @@ func (d *DockerOps) DeleteInternalVolume(volName string) {
 //      bool:    The result of the operation. True if the service was
 //               successfully stopped.
 func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
+	log.Infof("StopSMBServer for vol %s", volName)
 	serviceID, _, err := d.getServiceIDAndPort(volName)
 	if err != nil {
 		return 0, "", false
@@ -511,6 +515,7 @@ func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
 			}
 			// service is removed successfully
 			if serviceID == "" {
+				log.Infof("SMBServer for vol %s has been stopped successfully", volName)
 				return 0, "", true
 			}
 		case <-timer.C:

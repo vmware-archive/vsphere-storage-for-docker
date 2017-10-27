@@ -175,6 +175,7 @@ func (d *VolumeDriver) Get(r volume.Request) volume.Response {
 
 // List volumes known to the driver
 func (d *VolumeDriver) List(r volume.Request) volume.Response {
+	log.Infof("VolumeDriver List: %s", r.Name)
 	if !d.isInitialized {
 		return volume.Response{Err: initError}
 	}

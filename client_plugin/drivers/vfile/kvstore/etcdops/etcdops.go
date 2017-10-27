@@ -164,6 +164,7 @@ func NewKvStore(dockerOps *dockerops.DockerOps) *EtcdKVS {
 func (e *EtcdKVS) startEtcdCluster() error {
 	nodeID := e.nodeID
 	nodeAddr := e.nodeAddr
+	log.Infof("startEtcdCluster on node with nodeID %s and nodeAddr %s", nodeID, nodeAddr)
 	lines := []string{
 		"--name", nodeID,
 		"--advertise-client-urls", etcdScheme + nodeAddr + etcdClientPort,
@@ -186,6 +187,7 @@ func (e *EtcdKVS) startEtcdCluster() error {
 func (e *EtcdKVS) joinEtcdCluster(leaderAddr string) error {
 	nodeAddr := e.nodeAddr
 	nodeID := e.nodeID
+	log.Infof("joinEtcdCluster on node with nodeID %s and nodeAddr %s leaderAddr %s", nodeID, nodeAddr, leaderAddr)
 
 	etcd, err := addrToEtcdClient(leaderAddr)
 	if err != nil {
@@ -526,6 +528,7 @@ func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
 // CompareAndPut function: compare the value of the kay with oldVal
 // if equal, replace with newVal and return true; or else, return false.
 func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
+	log.Debugf("CompareAndPut: key=%s oldVal=%s newVal=%s", key, oldVal, newVal)
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
 	if etcdAPI == nil {
@@ -560,6 +563,7 @@ func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 	oldVal string,
 	newVal string) (*etcdClient.TxnResponse, error) {
 
+	log.Debugf("CompareAndPutOrFetch: key=%s oldVal=%s newVal=%s", key, oldVal, newVal)
 	var txresp *etcdClient.TxnResponse
 	// Create a client to talk to etcd
 	etcdAPI := e.createEtcdClient()
@@ -596,7 +600,7 @@ func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 func (e *EtcdKVS) CompareAndPutStateOrBusywait(key string, oldVal string, newVal string) bool {
 	var txresp *etcdClient.TxnResponse
 	var err error
-
+	log.Debugf("CompareAndPutStateOrBusywait: key=%s oldVal=%s newVal=%s", key, oldVal, newVal)
 	ticker := time.NewTicker(checkSleepDuration)
 	defer ticker.Stop()
 	timer := time.NewTimer(etcdUpdateTimeout)
@@ -670,6 +674,7 @@ func addrToEtcdClient(addr string) (*etcdClient.Client, error) {
 
 	etcd, err := etcdClient.New(cfg)
 	if err != nil {
+		log.Debugf("Cannot get etcdClient for addr %s", addr)
 		return nil, err
 	}
 
@@ -737,6 +742,10 @@ func (e *EtcdKVS) WriteMetaData(entries []kvstore.KvPair) error {
 	var msg string
 	var err error
 
+	log.WithFields(
+		log.Fields{"KvPair": entries},
+	).Debug("WriteMetaData")
+
 	// Create a client to talk to etcd
 	client := e.createEtcdClient()
 	if client == nil {
@@ -777,6 +786,9 @@ func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
 	var ops []etcdClient.Op
 	var missedCount int
 
+	log.WithFields(
+		log.Fields{"key": keys},
+	).Debug("ReadMetaData")
 	// Create a client to talk to etcd
 	client := e.createEtcdClient()
 	if client == nil {
@@ -829,6 +841,9 @@ func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
 		log.Warningf(msg)
 		panic(msg)
 	}
+	log.WithFields(
+		log.Fields{"KvPair": entries},
+	).Debug("ReadMetaData succeeded")
 	return entries, nil
 }
 
@@ -837,7 +852,7 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 
 	var msg string
 	var err error
-
+	log.Debugf("DeleteMetaData: name=%s", name)
 	// Create a client to talk to etcd
 	client := e.createEtcdClient()
 	if client == nil {
@@ -874,6 +889,7 @@ func (e *EtcdKVS) DeleteClientMetaData(name string, nodeID string) error {
 	var msg string
 	var err error
 
+	log.Debugf("DeleteClientMetaData: name=%s nodeID=%s", name, nodeID)
 	// Create a client to talk to etcd
 	client := e.createEtcdClient()
 	if client == nil {
@@ -999,6 +1015,7 @@ func (e *EtcdKVS) AtomicDecr(key string) error {
 // then read the value of another key
 func (e *EtcdKVS) BlockingWaitAndGet(key string, value string, newKey string) (string, error) {
 	// Create a client to talk to etcd
+	log.Debugf("BlockingWaitAndGet: key=%s value=%s newKey=%s", key, value, newKey)
 	client := e.createEtcdClient()
 	if client == nil {
 		return "", fmt.Errorf(etcdClientCreateError)
