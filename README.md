@@ -11,18 +11,17 @@ vSphere Docker Volume Service (vDVS) enables customers to address persistent sto
 
 [<img src="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vDVS is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
-To read more about code development and testing please read
+If you would like to contribute then please check out 
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
-as well as the
-[FAQ on the project site](http://vmware.github.io/docker-volume-vsphere/documentation/faq.html).
+& [FAQ on the project site](http://vmware.github.io/docker-volume-vsphere/documentation/faq.html).
 
-## Detailed documentation
+## Documentation
 
 Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
 
-## Download
+## Downloads
 
-** Download releases from [Github releases](https://github.com/vmware/docker-volume-vsphere/releases) page**
+**Download releases from [Github releases](https://github.com/vmware/docker-volume-vsphere/releases) page**
 
 The download consists of 2 parts:
 
@@ -31,7 +30,7 @@ The download consists of 2 parts:
 
 Please check [vDVS Installation User Guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html) to get started. To ensure compatibility, make sure to use the same version of vDVS driver (on ESX) and managed plugin (on Docker host VM).
 
-## Supported Platform
+## Supported Platforms
 
 **ESXi:** 6.0 and above<br />
 **Docker (Linux):** 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)<br />
@@ -101,7 +100,7 @@ Please refer [vDVS configuration page](http://vmware.github.io/docker-volume-vsp
 **Docker (Linux)**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
 **Docker (Windows)**: 1.13/17.03
 
-## Reference
+## References
 
 * **Known Issues**: Please check [vDVS known issue page](http://vmware.github.io/docker-volume-vsphere/documentation/known-issues.html) to find out about known issues.
 
