@@ -17,8 +17,11 @@
 package dockercli
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"strconv"
+	"strings"
 
 	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
@@ -82,4 +85,58 @@ func GetContainerName(hostName, shortName string) (string, error) {
 func GetAllContainers(hostName, filter string) (string, error) {
 	cmd := dockercli.ListContainers + "--filter name='" + filter + "' --format '{{.Names}}'"
 	return ssh.InvokeCommand(hostName, cmd)
+}
+
+// PromoteNode promotes a worker node to manager node
+func PromoteNode(hostIP, targetIP string) error {
+	log.Printf("Promoting worker node IP %s to manager", targetIP)
+	out, err := ssh.InvokeCommand(hostIP, dockercli.ListNodes+"-q")
+	if err != nil {
+		return err
+	}
+
+	IDs := strings.Split(out, "\n")
+	for _, nodeID := range IDs {
+		nodeIP, err := ssh.InvokeCommand(hostIP, dockercli.InspectNode+nodeID+" --format \"{{.Status.Addr}}\"")
+		if err != nil {
+			return err
+		}
+		if nodeIP == targetIP {
+			log.Printf("Found the ID of target IP is %s", nodeID)
+			_, err = ssh.InvokeCommand(hostIP, dockercli.PromoteNode+nodeID)
+			return err
+		}
+	}
+
+	err = fmt.Errorf("No node from 'docker node ls' matches with target IP")
+	return err
+}
+
+// DemoteNode demotes a manager node to worker node
+func DemoteNode(hostIP, targetIP string) error {
+	log.Printf("Demoting manager node ID %s to worker", targetIP)
+	out, err := ssh.InvokeCommand(hostIP, dockercli.ListNodes+"-q")
+	if err != nil {
+		return err
+	}
+
+	IDs := strings.Split(out, "\n")
+	for _, nodeID := range IDs {
+		nodeIP, err := ssh.InvokeCommand(hostIP, dockercli.InspectNode+nodeID+" --format \"{{.ManagerStatus.Addr}}\"")
+		if err != nil {
+			continue
+		}
+		nodeIP, _, err = net.SplitHostPort(nodeIP)
+		if err != nil {
+			continue
+		}
+		if nodeIP == targetIP {
+			log.Printf("Found the ID of target IP is %s", nodeID)
+			_, err = ssh.InvokeCommand(hostIP, dockercli.DemoteNode+nodeID)
+			return err
+		}
+	}
+
+	err = fmt.Errorf("No node from 'docker node ls' matches with target IP")
+	return err
 }

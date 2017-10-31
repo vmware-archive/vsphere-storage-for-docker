@@ -88,6 +88,15 @@ const (
 	// ListNodes list all docker swarm nodes
 	ListNodes = dockerNode + "ls "
 
+	// InspectNode inspects a swarm node
+	InspectNode = dockerNode + "inspect "
+
+	// PromoteNode promotes a swarm worker to manager
+	PromoteNode = dockerNode + "promote "
+
+	// DemoteNode demotes a swarm manager to worker
+	DemoteNode = dockerNode + "demote "
+
 	// CreateService create a docker service
 	CreateService = dockerService + "create "
 

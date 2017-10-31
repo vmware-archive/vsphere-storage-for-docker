@@ -123,7 +123,7 @@ then
   $DOCKER run --rm  -v $PWD/..:$dir -w $dir $pylint_container $MAKE_ESX pylint
 else
   docker_socket=/var/run/docker.sock
-  if [ -z $SSH_KEY_OPT ]
+  if [ -z '$SSH_KEY_OPT' ]
   then
     SSH_KEY_OPT="-i /root/.ssh/id_rsa"
   fi

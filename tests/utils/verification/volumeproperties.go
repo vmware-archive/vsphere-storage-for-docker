@@ -146,7 +146,7 @@ func getVolumeStatusHost(name, hostName string) string {
 // vfile driver
 func GetVFileVolumeStatusHost(name, hostName string) string {
 	cmd := dockercli.InspectVolume + " --format \"{{index .Status \\\"Volume Status\\\"}}\" " + name
-	log.Printf("GetVFileVolumeStatusHost: cmd[]", cmd)
+	log.Printf("Check the volume status of vFile volume %s", name)
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return out
 }
@@ -160,9 +160,8 @@ func GetVFileVolumeStatusHost(name, hostName string) string {
 //          string:     String containing global refcount
 func GetVFileVolumeGlobalRefcount(name, hostName string) string {
 	cmd := dockercli.InspectVolume +
-		" --format \"{{index .Status \\\"Global Refcount\\\"}}\" " +
-		name
-	log.Printf("GetVFileVolumeGlobalRefcount: cmd[]", cmd)
+		" --format \"{{index .Status \\\"Global Refcount\\\"}}\" " + name
+	log.Printf("Check the global refcount of vFile volume %s", name)
 	out, _ := ssh.InvokeCommand(hostName, cmd)
 	return out
 }
