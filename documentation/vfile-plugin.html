@@ -545,6 +545,9 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 <h3 id="can-i-use-another-base-volume-plugin-other-than-vdvs">Can I use another base volume plugin other than vDVS?</h3>
 <p>Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.</p>
 
+<h3 id="can-i-use-default-driver-for-local-volumes-as-a-base-volume-plugin">Can I use default driver for local volumes as a base volume plugin?</h3>
+<p>No, this is not supported by vFile plugin.</p>
+
 <h3 id="i-got-operation-now-in-progress-error-when-mounting-a-vfile-volume-to-a-container">I got “Operation now in progress” error when mounting a vFile volume to a container.</h3>
 <p>Please make sure the routing mesh of Docker Swarm cluster is working properly.
 Use the following way to verify:</p>
@@ -574,6 +577,29 @@ Use the following way to verify:</p>
 
 <p>This will increase timeout to 90 sec, from default of 30 sec.</p>
 
+<h3 id="volume-mount-failed-retry-mount-with-the-same-volume-still-failed">Volume mount failed, retry mount with the same volume still failed.</h3>
+<p>Check the “Volume Status” field of <code class="highlighter-rouge">docker volume inspect</code>, if the “Volume Status” field shows “Error”, which means volume is in error status, user should remove the volume manually.
+<code class="highlighter-rouge">
+docker volume inspect vol1
+[
+    {
+        "Driver": "vfile:latest",
+        "Labels": {},
+        "Mountpoint": "/mnt/vfile/vol1/",
+        "Name": "vol1",
+        "Options": {},
+        "Scope": "global",
+        "Status": {
+            "Clients": null,
+            "File server Port": 0,
+            "Global Refcount": 0,
+            "Service name": "",
+            "Volume Status": "Error"
+        }
+    }
+]
+</code></p>
+
 <h3 id="i-got-docker-volume-ls-operation-very-slow-and-docker-volume-rmcreate-a-vfile-volume-hang-forever">I got “docker volume ls” operation very slow and “docker volume rm/create” a vFile volume hang forever</h3>
 <p>Please check the log at <code class="highlighter-rouge">/var/log/vfile.log</code> and look up if there are error message about swarm status as follow:
 <code class="highlighter-rouge">The swarm does not have a leader. It's possible that too few managers are online. Make sure more than half of the managers are online.</code></p>
@@ -584,6 +610,31 @@ Use the following way to verify:</p>
     1. Run the swarm cluster with a single manager only for testing purpose.
     2. An <code class="highlighter-rouge">N</code> manager cluster will tolerate the loss of at most <code class="highlighter-rouge">(N-1)/2</code> managers.
     3. Docker recommends a maximum of seven manager nodes for a swarm.</p>
+
+<h3 id="does-vfile-plugin-support-multi-tenancy-feature">Does vFile plugin support multi-tenancy feature?</h3>
+<p>No. vFile plugin does not support multi-tenency, which is currently an experimental feature for vDVS.
+Assume we have created a vmgroup <code class="highlighter-rouge">vmgroup1</code> and add VM “node1” to <code class="highlighter-rouge">vmgroup1</code>. VM “node2” has not been added to any vmgroup and is considered belong to <code class="highlighter-rouge">_DEFAULT</code> vmgroup.
+Then create a volume “vol1” from “node2” and a volume “vol2” from “node1” using vFile plugin.</p>
+
+<p>On “node1”, we are able to see both “vol1” and “vol2” which are created by vFile plugin.
+```
+vmware@ubuntu16:~$ docker volume ls
+DRIVER              VOLUME NAME
+vsphere:latest      _vF_vol2@vsanDatastore
+vfile:latest        vol1
+vfile:latest        vol2</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>
+On "node2", we are also able to see both "vol1" and "vol2".
+</code></pre>
+</div>
+<p>vmware@ubuntu16:~$ docker volume ls
+DRIVER              VOLUME NAME
+vsphere:latest      _vF_vol1@vsanDatastore
+vfile:latest        vol1
+vfile:latest        vol2</p>
+
+<p>```</p>
 
   
 
@@ -601,7 +652,7 @@ Use the following way to verify:</p>
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Sep 27, 2017 <br />
+ Site last generated: Oct 31, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

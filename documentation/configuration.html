@@ -469,15 +469,18 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="plugin-configuration">Plugin Configuration</h2>
 
-<p>The configuration for  Docker volume plugin require the driver type which can be one of vsphere or vmdk (For backwards compatibility). You can also provide the log related configurations. The default location where it looks for plugin config is at /etc/docker-volume-vsphere.conf. You can also override it to use  a different configuration file by providing –config option and the full path to the file. Finally the parameters passed on the CLI override the one from the configuration file.</p>
+<p>The configuration for  Docker volume plugin can be provided via a JSON formatted configuration file and on the command line (only when the plugin is manually executed vs. as a managed plugin by docker). The plugin can be provided the driver type (which must be set to be “vsphere” (default)), log configuration and the group-id used to create the plugin socket file. The log configuration includes the log level and the location where the log file is located. The configuration file is by default located at /etc/docker-volume-vsphere.conf. The configuration file to use can also be specified by providing the –config option and the full path to the file. Finally the parameters passed on the commandline override those read from the configuration file.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code><span class="p">{</span><span class="w">
     </span><span class="nt">"Driver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vsphere"</span><span class="p">,</span><span class="w">
     </span><span class="nt">"MaxLogAgeDays"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">
     </span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
     </span><span class="nt">"LogPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log/docker-volume-vsphere.log"</span><span class="p">,</span><span class="w">
-    </span><span class="nt">"LogLevel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"info"</span><span class="w">
+    </span><span class="nt">"LogLevel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"info"</span><span class="p">,</span><span class="w">
+    </span><span class="nt">"GroupID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"root"</span><span class="w">  </span><span class="err">(default</span><span class="w"> </span><span class="err">or</span><span class="w"> </span><span class="err">alternatively</span><span class="w"> </span><span class="err">use</span><span class="w"> </span><span class="s2">"docker"</span><span class="w"> </span><span class="err">as</span><span class="w"> </span><span class="err">the</span><span class="w"> </span><span class="err">group</span><span class="w"> </span><span class="err">ID)</span><span class="w">
 </span><span class="p">}</span><span class="w">
+
+</span><span class="err">The</span><span class="w"> </span><span class="err">group</span><span class="w"> </span><span class="err">ID</span><span class="w"> </span><span class="err">is</span><span class="w"> </span><span class="s2">"root"</span><span class="w"> </span><span class="err">by</span><span class="w"> </span><span class="err">default</span><span class="w"> </span><span class="err">and</span><span class="w"> </span><span class="err">works</span><span class="w"> </span><span class="err">fine</span><span class="w"> </span><span class="err">with</span><span class="w"> </span><span class="err">most</span><span class="w"> </span><span class="err">Linux</span><span class="w"> </span><span class="err">OS</span><span class="w"> </span><span class="err">based</span><span class="w"> </span><span class="err">Docker</span><span class="w"> </span><span class="err">hosts,</span><span class="w"> </span><span class="err">the</span><span class="w"> </span><span class="err">alternative</span><span class="w"> </span><span class="err">to</span><span class="w"> </span><span class="err">use</span><span class="w"> </span><span class="s2">"docker"</span><span class="w"> </span><span class="err">as</span><span class="w"> </span><span class="err">the</span><span class="w"> </span><span class="err">group</span><span class="w"> </span><span class="err">ID</span><span class="w"> </span><span class="err">is</span><span class="w"> </span><span class="err">needed</span><span class="w"> </span><span class="err">for</span><span class="w"> </span><span class="err">coreOS</span><span class="w"> </span><span class="err">hosts.</span><span class="w">
 </span></code></pre>
 </div>
 <table class="table table-striped table-hover ">
@@ -527,7 +530,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Sep 27, 2017 <br />
+ Site last generated: Oct 31, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
