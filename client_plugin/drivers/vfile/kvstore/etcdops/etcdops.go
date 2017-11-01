@@ -55,12 +55,12 @@ import (
    etcdNoRef:                  if global refcount 1 -> 0, shut down SMB server
 */
 const (
+	etcdDataDir              = "/etcd-data"
 	etcdClientPort           = ":2379"
 	etcdPeerPort             = ":2380"
 	etcdClusterToken         = "vfile-etcd-cluster"
 	etcdListenURL            = "0.0.0.0"
 	etcdScheme               = "http://"
-	etcdDataDir              = "/etcd-data"
 	etcdClusterStateNew      = "new"
 	etcdClusterStateExisting = "existing"
 	etcdRequestTimeout       = 2 * time.Second
@@ -123,6 +123,25 @@ func NewKvStore(dockerOps *dockerops.DockerOps) *EtcdKVS {
 		return e
 	}
 
+	// check if ETCD data-dir already exists
+	_, err = os.Stat(etcdDataDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Errorf("failed to stat ETCD data-dir: %v", err)
+			return nil
+		}
+		// when error is IsNotExist, ETCD data-dir is not existing,
+		// need to continue to create/join a new ETCD cluster
+	} else {
+		// ETCD data-dir already exists, just re-join
+		err = e.rejoinEtcdCluster()
+		if err != nil {
+			log.Errorf("Failed to rejoin the ETCD cluster: %v", err)
+			return nil
+		}
+		return e
+	}
+
 	// check my local role
 	isLeader, err := dockerOps.IsSwarmLeader(nodeID)
 	if err != nil {
@@ -167,11 +186,43 @@ func NewKvStore(dockerOps *dockerops.DockerOps) *EtcdKVS {
 	return e
 }
 
+// rejoinEtcdCluster function is called when a node need to rejoin a ETCD cluster
+func (e *EtcdKVS) rejoinEtcdCluster() error {
+	nodeID := e.nodeID
+	nodeAddr := e.nodeAddr
+	lines := []string{
+		"--name", nodeID,
+		"--data-dir", etcdDataDir,
+		"--advertise-client-urls", etcdScheme + nodeAddr + etcdClientPort,
+		"--initial-advertise-peer-urls", etcdScheme + nodeAddr + etcdPeerPort,
+		"--listen-client-urls", etcdScheme + etcdListenURL + etcdClientPort,
+		"--listen-peer-urls", etcdScheme + etcdListenURL + etcdPeerPort,
+	}
+
+	// start the routine to create an etcd cluster
+	err := e.etcdStartService(lines)
+	if err != nil {
+		log.Errorf("Failed to start ETCD for rejoinEtcdCluster")
+		return err
+	}
+
+	// check if successfully joined the etcd cluster, then start the watcher
+	return e.checkLocalEtcd()
+}
+
 // startEtcdCluster function is called by swarm leader to start a ETCD cluster
 func (e *EtcdKVS) startEtcdCluster() error {
 	nodeID := e.nodeID
 	nodeAddr := e.nodeAddr
 	log.Infof("startEtcdCluster on node with nodeID %s and nodeAddr %s", nodeID, nodeAddr)
+
+	// create ETCD data directory with 755 permission since only root needs full permission
+	err := os.Mkdir(etcdDataDir, 0755)
+	if err != nil {
+		log.Errorf("Failed to create directory etcd-data: err %v", err)
+		return err
+	}
+
 	lines := []string{
 		"--name", nodeID,
 		"--data-dir", etcdDataDir,
@@ -185,7 +236,11 @@ func (e *EtcdKVS) startEtcdCluster() error {
 	}
 
 	// start the routine to create an etcd cluster
-	e.etcdStartService(lines)
+	err = e.etcdStartService(lines)
+	if err != nil {
+		log.Errorf("Failed to start ETCD for startEtcdCluster")
+		return err
+	}
 
 	// check if etcd cluster is successfully started, then start the watcher
 	return e.checkLocalEtcd()
@@ -297,6 +352,13 @@ func (e *EtcdKVS) joinEtcdCluster() error {
 		}
 	}
 
+	// create new ETCD data-dir
+	err = os.Mkdir(etcdDataDir, 0755)
+	if err != nil {
+		log.Errorf("Failed to create directory etcd-data: err %v", err)
+		return err
+	}
+
 	lines := []string{
 		"--name", nodeID,
 		"--data-dir", etcdDataDir,
@@ -310,7 +372,11 @@ func (e *EtcdKVS) joinEtcdCluster() error {
 	}
 
 	// start the routine for joining an etcd cluster
-	e.etcdStartService(lines)
+	err = e.etcdStartService(lines)
+	if err != nil {
+		log.Errorf("Failed to start ETCD for joinEtcdCluster")
+		return err
+	}
 
 	// check if successfully joined the etcd cluster, then start the watcher
 	return e.checkLocalEtcd()
@@ -371,43 +437,45 @@ func (e *EtcdKVS) leaveEtcdCluster() error {
 		}
 	}
 
-	e.etcdStopService()
-	return nil
+	err = e.etcdStopService()
+	return err
 }
 
 // etcdStartService function starts an ETCD process
-func (e *EtcdKVS) etcdStartService(lines []string) {
+func (e *EtcdKVS) etcdStartService(lines []string) error {
 	cmd := exec.Command("/bin/etcd", lines...)
 	err := cmd.Start()
 	if err != nil {
 		log.WithFields(
 			log.Fields{"error": err, "cmd": cmd},
 		).Error("Failed to start ETCD command ")
-		return
+		return err
 	}
 
 	e.etcdCMD = cmd
+	return nil
 }
 
 // etcdStopService function stops the ETCD process
-func (e *EtcdKVS) etcdStopService() {
+func (e *EtcdKVS) etcdStopService() error {
 	// stop watcher
 	e.watcher.Close()
 
 	// stop ETCD process
 	if err := e.etcdCMD.Process.Kill(); err != nil {
 		log.Errorf("Failed to stop ETCD process. Error: %v", err)
-		return
+		return err
 	}
 
 	// clean up ETCD data
 	if err := os.RemoveAll(etcdDataDir); err != nil {
 		log.Errorf("Failed to remove ETCD data directory. Error: %v", err)
-		return
+		return err
 	}
 
 	log.Infof("Stopped ETCD service due to demotion")
 	e.etcdCMD = nil
+	return nil
 }
 
 // checkLocalEtcd function check if local ETCD endpoint is successfully started or not
