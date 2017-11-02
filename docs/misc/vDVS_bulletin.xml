@@ -1,5 +1,5 @@
 <bulletin>
-	<id>vDVS_driver-0.17</id>
+	<id>vDVS_driver-0.18</id>
 	<vendor>VMware</vendor>
 	<summary>vDVS_Driver Bulletin</summary>
 	<severity>general</severity>
@@ -10,12 +10,12 @@
 		driver VIB.</description>
 	<kbUrl>https://github.com/vmware/docker-volume-vsphere/wiki</kbUrl>
 	<contact>VMware</contact>
-	<releaseDate>2017-08-27T23:47:36.688572+00:00</releaseDate>
+	<releaseDate>2017-10-30T23:47:36.688572+00:00</releaseDate>
 	<platforms>
 		<softwarePlatform locale="" version="6.*"
 			productLineID="embeddedEsx" />
 	</platforms>
 	<vibList>
-		<vibID>vmware-esx-vmdkops-0.17.c2aef31</vibID>
+		<vibID>vmware-esx-vmdkops-0.18.087b0d7</vibID>
 	</vibList>
 </bulletin>

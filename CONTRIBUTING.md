@@ -353,7 +353,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 **Note**: Some manual steps are required before publishing new release as shown below.
 1. Download deliverables from Github release page
 2. Remove VIB/DEB/RPMs from the ```Downloads``` sections
-3. Perform steps from internal Confluence page to sign the VIB.
+3. Perform steps from internal Confluence page to sign the VIB
 
 **Note**: Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release and check changes to `[vmware/master]/docs/misc/vDVS_bulletin.xml` (see below to update the content per release)
 
@@ -363,17 +363,19 @@ Head to GitHub and author a new release add the changelog for the tag created.
 <vibID>vmware-esx-vmdkops-0.15.b93c186</vibID> (vmware-esx-vmdkops-<release_version>.<commit's SHA hash>)
 ```
 
-4. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB
-5. Push vDVS & vFile managed plugin to docker store and windows plugin to bintray
-6. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
+4. After the vib signing has successfully finished, you will receive a confirmation email. Go to the deliverables link 
+   mentioned in the email and download the signed offline bundle. Offline bundle will be a zip file something like	```vDVS_driver-0.18-offline_bundle-7032243.zip```. From the offline bundle, extract the signed VIB.
+5. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB as well as offline bundle
+6. Push vDVS & vFile managed plugin to docker store and windows plugin to bintray
+7. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
 
 ### Publish vDVS managed plugin to Docker Store
 **Note**: not automated as of 04/04/17
 
 To push plugin image
 ```
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make all
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make all
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-all
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-all
 ```
 
 ### Publish signed VIB to Bintray
@@ -400,8 +402,8 @@ Following are their paths (with respect to vDVS root working directory)
 ### Publish vFile managed plugin to Docker Store
 To push plugin image
 ```
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-vfile
-DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-vfile-all
+DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile-all
 ```
 
 Update documentation following steps listed below.
