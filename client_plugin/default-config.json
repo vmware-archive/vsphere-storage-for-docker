@@ -1,4 +1,5 @@
 {"MaxLogAgeDays": 28,
  "MaxLogSizeMb": 100,
+ "MaxLogFiles": 3,
  "LogPath": "/var/log/docker-volume-vsphere.log",
  "LogLevel": "debug"}

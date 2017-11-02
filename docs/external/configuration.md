@@ -58,6 +58,7 @@ The configuration for  Docker volume plugin can be provided via a JSON formatted
 {
     "Driver": "vsphere",
     "MaxLogAgeDays": 28,
+    "MaxLogFiles": 3,
     "MaxLogSizeMb": 100,
     "LogPath": "/var/log/docker-volume-vsphere.log",
     "LogLevel": "info",
@@ -81,6 +82,10 @@ The group ID is "root" by default and works fine with most Linux OS based Docker
     <tr>
       <td>MaxLogAgeDays</td>
       <td>The max number of days for which to keep logs on the machine.</td>
+    </tr>
+    <tr>
+      <td>MaxLogFiles</td>
+      <td>The max number of backup log files retains on the machine.</td>
     </tr>
     <tr>
       <td>MaxLogSizeMb</td>
