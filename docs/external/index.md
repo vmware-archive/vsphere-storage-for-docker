@@ -42,7 +42,7 @@ Furthermore, vFile volume plugin comes with high availability, scalability, and 
 
 Same as vDVS, vFile volume plugin is also integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
 
-More details about the usage of vFile can be found at [vFile userguide](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/external/vfile-plugin.md).
+More details about the usage of vFile can be found at [vFile userguide](http://vmware.github.io/docker-volume-vsphere/documentation/vfile-plugin.html).
 
 ## Documentation Version
 

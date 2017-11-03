@@ -23,15 +23,18 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 * Docker version: 17.06.0 or newer
 * Base docker volume plugin: [vSphere Docker Volume Service](https://github.com/vmware/docker-volume-vsphere)
 * All hosts running in [Swarm mode](https://docs.docker.com/engine/swarm/swarm-tutorial/)
+* All docker swarm managers should open [official etcd ports](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) 2379 and 2380 (User-defined port number feature is WIP)
 
 ## Installation
 The recommended way to install vFile plugin is from docker cli:
 
 ```
-docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 ```
 
 Note: please make sure the base volume plugin is already installed!
+
+* The `VFILE_TIMEOUT_IN_SECOND` setting is strongly recommended before [Issue #1954](https://github.com/vmware/docker-volume-vsphere/issues/1954) is resolved.
 
 ## Usage examples
 
@@ -213,3 +216,11 @@ vfile:latest        vol1
 vfile:latest        vol2
 
 ```
+
+### Why should I choose vFile instead of just enabling multi-writer flag on vSphere file systems?
+vSAN multi-writer mode permits multiple VMs to access the same VMDKs in read-write mode to enable the use of in-guest
+shared-storage clustering solutions such as Oracle RAC.
+However, the guests must be capable of safely arbitrating and coordinating multiple systems accessing the same storage.
+If your application is not designed for maintaining consistency in the writes performed to the shared disk, enabling
+multi-writer mode could result in data corruption.
+More information can be found [here](https://kb.vmware.com/s/article/1034165) and [here](https://kb.vmware.com/s/article/2121181).
