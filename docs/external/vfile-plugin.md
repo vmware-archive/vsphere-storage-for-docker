@@ -36,6 +36,24 @@ Note: please make sure the base volume plugin is already installed!
 
 * The `VFILE_TIMEOUT_IN_SECOND` setting is strongly recommended before [Issue #1954](https://github.com/vmware/docker-volume-vsphere/issues/1954) is resolved.
 
+## Remove and Reinstallation
+The recommended order to remove and reinstallation is:
+* remove and reinstall vFile plugin on all worker nodes
+* remove and reinstall vFile plugin on all manager nodes which are not swarm leader
+* remove and reinstall vFile plugin on manger node which is swarm leader
+
+Run the following command to remove and reinstall vFile plugin from docker cli:
+```
+docker plugin rm vfile:latest vfile:latest
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+```
+Note: Please make sure no volume exists when trying to remove and reinstall the vFile plugin. You will get the following error when trying to remove vFile plugin if a volume still exists.
+```
+docker plugin rm vfile:latest
+Error response from daemon: plugin vfile:latest is in use
+```
+You can use ``` docker plugin rm -f vfile:latest ``` to force remove the vFile plugin and reinstall the vFile plugin, but after that, that volume is not usable.
+
 ## Usage examples
 
 ### Steps for create/use/delete a vFile volume
