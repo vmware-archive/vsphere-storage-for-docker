@@ -28,6 +28,7 @@ import (
 type VolumeDevSpec struct {
 	Unit                    string
 	ControllerPciSlotNumber string
+	ControllerPciBusNumber  string
 }
 
 // Mkdir creates a directory at the specified path.

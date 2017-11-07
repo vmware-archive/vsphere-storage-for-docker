@@ -330,12 +330,12 @@ func getDevicePath(volDev *VolumeDevSpec) (string, error) {
 	// under /sys/bus/pci/devices/<bridge>/pci_bus to get the device
 	// (PVSCSI controller) we are interested in.
 	pciBusDir := fmt.Sprintf("%s/0000:00:%s/pci_bus", sysPciDevs,
-		volDev.ControllerPciSlotNumber)
+		volDev.ControllerPciBusNumber)
 
 	devs, err := ioutil.ReadDir(pciBusDir)
 	if err != nil {
 		log.WithFields(log.Fields{"Error": err}).Warn("Get device path failed for unit %s @ PCI bridge device %s: ",
-			volDev.Unit, volDev.ControllerPciSlotNumber)
+			volDev.Unit, volDev.ControllerPciBusNumber)
 		return "", fmt.Errorf("Device not found")
 	}
 	// This assumes that there is only one controller attached to the PCI bridge (which
