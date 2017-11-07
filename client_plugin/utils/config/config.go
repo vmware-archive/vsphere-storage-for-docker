@@ -47,9 +47,9 @@ const (
 	DefaultGroupID = "root"
 
 	// Local constants
-	defaultMaxLogSizeMb  = 100
+	defaultMaxLogSizeMb  = 10
 	defaultMaxLogAgeDays = 28
-	defaultMaxLogFiles   = 3
+	defaultMaxLogFiles   = 10
 	defaultLogLevel      = "info"
 )
 

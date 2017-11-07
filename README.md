@@ -58,8 +58,8 @@ journalctl -fu docker.service # Journalctl/Systemd
  and log location. Example:
 ```
  {"MaxLogAgeDays": 28,
- "MaxLogFiles": 3,
- "MaxLogSizeMb": 100,
+ "MaxLogFiles": 10,
+ "MaxLogSizeMb": 10,
  "LogPath": "/var/log/docker-volume-vsphere.log"}
 ```
 * **Turning on debug logging**:

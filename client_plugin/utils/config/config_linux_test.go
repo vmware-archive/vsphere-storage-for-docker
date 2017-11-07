@@ -26,8 +26,8 @@ import (
 func TestLoad(t *testing.T) {
 	conf, err := config.Load("../../default-config.json")
 	assert.Nil(t, err)
-	assert.Equal(t, conf.MaxLogSizeMb, 100)
+	assert.Equal(t, conf.MaxLogSizeMb, 10)
 	assert.Equal(t, conf.MaxLogAgeDays, 28)
-	assert.Equal(t, conf.MaxLogFiles, 3)
+	assert.Equal(t, conf.MaxLogFiles, 10)
 	assert.Equal(t, conf.LogPath, "/var/log/docker-volume-vsphere.log")
 }

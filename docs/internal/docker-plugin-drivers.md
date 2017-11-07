@@ -26,8 +26,8 @@ The docker volume plugin supports a driver, namely, `vsphere` for the vSphere pl
 {
 	"Driver": "vsphere",
 	"MaxLogAgeDays": 28,
-	"MaxLogFiles": 3,
-	"MaxLogSizeMb": 100,
+	"MaxLogFiles": 10,
+	"MaxLogSizeMb": 10,
 	"LogPath": "/var/log/docker-volume-vsphere.log",
 	"LogLevel": "info"
 }
