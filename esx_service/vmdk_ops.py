@@ -149,6 +149,11 @@ opsCounter = counter.OpsCounter()
 # Timeout setting for waiting all in-flight ops drained
 WAIT_OPS_TIMEOUT = 20
 
+# PCI slot number bits and mask
+PCI_BUS_DEV_BITS = 5
+PCI_BUS_MASK = 31
+PCI_FUNC_MASK = 7
+
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
 def RunCommand(cmd):
@@ -1232,7 +1237,7 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
     is equal to the slot number of this given PVSCSI controller
     '''
     if pvscsi.slotInfo:
-       return str(pvscsi.slotInfo.pciSlotNumber)
+       slot_num = pvscsi.slotInfo.pciSlotNumber
     else:
        # Slot number is got from from the VM config
        key = 'scsi{0}.pciSlotNumber'.format(pvscsi.key -
@@ -1241,9 +1246,33 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
                if cfg.key == key]
        # If the given controller exists
        if slot:
-          return slot[0].value
+          slot_num = slot[0].value
        else:
           return None
+    # Check if the PCI slot is on the primary or secondary bus
+    # and find the slot number for the bridge on the secondary
+    # bus.
+    bus = (int(slot_num) >> PCI_BUS_DEV_BITS) & PCI_BUS_MASK
+    func = (bus >> PCI_BUS_DEV_BITS) & PCI_FUNC_MASK
+    print(slot_num)
+    print(bus)
+    while bus > 0:
+        bus = bus - 1
+        # Get PCI bridge slot number
+        key = 'pciBridge{0}.pciSlotNumber'.format(bus)
+        bridge_slot = [cfg for cfg in vm.config.extraConfig \
+                       if cfg.key == key]
+        if bridge_slot:
+            slot_num = bridge_slot[0].value
+        else:
+            # We didn't find a PCI bridge for this bus.
+            return None
+        bus = (int(slot_num) >> PCI_BUS_DEV_BITS) & PCI_BUS_MASK
+        print(slot_num)
+        print(bus)
+
+    #print(vm.config)
+    return '{0}.{1}'.format(hex(int(slot_num))[2:], func)
 
 def dev_info(unit_number, pci_slot_number):
     '''Return a dictionary with Unit/Bus for the vmdk (or error)'''
@@ -1444,7 +1473,7 @@ def disk_attach(vmdk_path, vm):
 
 
     devices = vm.config.hardware.device
-
+    print(devices)
     # get all scsi controllers (pvsci, lsi logic, whatever)
     controllers = [d for d in devices
                    if isinstance(d, vim.VirtualSCSIController)]
@@ -1545,7 +1574,7 @@ def disk_attach(vmdk_path, vm):
 
     vm_dev_info = dev_info(disk_slot, pci_slot_number)
 
-    setStatusAttached(vmdk_path, vm, vm_dev_info)
+    setStatusAttached(vmdk_path, vm)
     logging.info("Disk %s successfully attached. controller pci_slot_number=%s, disk_slot=%d",
                  vmdk_path, pci_slot_number, disk_slot)
 
