@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -132,8 +133,10 @@ func NewKvStore(dockerOps *dockerops.DockerOps) *EtcdKVS {
 		}
 		// when error is IsNotExist, ETCD data-dir is not existing,
 		// need to continue to create/join a new ETCD cluster
+		log.Infof("ETCD data-dir does not exist, continue to create/join a new ETCD cluster")
 	} else {
 		// ETCD data-dir already exists, just re-join
+		log.Infof("ETCD data-dir exists, continue to rejoin")
 		err = e.rejoinEtcdCluster()
 		if err != nil {
 			log.Errorf("Failed to rejoin the ETCD cluster: %v", err)
@@ -190,6 +193,7 @@ func NewKvStore(dockerOps *dockerops.DockerOps) *EtcdKVS {
 func (e *EtcdKVS) rejoinEtcdCluster() error {
 	nodeID := e.nodeID
 	nodeAddr := e.nodeAddr
+	log.Infof("rejoinEtcdCluster on node with nodeID %s and nodeAddr %s", nodeID, nodeAddr)
 	lines := []string{
 		"--name", nodeID,
 		"--data-dir", etcdDataDir,
@@ -216,8 +220,10 @@ func (e *EtcdKVS) startEtcdCluster() error {
 	nodeAddr := e.nodeAddr
 	log.Infof("startEtcdCluster on node with nodeID %s and nodeAddr %s", nodeID, nodeAddr)
 
+	files, err := filepath.Glob(etcdDataDir)
+	log.Debugf("Files in etcdDataDir: %s", files)
 	// create ETCD data directory with 755 permission since only root needs full permission
-	err := os.Mkdir(etcdDataDir, 0755)
+	err = os.Mkdir(etcdDataDir, 0755)
 	if err != nil {
 		log.Errorf("Failed to create directory etcd-data: err %v", err)
 		return err

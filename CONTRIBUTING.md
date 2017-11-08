@@ -110,6 +110,12 @@ The prerequisite to build and deploy the plugin is to have a DockerHub account. 
 
 - The build will use your `username` (the output of `whoami`) to decide on the `DOCKER_HUB_REPO` name to complete our move to use managed plugin. If you want to use another DockerHub repository you need to set `DOCKER_HUB_REPO` as environment variable.
 
+- You **need** to set environment variable `SSH_KEY_OPT` if your ssh keys are not stored in the default location with the following format:
+```
+export SSH_KEY_OPT='-i /Users/username/.ssh/id_rsa'
+
+```
+
 - Test verification is extended using govmomi integration and `govc` cli is **required to set** following environment variables.
   - `GOVC_USERNAME` & `GOVC_PASSWORD`: user credentials for logging in to `ESX IP`
 
@@ -363,7 +369,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 <vibID>vmware-esx-vmdkops-0.15.b93c186</vibID> (vmware-esx-vmdkops-<release_version>.<commit's SHA hash>)
 ```
 
-4. After the vib signing has successfully finished, you will receive a confirmation email. Go to the deliverables link 
+4. After the vib signing has successfully finished, you will receive a confirmation email. Go to the deliverables link
    mentioned in the email and download the signed offline bundle. Offline bundle will be a zip file something like	```vDVS_driver-0.18-offline_bundle-7032243.zip```. From the offline bundle, extract the signed VIB.
 5. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB as well as offline bundle
 6. Push vDVS & vFile managed plugin to docker store and windows plugin to bintray
