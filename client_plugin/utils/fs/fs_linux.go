@@ -19,7 +19,6 @@ package fs
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -326,30 +325,23 @@ func DeleteDevicePathWithID(id string) error {
 
 // getDevicePath returns the device path or error.
 func getDevicePath(volDev *VolumeDevSpec) (string, error) {
-	// Get the device node for the unit returned from the attach.
-	// Lookup each device that has a label and if that label matches
-	// the one for the given bus number.
-	// The device we need is then constructed from the dir name with
-	// the matching label.
-	pciSlotAddr := fmt.Sprintf("%s/%s/address", sysPciSlots, volDev.ControllerPciSlotNumber)
+	// The bus device number in the volume dev spec refers the PCI
+	// bridge under which the device is attached. Read the pci_bus dir
+	// under /sys/bus/pci/devices/<bridge>/pci_bus to get the device
+	// (PVSCSI controller) we are interested in.
+	pciBusDir := fmt.Sprintf("%s/0000:00:%s/pci_bus", sysPciDevs,
+		volDev.ControllerPciBusNumber)
 
-	fh, err := os.Open(pciSlotAddr)
+	devs, err := ioutil.ReadDir(pciBusDir)
 	if err != nil {
-		log.WithFields(log.Fields{"Error": err}).Warn("Get device path failed for unit# %s @ PCI slot %s: ",
-			volDev.Unit, volDev.ControllerPciSlotNumber)
+		log.WithFields(log.Fields{"Error": err}).Warn("Get device path failed for unit %s @ PCI bridge device %s: ",
+			volDev.Unit, volDev.ControllerPciBusNumber)
 		return "", fmt.Errorf("Device not found")
 	}
-
-	buf := make([]byte, pciAddrLen)
-	_, err = fh.Read(buf)
-
-	fh.Close()
-	if err != nil && err != io.EOF {
-		log.WithFields(log.Fields{"Error": err}).Warn("Get device path failed for unit# %s @ PCI slot %s: ",
-			volDev.Unit, volDev.ControllerPciSlotNumber)
-		return "", fmt.Errorf("Device not found")
-	}
-	return fmt.Sprintf("/dev/disk/by-path/pci-%s.0-scsi-0:0:%s:0", string(buf), volDev.Unit), nil
+	// This assumes that there is only one controller attached to the PCI bridge (which
+	// is the case anyway with PCIE).
+	pvscsiCtl := fmt.Sprintf("%s:00.0", devs[0].Name())
+	return fmt.Sprintf("/dev/disk/by-path/pci-%s-scsi-0:0:%s:0", pvscsiCtl, volDev.Unit), nil
 }
 
 // GetMountInfo returns a map of mounted volumes and devices if available. It creates a map

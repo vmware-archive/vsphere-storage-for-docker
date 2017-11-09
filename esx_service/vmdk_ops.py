@@ -149,6 +149,11 @@ opsCounter = counter.OpsCounter()
 # Timeout setting for waiting all in-flight ops drained
 WAIT_OPS_TIMEOUT = 20
 
+# PCI slot number bits and mask
+PCI_BUS_DEV_BITS = 5
+PCI_BUS_MASK = 31
+PCI_FUNC_MASK = 7
+
 # Run executable on ESX as needed.
 # Returns int with return value,  and a string with either stdout (on success) or  stderr (on error)
 def RunCommand(cmd):
@@ -1232,7 +1237,7 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
     is equal to the slot number of this given PVSCSI controller
     '''
     if pvscsi.slotInfo:
-       return str(pvscsi.slotInfo.pciSlotNumber)
+       slot_num = pvscsi.slotInfo.pciSlotNumber
     else:
        # Slot number is got from from the VM config
        key = 'scsi{0}.pciSlotNumber'.format(pvscsi.key -
@@ -1241,14 +1246,36 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
                if cfg.key == key]
        # If the given controller exists
        if slot:
-          return slot[0].value
+          slot_num = slot[0].value
        else:
           return None
+    # Check if the PCI slot is on the primary or secondary bus
+    # and find the slot number for the bridge on the secondary
+    # bus.
+    orig_slot_num = slot_num
+    bus = (int(slot_num) >> PCI_BUS_DEV_BITS) & PCI_BUS_MASK
+    func = (bus >> PCI_BUS_DEV_BITS) & PCI_FUNC_MASK
+    while bus > 0:
+        bus = bus - 1
+        # Get PCI bridge slot number
+        key = 'pciBridge{0}.pciSlotNumber'.format(bus)
+        bridge_slot = [cfg for cfg in vm.config.extraConfig \
+                       if cfg.key == key]
+        if bridge_slot:
+            slot_num = bridge_slot[0].value
+        else:
+            # We didn't find a PCI bridge for this bus.
+            return None
+        bus = (int(slot_num) >> PCI_BUS_DEV_BITS) & PCI_BUS_MASK
 
-def dev_info(unit_number, pci_slot_number):
+    bus_num = '{0}.{1}'.format(hex(int(slot_num))[2:], func)
+    return [str(orig_slot_num), bus_num]
+
+def dev_info(unit_number, pci_bus_slot_number):
     '''Return a dictionary with Unit/Bus for the vmdk (or error)'''
     return {'Unit': str(unit_number),
-            'ControllerPciSlotNumber': pci_slot_number}
+            'ControllerPciSlotNumber': pci_bus_slot_number[0],
+            'ControllerPciBusNumber': pci_bus_slot_number[1]}
 
 def reset_vol_meta(vmdk_path):
     '''Clears metadata for vmdk_path'''
@@ -1444,7 +1471,6 @@ def disk_attach(vmdk_path, vm):
 
 
     devices = vm.config.hardware.device
-
     # get all scsi controllers (pvsci, lsi logic, whatever)
     controllers = [d for d in devices
                    if isinstance(d, vim.VirtualSCSIController)]
@@ -1504,7 +1530,7 @@ def disk_attach(vmdk_path, vm):
         pci_slot_number = get_controller_pci_slot(vm, pvsci[0],
                                                   offset_from_bus_number)
         logging.info("Added a PVSCSI controller, controller_key=%d pci_slot_number=%s",
-                      controller_key, pci_slot_number)
+                      controller_key, pci_slot_number[0])
 
     # add disk as independent, so it won't be snapshotted with the Docker VM
     disk_spec = vim.VirtualDeviceConfigSpec(
@@ -1546,8 +1572,9 @@ def disk_attach(vmdk_path, vm):
     vm_dev_info = dev_info(disk_slot, pci_slot_number)
 
     setStatusAttached(vmdk_path, vm, vm_dev_info)
+
     logging.info("Disk %s successfully attached. controller pci_slot_number=%s, disk_slot=%d",
-                 vmdk_path, pci_slot_number, disk_slot)
+                 vmdk_path, pci_slot_number[0], disk_slot)
 
     return vm_dev_info
 
