@@ -21,12 +21,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/natefinch/lumberjack"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/log_formatter"
 	"io/ioutil"
 	"os"
 	"runtime"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/natefinch/lumberjack"
+	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/log_formatter"
 )
 
 const (
@@ -46,8 +47,9 @@ const (
 	DefaultGroupID = "root"
 
 	// Local constants
-	defaultMaxLogSizeMb  = 100
+	defaultMaxLogSizeMb  = 10
 	defaultMaxLogAgeDays = 28
+	defaultMaxLogFiles   = 10
 	defaultLogLevel      = "info"
 )
 
@@ -58,6 +60,7 @@ type Config struct {
 	LogPath        string `json:",omitempty"`
 	MaxLogSizeMb   int    `json:",omitempty"`
 	MaxLogAgeDays  int    `json:",omitempty"`
+	MaxLogFiles    int    `json:",omitempty"`
 	LogLevel       string `json:",omitempty"`
 	Target         string `json:",omitempty"`
 	Project        string `json:",omitempty"`
@@ -97,6 +100,9 @@ func setDefaults(config *Config) {
 	if config.MaxLogAgeDays == 0 {
 		config.MaxLogAgeDays = defaultMaxLogAgeDays
 	}
+	if config.MaxLogFiles == 0 {
+		config.MaxLogFiles = defaultMaxLogFiles
+	}
 	if config.LogLevel == "" {
 		config.LogLevel = defaultLogLevel
 	}
@@ -127,9 +133,10 @@ func LogInit(logInfo *LogInfo) bool {
 		path = *logInfo.LogFile
 	}
 	log.SetOutput(&lumberjack.Logger{
-		Filename: path,
-		MaxSize:  c.MaxLogSizeMb,  // megabytes
-		MaxAge:   c.MaxLogAgeDays, // days
+		Filename:   path,
+		MaxSize:    c.MaxLogSizeMb,  // megabytes
+		MaxAge:     c.MaxLogAgeDays, // days
+		MaxBackups: c.MaxLogFiles,   // total #of files
 	})
 
 	if *logInfo.LogLevel == "" {

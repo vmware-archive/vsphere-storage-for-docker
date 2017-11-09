@@ -129,7 +129,8 @@ via the `--config` option, specifying the full path of the file.
 ```
  {
 	"MaxLogAgeDays": 28,
-	"MaxLogSizeMb": 100,
+    "MaxLogFiles": 10,
+	"MaxLogSizeMb": 10,
 	"LogPath": "/var/log/vfile.log"
 }
 ```

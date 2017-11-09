@@ -11,7 +11,7 @@ vSphere Docker Volume Service (vDVS) enables customers to address persistent sto
 
 [<img src="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vDVS is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
-If you would like to contribute then please check out 
+If you would like to contribute then please check out
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
 & [FAQ on the project site](http://vmware.github.io/docker-volume-vsphere/documentation/faq.html).
 
@@ -58,7 +58,8 @@ journalctl -fu docker.service # Journalctl/Systemd
  and log location. Example:
 ```
  {"MaxLogAgeDays": 28,
- "MaxLogSizeMb": 100,
+ "MaxLogFiles": 10,
+ "MaxLogSizeMb": 10,
  "LogPath": "/var/log/docker-volume-vsphere.log"}
 ```
 * **Turning on debug logging**:

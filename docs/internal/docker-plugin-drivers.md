@@ -18,6 +18,7 @@ The docker volume plugin supports a driver, namely, `vsphere` for the vSphere pl
 * LogLevel      - logging level for the plugin
 * LogPath       - location where plugin log fils are created
 * MaxLogSizeMb  - max. size of the plugin log file
+* MaxLogFiles   - max. number of backup log files to retain
 * MaxLogAgeDays - number of days to retain plugin log files
 
 ## Sample plugin configuration
@@ -25,7 +26,8 @@ The docker volume plugin supports a driver, namely, `vsphere` for the vSphere pl
 {
 	"Driver": "vsphere",
 	"MaxLogAgeDays": 28,
-	"MaxLogSizeMb": 100,
+	"MaxLogFiles": 10,
+	"MaxLogSizeMb": 10,
 	"LogPath": "/var/log/docker-volume-vsphere.log",
 	"LogLevel": "info"
 }
