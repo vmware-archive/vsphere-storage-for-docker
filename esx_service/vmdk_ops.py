@@ -149,7 +149,7 @@ opsCounter = counter.OpsCounter()
 # Timeout setting for waiting all in-flight ops drained
 WAIT_OPS_TIMEOUT = 20
 
-# PCI bus and function number bits and mask, used on the slot number
+# PCI bus and function number bits and mask, used on the slot number.
 PCI_BUS_BITS = 5
 PCI_BUS_MASK = 31
 PCI_FUNC_BITS = 10
