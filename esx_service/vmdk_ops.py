@@ -149,9 +149,10 @@ opsCounter = counter.OpsCounter()
 # Timeout setting for waiting all in-flight ops drained
 WAIT_OPS_TIMEOUT = 20
 
-# PCI slot number bits and mask
-PCI_BUS_DEV_BITS = 5
+# PCI bus and function number bits and mask, used on the slot number.
+PCI_BUS_BITS = 5
 PCI_BUS_MASK = 31
+PCI_FUNC_BITS = 10
 PCI_FUNC_MASK = 7
 
 # Run executable on ESX as needed.
@@ -1253,8 +1254,8 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
     # and find the slot number for the bridge on the secondary
     # bus.
     orig_slot_num = slot_num
-    bus = (int(slot_num) >> PCI_BUS_DEV_BITS) & PCI_BUS_MASK
-    func = (bus >> PCI_BUS_DEV_BITS) & PCI_FUNC_MASK
+    bus = (int(slot_num) >> PCI_BUS_BITS) & PCI_BUS_MASK
+    func = (int(slot_num) >> PCI_FUNC_BITS) & PCI_FUNC_MASK
     while bus > 0:
         bus = bus - 1
         # Get PCI bridge slot number
@@ -1266,7 +1267,7 @@ def get_controller_pci_slot(vm, pvscsi, key_offset):
         else:
             # We didn't find a PCI bridge for this bus.
             return None
-        bus = (int(slot_num) >> PCI_BUS_DEV_BITS) & PCI_BUS_MASK
+        bus = (int(slot_num) >> PCI_BUS_BITS) & PCI_BUS_MASK
 
     bus_num = '{0}.{1}'.format(hex(int(slot_num))[2:], func)
     return [str(orig_slot_num), bus_num]
