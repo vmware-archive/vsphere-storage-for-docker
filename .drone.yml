@@ -148,13 +148,17 @@ build:
       - export VM1=`$GOVC_GET_IP photon.ga.vmfs`
       - export VM2=`$GOVC_GET_IP Ubuntu.1404.vmfs`
       - #
-      - export MANAGER1=$VM1
-      - export WORKER1=$VM2
-      - export WORKER2=`$GOVC_GET_IP Ubuntu.1404.vsan`
+      - export MANAGER1=$VM2
+      - export WORKER1=`$GOVC_GET_IP Ubuntu.1404.vsan`
+      - export WORKER2=`$GOVC_GET_IP photon.ga.vsan`
       - #
-      - export CI_NODE4=`$GOVC_GET_IP photon.ga.vsan`
+      - export CI_NODE4=$WORKER1
       - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL $VM1 $VM2 $$BUILD_NUMBER installbuilds < /dev/null
+      - #
+      - #echo "=> Building and running tests for vFile plugin on VMFS ESX_6.0" `date` > /dev/null
+      - #
+      - #./misc/drone-scripts/deploy-and-test-wrapper.sh vfileplugin $GOVC_URL_6_0 $MANAGER1 $WORKER1 $$BUILD_NUMBER < /dev/null
       - #
       - #echo "=> Running tests on VSAN ESX_6.0" `date` > /dev/null
       - echo "=> Tests are disabled for VSAN ESX_6.0 until we fix Git Issue 1057" `date` > /dev/null

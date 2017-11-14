@@ -75,9 +75,9 @@ var _ = Suite(&VFileDemotePromoteTestSuite{})
 // 2. Verify the 1st volume is available
 // 3. Attach the 1st volume on worker1
 // 4. Promote worker1 to manager
-// 5. Sleep 20 seconds
+// 5. Sleep 60 seconds
 // 6. Demote original manager to worker
-// 7. Sleep 20 seconds
+// 7. Sleep 60 seconds
 // 8. Create the 2nd volume on new worker (s.master)
 // 9. Verify the 2nd volume is available
 // 10. Attach the 2nd volume on new worker (s.master)
@@ -102,14 +102,14 @@ func (s *VFileDemotePromoteTestSuite) TestSwarmRoleChange(c *C) {
 	err = dockercli.PromoteNode(s.master, s.worker1)
 	c.Assert(err, IsNil, Commentf("Failed to promote worker1 %s to manager", s.worker1))
 
-	log.Printf("Wait 20 seconds for new manager to be updated")
-	time.Sleep(20 * time.Second)
+	log.Printf("Wait 80 seconds for new manager to be updated")
+	time.Sleep(80 * time.Second)
 
 	err = dockercli.DemoteNode(s.worker1, s.master)
 	c.Assert(err, IsNil, Commentf("Failed to demote manager %s", s.master))
 
-	log.Printf("Wait 20 seconds for new worker to be updated")
-	time.Sleep(20 * time.Second)
+	log.Printf("Wait 80 seconds for new worker to be updated")
+	time.Sleep(80 * time.Second)
 
 	out, err = dockercli.CreateVFileVolume(s.master, s.volName2)
 	c.Assert(err, IsNil, Commentf(out))
@@ -142,8 +142,8 @@ func (s *VFileDemotePromoteTestSuite) TestSwarmRoleChange(c *C) {
 	grefc, _ = strconv.Atoi(out)
 	c.Assert(grefc, Equals, 0, Commentf("Expected volume %s global refcount to be 0, found %s", s.volName2, out))
 
-	log.Printf("Wait 20 seconds for volume status back to Ready")
-	time.Sleep(20 * time.Second)
+	log.Printf("Wait 80 seconds for volume status to be back to - Ready")
+	time.Sleep(80 * time.Second)
 
 	out = verification.GetVFileVolumeStatusHost(s.volName1, s.master)
 	log.Println("GetVFileVolumeStatusHost return out[%s] for volume %s", out, s.volName1)
@@ -167,18 +167,18 @@ func (s *VFileDemotePromoteTestSuite) TestSwarmRoleChange(c *C) {
 	out, err = dockercli.DeleteVolume(s.worker1, s.volName2)
 	c.Assert(err, IsNil, Commentf(out))
 
-	log.Println("Finished swarm promote/demote test for vFile, start to reset the testbed swarm roles...")
+	log.Println("Finished swarm promote/demote test for vFile, starting to reset the testbed swarm roles...")
 	err = dockercli.PromoteNode(s.worker1, s.master)
 	c.Assert(err, IsNil, Commentf("Failed to reset manager role for %s ", s.master))
 
-	log.Printf("Wait 20 seconds for original manager to be updated")
-	time.Sleep(20 * time.Second)
+	log.Printf("Wait 80 seconds for original manager to be updated")
+	time.Sleep(80 * time.Second)
 
 	err = dockercli.DemoteNode(s.master, s.worker1)
 	c.Assert(err, IsNil, Commentf("Failed to reset worker role for %s", s.worker1))
 
-	log.Printf("Wait 20 seconds for original worker to be updated")
-	time.Sleep(20 * time.Second)
+	log.Printf("Wait 80 seconds for original worker to be updated")
+	time.Sleep(80 * time.Second)
 
 	misc.LogTestEnd(c.TestName())
 }

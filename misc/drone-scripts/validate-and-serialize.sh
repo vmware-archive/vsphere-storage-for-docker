@@ -91,7 +91,7 @@ do
         # cleans up if return value is 0 otherwise not; checking build is finished or not
         if is_cleanup_needed ${runningBuildArr[0]}
         then
-            echo "Cleanning stale data..."
+            echo "Cleaning stale data..."
             govc datastore.rm $DS docker-volume-vsphere/ongoing/${runningBuildArr[0]}
             release_lock $check_lock
             break
