@@ -189,8 +189,9 @@ def createVMDK(vmdk_path, vm_name, vol_name,
 
     if os.path.isfile(vmdk_path):
         # We are mostly here due to race or Plugin VMCI retry #1076
-        logging.warning("File %s already exists", vmdk_path)
-        return None
+        msg = "File {0} already exists".format(vmdk_path) 
+        logging.warning(msg)
+        return err(msg)
 
     try:
         validate_opts(opts, vmdk_path)

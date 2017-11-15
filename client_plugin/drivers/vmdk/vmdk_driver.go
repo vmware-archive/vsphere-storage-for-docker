@@ -28,6 +28,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
@@ -368,6 +369,9 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 
 	errCreate := d.ops.Create(r.Name, r.Options)
 	if errCreate != nil {
+		if strings.Contains(errCreate.Error(), "already exists") {
+			return volume.Response{Err: ""}
+		}
 		log.WithFields(log.Fields{"name": r.Name, "error": errCreate}).Error("Create volume failed ")
 		return volume.Response{Err: errCreate.Error()}
 	}

@@ -68,7 +68,7 @@ var _ = Suite(&BasicTestSuite{})
 // VM3 - created on shared VSAN datastore (TODO: currently not available)
 //
 // Test steps:
-// 1. Create a volume
+// 1. Create a volume, re-create the volume, verify the create is idempotent
 // 2. Verify the volume is available
 // 3. Attach the volume
 // 4. Verify volume status is attached
@@ -82,6 +82,9 @@ func (s *BasicTestSuite) TestVolumeLifecycle(c *C) {
 
 	for _, host := range s.config.DockerHosts {
 		out, err := dockercli.CreateVolume(host, s.volName1)
+		c.Assert(err, IsNil, Commentf(out))
+
+		out, err = dockercli.CreateVolume(host, s.volName1)
 		c.Assert(err, IsNil, Commentf(out))
 
 		accessible := verification.CheckVolumeAvailability(host, s.volName1)
