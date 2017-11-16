@@ -19,10 +19,7 @@
 package powershell
 
 import (
-	"fmt"
-	"os"
 	"strings"
-	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	ps "github.com/gorillalabs/go-powershell"
@@ -32,27 +29,12 @@ import (
 var (
 	// shell is the handle to a single open Powershell session.
 	shell ps.Shell
-
-	// mutex synchronizes access to the single PowerShell session.
-	mutex = &sync.Mutex{}
 )
-
-// init creates a PowerShell session.
-func init() {
-	var err error
-	shell, err = ps.New(&backend.Local{})
-	if err != nil {
-		log.WithField("err", err).Fatal("Failed to create a PowerShell session")
-		fmt.Println("Failed to create a PowerShell session")
-		os.Exit(1)
-	}
-}
 
 // Exec executes the given command in a PowerShell session.
 func Exec(command string) (string, string, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
+	shell, _ = ps.New(&backend.Local{})
+	defer shell.Exit()
 	// A \n character marks the end of command in PowerShell. Therefore, we
 	// escape such characters to prevent partial script execution.
 	escapedCmd := strings.Replace(command, "\n", " ", -1) + "\n"
@@ -62,11 +44,4 @@ func Exec(command string) (string, string, error) {
 			"stdout": stdout, "stderr": stderr}).Error("Failed to execute PowerShell command")
 	}
 	return stdout, stderr, err
-}
-
-// Exit terminates the PowerShell session.
-func Exit() {
-	mutex.Lock()
-	defer mutex.Unlock()
-	shell.Exit()
 }
