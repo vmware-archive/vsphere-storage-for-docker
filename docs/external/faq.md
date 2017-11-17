@@ -57,6 +57,9 @@ It occurs if the Docker volume service cannot communicate to the ESX back end. T
 
 It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read ["What is VMCI and vSock and why is it needed?"](https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed) above.
 
+#### I see "plugin not found" error message in the Docker daemon logs, what is the cause?
+This is the limitation of docker and being tracked at [issue#34545](https://github.com/moby/moby/issues/34545). Docker maintains plugin id and changes it while reinstalling the managed plugin. It is recommended to invoke `docker plugin upgrade` as mentioned at [user guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html#upgrade-instructions) while uprading vDVS plugin.
+
 #### Volume remains attached to the VM after upgrading vDVS ESX driver
 If the container using volumes exits during the upgrade of ESX driver (i.e. after vib remove but before vib install), the volumes may remain attached to VM. In such a case, please disable and then enable (restart) the volume plugin to ensure volumes are properly detached.
 
