@@ -94,7 +94,8 @@ func (s *ParallelVolumeCreateTestSuite) accessCheck(hostIP string, volList []str
 func (s *ParallelVolumeCreateTestSuite) TestVolumeCreationParallel(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	const noOfVolumes = 50
+	// change this parameter to create as many volume in parallel
+	const noOfVolumes = 15
 
 	s.parallelVolumeCreation(noOfVolumes, c)
 	s.accessCheck(s.config.DockerHosts[0], s.volumeList, c)
