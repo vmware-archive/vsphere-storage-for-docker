@@ -95,7 +95,7 @@ func (s *ParallelVolumeCreateTestSuite) TestVolumeCreationParallel(c *C) {
 	misc.LogTestStart(c.TestName())
 
 	// change this parameter to create as many volume in parallel.
-	const noOfVolumes = 15
+	const noOfVolumes = 10
 
 	s.parallelVolumeCreation(noOfVolumes, c)
 	s.accessCheck(s.config.DockerHosts[0], s.volumeList, c)
