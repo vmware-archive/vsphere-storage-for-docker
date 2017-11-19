@@ -94,7 +94,7 @@ func (s *ParallelVolumeCreateTestSuite) accessCheck(hostIP string, volList []str
 func (s *ParallelVolumeCreateTestSuite) TestVolumeCreationParallel(c *C) {
 	misc.LogTestStart(c.TestName())
 
-	// change this parameter to create as many volume in parallel.
+	// change this parameter to create as many volume in parallel
 	const noOfVolumes = 10
 
 	s.parallelVolumeCreation(noOfVolumes, c)
