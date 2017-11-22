@@ -25,7 +25,6 @@ import (
 	"github.com/Microsoft/go-winio"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	ps "github.com/vmware/docker-volume-vsphere/client_plugin/utils/powershell"
 )
 
 const (
@@ -99,5 +98,4 @@ func (s *NpipePluginServer) Init() {
 func (s *NpipePluginServer) Destroy() {
 	log.WithFields(log.Fields{"npipe": npipeAddr}).Info("Closing npipe listener ")
 	s.listener.Close()
-	ps.Exit()
 }
