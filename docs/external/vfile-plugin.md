@@ -34,6 +34,11 @@ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest 
 
 Note: please make sure the base volume plugin is already installed!
 
+Internally, vFile creates and uses etcd cluster to store metadata for volumes. By default, the etcd cluster listens on port 2379 for client communication and port 2380 for peer communication. If you has other etcd clutster which already listens on those default ports, you need to sepcify different ports to avoid conflict when installing the vFile plugin.  Please see the following example:
+```
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VFILE_ETCD_CLIENT_PORT=4001 VFILE_ETCD_PEER_PORT=4002
+```
+
 * The `VFILE_TIMEOUT_IN_SECOND` setting is strongly recommended before [Issue #1954](https://github.com/vmware/docker-volume-vsphere/issues/1954) is resolved.
 
 ## Remove and Reinstallation

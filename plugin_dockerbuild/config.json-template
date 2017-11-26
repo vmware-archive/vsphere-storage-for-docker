@@ -76,6 +76,18 @@
 		"description": "Group ID of the socket file for the plugin",
 		"value": "root",
 		"Settable": [ "value"]
+	},
+	{
+		"name": "VFILE_ETCD_CLIENT_PORT",
+		"description": "Etcd client port number used by vFILE plugin",
+		"value": "",
+		"Settable": [ "value"]
+	},
+	{
+		"name": "VFILE_ETCD_PEER_PORT",
+		"description": "Etcd peer port number used by vFILE plugin",
+		"value": "",
+		"Settable": [ "value"]
 	}
 
 	]
