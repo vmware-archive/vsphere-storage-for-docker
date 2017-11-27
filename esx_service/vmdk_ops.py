@@ -716,7 +716,8 @@ def findVmByUuidChoice(bios_uuid, vc_uuid):
     if vc_uuid:
         vm = findVmByUuid(vc_uuid, True)
     if not vm: # either vc_uuid is not even passed, or we failed to find the VM by VC uuid:
-        logging.info("Failed to find VM by VC UUID %s, trying BIOS UUID %s", vc_uuid, bios_uuid)
+        if vc_uuid:
+            logging.info("Failed to find VM by VC UUID %s, trying BIOS UUID %s", vc_uuid, bios_uuid)
         vm = findVmByUuid(bios_uuid, False)
     if not vm: # can't find VM by VC or BIOS uuid
         logging.error("Failed to find VM by BIOS UUID either.")
@@ -746,8 +747,12 @@ def apply_action_VMDK(action, vmdk_path, vm_name, bios_uuid, vc_uuid):
     logging.info("*** %s: VMDK %s to VM '%s' , bios uuid = %s, VC uuid=%s)",
                  action.__name__, vmdk_path, vm_name, bios_uuid, vc_uuid)
     vm = findVmByUuidChoice(bios_uuid, vc_uuid)
+    vcuuid = 'None'
+    if vc_uuid:
+        vcuuid = vc_uuid
+
     if not vm: # can't find VM by VC or BIOS uuid
-        return err("Failed to find VM object for %s (bios %s vc %s)" % (vm_name, bios_uuid, vc_uuid))
+        return err("Failed to find VM object for %s (bios %s vc %s)" % (vm_name, bios_uuid, vcuuid))
 
     if vm.config.name != vm_name:
         logging.warning("vm_name from vSocket '%s' does not match VM object '%s' ", vm_name, vm.config.name)
@@ -1042,8 +1047,11 @@ def executeRequest(vm_uuid, vm_name, config_path, cmd, full_vol_name, opts, vc_u
         # default_datastore could be a real datastore name or a hard coded  one "_VM_DS"
         default_datastore = get_datastore_name(default_datastore_url)
 
+        vcuuid = 'None'
+        if vc_uuid:
+            vcuuid = vc_uuid
         logging.debug("executeRequest: vm uuid=%s VC uuid=%s name=%s, tenant_name=%s, default_datastore=%s",
-                    vm_uuid, vc_uuid, vm_name, tenant_name, default_datastore)
+                      vm_uuid, vcuuid, vm_name, tenant_name, default_datastore)
 
         if cmd == "list":
             threadutils.set_thread_name("{0}-nolock-{1}".format(vm_name, cmd))
@@ -1772,12 +1780,16 @@ def execRequestThread(client_socket, cartel, request):
         vm_name = group_info["displayName"]
         cfg_path = group_info["cfgPath"]
         uuid = group_info["uuid"]            # BIOS UUID, see http://www.virtu-al.net/2015/12/04/a-quick-reference-of-vsphere-ids/
-        vc_uuid = group_info["vcUuid"]       # VC UUID
+        vcuuid = group_info["vcUuid"]       # VC UUID
         # pyVmomi expects uuid like this one: 564dac12-b1a0-f735-0df3-bceb00b30340
         # to get it from uuid in VSI vms/<id>/vmmGroup, we use the following format:
         UUID_FORMAT = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}"
         vm_uuid = UUID_FORMAT.format(*uuid.replace("-",  " ").split())
-        vc_uuid = UUID_FORMAT.format(*vc_uuid.replace("-",  " ").split())
+        vc_uuid = None
+
+        # Use a VC uuid if one is present.
+        if len(vcuuid) > 0:
+            vc_uuid = UUID_FORMAT.format(*vcuuid.replace("-",  " ").split())
 
         try:
             req = json.loads(request.decode('utf-8'))
