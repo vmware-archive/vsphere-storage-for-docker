@@ -22,9 +22,12 @@ Creating snapshots of a VM which has containers running is not supported.
 
 - If a container is running and a snapshot is taken then if the container exits, the volume is not detached. VC shows an error that the volume is part of a snapshot and hence can't be removed from the VM config. For this reason, snapshotting a VM after starting one or more containers isn't supported as it leaves the volume attached to the VM. [#1649](https://github.com/vmware/docker-volume-vsphere/issues/1649)
 
-
 **Site Recovery Manager[SRM]**
 
 User created vmgroup is not supported with SRM.
 
 - SRM does not replicate the vmgroup configuration to the recovery site. As a result, after disaster recovery finishes, all VMs that were part of user created vmgroup will lose access to volumes of user created vmgroup. Those VMs now become part of `_DEFAULT` vmgroup and will have access to volumes of `_DEFAULT` vmgroup - in short, VMs lose the volumes that were part of user created vmgroup and gain access to volumes of `_DEFAULT vmgroup`. [#1786](https://github.com/vmware/docker-volume-vsphere/issues/1786)
+
+**Virtual Volumes(VVol)**
+
+- All features of vDVS are supported with Virtual Volumes(VVol) except clone volume. Cloning a volume to create a new volume on a VVol datastore is not supported currently. [#1998] (https://github.com/vmware/docker-volume-vsphere/issues/1998)
