@@ -57,13 +57,36 @@ const (
 	VolPrefixGRef                     = "SVOLS_gref_"
 	VolPrefixInfo                     = "SVOLS_info_"
 	VolPrefixClient                   = "SVOLS_client_"
+	VolPrefixStartTrigger             = "SVOLS_start_trigger_"
+	VolPrefixStopTrigger              = "SVOLS_stop_trigger_"
+	VolPrefixStartMarker              = "SVOLS_start_marker_"
+	VolPrefixStopMarker               = "SVOLS_stop_marker_"
 	VolumeDoesNotExistError           = "No such volume"
+	OpGet                             = "Get"
+	OpPut                             = "Put"
+	OpDelete                          = "Delete"
 )
 
 // KvPair : Key Value pair holder
 type KvPair struct {
-	Key   string
-	Value string
+	Key    string
+	Value  string
+	OpType string
+}
+
+// KvLoc: generic lock for a key
+type KvLock interface {
+	// BlockingLockWithLease - Try to blocking wait to get a lock on a key
+	BlockingLockWithLease() error
+
+	// TryLock - try a lock
+	TryLock() error
+
+	// ReleaseLock - releasing a lock
+	ReleaseLock()
+
+	// ClearLock - clean a lock
+	ClearLock()
 }
 
 // KvStore is the interface for VolumeDriver to access a plugin-level KV store
@@ -73,6 +96,9 @@ type KvStore interface {
 
 	// ReadMetaData - Read volume metadata in KV store
 	ReadMetaData(keys []string) ([]KvPair, error)
+
+	// UpdateMetaData - Read/Write/Delete metadata according to given key-value pairs
+	UpdateMetaData(entries []KvPair) ([]KvPair, error)
 
 	// DeleteMetaData - Delete volume metadata in KV store
 	DeleteMetaData(name string) error
@@ -103,4 +129,7 @@ type KvStore interface {
 
 	// DeleteClientMetaData - Delete volume client metadata in KV store
 	DeleteClientMetaData(name string, nodeID string) error
+
+	// CreateLock - Create a new lock based on a given key
+	CreateLock(key string) (KvLock, error)
 }

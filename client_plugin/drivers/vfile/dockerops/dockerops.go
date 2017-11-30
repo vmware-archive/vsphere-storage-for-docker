@@ -51,7 +51,7 @@ const (
 	// for communicating to clients
 	networkDriver = "overlay"
 	// Name of the Samba server docker image
-	sambaImageName = "dperson/samba"
+	sambaImageName = "luomiao/samba-debian"
 	// Name of the Samba share used to expose a volume
 	FileShareName = "share1"
 	// Default username for all accessing Samba server mounts
@@ -200,6 +200,16 @@ func (d *DockerOps) VolumeInspect(volName string) error {
 //      bool:    Indicated success/failure of the function. If
 //               false, ignore other output values.
 func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
+	_, port, err := d.getServiceIDAndPort(volName)
+	if err == nil {
+		// if the service is already existing, just return corresponding port number and name
+		return int(port), serviceNamePrefix + volName, true
+	}
+
+	if err != nil && err.Error() != noSambaServiceError {
+		log.Warningf("Failed to check the if a server is running for volume %s", volName)
+	}
+
 	var service swarm.ServiceSpec
 	var options dockerTypes.ServiceCreateOptions
 
@@ -463,6 +473,9 @@ func (d *DockerOps) DeleteInternalVolume(volName string) {
 				// volume exists, continue waiting and retry removing
 				msg += fmt.Sprintf(" Internal volume still in use. Wait and retry before timeout.")
 				log.Warningf(msg)
+			} else {
+				log.Info("Successfully deleted internal volume.")
+				return
 			}
 		case <-timer.C:
 			// The deletion of internal volume will be handled by garbage collector
@@ -489,7 +502,12 @@ func (d *DockerOps) StopSMBServer(volName string) (int, string, bool) {
 	log.Infof("StopSMBServer for vol %s", volName)
 	serviceID, _, err := d.getServiceIDAndPort(volName)
 	if err != nil {
-		return 0, "", false
+		if err.Error() != noSambaServiceError {
+			return 0, "", false
+		} else {
+			// if the service is already stopped
+			return 0, "", true
+		}
 	}
 
 	//Stop the service

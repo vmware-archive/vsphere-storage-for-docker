@@ -30,6 +30,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/dockerops"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore"
 )
@@ -51,9 +52,11 @@ import (
                                before checking again
    gcTicker:                   ticker for garbage collector to run a collection
    etcdClientCreateError:      Error indicating failure to create etcd client
-   swarmUnhealthyErrorMsg:     Message indicating swarm cluster is unhealthy
-   etcdSingleRef:              if global refcount 0 -> 1, start SMB server
-   etcdNoRef:                  if global refcount 1 -> 0, shut down SMB server
+   etcdUnhealthyErrorMsg:      Message indicating etcd is unhealthy
+   etcdNoRef:                  global refcount = 0, no dependency on this volume
+   etcdLockTicker:             ticker for blocking wait a ETCD lock
+   etcdLockTimer:              timeout for blocking wait a ETCD lock
+   etcdLockTimeoutErrMsg:      Message indicating the failure to block wait a ETCD lock
 */
 const (
 	etcdDataDir              = "/etcd-data"
@@ -69,9 +72,12 @@ const (
 	checkSleepDuration       = time.Second
 	gcTicker                 = 15 * time.Second
 	etcdClientCreateError    = "Failed to create etcd client"
-	swarmUnhealthyErrorMsg   = "Swarm cluster maybe unhealthy"
-	etcdSingleRef            = "1"
+	etcdUnhealthyErrorMsg    = "ETCD maybe unhealthy"
 	etcdNoRef                = "0"
+	etcdLockTicker           = 1 * time.Second
+	etcdLockTimer            = 20 * time.Second
+	etcdLockTimeoutErrMsg    = "ETCD Lock blocking wait timeout"
+	etcdLockLeaseTime        = 20
 )
 
 type EtcdKVS struct {
@@ -89,6 +95,17 @@ type EtcdKVS struct {
 	etcdClientPort string
 	// etcdPeerPort is port for etcd peers talk to each other
 	etcdPeerPort string
+}
+
+type EtcdLock struct {
+	// Key for this lock
+	Key string
+	// lockCli to hold the client for the lock
+	lockCli *etcdClient.Client
+	// lockSession to hold the session for the lock
+	lockSession *concurrency.Session
+	// lockMutex to hold the mutex for the lock
+	lockMutex *concurrency.Mutex
 }
 
 // VFileVolConnectivityData - Contains metadata of vFile volumes
@@ -539,7 +556,8 @@ func (e *EtcdKVS) checkLocalEtcd() error {
 			} else {
 				log.Infof("Local ETCD client is up successfully, start watcher")
 				e.watcher = cli
-				go e.etcdWatcher(cli)
+				go e.etcdStartWatcher(cli)
+				go e.etcdStopWatcher(cli)
 				return nil
 			}
 		case <-timer.C:
@@ -548,13 +566,24 @@ func (e *EtcdKVS) checkLocalEtcd() error {
 	}
 }
 
-// etcdWatcher function sets up a watcher to monitor all the changes to global refcounts in the KV store
-func (e *EtcdKVS) etcdWatcher(cli *etcdClient.Client) {
-	watchCh := cli.Watch(context.Background(), kvstore.VolPrefixGRef,
+// etcdStartWatcher function sets up a watcher to monitor the change to StartTrigger in the KV store
+func (e *EtcdKVS) etcdStartWatcher(cli *etcdClient.Client) {
+	watchCh := cli.Watch(context.Background(), kvstore.VolPrefixStartTrigger,
 		etcdClient.WithPrefix(), etcdClient.WithPrevKV())
 	for wresp := range watchCh {
 		for _, ev := range wresp.Events {
-			e.etcdEventHandler(ev)
+			e.etcdStartEventHandler(ev)
+		}
+	}
+}
+
+// etcdStopWatcher function sets up a watcher to monitor the change to StopTrigger in the KV store
+func (e *EtcdKVS) etcdStopWatcher(cli *etcdClient.Client) {
+	watchCh := cli.Watch(context.Background(), kvstore.VolPrefixStopTrigger,
+		etcdClient.WithPrefix(), etcdClient.WithPrevKV())
+	for wresp := range watchCh {
+		for _, ev := range wresp.Events {
+			e.etcdStopEventHandler(ev)
 		}
 	}
 }
@@ -650,140 +679,313 @@ func (e *EtcdKVS) cleanOrphanService(volumesToVerify []string) {
 	}
 }
 
-// etcdEventHandler function handles the returned event from etcd watcher of global refcount changes
-func (e *EtcdKVS) etcdEventHandler(ev *etcdClient.Event) {
+// etcdStartEventHandler function handles the returned event from etcd watcher of the start trigger changes
+func (e *EtcdKVS) etcdStartEventHandler(ev *etcdClient.Event) {
 	log.WithFields(
 		log.Fields{"type": ev.Type},
-	).Infof("Watcher on global refcount returns event ")
+	).Info("Watcher on start trigger returns event ")
 
-	nested := func(key string, fromState kvstore.VolStatus,
-		toState kvstore.VolStatus, interimState kvstore.VolStatus,
-		fn func(string) (int, string, bool)) {
+	// monitor PUT requests on start triggers, excluding the PUT for creation
+	if ev.Type == etcdClient.EventTypePut && ev.PrevKv != nil {
+		log.Debugf("Watcher got a increase event on watcher, new value is %s", string(ev.Kv.Value))
+		volName := strings.TrimPrefix(string(ev.Kv.Key), kvstore.VolPrefixStartTrigger)
 
-		// watcher observes global refcount critical change
-		// transactional edit state first
-		volName := strings.TrimPrefix(key, kvstore.VolPrefixGRef)
-		succeeded := e.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+volName,
-			string(fromState), string(interimState))
-		if !succeeded {
-			// this handler doesn't get the right to start/stop server
+		// Compare the value of start marker, only one watcher will be able to successfully update the value to
+		// the new value of start trigger
+		success, err := e.CompareAndPutIfNotEqual(kvstore.VolPrefixStartMarker+volName, string(ev.Kv.Value))
+		if err != nil || success == false {
+			// watchers failed to update the marker just return
 			return
 		}
 
-		port, servName, succeeded := fn(volName)
+		log.Infof("Successfully update the start marker to the value of start trigger, proceed to next step")
+
+		// Get the lock for changing the state and server
+		lock, err := e.CreateLock(kvstore.VolPrefixState + volName)
+		if err != nil {
+			log.Errorf("Failed to create lock for state changing of %s", volName)
+			return
+		}
+
+		err = lock.BlockingLockWithLease()
+		if err != nil {
+			log.Errorf("Failed to blocking wait lock for state changing of %s", volName)
+			lock.ClearLock()
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+		resp, err := e.watcher.Get(ctx, kvstore.VolPrefixState+volName)
+		cancel()
+		if err != nil {
+			log.WithFields(
+				log.Fields{"volName": volName,
+					"error": err},
+			).Error("Failed to Get state of volume from ETCD ")
+			lock.ReleaseLock()
+			return
+		}
+
+		if string(resp.Kvs[0].Value) == string(kvstore.VolStateMounted) {
+			log.Infof("Volume is already in desired state %s", kvstore.VolStateMounted)
+			lock.ReleaseLock()
+			return
+		}
+
+		// start the SMB server
+		port, servName, succeeded := e.dockerOps.StartSMBServer(volName)
 		if succeeded {
-			// Either starting or stopping SMB
-			// server succeeded.
-			// Update volume metadata to reflect
-			// port number and file service name.
-			var entries []kvstore.KvPair
-			var writeEntries []kvstore.KvPair
-			var volRecord VFileVolConnectivityData
-
-			// Port, Server name, Client list, Samba
-			// username/password are in the same key.
-			// Must fetch this key to know the value
-			// of other fields before rewriting them.
-			keys := []string{
-				kvstore.VolPrefixInfo + volName,
-			}
-			entries, err := e.ReadMetaData(keys)
+			err = e.updateServerInfo(kvstore.VolPrefixInfo+volName, port, servName)
 			if err != nil {
-				// Failed to fetch existing metadata on the volume
-				// Set volume state to error as we cannot
-				// proceed
-				log.Warningf("Failed to read volume metadata before updating port information: %v",
-					err)
-				e.CompareAndPut(kvstore.VolPrefixState+volName,
-					string(interimState),
-					string(kvstore.VolStateError))
-				return
-			}
-			err = json.Unmarshal([]byte(entries[0].Value), &volRecord)
-			if err != nil {
-				// Failed to unmarshal record from JSON
-				// Set volume state to error as we cannot
-				// proceed
-				log.Warningf("Failed to unmarshal JSON for reading existing metadata: %v",
-					err)
-				e.CompareAndPut(kvstore.VolPrefixState+volName,
-					string(interimState),
-					string(kvstore.VolStateError))
-				return
-			}
-			// Rewrite the port number and service name
-			// then marshal the data structure to JSON again.
-			volRecord.Port = port
-			volRecord.ServiceName = servName
-			byteRecord, err := json.Marshal(volRecord)
-			if err != nil {
-				// Failed to marshal record as JSON
-				// Set volume state to error as we cannot
-				// proceed
-				log.Warningf("Failed to marshal JSON for writing metadata: %v",
-					err)
-				e.CompareAndPut(kvstore.VolPrefixState+volName,
-					string(interimState),
-					string(kvstore.VolStateError))
-				return
-			}
-			writeEntries = append(writeEntries, kvstore.KvPair{
-				Key:   kvstore.VolPrefixInfo + volName,
-				Value: string(byteRecord)})
-
-			log.Infof("Updating port and file service name for %s", volName)
-			err = e.WriteMetaData(writeEntries)
-			if err != nil {
-				// Failed to write metadata.
-				// Set volume state to error as we cannot
-				// proceed
-				log.Warningf("Failed to write metadata for volume %s",
-					volName)
-				e.CompareAndPut(kvstore.VolPrefixState+volName,
-					string(interimState),
-					string(kvstore.VolStateError))
+				// Leave the SMB server running but don't update the state
+				log.Errorf("Failed to update metadata for %s", volName)
+				lock.ReleaseLock()
 				return
 			}
 
-			// server start/stop succeed. Set desired state on volume.
+			// server start succeed. Set desired state on volume.
 			stateUpdateResult := e.CompareAndPut(kvstore.VolPrefixState+volName,
-				string(interimState),
-				string(toState))
+				string(kvstore.VolStateReady),
+				string(kvstore.VolStateMounted))
 			if stateUpdateResult == false {
-				// Could not set desired state on volume
-				// set to state Error
-				e.CompareAndPut(kvstore.VolPrefixState+volName,
-					string(interimState),
-					string(kvstore.VolStateError))
+				log.Errorf("Failed to update state of %s from Ready to Mounted", volName)
 			}
 		} else {
-			// failed to start/stop server, set to state Error
-			e.CompareAndPut(kvstore.VolPrefixState+volName,
-				string(interimState),
-				string(kvstore.VolStateError))
+			// failed to start server
+			log.Errorf("Failed to start SMB server for %s", volName)
 		}
-		return
+		lock.ReleaseLock()
 	}
 
-	// What we want to monitor are PUT requests on global refcount
-	// Not delete, not get, not anything else
-	if ev.Type == etcdClient.EventTypePut {
-		if string(ev.Kv.Value) == etcdSingleRef &&
-			ev.PrevKv != nil &&
-			string(ev.PrevKv.Value) == etcdNoRef {
-			// Refcount went 0 -> 1
-			nested(string(ev.Kv.Key), kvstore.VolStateReady,
-				kvstore.VolStateMounted, kvstore.VolStateMounting,
-				e.dockerOps.StartSMBServer)
-		} else if string(ev.Kv.Value) == etcdNoRef &&
-			ev.PrevKv != nil &&
-			string(ev.PrevKv.Value) == etcdSingleRef {
-			// Refcount went 1 -> 0
-			nested(string(ev.Kv.Key), kvstore.VolStateMounted,
-				kvstore.VolStateReady, kvstore.VolStateUnmounting,
-				e.dockerOps.StopSMBServer)
+	return
+}
+
+// etcdStopEventHandler function handles the returned event from etcd watcher of the stop trigger changes
+func (e *EtcdKVS) etcdStopEventHandler(ev *etcdClient.Event) {
+	log.WithFields(
+		log.Fields{"type": ev.Type},
+	).Info("Watcher on stop trigger returns event ")
+
+	// monitor PUT requests on stop triggers, excluding the PUT for creation
+	if ev.Type == etcdClient.EventTypePut && ev.PrevKv != nil {
+		log.Debugf("Watcher got a increase event on stop watcher, new value is %s", string(ev.Kv.Value))
+		volName := strings.TrimPrefix(string(ev.Kv.Key), kvstore.VolPrefixStopTrigger)
+
+		// Compare the value of stop marker, only one watcher will be able to successfully update the value to
+		// the new value of stop trigger
+		success, err := e.CompareAndPutIfNotEqual(kvstore.VolPrefixStopMarker+volName, string(ev.Kv.Value))
+		if err != nil || success == false {
+			// watchers failed to update the marker just return
+			return
+		}
+
+		log.Infof("Successfully update the stop marker to the value of stop trigger, proceed to next step")
+
+		// Get the lock for changing the state and server
+		lock, err := e.CreateLock(kvstore.VolPrefixState + volName)
+		if err != nil {
+			log.Errorf("Failed to create lock for state changing of %s", volName)
+			return
+		}
+
+		err = lock.BlockingLockWithLease()
+		if err != nil {
+			log.Errorf("Failed to blocking wait lock for state changing of %s", volName)
+			lock.ClearLock()
+			return
+		}
+
+		// stop event should check global refcount instead of state
+		ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+		resp, err := e.watcher.Get(ctx, kvstore.VolPrefixGRef+volName)
+		cancel()
+		if err != nil {
+			log.WithFields(
+				log.Fields{"volName": volName,
+					"error": err},
+			).Error("Failed to Get global refcount of volume from ETCD ")
+			lock.ReleaseLock()
+			return
+		}
+
+		if string(resp.Kvs[0].Value) != etcdNoRef {
+			log.Infof("Volume %s still has global users, cannot stop the server", volName)
+			lock.ReleaseLock()
+			return
+		}
+
+		// Change state back to Ready before stop the server
+		_, err = e.CompareAndPutIfNotEqual(kvstore.VolPrefixState+volName, string(kvstore.VolStateReady))
+		if err != nil {
+			log.Errorf("Failed to update state of %s to Ready during server stop event", err)
+			lock.ReleaseLock()
+			return
+		}
+
+		// stop the SMB server
+		port, servName, succeeded := e.dockerOps.StopSMBServer(volName)
+		if succeeded {
+			err = e.updateServerInfo(kvstore.VolPrefixInfo+volName, port, servName)
+			if err != nil {
+				log.Warningf("Failed to update metadata for %s after stopping the server", volName)
+			}
+		} else {
+			log.Errorf("Failed to stop SMB server for %s", volName)
+		}
+		lock.ReleaseLock()
+		return
+	}
+}
+
+func (e *EtcdKVS) updateServerInfo(key string, port int, servName string) error {
+	// Update volume metadata to reflect port number and file service name.
+	var entries []kvstore.KvPair
+	var writeEntries []kvstore.KvPair
+	var volRecord VFileVolConnectivityData
+
+	// Port, Server name, Samba username/password are in the same key.
+	// Must fetch this key to know the value of other fields before rewriting them.
+	keys := []string{key}
+	entries, err := e.ReadMetaData(keys)
+	if err != nil {
+		// Failed to fetch existing metadata on the volume
+		log.Warningf("Failed to read volume metadata before updating: %v", err)
+		return err
+	}
+	err = json.Unmarshal([]byte(entries[0].Value), &volRecord)
+	if err != nil {
+		// Failed to unmarshal record from JSON
+		log.Warningf("Failed to unmarshal JSON for reading existing metadata: %v", err)
+		return err
+	}
+
+	// Check if current port number is already recorded in the meta data
+	if volRecord.Port != port {
+		// Rewrite the port number and service name
+		// then marshal the data structure to JSON again.
+		volRecord.Port = port
+		volRecord.ServiceName = servName
+		byteRecord, err := json.Marshal(volRecord)
+		if err != nil {
+			// Failed to marshal record as JSON
+			log.Warningf("Failed to marshal JSON for writing metadata: %v", err)
+			return err
+		}
+		writeEntries = append(writeEntries, kvstore.KvPair{
+			Key:   key,
+			Value: string(byteRecord)})
+
+		log.Infof("Updating port and file service name for %s", key)
+		err = e.WriteMetaData(writeEntries)
+		if err != nil {
+			// Failed to write metadata.
+			log.Warningf("Failed to write metadata for volume %s", key)
+			return err
+		}
+	} else {
+		log.Warningf("Volume metadata already contains the correct port number, skip updating metadata")
+	}
+	return nil
+}
+
+// CreateLock: create a ETCD lock for a given key, only setup the client
+// session and mutex should be create when start to use the lock
+func (e *EtcdKVS) CreateLock(name string) (kvstore.KvLock, error) {
+	// Create a client to talk to etcd
+	etcdAPI := e.createEtcdClient()
+	if etcdAPI == nil {
+		log.Warningf(etcdClientCreateError)
+		return nil, errors.New(etcdClientCreateError)
+	}
+
+	var kvlock kvstore.KvLock
+	elock := &EtcdLock{
+		Key:     name + "-lock",
+		lockCli: etcdAPI,
+	}
+	kvlock = elock
+	return kvlock, nil
+}
+
+// TryLock: try to get a ETCD mutex lock
+func (e *EtcdLock) TryLock() error {
+	session, err := concurrency.NewSession(e.lockCli, concurrency.WithTTL(etcdLockLeaseTime))
+	if err != nil {
+		log.Errorf("Failed to create session before blocking wait lock of %s", e.Key)
+		return err
+	}
+	mutex := concurrency.NewMutex(session, e.Key)
+	err = mutex.Lock(context.TODO())
+	if err != nil {
+		log.Errorf("Failed to get TryLock for key %s", e.Key)
+		session.Close()
+		return err
+	} else {
+		log.Infof("TryLock %s successfully", e.Key)
+		e.lockSession = session
+		e.lockMutex = mutex
+		return nil
+	}
+}
+
+// BlockingLockWithLease: blocking wait to get a ETCD mutex on the given name until timeout
+func (e *EtcdLock) BlockingLockWithLease() error {
+	log.Debugf("BlockingLockWithLease: key=%s", e.Key)
+
+	session, err := concurrency.NewSession(e.lockCli, concurrency.WithTTL(etcdLockLeaseTime))
+	if err != nil {
+		log.Errorf("Failed to create session before blocking wait lock of %s", e.Key)
+		return err
+	}
+
+	ticker := time.NewTicker(etcdLockTicker)
+	defer ticker.Stop()
+	timer := time.NewTimer(dockerops.GetServiceStartTimeout() + etcdLockTimer)
+	defer timer.Stop()
+
+	mutex := concurrency.NewMutex(session, e.Key)
+
+	for {
+		select {
+		case <-ticker.C:
+			err := mutex.Lock(context.TODO())
+			if err != nil {
+				log.Warningf("Failed to get lock for key %s", e.Key)
+			} else {
+				log.Infof("Locked %s successfully", e.Key)
+				e.lockSession = session
+				e.lockMutex = mutex
+				return nil
+			}
+		case <-timer.C:
+			msg := fmt.Sprintf(etcdLockTimeoutErrMsg)
+			log.Warningf(msg)
+			session.Close()
+			return errors.New(msg)
 		}
 	}
+}
+
+// ClearLock: stop the client/session with the lock
+func (e *EtcdLock) ClearLock() {
+	e.lockMutex = nil
+	if e.lockSession != nil {
+		e.lockSession.Close()
+		e.lockSession = nil
+	}
+	if e.lockCli != nil {
+		e.lockCli.Close()
+		e.lockCli = nil
+	}
+}
+
+// ReleaseLock: try to release a lock
+func (e *EtcdLock) ReleaseLock() {
+	err := e.lockMutex.Unlock(context.TODO())
+	if err != nil {
+		log.Warningf("Failed to release lock for %s, but will continue to clear the lock session", e.Key)
+	}
+	e.ClearLock()
 	return
 }
 
@@ -820,7 +1022,36 @@ func (e *EtcdKVS) CompareAndPut(key string, oldVal string, newVal string) bool {
 	return txresp.Succeeded
 }
 
-//CompareAndPutOrFetch - Compare and put of get the current value of the key
+// CompareAndPutIfNotEqual - Compare and put a new value of the key if the current value is not equal to the new value
+func (e *EtcdKVS) CompareAndPutIfNotEqual(key string, newVal string) (bool, error) {
+	log.Debugf("CompareAndPutIfNotEqual: key=%s, newVal=%s", key, newVal)
+	var txresp *etcdClient.TxnResponse
+	// Create a client to talk to etcd
+	etcdAPI := e.createEtcdClient()
+	if etcdAPI == nil {
+		return false, errors.New(etcdClientCreateError)
+	}
+	defer etcdAPI.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	txresp, err := etcdAPI.Txn(ctx).If(
+		etcdClient.Compare(etcdClient.Value(key), "!=", newVal),
+	).Then(
+		etcdClient.OpPut(key, newVal),
+	).Commit()
+	cancel()
+
+	if err != nil {
+		log.WithFields(
+			log.Fields{"Key": key,
+				"Value to compare": newVal,
+				"Error":            err},
+		).Errorf("Failed to compare and put if not equal")
+	}
+	return txresp.Succeeded, err
+}
+
+//CompareAndPutOrFetch - Compare and put or get the current value of the key
 func (e *EtcdKVS) CompareAndPutOrFetch(key string,
 	oldVal string,
 	newVal string) (*etcdClient.TxnResponse, error) {
@@ -1035,12 +1266,75 @@ func (e *EtcdKVS) WriteMetaData(entries []kvstore.KvPair) error {
 	if err != nil {
 		msg = fmt.Sprintf("Failed to write metadata: %v.", err)
 		if err == context.DeadlineExceeded {
-			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+			msg += fmt.Sprintf(etcdUnhealthyErrorMsg)
 		}
 		log.Warningf(msg)
 		return errors.New(msg)
 	}
 	return nil
+}
+
+// UpdateMetaData - Read/Write/Delete metadata according to given key-value pairs
+func (e *EtcdKVS) UpdateMetaData(entries []kvstore.KvPair) ([]kvstore.KvPair, error) {
+	var ops []etcdClient.Op
+	//var result_entries []kvstore.KvPair
+	log.WithFields(
+		log.Fields{"KvPair": entries},
+	).Debug("UpdateMetaData")
+
+	// Create a client to talk to etcd
+	client := e.createEtcdClient()
+	if client == nil {
+		return nil, errors.New(etcdClientCreateError)
+	}
+	defer client.Close()
+
+	// Lets build the request which will be executed
+	// in a single transaction
+	// ops contain multiple operations
+	for _, elem := range entries {
+		if elem.OpType == kvstore.OpPut {
+			ops = append(ops, etcdClient.OpPut(elem.Key, elem.Value))
+		} else if elem.OpType == kvstore.OpGet {
+			ops = append(ops, etcdClient.OpGet(elem.Key))
+		} else if elem.OpType == kvstore.OpDelete {
+			ops = append(ops, etcdClient.OpDelete(elem.Key))
+		} else {
+			msg := fmt.Sprintf("Unknown OpType for UpdateMetaData: %s", elem.OpType)
+			log.Errorf(msg)
+			return nil, errors.New(msg)
+		}
+	}
+
+	// Post all requested operations in one transaction
+	ctx, cancel := context.WithTimeout(context.Background(), etcdRequestTimeout)
+	resp, err := client.Txn(ctx).Then(ops...).Commit()
+	cancel()
+	if err != nil {
+		msg := fmt.Sprintf("Transactional metadata update failed: %v.", err)
+		if err == context.DeadlineExceeded {
+			msg += fmt.Sprintf(etcdUnhealthyErrorMsg)
+		}
+		log.Warningf(msg)
+		return nil, errors.New(msg)
+	}
+
+	for i, elem := range entries {
+		resp := resp.Responses[i].GetResponseRange()
+		if elem.OpType == kvstore.OpGet {
+			// If any Get() didnt find a key, there wont be
+			// an error returned. It will just return an empty resp
+			if resp.Count == 0 {
+				continue
+			}
+			entries[i].Value = string(resp.Kvs[0].Value)
+		}
+	}
+
+	log.WithFields(
+		log.Fields{"KvPair": entries},
+	).Debug("UpdateMetaData succeeded")
+	return entries, nil
 }
 
 // ReadMetaData - Read metadata in KV store
@@ -1073,7 +1367,7 @@ func (e *EtcdKVS) ReadMetaData(keys []string) ([]kvstore.KvPair, error) {
 	if err != nil {
 		msg := fmt.Sprintf("Transactional metadata read failed: %v.", err)
 		if err == context.DeadlineExceeded {
-			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+			msg += fmt.Sprintf(etcdUnhealthyErrorMsg)
 		}
 		log.Warningf(msg)
 		return entries, errors.New(msg)
@@ -1128,6 +1422,10 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 	ops := []etcdClient.Op{
 		etcdClient.OpDelete(kvstore.VolPrefixState + name),
 		etcdClient.OpDelete(kvstore.VolPrefixGRef + name),
+		etcdClient.OpDelete(kvstore.VolPrefixStartTrigger + name),
+		etcdClient.OpDelete(kvstore.VolPrefixStopTrigger + name),
+		etcdClient.OpDelete(kvstore.VolPrefixStartMarker + name),
+		etcdClient.OpDelete(kvstore.VolPrefixStopMarker + name),
 		etcdClient.OpDelete(kvstore.VolPrefixInfo + name),
 	}
 
@@ -1138,7 +1436,7 @@ func (e *EtcdKVS) DeleteMetaData(name string) error {
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete metadata for volume %s: %v", name, err)
 		if err == context.DeadlineExceeded {
-			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+			msg += fmt.Sprintf(etcdUnhealthyErrorMsg)
 		}
 		log.Warningf(msg)
 		return errors.New(msg)
@@ -1173,7 +1471,7 @@ func (e *EtcdKVS) DeleteClientMetaData(name string, nodeID string) error {
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete client metadata for volume %s on node %s: %v", name, nodeID, err)
 		if err == context.DeadlineExceeded {
-			msg += fmt.Sprintf(swarmUnhealthyErrorMsg)
+			msg += fmt.Sprintf(etcdUnhealthyErrorMsg)
 		}
 		log.Warningf(msg)
 		return errors.New(msg)

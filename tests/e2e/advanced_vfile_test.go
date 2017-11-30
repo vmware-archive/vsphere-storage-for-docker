@@ -90,6 +90,7 @@ func (s *AdvancedVFileTestSuite) TestVFileVolumeLifecycle(c *C) {
 
 	// Mount the volume on worker
 	out, err = dockercli.AttachVFileVolume(s.worker1, s.volName1, s.container1Name)
+	c.Assert(err, IsNil, Commentf(out))
 
 	// Expect global refcount for this volume to be 2
 	out = verification.GetVFileVolumeGlobalRefcount(s.volName1, s.master)

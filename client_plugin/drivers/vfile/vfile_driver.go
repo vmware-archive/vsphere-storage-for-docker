@@ -81,6 +81,10 @@ type VolumeDriver struct {
 
    status:          What state is the vFile volume currently in?
    globalRefcount:  How many host VMs are accessing this volume?
+   StartTrigger:    trigger for watchers of server start event on swarm managers
+   StopTrigger:     trigger for watchers of server stop event on swarm managers
+   StartMarker:     marker to filter a single watcher for server start event
+   StopMarker:      marker to filter a single watcher for server stop event
    port:            On which port is the Samba service listening?
    serviceName:     What is the name of the Samba service for this volume?
    username:
@@ -93,6 +97,10 @@ type VolumeDriver struct {
 type VolumeMetadata struct {
 	Status         kvstore.VolStatus `json:"-"` // Field won't be marshalled
 	GlobalRefcount int               `json:"-"` // Field won't be marshalled
+	StartTrigger   int               `json:"starttrigger,omitempty"`
+	StopTrigger    int               `json:"stoptrigger,omitempty"`
+	StartMarker    int               `json:"startmarker,omitempty"`
+	StopMarker     int               `json:"stopmarker,omitempty"`
 	Port           int               `json:"port,omitempty"`
 	ServiceName    string            `json:"serviceName,omitempty"`
 	Username       string            `json:"username,omitempty"`
@@ -268,6 +276,10 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	volRecord := VolumeMetadata{
 		Status:         kvstore.VolStateCreating,
 		GlobalRefcount: 0,
+		StartTrigger:   0,
+		StopTrigger:    0,
+		StartMarker:    0,
+		StopMarker:     0,
 		Port:           0,
 		Username:       dockerops.SambaUsername,
 		Password:       dockerops.SambaPassword,
@@ -276,6 +288,10 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	// Append global refcount and status to kv pairs that will be written
 	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixGRef + r.Name, Value: strconv.Itoa(volRecord.GlobalRefcount)})
 	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixState + r.Name, Value: string(volRecord.Status)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixStartTrigger + r.Name, Value: strconv.Itoa(volRecord.StartTrigger)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixStopTrigger + r.Name, Value: strconv.Itoa(volRecord.StopTrigger)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixStartMarker + r.Name, Value: strconv.Itoa(volRecord.StartMarker)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixStopMarker + r.Name, Value: strconv.Itoa(volRecord.StopMarker)})
 	// Append the rest of the metadata as one KV pair where the data is jsonified
 	byteRecord, err := json.Marshal(volRecord)
 	if err != nil {
@@ -351,7 +367,6 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 	}
 
 	var msg string
-	var volRecord VolumeMetadata
 
 	// Cannot remove volumes till plugin completely initializes
 	// because we don't know if it is being used or not
@@ -371,61 +386,69 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 		return volume.Response{Err: msg}
 	}
 
-	// Test and set status to Deleting
-	if !d.kvStore.CompareAndPutStateOrBusywait(kvstore.VolPrefixState+r.Name,
-		string(kvstore.VolStateReady),
-		string(kvstore.VolStateDeleting)) {
-		// Failed to change state from Ready to Deleting
-		// 1. Volume is in Mounted state -> get clients and return error
-		// 2. Volume is already in Deleting/Error/Creating/Unmounting and timeout -> continue delete
-		// 3. Volume is in other states -> return error
+	// Get the lock for changing the global refcount
+	grefLock, err := d.kvStore.CreateLock(kvstore.VolPrefixGRef + r.Name)
+	if err != nil {
+		msg = fmt.Sprintf("Failed to create lock for removing volume %s. Error: %v",
+			kvstore.VolPrefixGRef+r.Name, err)
+		log.Error(msg)
+		return volume.Response{Err: msg}
+	}
 
-		// Get a list of host VMs using this volume, if any
-		keys := []string{
-			kvstore.VolPrefixState + r.Name,
-			kvstore.VolPrefixInfo + r.Name,
-		}
-		entries, err := d.kvStore.ReadMetaData(keys)
-		if err != nil {
-			msg = fmt.Sprintf("Remove failed: cannot read metadata of volume %s", r.Name)
-			log.Errorf(msg)
-			return volume.Response{Err: msg}
-		}
+	err = grefLock.BlockingLockWithLease()
+	if err != nil {
+		msg = fmt.Sprintf("Failed to blocking wait lock for removing volume %s. Error: %v",
+			kvstore.VolPrefixGRef+r.Name, err)
+		log.Error(msg)
+		grefLock.ClearLock()
+		return volume.Response{Err: msg}
+	}
 
-		state := entries[0].Value
-		switch state {
-		case string(kvstore.VolStateDeleting):
-			log.Warningf("Remove: volume in Deleting state after timeout. Continue deleting.")
-		case string(kvstore.VolStateError):
-		case string(kvstore.VolStateCreating):
-		case string(kvstore.VolStateUnmounting):
-			log.Warningf("Remove: volume in %s state after timeout. Continue deleting", state)
-			if !d.kvStore.CompareAndPut(kvstore.VolPrefixState+r.Name,
-				state, string(kvstore.VolStateDeleting)) {
-				msg = fmt.Sprintf("Remove: Volume state changed unexpected. Please retry later")
-				log.Errorf(msg)
-				return volume.Response{Err: msg}
+	// Try to lock for changing state. At this point, there should be no lock on the state
+	stateLock, err := d.kvStore.CreateLock(kvstore.VolPrefixState + r.Name)
+	if err != nil {
+		msg = fmt.Sprintf("Failed to create lock for removing volume %s. Error: %v",
+			kvstore.VolPrefixState+r.Name, err)
+		log.Error(msg)
+		grefLock.ReleaseLock()
+		return volume.Response{Err: msg}
+	}
 
-			}
-		case string(kvstore.VolStateMounted):
-			// Unmarshal Info key
-			err = json.Unmarshal([]byte(entries[1].Value), &volRecord)
-			if err != nil {
-				msg = fmt.Sprintf("Remove failed: cannot unmarshal info data. %v", err)
-				log.Errorf(msg)
-				return volume.Response{Err: msg}
-			}
+	err = stateLock.TryLock()
+	if err != nil {
+		msg = fmt.Sprintf("Failed to try lock for removing volume %s. Error: %v",
+			kvstore.VolPrefixState+r.Name, err)
+		log.Error(msg)
+		stateLock.ClearLock()
+		grefLock.ReleaseLock()
+		return volume.Response{Err: msg}
+	}
 
-			msg = fmt.Sprintf("Remove failed: volume state is Mounted.")
-			msg += fmt.Sprintf(" Host VMs using this volume: %s",
-				strings.Join(d.GetClientList(r.Name), ","))
-			log.Errorf(msg)
-			return volume.Response{Err: msg}
-		default:
-			msg = fmt.Sprintf("Remove failed: cannot delete from current state %s.", state)
-			log.Errorf(msg)
-			return volume.Response{Err: msg}
-		}
+	// Set global refcount to 0, set state to Ready, before removing the volume
+	var entries []kvstore.KvPair
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixGRef + r.Name, Value: strconv.Itoa(0)})
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixState + r.Name, Value: string(kvstore.VolStateReady)})
+	err = d.kvStore.WriteMetaData(entries)
+	if err != nil {
+		msg = fmt.Sprintf("Failed to reset global refcount and state before removing volume %s. Error: %v",
+			r.Name, err)
+		log.Error(msg)
+		stateLock.ReleaseLock()
+		grefLock.ReleaseLock()
+		return volume.Response{Err: msg}
+	}
+
+	// release the lock for volume state
+	stateLock.ReleaseLock()
+
+	// increase stop trigger again in case server is still running
+	err = d.kvStore.AtomicIncr(kvstore.VolPrefixStopTrigger + r.Name)
+	if err != nil {
+		msg = fmt.Sprintf("Failed to increase stop trigger when removing volume %s. Error: %v",
+			r.Name, err)
+		log.Error(msg)
+		grefLock.ReleaseLock()
+		return volume.Response{Err: msg}
 	}
 
 	// Delete internal volume
@@ -434,12 +457,15 @@ func (d *VolumeDriver) Remove(r volume.Request) volume.Response {
 
 	// Delete metadata associated with this volume
 	log.Infof("Attempting to delete volume metadata for %s", r.Name)
-	err := d.kvStore.DeleteMetaData(r.Name)
+	err = d.kvStore.DeleteMetaData(r.Name)
 	if err != nil {
 		msg = fmt.Sprintf("Failed to delete volume metadata for %s. Reason: %v", r.Name, err)
+		log.Error(msg)
+		grefLock.ReleaseLock()
 		return volume.Response{Err: msg}
 	}
 
+	grefLock.ReleaseLock()
 	return volume.Response{Err: ""}
 }
 
@@ -511,37 +537,10 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	return volume.Response{Mountpoint: mountpoint}
 }
 
-func (d *VolumeDriver) addVMToClientList(volName string, nodeID string, vmIP string) error {
-	log.Infof("Add VM[%s] with ID[%s] to ClientList for volume[%s]", vmIP, nodeID, volName)
-	var entries []kvstore.KvPair
-	clientKey := kvstore.VolPrefixClient + volName + "_" + nodeID
-	entries = append(entries, kvstore.KvPair{Key: clientKey, Value: vmIP})
-	err := d.kvStore.WriteMetaData(entries)
-	if err != nil {
-		// Failed to write metadata.
-		log.Warningf("Failed to add ClientList[%] on node[%s] for volume %s",
-			vmIP, nodeID, volName)
-		return err
-	}
-	return nil
-}
-
-func (d *VolumeDriver) removeVMFromClientList(volName string, nodeID string, vmIP string) error {
-	log.Infof("Remove VM[%s] with ID[%s] from ClientList for volume[%s]", vmIP, nodeID, volName)
-	err := d.kvStore.DeleteClientMetaData(volName, nodeID)
-	if err != nil {
-		// Failed to delete metadata.
-		log.Warningf("Failed to remove ClientList[%] on node[%s] for volume %s",
-			vmIP, nodeID, volName)
-		return err
-	}
-	return nil
-}
-
 // MountVolume - Request attach and then mounts the volume.
 func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isReadOnly bool, skipAttach bool) (string, error) {
 	mountpoint := d.GetMountPoint(name)
-	// First, make sure  that mountpoint exists.
+	// First, make sure that mountpoint exists.
 	err := fs.Mkdir(mountpoint)
 	if err != nil {
 		log.WithFields(
@@ -551,14 +550,29 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		return mountpoint, err
 	}
 
-	// Increase GRef
-	log.Infof("Before AtomicIncr")
-	err = d.kvStore.AtomicIncr(kvstore.VolPrefixGRef + name)
+	log.Debugf("MountVolume: before get lock for global refcount of %s", name)
+	// Get the lock for changing the global refcount
+	lock, err := d.kvStore.CreateLock(kvstore.VolPrefixGRef + name)
+	if err != nil {
+		log.Errorf("Failed to create lock for mounting volume %s", kvstore.VolPrefixGRef+name)
+		return "", err
+	}
+
+	err = lock.BlockingLockWithLease()
+	if err != nil {
+		log.Errorf("Failed to blocking wait lock for mounting volume %s", kvstore.VolPrefixGRef+name)
+		lock.ClearLock()
+		return "", err
+	}
+
+	log.Debugf("Before AtomicIncr for StartServerTrigger")
+	err = d.kvStore.AtomicIncr(kvstore.VolPrefixStartTrigger + name)
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": name,
 				"error": err},
-		).Error("Failed to increase global refcount when processMount ")
+		).Error("Failed to increase start server trigger when processMount ")
+		lock.ReleaseLock()
 		return "", err
 	}
 
@@ -568,25 +582,10 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	info, err := d.kvStore.BlockingWaitAndGet(kvstore.VolPrefixState+name,
 		string(kvstore.VolStateMounted), kvstore.VolPrefixInfo+name)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to blocking wait for Mounted state. Error: %v.", err)
-		err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
-		if err != nil {
-			msg += fmt.Sprintf(" Also failed to decrease global refcount. Error: %v.", err)
-		}
 		log.WithFields(
 			log.Fields{"name": name,
-				"error": msg}).Error("")
-		return "", errors.New(msg)
-	}
-
-	// add VM to ClientList
-	nodeID, addr, _, err := d.dockerOps.GetSwarmInfo()
-	err = d.addVMToClientList(name, nodeID, addr)
-	if err != nil {
-		log.WithFields(
-			log.Fields{"volume name": name,
-				"error": err,
-			}).Error("Failed to add VM IP to ClientList")
+				"error": err}).Error("Failed to blocking wait for Mounted state ")
+		lock.ReleaseLock()
 		return "", err
 	}
 
@@ -600,6 +599,7 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 			log.Fields{"name": name,
 				"error": err},
 		).Error("Failed to unmarshal info data ")
+		lock.ReleaseLock()
 		return "", err
 	}
 
@@ -610,24 +610,50 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		}).Info("Get info for mounting ")
 	err = d.mountVFileVolume(name, mountpoint, &volRecord)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to mount vFile volume. Error: %v.", err)
-		// AtomicDecr decreases global refcount by one
-		// if global refcount reduces from 1 to 0, a watcher event is triggered on manager nodes
-		err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
-		if err != nil {
-			msg += fmt.Sprintf(" Also failed to decrease global refcount. Error: %v.", err)
-		}
-		// remmove VM IP from ClientList
-		err = d.removeVMFromClientList(name, nodeID, addr)
-		if err != nil {
-			msg += fmt.Sprintf(" Also failed to remove VM from ClientList. Error: %v.", err)
-		}
 		log.WithFields(
 			log.Fields{"name": name,
-				"error": msg}).Error("")
-		return "", errors.New(msg)
+				"error": err}).Error("Failed to mount vFile volume ")
+
+		lock.ReleaseLock()
+		return "", err
 	}
 
+	keys := []string{
+		kvstore.VolPrefixGRef + name,
+	}
+
+	// Read the current global refcount
+	entries, err := d.kvStore.ReadMetaData(keys)
+	if err != nil {
+		log.Errorf("Failed to read metadata for volume %s from KV store. %v", name, err)
+		lock.ReleaseLock()
+		return "", err
+	}
+
+	gref, _ := strconv.Atoi(entries[0].Value)
+
+	nodeID, addr, _, err := d.dockerOps.GetSwarmInfo()
+	if err != nil {
+		log.WithFields(
+			log.Fields{"volume name": name,
+				"error": err,
+			}).Error("Failed to get swarm info ")
+		lock.ReleaseLock()
+		return "", err
+	}
+
+	entries[0].Value = strconv.Itoa(gref + 1)
+	entries = append(entries, kvstore.KvPair{Key: kvstore.VolPrefixClient + name + "_" + nodeID, Value: addr})
+	err = d.kvStore.WriteMetaData(entries)
+	if err != nil {
+		// Failed to write metadata.
+		log.Warningf("Failed to update GRef and ClientList[%] on node[%s] for volume %s",
+			addr, nodeID, name)
+		lock.ReleaseLock()
+		return "", err
+	}
+
+	lock.ReleaseLock()
 	return mountpoint, nil
 }
 
@@ -758,35 +784,79 @@ func (d *VolumeDriver) UnmountVolume(name string) error {
 		return err
 	}
 
-	// Decrease GRef
-	log.Infof("Before AtomicDecr")
-	err = d.kvStore.AtomicDecr(kvstore.VolPrefixGRef + name)
-	if err != nil {
-		log.WithFields(
-			log.Fields{"name": name,
-				"error": err},
-		).Error("Failed to derease global refcount when processUnmount ")
-		return err
-	}
-
-	// remove VM from ClientList
 	nodeID, addr, _, err := d.dockerOps.GetSwarmInfo()
 	if err != nil {
 		log.WithFields(
 			log.Fields{"volume name": name,
 				"error": err,
-			}).Error("Failed to get IP address from docker swarm ")
+			}).Error("Failed to get IP address from docker swarm for UnmountVolume ")
 		return err
 	}
 
-	err = d.removeVMFromClientList(name, nodeID, addr)
+	// Get the lock for changing the global refcount
+	lock, err := d.kvStore.CreateLock(kvstore.VolPrefixGRef + name)
 	if err != nil {
-		log.WithFields(
-			log.Fields{"volume name": name,
-				"error": err,
-			}).Error("Failed to remove VM IP from ClientList")
+		log.Errorf("Failed to create lock for mounting volume %s", kvstore.VolPrefixGRef+name)
 		return err
 	}
+
+	err = lock.BlockingLockWithLease()
+	if err != nil {
+		log.Errorf("Failed to blocking wait lock for unmounting volume %s", kvstore.VolPrefixGRef+name)
+		lock.ClearLock()
+		return err
+	}
+
+	keys := []string{
+		kvstore.VolPrefixGRef + name,
+	}
+
+	// Read the current global refcount
+	entries, err := d.kvStore.ReadMetaData(keys)
+	if err != nil {
+		log.Errorf("Failed to read metadata for volume %s from KV store. %v", name, err)
+		lock.ReleaseLock()
+		return err
+	}
+
+	gref, _ := strconv.Atoi(entries[0].Value)
+	if gref > 0 {
+		gref--
+	} else {
+		log.Warningf("Global refcount is 0 before unmounting, possible errors in previous operations to this volume")
+	}
+
+	var updateEntries []kvstore.KvPair
+	updateEntries = append(updateEntries,
+		kvstore.KvPair{
+			Key:    kvstore.VolPrefixGRef + name,
+			Value:  strconv.Itoa(gref),
+			OpType: kvstore.OpPut})
+	updateEntries = append(updateEntries,
+		kvstore.KvPair{
+			Key:    kvstore.VolPrefixClient + name + "_" + nodeID,
+			OpType: kvstore.OpDelete})
+	_, err = d.kvStore.UpdateMetaData(updateEntries)
+	if err != nil {
+		log.Warningf("Failed to update GRef and delete ClientList[%] on node[%s] for volume %s",
+			addr, nodeID, name)
+		lock.ReleaseLock()
+		return err
+	}
+
+	err = d.kvStore.AtomicIncr(kvstore.VolPrefixStopTrigger + name)
+	if err != nil {
+		// if failed, release the lock
+		log.WithFields(
+			log.Fields{"name": name,
+				"error": err},
+		).Error("Failed to increase stop trigger when processUnmount ")
+		lock.ReleaseLock()
+		return err
+	}
+
+	// release the GRef lock
+	lock.ReleaseLock()
 	return nil
 }
 
