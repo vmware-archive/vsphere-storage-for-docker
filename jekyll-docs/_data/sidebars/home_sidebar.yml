@@ -76,7 +76,7 @@ entries:
           url: /blogs.html
           output: web
         - title: Interop with vSphere features
-          url: /Interop.html
+          url: /blogs.html
           output: web  
         - title: Known Issues
           url: /known-issues.html
