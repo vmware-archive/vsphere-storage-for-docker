@@ -140,6 +140,21 @@ via the `--config` option, specifying the full path of the file.
 }
 ```
 
+## How to troubleshoot issues
+
+### Which log is needed to debug issues? Where is the log located?
+Log file `vfile.log` is needed to debug. This file is located at `/var/log` directory of the docker host where the vFile plugin is installed.
+
+### What is the default log level? How to change the log level?
+Default log level is `INFO`. If needed, log level can be changed to `DEBUG` using the following command during vFile plugin install:
+
+```
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VDVS_LOG_LEVEL=debug
+```
+
+### What should I do if the Docker Swarm cluster is in unhealthy state?
+vFile plguin can only work properly when the Docker Swarm cluster is healthy. If Swarm cluster is unhealthy, you may need to destroy and recreate the Docker Swarm cluster.
+
 ## Q&A
 
 ### How to install and use the driver?
