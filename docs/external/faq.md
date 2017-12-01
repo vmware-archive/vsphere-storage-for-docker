@@ -16,6 +16,16 @@ Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/w
 ### How do I bind a volume to a particular container host?
 This can be achieved via [Tenancy](http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html).
 
+### How do I mount vSphere volume when there are volumes with the same name created on the different datastores?
+If there are volumes with the same name on different datastores then use the long name (e.g. `myVolume@vsanDatastore`). Let's take an example as shown below, full volume name should be passed while mounting the volume.
+
+```
+root@sc-rdops-vm02-dhcp-52-237:~# docker volume ls
+DRIVER              VOLUME NAME
+vsphere:latest      myVolume@sharedVmfs-0
+vsphere:latest      myVolume@vsanDatastore
+```
+
 ### Can I migrate data between Linux and Windows containers?
 Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vSphere Storage for Docker plugin doesn't support such cases, nor does it provide any explicit help.
 
