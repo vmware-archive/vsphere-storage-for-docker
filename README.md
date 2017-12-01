@@ -95,7 +95,7 @@ Please refer [vDVS configuration page](http://vmware.github.io/docker-volume-vsp
    - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340) ```sudo apt-get install open-vm-tools```
 - RedHat and CentOS
 - Windows Server 2016 (64 bit)
-- [Photon 1.0, Revision 2](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-10-revision-2-binaries) (v4.4.51 or later)
+- [Photon 1.0, Revision 2](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-10-revision-2-binaries) (v4.4.51 or later), [Photon 2.0](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-20-ga-binaries)
 
 **Docker (Linux)**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
 **Docker (Windows)**: 1.13/17.03

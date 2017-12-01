@@ -158,7 +158,7 @@ vFile plguin can only work properly when the Docker Swarm cluster is healthy. If
 ## Q&A
 
 ### How to install and use the driver?
-Please see README.md in the for the release by clicking on the tag for the release. Example: TBD.
+Please follow the instructions at [installation-on-esxi](http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi).
 
 ### Can I use another base volume plugin other than vDVS?
 Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.

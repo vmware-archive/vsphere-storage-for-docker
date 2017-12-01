@@ -193,6 +193,7 @@ volumes:
 The above YAML file can be used to deploy a PostGres service, the volume used in this service is created by vSphere driver, and the name of the volume can be specified with fullname format.
 
 Now, let us deploy the stack using this YAML file:
+
 ```
 root@sc-rdops-vm02-dhcp-52-237:~# docker stack deploy -c postgres.yml postgres
 Creating network postgres_default
@@ -200,6 +201,7 @@ Creating service postgres_postgres
 ```
 
 After stack deploy, volume "postgres_vol@sharedVmfs-1" has been created by vSphere driver as expected.
+
 ```
 root@sc-rdops-vm02-dhcp-52-237:~# docker volume ls
 DRIVER              VOLUME NAME
@@ -240,6 +242,7 @@ root@sc-rdops-vm02-dhcp-52-237:~# docker volume inspect postgres_vol@sharedVmfs-
 ```
 
 Wait for a while, check the service, and the service start running successfully.
+
 ```
 root@sc-rdops-vm02-dhcp-52-237:~# docker service ps postgres_postgres
 ID                  NAME                  IMAGE               NODE                        DESIRED STATE       CURRENT STATE            ERROR               PORTS

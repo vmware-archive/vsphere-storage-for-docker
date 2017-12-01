@@ -59,3 +59,11 @@ Datastore for a volume is decided as shown below (preference from top to bottom)
 
 1. Using volume long/fully qualified name (with @<datastore_name>): volume is created on custom datastore
 2. Using short name (not passed @<datastore_name>): volume is created on the vmgroup's default_datastore.
+
+## Attach Volume
+
+Sample command to run a container with vDVS volume attached:
+
+```
+root@sc-rdops-vm02-dhcp-52-237:~# docker run -it --volume-driver=vsphere -v testVolume@vsanDatastore:/vol1 --name ub2 ubuntu
+```

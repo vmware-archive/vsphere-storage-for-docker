@@ -63,6 +63,7 @@ Available Commands:
 
 ### Create
 A vmgroup named "_DEFAULT" will be created automatically post install.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
@@ -73,6 +74,7 @@ Uuid                                  Name      Description                Defau
 The "Default_datastore" field is set to "_VM_DS" for "_DEFAULT" vmgroup. Any volume create from VM which belongs to "_DEFAULT" vmgroup will be created on the datastore where VM resides.
 
 When configuration is initialized with 'config init', the access to _ALL_DS and _VM_DS for all VMs is automatically enabled.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup access ls --name=_DEFAULT
 Datastore  Allow_create  Max_volume_size  Total_size
@@ -91,6 +93,7 @@ will be placed on this datastore.
 Users can modify this privilege using `vmgroup access` subcommands.
 
 Sample:
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup1 --default-datastore=vsanDatastore
 vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
@@ -107,6 +110,7 @@ vsanDatastore  True          Unset            Unset
 ```
 
 The "default_datastore" can be also set to a special value "_VM_DS" during vmgroup create.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup2 --default-datastore="_VM_DS"
 vmgroup 'vmgroup2' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
@@ -124,6 +128,7 @@ _VM_DS     True          Unset            Unset
 ```
 
 "Default_datastore" cannot be set to "_ALL_DS". An attempt to do so will generate an error"
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup3 --default-datastore="_ALL_DS"
 Cannot use _ALL_DS as default datastore. Please use specific datastore name or _VM_DS special datastore
@@ -132,6 +137,7 @@ Cannot use _ALL_DS as default datastore. Please use specific datastore name or _
 The vmgroup to VM association can be done at create time.
 
 Sample:
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup create --name=vmgroup1 --default-datastore=vsanDatastore --vm-list=ubuntu-VM0.0
 vmgroup 'vmgroup1' is created. Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
@@ -145,6 +151,7 @@ f68c315d-2690-4b63-94c4-f0db09ad458f  vmgroup1                             vsanD
 ```
 
 #### Help
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup create --help
 Usage: esxcli storage guestvol vmgroup create [cmd options]
@@ -160,8 +167,10 @@ Cmd options:
   --vm-list=<str>       A list of VM names to place in this vmgroup
 
 ```
+
 ### List
 List existing vmgroups, the datastores vmgroups have access to and the VMs assigned.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
@@ -172,6 +181,7 @@ f68c315d-2690-4b63-94c4-f0db09ad458f  vmgroup1                             vsanD
 ```
 
 #### Help
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup ls --help
 Usage: esxcli storage guestvol vmgroup ls [cmd options]
@@ -185,6 +195,7 @@ Update existing vmgroup. This command allows to update "Description" and "Defaul
 "Default_datastore" is either a valid datastore name or a special value "_VM_DS".
 After changing the "default_datastore" for a vmgroup, a full access privilege to the new "default_datastore" will be created automatically, and the existing access privilege to old "default_datastore" will remain. User can remove the access privilege to old "default_datastore" if not needed using `vmgroup access rm` subcommands.
 Sample:
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
@@ -215,6 +226,7 @@ vsanDatastore  True          Unset            Unset
 Please use the test suggested above, for "create".
 
 #### Help
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup update --help
 Usage: esxcli storage guestvol vmgroup update [cmd options]
@@ -235,6 +247,7 @@ Cmd options:
 Remove a vmgroup, optionally all volumes for a vmgroup can be removed as well.
 
 Sample:
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup rm --name=new-vmgroup1 --remove-volumes
 All Volumes will be removed. vmgroup rm succeeded
@@ -251,6 +264,7 @@ First remove the VMs individually from the vmgroup using admin cli
 on the same host on which the VM resides.
 Then remove the vmgroup.
 #### Help
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup rm --help
 Usage: esxcli storage guestvol vmgroup rm [cmd options]
@@ -281,6 +295,7 @@ Uuid                                  Name      Description                Defau
 ```
 
 #### List
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup vm ls --name vmgroup1
 Uuid                                  Name
@@ -291,6 +306,7 @@ Uuid                                  Name
 
 #### Remove
 Remove a VM from a vmgroup's list of VMs. VM will no longer be able to access the volumes created for the vmgroup.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup vm rm --name=vmgroup1 --vm-list=ubuntu-VM1.0
 vmgroup vm rm succeeded
@@ -303,6 +319,7 @@ Uuid                                  Name
 
 ### Replace
 Replace VMs from a vmgroup's list of VMs. VMs which are replaced will no longer be able to access the volumes created for the vmgroup.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup vm ls --name vmgroup1
 Uuid                                  Name
@@ -324,6 +341,7 @@ To do so:
 3. Ensure that the dvs volumes have status detached (docker volume inspect)
 
 #### Help
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup vm --help
 Usage: esxcli storage guestvol vmgroup vm {cmd} [cmd options]
@@ -429,7 +447,8 @@ _ALL_DS        True          500.00MB         1.00GB
 
 
 ##### Help
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol vmgroup access add --help
 Usage: esxcli storage guestvol vmgroup access add [cmd options]
 
@@ -453,7 +472,7 @@ When displaying the result keep in mind:
 
 - For capacity Unset indicates no limits
 
-```bash
+```
 [root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
 Datastore      Allow_create  Max_volume_size  Total_size
 -------------  ------------  ---------------  ----------
@@ -462,7 +481,8 @@ _ALL_DS        True          500.00MB         1.00GB
 ```
 
 ##### Help
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol vmgroup access ls --help
 Usage: esxcli storage guestvol vmgroup access ls [cmd options]
 
@@ -476,7 +496,8 @@ Cmd options:
 #### Remove
 Remove access to a datastore for a vmgroup.
 Removing of access privilege to "default_datastore" is not suported
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol vmgroup ls
 Uuid                                  Name      Description                Default_datastore  VM_list
 ------------------------------------  --------  -------------------------  -----------------  ------------
@@ -502,7 +523,8 @@ vsanDatastore  True          Unset            Unset
 ```
 
 ##### Help
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol vmgroup  access rm --help
 Usage: esxcli storage guestvol vmgroup access rm [cmd options]
 
@@ -520,7 +542,7 @@ Set command allows to change the existing access control in place for a vmgroup.
 
 Sample:
 
-```shell
+```
 [root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
 Datastore      Allow_create  Max_volume_size  Total_size
 -------------  ------------  ---------------  ----------
@@ -534,6 +556,7 @@ vsanDatastore  True          1000.00MB        Unset
 ```
 
 "--volume-totalsize" can also be set to the value other than unlimit when add privilege for special value "_VM_DS" and "_ALL_DS".
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup access ls --name=vmgroup1
 Datastore   Allow_create  Max_volume_size  Total_size
@@ -557,6 +580,7 @@ _VM_DS         True          1.00GB           2.00GB
 ```
 
 ##### Help
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup access set --help
 Usage: esxcli storage guestvol vmgroup access set [cmd options]
@@ -578,7 +602,8 @@ Cmd options:
 ## Volume
 
 #### Help
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol volume ls --help
 Usage: esxcli storage guestvol volume ls [cmd options]
 
@@ -592,7 +617,8 @@ Cmd options:
 #### List All
 List all properties for all Docker volumes that exist on datastores accessible to the host.
 
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol volume ls
 Volume  Datastore     VMGroup   Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
 ------  ------------  --------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
@@ -606,7 +632,8 @@ policy and show up as `N/A'.
 
 Note that the `VMGroup` column shows the vmgroup by which the volume was created. If the vmgroup which created the volume has been removed, the `VMGroup` column shows up as 'N/A'. See the following example:
 
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol volume ls
 Volume  Datastore      VMGroup   Capacity  Used  Filesystem  Policy          Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
 ------  -------------  --------  --------  ----  ----------  --------------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
@@ -619,7 +646,8 @@ vol4    vsanDatastore  N/A       100MB     80MB  ext4        [VSAN default]  thi
 #### List limited information about volumes
 
 Only shows Volume, Capacity, Disk Format and Attached-to fields
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol volume shortls
 Volume  Capacity  Disk Format  Attached-to
 ------  --------  -----------  -----------
@@ -635,7 +663,8 @@ for example if the volume name is `container-vol` then the volume is specified a
 The attributes to set/modify are specified as a comma separated list as "<attr1>=<value>, <attr2>=<value>....". For example,
 a command line would look like this.
 
-```bash
+
+```
 $ esxcli storage guestvol volume set --volume=<volume@datastore> --vmgroup=<vmgroup_name> --options="<attr1>=<value>, <attr2>=<value>, ..."
 ```
 
@@ -656,7 +685,8 @@ A sample use case:
 The container images themselves can be smaller as they share the libs and possibly binaries from read-only volumes.
 
 Example:
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol volume ls
 Volume  Datastore      VMGroup   Capacity  Used  Filesystem  Policy          Disk Format  Attached-to  Access      Attach-as               Created By    Created Date
 ------  -------------  --------  --------  ----  ----------  --------------  -----------  -----------  ----------  ----------------------  ------------  ------------------------
@@ -682,7 +712,8 @@ vol4    vsanDatastore  N/A       100MB     80MB  ext4        [VSAN default]  thi
 Create, configure and show the VSAN policy names and their corresponding VSAN policy strings. Also show whether or not they are in use.
 
 #### Help
-```bash
+
+```
 [root@localhost:~] esxcli storage guestvol policy --help
 Usage: esxcli storage guestvol policy {cmd} [cmd options]
 
@@ -697,7 +728,7 @@ Available Commands:
 
 Create a VSAN storage policy.
 
-```bash
+```
 [root@localhost:~] esxcli storage guestvol policy create --name some-policy --content '(("proportionalCapacity" i0)("hostFailuresToTolerate" i0))'
 Successfully created policy: some-policy
 ```
@@ -710,7 +741,7 @@ for storage policy options.
 
 List all VSAN storage policies.
 
-```bash
+```
 [root@localhost:~] esxcli storage guestvol policy ls
 Policy Name  Policy Content                                              Active
 -----------  ----------------------------------------------------------  ------
@@ -730,7 +761,7 @@ the command fails, the number of virtual disks that were successfully updated an
 failed to update will be shown. The names of the virtual disks that failed to update will be logged
 so that manual action can be taken.
 
-```bash
+```
 [root@localhost:~] esxcli storage guestvol policy update --name some-policy --content '(("proportionalCapacity" i1))'
 Successfully updated policy some-policy
 ```
@@ -744,7 +775,7 @@ The ability to list which virtual disks are using a specific storage policy, cha
 for a virtual disk, and reset virtual disks to the default storage policy is a necessary
 enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issues/577).
 
-```bash
+```
 [root@localhost:~] esxcli storage guestvol policy rm --name=some-policy
 Successfully removed policy: some-policy
 ```
@@ -754,6 +785,7 @@ Successfully removed policy: some-policy
 **THIS FEATURE IS EXPERIMENTAL**
 
 Creates, removes, moves and reports on status of Authorization config DB (referred to as `Config DB`). Config DB keeps authorization information - vmgroups, datastore access control, quota information -  and without initializing it no access control is supported. Also, before Config DB is initialized, any attempt to configure access control will fail, e.g.
+
 ```
 [root@localhost:~] esxcli storage guestvol vmgroup create --name MY
 Configuration not found. Please init configuration with 'esxcli storage guestvol config init'.
@@ -871,7 +903,7 @@ Cmd options:
 ```
 
 
-```bash
+```
 [root@localhost:~] time esxcli storage guestvol status
 === Service:
 Version: 0.14.ff1d8d4-0.0.1
@@ -892,7 +924,7 @@ sys	0m 0.00s
 
  Some of the information retrieval may be slow (e.g. VIB version (`Version` field) # or VMCI port number (`Port` field). `--fast` flag skips slow data collection and prints `?` for fields with no information.
 
-```bash
+```
 [root@localhost:~] time esxcli storage guestvol status --fast
 === Service:
 Version: ?

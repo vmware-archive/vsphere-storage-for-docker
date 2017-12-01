@@ -8,7 +8,7 @@ title: FAQs
 Please look at [GitHub Releases](https://github.com/vmware/docker-volume-vsphere/releases) for binaries. Github releases allow downloading of source for a release in addition to git clone.
 
 ### How to install and use the driver?
-Please see README.md in the for the release by clicking on the tag for the release. Example: [README](https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2)
+Please follow the instructions at [installation-on-esxi](http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi).
 
 ### How do I run the setup on my laptop?
 Follow the [guide on the wiki](https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack)
