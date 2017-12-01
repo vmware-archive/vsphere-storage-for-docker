@@ -9,6 +9,7 @@ This section lists the major known issues with vSphere Docker Volume Service. Fo
 -  Volume creation using VFAT filesystem is not working currently. [#1327](https://github.com/vmware/docker-volume-vsphere/issues/1327)
 -  Plugin fails to create volumes after installation on VM running boot2docker Linux. This is because open-vm-tools available for boot2docker doesn't install the vSockets driver and hence the plugin is unable to contact the ESX service. [#1744](https://github.com/vmware/docker-volume-vsphere/issues/1744)
 -  Currently "vmdk-opsd stop" just stops (exits) the service forcefully. If there are operations in flight it could kill them in the middle of execution. This can potentially create inconsistencies in VM attachement, KV files or auth-db. [#1073](https://github.com/vmware/docker-volume-vsphere/issues/1073)
+-  vDVS volume that has already been created cannot be resized or it's size cannot be updated.
 
 ## Known Differences Between Linux And Windows Plugin
 - Docker, by default, converts volume names to lower-case on Windows. Therefore, volume operations involving case-sensitive names will always be handled in lower case.

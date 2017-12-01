@@ -132,8 +132,3 @@ Error response from daemon: create MyVolume@datastore1: VolumeDriver.Create: No 
 ```
 Remember we have set default datastore as "datastore3" which as “--allow-create” permissions and we don't have access privilege to datastore "datastore1".
 
-
-
-## References
-
-- [Design Spec for tenancy](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/docker-volume-auth-proposal.v1_2.md)

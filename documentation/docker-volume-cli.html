@@ -355,6 +355,13 @@
             
             
             
+            <li><a href="Interop.html">Interop with vSphere features</a></li>
+            
+            
+            
+            
+            
+            
             <li><a href="known-issues.html">Known Issues</a></li>
             
             
@@ -421,7 +428,7 @@ $('#toc').on('click', 'a', function() {
     
 
   <h2 id="creation-and-management-of-docker-volumes">Creation and management of docker volumes</h2>
-<p>The docker volume commands are completely supported by vDVS plugin. This section demonstrates use of various commands with examples.</p>
+<p>All the docker volume commands other than the prune command are completely supported by vDVS plugin. This section demonstrates use of various commands with examples.</p>
 
 <h5 id="size">Size</h5>
 <p>You can specify the size of volume while creating a volume. Supported units of sizes are mb, gb and tb. By default if you don’t specify the size, a 100MB volume is created.</p>
@@ -431,7 +438,7 @@ $('#toc').on('click', 'a', function() {
 </div>
 
 <h5 id="file-system-type-fstype">File System Type (fstype)</h5>
-<p>You can specify the filesystem which will be used it to create the volumes. The docker plugin will look for existing filesystesm in /sbin/mkfs.fstype but if the specified filesystem is not found then it will return a list for which it has found mkfs. The default filesystem if not specified is ext4.</p>
+<p>You can specify the filesystem which will be used it to create the volumes. The docker plugin will look for existing filesystems in /sbin/mkfs.fstype but if the specified filesystem is not found then it will return a list for which it has found mkfs. The default filesystem if not specified is ext4.</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o fstype=xfs
 docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o fstype=ext4 (default)
@@ -447,7 +454,7 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o fstype=ext
 </code></pre>
 </div>
 
-<p>You can find more details about policy management using vSAN in page <a href="/policy-based-management.html">Storage policy based management</a></p>
+<p>You can find more details about policy management using vSAN in page <a href="http://vmware.github.io/docker-volume-vsphere/documentation/policy-based-management.html">Storage policy based management</a></p>
 
 <h5 id="disk-format-diskformat">Disk Format (diskformat)</h5>
 <p>The docker volumes are backed by VMDK and VMDKs support multiple <a href="https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&amp;cmd=displayKC&amp;externalId=1022242">types</a>. At the moment following types of VMDKs are supported:</p>
@@ -591,7 +598,7 @@ db_data
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Oct 31, 2017 <br />
+ Site last generated: Dec 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

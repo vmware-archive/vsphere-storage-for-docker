@@ -355,6 +355,13 @@
             
             
             
+            <li><a href="Interop.html">Interop with vSphere features</a></li>
+            
+            
+            
+            
+            
+            
             <li><a href="known-issues.html">Known Issues</a></li>
             
             
@@ -426,7 +433,7 @@ $('#toc').on('click', 'a', function() {
 <p>Please look at <a href="https://github.com/vmware/docker-volume-vsphere/releases">GitHub Releases</a> for binaries. Github releases allow downloading of source for a release in addition to git clone.</p>
 
 <h3 id="how-to-install-and-use-the-driver">How to install and use the driver?</h3>
-<p>Please see README.md in the for the release by clicking on the tag for the release. Example: <a href="https://github.com/vmware/docker-volume-vsphere/tree/0.1.0.tp.2">README</a></p>
+<p>Please follow the instructions at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
 
 <h3 id="how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?</h3>
 <p>Follow the <a href="https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></p>
@@ -476,6 +483,11 @@ Additional reading for differences between VMware tools and open vm tools:</p>
 <p>97 is a standard linux error (<code class="highlighter-rouge">#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>)</p>
 
 <p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">“What is VMCI and vSock and why is it needed?”</a> above.</p>
+
+<h4 id="i-see-plugin-not-found-error-message-in-the-docker-daemon-logs-what-is-the-cause">I see “plugin not found” error message in the Docker daemon logs, what is the cause?</h4>
+<p>This is the limitation of docker and being tracked at <a href="https://github.com/moby/moby/issues/34545">issue#34545</a>.</p>
+
+<p>Docker maintains a unique plugin ID that’s assigned when the plugin is installed. Once assigned the ID remains with the plugin till its removed. All volumes that were created via the plugin will remain inaccessible if the plugin is removed. The correct way to install updates to the plugin is to upgrade the plugin using <code class="highlighter-rouge">docker plugin upgrade</code> as mentioned at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#upgrade-instructions">user guide</a>.</p>
 
 <h4 id="volume-remains-attached-to-the-vm-after-upgrading-vdvs-esx-driver">Volume remains attached to the VM after upgrading vDVS ESX driver</h4>
 <p>If the container using volumes exits during the upgrade of ESX driver (i.e. after vib remove but before vib install), the volumes may remain attached to VM. In such a case, please disable and then enable (restart) the volume plugin to ensure volumes are properly detached.</p>
@@ -631,7 +643,7 @@ The path which stores this new volume is “/vmfs/volumes/datastore1/dockvols/ne
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Oct 31, 2017 <br />
+ Site last generated: Dec 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

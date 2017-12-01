@@ -355,6 +355,13 @@
             
             
             
+            <li><a href="Interop.html">Interop with vSphere features</a></li>
+            
+            
+            
+            
+            
+            
             <li><a href="known-issues.html">Known Issues</a></li>
             
             
@@ -442,16 +449,44 @@ along with high availability, scalability, and load balancing support.</p>
   <li>Docker version: 17.06.0 or newer</li>
   <li>Base docker volume plugin: <a href="https://github.com/vmware/docker-volume-vsphere">vSphere Docker Volume Service</a></li>
   <li>All hosts running in <a href="https://docs.docker.com/engine/swarm/swarm-tutorial/">Swarm mode</a></li>
+  <li>All docker swarm managers should open <a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">official etcd ports</a> 2379 and 2380 (User-defined port number feature is WIP)</li>
 </ul>
 
 <h2 id="installation">Installation</h2>
 <p>The recommended way to install vFile plugin is from docker cli:</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest
+<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 </code></pre>
 </div>
 
 <p>Note: please make sure the base volume plugin is already installed!</p>
+
+<p>Internally, vFile creates and uses etcd cluster to store metadata for volumes. By default, the etcd cluster listens on port 2379 for client communication and port 2380 for peer communication. If you has other etcd clutster which already listens on those default ports, you need to sepcify different ports to avoid conflict when installing the vFile plugin.  Please see the following example:
+<code class="highlighter-rouge">
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VFILE_ETCD_CLIENT_PORT=4001 VFILE_ETCD_PEER_PORT=4002
+</code></p>
+
+<ul>
+  <li>The <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> setting is strongly recommended before <a href="https://github.com/vmware/docker-volume-vsphere/issues/1954">Issue #1954</a> is resolved.</li>
+</ul>
+
+<h2 id="remove-and-reinstallation">Remove and Reinstallation</h2>
+<p>The recommended order to remove and reinstallation is:
+* remove and reinstall vFile plugin on all worker nodes
+* remove and reinstall vFile plugin on all manager nodes which are not swarm leader
+* remove and reinstall vFile plugin on manger node which is swarm leader</p>
+
+<p>Run the following command to remove and reinstall vFile plugin from docker cli:
+<code class="highlighter-rouge">
+docker plugin rm vfile:latest vfile:latest
+docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+</code>
+Note: Please make sure no volume exists when trying to remove and reinstall the vFile plugin. You will get the following error when trying to remove vFile plugin if a volume still exists.
+<code class="highlighter-rouge">
+docker plugin rm vfile:latest
+Error response from daemon: plugin vfile:latest is in use
+</code>
+You can use <code class="highlighter-rouge">docker plugin rm -f vfile:latest</code> to force remove the vFile plugin and reinstall the vFile plugin, but after that, that volume is not usable.</p>
 
 <h2 id="usage-examples">Usage examples</h2>
 
@@ -531,16 +566,32 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 
 <div class="highlighter-rouge"><pre class="highlight"><code><span class="w"> </span><span class="p">{</span><span class="w">
 	</span><span class="nt">"MaxLogAgeDays"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">
-	</span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
+    </span><span class="nt">"MaxLogFiles"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
+	</span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
 	</span><span class="nt">"LogPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log/vfile.log"</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
 </div>
 
+<h2 id="how-to-troubleshoot-issues">How to troubleshoot issues</h2>
+
+<h3 id="which-log-is-needed-to-debug-issues-where-is-the-log-located">Which log is needed to debug issues? Where is the log located?</h3>
+<p>Log file <code class="highlighter-rouge">vfile.log</code> is needed to debug. This file is located at <code class="highlighter-rouge">/var/log</code> directory of the docker host where the vFile plugin is installed.</p>
+
+<h3 id="what-is-the-default-log-level-how-to-change-the-log-level">What is the default log level? How to change the log level?</h3>
+<p>Default log level is <code class="highlighter-rouge">INFO</code>. If needed, log level can be changed to <code class="highlighter-rouge">DEBUG</code> using the following command during vFile plugin install:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VDVS_LOG_LEVEL=debug
+</code></pre>
+</div>
+
+<h3 id="what-should-i-do-if-the-docker-swarm-cluster-is-in-unhealthy-state">What should I do if the Docker Swarm cluster is in unhealthy state?</h3>
+<p>vFile plguin can only work properly when the Docker Swarm cluster is healthy. If Swarm cluster is unhealthy, you may need to destroy and recreate the Docker Swarm cluster.</p>
+
 <h2 id="qa">Q&amp;A</h2>
 
 <h3 id="how-to-install-and-use-the-driver">How to install and use the driver?</h3>
-<p>Please see README.md in the for the release by clicking on the tag for the release. Example: TBD.</p>
+<p>Please follow the instructions at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
 
 <h3 id="can-i-use-another-base-volume-plugin-other-than-vdvs">Can I use another base volume plugin other than vDVS?</h3>
 <p>Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.</p>
@@ -636,6 +687,14 @@ vfile:latest        vol2</p>
 
 <p>```</p>
 
+<h3 id="why-should-i-choose-vfile-instead-of-just-enabling-multi-writer-flag-on-vsphere-file-systems">Why should I choose vFile instead of just enabling multi-writer flag on vSphere file systems?</h3>
+<p>vSAN multi-writer mode permits multiple VMs to access the same VMDKs in read-write mode to enable the use of in-guest
+shared-storage clustering solutions such as Oracle RAC.
+However, the guests must be capable of safely arbitrating and coordinating multiple systems accessing the same storage.
+If your application is not designed for maintaining consistency in the writes performed to the shared disk, enabling
+multi-writer mode could result in data corruption.
+More information can be found <a href="https://kb.vmware.com/s/article/1034165">here</a> and <a href="https://kb.vmware.com/s/article/2121181">here</a>.</p>
+
   
 
     <div class="tags">
@@ -652,7 +711,7 @@ vfile:latest        vol2</p>
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Oct 31, 2017 <br />
+ Site last generated: Dec 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

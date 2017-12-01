@@ -355,6 +355,13 @@
             
             
             
+            <li><a href="Interop.html">Interop with vSphere features</a></li>
+            
+            
+            
+            
+            
+            
             <li><a href="known-issues.html">Known Issues</a></li>
             
             
@@ -480,6 +487,14 @@ photon			ds2volume@datastore2
   <li>Using short name (not passed @<datastore_name>): volume is created on the vmgroup's default_datastore.</datastore_name></li>
 </ol>
 
+<h2 id="attach-volume">Attach Volume</h2>
+
+<p>Sample command to run a container with vDVS volume attached:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>root@sc-rdops-vm02-dhcp-52-237:~# docker run -it --volume-driver=vsphere -v testVolume@vsanDatastore:/vol1 --name ub2 ubuntu
+</code></pre>
+</div>
+
   
 
     <div class="tags">
@@ -496,7 +511,7 @@ photon			ds2volume@datastore2
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Oct 31, 2017 <br />
+ Site last generated: Dec 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

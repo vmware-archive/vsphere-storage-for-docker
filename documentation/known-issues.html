@@ -355,6 +355,13 @@
             
             
             
+            <li><a href="Interop.html">Interop with vSphere features</a></li>
+            
+            
+            
+            
+            
+            
             <li class="active"><a href="known-issues.html">Known Issues</a></li>
             
             
@@ -428,6 +435,7 @@ $('#toc').on('click', 'a', function() {
   <li>Volume creation using VFAT filesystem is not working currently. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1327">#1327</a></li>
   <li>Plugin fails to create volumes after installation on VM running boot2docker Linux. This is because open-vm-tools available for boot2docker doesn’t install the vSockets driver and hence the plugin is unable to contact the ESX service. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1744">#1744</a></li>
   <li>Currently “vmdk-opsd stop” just stops (exits) the service forcefully. If there are operations in flight it could kill them in the middle of execution. This can potentially create inconsistencies in VM attachement, KV files or auth-db. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1073">#1073</a></li>
+  <li>vDVS volume that has already been created cannot be resized or it’s size cannot be updated.</li>
 </ul>
 
 <h2 id="known-differences-between-linux-and-windows-plugin">Known Differences Between Linux And Windows Plugin</h2>
@@ -451,7 +459,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Oct 31, 2017 <br />
+ Site last generated: Dec 1, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
