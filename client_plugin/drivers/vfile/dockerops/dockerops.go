@@ -36,6 +36,7 @@ import (
 	dockerTypes "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/swarm"
+	version "github.com/hashicorp/go-version"
 )
 
 const (
@@ -567,4 +568,29 @@ func (d *DockerOps) LoadFileServerImage() {
 		return
 	}
 	return
+}
+
+// CheckDockerVersion - Return the version of docker on current node
+func (d *DockerOps) CheckDockerVersion(requiredVersion string) (bool, error) {
+	serverVersion, err := d.Dockerd.ServerVersion(context.Background())
+	if err != nil {
+		log.Errorf("Failed to get docker server version. Error: %v", err)
+		return false, err
+	}
+	v1, err := version.NewVersion(serverVersion.Version)
+	if err != nil {
+		log.Errorf("Failed to create version comparison for %s. Error: %v", serverVersion.Version, err)
+		return false, err
+	}
+	v2, err := version.NewVersion(requiredVersion)
+	if err != nil {
+		log.Errorf("Failed to create version comparison for %s. Error: %v", requiredVersion, err)
+		return false, err
+	}
+	if v1.LessThan(v2) {
+		log.Errorf("Current docker version %s doesn't satisfy required version %s", serverVersion.Version, requiredVersion)
+		return false, nil
+	}
+	log.Infof("Current docker server version: %s", serverVersion.Version)
+	return true, nil
 }

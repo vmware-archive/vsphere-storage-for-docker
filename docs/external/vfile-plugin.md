@@ -263,3 +263,7 @@ However, the guests must be capable of safely arbitrating and coordinating multi
 If your application is not designed for maintaining consistency in the writes performed to the shared disk, enabling
 multi-writer mode could result in data corruption.
 More information can be found [here](https://kb.vmware.com/s/article/1034165) and [here](https://kb.vmware.com/s/article/2121181).
+
+### I got "no space left on device" error when installing vFile plugin but I have enough space on my node
+This error can happen when your docker version is below required version.
+Please check /var/log/vfile.log to locate if there are warning messages about your current docker server version.

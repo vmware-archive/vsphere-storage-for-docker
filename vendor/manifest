@@ -382,6 +382,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/hashicorp/go-version",
+			"repository": "https://github.com/hashicorp/go-version",
+			"vcs": "git",
+			"revision": "4fe82ae3040f80a03d04d2cccb5606a626b8e1ee",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/juju/errors",
 			"repository": "https://github.com/juju/errors",
 			"vcs": "git",

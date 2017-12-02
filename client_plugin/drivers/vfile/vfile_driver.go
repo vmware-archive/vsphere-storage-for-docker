@@ -58,6 +58,7 @@ const (
 	initError            = "vFile volume driver is not fully initialized yet."
 	mountError           = "exit status 255"
 	checkTicker          = time.Second
+	requiredVersion      = "17.06"
 )
 
 /* VolumeDriver - vFile plugin volume driver struct
@@ -109,6 +110,12 @@ type VolumeMetadata struct {
 
 // NewVolumeDriver creates driver instance
 func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
+	versionDockerOps := dockerops.NewDockerOps()
+	checkVersion, err := versionDockerOps.CheckDockerVersion(requiredVersion)
+	if err != nil || checkVersion == false {
+		return nil
+	}
+
 	var d VolumeDriver
 
 	d.RefCounts = refcount.NewRefCountsMap()
