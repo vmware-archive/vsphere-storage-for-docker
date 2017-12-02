@@ -1,3 +1,19 @@
+## Table of Contents
+* [Dev Setup and debugging help](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#pull-requests)
+* [Bug filing guidelines](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#bug-filing-guidelines)
+* [Typical Developer Workflow](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#typical-developer-workflow)
+* [Photon VM specific configuration](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#photon-vm-specific-configuration)
+* [Testing configuration](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#testing-configuration)
+* [git, branch management and pull requests](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#git-branch-management-and-pull-requests)
+* [Windows plugin contribution guidelines](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#windows-plugin-contribution-guidelines)
+* [Managing GO Dependencies](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#managing-go-dependencies)
+* [Capturing ESX Code Coverage](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#capturing-esx-code-coverage)
+* [CI/CD System](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#cicd-system)
+* [Release naming convention](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention)
+* [Guidelines for cutting a new release](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#cutting-a-new-release-guidelines)
+* [Documentation](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#documentation)
+
+
 ## Code Contribution guidelines
 ### Dev Setup and debugging help
 Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
@@ -328,7 +344,7 @@ The nomenclature for release will follow the format ```major-version.minor-versi
 
 For Example, assume we plan to cut the first release for GA in August, the release number will be “1.0.0.stable”. Then the monthly edge release in September will be “1.1.0.edge”, the monthly release in October will be “1.2.0.edge” and the stable release in November will be “1.3.0.stable”, etc.
 
-## Cutting a new release guidelines
+## Guidelines for cutting a new release
 
 Once a release has been tagged, the CI system will start a build and push the binaries to GitHub Releases page. Creating the release on GitHub is a manual process but the binaries for it will be auto generated.
 
