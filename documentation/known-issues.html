@@ -431,11 +431,15 @@ $('#toc').on('click', 'a', function() {
 
 <ul>
   <li>Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) <a href="https://github.com/vmware/docker-volume-vsphere/issues/1191">#1191</a>. It’s an ESX issue and will be available in the next vSphere release.</li>
-  <li>Full volume name with format like “volume@datastore” cannot be specified in the compose file for stack deployment. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1315">#1315</a>. It is a docker compose issue and a workaround has been provided in the issue.</li>
-  <li>Volume creation using VFAT filesystem is not working currently. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1327">#1327</a></li>
-  <li>Plugin fails to create volumes after installation on VM running boot2docker Linux. This is because open-vm-tools available for boot2docker doesn’t install the vSockets driver and hence the plugin is unable to contact the ESX service. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1744">#1744</a></li>
   <li>Currently “vmdk-opsd stop” just stops (exits) the service forcefully. If there are operations in flight it could kill them in the middle of execution. This can potentially create inconsistencies in VM attachement, KV files or auth-db. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1073">#1073</a></li>
   <li>vDVS volume that has already been created cannot be resized or it’s size cannot be updated.</li>
+</ul>
+
+<h2 id="windows-plugin-known-issues">Windows Plugin Known issues</h2>
+
+<ul>
+  <li>Volume creation initiated by Windows Container Hosts is slow. <a href="https://github.com/vmware/docker-volume-vsphere/issues/2010">#2010</a></li>
+  <li>For Windows plugin, if the volume is mounted using its short name then subsequent mount requests for the same volume should only use short volume name. Same thing applies for long volume names. Otherwise user will run into the issue <a href="https://github.com/vmware/docker-volume-vsphere/issues/2006">#2006</a></li>
 </ul>
 
 <h2 id="known-differences-between-linux-and-windows-plugin">Known Differences Between Linux And Windows Plugin</h2>
