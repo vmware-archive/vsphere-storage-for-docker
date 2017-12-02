@@ -11,6 +11,7 @@ This section lists the major known issues with vSphere Docker Volume Service. Fo
 ## Windows Plugin Known issues
 
 - Volume creation initiated by Windows Container Hosts is slow. [#2010](https://github.com/vmware/docker-volume-vsphere/issues/2010)
+- For Windows plugin, if the volume is mounted using its short name then subsequent mount requests for the same volume should only use short volume name. Same thing applies for long volume names. Otherwise user will run into the issue [#2006](https://github.com/vmware/docker-volume-vsphere/issues/2006)
 
 ## Known Differences Between Linux And Windows Plugin
 - Docker, by default, converts volume names to lower-case on Windows. Therefore, volume operations involving case-sensitive names will always be handled in lower case.
