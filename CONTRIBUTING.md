@@ -427,8 +427,6 @@ DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-vfile-all
 DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile-all
 ```
 
-Update documentation following steps listed below.
-
 ## Documentation
 
 Documentation is published to [GitHub
