@@ -23,7 +23,7 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 * Docker version: 17.06.0 or newer
 * Base docker volume plugin: [vSphere Docker Volume Service](https://github.com/vmware/docker-volume-vsphere)
 * All hosts running in [Swarm mode](https://docs.docker.com/engine/swarm/swarm-tutorial/)
-* All docker swarm managers should open [official etcd ports](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) 2379 and 2380 (User-defined port number feature is WIP)
+* All docker swarm managers should open [official etcd ports](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) 2379 and 2380, or the user-defined ETCD ports (please find more details about user-defined ETCD ports in the Installation section)
 
 ## Installation
 The recommended way to install vFile plugin is from docker cli:
@@ -36,7 +36,7 @@ Note: please make sure the base volume plugin is already installed!
 
 Internally, vFile creates and uses etcd cluster to store metadata for volumes.
 By default, the etcd cluster listens on port 2379 for client communication and port 2380 for peer communication.
-If you have other etcd clutster which already listens on those default ports, you need to specify different ports to avoid conflict when installing the vFile plugin.
+If you have other etcd cluster which already listens on those default ports, you need to specify different ports to avoid conflict when installing the vFile plugin.
 Please see the following example:
 
 ```
@@ -204,7 +204,7 @@ When you see something like the following in the log
 Please make sure the volume you used is a valid volume name. A valid volume name consists of ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]```.
 
 ### I got " VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete.." when mounting a volume.
-We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. In general, it's better free up some disk space. You can also try to increase the service start timeout value, controlled by ```VFILE_TIMEOUT_IN_SECOND``` env variable:
+We see this issue only on platform where the space is low. When available disk space is low, Docker Swarm service may take longer to start a service. In general, it's better free up some disk space. You can also try to increase the service start timeout value, controlled by ```VFILE_TIMEOUT_IN_SECOND``` env variable:
 
 ```
 ~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
