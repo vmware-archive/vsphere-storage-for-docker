@@ -577,7 +577,14 @@ func (d *DockerOps) CheckDockerVersion(requiredVersion string) (bool, error) {
 		log.Errorf("Failed to get docker server version. Error: %v", err)
 		return false, err
 	}
-	v1, err := version.NewVersion(serverVersion.Version)
+	// serverVersion.Version read from docker has the format like this
+	// 17.06.0-ce
+	// need to extract the numeric part to compare
+	versionStr := strings.Split(serverVersion.Version, "-")
+	// dockerServersion only has the numeric part "17.06.0"
+	dockerServerVersion := versionStr[0]
+	log.Debugf("dockerServerVersion: %s", dockerServerVersion)
+	v1, err := version.NewVersion(dockerServerVersion)
 	if err != nil {
 		log.Errorf("Failed to create version comparison for %s. Error: %v", serverVersion.Version, err)
 		return false, err

@@ -58,7 +58,7 @@ const (
 	initError            = "vFile volume driver is not fully initialized yet."
 	mountError           = "exit status 255"
 	checkTicker          = time.Second
-	requiredVersion      = "17.06"
+	requiredVersion      = "17.06.0"
 )
 
 /* VolumeDriver - vFile plugin volume driver struct
