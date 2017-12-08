@@ -28,9 +28,9 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/dockerops"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore"
 )

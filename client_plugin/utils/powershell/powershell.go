@@ -21,7 +21,7 @@ package powershell
 import (
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	ps "github.com/gorillalabs/go-powershell"
 	"github.com/gorillalabs/go-powershell/backend"
 )

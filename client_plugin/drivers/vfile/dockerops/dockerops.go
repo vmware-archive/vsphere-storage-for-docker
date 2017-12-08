@@ -31,12 +31,12 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/docker/engine-api/client"
 	dockerTypes "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/swarm"
 	version "github.com/hashicorp/go-version"
+	log "github.com/sirupsen/logrus"
 )
 
 const (

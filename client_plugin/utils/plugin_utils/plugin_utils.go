@@ -19,7 +19,7 @@ package plugin_utils
 import (
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 )

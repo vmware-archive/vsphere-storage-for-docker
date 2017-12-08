@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // * This file contains an implementation of a
-// * [Logrus Formatter](https://github.com/Sirupsen/logrus#formatters) according to VMware CNA
+// * [Logrus Formatter](https://github.com/sirupsen/logrus#formatters) according to VMware CNA
 // * storage team specifications. The `appendKeyValue` and `needsQuoting` functions are copied
 // * from the implementation of the TextFormatter in Logrus.
 
@@ -22,8 +22,9 @@ package log_formatter
 import (
 	"bytes"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // VmwareFormatter struct
