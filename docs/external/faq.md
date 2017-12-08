@@ -88,6 +88,10 @@ e.g.
 systemctl restart docker
 ```
 
+#### I'm not able to create volume and I see "VolumeDriver.Create: Device not found" error
+
+From 0.19 release of vDVS, the plugin has to have a VIB that's at least 0.19 or later.  [#2023](https://github.com/vmware/docker-volume-vsphere/issues/2023)
+Ideally it is better if you always upgrade both the plugin and the VIB to matching versions.
 
 ## Upgrade to version 0.10 (Dec 2016) release
 
@@ -210,3 +214,4 @@ new-vol1  datastore1  new-vmgroup1  100MB     13MB  ext4        N/A     thin    
 
 Step6: Manually copy the data from backup to the new volume "new-vol1@datastore1".
 The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-vmgroup1".
+
