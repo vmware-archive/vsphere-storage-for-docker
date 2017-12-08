@@ -122,7 +122,7 @@ func (api *HostsAPI) GetTasks(id string, options *TaskGetOptions) (result *TaskL
 	return
 }
 
-// Gets all the vms with the specified host ID.
+// Gets all the vms with the specified deployment ID.
 func (api *HostsAPI) GetVMs(id string) (result *VMs, err error) {
 	res, err := api.client.restClient.Get(api.client.Endpoint+hostUrl+"/"+id+"/vms", api.client.options.TokenOptions.AccessToken)
 	if err != nil {

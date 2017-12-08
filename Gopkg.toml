@@ -1,0 +1,69 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  name = "github.com/Microsoft/go-winio"
+  version = "0.4.5"
+
+[[constraint]]
+  name = "github.com/coreos/etcd"
+
+[[constraint]]
+  name = "github.com/docker/engine-api"
+
+[[constraint]]
+  name = "github.com/docker/go-plugins-helpers"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gorillalabs/go-powershell"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/hashicorp/go-version"
+
+[[constraint]]
+  name = "github.com/kardianos/service"
+
+[[constraint]]
+  name = "github.com/natefinch/lumberjack"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.4"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+
+[[constraint]]
+  name = "github.com/vmware/photon-controller-go-sdk"
+
+[[constraint]]
+  name = "golang.org/x/exp"
+
+[[constraint]]
+  name = "golang.org/x/net"
+
+[[constraint]]
+  branch = "v1"
+  name = "gopkg.in/check.v1"

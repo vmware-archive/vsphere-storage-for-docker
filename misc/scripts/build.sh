@@ -70,7 +70,7 @@ fi
 # Docker container images used in the build
 
 #  GO and Vibauthoring
-plugin_container_version=0.12
+plugin_container_version=0.13
 
 plug_container=cnastorage/vibauthor-and-go:$plugin_container_version
 #dockerfile=Dockerfile.vibauthor-and-go

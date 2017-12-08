@@ -21,9 +21,9 @@ package powershell
 import (
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	ps "github.com/gorillalabs/go-powershell"
 	"github.com/gorillalabs/go-powershell/backend"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
