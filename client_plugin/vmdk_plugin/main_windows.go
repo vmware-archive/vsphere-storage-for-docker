@@ -16,8 +16,8 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/kardianos/service"
+	log "github.com/sirupsen/logrus"
 )
 
 // pluginService is a wrapper for vDVS plugin server so that the plugin can

@@ -25,8 +25,8 @@ import (
 	"os"
 	"runtime"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/natefinch/lumberjack"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/log_formatter"
 )
 

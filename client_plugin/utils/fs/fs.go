@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // VolumeDevSpec - volume spec returned from the server on an attach

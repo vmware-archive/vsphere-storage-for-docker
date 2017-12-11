@@ -18,9 +18,17 @@ package coverage
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"testing"
 )
+
+func (d dummyTestDeps) MatchString(pat, str string) (bool, error)   { return false, nil }
+func (d dummyTestDeps) StartCPUProfile(io.Writer) error             { return nil }
+func (d dummyTestDeps) StopCPUProfile()                             {}
+func (d dummyTestDeps) WriteHeapProfile(io.Writer) error            { return nil }
+func (d dummyTestDeps) WriteProfileTo(string, io.Writer, int) error { return nil }
+func (d dummyTestDeps) ImportPath() string                          { return "" }
 
 type dummyTestDeps func(pat, str string) (bool, error)
 

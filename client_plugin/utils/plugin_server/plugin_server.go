@@ -19,8 +19,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/codecov"
 )
 

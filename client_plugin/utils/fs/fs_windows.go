@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	ps "github.com/vmware/docker-volume-vsphere/client_plugin/utils/powershell"
 )
 

@@ -27,12 +27,12 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
 	testutil "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"

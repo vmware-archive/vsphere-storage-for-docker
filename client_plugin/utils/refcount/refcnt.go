@@ -77,10 +77,10 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
 	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
