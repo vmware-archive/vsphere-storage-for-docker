@@ -27,7 +27,7 @@
 ::
 :: Building
 :: --------
-::   Start cmd and cd to the docker-volume-vsphere directory.
+::   Start cmd and cd to the vsphere-storage-for-docker directory.
 ::   Execute build.bat.
 
 :: ---- Setup ----
@@ -96,7 +96,7 @@ echo Moving binaries to the build directory.
 if not exist %winBuildDir% mkdir %winBuildDir%
 move /y %vmdkopsDir%\vmci_client.dll %winBuildDir%
 move /y vdvs.exe %winBuildDir%
-powershell Compress-Archive -Path %winBuildDir%\* -DestinationPath %winBuildDir%\docker-volume-vsphere.zip -Force
+powershell Compress-Archive -Path %winBuildDir%\* -DestinationPath %winBuildDir%\vsphere-storage-for-docker.zip -Force
 echo Successfully moved binaries to the build directory.
 
 cd %projectRoot%

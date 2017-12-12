@@ -1,21 +1,21 @@
 ## Table of Contents
-* [Dev Setup and debugging help](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#pull-requests)
-* [Bug filing guidelines](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#bug-filing-guidelines)
-* [Typical Developer Workflow](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#typical-developer-workflow)
-* [Photon VM specific configuration](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#photon-vm-specific-configuration)
-* [Testing configuration](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#testing-configuration)
-* [Windows plugin contribution guidelines](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#windows-plugin-contribution-guidelines)
-* [Managing GO Dependencies](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#managing-go-dependencies)
-* [Capturing ESX Code Coverage](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#capturing-esx-code-coverage)
-* [CI/CD System](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#cicd-system)
-* [Release naming convention](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention)
-* [Guidelines for cutting a new release](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#guidelines-for-cutting-a-new-release)
-* [Documentation](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#documentation)
+* [Dev Setup and debugging help](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#pull-requests)
+* [Bug filing guidelines](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#bug-filing-guidelines)
+* [Typical Developer Workflow](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#typical-developer-workflow)
+* [Photon VM specific configuration](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#photon-vm-specific-configuration)
+* [Testing configuration](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#testing-configuration)
+* [Windows plugin contribution guidelines](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#windows-plugin-contribution-guidelines)
+* [Managing GO Dependencies](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#managing-go-dependencies)
+* [Capturing ESX Code Coverage](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#capturing-esx-code-coverage)
+* [CI/CD System](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#cicd-system)
+* [Release naming convention](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#release-naming-convention)
+* [Guidelines for cutting a new release](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#guidelines-for-cutting-a-new-release)
+* [Documentation](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#documentation)
 
 
 ## Code Contribution guidelines
 ### Dev Setup and debugging help
-Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
+Read the [FAQ on the Wiki](https://github.com/vmware/vsphere-storage-for-docker/wiki#faq)
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
    * Branch should be suffixed with github user id: `(branch name).(github user id)` Example: `mydevbranch.kerneltime`
@@ -139,7 +139,7 @@ export SSH_KEY_OPT='-i /Users/username/.ssh/id_rsa'
   - `MANAGER1` - swarm cluster manager node IP
   - `WORKER1` & `WORKER2` - swarm cluster worker node IP
 
-**Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/docker-volume-vsphere/pull/1163), our build/deployment script start using managed plugin approach.
+**Note**: You need to manually remove older rpm/deb installation from your test VMs. With [PR 1163](https://github.com/vmware/vsphere-storage-for-docker/pull/1163), our build/deployment script start using managed plugin approach.
 
 Examples:
 ```
@@ -184,7 +184,7 @@ Standard invocation on ESX:
 python -B /usr/lib/vmware/vmdkops/bin/vmdk_ops.py
 
 Standard invocation on VM: (as root)
-/usr/local/bin/docker-volume-vsphere
+/usr/local/bin/vsphere-storage-for-docker
 ```
 
 To remove the code from the testbed, use the same steps as above (i.e define
@@ -291,7 +291,7 @@ Add a multi-string key named Environment and add the following lines to it.
 
       # deploy the plugin:
       make deploy-windows-plugin
-      
+
       # run the tests:
       make test-e2e-windows
 
@@ -342,7 +342,7 @@ COVERAGE_PROCESS_START DEFAULT=/coverage.rc
 
 ## CI/CD System
 
-The CI/CD system is based on [Drone platform](https://drone.io/) and the server is  https://ci.vmware.run/. More information is found at our [CI.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CI.md)
+The CI/CD system is based on [Drone platform](https://drone.io/) and the server is  https://ci.vmware.run/. More information is found at our [CI.md](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CI.md)
 
 ## Release naming convention
 The following is the plan for GA and post GA releases. Before GA, the release name format remains the same e.g. 0.XX (existing release tag)
@@ -383,7 +383,7 @@ Check to see if the new release shows up on GitHub and the CI build has started.
 
 ### Generate the change log
 ```
-docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p docker-volume-vsphere -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
+docker run -v `pwd`:/data --rm muccg/github-changelog-generator -u vmware -p vsphere-storage-for-docker -t <github token> --exclude-labels wontfix,invalid,duplicate,could-not-reproduce
 ```
 
 Manually eye ball the list to make sure Issues are relevant to the release (Some times labels such as wontfix have not been applied to an Issue)
@@ -395,7 +395,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 2. Remove VIB/DEB/RPMs from the ```Downloads``` sections
 3. Perform steps from internal Confluence page to sign the VIB
 
-**Note**: Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release and check changes to `[vmware/master]/docs/misc/vDVS_bulletin.xml` (see below to update the content per release)
+**Note**: Update [vDVS_bulletin.xml](https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release and check changes to `[vmware/master]/docs/misc/vDVS_bulletin.xml` (see below to update the content per release)
 
 ```
 <id>vDVS_driver-0.15</id> (0.15 refers to version)
@@ -407,7 +407,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
    mentioned in the email and download the signed offline bundle. Offline bundle will be a zip file something like	```vDVS_driver-0.18-offline_bundle-7032243.zip```. From the offline bundle, extract the signed VIB.
 5. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB as well as offline bundle
 6. Push vDVS & vFile managed plugin to docker store and windows plugin to bintray
-7. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
+7. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/vsphere-storage-for-docker/releases/tag/0.13) as the reference
 
 ### Publish vDVS managed plugin to Docker Store
 **Note**: not automated as of 04/04/17
@@ -429,14 +429,14 @@ DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-all
 Windows plugin needs to be built on a windows environment
 1. export WIN_VM1=[Valid Windows VM IP]
 2. make build-windows-plugin
-3. rename the build/windows/vdvs-bin.zip to /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
+3. rename the build/windows/vdvs-bin.zip to /build/windows/vsphere-storage-for-docker_windows_<release_tag>.zip
 
 ### Upload files to bintray
 Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/vDVS_Windows
 
 Following are their paths (with respect to vDVS root working directory)
 1. install-vdvs.ps1
-2. /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
+2. /build/windows/vsphere-storage-for-docker_windows_<release_tag>.zip
 
 ## Cutting release steps for vFile plugin
 ### Publish vFile managed plugin to Docker Store
@@ -449,12 +449,12 @@ DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-vfile-all
 ## Documentation
 
 Documentation is published to [GitHub
-Pages](https://vmware.github.io/docker-volume-vsphere/) using
+Pages](https://vmware.github.io/vsphere-storage-for-docker/) using
 [jekyll](https://jekyllrb.com/).
 
 1. Documentation is updated each time a release is tagged.
 2. The latest documentation for the master can be found in
-   [docs](https://github.com/vmware/docker-volume-vsphere/tree/master/docs) in
+   [docs](https://github.com/vmware/vsphere-storage-for-docker/tree/master/docs) in
    markdown format
 
 To copy documentation changes from vmware:master to gh-pages, run the following script

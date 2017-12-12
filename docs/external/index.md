@@ -3,9 +3,9 @@ title: vSphere Docker Volume Service
 ---
 ![Image](images/docker-cert.jpeg)
 
-## Introduction 
+## Introduction
 
-Containers have changed the way applications are packaged and deployed. Not only containers are efficient from infrastructure utilization point of view, they also provide strong isolation between process on same host. They are lightweight and once packaged can run anywhere. Docker is the most commonly used container runtime technology and this user guide outlines how vSphere is compatible with Docker ecosystem. 
+Containers have changed the way applications are packaged and deployed. Not only containers are efficient from infrastructure utilization point of view, they also provide strong isolation between process on same host. They are lightweight and once packaged can run anywhere. Docker is the most commonly used container runtime technology and this user guide outlines how vSphere is compatible with Docker ecosystem.
 
 ## Persistent Storage in Container World
 
@@ -24,13 +24,13 @@ vSphere Docker Volume Service technology enables running stateful containers bac
 
 Some of key features of vDVS are:
 
-* **Enterprise class storage**: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc. 
+* **Enterprise class storage**: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc.
 * **Security & RBAC**: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.
 * **Simple to use**: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.
 * **Docker Compatibility**: vSphere Docker Volume Service is 100% Docker compatible and integrates with Docker Swarm to extend High Availability feature provided by Swarm
 * **Storage Policy Management**: vSphere Docker Volume Service brings vSphere's advanced storage feature like policy management to Docker ecosystem.
 
-This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). It does not need credential management or configuration management. 
+This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/). It does not need credential management or configuration management.
 
 vDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment
 
@@ -42,8 +42,8 @@ Furthermore, vFile volume plugin comes with high availability, scalability, and 
 
 Same as vDVS, vFile volume plugin is also integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
 
-More details about the usage of vFile can be found at [vFile userguide](http://vmware.github.io/docker-volume-vsphere/documentation/vfile-plugin.html).
+More details about the usage of vFile can be found at [vFile userguide](http://vmware.github.io/vsphere-storage-for-docker/documentation/vfile-plugin.html).
 
 ## Documentation Version
 
-The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in [jekyll-docs folder](https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs). For older releases, browse to [releases](https://github.com/vmware/docker-volume-vsphere/releases) select the release, click on the tag for the release and browse the docs folder.
+The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in [jekyll-docs folder](https://github.com/vmware/vsphere-storage-for-docker/tree/gh-pages/jekyll-docs). For older releases, browse to [releases](https://github.com/vmware/vsphere-storage-for-docker/releases) select the release, click on the tag for the release and browse the docs folder.

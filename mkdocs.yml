@@ -1,7 +1,7 @@
 site_name: vSphere Docker Volume Service
 pages:
     - Home: index.md
-    - Setup: 
+    - Setup:
         - Installation: user-guide/install.md
         - Advanced Configuration: user-guide/docker-plugin-drivers.md
     - User Guide:
@@ -18,11 +18,11 @@ pages:
         - Release announcement and updates: blog/2016-9-28.md
         - 0.8.1 Release (Tenancy) and stateful containers meetup: blog/2016-10-28.md
 theme: readthedocs
-google_analytics: ['UA-81413942-1', 'https://vmware.github.io/docker-volume-vsphere/']
+google_analytics: ['UA-81413942-1', 'https://vmware.github.io/vsphere-storage-for-docker/']
 site_favicon: favicon.ico
 site_author: containers@vmware.com
 site_name: vSphere Docker Volume Service
-site_url: https://vmware.github.io/docker-volume-vsphere/
+site_url: https://vmware.github.io/vsphere-storage-for-docker/
 dev_addr: 0.0.0.0:8000
 markdown_extensions:
     - smarty

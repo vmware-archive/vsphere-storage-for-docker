@@ -21,7 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/codecov"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/codecov"
 )
 
 // PluginServer responds to HTTP requests from Docker.

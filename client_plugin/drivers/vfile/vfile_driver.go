@@ -34,14 +34,14 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/dockerops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore/etcdops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/utils"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vfile/dockerops"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vfile/kvstore"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vfile/kvstore/etcdops"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/fs"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/plugin_utils"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/refcount"
 )
 
 /* Constants

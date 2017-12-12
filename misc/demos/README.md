@@ -1,5 +1,5 @@
 # Demos location
-Demos are posted to the project [wiki](https://github.com/vmware/docker-volume-vsphere/wiki)
+Demos are posted to the project [wiki](https://github.com/vmware/vsphere-storage-for-docker/wiki)
 # Demos how to
 CLI based demos are done using
 * https://github.com/redhat-cip/spielbash

@@ -73,7 +73,7 @@ To transition from MultiNode, either the admin has to issue `config --rm` or the
 
 Discovery goal is to sync `vmdk_ops.py` Config DB state to reflect changes to the state done on a different ESXi node.
 
-**The key use case** is initial configuration, where all nodes start with NotConfigured. On one of the nodes, admin (manually or via automation) configures a shared Config DB on a datastore visible to all nodes. Then discovery kicks in on all nodes, finds out there is a fresh Config DB on a shared store, and configures the node to use this DB. This way Admin only need to do configuration on one node and the rest pick it up . See Issue https://github.com/vmware/docker-volume-vsphere/issues/1086 for details.
+**The key use case** is initial configuration, where all nodes start with NotConfigured. On one of the nodes, admin (manually or via automation) configures a shared Config DB on a datastore visible to all nodes. Then discovery kicks in on all nodes, finds out there is a fresh Config DB on a shared store, and configures the node to use this DB. This way Admin only need to do configuration on one node and the rest pick it up . See Issue https://github.com/vmware/vsphere-storage-for-docker/issues/1086 for details.
 
 The only state transition supported by Discovery is NotConfigured -> MultiNode.
 *  Note - once defined, the DB becomes a single point of failure, and the only way to remove it is to run local CLI `config rm --local` on each ESX.

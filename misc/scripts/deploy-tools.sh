@@ -29,7 +29,7 @@
 
 . ../misc/scripts/commands.sh
 
-PLUGIN_NAME=docker-volume-vsphere
+PLUGIN_NAME=vsphere-storage-for-docker
 VFILE_PLUGNAME=vfile
 VIB_NAME=esx-vmdkops-service
 TMP_LOC=/tmp/$PLUGIN_NAME
@@ -42,8 +42,8 @@ PLUGIN_SRC_DIR=../
 PLUGIN_SRC_ZIP=vdvs-src.zip
 PLUGIN_BIN_ZIP=vdvs-bin.zip
 WIN_TEMP_DIR=C:\\Users\\root\\AppData\\Local\\Temp
-WIN_PLUGIN_SRC_DIR=C:\\Users\\root\\go\\src\\github.com\\vmware\\docker-volume-vsphere
-WIN_PLUGIN_BIN_ZIP_LOC=$WIN_PLUGIN_SRC_DIR\\build\\windows\\docker-volume-vsphere.zip
+WIN_PLUGIN_SRC_DIR=C:\\Users\\root\\go\\src\\github.com\\vmware\\vsphere-storage-for-docker
+WIN_PLUGIN_BIN_ZIP_LOC=$WIN_PLUGIN_SRC_DIR\\build\\windows\\vsphere-storage-for-docker.zip
 WIN_BUILD_DIR=build/windows/
 HOSTD=/etc/init.d/hostd
 
