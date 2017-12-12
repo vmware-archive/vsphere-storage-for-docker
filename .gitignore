@@ -1,2 +1,5 @@
 .vscode
 plugin_dockerbuild
+vendor
+esx_service
+client_plugin
