@@ -1,5 +1,5 @@
 [Unit]
-Description="Docker Volume Driver for vSphere"
+Description="Docker Volume Driver for vSphere Storage"
 Before=docker.service
 Requires=docker.service
 
