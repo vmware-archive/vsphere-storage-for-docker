@@ -367,7 +367,7 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None, vm_
 
     # Fix up the KV for the destination
     if not kv.fixup_kv(src_vmdk_path, vmdk_path):
-        msg = ("Failed to create volume volume KV for %s" % vol_name)
+        msg = ("Failed to create volume KV for %s" % vol_name)
         logging.warning(msg)
         error_info = err(msg)
         clean_err = cleanVMDK(vmdk_path=vmdk_path, vol_name=vol_name)

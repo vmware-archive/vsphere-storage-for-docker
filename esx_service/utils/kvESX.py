@@ -246,14 +246,18 @@ def create(volpath, kv_dict):
 @diskLibLock
 def delete(volpath):
     """
-    Delete the the side car for the given volume
+    Delete the side car for the given volume
     """
-    meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
-                                                DVOL_KEY.encode())
-    logging.warning("Side car %s for %s", meta_file, volpath)
-    if os.path.exists(meta_file):
-        os.unlink(meta_file)
-        return True
+    vol_type = c_uint32(0)
+    res = lib.ObjLib_PathToType(volpath.encode(), byref(vol_type))
+    if res != 0:
+        logging.warning("KV delete - could not determine type of volume %s, error - %x", volpath, res)
+        return False
+    if vol_type.value == c_uint32(KV_VOL_VIRTUAL).value:
+        meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(), DVOL_KEY.encode())
+        if os.path.exists(meta_file):
+            os.unlink(meta_file)
+            return True
 
     # Other volume types are storage specific sidecars.
     dhandle = vol_open_path(volpath)
