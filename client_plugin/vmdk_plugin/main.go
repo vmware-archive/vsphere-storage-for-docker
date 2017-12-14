@@ -33,7 +33,7 @@ func main() {
 	startDaemon()
 }
 
-// startPluginServer starts vDVS plugin server.
+// startPluginServer starts VDVS plugin server.
 // Parses flags, initializes and mounts refcounters and finally initializes the server.
 func startPluginServer() {
 	var driver volume.Driver

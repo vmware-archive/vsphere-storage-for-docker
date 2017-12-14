@@ -6,14 +6,14 @@ title: vFile volume plugin for Docker
 Depending on the underlying block storage system, it might not be possible to access the same
 persistent volume across different hosts/nodes simultaneously.
 For example, currently users cannot mount the same persistent volume which is created through
-vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.
+vSphere Docker Volume Service (VDVS) on containers running on two different hosts at the same time.
 
 This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
 However, setting up and maintaining enterprise storage offerings for Cloud Native use cases is not a trivial work.
 Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.
 
 __vFile volume plugin for Docker__ provides simultaneous persistent volume access between hosts in the
-same Docker Swarm cluster for the base volume plugin service such as vDVS, with zero configuration effort,
+same Docker Swarm cluster for the base volume plugin service such as VDVS, with zero configuration effort,
 along with high availability, scalability, and load balancing support.
 
 ## Detailed documentation
@@ -177,8 +177,8 @@ vFile plugin can only work properly when the Docker Swarm cluster is healthy. If
 ### How to install and use the driver?
 Please follow the instructions at [installation-on-esxi](http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi).
 
-### Can I use another base volume plugin other than vDVS?
-Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.
+### Can I use another base volume plugin other than VDVS?
+Currently vFile volume service is only developed and tested with VDVS as the base volume plugin.
 
 ### Can I use default driver for local volumes as a base volume plugin?
 No, this is not supported by vFile plugin.
@@ -252,7 +252,7 @@ Please follow the following [recommendations for the Swarm manager nodes setup](
 
 
 ### Does vFile plugin support multi-tenancy feature?
-No. vFile plugin does not support multi-tenency, which is currently an experimental feature for vDVS.
+No. vFile plugin does not support multi-tenency, which is currently an experimental feature for VDVS.
 Assume we have created a vmgroup ```vmgroup1``` and add VM "node1" to ```vmgroup1```. VM "node2" has not been added to any vmgroup and is considered belong to ```_DEFAULT``` vmgroup.
 Then create a volume "vol1" from "node2" and a volume "vol2" from "node1" using vFile plugin.
 

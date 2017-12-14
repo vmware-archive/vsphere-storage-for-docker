@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.\
 
-// A sample test to run vDVS in a test mode to collect coverage data from
+// A sample test to run VDVS in a test mode to collect coverage data from
 // an instrumented binary.
 
 // +build testmain

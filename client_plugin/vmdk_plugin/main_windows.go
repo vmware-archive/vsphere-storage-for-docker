@@ -20,7 +20,7 @@ import (
 	"github.com/kardianos/service"
 )
 
-// pluginService is a wrapper for vDVS plugin server so that the plugin can
+// pluginService is a wrapper for VDVS plugin server so that the plugin can
 // be run as a service on Windows. Windows controls services by setting up
 // callbacks that is non-trivial. This wrapper utilizes a vendor library to
 // handle this.
@@ -42,7 +42,7 @@ func (p *pluginService) Stop(s service.Service) error {
 	return nil
 }
 
-// startDaemon starts vDVS plugin daemon on Windows
+// startDaemon starts VDVS plugin daemon on Windows
 func startDaemon() {
 	svcConfig := &service.Config{
 		Name:        "vdvs",

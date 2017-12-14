@@ -24,9 +24,9 @@ import (
 
 	adminutils "github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
+	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
 	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
 	. "gopkg.in/check.v1"
 )
@@ -167,7 +167,7 @@ func (vm *VMOpsTest) TestVMReset(c *C) {
 
 	// 4. Verify VM gets back to powered-on state
 	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(vm.config.DockerHosts[0], vm.config.DockerHostNames[0])
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", vm.volName1))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", vm.volName1))
 
 	// 5. Verify volume is detached
 	ok = verification.PollDetachedStatus(vm.volName1, vm.config.DockerHosts[0], vm.config.EsxHost)

@@ -158,10 +158,10 @@ func (s *RestartTestData) TestVolumeDetached(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
-// TestPluginKill - Test vDVS plugin kill
+// TestPluginKill - Test VDVS plugin kill
 // 1. Attach a volume with restart=always flag
 // 2. Verify volume attached status
-// 3. Kill vDVS plugin
+// 3. Kill VDVS plugin
 // 4. Stop the container
 // 5. Start the same container
 // 6. Stop the container
@@ -177,7 +177,7 @@ func (s *RestartTestData) TestPluginKill(c *C) {
 	status := verification.VerifyAttachedStatus(s.volumeName, s.config.DockerHosts[1], s.config.EsxHost)
 	c.Assert(status, Equals, true, Commentf("Volume %s is not attached", s.volumeName))
 
-	// 3. Kill vDVS plugin
+	// 3. Kill VDVS plugin
 	out, err = dockercli.KillVDVSPlugin(s.config.DockerHosts[1])
 	c.Assert(err, IsNil, Commentf(out))
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This test suite includes test cases to verify basic vDVS functionality
+// This test suite includes test cases to verify basic VDVS functionality
 // in docker swarm mode.
 
 // +build runonce
@@ -78,7 +78,7 @@ func (s *SwarmTestSuite) TearDownTest(c *C) {
 
 var _ = Suite(&SwarmTestSuite{})
 
-// Test vDVS usage during failover across different swarm nodes
+// Test VDVS usage during failover across different swarm nodes
 //
 // Test steps:
 // 1. Create a service with volume mounted
@@ -161,7 +161,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	// Power on the worker node
 	esx.PowerOnVM(hostName)
 	isVDVSRunning := esx.IsVDVSRunningAfterVMRestart(host1, hostName)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", hostName))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", hostName))
 
 	out, err = dockercli.RemoveService(s.master, s.serviceName)
 	c.Assert(err, IsNil, Commentf(out))
@@ -175,7 +175,7 @@ func (s *SwarmTestSuite) TestFailoverAcrossSwarmNodes(c *C) {
 	misc.LogTestEnd(c.TestName())
 }
 
-// Test vDVS usage during failover across different service replicas
+// Test VDVS usage during failover across different service replicas
 //
 // Note: Swarm scaled replica feature doesn't support stateful
 // applications. So at one time the volume can be attached to

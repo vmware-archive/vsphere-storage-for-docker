@@ -28,26 +28,25 @@ import (
 )
 
 const (
-	dockerRestartCmd = "pidof systemd && " + dockercli.RestartDockerWithSystemd + " || " + dockercli.RestartDockerService
-	dockerInfoCmd = "docker info"
-	restartWait = 6
+	dockerRestartCmd  = "pidof systemd && " + dockercli.RestartDockerWithSystemd + " || " + dockercli.RestartDockerService
+	dockerInfoCmd     = "docker info"
+	restartWait       = 6
 	maxRestartRetries = 10
-
 )
 
 // DOCKER AND PLUGIN MGMT API
 // --------------------------
 
-// GetVDVSPlugin - get vDVS plugin id
+// GetVDVSPlugin - get VDVS plugin id
 func GetVDVSPlugin(ip string) (string, error) {
 	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPlugin)
 	if out == "" {
-		return "", fmt.Errorf("vDVS plugin unavailable")
+		return "", fmt.Errorf("VDVS plugin unavailable")
 	}
 	return strings.Fields(out)[0], err
 }
 
-// GetVDVSPID - gets vDVS process id
+// GetVDVSPID - gets VDVS process id
 func GetVDVSPID(ip string) (string, error) {
 	out, err := ssh.InvokeCommand(ip, dockercli.GetVDVSPID)
 	if err != nil {
@@ -57,9 +56,9 @@ func GetVDVSPID(ip string) (string, error) {
 	return out, nil
 }
 
-// KillVDVSPlugin - kill vDVS plugin. It is restarted automatically
+// KillVDVSPlugin - kill VDVS plugin. It is restarted automatically
 func KillVDVSPlugin(ip string) (string, error) {
-	log.Printf("Killing vDVS plugin on VM [%s]\n", ip)
+	log.Printf("Killing VDVS plugin on VM [%s]\n", ip)
 
 	pluginID, err := GetVDVSPlugin(ip)
 	if err != nil {
@@ -73,7 +72,7 @@ func KillVDVSPlugin(ip string) (string, error) {
 
 	out, err := ssh.InvokeCommand(ip, dockercli.KillVDVSPlugin+pluginID)
 	if err != nil {
-		log.Printf("Killing vDVS plugin failed")
+		log.Printf("Killing VDVS plugin failed")
 		return "", err
 	}
 	misc.SleepForSec(2)
@@ -85,7 +84,7 @@ func KillVDVSPlugin(ip string) (string, error) {
 
 	// unsuccessful restart
 	if oldPID == newPID {
-		return "", fmt.Errorf("vDVS plugin autorestart failed")
+		return "", fmt.Errorf("VDVS plugin autorestart failed")
 	}
 
 	return out, nil

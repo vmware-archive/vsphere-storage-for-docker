@@ -20,6 +20,6 @@ const (
 	// MountFile linix mount file
 	MountFile = " /proc/mounts"
 
-	// LogFile location of the vDVS log file on docker host.
+	// LogFile location of the VDVS log file on docker host.
 	LogFile = " /var/log/docker-volume-vsphere.log"
 )

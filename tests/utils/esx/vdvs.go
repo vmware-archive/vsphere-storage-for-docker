@@ -24,11 +24,11 @@ import (
 	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
 )
 
-// IsVDVSRunning checks if vDVS is running on given VM. This util can be
+// IsVDVSRunning checks if VDVS is running on given VM. This util can be
 // useful in scenarios where VM is powered-on and user wants to find out
 // if VDVS is up and running to be able to run docker volume commands.
 func IsVDVSRunning(ip string) bool {
-	log.Printf("Verifying if vDVS is running on vm: %s", ip)
+	log.Printf("Verifying if VDVS is running on vm: %s", ip)
 	maxAttempt := 60
 	waitTime := 3
 	for attempt := 0; attempt < maxAttempt; attempt++ {
@@ -39,6 +39,6 @@ func IsVDVSRunning(ip string) bool {
 			return true
 		}
 	}
-	log.Printf("vDVS is not running on VM: %s", ip)
+	log.Printf("VDVS is not running on VM: %s", ip)
 	return false
 }

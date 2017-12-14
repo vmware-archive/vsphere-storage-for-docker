@@ -124,7 +124,7 @@ Lets try to create a volume from one of the QA machines with size = 2 GB
 #  docker volume create --name=MyVolume --driver=vsphere -o size=2GB
 Error response from daemon: create MyVolume: VolumeDriver.Create: Volume size exceeds the max volume size limit
 ```
-vDVS has restricted user from creating a volume of size > 1 GB. Lets try to create volume on datastore other than the one which is set as default
+VDVS has restricted user from creating a volume of size > 1 GB. Lets try to create volume on datastore other than the one which is set as default
 
 ```
 root@sc-rdops-vm02-dhcp-52-237:~# docker volume create --name=MyVolume@datastore1 --driver=vsphere -o size=2GB

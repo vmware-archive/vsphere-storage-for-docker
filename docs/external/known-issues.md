@@ -6,7 +6,7 @@ This section lists the major known issues with vSphere Docker Volume Service. Fo
 
 -  Volume metadata file got deleted while removing volume from VM(placed on Esx2) which is in use by another VM(placed on Esx1) [#1191](https://github.com/vmware/docker-volume-vsphere/issues/1191). It's an ESX issue and will be available in the next vSphere release.
 -  Currently "vmdk-opsd stop" just stops (exits) the service forcefully. If there are operations in flight it could kill them in the middle of execution. This can potentially create inconsistencies in VM attachement, KV files or auth-db. [#1073](https://github.com/vmware/docker-volume-vsphere/issues/1073)
-- vDVS volume that has already been created cannot be resized or it's size cannot be updated.
+- VDVS volume that has already been created cannot be resized or it's size cannot be updated.
 
 ## Windows Plugin Known issues
 

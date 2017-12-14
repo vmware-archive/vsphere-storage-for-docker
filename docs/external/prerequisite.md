@@ -9,11 +9,11 @@ This section enumerates the prerequisites like environments, packages required t
 vSphere Docker Volume Service can be used with vSphere environment. You will need ESXi version **6.0 or above**.
 
 ## vSphere Docker Volume Service
-On all the machines where you want to operate vDVS, you will need docker-engine installed. You can get the installable specific to your OS form Docker website.
+On all the machines where you want to operate VDVS, you will need docker-engine installed. You can get the installable specific to your OS form Docker website.
 
 Docker engine can be extended by using the plugin framework. Docker provides a plugin API and standard interfaces which can be used to extend docker engine’s core functionality. Docker volume plugins specifically are targeted at storage related integrations and can be used to work with underlying storage technologies. You can read more about the [Docker’s plugin system](https://docs.docker.com/engine/extend/).
 
-VMWare uses the volume plugin mechanism to enable vSphere docker volume service (vDVS) for vSphere environments.
+VMWare uses the volume plugin mechanism to enable vSphere docker volume service (VDVS) for vSphere environments.
 
 vSphere Docker Volume Service comprises of Docker plugin and vSphere Installation Bundle which bridges the Docker and vSphere ecosystems.
 

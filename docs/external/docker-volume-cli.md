@@ -3,7 +3,7 @@ title: Docker Volume Management
 ---
 
 ## Creation and management of docker volumes
-All the docker volume commands other than the prune command are completely supported by vDVS plugin. This section demonstrates use of various commands with examples.
+All the docker volume commands other than the prune command are completely supported by VDVS plugin. This section demonstrates use of various commands with examples.
 
 
 ##### Size
@@ -65,7 +65,7 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o diskformat
 ```
 
 ##### Disk Modes (attach-as)
-Docker volumes used in vDVS are backed by VMDKs. VMDKs are attached to hosts on which containers are running. These VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
+Docker volumes used in VDVS are backed by VMDKs. VMDKs are attached to hosts on which containers are running. These VMDKs can be attached in [different modes.](http://cormachogan.com/2013/04/16/what-are-dependent-independent-disks-persistent-and-non-persisent-modes/)
 
 1. Persistent mode: In persistent mode the VMDK becomes part of the VM snapshot if a snapshot of the VM is taken while VMDK was attached.
 2. Independent Persistent Mode: In the independent persistent mode the VMDK snapshotting is indepedent of the VM snapshot lifecycle. Even if a snapshot of the VM is taken while the Volume is attached to host, the volume VMDK does not become part of the VM snapshot.

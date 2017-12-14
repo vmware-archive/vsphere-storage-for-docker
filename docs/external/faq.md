@@ -38,7 +38,7 @@ Stable release: A quarterly release with reliable/stable updates.
 
 Please refer [release convention](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention) for more details.
 
-### Can I use the full volume like "vol@datastore" in compose file with vDVS?
+### Can I use the full volume like "vol@datastore" in compose file with VDVS?
 Yes, it is supported starting from Docker 17.09-ce release and compose 3.4. Please refer to this [example](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/external/docker-stacks.md).
 
 ## Troubleshooting
@@ -72,10 +72,10 @@ This is the limitation of docker and being tracked at [issue#34545](https://gith
 
 Docker maintains a unique plugin ID that's assigned when the plugin is installed. Once assigned the ID remains with the plugin till its removed. All volumes that were created via the plugin will remain inaccessible if the plugin is removed. The correct way to install updates to the plugin is to upgrade the plugin using `docker plugin upgrade` as mentioned at [user guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html#upgrade-instructions).
 
-#### Volume remains attached to the VM after upgrading vDVS ESX driver
+#### Volume remains attached to the VM after upgrading VDVS ESX driver
 If the container using volumes exits during the upgrade of ESX driver (i.e. after vib remove but before vib install), the volumes may remain attached to VM. In such a case, please disable and then enable (restart) the volume plugin to ensure volumes are properly detached.
 
-#### I'm not able to create volume after upgrading to vDVS managed plugin, what is the cause?
+#### I'm not able to create volume after upgrading to VDVS managed plugin, what is the cause?
 ```
 # docker volume create -d vsphere vol5
 Error response from daemon: create vol5: Post http://%2Frun%2Fdocker%2Fplugins%2Fvsphere.sock/VolumeDriver.Create: dial unix /run/docker/plugins/vsphere.sock: connect: no such file or directory
@@ -90,128 +90,5 @@ systemctl restart docker
 
 #### I'm not able to create volume and I see "VolumeDriver.Create: Device not found" error
 
-From 0.19 release of vDVS, the plugin has to have a VIB that's at least 0.19 or later.  [#2023](https://github.com/vmware/docker-volume-vsphere/issues/2023)
+From 0.19 release of VDVS, the plugin has to have a VIB that's at least 0.19 or later.  [#2023](https://github.com/vmware/docker-volume-vsphere/issues/2023)
 Ideally it is better if you always upgrade both the plugin and the VIB to matching versions.
-
-## Upgrade to version 0.10 (Dec 2016) release
-
-Tenancy changes in release 0.10 need a manual upgrade process enumerated below.
-***Save the desired tenancy configuration before upgrade***
-
-### How to know if auth-db upgrade is needed post install?
-
-After installing the new build, type command “vmgroup ls”
-Check for failure to connect to auth DB.
-
-```
-esxcli storage guestvol vmgroup ls
-Failed to connect auth DB(DB connection error /etc/vmware/vmdkops/auth-db)
-```
-
-The corresponding errors in the vmdk_ops.log file.
-
-```
-[root@localhost:~] cat /var/log/vmware/vmdk_ops.log
-
-08/29/16 08:20:23 297059 [MainThread] [ERROR  ] version 0.0 in auth-db does not match latest DB version 1.0
-08/29/16 08:20:23 297059 [MainThread] [ERROR  ] DB upgrade is not supported. Please remove the DB file at /etc/vmware/vmdkops/auth-db. All existing configuration will be removed and need to be recreated after removing the DB file.
-```
-
-### How to handle the upgrade manually?
-
-#### Case 1: No vmgroup configured before
-
-If no vmgroup has been configured, user just needs to delete the auth-db file
-
-Step 1: Remove  auth-db file at /etc/vmware/vmdkops/auth-db
-
-```
-[root@localhost:/etc/vmware/vmdkops]rm /etc/vmware/vmdkops/auth-db
-```
-
-Step 2: Verify “vmgroup ls” command
-```
-[root@localhost:~] esxcli storage guestvol vmgroup ls
-Uuid                                  Name       Description                 Default_datastore  VM_list
-------------------------------------  ---------  --------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT   This is a default vmgroup
-
-```
-
-After this point, the manually upgrade is done, and tenancy operations will succeed.
-
-#### Case2: Has vmgroup configured before
-Step 1: Backup data manually.
-
-Example below has a vmgroup ```vmgroup1``` with VM ```photon-6``` assigned to this vmgroup1 and one volumes: vol1@datastore1 created.
-
-```
-root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
-DRIVER              VOLUME NAME
-vmdk                vol1@datastore1
-```
-
-User needs to manually backup data stored in vol1@datastore1.
-
-Step 2: Move the auth-db file at /etc/vmware/vmdkops/auth-db
-
-```
-[root@localhost:/etc/vmware/vmdkops]mv /etc/vmware/vmdkops/auth-db /etc/vmware/vmdkops/auth-db.backup.v10.upgrade
-```
-
-Step 3: Verify “vmgroup ls” command, now only  ```_DEFAULT``` should be listed.
-
-```
-[root@localhost:~] esxcli storage guestvol vmgroup ls
-Uuid                                  Name      Description                 Default_datastore  VM_list
-------------------------------------  --------  --------------------------  -----------------  -------
-11111111-1111-1111-1111-111111111111  _DEFAULT  This is a default vmgroup
-
-
-```
-
-Step 4: Recreate the vmgroup configuration with new name “new-vmgroup1” (associate the same VM photon-6 to this new-vmgroup1), see the following example:
-
-***Note: Please DO NOT create the vmgroup with the old name “vmgroup1”!!!***
-
-```
-[root@localhost:~] esxcli storage guestvol vmgroup create --name=new-vmgroup1  --vm-list=photon-6 --default-datastore=datastore1
-vmgroup 'new-vmgroup1' is created.  Do not forget to run 'vmgroup vm add' to add vm to vmgroup.
-
-[root@localhost:~] esxcli storage guestvol vmgroup ls
-Uuid                                  Name           Description                 Default_datastore  VM_list
-------------------------------------  -------------  --------------------------  -----------------  --------
-11111111-1111-1111-1111-111111111111  _DEFAULT       This is a default vmgroup
-5c0927fb-86b5-4034-87db-8bdfa24018d4  new-vmgroup1                              datastore1         photon-6
-```
-
-Step 4: Run “docker volume ls” from VM “photon-6”,  volume which belongs to “vmgroup1” which was created before will not be visible
-```
-root@photon-JQQBWNwG6 [ ~ ]# docker volume ls
-DRIVER              VOLUME NAME
-```
-
-Step 5: Run “docker volume create”  to create a new volume “new-vol1” and run “docker volume ls”,   should only able to see this volume which was just created
-```
-root@photon-KwqUODFXp [ ~ ]# docker volume create --driver=vsphere --name=new-vol1 -o size=100MB
-new-vol1
-root@photon-KwqUODFXp [ ~ ]# docker volume ls
-DRIVER              VOLUME NAME
-vsphere             new-vol1@datastore1
-```
-
-Volume “vol1” which was created before still exists, and can be seen from the following AdminCLI command
-
-```
-[root@localhost:~] esxcli storage guestvol volume ls
-Volume    Datastore   VMGroup       Capacity  Used  Filesystem  Policy  Disk Format  Attached-to  Access      Attach-as               Created By  Created Date
---------  ----------  ------------  --------  ----  ----------  ------  -----------  -----------  ----------  ----------------------  ----------  ------------------------
-vol1      datastore1  N/A           100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Wed Sep 14 16:20:30 2016
-new-vol1  datastore1  new-vmgroup1  100MB     13MB  ext4        N/A     thin         detached     read-write  independent_persistent  photon-6    Wed Sep 14 16:22:58 2016
-
-
-```
-
-Step6: Manually copy the data from backup to the new volume "new-vol1@datastore1".
-The path which stores this new volume is "/vmfs/volumes/datastore1/dockvols/new-vmgroup1".
-

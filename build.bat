@@ -64,7 +64,7 @@ del %winBuildDir%\vdvs.exe
 echo Clean up complete.
 
 :: ---- Build ----
-echo Building vDVS...
+echo Building VDVS...
 
 :: Compile vmci_client.dll.
 echo Entering the MSVC Build Tools environment.
@@ -100,5 +100,5 @@ powershell Compress-Archive -Path %winBuildDir%\* -DestinationPath %winBuildDir%
 echo Successfully moved binaries to the build directory.
 
 cd %projectRoot%
-echo vDVS build complete.
+echo VDVS build complete.
 echo Binaries are available under %winBuildDir%.
