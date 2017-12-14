@@ -246,7 +246,7 @@ def create(volpath, kv_dict):
 @diskLibLock
 def delete(volpath):
     """
-    Delete the side car for the given volume
+    Delete the side car for the given volume.
     """
     vol_type = c_uint32(0)
     res = lib.ObjLib_PathToType(volpath.encode(), byref(vol_type))
