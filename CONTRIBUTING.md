@@ -1,21 +1,19 @@
 ## Table of Contents
-* [Dev Setup and debugging help](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#pull-requests)
-* [Bug filing guidelines](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#bug-filing-guidelines)
-* [Typical Developer Workflow](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#typical-developer-workflow)
-* [Photon VM specific configuration](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#photon-vm-specific-configuration)
-* [Testing configuration](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#testing-configuration)
-* [Windows plugin contribution guidelines](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#windows-plugin-contribution-guidelines)
-* [Managing GO Dependencies](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#managing-go-dependencies)
-* [Capturing ESX Code Coverage](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#capturing-esx-code-coverage)
-* [CI/CD System](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#cicd-system)
-* [Release naming convention](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention)
-* [Guidelines for cutting a new release](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#guidelines-for-cutting-a-new-release)
-* [Documentation](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#documentation)
+* [Dev Setup and debugging help](#pull-requests)
+* [Bug filing guidelines](#bug-filing-guidelines)
+* [Typical Developer Workflow](#typical-developer-workflow)
+* [Photon VM specific configuration](#photon-vm-specific-configuration)
+* [Testing configuration](#testing-configuration)
+* [Windows plugin contribution guidelines](#windows-plugin-contribution-guidelines)
+* [Managing GO Dependencies](#managing-go-dependencies)
+* [Capturing ESX Code Coverage](#capturing-esx-code-coverage)
+* [CI/CD System](#cicd-system)
+* [Release naming convention](#release-naming-convention)
+* [Guidelines for cutting a new release](#guidelines-for-cutting-a-new-release)
+* [Documentation](#documentation)
 
 
 ## Code Contribution guidelines
-### Dev Setup and debugging help
-Read the [FAQ on the Wiki](https://github.com/vmware/docker-volume-vsphere/wiki#faq)
 ### Pull Requests
 * Create a fork or branch (if you can) and make your changes
    * Branch should be suffixed with github user id: `(branch name).(github user id)` Example: `mydevbranch.kerneltime`
@@ -239,7 +237,7 @@ This is done to make sure CI still passes.
 
 ## Windows plugin contribution guidelines
 
-Use following information to setup Windows VM in order to contribute towards vDVS plugin for Windows.
+Use following information to setup Windows VM in order to contribute towards VDVS plugin for Windows.
 
 ### To configure a Windows VM
 1. Create/Deploy Windows 2016 Server or Windows 10 OS VM.
@@ -291,7 +289,7 @@ Add a multi-string key named Environment and add the following lines to it.
 
       # deploy the plugin:
       make deploy-windows-plugin
-      
+
       # run the tests:
       make test-e2e-windows
 
@@ -300,11 +298,14 @@ Add a multi-string key named Environment and add the following lines to it.
 ## Managing GO Dependencies
 
 Use [gvt](https://github.com/FiloSottile/gvt) and check in the dependency.
+
 Example:
 ```
 make gvt # Start docker image used to build which includes gvt
+
 # Use this command to install gvt if not already installed on your system
 go get -u github.com/FiloSottile/gvt
+
 gvt fetch github.com/docker/go-plugins-helpers/volume
 git add vendor
 git commit -m "Added new dependency go-plugins-helpers"
@@ -312,7 +313,7 @@ exit
 ```
 
 ## Capturing ESX Code Coverage
-Coverage is captured using make coverage target (On CI it is called using drone script).
+Coverage is captured using `make coverage` target (On CI it is called using drone script).
 User can configure the setup and use this target to see the coverage.
 ### Setup ESX box to install python coverage package
 * Install https://coverage.readthedocs.io/en/coverage-4.4.1/ on your machine using pip <br />
@@ -398,7 +399,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 **Note**: Update [vDVS_bulletin.xml](https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/vDVS_bulletin.xml#L19) to keep it current with the release and check changes to `[vmware/master]/docs/misc/vDVS_bulletin.xml` (see below to update the content per release)
 
 ```
-<id>vDVS_driver-0.15</id> (0.15 refers to version)
+<id>VDVS_driver-0.15</id> (0.15 refers to version)
 <releaseDate>2017-06-30T18:47:36.688572+00:00</releaseDate> (release date where time is optional)
 <vibID>vmware-esx-vmdkops-0.15.b93c186</vibID> (vmware-esx-vmdkops-<release_version>.<commit's SHA hash>)
 ```
@@ -406,10 +407,10 @@ Head to GitHub and author a new release add the changelog for the tag created.
 4. After the vib signing has successfully finished, you will receive a confirmation email. Go to the deliverables link
    mentioned in the email and download the signed offline bundle. Offline bundle will be a zip file something like	```vDVS_driver-0.18-offline_bundle-7032243.zip```. From the offline bundle, extract the signed VIB.
 5. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB as well as offline bundle
-6. Push vDVS & vFile managed plugin to docker store and windows plugin to bintray
+6. Push VDVS & vFile managed plugin to docker store and windows plugin to bintray
 7. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/docker-volume-vsphere/releases/tag/0.13) as the reference
 
-### Publish vDVS managed plugin to Docker Store
+### Publish VDVS managed plugin to Docker Store
 **Note**: not automated as of 04/04/17
 
 To push plugin image
@@ -434,7 +435,7 @@ Windows plugin needs to be built on a windows environment
 ### Upload files to bintray
 Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/vDVS_Windows
 
-Following are their paths (with respect to vDVS root working directory)
+Following are their paths (with respect to VDVS root working directory)
 1. install-vdvs.ps1
 2. /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
 

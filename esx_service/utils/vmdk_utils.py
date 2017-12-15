@@ -385,7 +385,7 @@ def get_attached_volume_path(vm, volname, datastore):
 
 def find_dvs_volume(dev):
     """
-    If the @param dev (type is vim.vm.device) a vDVS managed volume, return its vmdk path
+    If the @param dev (type is vim.vm.device) a VDVS managed volume, return its vmdk path
     """
     # if device is not a virtual disk, skip this device
     if type(dev) != vim.vm.device.VirtualDisk:
@@ -406,7 +406,7 @@ def find_dvs_volume(dev):
     dvol_dir = os.path.basename(dvol_dir_path)
 
     if disk_path.startswith(dvol_dir):
-        # returning the vmdk path for vDVS volume
+        # returning the vmdk path for VDVS volume
         return os.path.join(VOLUME_ROOT, datastore_name, disk_path)
 
     return None

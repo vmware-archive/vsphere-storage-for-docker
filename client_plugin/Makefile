@@ -76,10 +76,10 @@ PLUGIN_BIN = $(BIN)/$(PLUGNAME)
 VFILE_PLUGIN_BIN = $(BIN)/$(VFILE_PLUGNAME)
 
 # all binaries for VMs - plugin and tests
-# PLUGIN_BIN - vDVS plugin binary
+# PLUGIN_BIN - VDVS plugin binary
 # $(BIN)/$(VMDKOPS_TEST_MODULE).test - Running mock esx test
 # $(BIN)/$(PLUGNAME).test - Running sanity test
-# $(BIN)/$(INSTRUMENTED_PLUGIN_BIN) - Instrumented vDVS plugin binary for capturing code coverage
+# $(BIN)/$(INSTRUMENTED_PLUGIN_BIN) - Instrumented VDVS plugin binary for capturing code coverage
 VM_BINS = $(PLUGIN_BIN) $(BIN)/$(VMDKOPS_TEST_MODULE).test $(BIN)/$(PLUGNAME).test $(BIN)/$(INSTRUMENTED_PLUGIN_BIN)
 VFILE_VM_BINS = $(VFILE_PLUGIN_BIN)
 
@@ -171,7 +171,7 @@ $(VFILE_PLUGIN_BIN): $(COMMON_SRC) $(VFILE_PLUGIN_SRC)
 	@-mkdir -p $(BIN) && chmod a+w $(BIN)
 	$(GO) build --ldflags '-extldflags "-static"' -o $(VFILE_PLUGIN_BIN) $(PLUGIN)/vfile_plugin
 
-# vDVS binary to capture code coverage
+# VDVS binary to capture code coverage
 $(BIN)/$(INSTRUMENTED_PLUGIN_BIN): $(COMMON_SRC) $(VMDKOPS_MODULE_SRC) $(VMDK_PLUGIN_TEST_SRC)
 	$(GO) test -coverprofile=/tmp/cover.out -coverpkg=$(PLUGIN)/... -c -o $@ $(PLUGIN)/vmdk_plugin -tags testmain -covermode count
 
@@ -401,7 +401,7 @@ test-esx:
 testremote: test-esx test-vm
 test-all:  test test-e2e testremote
 
-# capture coverage of vDVS driver code.
+# capture coverage of VDVS driver code.
 coverage:
 	$(log_target)
 	$(MAKE)  --directory=$(ESX_SRC) $@

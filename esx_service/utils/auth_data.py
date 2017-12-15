@@ -623,7 +623,7 @@ class AuthorizationDataManager:
             if major_ver == 1 and minor_ver == 1:
                 self.handle_upgrade_1_1_to_1_2()
             else:
-                error_msg = "Upgrade is not supported for auth-db schema version {}.{} to {}.{}. Refer to vDVS release versions".format(major_ver, minor_ver, DB_MAJOR_VER, DB_MINOR_VER)
+                error_msg = "Upgrade is not supported for auth-db schema version {}.{} to {}.{}. Refer to VDVS release versions".format(major_ver, minor_ver, DB_MAJOR_VER, DB_MINOR_VER)
                 logging.error("__handle_upgrade: %s", error_msg)
                 raise DbUpgradeError(self.db_path, error_msg)
 

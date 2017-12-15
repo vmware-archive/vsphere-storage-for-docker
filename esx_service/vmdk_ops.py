@@ -189,7 +189,7 @@ def createVMDK(vmdk_path, vm_name, vol_name,
 
     if os.path.isfile(vmdk_path):
         # We are mostly here due to race or Plugin VMCI retry #1076
-        msg = "File {0} already exists".format(vmdk_path) 
+        msg = "File {0} already exists".format(vmdk_path)
         logging.warning(msg)
         return err(msg)
 
@@ -1818,10 +1818,10 @@ def execRequestThread(client_socket, cartel, request):
             client_protocol_version = int(req["version"]) if "version" in req else SERVER_PROTOCOL_VERSION
             logging.debug("execRequestThread: client protocol version=%d", client_protocol_version)
             if client_protocol_version != SERVER_PROTOCOL_VERSION:
-                reply_string = err("""There is a mismatch between vDVS client (Docker plugin) protocol version
+                reply_string = err("""There is a mismatch between VDVS client (Docker plugin) protocol version
                                     ({}) and server (ESXi) protocol version ({}) which indicates different
                                     versions of the product are installed on Guest and ESXi sides,
-                                    please make sure vDVS plugin and driver are from the same release version.
+                                    please make sure VDVS plugin and driver are from the same release version.
                                     """.format(client_protocol_version, SERVER_PROTOCOL_VERSION))
                 send_vmci_reply(client_socket, reply_string)
                 logging.warning("executeRequest '%s' failed: %s", req["cmd"], reply_string)

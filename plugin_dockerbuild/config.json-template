@@ -55,7 +55,7 @@
 	},
 	{
 		"name": "VDVS_VERSION",
-		"description": "Release version of vDVS plugin",
+		"description": "Release version of VDVS plugin",
 		"value": "%VDVS_VERSION%",
 		"Settable": [ "value"]
 	},

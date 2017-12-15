@@ -15,7 +15,7 @@
 // A VMDK Docker Data Volume plugin for Linux
 package main
 
-// startDaemon starts vDVS plugin daemon on Linux
+// startDaemon starts VDVS plugin daemon on Linux
 func startDaemon() {
 	startPluginServer()
 }

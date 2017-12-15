@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This Makefile's purpose is to hold common variables to reuse across
-# Makefiles for vDVS.
+# Makefiles for VDVS.
 
 # Exporting all variables to reuse
 export

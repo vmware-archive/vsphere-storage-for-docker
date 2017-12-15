@@ -7,7 +7,7 @@ set -e
 #
 # A. Pre-requisite:
 #
-# 1. Local copy of vDVS project is needed before running this script
+# 1. Local copy of VDVS project is needed before running this script
 #   $ git clone https://github.com/vmware/docker-volume-vsphere.git)
 #
 # 2. Before executing this script, its important to have two git remotes: origin and vmware

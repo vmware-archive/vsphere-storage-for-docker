@@ -1,16 +1,16 @@
-# vDVS Authorization Config DB state machine
+# VDVS Authorization Config DB state machine
 
-vSphere Docker Volume Service (`vDVS`) Authorization Config DB (aka `Config DB`) supports `modes` which is easier to see as states in a state machine. This document is a quick write up of the states and allowed state transitions. It is intended to help understanding and verifying behavior of vmdkops_admin.py (`config` command set for managing Config DB) and auth_data.AuthDataManager methods related to DBMode type.
+vSphere Docker Volume Service (`VDVS`) Authorization Config DB (aka `Config DB`) supports `modes` which is easier to see as states in a state machine. This document is a quick write up of the states and allowed state transitions. It is intended to help understanding and verifying behavior of vmdkops_admin.py (`config` command set for managing Config DB) and auth_data.AuthDataManager methods related to DBMode type.
 
 ## States
 
 The following states are tracked:
 
 * `Unknown` - initial state of the AuthDataManager, meaning no attempt to find out the actual state has been made yet. This state is replaced by actual state on the instance construction time
-* `NotConfigured` - there is no link for DB in /etc/vmware/vmdkops. No auth config operation is allowed, and the allow_all_access() method will always return True. All requests from vDVS client are auto-approved.
+* `NotConfigured` - there is no link for DB in /etc/vmware/vmdkops. No auth config operation is allowed, and the allow_all_access() method will always return True. All requests from VDVS client are auto-approved.
 * `SingleNode` - there is an actual Config DB in /etc/vmware/vmdkops. All authorization system is limited to a single ESX node
 * `MultiNode` - There is a link in /etc/vmware/vmdkops to a Config DB on a shared datastore. Every ESXi node which has similar link will share the authorization configuration.
-* `BrokenLink` - Error state. Either the symlink point to non-existing file, or the DB file is corrupt. All vDVS client requests will be denied in this mode, and vmdk_ops.py error log will indicate the BrokenLink state. The only way to recover is to remove the local configuration and re-init the Config DB again
+* `BrokenLink` - Error state. Either the symlink point to non-existing file, or the DB file is corrupt. All VDVS client requests will be denied in this mode, and vmdk_ops.py error log will indicate the BrokenLink state. The only way to recover is to remove the local configuration and re-init the Config DB again
 
 ## State transitions
 
@@ -45,13 +45,13 @@ BrokenLink is an error condition. We do not know what was the admin intent so we
 * BrokenLink -> NotConfigured - by admin `config rm` command
 * BrokenLink -> BrokenLink -  noop
 * BrokenLink -> SingleNode or MultiNode - no direct transition, the Config DB has to go through NotConfigured first.
-  * However, a vDVS service may first find out the state is BrokenLink, then admin does 2 commands and then vDVS service may directly transfer it's internal state to MultiNode or SingleNode
+  * However, a VDVS service may first find out the state is BrokenLink, then admin does 2 commands and then VDVS service may directly transfer it's internal state to MultiNode or SingleNode
 
 
 ### From SingleNode
 
 Transition from SingleNode means the admin live-reconfigured the Config DB.
-On the node where the operation happened, the admin CLI will refresh the vDVS service which will find out the new state from the DB.
+On the node where the operation happened, the admin CLI will refresh the VDVS service which will find out the new state from the DB.
 
 On other nodes, the discovery will find out about the change to `MultiNode` only, and will issue a warning to the admin  - since we do not know what was the intent.
 

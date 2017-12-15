@@ -42,7 +42,7 @@ dosy6twh0fug6216wj9j3pmtl    photon4   Ready   Active
 
 ```
 
-We can also verify that there is no volume that exists on the cluster at 
+We can also verify that there is no volume that exists on the cluster at
 the moment:
 
 ```
@@ -122,8 +122,8 @@ shm                                               64M     0   64M   0% /dev/shm
 ```
 
 
-## Store the data 
-Let's create an empty table in the database. In ideal scenario, even if container or the node fails, this data should still persist. 
+## Store the data
+Let's create an empty table in the database. In ideal scenario, even if container or the node fails, this data should still persist.
 
 ```
 root@d5afd6b94b99:/# mysql -u wordpress -p
@@ -141,7 +141,7 @@ Database changed
 MariaDB [wordpress]> show tables;
 Empty set (0.01 sec)
 
-MariaDB [wordpress]> 	
+MariaDB [wordpress]>
 Query OK, 0 rows affected (0.17 sec)
 
 MariaDB [wordpress]> show tables;
@@ -163,7 +163,7 @@ MariaDB [wordpress]>
 Now to test the availability of the database, let's completely destroy the node on which the MySQL DB is running. This should cause two things to happen:
 
 - The container should be re-scheduled on a different node (This is responsibility of Swarm)
-- The volume should get attached to the container on new node (This is what vDVS plugin will provide in this case)
+- The volume should get attached to the container on new node (This is what VDVS plugin will provide in this case)
 
 Once we destroy the original node, we can see that the container is scheduled on a different node.
 
@@ -223,4 +223,4 @@ MariaDB [wordpress]>
 
 ## Conclusion
 
-vDVS along with Swarm mode can provide a HA capability to a cluster running stateful applications. While Swarm mode takes care of re-scheduling the application containers on nodes in the cluster, vDVS plugun ensures that the volumes are managed in a similar way and data is persisted while re-scheduling of the application containers.
+VDVS along with Swarm mode can provide a HA capability to a cluster running stateful applications. While Swarm mode takes care of re-scheduling the application containers on nodes in the cluster, VDVS plugun ensures that the volumes are managed in a similar way and data is persisted while re-scheduling of the application containers.

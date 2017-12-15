@@ -4,11 +4,11 @@
 [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
 [![Windows Plugin](https://img.shields.io/badge/Windows%20Plugin-latest-blue.svg)](https://bintray.com/vmware/vDVS/vDVS_Windows/_latestVersion)
 
-# vSphere Docker Volume Service
+# vSphere Storage for Docker
 
-vSphere Docker Volume Service (vDVS) enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS) to stateful containers using Docker.
+vSphere Storage for Docker enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS, VVol) to stateful containers using Docker.
 
-[<img src="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vDVS is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
+[<img src="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vSphere Storage for Docker is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
 If you would like to contribute then please check out
 [CONTRIBUTING.md](https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md)
@@ -24,10 +24,10 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 
 The download consists of 2 parts:
 
-1. VIB (vDVS driver): The ESX code is packaged as [a vib or an offline depot](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
-2. Managed plugin (vDVS plugin): Plugin is available on [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
+1. VIB (VDVS driver): The ESX code is packaged as [a vib or an offline depot](http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.vsphere.install.doc/GUID-29491174-238E-4708-A78F-8FE95156D6A3.html#GUID-29491174-238E-4708-A78F-8FE95156D6A3)
+2. Managed plugin (VDVS plugin): Plugin is available on [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
-Please check [vDVS Installation User Guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html) to get started. To ensure compatibility, make sure to use the same version of vDVS driver (on ESX) and managed plugin (on Docker host VM).
+Please check [VDVS Installation User Guide](http://vmware.github.io/docker-volume-vsphere/documentation/install.html) to get started. To ensure compatibility, make sure to use the same version of driver (on ESX) and managed plugin (on Docker host VM) for vSphere Storage for Docker.
 
 ## Supported Platforms
 
@@ -47,7 +47,7 @@ The relevant logging for debugging consists of the following:
 journalctl -fu docker.service # Journalctl/Systemd
 ```
 
-**vDVS Plugin logs**
+**VDVS Plugin logs**
 
 * Log location (Linux): `/var/log/docker-volume-vsphere.log`
 * Log location (Windows): `C:\Windows\System32\config\systemprofile\AppData\Local\docker-volume-vsphere\logs\docker-volume-vsphere.log`
@@ -74,14 +74,14 @@ journalctl -fu docker.service # Journalctl/Systemd
       docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest VDVS_LOG_LEVEL=debug VDVS_SOCKET_GID=<group name>
       ```
 
-**vDVS Driver logs**
+**VDVS Driver logs**
 
 * Log location: `/var/log/vmware/vmdk_ops.log`
 * Config file location: `/etc/vmware/vmdkops/log_config.json`  See Python
 logging config format for content details.
 * **Turning on debug logging**: replace all 'INFO' with 'DEBUG' in config file, restart the service
 
-Please refer [vDVS configuration page](http://vmware.github.io/docker-volume-vsphere/documentation/configuration.html) for detailed steps.
+Please refer [VDVS configuration page](http://vmware.github.io/docker-volume-vsphere/documentation/configuration.html) for detailed steps.
 
 ## Tested on
 
@@ -102,8 +102,8 @@ Please refer [vDVS configuration page](http://vmware.github.io/docker-volume-vsp
 
 ## References
 
-* **Known Issues**: Please check [vDVS known issue page](http://vmware.github.io/docker-volume-vsphere/documentation/known-issues.html) to find out about known issues.
+* **Known Issues**: Please check [VDVS known issue page](http://vmware.github.io/docker-volume-vsphere/documentation/known-issues.html) to find out about known issues.
 
 * **Contact us**: Please [click here](http://vmware.github.io/docker-volume-vsphere/documentation/contactus.html) for requesting any feature or reporting a product issue.
 
- * **Blogs**: Please check our [vDVS blog page](http://vmware.github.io/docker-volume-vsphere/documentation/blogs.html).
+ * **Blogs**: Please check our [VDVS blog page](http://vmware.github.io/docker-volume-vsphere/documentation/blogs.html).

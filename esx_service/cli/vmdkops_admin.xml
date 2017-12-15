@@ -8,7 +8,7 @@
             <description>Admin commands to manage volumes consumed by containers running on guest VM </description>
         </namespace>
         <namespace path="storage.guestvol.volume">
-            <description>Manage vDVS volumes</description>
+            <description>Manage VDVS volumes</description>
         </namespace>
         <namespace path="storage.guestvol.policy">
             <description>Configure and display storage policy information</description>

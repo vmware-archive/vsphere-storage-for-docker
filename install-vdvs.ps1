@@ -67,7 +67,7 @@ function Uninstall-Service([System.ServiceProcess.ServiceController]$svc) {
     echo "Windows service $svcName uninstalled successfully!"
 }
 
-# Check if vDVS plugin is already installed
+# Check if VDVS plugin is already installed
 $svc = Get-Service | Where-Object {$_.Name -eq $svcName}
 
 # Handle uninstallation

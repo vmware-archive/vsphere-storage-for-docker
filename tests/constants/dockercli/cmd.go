@@ -43,25 +43,25 @@ const (
 	// RestartDockerService - restart docker service
 	RestartDockerService = "service docker restart"
 
-	// VDVSPluginName name of vDVS plugin
+	// VDVSPluginName name of VDVS plugin
 	VDVSPluginName = "vsphere "
 
-	// VDVSName name of the vDVS service
+	// VDVSName name of the VDVS service
 	VDVSName = "docker-volume-vsphere"
 
-	// GetVDVSPlugin gets vDVS plugin info
+	// GetVDVSPlugin gets VDVS plugin info
 	GetVDVSPlugin = docker + "plugin list --no-trunc | grep " + VDVSPluginName
 
-	// GetVDVSPID get the process id of vDVS plugin
+	// GetVDVSPID get the process id of VDVS plugin
 	GetVDVSPID = "pidof " + VDVSName
 
 	// GetDockerPID get docker pid
 	GetDockerPID = "pidof dockerd"
 
-	// KillVDVSPlugin kills vDVS plugin
+	// KillVDVSPlugin kills VDVS plugin
 	KillVDVSPlugin = "docker-runc kill "
 
-	// StartVDVSPlugin starts the vDVS plugin
+	// StartVDVSPlugin starts the VDVS plugin
 	StartVDVSPlugin = docker + " plugin enable " + VDVSPluginName
 
 	// RunContainer create and run a container

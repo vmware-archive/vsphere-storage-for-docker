@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // This test suite holds testcases related with vm listener functionality.
-// In case of vm/esx host restart vDVS cleans up stale attachment details
+// In case of vm/esx host restart VDVS cleans up stale attachment details
 // the volume.
 
 // +build runonce
@@ -155,7 +155,7 @@ func (s *VMListenerTestParams) TestBasicFailover(c *C) {
 	// Power on VM
 	esxutil.PowerOnVM(s.vm1Name)
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be detached
 	status = verification.PollDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -232,7 +232,7 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVmfs(c *C) {
 	// Power on VM1 which has been killed
 	esxutil.PowerOnVM(s.vm1Name)
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.VerifyDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -318,7 +318,7 @@ func (s *VMListenerTestParams) TestFailoverAcrossVmOnVsan(c *C) {
 	// Power on VM1 which has been killed
 	esxutil.PowerOnVM(s.vm1Name)
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// Status should be still detached
 	status = verification.PollDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -385,7 +385,7 @@ func (s *VMListenerTestParams) TestVolumeAttachedForHostdRestart(c *C) {
 	// 5. Restore VM
 	esxutil.PowerOnVM(s.vm1Name)
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// 6. Status should be detached (verify on the VM)
 	status = verification.PollDetachedStatus(s.volumeName, s.vm1, s.esx)
@@ -431,7 +431,7 @@ func (s *VMListenerTestParams) TestVolumeAttachedForVMSuspend(c *C) {
 
 	// 2. Resume is like a power-on and so include the same checks
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// 3. Verify volume stays attached
 	status := verification.VerifyAttachedStatus(s.volumeName, s.vm1, s.esx)
@@ -493,7 +493,7 @@ func (s *VMListenerTestParams) TestVolumeAttachedWhenHostdKilled(c *C) {
 	// 5. Restore VM
 	esxutil.PowerOnVM(s.vm1Name)
 	isVDVSRunning := esxutil.IsVDVSRunningAfterVMRestart(s.vm1, s.vm1Name)
-	c.Assert(isVDVSRunning, Equals, true, Commentf("vDVS is not running after VM [%s] being restarted", s.vm1Name))
+	c.Assert(isVDVSRunning, Equals, true, Commentf("VDVS is not running after VM [%s] being restarted", s.vm1Name))
 
 	// 6. Status should be detached (verify on the VM)
 	status = verification.PollDetachedStatus(s.volumeName, s.vm1, s.esx)

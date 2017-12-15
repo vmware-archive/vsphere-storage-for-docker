@@ -79,7 +79,7 @@ func WaitForExpectedState(fn getVMPowerStatus, vmName, expectedState string) boo
 	return false
 }
 
-// IsVDVSRunningAfterVMRestart checks if vDVS is up and running after VM being restarted.
+// IsVDVSRunningAfterVMRestart checks if VDVS is up and running after VM being restarted.
 func IsVDVSRunningAfterVMRestart(vmIP, vmName string) bool {
 	isStatusOnline := WaitForExpectedState(GetVMPowerState, vmName, properties.PowerOnState)
 	if !isStatusOnline {
@@ -89,7 +89,7 @@ func IsVDVSRunningAfterVMRestart(vmIP, vmName string) bool {
 
 	isVDVSRunning := IsVDVSRunning(vmIP)
 	if !isVDVSRunning {
-		log.Printf("vDVS is not running on VM [%s]. Please check if the previous VM IP [%s] has changed.", vmName, vmIP)
+		log.Printf("VDVS is not running on VM [%s]. Please check if the previous VM IP [%s] has changed.", vmName, vmIP)
 		return false
 	}
 

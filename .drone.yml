@@ -104,7 +104,7 @@ build:
       - GOVC_PASSWORD=$GOVC_PASSWORD_ESX
       - if [ "$TAG" != "" ]; then export PKG_VERSION=$TAG; fi
       - #
-      - echo "=> Building and pushing vDVS managed plugin" `date` > /dev/null
+      - echo "=> Building and pushing VDVS managed plugin" `date` > /dev/null
       - #
       - export GOVC_URL=$GOVC_URL_6_5
       - export VM1=`$GOVC_GET_IP photon.vmfs`
@@ -133,7 +133,7 @@ build:
       - #
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh runtests $GOVC_URL_6_5 $VM1 $VM2 $$BUILD_NUMBER < /dev/null
       - #
-      - echo "=> Building and running tests for Windows vDVS plugin on VMFS" `date` > /dev/null
+      - echo "=> Building and running tests for Windows VDVS plugin on VMFS" `date` > /dev/null
       - #
       - export WIN_VM1=`$GOVC_GET_IP windows`
       - ./misc/drone-scripts/deploy-and-test-wrapper.sh winplugin $GOVC_URL_6_5 < /dev/null
