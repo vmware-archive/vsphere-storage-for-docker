@@ -14,11 +14,11 @@
   },
   "repository" : {
     "type" : "git",
-    "url" : "https://github.com/vmware/docker-volume-vsphere.git"
+    "url" : "https://github.com/vmware/vsphere-storage-for-docker.git"
   },
   "author": {
     "name": "SABU, VMware",
     "email": "cna-storage@vmware.com",
-    "url": "https://github.com/vmware/docker-volume-vsphere"
+    "url": "https://github.com/vmware/vsphere-storage-for-docker"
   }
 }

@@ -24,11 +24,11 @@ import (
 
 	. "gopkg.in/check.v1"
 
-	adminconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
+	adminconst "github.com/vmware/vsphere-storage-for-docker/tests/constants/admincli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/admincli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
 )
 
 const (

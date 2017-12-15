@@ -36,7 +36,7 @@ EPOCH := 0
 SCRIPTS     := ../misc/scripts
 
 # Packaging variables
-PLUGNAME  := docker-volume-vsphere
+PLUGNAME  := vsphere-storage-for-docker
 VFILE_PLUGNAME  := vfile
 GOPATH_PLUGNAME := $(PLUGNAME)/client_plugin
 INSTRUMENTED_PLUGIN_BIN := vdvs-instrumented

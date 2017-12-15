@@ -46,7 +46,7 @@ DB_MINOR_VER = 2
 VMODL_MAJOR_VER = 1
 VMODL_MINOR_VER = 0
 
-UPGRADE_README = "https://github.com/vmware/docker-volume-vsphere/blob/master/docs/misc/UpgradeFrom_Pre0.11.1.md"
+UPGRADE_README = "https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/UpgradeFrom_Pre0.11.1.md"
 
 
 class DBMode(object):

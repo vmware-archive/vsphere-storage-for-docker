@@ -21,5 +21,5 @@ const (
 	MountFile = " /proc/mounts"
 
 	// LogFile location of the VDVS log file on docker host.
-	LogFile = " /var/log/docker-volume-vsphere.log"
+	LogFile = " /var/log/vsphere-storage-for-docker.log"
 )

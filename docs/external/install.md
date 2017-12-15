@@ -61,12 +61,12 @@ Note: We have discontinued the DEB/RPM based installation of the Docker plugin.
 * **To install the plugin**
 
 ```
-~# docker plugin install --grant-all-permissions --alias vsphere vmware/docker-volume-vsphere:latest
-latest: Pulling from vmware/docker-volume-vsphere
+~# docker plugin install --grant-all-permissions --alias vsphere vmware/vsphere-storage-for-docker:latest
+latest: Pulling from vmware/vsphere-storage-for-docker
 f07d34084e57: Download complete
 Digest: sha256:e1028b8570f37f374e8987d1a5b418e3c591e2cad155cc3b750e5e5ac643fb31
-Status: Downloaded newer image for vmware/docker-volume-vsphere:latest
-Installed plugin vmware/docker-volume-vsphere:latest
+Status: Downloaded newer image for vmware/vsphere-storage-for-docker:latest
+Installed plugin vmware/vsphere-storage-for-docker:latest
 ```
 
 * **To verify that it was installed and is listed**
@@ -111,7 +111,7 @@ First, start an instance of PowerShell with the "Run as administrator" option.
 * **To download the plugin installer**
 
 ```
-PS C:\> Invoke-WebRequest -Uri https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/install-vdvs.ps1 -Out install-vdvs.ps1
+PS C:\> Invoke-WebRequest -Uri https://raw.githubusercontent.com/vmware/vsphere-storage-for-docker/master/install-vdvs.ps1 -Out install-vdvs.ps1
 ```
 
 * **To install the plugin**
@@ -125,8 +125,8 @@ For example, the vSphere Storage for Docker 0.16 developer preview binary could 
 ```
 PS C:\> .\install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere_windows_developer-preview.zip
 Downloading from https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere_windows_developer-preview.zip...
-Extracting docker-volume-vsphere.zip into C:\Program Files\VMware\vmdkops...
-Deleting docker-volume-vsphere.zip...
+Extracting vsphere-storage-for-docker.zip into C:\Program Files\VMware\vmdkops...
+Deleting vsphere-storage-for-docker.zip...
 Installing Windows service vdvs from C:\Program Files\VMware\vmdkops\vdvs.exe...
 
 Status   Name               DisplayName
@@ -175,7 +175,7 @@ Upgrade of volume managed plugin or ESX driver has no impact on data path and ru
 #1. Uninstall VIB (driver)
 esxcli software vib remove -n esx-vmdkops-service
 
-#2. Download and install the latest VIB from the docker-volume-vsphere release page
+#2. Download and install the latest VIB from the vsphere-storage-for-docker release page
 esxcli software vib install -v /<vib_name>.vib
 
 #3. Verify the status
@@ -189,8 +189,8 @@ esxcli storage guestvol status
 #1. Disable the managed plugin from the docker host
 docker plugin disable -f vsphere
 
-#2. Upgrade the latest release of docker-volume-vsphere managed plugin
-docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:latest
+#2. Upgrade the latest release of vsphere-storage-for-docker managed plugin
+docker plugin upgrade --grant-all-permissions vsphere:latest vmware/vsphere-storage-for-docker:latest
 
 #3. Enable the managed plugin from the docker host
 docker plugin enable vsphere
@@ -203,7 +203,7 @@ docker plugin enable vsphere
 #1. Uninstall VIB (driver)
 esxcli software vib remove -n esx-vmdkops-service
 
-#2. Download and install the required VIB from the docker-volume-vsphere release page
+#2. Download and install the required VIB from the vsphere-storage-for-docker release page
 esxcli software vib install -v /<vib_name>.vib
 
 #3. Verify the status
@@ -217,8 +217,8 @@ esxcli storage guestvol status
 #1. Disable the managed plugin from the docker host
 docker plugin disable -f vsphere
 
-#2. Using docker plugin upgrade, you can downgrade to required release of docker-volume-vsphere managed plugin
-docker plugin upgrade --grant-all-permissions vsphere:latest vmware/docker-volume-vsphere:<required_release_version>
+#2. Using docker plugin upgrade, you can downgrade to required release of vsphere-storage-for-docker managed plugin
+docker plugin upgrade --grant-all-permissions vsphere:latest vmware/vsphere-storage-for-docker:<required_release_version>
 
 #3. Enable the managed plugin from the docker host
 docker plugin enable vsphere

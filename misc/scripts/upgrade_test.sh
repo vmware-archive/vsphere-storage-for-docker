@@ -15,7 +15,7 @@
 
     source ../misc/scripts/commands.sh
     MANAGED_PLUGIN_NAME="vsphere:latest"
-    E2E_Tests="github.com/vmware/docker-volume-vsphere/tests/e2e"
+    E2E_Tests="github.com/vmware/vsphere-storage-for-docker/tests/e2e"
     GO="go"
     DEPLOY_TOOLS_SH=../misc/scripts/deploy-tools.sh
 
@@ -80,8 +80,8 @@
 	echo "Upgrade test step 2.1: remove plugin $MANAGED_PLUGIN_NAME on $VM1"
 	$DEPLOY_TOOLS_SH cleanvm $VM1 $MANAGED_PLUGIN_NAME
 
-	echo "Upgrade test step 2.2: deploy plugin vmware/docker-volume-vsphere:$UPGRADE_FROM_VER on $VM1"
-	../misc/scripts/deploy-tools.sh deployvm $VM1 vmware/docker-volume-vsphere:$UPGRADE_FROM_VER
+	echo "Upgrade test step 2.2: deploy plugin vmware/vsphere-storage-for-docker:$UPGRADE_FROM_VER on $VM1"
+	../misc/scripts/deploy-tools.sh deployvm $VM1 vmware/vsphere-storage-for-docker:$UPGRADE_FROM_VER
 	$SSH $VM1 "systemctl restart docker || service docker restart"
 
 	echo "Upgrade test step 3: run pre-upgrade test"
@@ -101,8 +101,8 @@
 
     if [ $UPGRADE_TO_VER != "CURRENT" ]
     then
-	    echo "Upgrade test step 5.2: deploy plugin vmware/docker-volume-vsphere:$UPGRADE_TO_VER on $VM1"
-	    $DEPLOY_TOOLS_SH deployvm $VM1 vmware/docker-volume-vsphere:$UPGRADE_TO_VER
+	    echo "Upgrade test step 5.2: deploy plugin vmware/vsphere-storage-for-docker:$UPGRADE_TO_VER on $VM1"
+	    $DEPLOY_TOOLS_SH deployvm $VM1 vmware/vsphere-storage-for-docker:$UPGRADE_TO_VER
     else
         echo "Upgrade test step 5.2: deploy plugin $PLUGIN_NAME:$PLUGIN_TAG on $VM1"
         $DEPLOY_TOOLS_SH deployvm $VM1 $PLUGIN_NAME:$PLUGIN_TAG

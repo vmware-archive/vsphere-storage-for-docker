@@ -774,7 +774,7 @@ by one or more virtual disks.
 
 The ability to list which virtual disks are using a specific storage policy, change storage policies
 for a virtual disk, and reset virtual disks to the default storage policy is a necessary
-enhancement tracked [here](https://github.com/vmware/docker-volume-vsphere/issues/577).
+enhancement tracked [here](https://github.com/vmware/vsphere-storage-for-docker/issues/577).
 
 ```
 [root@localhost:~] esxcli storage guestvol policy rm --name=some-policy

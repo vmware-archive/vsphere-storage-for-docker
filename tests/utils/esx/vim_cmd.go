@@ -19,8 +19,8 @@ package esx
 import (
 	"fmt"
 
-	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/esx"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 // SuspendResumeVM - suspend and resume a VM identified by name

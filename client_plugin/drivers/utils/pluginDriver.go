@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/refcount"
 )
 
 // PluginDriver - helper struct to hold common utilities for driver interface

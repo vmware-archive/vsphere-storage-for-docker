@@ -9,7 +9,7 @@ The Docker volume plugin supports the vSphere platform and provides correspondin
 The Docker vsphere volume driver supports provisioning and managing docker volumes on a standalone or cluster of ESX servers via a service (ESX service) that's installed and runs on each server. Docker volumes are created and managed via publicly available VIM (Virtual Infrastructure Management) APIs on the ESX host.
 
 ## Configuring the Docker Volume Plugin
-The docker volume plugin loads runtime options and values from a JSON configuration file (default `/etc/docker-volume-vsphere.conf` for Linux, `C:\ProgramData\docker-volume-vsphere\docker-volume-vsphere.conf` for Windows) on the host. The user can override the default configuration by providing a different configuration file, via the `--config` option, specifying the full path of the file. Options that are currently recognized include the below set. Options passed on the command line override those in the configuration file.
+The docker volume plugin loads runtime options and values from a JSON configuration file (default `/etc/vsphere-storage-for-docker.conf` for Linux, `C:\ProgramData\vsphere-storage-for-docker\vsphere-storage-for-docker.conf` for Windows) on the host. The user can override the default configuration by providing a different configuration file, via the `--config` option, specifying the full path of the file. Options that are currently recognized include the below set. Options passed on the command line override those in the configuration file.
 
 ### Selecting the driver to handle volume operations
 The docker volume plugin supports a driver, namely, `vsphere` for the vSphere platform. The usage of driver is specified as below in the [sample configuration](#sample-plugin-configuration).
@@ -28,7 +28,7 @@ The docker volume plugin supports a driver, namely, `vsphere` for the vSphere pl
 	"MaxLogAgeDays": 28,
 	"MaxLogFiles": 10,
 	"MaxLogSizeMb": 10,
-	"LogPath": "/var/log/docker-volume-vsphere.log",
+	"LogPath": "/var/log/vsphere-storage-for-docker.log",
 	"LogLevel": "info"
 }
 ```

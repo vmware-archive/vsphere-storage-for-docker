@@ -54,7 +54,7 @@ DISK_LIB64 = "/lib64/libvmsnapshot.so"
 DISK_LIB = "/lib/libvmsnapshot.so"
 lib = None
 use_sidecar_create = False
-DVOL_KEY = "docker-volume-vsphere"
+DVOL_KEY = "vsphere-storage-for-docker"
 
 # Volume attributes
 VOL_SIZE = 'size'
@@ -386,7 +386,7 @@ def fixup_kv(src_volpath, dst_volpath):
                 logging.warning("Side car delete for %s failed - %x", dst_volpath, res)
                 lib.DiskLib_Close(dhandle)
                 return False
-    
+
             lib.DiskLib_Close(dhandle)
             src_dict = load(src_volpath)
             return create(dst_volpath, src_dict)

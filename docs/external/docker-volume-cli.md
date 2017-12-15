@@ -30,7 +30,7 @@ docker volume create --driver=vsphere --name=MyVolume -o size=10gb -o vsan-polic
 
 ```
 
-You can find more details about policy management using vSAN in page [Storage policy based management](http://vmware.github.io/docker-volume-vsphere/documentation/policy-based-management.html)
+You can find more details about policy management using vSAN in page [Storage policy based management](http://vmware.github.io/vsphere-storage-for-docker/documentation/policy-based-management.html)
 
 ##### Disk Format (diskformat)
 The docker volumes are backed by VMDK and VMDKs support multiple [types](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1022242). At the moment following types of VMDKs are supported:

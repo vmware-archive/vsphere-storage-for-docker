@@ -1,5 +1,5 @@
 clone:
-    path: github.com/vmware/docker-volume-vsphere
+    path: github.com/vmware/vsphere-storage-for-docker
     tags: true
 
 build:
@@ -20,7 +20,7 @@ build:
       - ESX_6_5=$$CI_ESX_NAME_6_5
       - GOVC_URL_6_0=$$CI_ESX_IP_6_0
       - GOVC_URL_6_5=$$CI_ESX_IP_6_5
-      - SSH_KEY_OPT=-i /drone/src/github.com/vmware/docker-volume-vsphere/key
+      - SSH_KEY_OPT=-i /drone/src/github.com/vmware/vsphere-storage-for-docker/key
       - GOVC_GET_IP=govc vm.ip -a -v4
       - KEY=$$KEY
       - DOCKER_HUB_REPO=cnastorage
@@ -49,8 +49,8 @@ build:
       - go get github.com/golang/lint/golint
       - go get -u gopkg.in/check.v1
       - make -s build
-      - echo $KEY | base64 -d > /drone/src/github.com/vmware/docker-volume-vsphere/key
-      - chmod 0600 /drone/src/github.com/vmware/docker-volume-vsphere/key
+      - echo $KEY | base64 -d > /drone/src/github.com/vmware/vsphere-storage-for-docker/key
+      - chmod 0600 /drone/src/github.com/vmware/vsphere-storage-for-docker/key
     when: *branches
 
   build_events:

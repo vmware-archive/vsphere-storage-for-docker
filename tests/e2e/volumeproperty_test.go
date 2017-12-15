@@ -27,13 +27,13 @@ import (
 	"reflect"
 	"strings"
 
-	dockerconst "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
-	admincliconst "github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	dockerconst "github.com/vmware/vsphere-storage-for-docker/tests/constants/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/properties"
+	admincliconst "github.com/vmware/vsphere-storage-for-docker/tests/utils/admincli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 	. "gopkg.in/check.v1"
 )
 

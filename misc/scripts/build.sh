@@ -88,7 +88,7 @@ pylint_container=cnastorage/pylint
 docs_container=cnastorage/gh-documentation
 
 # mount point within the container.
-dir=/go/src/github.com/vmware/docker-volume-vsphere
+dir=/go/src/github.com/vmware/vsphere-storage-for-docker
 # We need to mount this into the container:
 host_dir=$PWD/..
 

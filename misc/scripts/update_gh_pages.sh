@@ -8,20 +8,20 @@ set -e
 # A. Pre-requisite:
 #
 # 1. Local copy of VDVS project is needed before running this script
-#   $ git clone https://github.com/vmware/docker-volume-vsphere.git)
+#   $ git clone https://github.com/vmware/vsphere-storage-for-docker.git)
 #
 # 2. Before executing this script, its important to have two git remotes: origin and vmware
 #   $ git remote -v
-#    origin	https://github.com/ashahi1/docker-volume-vsphere.git (fetch)
-#    origin	https://github.com/ashahi1/docker-volume-vsphere.git (push)
-#    vmware	https://github.com/vmware/docker-volume-vsphere.git (fetch)
-#    vmware	https://github.com/vmware/docker-volume-vsphere.git (push)
+#    origin	https://github.com/ashahi1/vsphere-storage-for-docker.git (fetch)
+#    origin	https://github.com/ashahi1/vsphere-storage-for-docker.git (push)
+#    vmware	https://github.com/vmware/vsphere-storage-for-docker.git (fetch)
+#    vmware	https://github.com/vmware/vsphere-storage-for-docker.git (push)
 #
 # 3. Now we need to fetch all the remote branches
 #   $ git fetch --all
 #
 #
-# B. Run the script from docker-volume-vsphere/
+# B. Run the script from vsphere-storage-for-docker/
 #   $ ./misc/scripts/update_gh_pages.sh
 #
 

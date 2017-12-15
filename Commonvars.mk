@@ -29,10 +29,10 @@ export
 # To check resulting settings use  "make info"
 # examples:
 #   make
-#          --> resulting name (for my build as of 3/17/17)  msterin/docker-volume-vsphere:0.13-dev
+#          --> resulting name (for my build as of 3/17/17)  msterin/vsphere-storage-for-docker:0.13-dev
 #
 # 	DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make
-#           --> resulting name vmware/docker-volume-vsphere:latest
+#           --> resulting name vmware/vsphere-storage-for-docker:latest
 #
 #   DOCKER_HUB_REPO=cnastorage EXTRA_TAG=-CI make
 #           --> resulting name cnastorage/docker-volume-vspehere:0.13-CI
@@ -53,7 +53,7 @@ EXTRA_TAG ?= -dev
 PLUGIN_TAG := $(VERSION_TAG)$(EXTRA_TAG)
 
 # plugin name - used as a base for full plugin name and container for extracting rootfs
-PLUGIN_NAME ?= $(DOCKER_HUB_REPO)/docker-volume-vsphere
+PLUGIN_NAME ?= $(DOCKER_HUB_REPO)/vsphere-storage-for-docker
 VFILE_PLUGIN_NAME = $(DOCKER_HUB_REPO)/vfile
 
 # Managed plugin alias name

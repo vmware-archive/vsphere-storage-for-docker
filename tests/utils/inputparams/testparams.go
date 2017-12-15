@@ -27,7 +27,7 @@ import (
 
 	"log"
 
-	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/esx"
 )
 
 // TestConfig - struct for common test configuration params
