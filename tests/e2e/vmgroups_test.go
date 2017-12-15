@@ -22,13 +22,13 @@ import (
 	"log"
 	"strings"
 
-	adminconst "github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
-	adminutils "github.com/vmware/docker-volume-vsphere/tests/utils/admincli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
+	adminconst "github.com/vmware/vsphere-storage-for-docker/tests/constants/admincli"
+	adminutils "github.com/vmware/vsphere-storage-for-docker/tests/utils/admincli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/verification"
 	. "gopkg.in/check.v1"
 )
 

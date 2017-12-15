@@ -129,7 +129,7 @@ func (vmdkCmd EsxVmdkCmd) Run(cmd string, name string, opts map[string]string) (
 				continue
 			}
 			if errno == syscall.ECONNRESET || errno == syscall.ETIMEDOUT {
-				msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/docker-volume-vsphere/wiki#faq"
+				msg += " Cannot communicate with ESX, please refer to the FAQ https://github.com/vmware/vsphere-storage-for-docker/wiki#faq"
 			}
 		} else {
 			msg = fmt.Sprintf("Internal issue: ret != 0 but errno is not set. Cancelling operation - %s ", C.GoString(&ans.errBuf[0]))

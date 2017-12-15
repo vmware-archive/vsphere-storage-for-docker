@@ -33,16 +33,16 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/strslice"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
-	testutil "github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/refcount"
+	testutil "github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
 	"golang.org/x/net/context"
 )
 
 const (
 	defaultMountLocation = "/mnt/testvol"
 	// tests are often run under regular account and have no access to /var/log
-	defaultTestLogPath = "/tmp/test-docker-volume-vsphere.log"
+	defaultTestLogPath = "/tmp/test-vsphere-storage-for-docker.log"
 	// Number of volumes per client for parallel tests
 )
 

@@ -29,9 +29,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/esx"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 const (

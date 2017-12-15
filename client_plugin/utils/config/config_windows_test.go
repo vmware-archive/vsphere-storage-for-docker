@@ -16,12 +16,12 @@ package config_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
 	"os"
 	"testing"
 )
 
 func TestWindowsPath(t *testing.T) {
-	assert.Equal(t, config.DefaultConfigPath, os.Getenv("PROGRAMDATA")+`\docker-volume-vsphere\docker-volume-vsphere.conf`)
-	assert.Equal(t, config.DefaultLogPath, os.Getenv("LOCALAPPDATA")+`\docker-volume-vsphere\logs\docker-volume-vsphere.log`)
+	assert.Equal(t, config.DefaultConfigPath, os.Getenv("PROGRAMDATA")+`\vsphere-storage-for-docker\vsphere-storage-for-docker.conf`)
+	assert.Equal(t, config.DefaultLogPath, os.Getenv("LOCALAPPDATA")+`\vsphere-storage-for-docker\logs\vsphere-storage-for-docker.log`)
 }

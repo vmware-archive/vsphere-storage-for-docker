@@ -17,9 +17,9 @@
 stat /proc/1/exe | grep File | grep systemd
 if [ $? -eq 0 ]
 then
-  systemctl stop docker-volume-vsphere.service
-  systemctl disable docker-volume-vsphere.service
+  systemctl stop vsphere-storage-for-docker.service
+  systemctl disable vsphere-storage-for-docker.service
 else
-  service docker-volume-vsphere stop
+  service vsphere-storage-for-docker stop
 fi
 exit 0

@@ -8,7 +8,7 @@
 	<releaseType>extension</releaseType>
 	<description>This bulletin contains details regarding the vSphere docker volume service
 		driver VIB.</description>
-	<kbUrl>https://github.com/vmware/docker-volume-vsphere/wiki</kbUrl>
+	<kbUrl>https://github.com/vmware/vsphere-storage-for-docker/wiki</kbUrl>
 	<contact>VMware</contact>
 	<releaseDate>2017-12-01T23:47:36.688572+00:00</releaseDate>
 	<platforms>

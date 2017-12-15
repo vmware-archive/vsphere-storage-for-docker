@@ -20,7 +20,7 @@
 # managed plugin
 
 #
-# Makefile names the plugin simlarly to this (for example) 'msterin/docker-volume-vsphere:0.13-dev'
+# Makefile names the plugin simlarly to this (for example) 'msterin/vsphere-storage-for-docker:0.13-dev'
 #
 # Make targets:
 #    info (helpful info), clean (remove build artefacts), plugin, (build plugin), push (push to dockerhub)
@@ -30,7 +30,7 @@
 -include ../Commonvars.mk
 
 # Binaries we want to pick up from the actual build
-BINARY ?= docker-volume-vsphere
+BINARY ?= vsphere-storage-for-docker
 VFILE_BINARY := vfile
 
 # Dockerfile templates

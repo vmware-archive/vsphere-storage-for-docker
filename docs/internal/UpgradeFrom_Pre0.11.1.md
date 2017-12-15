@@ -38,17 +38,17 @@ vSphere Docker Volume Service RPMs on Docker VMs.
 ## Upgrade to newer build when you DO have Docker volumes to retain
 
 We provide a script to migrate data and configuration from Release 0.11 (or 0.10) to 0.11.2.
-The script is located [here](https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py).
+The script is located [here](https://raw.githubusercontent.com/vmware/vsphere-storage-for-docker/master/esx_service/cli/vmdkops_post_update.11.1.py).
 
-Upgrade steps are as follows: 
+Upgrade steps are as follows:
 * Install VIB with Release 0.11.2 (or later) on each ESX.
 * Download the upgrade script. This step is for Release 0.11.2 only. For 0.12 and later, skip directly to running the script.
- * Download the script from https://raw.githubusercontent.com/vmware/docker-volume-vsphere/master/esx_service/cli/vmdkops_post_update.11.1.py and place it into /usr/lib/vmware/vmdkops/bin/ on each ESX
+ * Download the script from https://raw.githubusercontent.com/vmware/vsphere-storage-for-docker/master/esx_service/cli/vmdkops_post_update.11.1.py and place it into /usr/lib/vmware/vmdkops/bin/ on each ESX
   * make it executabe on each ESX : `cd /usr/lib/vmware/vmdkops/bin/ ; chmod a+x vmdkops_post_update.11.1.py;`
 * on each ESX, run `/usr/lib/vmware/vmdkops/bin/vmdkops_post_update.11.1.py`
 
-To understand which steps the script is taking, please look at the [source](https://github.com/vmware/docker-volume-vsphere/blob/master/esx_service/cli/vmdkops_post_update.11.1.py)
+To understand which steps the script is taking, please look at the [source](https://github.com/vmware/vsphere-storage-for-docker/blob/master/esx_service/cli/vmdkops_post_update.11.1.py)
 
 # Contact
 
-As usual, if you have questions please [contact us](https://github.com/vmware/docker-volume-vsphere#contact-us)
+As usual, if you have questions please [contact us](https://github.com/vmware/vsphere-storage-for-docker#contact-us)

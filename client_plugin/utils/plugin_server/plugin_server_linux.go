@@ -23,7 +23,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
 )
 
 // Unix sock for the plugin is maintained here

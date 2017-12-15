@@ -18,9 +18,9 @@ const (
 	// Default paths - used in log init in main() and test:
 
 	// DefaultVMDKPluginConfigPath is the default location of Log configuration file
-	DefaultVMDKPluginConfigPath = "/etc/docker-volume-vsphere.conf"
+	DefaultVMDKPluginConfigPath = "/etc/vsphere-storage-for-docker.conf"
 	// DefaultVMDKPluginLogPath is the default location of log (trace) file
-	DefaultVMDKPluginLogPath = "/var/log/docker-volume-vsphere.log"
+	DefaultVMDKPluginLogPath = "/var/log/vsphere-storage-for-docker.log"
 	// DefaultVFilePluginConfigPath is the default location of Log configuration file for vFile plugin
 	DefaultVFilePluginConfigPath = "/etc/vfile.conf"
 	// DefaultVFilePluginLogPath is the default location of log (trace) file for vFile plugin

@@ -1,4 +1,4 @@
-# Dockerile for packaging https://github.com/vmware/docker-volume-vsphere as
+# Dockerile for packaging https://github.com/vmware/vsphere-storage-for-docker as
 # Docker managed plugin.
 #
 # Image created with this file is used to unpack to plugin rootfs and then build

@@ -20,8 +20,8 @@ package esx
 import (
 	"log"
 
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 // IsVDVSRunning checks if VDVS is running on given VM. This util can be
@@ -33,9 +33,9 @@ func IsVDVSRunning(ip string) bool {
 	waitTime := 3
 	for attempt := 0; attempt < maxAttempt; attempt++ {
 		misc.SleepForSec(waitTime)
-		pid, _ := ssh.InvokeCommand(ip, "pidof docker-volume-vsphere")
+		pid, _ := ssh.InvokeCommand(ip, "pidof vsphere-storage-for-docker")
 		if pid != "" {
-			log.Printf("Process ID of docker-volume-vsphere is: %s", pid)
+			log.Printf("Process ID of vsphere-storage-for-docker is: %s", pid)
 			return true
 		}
 	}

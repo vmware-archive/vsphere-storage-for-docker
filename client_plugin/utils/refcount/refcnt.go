@@ -44,7 +44,7 @@
 // After refcount discovery, results are compared to fs.GetMountInfo() content.
 //
 // We rely on all plugin mounts being in /mnt/vmdk/<volume_name> for Linux and
-// C:\Users\Administrator\AppData\Local\docker-volume-vsphere\mounts\<volume_name>
+// C:\Users\Administrator\AppData\Local\vsphere-storage-for-docker\mounts\<volume_name>
 // on Windows, and  will unmount stuff there at will - this place SHOULD NOT be
 // used for manual mounts.
 //
@@ -81,9 +81,9 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/fs"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/plugin_utils"
 	"golang.org/x/net/context"
 )
 

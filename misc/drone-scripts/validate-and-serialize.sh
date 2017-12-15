@@ -38,7 +38,7 @@ interval=90
 # current build have the same ID
 function is_cleanup_needed {
     # Retrieve on-going build information
-    ongoingBuildInfo=`drone build info vmware/docker-volume-vsphere $1`
+    ongoingBuildInfo=`drone build info vmware/vsphere-storage-for-docker $1`
     buildInfoObj=($ongoingBuildInfo)
 
     # verifies status value OR request is resulted from *Restart* event
@@ -58,7 +58,7 @@ function release_lock {
         echo "USAGE: release_lock <lock_name>"
         return 2;
     fi
-    govc datastore.rm $DS docker-volume-vsphere/$1
+    govc datastore.rm $DS vsphere-storage-for-docker/$1
     return $?
 }
 
@@ -70,7 +70,7 @@ function acquire_lock {
         echo "USAGE: acquire_lock <lock_name>"
         return 2;
     fi
-    govc datastore.mkdir $DS docker-volume-vsphere/$1 2>/dev/null > /dev/null
+    govc datastore.mkdir $DS vsphere-storage-for-docker/$1 2>/dev/null > /dev/null
     return $?
 }
 
@@ -85,14 +85,14 @@ do
     if acquire_lock $check_lock
     then
         # Grab ongoing build information from drone.
-        runningBuild=`govc datastore.ls $DS docker-volume-vsphere/ongoing`
+        runningBuild=`govc datastore.ls $DS vsphere-storage-for-docker/ongoing`
         runningBuildArr=($runningBuild)
         # Let's check cleanup is needed or not
         # cleans up if return value is 0 otherwise not; checking build is finished or not
         if is_cleanup_needed ${runningBuildArr[0]}
         then
             echo "Cleaning stale data..."
-            govc datastore.rm $DS docker-volume-vsphere/ongoing/${runningBuildArr[0]}
+            govc datastore.rm $DS vsphere-storage-for-docker/ongoing/${runningBuildArr[0]}
             release_lock $check_lock
             break
         else
@@ -105,6 +105,6 @@ do
     sleep $interval;
 done
 
-govc datastore.mkdir $DS docker-volume-vsphere/ongoing/$DRONE_BUILD_NUMBER
+govc datastore.mkdir $DS vsphere-storage-for-docker/ongoing/$DRONE_BUILD_NUMBER
 echo "$DRONE_BUILD_NUMBER is added to ongoing folder"
 exit 0

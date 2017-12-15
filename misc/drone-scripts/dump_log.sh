@@ -15,7 +15,7 @@
 
 # A few helper functions for dumping logs
 
-VM_LOGFILE="/var/log/docker-volume-vsphere.log"
+VM_LOGFILE="/var/log/vsphere-storage-for-docker.log"
 ESX_LOGFILE="/var/log/vmware/vmdk_ops.log"
 HOSTD_LOGFILE="/var/log/hostd.log"
 SYS_LOGFILE="/var/log/syslog"

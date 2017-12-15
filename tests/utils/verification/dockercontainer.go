@@ -22,8 +22,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
 )
 
 // IsDockerServiceRunning returns true if the given service is running on

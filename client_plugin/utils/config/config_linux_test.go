@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
 )
 
 func TestLoad(t *testing.T) {
@@ -29,5 +29,5 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, conf.MaxLogSizeMb, 10)
 	assert.Equal(t, conf.MaxLogAgeDays, 28)
 	assert.Equal(t, conf.MaxLogFiles, 10)
-	assert.Equal(t, conf.LogPath, "/var/log/docker-volume-vsphere.log")
+	assert.Equal(t, conf.LogPath, "/var/log/vsphere-storage-for-docker.log")
 }

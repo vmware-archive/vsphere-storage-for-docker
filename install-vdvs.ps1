@@ -30,11 +30,11 @@
 .DESCRIPTION
     This script helps to download, install, uninstall, and re-install VMware vSphere Docker Volume Plugin on your system.
 .EXAMPLE
-    ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere.zip
+    ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=vsphere-storage-for-docker.zip
 .EXAMPLE
     ./install-vdvs.ps1 -uninstall
 .LINK
-    https://vmware.github.io/docker-volume-vsphere/
+    https://vmware.github.io/vsphere-storage-for-docker/
 #>
 
 # Command line parameters
@@ -50,7 +50,7 @@ $svcDisplayName = "vSphere Docker Volume Service"
 $svcDescription = "Enables user to run stateful containerized applications on top of VMware vSphere."
 $installPath = "C:\Program Files\VMware\vmdkops"
 $exePathName = $installPath + "\vdvs.exe"
-$zipFileName = "docker-volume-vsphere.zip"
+$zipFileName = "vsphere-storage-for-docker.zip"
 
 function Uninstall-Service([System.ServiceProcess.ServiceController]$svc) {
     if ($svc.Status -eq "Running") {

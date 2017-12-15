@@ -81,7 +81,7 @@ else
 
 deploy test copy_to_payload:
 	@echo "Ignoring VMODL '$@' target."
-	@echo See https://github.com/vmware/docker-volume-vsphere/pull/975 for details.
+	@echo See https://github.com/vmware/vsphere-storage-for-docker/pull/975 for details.
 
 endif
 

@@ -17,8 +17,8 @@ stat /proc/1/exe | grep File | grep systemd
 if [ $? -eq 0 ]
 then
   systemctl daemon-reload
-  systemctl enable docker-volume-vsphere.service
-  systemctl start docker-volume-vsphere.service
+  systemctl enable vsphere-storage-for-docker.service
+  systemctl start vsphere-storage-for-docker.service
 else
-  service docker-volume-vsphere start
+  service vsphere-storage-for-docker start
 fi

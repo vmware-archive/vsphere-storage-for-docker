@@ -24,13 +24,13 @@ import (
 
 	. "gopkg.in/check.v1"
 
-	constant "github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/esx"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/inputparams"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/verification"
+	constant "github.com/vmware/vsphere-storage-for-docker/tests/constants/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/properties"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/esx"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/inputparams"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/verification"
 )
 
 type SwarmTestSuite struct {

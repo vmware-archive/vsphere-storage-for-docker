@@ -22,12 +22,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_server"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vfile"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/plugin_server"
 )
 
-// main for docker-volume-vsphere
+// main for vsphere-storage-for-docker
 // Parses flags, initializes and mounts refcounters and finally initializes the server.
 func main() {
 	var driver volume.Driver

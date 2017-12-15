@@ -33,12 +33,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/utils"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vmdk/vmdkops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/config"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/plugin_utils"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/refcount"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/utils"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vmdk/vmdkops"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/fs"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/plugin_utils"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/refcount"
 )
 
 const version = "VDVS_VERSION"

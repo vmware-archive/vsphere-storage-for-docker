@@ -31,8 +31,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	etcdClient "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/dockerops"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/drivers/vfile/kvstore"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vfile/dockerops"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/vfile/kvstore"
 )
 
 /*

@@ -22,8 +22,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/vmware/docker-volume-vsphere/tests/constants/admincli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/admincli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 // CreateVMgroup method is going to create a vmgroup and adds vm to it if vm name is passed.

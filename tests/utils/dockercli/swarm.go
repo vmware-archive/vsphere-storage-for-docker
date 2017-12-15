@@ -23,8 +23,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vmware/docker-volume-vsphere/tests/constants/dockercli"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/dockercli"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 // ListContainers returns all running docker containers

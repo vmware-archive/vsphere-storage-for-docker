@@ -5,12 +5,12 @@
 # This is published to docker hub for 2 reasons
 # 1. Drone cannot build this image and then use it without forking
 #    a separate repo and adding dependencies between dockerfile
-#    and the docker-volume-vsphere repo.
+#    and the vsphere-storage-for-docker repo.
 # 2. Others outside the project can find this useful.
 
 
 #
-## This container is used for different duties in docker-volume-vsphere dev process:
+## This container is used for different duties in vsphere-storage-for-docker dev process:
 ##
 ## - Build of GO code            => need golang 1.5+
 ## - Build of C VMCI wrappers    => need gcc and 32 bit libs

@@ -19,7 +19,7 @@ package vmdkops
 import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
-	"github.com/vmware/docker-volume-vsphere/client_plugin/utils/fs"
+	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/fs"
 )
 
 //

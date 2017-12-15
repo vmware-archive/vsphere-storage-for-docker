@@ -58,7 +58,7 @@ sudo install -t /usr/local/bin drone
 ```
 mkdir -p $GOPATH/src/github.com/vmware
 cd $GOPATH/src/github.com/vmware
-git clone https://github.com/vmware/docker-volume-vsphere.git
+git clone https://github.com/vmware/vsphere-storage-for-docker.git
 ```
 
 * Setup ssh keys on linux nodes & ESX
@@ -78,6 +78,6 @@ Test SSH keys, login form the drone node should not require typing in a password
 * Run drone exec
 
 ```
-cd $GOPATH/src/github.com/vmware/docker-volume-vsphere/
+cd $GOPATH/src/github.com/vmware/vsphere-storage-for-docker/
 drone exec --trusted --yaml .drone.dev.yml -i ~/.ssh/id_rsa -e VM1=<ip VM1> -e VM2=<ip VM2> -e ESX=<ip ESX>
 ```

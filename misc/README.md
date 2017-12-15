@@ -1,7 +1,7 @@
 This directory contains scripts and other files (e.g. Dockerfiles) needed for
-the following: 
+the following:
 
-* building RPM / DEB and VIB packages for docker-volume-vsphere plugin
+* building RPM / DEB and VIB packages for vsphere-storage-for-docker plugin
 * running CI (we use https://drone.io/)
 
 The subdirs are as follows:

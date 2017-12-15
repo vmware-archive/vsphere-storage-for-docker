@@ -4,7 +4,7 @@ Before=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/local/bin/docker-volume-vsphere -port 1019
+ExecStart=/usr/local/bin/vsphere-storage-for-docker -port 1019
 Restart=always
 
 [Install]

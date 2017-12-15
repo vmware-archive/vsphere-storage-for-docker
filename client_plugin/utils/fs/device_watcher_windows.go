@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	ps "github.com/vmware/docker-volume-vsphere/client_plugin/utils/powershell"
+	ps "github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/powershell"
 )
 
 const (

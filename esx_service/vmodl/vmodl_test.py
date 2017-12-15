@@ -34,7 +34,7 @@
 import os, sys
 
 # nothing to test until we put VMODL back in the VIB
-# See https://github.com/vmware/docker-volume-vsphere/pull/975 for details.
+# See https://github.com/vmware/vsphere-storage-for-docker/pull/975 for details.
 if "INSTALL_VMODL" not in os.environ:
     print("Skipping VMODL test - INSTALL_VMODL is not defined")
     sys.exit(0)

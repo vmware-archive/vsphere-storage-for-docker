@@ -22,9 +22,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vmware/docker-volume-vsphere/tests/constants/vm"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/vm"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 // CheckVolumeInProcMounts - check if volume entry is present in docker host mount file
@@ -44,7 +44,7 @@ func CheckVolumeInProcMounts(hostName, volName string) bool {
 // CheckRefCount - check the log record for expected refcount of the volume.
 // grep does the work. If refcount isn't the expected one, err is not nil (Exit status 1)
 // logLines are number of log lines to be tailed from the log file.
-// eg: tail -1 /var/log/docker-volume-vsphere.log | grep testName |  grep -q refcount=5
+// eg: tail -1 /var/log/vsphere-storage-for-docker.log | grep testName |  grep -q refcount=5
 func CheckRefCount(hostName, volName string, logLines, expectedRefCnt int) bool {
 	cmd := "tail -" + strconv.Itoa(logLines) + vm.LogFile + " | grep " + volName + " | grep -q refcount=" +
 		strconv.Itoa(expectedRefCnt)
@@ -61,7 +61,7 @@ func CheckRefCount(hostName, volName string, logLines, expectedRefCnt int) bool 
 // checkRecoveryRecord - check the recovery record printed by plugin after restart
 // The log record must contain expected refcount
 // logLines are number of log lines to be tailed from the log file.
-// eg: tail -50 /var/log/docker-volume-vsphere.log | grep 'Volume name=testName' | grep 'mounted=true'
+// eg: tail -50 /var/log/vsphere-storage-for-docker.log | grep 'Volume name=testName' | grep 'mounted=true'
 func checkRecoveryRecord(hostName, volName string, logLines, expectedRefCnt int) bool {
 	cmd := "tail -" + strconv.Itoa(logLines) + vm.LogFile + " | grep 'Volume name=" + volName +
 		"' | grep 'mounted=true'"

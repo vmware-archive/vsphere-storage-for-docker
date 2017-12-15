@@ -1,4 +1,4 @@
-This directory contains code for client (docker) side of docker-volume-vsphere.
+This directory contains code for client (docker) side of vsphere-storage-for-docker.
 
 * ***.go** - GO code implementing Docker Plugin API (used docker/go-plugins-helper)
 * **vmdkops** - Client Module (in GO) with C interface for communicating over VMCI

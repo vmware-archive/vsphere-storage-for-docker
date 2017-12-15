@@ -25,10 +25,10 @@ package esx
 import (
 	"log"
 
-	"github.com/vmware/docker-volume-vsphere/tests/constants/esx"
-	"github.com/vmware/docker-volume-vsphere/tests/constants/properties"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/misc"
-	"github.com/vmware/docker-volume-vsphere/tests/utils/ssh"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/esx"
+	"github.com/vmware/vsphere-storage-for-docker/tests/constants/properties"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/misc"
+	"github.com/vmware/vsphere-storage-for-docker/tests/utils/ssh"
 )
 
 type getVMPowerStatus func(string) string
