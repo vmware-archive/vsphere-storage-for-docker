@@ -2,10 +2,10 @@
 title: Storage Policy Based Management
 ---
 
-## Introduction 
+## Introduction
 Storage Policy Based Management(SPBM) is one of the important features of VMware vSphere which allows IT administrators to deal with challenges of provisioning. Policy based approach enables provisioning of datastore at scale and avoid per VM allocations. Lack of policies leads to over provisioning and wastage.
 
-Storage Policies capture storage requirements, such as performance and availability, for persistent volumes. These policies determine how the container volume storage objects are provisioned and allocated within the datastore to guarantee the requested Quality of Service. Storage policies are composed of storage capabilities, typically represented by a key-value pair. The key is a specific property that the datastore can offer and the value is a metric, or a range, that the datastore guarantees for a provisioned object, such as a container volume backed by a virtual disk. 
+Storage Policies capture storage requirements, such as performance and availability, for persistent volumes. These policies determine how the container volume storage objects are provisioned and allocated within the datastore to guarantee the requested Quality of Service. Storage policies are composed of storage capabilities, typically represented by a key-value pair. The key is a specific property that the datastore can offer and the value is a metric, or a range, that the datastore guarantees for a provisioned object, such as a container volume backed by a virtual disk.
 
 ## Benefits of Storage Policy Based Management
 - Helps in avoiding problem of overprovisioning of storage
@@ -22,7 +22,7 @@ As described in [official documentation](https://pubs.vmware.com/vsphere-65/inde
 ## Using Storage Policies in vSphere Docker Volume Service
 We will now illustrate how this policy based management approach can be applied to container volumes as well.
 
-With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom vSAN Policies that can then be specified during Docker Volume creations. When vSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the vSAN datastore in the form of virtual disks. This is why the vSAN Policies can be applied seamlessly to the volumes created by vDVS.
+With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom vSAN Policies that can then be specified during Docker Volume creations. When vSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the vSAN datastore in the form of virtual disks. This is why the vSAN Policies can be applied seamlessly to the volumes created by VDVS.
 
 To create a new vSAN Policy, you will need to specify the name of the policy and provide the set of vSAN capabilities formatted using the same syntax found in esxcli vsan policy getdefault command. For example: (("hostFailuresToTolerate" i1) ("forceProvisioning" i1)). Here is a list of storage capabilities supported by vSAN (for more detailed information, please refer to official Virtual SAN documentation):
 

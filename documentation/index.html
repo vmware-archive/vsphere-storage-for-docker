@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>vSphere Docker Volume Service | vSphere Docker Volume Service</title>
+<title>vSphere Storage for Docker | vSphere Docker Volume Service</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -150,7 +150,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="vSphere Docker Volume Service">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="vSphere Storage for Docker">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -386,7 +386,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">vSphere Docker Volume Service</h1>
+   <h1 class="post-title-main">vSphere Storage for Docker</h1>
 </div>
 
 
@@ -444,16 +444,16 @@ $('#toc').on('click', 'a', function() {
   <li>Certain applications have a strong sense of identity (For example. Kafka, Elastic etc.) and the disk used by a container with certain identity is tied to it. It is important that if a container with a certain ID gets re-scheduled for some reason then the disk only associated with that ID is re-attached on a new host.</li>
 </ul>
 
-<h2 id="vsphere-docker-volume-service-vdvs">vSphere Docker Volume Service (vDVS)</h2>
+<h2 id="vsphere-docker-volume-service-vdvs">vSphere Docker Volume Service (VDVS)</h2>
 
 <p><img src="images/vSphereDatastore.jpg" alt="Image" /></p>
 
-<p>vSphere Docker Volume Service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. vDVS which works with proven storage technologies from VMWare and is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.</p>
+<p>vSphere Docker Volume Service technology enables running stateful containers backed by storage technology of choice in a vSphere environment. VDVS which works with proven storage technologies from VMWare and is easy to install and use from end user perspective while retaining visibility and control in hands of a vSphere administrator.</p>
 
-<p>Some of key features of vDVS are:</p>
+<p>Some of key features of VDVS are:</p>
 
 <ul>
-  <li><strong>Enterprise class storage</strong>: You can use vDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc.</li>
+  <li><strong>Enterprise class storage</strong>: You can use VDVS with proven enterprise class technologies such as VMWare vSAN, VMFS, NFS etc.</li>
   <li><strong>Security &amp; RBAC</strong>: The vSphere admin can manage the security and access controls on the underlying hosts on a set of hosts or data centers.</li>
   <li><strong>Simple to use</strong>: It is as easy to use as other docker APIs and from end user’s perspective there is no need for additional configuration etc.</li>
   <li><strong>Docker Compatibility</strong>: vSphere Docker Volume Service is 100% Docker compatible and integrates with Docker Swarm to extend High Availability feature provided by Swarm</li>
@@ -462,15 +462,15 @@ $('#toc').on('click', 'a', function() {
 
 <p>This service is integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>. It does not need credential management or configuration management.</p>
 
-<p>vDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment</p>
+<p>VDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment</p>
 
 <h2 id="vfile-volume-plugin-for-docker">vFile volume plugin for Docker</h2>
 
-<p>vFile volume plugin for Docker provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as vDVS.
+<p>vFile volume plugin for Docker provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as VDVS.
 vFile allows users to utilize vFile volumes with no extra configuration effort. The user experience of vFile volumes is the same as any other type of docker volumes.
 Furthermore, vFile volume plugin comes with high availability, scalability, and load balancing support.</p>
 
-<p>Same as vDVS, vFile volume plugin is also integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>.</p>
+<p>Same as VDVS, vFile volume plugin is also integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>.</p>
 
 <p>More details about the usage of vFile can be found at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/vfile-plugin.html">vFile userguide</a>.</p>
 
@@ -494,7 +494,7 @@ Furthermore, vFile volume plugin comes with high availability, scalability, and 
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

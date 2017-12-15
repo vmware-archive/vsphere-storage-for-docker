@@ -427,21 +427,19 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <h1 id="interop-with-vsphere-features">Interop with vSphere features</h1>
-
-<p>The vDVS plugin works well with all vSphere features and deviations if any are as documented below:</p>
+  <p>The VDVS plugin works well with all vSphere features and deviations if any are as documented below:</p>
 
 <p><strong>SvMotion/XvMotion</strong></p>
 
-<p>SvMotion/XvMotion is not supported for VMs that use vDVS volumes.</p>
+<p>SvMotion/XvMotion is not supported for VMs that use VDVS volumes.</p>
 
 <ul>
-  <li>SvMotion/XvMotion causes vDVS volumes to be migrated out of the datastore location and hence causing the plugin to lose access to the volume. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1618">#1618</a></li>
+  <li>SvMotion/XvMotion causes VDVS volumes to be migrated out of the datastore location and hence causing the plugin to lose access to the volume. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1618">#1618</a></li>
 </ul>
 
 <p><strong>Storage DRS</strong></p>
 
-<p>Storage DRS is not supported for VMs that use vDVS volumes.</p>
+<p>Storage DRS is not supported for VMs that use VDVS volumes.</p>
 
 <ul>
   <li>Volume creation succeeds on a datastore which is in maintenance mode. Datastore maintenance mode is a VC feature and ESX is not aware of if any datastore is put in maintenance mode. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1651">#1651</a></li>
@@ -468,7 +466,7 @@ $('#toc').on('click', 'a', function() {
 <p><strong>Virtual Volumes(VVol)</strong></p>
 
 <ul>
-  <li>All features of vDVS are supported with Virtual Volumes(VVol) except clone volume. Cloning a volume to create a new volume on a VVol datastore is not supported currently. [#1998] (https://github.com/vmware/docker-volume-vsphere/issues/1998)</li>
+  <li>All features of VDVS are supported with Virtual Volumes(VVol) except clone volume. Cloning a volume to create a new volume on a VVol datastore is not supported currently. [#1998] (https://github.com/vmware/docker-volume-vsphere/issues/1998)</li>
 </ul>
 
   
@@ -487,7 +485,7 @@ $('#toc').on('click', 'a', function() {
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

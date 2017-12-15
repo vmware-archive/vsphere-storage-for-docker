@@ -429,16 +429,16 @@ $('#toc').on('click', 'a', function() {
 
   <h2 id="overview">Overview</h2>
 <p>Depending on the underlying block storage system, it might not be possible to access the same
-persistent volume across different hosts/nodes simultanously.
+persistent volume across different hosts/nodes simultaneously.
 For example, currently users cannot mount the same persistent volume which is created through
-vSphere Docker Volume Service (vDVS) on containers running on two different hosts at the same time.</p>
+vSphere Docker Volume Service (VDVS) on containers running on two different hosts at the same time.</p>
 
 <p>This can be solved through distributed file systems, such as NFS, Ceph, Gluster, etc.
-However, setting up and maintaining enterprise storage offerings for Cloud Native usecases is not a trivial work.
+However, setting up and maintaining enterprise storage offerings for Cloud Native use cases is not a trivial work.
 Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.</p>
 
 <p><strong>vFile volume plugin for Docker</strong> provides simultaneous persistent volume access between hosts in the
-same Docker Swarm cluster for the base volume plugin service such as vDVS, with zero configuration effort,
+same Docker Swarm cluster for the base volume plugin service such as VDVS, with zero configuration effort,
 along with high availability, scalability, and load balancing support.</p>
 
 <h2 id="detailed-documentation">Detailed documentation</h2>
@@ -449,44 +449,63 @@ along with high availability, scalability, and load balancing support.</p>
   <li>Docker version: 17.06.0 or newer</li>
   <li>Base docker volume plugin: <a href="https://github.com/vmware/docker-volume-vsphere">vSphere Docker Volume Service</a></li>
   <li>All hosts running in <a href="https://docs.docker.com/engine/swarm/swarm-tutorial/">Swarm mode</a></li>
-  <li>All docker swarm managers should open <a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">official etcd ports</a> 2379 and 2380 (User-defined port number feature is WIP)</li>
+  <li>All docker swarm managers should open <a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">official etcd ports</a> 2379 and 2380, or the user-defined ETCD ports (please find more details about user-defined ETCD ports in the Installation section)</li>
 </ul>
 
 <h2 id="installation">Installation</h2>
 <p>The recommended way to install vFile plugin is from docker cli:</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 </code></pre>
 </div>
 
 <p>Note: please make sure the base volume plugin is already installed!</p>
 
-<p>Internally, vFile creates and uses etcd cluster to store metadata for volumes. By default, the etcd cluster listens on port 2379 for client communication and port 2380 for peer communication. If you has other etcd clutster which already listens on those default ports, you need to sepcify different ports to avoid conflict when installing the vFile plugin.  Please see the following example:
-<code class="highlighter-rouge">
-docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VFILE_ETCD_CLIENT_PORT=4001 VFILE_ETCD_PEER_PORT=4002
-</code></p>
+<p>Internally, vFile creates and uses etcd cluster to store metadata for volumes.
+By default, the etcd cluster listens on port 2379 for client communication and port 2380 for peer communication.
+If you have other etcd cluster which already listens on those default ports, you need to specify different ports to avoid conflict when installing the vFile plugin.
+Please see the following example:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VFILE_ETCD_CLIENT_PORT=4001 VFILE_ETCD_PEER_PORT=4002
+</code></pre>
+</div>
 
 <ul>
   <li>The <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> setting is strongly recommended before <a href="https://github.com/vmware/docker-volume-vsphere/issues/1954">Issue #1954</a> is resolved.</li>
 </ul>
 
 <h2 id="remove-and-reinstallation">Remove and Reinstallation</h2>
-<p>The recommended order to remove and reinstallation is:
-* remove and reinstall vFile plugin on all worker nodes
-* remove and reinstall vFile plugin on all manager nodes which are not swarm leader
-* remove and reinstall vFile plugin on manger node which is swarm leader</p>
+<p>The recommended order to remove and reinstallation is:</p>
 
-<p>Run the following command to remove and reinstall vFile plugin from docker cli:
-<code class="highlighter-rouge">
-docker plugin rm vfile:latest vfile:latest
-docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
-</code>
-Note: Please make sure no volume exists when trying to remove and reinstall the vFile plugin. You will get the following error when trying to remove vFile plugin if a volume still exists.
-<code class="highlighter-rouge">
-docker plugin rm vfile:latest
-Error response from daemon: plugin vfile:latest is in use
-</code>
-You can use <code class="highlighter-rouge">docker plugin rm -f vfile:latest</code> to force remove the vFile plugin and reinstall the vFile plugin, but after that, that volume is not usable.</p>
+<ul>
+  <li>remove and reinstall vFile plugin on all worker nodes</li>
+  <li>remove and reinstall vFile plugin on all manager nodes which are not swarm leader</li>
+  <li>remove and reinstall vFile plugin on manger node which is swarm leader</li>
+</ul>
+
+<p>Run the following command to remove and reinstall vFile plugin from docker cli:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin rm vfile:latest vfile:latest
+~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+</code></pre>
+</div>
+
+<p>Note: Please make sure no volume exists when trying to remove and reinstall the vFile plugin.</p>
+
+<p>You will get the following error when trying to remove vFile plugin if a volume still exists.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin rm vfile:latest
+~$ Error response from daemon: plugin vfile:latest is in use
+</code></pre>
+</div>
+
+<p>You can use:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin rm -f vfile:latest
+</code></pre>
+</div>
+
+<p>to force remove the vFile plugin and reinstall the vFile plugin, but after that, that volume is not usable.</p>
 
 <h2 id="usage-examples">Usage examples</h2>
 
@@ -494,9 +513,9 @@ You can use <code class="highlighter-rouge">docker plugin rm -f vfile:latest</co
 
 <h4 id="creating-a-persistent-volume-from-vfile-plugin">Creating a persistent volume from vFile plugin</h4>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ docker volume create --driver=vfile --name=SharedVol -o size=10gb
-$ docker volume ls
-$ docker volume inspect SharedVol
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker volume create --driver=vfile --name=SharedVol -o size=10gb
+~$ docker volume ls
+~$ docker volume inspect SharedVol
 </code></pre>
 </div>
 
@@ -508,7 +527,7 @@ Note: The valid volume name can only be <code class="highlighter-rouge">[a-zA-Z0
 <h4 id="mounting-this-volume-to-a-container-running-on-the-first-host">Mounting this volume to a container running on the first host</h4>
 
 <div class="highlighter-rouge"><pre class="highlight"><code># ssh to node1
-$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node1 busybox
+~$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node1 busybox
 / # cd /mnt/myvol
 # read/write data into mounted vFile volume
 </code></pre>
@@ -517,7 +536,7 @@ $ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node1 busybox
 <h4 id="mounting-this-volume-to-a-container-running-on-the-second-host">Mounting this volume to a container running on the second host</h4>
 
 <div class="highlighter-rouge"><pre class="highlight"><code># ssh to node2
-$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node2 busybox
+~$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node2 busybox
 / # cd /mnt/myvol
 # read/write data from mounted vFile volume
 </code></pre>
@@ -525,14 +544,14 @@ $ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node2 busybox
 
 <h4 id="stopping-the-two-containers-on-each-host">Stopping the two containers on each host</h4>
 
-<div class="highlighter-rouge"><pre class="highlight"><code># docker stop busybox-on-node1
-# docker stop busybox-on-node2
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker stop busybox-on-node1
+~$ docker stop busybox-on-node2
 </code></pre>
 </div>
 
 <h4 id="removing-the-vfile-volume">Removing the vFile volume</h4>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>$ docker volume rm SharedVol
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker volume rm SharedVol
 </code></pre>
 </div>
 
@@ -566,7 +585,7 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 
 <div class="highlighter-rouge"><pre class="highlight"><code><span class="w"> </span><span class="p">{</span><span class="w">
 	</span><span class="nt">"MaxLogAgeDays"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">
-    </span><span class="nt">"MaxLogFiles"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
+	</span><span class="nt">"MaxLogFiles"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
 	</span><span class="nt">"MaxLogSizeMb"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
 	</span><span class="nt">"LogPath"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/var/log/vfile.log"</span><span class="w">
 </span><span class="p">}</span><span class="w">
@@ -581,20 +600,20 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 <h3 id="what-is-the-default-log-level-how-to-change-the-log-level">What is the default log level? How to change the log level?</h3>
 <p>Default log level is <code class="highlighter-rouge">INFO</code>. If needed, log level can be changed to <code class="highlighter-rouge">DEBUG</code> using the following command during vFile plugin install:</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VDVS_LOG_LEVEL=debug
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VDVS_LOG_LEVEL=debug
 </code></pre>
 </div>
 
 <h3 id="what-should-i-do-if-the-docker-swarm-cluster-is-in-unhealthy-state">What should I do if the Docker Swarm cluster is in unhealthy state?</h3>
-<p>vFile plguin can only work properly when the Docker Swarm cluster is healthy. If Swarm cluster is unhealthy, you may need to destroy and recreate the Docker Swarm cluster.</p>
+<p>vFile plugin can only work properly when the Docker Swarm cluster is healthy. If Swarm cluster is unhealthy, you may need to destroy and recreate the Docker Swarm cluster.</p>
 
 <h2 id="qa">Q&amp;A</h2>
 
 <h3 id="how-to-install-and-use-the-driver">How to install and use the driver?</h3>
 <p>Please follow the instructions at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
 
-<h3 id="can-i-use-another-base-volume-plugin-other-than-vdvs">Can I use another base volume plugin other than vDVS?</h3>
-<p>Currently vFile volume service is only developed and tested with vDVS as the base volume plugin.</p>
+<h3 id="can-i-use-another-base-volume-plugin-other-than-vdvs">Can I use another base volume plugin other than VDVS?</h3>
+<p>Currently vFile volume service is only developed and tested with VDVS as the base volume plugin.</p>
 
 <h3 id="can-i-use-default-driver-for-local-volumes-as-a-base-volume-plugin">Can I use default driver for local volumes as a base volume plugin?</h3>
 <p>No, this is not supported by vFile plugin.</p>
@@ -603,7 +622,7 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 <p>Please make sure the routing mesh of Docker Swarm cluster is working properly.
 Use the following way to verify:</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker service create --replicas 1 -p 8080:80 --name web nginx
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker service create --replicas 1 -p 8080:80 --name web nginx
 </code></pre>
 </div>
 
@@ -611,7 +630,7 @@ Use the following way to verify:</p>
 <code class="highlighter-rouge">Connection refused</code> error means the routing mesh of this Docker Swarm cluster is broken and needs to be fixed.</p>
 
 <h3 id="mounting-volume-failed-and-i-saw-name-must-be-valid-as-a-dns-name-component-error-in-the-log-when-mounting-a-vfile-volume-to-a-container">Mounting volume failed and I saw “name must be valid as a DNS name component” error in the log when mounting a vFile volume to a container.</h3>
-<p>When you see somthing like the following in the log</p>
+<p>When you see something like the following in the log</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>2017-08-24 11:57:16.436786459 -0700 PDT [WARNING] Failed to create file server for volume space vol7. Reason: Error response from daemon: {"message":"rpc error: code = 3 desc = name must be valid as a DNS name component"}
 </code></pre>
@@ -620,18 +639,18 @@ Use the following way to verify:</p>
 <p>Please make sure the volume you used is a valid volume name. A valid volume name consists of <code class="highlighter-rouge">[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]</code>.</p>
 
 <h3 id="i-got--volumedrivermount-failed-to-blocking-wait-for-mounted-state-error-timeout-reached-blockingwait-is-not-complete-when-mounting-a-volume">I got “ VolumeDriver.Mount: Failed to blocking wait for Mounted state. Error: Timeout reached; BlockingWait is not complete..” when mounting a volume.</h3>
-<p>We see this issue only on platform where the space is low. When available disk space are low, Docker Swarm service may take longer to start a service. Generally it’s better free up some disk space. You can also try to increase the service start timeout value, controlled by <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> env variable:</p>
+<p>We see this issue only on platform where the space is low. When available disk space is low, Docker Swarm service may take longer to start a service. In general, it’s better free up some disk space. You can also try to increase the service start timeout value, controlled by <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> env variable:</p>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 </code></pre>
 </div>
 
-<p>This will increase timeout to 90 sec, from default of 30 sec.</p>
+<p>This will increase timeout to 90 seconds, from default of 30 seconds.</p>
 
 <h3 id="volume-mount-failed-retry-mount-with-the-same-volume-still-failed">Volume mount failed, retry mount with the same volume still failed.</h3>
-<p>Check the “Volume Status” field of <code class="highlighter-rouge">docker volume inspect</code>, if the “Volume Status” field shows “Error”, which means volume is in error status, user should remove the volume manually.
-<code class="highlighter-rouge">
-docker volume inspect vol1
+<p>Check the “Volume Status” field of <code class="highlighter-rouge">docker volume inspect</code>, if the “Volume Status” field shows “Error”, which means volume is in error status, user should remove the volume manually.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker volume inspect vol1
 [
     {
         "Driver": "vfile:latest",
@@ -649,43 +668,50 @@ docker volume inspect vol1
         }
     }
 ]
-</code></p>
+</code></pre>
+</div>
 
 <h3 id="i-got-docker-volume-ls-operation-very-slow-and-docker-volume-rmcreate-a-vfile-volume-hang-forever">I got “docker volume ls” operation very slow and “docker volume rm/create” a vFile volume hang forever</h3>
-<p>Please check the log at <code class="highlighter-rouge">/var/log/vfile.log</code> and look up if there are error message about swarm status as follow:
-<code class="highlighter-rouge">The swarm does not have a leader. It's possible that too few managers are online. Make sure more than half of the managers are online.</code></p>
+<p>Please check the log at <code class="highlighter-rouge">/var/log/vfile.log</code> and look up if there are error message about swarm status as follow:</p>
+
+<p><code class="highlighter-rouge">The swarm does not have a leader. It's possible that too few managers are online. Make sure more than half of the managers are online.</code></p>
 
 <p>This error message indicates the swarm cluster is not in a healthy status.</p>
 
-<p>Please follow the following <a href="https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes">recommendations for the Swarm manager nodes setup</a>:
-    1. Run the swarm cluster with a single manager only for testing purpose.
-    2. An <code class="highlighter-rouge">N</code> manager cluster will tolerate the loss of at most <code class="highlighter-rouge">(N-1)/2</code> managers.
-    3. Docker recommends a maximum of seven manager nodes for a swarm.</p>
+<p>Please follow the following <a href="https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes">recommendations for the Swarm manager nodes setup</a>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. Run the swarm cluster with a single manager only for testing purpose.
+2. An `N` manager cluster will tolerate the loss of at most `(N-1)/2` managers.
+3. Docker recommends a maximum of seven manager nodes for a swarm.
+</code></pre>
+</div>
 
 <h3 id="does-vfile-plugin-support-multi-tenancy-feature">Does vFile plugin support multi-tenancy feature?</h3>
-<p>No. vFile plugin does not support multi-tenency, which is currently an experimental feature for vDVS.
+<p>No. vFile plugin does not support multi-tenency, which is currently an experimental feature for VDVS.
 Assume we have created a vmgroup <code class="highlighter-rouge">vmgroup1</code> and add VM “node1” to <code class="highlighter-rouge">vmgroup1</code>. VM “node2” has not been added to any vmgroup and is considered belong to <code class="highlighter-rouge">_DEFAULT</code> vmgroup.
 Then create a volume “vol1” from “node2” and a volume “vol2” from “node1” using vFile plugin.</p>
 
-<p>On “node1”, we are able to see both “vol1” and “vol2” which are created by vFile plugin.
-```
-vmware@ubuntu16:~$ docker volume ls
+<p>On “node1”, we are able to see both “vol1” and “vol2” which are created by vFile plugin.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker volume ls
 DRIVER              VOLUME NAME
 vsphere:latest      _vF_vol2@vsanDatastore
 vfile:latest        vol1
-vfile:latest        vol2</p>
+vfile:latest        vol2
 
-<div class="highlighter-rouge"><pre class="highlight"><code>
-On "node2", we are also able to see both "vol1" and "vol2".
 </code></pre>
 </div>
-<p>vmware@ubuntu16:~$ docker volume ls
+
+<p>On “node2”, we are also able to see both “vol1” and “vol2”.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>~$ docker volume ls
 DRIVER              VOLUME NAME
 vsphere:latest      _vF_vol1@vsanDatastore
 vfile:latest        vol1
-vfile:latest        vol2</p>
+vfile:latest        vol2
 
-<p>```</p>
+</code></pre>
+</div>
 
 <h3 id="why-should-i-choose-vfile-instead-of-just-enabling-multi-writer-flag-on-vsphere-file-systems">Why should I choose vFile instead of just enabling multi-writer flag on vSphere file systems?</h3>
 <p>vSAN multi-writer mode permits multiple VMs to access the same VMDKs in read-write mode to enable the use of in-guest
@@ -694,6 +720,10 @@ However, the guests must be capable of safely arbitrating and coordinating multi
 If your application is not designed for maintaining consistency in the writes performed to the shared disk, enabling
 multi-writer mode could result in data corruption.
 More information can be found <a href="https://kb.vmware.com/s/article/1034165">here</a> and <a href="https://kb.vmware.com/s/article/2121181">here</a>.</p>
+
+<h3 id="i-got-no-space-left-on-device-error-when-installing-vfile-plugin-but-i-have-enough-space-on-my-node">I got “no space left on device” error when installing vFile plugin but I have enough space on my node</h3>
+<p>This error can happen when your docker version is below required version.
+Please check /var/log/vfile.log to locate if there are warning messages about your current docker server version.</p>
 
   
 
@@ -711,7 +741,7 @@ More information can be found <a href="https://kb.vmware.com/s/article/1034165">
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

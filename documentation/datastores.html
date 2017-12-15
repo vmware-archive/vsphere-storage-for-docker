@@ -431,7 +431,7 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="multiple-datastores-support">Multiple datastores Support</h2>
 
-<p>By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. vDVS allows you to create a volume on any of the datastores available.</p>
+<p>By default the volume is created in the datastore that hosts the VM. But there are use cases where you want to create and consume volumes from different datastores for specific performance or functionality. VDVS allows you to create a volume on any of the datastores available.</p>
 
 <h2 id="default-datastore">Default datastore</h2>
 <p>By default when you just specify name of volume - it is created in the datastore that hosts the VM.</p>
@@ -489,7 +489,7 @@ photon			ds2volume@datastore2
 
 <h2 id="attach-volume">Attach Volume</h2>
 
-<p>Sample command to run a container with vDVS volume attached:</p>
+<p>Sample command to run a container with VDVS volume attached:</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>root@sc-rdops-vm02-dhcp-52-237:~# docker run -it --volume-driver=vsphere -v testVolume@vsanDatastore:/vol1 --name ub2 ubuntu
 </code></pre>
@@ -511,7 +511,7 @@ photon			ds2volume@datastore2
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

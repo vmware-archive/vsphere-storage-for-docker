@@ -467,7 +467,7 @@ dosy6twh0fug6216wj9j3pmtl    photon4   Ready   Active
 </code></pre>
 </div>
 
-<p>We can also verify that there is no volume that exists on the cluster at 
+<p>We can also verify that there is no volume that exists on the cluster at
 the moment:</p>
 
 <div class="highlighter-rouge"><pre class="highlight"><code>#docker volume ls
@@ -565,7 +565,7 @@ Database changed
 MariaDB [wordpress]&gt; show tables;
 Empty set (0.01 sec)
 
-MariaDB [wordpress]&gt; 	
+MariaDB [wordpress]&gt;
 Query OK, 0 rows affected (0.17 sec)
 
 MariaDB [wordpress]&gt; show tables;
@@ -588,7 +588,7 @@ MariaDB [wordpress]&gt;
 
 <ul>
   <li>The container should be re-scheduled on a different node (This is responsibility of Swarm)</li>
-  <li>The volume should get attached to the container on new node (This is what vDVS plugin will provide in this case)</li>
+  <li>The volume should get attached to the container on new node (This is what VDVS plugin will provide in this case)</li>
 </ul>
 
 <p>Once we destroy the original node, we can see that the container is scheduled on a different node.</p>
@@ -649,7 +649,7 @@ MariaDB [wordpress]&gt;
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>vDVS along with Swarm mode can provide a HA capability to a cluster running stateful applications. While Swarm mode takes care of re-scheduling the application containers on nodes in the cluster, vDVS plugun ensures that the volumes are managed in a similar way and data is persisted while re-scheduling of the application containers.</p>
+<p>VDVS along with Swarm mode can provide a HA capability to a cluster running stateful applications. While Swarm mode takes care of re-scheduling the application containers on nodes in the cluster, VDVS plugun ensures that the volumes are managed in a similar way and data is persisted while re-scheduling of the application containers.</p>
 
   
 
@@ -667,7 +667,7 @@ MariaDB [wordpress]&gt;
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

@@ -447,7 +447,7 @@ $('#toc').on('click', 'a', function() {
 <h2 id="using-storage-policies-in-vsphere-docker-volume-service">Using Storage Policies in vSphere Docker Volume Service</h2>
 <p>We will now illustrate how this policy based management approach can be applied to container volumes as well.</p>
 
-<p>With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom vSAN Policies that can then be specified during Docker Volume creations. When vSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the vSAN datastore in the form of virtual disks. This is why the vSAN Policies can be applied seamlessly to the volumes created by vDVS.</p>
+<p>With vSphere Docker Volume Service, vSphere administrators will have the ability to create custom vSAN Policies that can then be specified during Docker Volume creations. When vSAN policies are assigned to the Docker Volumes, the back-end storage objects get created on the vSAN datastore in the form of virtual disks. This is why the vSAN Policies can be applied seamlessly to the volumes created by VDVS.</p>
 
 <p>To create a new vSAN Policy, you will need to specify the name of the policy and provide the set of vSAN capabilities formatted using the same syntax found in esxcli vsan policy getdefault command. For example: ((“hostFailuresToTolerate” i1) (“forceProvisioning” i1)). Here is a list of storage capabilities supported by vSAN (for more detailed information, please refer to official Virtual SAN documentation):</p>
 
@@ -584,7 +584,7 @@ Successfully removed policy: gold
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

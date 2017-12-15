@@ -429,11 +429,11 @@ $('#toc').on('click', 'a', function() {
 
   <p><a href="https://www.minio.io/">Minio</a> is lightweight AWS S3 compatible object storage server built for cloud applications.</p>
 
-<p>vSphere Docker Volume Service (vDVS) enables running stateful containers backed by proven enterprise class storage.</p>
+<p>vSphere Docker Volume Service (VDVS) enables running stateful containers backed by proven enterprise class storage.</p>
 
-<p>With Minio’s simple object storage layer and VMware’s highly available vSphere Docker Volumes, you can reliably run any application that requires object storage with vDVS for e.g. Docker Trusted Registry.</p>
+<p>With Minio’s simple object storage layer and VMware’s highly available vSphere Docker Volumes, you can reliably run any application that requires object storage with VDVS for e.g. Docker Trusted Registry.</p>
 
-<h2 id="launch-minio-with-vdvs-and-docker-swarm">Launch Minio with vDVS and Docker Swarm</h2>
+<h2 id="launch-minio-with-vdvs-and-docker-swarm">Launch Minio with VDVS and Docker Swarm</h2>
 
 <p>Minio Stack (vMinio.yml):</p>
 
@@ -451,7 +451,7 @@ services:
     environment:
       MINIO_ACCESS_KEY: admin
       MINIO_SECRET_KEY: admin123
-    command: server /export 
+    command: server /export
     deploy:
       restart_policy:
         condition: on-failure
@@ -520,7 +520,7 @@ vsphere:latest      minio_export@datastore1
             <div class="row">
                 <div class="col-lg-12 footer">
                &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 1, 2017 <br />
+ Site last generated: Dec 15, 2017 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>

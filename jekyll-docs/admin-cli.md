@@ -32,7 +32,7 @@ Available Namespaces:
   vmgroup               Administer and monitor volume access control
   config                Init and manage Config DB to enable quotas and access control [EXPERIMENTAL]
   policy                Configure and display storage policy information
-  volume                Manage vDVS volumes
+  volume                Manage VDVS volumes
 
 Available Commands:
   status                Status of vdvs service
@@ -337,7 +337,7 @@ Note: If the VMs have volumes attached (containers running), their membership ch
 they belong is not permitted. Make sure no volumes are attached.
 To do so:
 1. Get the list of containers running. (docker ps)
-2. If the container has any vDVS volume mounted (docker inspect container_name), stop the container.
+2. If the container has any VDVS volume mounted (docker inspect container_name), stop the container.
 3. Ensure that the dvs volumes have status detached (docker volume inspect)
 
 #### Help
