@@ -176,3 +176,6 @@ def remove(vol_path, key):
 
 def get_vol_info(vol_path):
    return kvESX.get_info(vol_path)
+
+def fixup_kv(src_volpath, dst_volpath):
+    return kvESX.fixup_kv(src_volpath, dst_volpath)

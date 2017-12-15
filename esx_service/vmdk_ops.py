@@ -365,6 +365,19 @@ def cloneVMDK(vm_name, vmdk_path, opts={}, vm_uuid=None, datastore_url=None, vm_
 
     vol_name = vmdk_utils.strip_vmdk_extension(src_vmdk_path.split("/")[-1])
 
+    # Fix up the KV for the destination
+    if not kv.fixup_kv(src_vmdk_path, vmdk_path):
+        msg = ("Failed to create volume KV for %s" % vol_name)
+        logging.warning(msg)
+        error_info = err(msg)
+        clean_err = cleanVMDK(vmdk_path=vmdk_path, vol_name=vol_name)
+
+        if clean_err:
+            logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
+            error_info = error_info + clean_err
+
+        return error_info
+
     # Handle vsan policy
     if kv.VSAN_POLICY_NAME in opts:
         # Attempt to set policy to vmdk
@@ -605,6 +618,8 @@ def cleanVMDK(vmdk_path, vol_name=None):
     volume_datastore_path = vmdk_utils.get_datastore_path(vmdk_path)
 
     retry_count = 0
+    vol_meta = kv.getAll(vmdk_path)
+    kv.delete(vmdk_path)
     while True:
         si = get_si()
         task = si.content.virtualDiskManager.DeleteVirtualDisk(name=volume_datastore_path)
@@ -617,6 +632,7 @@ def cleanVMDK(vmdk_path, vol_name=None):
             return None
         except vim.fault.VimFault as ex:
             if retry_count == vmdk_utils.VMDK_RETRY_COUNT or "Error caused by file" not in ex.msg:
+                kv.create(vmdk_path, vol_meta)
                 return err("Failed to remove volume: {0}".format(ex.msg))
             else:
                 logging.warning("*** removeVMDK: Retrying removal on error: %s", ex.msg)
@@ -646,7 +662,6 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
 
     # Cleaning .vmdk file
     clean_err = cleanVMDK(vmdk_path, vol_name)
-
     if clean_err:
         logging.warning("Failed to clean %s file: %s", vmdk_path, clean_err)
         return clean_err
