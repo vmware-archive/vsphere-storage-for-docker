@@ -17,11 +17,11 @@ same Docker Swarm cluster for the base volume plugin service such as VDVS, with 
 along with high availability, scalability, and load balancing support.
 
 ## Detailed documentation
-Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/docker-volume-vsphere/documentation/).
+Detailed documentation can be found on our [GitHub Documentation Page](http://vmware.github.io/vsphere-storage-for-docker/documentation/).
 
 ## Prerequisites
 * Docker version: 17.06.0 or newer
-* Base docker volume plugin: [vSphere Docker Volume Service](https://github.com/vmware/docker-volume-vsphere)
+* Base docker volume plugin: [vSphere Docker Volume Service](https://github.com/vmware/vsphere-storage-for-docker)
 * All hosts running in [Swarm mode](https://docs.docker.com/engine/swarm/swarm-tutorial/)
 * All docker swarm managers should open [official etcd ports](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) 2379 and 2380, or the user-defined ETCD ports (please find more details about user-defined ETCD ports in the Installation section)
 
@@ -43,7 +43,7 @@ Please see the following example:
 ~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VFILE_ETCD_CLIENT_PORT=4001 VFILE_ETCD_PEER_PORT=4002
 ```
 
-* The `VFILE_TIMEOUT_IN_SECOND` setting is strongly recommended before [Issue #1954](https://github.com/vmware/docker-volume-vsphere/issues/1954) is resolved.
+* The `VFILE_TIMEOUT_IN_SECOND` setting is strongly recommended before [Issue #1954](https://github.com/vmware/vsphere-storage-for-docker/issues/1954) is resolved.
 
 ## Remove and Reinstallation
 The recommended order to remove and reinstallation is:
@@ -175,7 +175,7 @@ vFile plugin can only work properly when the Docker Swarm cluster is healthy. If
 ## Q&A
 
 ### How to install and use the driver?
-Please follow the instructions at [installation-on-esxi](http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi).
+Please follow the instructions at [installation-on-esxi](http://vmware.github.io/vsphere-storage-for-docker/documentation/install.html#installation-on-esxi).
 
 ### Can I use another base volume plugin other than VDVS?
 Currently vFile volume service is only developed and tested with VDVS as the base volume plugin.

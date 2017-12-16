@@ -52,7 +52,7 @@ The configurations used by a driver while performing operations are read from a 
 
 ## Plugin Configuration
 
-The configuration for  Docker volume plugin can be provided via a JSON formatted configuration file and on the command line (only when the plugin is manually executed vs. as a managed plugin by docker). The plugin can be provided the driver type (which must be set to be "vsphere" (default)), log configuration and the group-id used to create the plugin socket file. The log configuration includes the log level and the location where the log file is located. The configuration file is by default located at /etc/docker-volume-vsphere.conf. The configuration file to use can also be specified by providing the --config option and the full path to the file. Finally the parameters passed on the commandline override those read from the configuration file.
+The configuration for  Docker volume plugin can be provided via a JSON formatted configuration file and on the command line (only when the plugin is manually executed vs. as a managed plugin by docker). The plugin can be provided the driver type (which must be set to be "vsphere" (default)), log configuration and the group-id used to create the plugin socket file. The log configuration includes the log level and the location where the log file is located. The configuration file is by default located at /etc/vsphere-storage-for-docker.conf. The configuration file to use can also be specified by providing the --config option and the full path to the file. Finally the parameters passed on the commandline override those read from the configuration file.
 
 ```
 {
@@ -60,7 +60,7 @@ The configuration for  Docker volume plugin can be provided via a JSON formatted
     "MaxLogAgeDays": 28,
     "MaxLogFiles": 10,
     "MaxLogSizeMb": 10,
-    "LogPath": "/var/log/docker-volume-vsphere.log",
+    "LogPath": "/var/log/vsphere-storage-for-docker.log",
     "LogLevel": "info",
     "GroupID": "root"  (default or alternatively use "docker" as the group ID)
 }

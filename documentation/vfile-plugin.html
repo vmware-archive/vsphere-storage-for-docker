@@ -442,12 +442,12 @@ same Docker Swarm cluster for the base volume plugin service such as VDVS, with 
 along with high availability, scalability, and load balancing support.</p>
 
 <h2 id="detailed-documentation">Detailed documentation</h2>
-<p>Detailed documentation can be found on our <a href="http://vmware.github.io/docker-volume-vsphere/documentation/">GitHub Documentation Page</a>.</p>
+<p>Detailed documentation can be found on our <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/">GitHub Documentation Page</a>.</p>
 
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
   <li>Docker version: 17.06.0 or newer</li>
-  <li>Base docker volume plugin: <a href="https://github.com/vmware/docker-volume-vsphere">vSphere Docker Volume Service</a></li>
+  <li>Base docker volume plugin: <a href="https://github.com/vmware/vsphere-storage-for-docker">vSphere Docker Volume Service</a></li>
   <li>All hosts running in <a href="https://docs.docker.com/engine/swarm/swarm-tutorial/">Swarm mode</a></li>
   <li>All docker swarm managers should open <a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">official etcd ports</a> 2379 and 2380, or the user-defined ETCD ports (please find more details about user-defined ETCD ports in the Installation section)</li>
 </ul>
@@ -471,7 +471,7 @@ Please see the following example:</p>
 </div>
 
 <ul>
-  <li>The <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> setting is strongly recommended before <a href="https://github.com/vmware/docker-volume-vsphere/issues/1954">Issue #1954</a> is resolved.</li>
+  <li>The <code class="highlighter-rouge">VFILE_TIMEOUT_IN_SECOND</code> setting is strongly recommended before <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/1954">Issue #1954</a> is resolved.</li>
 </ul>
 
 <h2 id="remove-and-reinstallation">Remove and Reinstallation</h2>
@@ -610,7 +610,7 @@ via the <code class="highlighter-rouge">--config</code> option, specifying the f
 <h2 id="qa">Q&amp;A</h2>
 
 <h3 id="how-to-install-and-use-the-driver">How to install and use the driver?</h3>
-<p>Please follow the instructions at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
+<p>Please follow the instructions at <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
 
 <h3 id="can-i-use-another-base-volume-plugin-other-than-vdvs">Can I use another base volume plugin other than VDVS?</h3>
 <p>Currently vFile volume service is only developed and tested with VDVS as the base volume plugin.</p>

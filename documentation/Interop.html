@@ -434,7 +434,7 @@ $('#toc').on('click', 'a', function() {
 <p>SvMotion/XvMotion is not supported for VMs that use VDVS volumes.</p>
 
 <ul>
-  <li>SvMotion/XvMotion causes VDVS volumes to be migrated out of the datastore location and hence causing the plugin to lose access to the volume. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1618">#1618</a></li>
+  <li>SvMotion/XvMotion causes VDVS volumes to be migrated out of the datastore location and hence causing the plugin to lose access to the volume. <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/1618">#1618</a></li>
 </ul>
 
 <p><strong>Storage DRS</strong></p>
@@ -442,8 +442,8 @@ $('#toc').on('click', 'a', function() {
 <p>Storage DRS is not supported for VMs that use VDVS volumes.</p>
 
 <ul>
-  <li>Volume creation succeeds on a datastore which is in maintenance mode. Datastore maintenance mode is a VC feature and ESX is not aware of if any datastore is put in maintenance mode. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1651">#1651</a></li>
-  <li>Specifying “Datastore Cluster” name during volume creation is not supported. Datastore clusters (as a part of Storage DRS) is a VC feature and not available on an individual ESX. <a href="https://github.com/vmware/docker-volume-vsphere/issues/556">#556</a></li>
+  <li>Volume creation succeeds on a datastore which is in maintenance mode. Datastore maintenance mode is a VC feature and ESX is not aware of if any datastore is put in maintenance mode. <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/1651">#1651</a></li>
+  <li>Specifying “Datastore Cluster” name during volume creation is not supported. Datastore clusters (as a part of Storage DRS) is a VC feature and not available on an individual ESX. <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/556">#556</a></li>
   <li>Storage DRS doesn’t apply for VMs that have independent disks attached to it.</li>
 </ul>
 
@@ -452,7 +452,7 @@ $('#toc').on('click', 'a', function() {
 <p>Creating snapshots of a VM which has containers running is not supported.</p>
 
 <ul>
-  <li>If a container is running and a snapshot is taken then if the container exits, the volume is not detached. VC shows an error that the volume is part of a snapshot and hence can’t be removed from the VM config. For this reason, snapshotting a VM after starting one or more containers isn’t supported as it leaves the volume attached to the VM. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1649">#1649</a></li>
+  <li>If a container is running and a snapshot is taken then if the container exits, the volume is not detached. VC shows an error that the volume is part of a snapshot and hence can’t be removed from the VM config. For this reason, snapshotting a VM after starting one or more containers isn’t supported as it leaves the volume attached to the VM. <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/1649">#1649</a></li>
 </ul>
 
 <p><strong>Site Recovery Manager[SRM]</strong></p>
@@ -460,13 +460,13 @@ $('#toc').on('click', 'a', function() {
 <p>User created vmgroup is not supported with SRM.</p>
 
 <ul>
-  <li>SRM does not replicate the vmgroup configuration to the recovery site. As a result, after disaster recovery finishes, all VMs that were part of user created vmgroup will lose access to volumes of user created vmgroup. Those VMs now become part of <code class="highlighter-rouge">_DEFAULT</code> vmgroup and will have access to volumes of <code class="highlighter-rouge">_DEFAULT</code> vmgroup - in short, VMs lose the volumes that were part of user created vmgroup and gain access to volumes of <code class="highlighter-rouge">_DEFAULT vmgroup</code>. <a href="https://github.com/vmware/docker-volume-vsphere/issues/1786">#1786</a></li>
+  <li>SRM does not replicate the vmgroup configuration to the recovery site. As a result, after disaster recovery finishes, all VMs that were part of user created vmgroup will lose access to volumes of user created vmgroup. Those VMs now become part of <code class="highlighter-rouge">_DEFAULT</code> vmgroup and will have access to volumes of <code class="highlighter-rouge">_DEFAULT</code> vmgroup - in short, VMs lose the volumes that were part of user created vmgroup and gain access to volumes of <code class="highlighter-rouge">_DEFAULT vmgroup</code>. <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/1786">#1786</a></li>
 </ul>
 
 <p><strong>Virtual Volumes(VVol)</strong></p>
 
 <ul>
-  <li>All features of VDVS are supported with Virtual Volumes(VVol) except clone volume. Cloning a volume to create a new volume on a VVol datastore is not supported currently. [#1998] (https://github.com/vmware/docker-volume-vsphere/issues/1998)</li>
+  <li>All features of VDVS are supported with Virtual Volumes(VVol) except clone volume. Cloning a volume to create a new volume on a VVol datastore is not supported currently. [#1998] (https://github.com/vmware/vsphere-storage-for-docker/issues/1998)</li>
 </ul>
 
   

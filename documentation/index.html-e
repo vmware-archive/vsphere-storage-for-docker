@@ -472,11 +472,11 @@ Furthermore, vFile volume plugin comes with high availability, scalability, and 
 
 <p>Same as VDVS, vFile volume plugin is also integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>.</p>
 
-<p>More details about the usage of vFile can be found at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/vfile-plugin.html">vFile userguide</a>.</p>
+<p>More details about the usage of vFile can be found at <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/vfile-plugin.html">vFile userguide</a>.</p>
 
 <h2 id="documentation-version">Documentation Version</h2>
 
-<p>The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in <a href="https://github.com/vmware/docker-volume-vsphere/tree/gh-pages/jekyll-docs">jekyll-docs folder</a>. For older releases, browse to <a href="https://github.com/vmware/docker-volume-vsphere/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
+<p>The documentation here is for the latest release. The current master documentation can be found in jekyll/markdown format in <a href="https://github.com/vmware/vsphere-storage-for-docker/tree/gh-pages/jekyll-docs">jekyll-docs folder</a>. For older releases, browse to <a href="https://github.com/vmware/vsphere-storage-for-docker/releases">releases</a> select the release, click on the tag for the release and browse the docs folder.</p>
 
   
 

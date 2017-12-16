@@ -430,16 +430,16 @@ $('#toc').on('click', 'a', function() {
   <h2 id="general">General</h2>
 
 <h3 id="where-do-i-get-the-binaries-what-about-the-source">Where do I get the binaries? What about the source?</h3>
-<p>Please look at <a href="https://github.com/vmware/docker-volume-vsphere/releases">GitHub Releases</a> for binaries. Github releases allow downloading of source for a release in addition to git clone.</p>
+<p>Please look at <a href="https://github.com/vmware/vsphere-storage-for-docker/releases">GitHub Releases</a> for binaries. Github releases allow downloading of source for a release in addition to git clone.</p>
 
 <h3 id="how-to-install-and-use-the-driver">How to install and use the driver?</h3>
-<p>Please follow the instructions at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
+<p>Please follow the instructions at <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/install.html#installation-on-esxi">installation-on-esxi</a>.</p>
 
 <h3 id="how-do-i-run-the-setup-on-my-laptop">How do I run the setup on my laptop?</h3>
-<p>Follow the <a href="https://github.com/vmware/docker-volume-vsphere/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></p>
+<p>Follow the <a href="https://github.com/vmware/vsphere-storage-for-docker/wiki/Using-laptop-for-running-the-entire-stack">guide on the wiki</a></p>
 
 <h3 id="how-do-i-bind-a-volume-to-a-particular-container-host">How do I bind a volume to a particular container host?</h3>
-<p>This can be achieved via <a href="http://vmware.github.io/docker-volume-vsphere/documentation/tenancy.html">Tenancy</a>.</p>
+<p>This can be achieved via <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/tenancy.html">Tenancy</a>.</p>
 
 <h3 id="how-do-i-mount-vsphere-volume-when-there-are-volumes-with-the-same-name-created-on-the-different-datastores">How do I mount vSphere volume when there are volumes with the same name created on the different datastores?</h3>
 <p>If there are volumes with the same name on different datastores then use the long name (e.g. <code class="highlighter-rouge">myVolume@vsanDatastore</code>). Let’s take an example as shown below, full volume name should be passed while mounting the volume.</p>
@@ -461,10 +461,10 @@ vsphere:latest      myVolume@vsanDatastore
 
 <p>Stable release: A quarterly release with reliable/stable updates.</p>
 
-<p>Please refer <a href="https://github.com/vmware/docker-volume-vsphere/blob/master/CONTRIBUTING.md#release-naming-convention">release convention</a> for more details.</p>
+<p>Please refer <a href="https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md#release-naming-convention">release convention</a> for more details.</p>
 
 <h3 id="can-i-use-the-full-volume-like-voldatastore-in-compose-file-with-vdvs">Can I use the full volume like “vol@datastore” in compose file with VDVS?</h3>
-<p>Yes, it is supported starting from Docker 17.09-ce release and compose 3.4. Please refer to this <a href="https://github.com/vmware/docker-volume-vsphere/blob/master/docs/external/docker-stacks.md">example</a>.</p>
+<p>Yes, it is supported starting from Docker 17.09-ce release and compose 3.4. Please refer to this <a href="https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/external/docker-stacks.md">example</a>.</p>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
@@ -481,23 +481,23 @@ Additional reading for differences between VMware tools and open vm tools:</p>
   <li><a href="http://superuser.com/questions/270112/open-vm-tools-vs-vmware-tools">VMware Tools vs Open VM Tools</a></li>
 </ul>
 
-<h4 id="i-see-connection-reset-by-peer-errno104-in-the-services-logshttpsgithubcomvmwaredocker-volume-vspherelogging-what-is-the-cause">I see “connection reset by peer (errno=104)” in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service’s logs</a>, what is the cause?</h4>
+<h4 id="i-see-connection-reset-by-peer-errno104-in-the-services-logshttpsgithubcomvmwarevsphere-storage-for-dockerlogging-what-is-the-cause">I see “connection reset by peer (errno=104)” in the <a href="https://github.com/vmware/vsphere-storage-for-docker#logging">service’s logs</a>, what is the cause?</h4>
 <p>104 is a standard linux error (<code class="highlighter-rouge">#define ECONNRESET      104     /* Connection reset by peer */</code>)</p>
 
 <p>It occurs if the Docker volume service cannot communicate to the ESX back end. This can happen if:
    * VMCI and/or vSock kernel modules are not loaded or the kernel does not support VMCI and vSock. Please read “What is VMCI and vSock and why is it needed?” above.
-   * ESX service is not running. <code class="highlighter-rouge">/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/docker-volume-vsphere#logging">ESX Logs</a>
-   * ESX service and the docker volume service are not communicating on the same port. <code class="highlighter-rouge">ps -c | grep vmdk #On ESX</code> and <code class="highlighter-rouge">ps aux| grep docker-volume-vsphere # On VM</code> check the port param passed in and make sure they are the same</p>
+   * ESX service is not running. <code class="highlighter-rouge">/etc/init.d/vmdk-opsd status</code>. Check <a href="https://github.com/vmware/vsphere-storage-for-docker#logging">ESX Logs</a>
+   * ESX service and the docker volume service are not communicating on the same port. <code class="highlighter-rouge">ps -c | grep vmdk #On ESX</code> and <code class="highlighter-rouge">ps aux| grep vsphere-storage-for-docker # On VM</code> check the port param passed in and make sure they are the same</p>
 
-<h4 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logshttpsgithubcomvmwaredocker-volume-vspherelogging-what-is-the-cause">I see “address family not supported by protocol (errno=97)” in the <a href="https://github.com/vmware/docker-volume-vsphere#logging">service’s logs</a>, what is the cause?</h4>
+<h4 id="i-see-address-family-not-supported-by-protocol-errno97-in-the-services-logshttpsgithubcomvmwarevsphere-storage-for-dockerlogging-what-is-the-cause">I see “address family not supported by protocol (errno=97)” in the <a href="https://github.com/vmware/vsphere-storage-for-docker#logging">service’s logs</a>, what is the cause?</h4>
 <p>97 is a standard linux error (<code class="highlighter-rouge">#define EAFNOSUPPORT    97      /* Address family not supported by protocol */</code>)</p>
 
-<p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/docker-volume-vsphere/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">“What is VMCI and vSock and why is it needed?”</a> above.</p>
+<p>It occurs if the linux kernel does not know about the AF family used for VMCI communication. Please read <a href="https://vmware.github.io/vsphere-storage-for-docker/user-guide/faq/#what-is-vmci-and-vsock-and-why-is-it-needed">“What is VMCI and vSock and why is it needed?”</a> above.</p>
 
 <h4 id="i-see-plugin-not-found-error-message-in-the-docker-daemon-logs-what-is-the-cause">I see “plugin not found” error message in the Docker daemon logs, what is the cause?</h4>
 <p>This is the limitation of docker and being tracked at <a href="https://github.com/moby/moby/issues/34545">issue#34545</a>.</p>
 
-<p>Docker maintains a unique plugin ID that’s assigned when the plugin is installed. Once assigned the ID remains with the plugin till its removed. All volumes that were created via the plugin will remain inaccessible if the plugin is removed. The correct way to install updates to the plugin is to upgrade the plugin using <code class="highlighter-rouge">docker plugin upgrade</code> as mentioned at <a href="http://vmware.github.io/docker-volume-vsphere/documentation/install.html#upgrade-instructions">user guide</a>.</p>
+<p>Docker maintains a unique plugin ID that’s assigned when the plugin is installed. Once assigned the ID remains with the plugin till its removed. All volumes that were created via the plugin will remain inaccessible if the plugin is removed. The correct way to install updates to the plugin is to upgrade the plugin using <code class="highlighter-rouge">docker plugin upgrade</code> as mentioned at <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/install.html#upgrade-instructions">user guide</a>.</p>
 
 <h4 id="volume-remains-attached-to-the-vm-after-upgrading-vdvs-esx-driver">Volume remains attached to the VM after upgrading VDVS ESX driver</h4>
 <p>If the container using volumes exits during the upgrade of ESX driver (i.e. after vib remove but before vib install), the volumes may remain attached to VM. In such a case, please disable and then enable (restart) the volume plugin to ensure volumes are properly detached.</p>
@@ -517,7 +517,7 @@ systemctl restart docker
 
 <h4 id="im-not-able-to-create-volume-and-i-see-volumedrivercreate-device-not-found-error">I’m not able to create volume and I see “VolumeDriver.Create: Device not found” error</h4>
 
-<p>From 0.19 release of VDVS, the plugin has to have a VIB that’s at least 0.19 or later.  <a href="https://github.com/vmware/docker-volume-vsphere/issues/2023">#2023</a>
+<p>From 0.19 release of VDVS, the plugin has to have a VIB that’s at least 0.19 or later.  <a href="https://github.com/vmware/vsphere-storage-for-docker/issues/2023">#2023</a>
 Ideally it is better if you always upgrade both the plugin and the VIB to matching versions.</p>
 
   
