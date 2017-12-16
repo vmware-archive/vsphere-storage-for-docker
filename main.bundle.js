@@ -16,7 +16,7 @@ webpackEmptyContext.id = "./src async recursive";
 /***/ "./src/app/app.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<clr-main-container>\n    <header class=\"header header-6\">\n        <div class=\"branding\">\n            <a href=\"https://vmware.github.io/\" class=\"nav-link\">\n                <span class=\"clr-icon vmware-logo\"></span>\n                <span class=\"title\">Open Source Program Office</span>\n            </a>\n        </div>\n    </header>\n    <div class=\"content-container\">\n        <div id=\"content-area\" class=\"content-area\" hash-listener #scrollable>\n            <div class=\"hero\">\n                <div class=\"hero-image\"><img src=\"images/docker-volume-vsphere.png\" alt=\"vSphere Storage for Docker\"></div>\n                <h3>Persistent Storage for Cloud Native Applications</h3>\n                <p><a href=\"https://github.com/vmware/docker-volume-vsphere\" class=\"btn btn-primary\"><i class=\"icon icon-github\"></i> Fork vSphere Storage for Docker</a></p>\n            </div>\n            <div id=\"overview\" class=\"section\">\n                <h2>What is the vSphere Storage for Docker?</h2>\n\n                <p>vSphere Storage for Docker enables you to run stateful containerized applications on top of VMware vSphere.</p>\n\n                <p>It is designed to meet the needs of Enterprise IT and application developers and offers the following benefits</p>\n\n                <br>\n\n                <ul>\n                    <li><strong>Proven Persistent shared storage</strong> You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS and VVoL</li>\n                    <li><strong>Multitenancy, Security and Access Control</strong> vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location</li>\n                    <li><strong>Operational Consistency &amp; Simplicity</strong> Zero Configuration, zero credential management. It is easy to deploy and manage</li>\n                    <li><strong>Self Service Operations</strong> Use Docker APIs to manage volume lifecycle while maintaining admin control over consumption</li>\n                </ul>\n            </div>\n\n            <div id=\"download\" class=\"section\">\n                <h2>Getting vSphere Storage for Docker</h2>\n\n                <p>vSphere Storage for Docker is available on the <a href=\"https://github.com/vmware/docker-volume-vsphere\">VMware Github source repository</a>.</p>\n            </div>\n\n            <div id=\"gettingStarted\" class=\"section\">\n                <h2>Getting Started</h2>\n                \n                <p>Our documentation including steps for getting started can be found at: <a href=\"https://vmware.github.io/docker-volume-vsphere/documentation\">Documentation and User Guide</a></p>\n            </div>\n\n            <div id=\"support\" class=\"section\">\n                <h2>Support</h2>\n                \n                <p>vSphere Storage for Docker is released as an open source project and presently provides community support through <a href=\"https://github.com/vmware/docker-volume-vsphere/\">our GitHub project page. </a></p>\n\n                <p>You can also reach out to us at <a href=\"mailto:hatchway@vmware.com\">hatchway@vmware.com</a> if you have any questions or are interested in deploying the vSphere Storage for Docker in your environment.</p>\n            </div>\n            <div id=\"contributors\" class=\"section\">\n                <h2>Contributors</h2>\n\n                <br>\n\n                <ul class=\"list-unstyled row\">\n                    <li *ngFor=\"let contributor of contributors\"><a [href]=\"contributor.html_url\"><img [src]=\"contributor.avatar_url\" alt=\"\" class=\"contributor\"></a></li>\n                </ul>\n            </div>\n\n            <div id=\"contributing\" class=\"section\">\n                <h2>Contributing</h2>\n\n                <p>You are invited to contribute new features, fixes or updates, both large or small. We are always thrilled to receive pull requests, and do our best to process them as fast as we can. If you wish to contribute code, you should sign a <a href=\"https://vmware.github.io/docker-volume-vsphere/files/vmware_cla.pdf\">Contributor License Agreement</a> and return a copy to <a href=\"mailto:osscontributions@vmware.com\">osscontributions@vmware.com</a> before we merge your contribution. For any questions about the CLA process, please refer to our <a href=\"https://cla.vmware.com/faq\">FAQ</a>.</p>\n\n                <p>You can also contact us at <a href=\"mailto:hatchway@vmware.com\">hatchway@vmware.com</a></p>\n            </div>\n\n            <div id=\"license\" class=\"section\">\n                <h2>License</h2>\n\n                <p>vSphere Storage for Docker is licensed under Apache License Version 2.0 as documented in the <a href=\"https://github.com/vmware/docker-volume-vsphere/blob/master/LICENSE\">open source license file</a> accompanying the vSphere Storage for Docker distribution.</p>\n            </div>\n        </div>\n        <nav class=\"sidenav\" [clr-nav-level]=\"2\">\n            <section class=\"sidenav-content\">\n                <section class=\"nav-group\" [scrollspy]=\"scrollable\">\n                    <label><a class=\"nav-link active\" routerLink=\".\" routerLinkActive=\"active\" fragment=\"overview\">Overview</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"download\">Getting DVS</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"gettingStarted\">Getting Started</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"support\">Support</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributors\">Contributors</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributing\">Contributing</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"license\">License</a></label>\n                </section>\n            </section>\n        </nav>\n    </div>\n</clr-main-container>\n"
+module.exports = "<clr-main-container>\n    <header class=\"header header-6\">\n        <div class=\"branding\">\n            <a href=\"https://vmware.github.io/\" class=\"nav-link\">\n                <span class=\"clr-icon vmware-logo\"></span>\n                <span class=\"title\">Open Source Program Office</span>\n            </a>\n        </div>\n    </header>\n    <div class=\"content-container\">\n        <div id=\"content-area\" class=\"content-area\" hash-listener #scrollable>\n            <div class=\"hero\">\n                <div class=\"hero-image\"><img src=\"images/vsphere-storage-for-docker.png\" alt=\"vSphere Storage for Docker\"></div>\n                <h3>Persistent Storage for Cloud Native Applications</h3>\n                <p><a href=\"https://github.com/vmware/vsphere-storage-for-docker\" class=\"btn btn-primary\"><i class=\"icon icon-github\"></i> Fork vSphere Storage for Docker</a></p>\n            </div>\n            <div id=\"overview\" class=\"section\">\n                <h2>What is the vSphere Storage for Docker?</h2>\n\n                <p>vSphere Storage for Docker enables you to run stateful containerized applications on top of VMware vSphere.</p>\n\n                <p>It is designed to meet the needs of Enterprise IT and application developers and offers the following benefits</p>\n\n                <br>\n\n                <ul>\n                    <li><strong>Proven Persistent shared storage</strong> You can now use any VMware supported enterprise class storage backed by vSAN, VMFS, NFS and VVoL</li>\n                    <li><strong>Multitenancy, Security and Access Control</strong> vSphere Admins can effortlessly set access permissions for shared storage across hosts, datastores and VMs from a single location</li>\n                    <li><strong>Operational Consistency &amp; Simplicity</strong> Zero Configuration, zero credential management. It is easy to deploy and manage</li>\n                    <li><strong>Self Service Operations</strong> Use Docker APIs to manage volume lifecycle while maintaining admin control over consumption</li>\n                </ul>\n            </div>\n\n            <div id=\"download\" class=\"section\">\n                <h2>Getting vSphere Storage for Docker</h2>\n\n                <p>vSphere Storage for Docker is available on the <a href=\"https://github.com/vmware/vsphere-storage-for-docker\">VMware Github source repository</a>.</p>\n            </div>\n\n            <div id=\"gettingStarted\" class=\"section\">\n                <h2>Getting Started</h2>\n                \n                <p>Our documentation including steps for getting started can be found at: <a href=\"https://vmware.github.io/vsphere-storage-for-docker/documentation\">Documentation and User Guide</a></p>\n            </div>\n\n            <div id=\"support\" class=\"section\">\n                <h2>Support</h2>\n                \n                <p>vSphere Storage for Docker is released as an open source project and presently provides community support through <a href=\"https://github.com/vmware/vsphere-storage-for-docker/\">our GitHub project page. </a></p>\n\n                <p>You can also reach out to us at <a href=\"mailto:hatchway@vmware.com\">hatchway@vmware.com</a> if you have any questions or are interested in deploying the vSphere Storage for Docker in your environment.</p>\n            </div>\n            <div id=\"contributors\" class=\"section\">\n                <h2>Contributors</h2>\n\n                <br>\n\n                <ul class=\"list-unstyled row\">\n                    <li *ngFor=\"let contributor of contributors\"><a [href]=\"contributor.html_url\"><img [src]=\"contributor.avatar_url\" alt=\"\" class=\"contributor\"></a></li>\n                </ul>\n            </div>\n\n            <div id=\"contributing\" class=\"section\">\n                <h2>Contributing</h2>\n\n                <p>You are invited to contribute new features, fixes or updates, both large or small. We are always thrilled to receive pull requests, and do our best to process them as fast as we can. If you wish to contribute code, you should sign a <a href=\"https://vmware.github.io/vsphere-storage-for-docker/files/vmware_cla.pdf\">Contributor License Agreement</a> and return a copy to <a href=\"mailto:osscontributions@vmware.com\">osscontributions@vmware.com</a> before we merge your contribution. For any questions about the CLA process, please refer to our <a href=\"https://cla.vmware.com/faq\">FAQ</a>.</p>\n\n                <p>You can also contact us at <a href=\"mailto:hatchway@vmware.com\">hatchway@vmware.com</a></p>\n            </div>\n\n            <div id=\"license\" class=\"section\">\n                <h2>License</h2>\n\n                <p>vSphere Storage for Docker is licensed under Apache License Version 2.0 as documented in the <a href=\"https://github.com/vmware/vsphere-storage-for-docker/blob/master/LICENSE\">open source license file</a> accompanying the vSphere Storage for Docker distribution.</p>\n            </div>\n        </div>\n        <nav class=\"sidenav\" [clr-nav-level]=\"2\">\n            <section class=\"sidenav-content\">\n                <section class=\"nav-group\" [scrollspy]=\"scrollable\">\n                    <label><a class=\"nav-link active\" routerLink=\".\" routerLinkActive=\"active\" fragment=\"overview\">Overview</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"download\">Getting DVS</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"gettingStarted\">Getting Started</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"support\">Support</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributors\">Contributors</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"contributing\">Contributing</a></label>\n                    <label class=\"bump-down\"><a class=\"nav-link\" routerLink=\".\" fragment=\"license\">License</a></label>\n                </section>\n            </section>\n        </nav>\n    </div>\n</clr-main-container>\n"
 
 /***/ }),
 
@@ -28,7 +28,7 @@ exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/cs
 
 
 // module
-exports.push([module.i, ".clr-icon.vmware-logo {\n  background: url(/docker-volume-vsphere/images/vmware.svg) no-repeat left 9px;\n  width: 108px; }\n\n.hero {\n  background-color: #ddd;\n  left: -24px;\n  padding-bottom: 2em;\n  padding-top: 2em;\n  overflow-x: hidden;\n  position: relative;\n  text-align: center;\n  top: -24px; }\n  .hero .btn-custom {\n    display: inline-block;\n    text-align: center;\n    margin: auto; }\n\n.content-area {\n  overflow-x: hidden; }\n\n.hero-image img {\n  max-width: 360px; }\n\n.icon {\n  display: inline-block;\n  height: 32px;\n  vertical-align: middle;\n  width: 32px; }\n  .icon.icon-github {\n    background: url(/docker-volume-vsphere/images/github_icon.svg) no-repeat left -2px; }\n\n.nav-group label {\n  display: block;\n  margin-bottom: 1em; }\n\n.sidenav .nav-link {\n  padding: 3px 6px; }\n  .sidenav .nav-link:hover {\n    background: #eee; }\n  .sidenav .nav-link.active {\n    background: #d9e4ea;\n    color: #000; }\n\n.section {\n  padding: .5em 0; }\n\n.contributor {\n  border-radius: 50%;\n  border: 1px solid #ccc;\n  margin-bottom: 1.5em;\n  margin-right: 1em;\n  max-width: 64px;\n  text-decoration: none; }\n\n@media (min-width: 320px) {\n  .title {\n    display: none; }\n  .hero {\n    width: 100vw; }\n  #license {\n    padding-bottom: 20vh; } }\n\n@media (min-width: 768px) {\n  .title {\n    display: block; }\n  .hero {\n    width: 110%; }\n  #license {\n    padding-bottom: 78vh; } }\n\n.row:after {\n  clear: both;\n  content: \"\";\n  display: table; }\n", ""]);
+exports.push([module.i, ".clr-icon.vmware-logo {\n  background: url(/vsphere-storage-for-docker/images/vmware.svg) no-repeat left 9px;\n  width: 108px; }\n\n.hero {\n  background-color: #ddd;\n  left: -24px;\n  padding-bottom: 2em;\n  padding-top: 2em;\n  overflow-x: hidden;\n  position: relative;\n  text-align: center;\n  top: -24px; }\n  .hero .btn-custom {\n    display: inline-block;\n    text-align: center;\n    margin: auto; }\n\n.content-area {\n  overflow-x: hidden; }\n\n.hero-image img {\n  max-width: 360px; }\n\n.icon {\n  display: inline-block;\n  height: 32px;\n  vertical-align: middle;\n  width: 32px; }\n  .icon.icon-github {\n    background: url(/vsphere-storage-for-docker/images/github_icon.svg) no-repeat left -2px; }\n\n.nav-group label {\n  display: block;\n  margin-bottom: 1em; }\n\n.sidenav .nav-link {\n  padding: 3px 6px; }\n  .sidenav .nav-link:hover {\n    background: #eee; }\n  .sidenav .nav-link.active {\n    background: #d9e4ea;\n    color: #000; }\n\n.section {\n  padding: .5em 0; }\n\n.contributor {\n  border-radius: 50%;\n  border: 1px solid #ccc;\n  margin-bottom: 1.5em;\n  margin-right: 1em;\n  max-width: 64px;\n  text-decoration: none; }\n\n@media (min-width: 320px) {\n  .title {\n    display: none; }\n  .hero {\n    width: 100vw; }\n  #license {\n    padding-bottom: 20vh; } }\n\n@media (min-width: 768px) {\n  .title {\n    display: block; }\n  .hero {\n    width: 110%; }\n  #license {\n    padding-bottom: 78vh; } }\n\n.row:after {\n  clear: both;\n  content: \"\";\n  display: table; }\n", ""]);
 
 // exports
 
@@ -79,7 +79,7 @@ AppComponent = __decorate([
 ], AppComponent);
 exports.AppComponent = AppComponent;
 var _a;
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/app/app.component.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/app/app.component.js.map
 
 /***/ }),
 
@@ -127,7 +127,7 @@ AppModule = __decorate([
     })
 ], AppModule);
 exports.AppModule = AppModule;
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/app/app.module.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/app/app.module.js.map
 
 /***/ }),
 
@@ -142,7 +142,7 @@ exports.ROUTES = [
     { path: '', redirectTo: 'home', pathMatch: 'full' }
 ];
 exports.ROUTING = router_1.RouterModule.forRoot(exports.ROUTES);
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/app/app.routing.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/app/app.routing.js.map
 
 /***/ }),
 
@@ -157,7 +157,7 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(__webpack_require__("./src/app/app.component.ts"));
 __export(__webpack_require__("./src/app/app.module.ts"));
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/app/index.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/app/index.js.map
 
 /***/ }),
 
@@ -174,7 +174,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.environment = {
     production: true
 };
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/environments/environment.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/environments/environment.js.map
 
 /***/ }),
 
@@ -193,7 +193,7 @@ if (environment_1.environment.production) {
     core_1.enableProdMode();
 }
 platform_browser_dynamic_1.platformBrowserDynamic().bootstrapModule(_1.AppModule);
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/main.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/main.js.map
 
 /***/ }),
 
@@ -221,7 +221,7 @@ __webpack_require__("./node_modules/core-js/es6/set.js");
 __webpack_require__("./node_modules/core-js/es6/reflect.js");
 __webpack_require__("./node_modules/core-js/es7/reflect.js");
 __webpack_require__("./node_modules/zone.js/dist/zone.js");
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/polyfills.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/polyfills.js.map
 
 /***/ }),
 
@@ -252,7 +252,7 @@ var ContributorService = (function () {
     ContributorService.prototype.getContributors = function () {
         // do work to merge three http calls into one observable.
         return Observable_1.Observable.forkJoin([
-            this.http.get('https://api.github.com/repos/vmware/docker-volume-vsphere/contributors')
+            this.http.get('https://api.github.com/repos/vmware/vsphere-storage-for-docker/contributors')
                 .map(function (res) { return res.json(); })
         ])
             .map(function (data) {
@@ -284,7 +284,7 @@ ContributorService = __decorate([
 ], ContributorService);
 exports.ContributorService = ContributorService;
 var _a;
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/services/contributors.service.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/services/contributors.service.js.map
 
 /***/ }),
 
@@ -347,7 +347,7 @@ HashListener = __decorate([
 ], HashListener);
 exports.HashListener = HashListener;
 var _a;
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/utils/hash-listener.directive.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/utils/hash-listener.directive.js.map
 
 /***/ }),
 
@@ -442,7 +442,7 @@ ScrollSpy = __decorate([
 ], ScrollSpy);
 exports.ScrollSpy = ScrollSpy;
 var _a, _b, _c, _d;
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/utils/scrollspy.directive.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/utils/scrollspy.directive.js.map
 
 /***/ }),
 
@@ -485,7 +485,7 @@ UtilsModule = __decorate([
     })
 ], UtilsModule);
 exports.UtilsModule = UtilsModule;
-//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/docker-volume-vsphere/src/src/src/utils/utils.module.js.map
+//# sourceMappingURL=/Users/druk/ID&D Assets/Open Source Software/vsphere-storage-for-docker/src/src/src/utils/utils.module.js.map
 
 /***/ }),
 
