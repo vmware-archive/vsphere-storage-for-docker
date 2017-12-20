@@ -44,7 +44,7 @@ Installation Result
 
 ## Installation on Linux Docker Hosts
 
-VDVS plugin can be installed on Linux Docker hosts like any docker plugin installation. You will need docker version **1.13/17.03 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.
+VDVS plugin can be installed on Linux Docker hosts like any docker plugin installation. You will need docker version **17.06.1 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.
 
 ### Dependencies
 
@@ -104,7 +104,7 @@ ID                  NAME                DESCRIPTION         ENABLED
 
 ## Installation on Windows Docker Hosts
 
-vSphere Storage for Docker can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **1.13/17.03 or above** (with Windows containers mode enabled) on the VM.
+vSphere Storage for Docker can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **17.06 or above** (with Windows containers mode enabled) on the VM.
 
 First, start an instance of PowerShell with the "Run as administrator" option.
 

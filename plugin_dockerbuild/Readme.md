@@ -9,7 +9,7 @@ as a Managed Plugin, and push to dockerhub.
 **Note that this is not integrated with Build or CI, which is an upcoming change**
 
 Assuming the `Makefile`  defines names as 'cnastorage/vsphere-storage-for-docker:0.12', the plugin  could
-be installed on Docker (1.13+) as follows:
+be installed on Docker (17.06.1+) as follows:
 
 * no question asked, and pretend the plugin name is 'vsphere' (can be used in `volume create` and `plugin rm`)
 ```
