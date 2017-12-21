@@ -2,7 +2,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/vmware/vsphere-storage-for-docker)](https://goreportcard.com/report/github.com/vmware/vsphere-storage-for-docker)
 [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)
 [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
-[![Windows Plugin](https://img.shields.io/badge/Windows%20Plugin-latest-blue.svg)](https://bintray.com/vmware/vDVS/vDVS_Windows/_latestVersion)
+[![Windows Plugin](https://img.shields.io/badge/Windows%20Plugin-latest-blue.svg)](https://bintray.com/vmware/vDVS/VDVS_Windows/_latestVersion)
 
 # vSphere Storage for Docker
 

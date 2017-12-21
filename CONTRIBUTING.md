@@ -430,14 +430,14 @@ DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=latest make build-all
 Windows plugin needs to be built on a windows environment
 1. export WIN_VM1=[Valid Windows VM IP]
 2. make build-windows-plugin
-3. rename the build/windows/vdvs-bin.zip to /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
+3. rename the build/windows/vdvs-bin.zip to /build/windows/vsphere-storage-for-docker_windows_<release_tag>.zip
 
 ### Upload files to bintray
-Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/vDVS_Windows
+Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/VDVS_Windows
 
 Following are their paths (with respect to VDVS root working directory)
 1. install-vdvs.ps1
-2. /build/windows/docker-volume-vsphere_windows_<release_tag>.zip
+2. /build/windows/vsphere-storage-for-docker_windows_<release_tag>.zip
 
 ## Cutting release steps for vFile plugin
 ### Publish vFile managed plugin to Docker Store
@@ -460,7 +460,7 @@ Pages](https://vmware.github.io/vsphere-storage-for-docker/) using
 
 To copy documentation changes from vmware:master to gh-pages, run the following script
 ```
-# Run the script misc/scripts/update_GHpages.sh
+# Run the script misc/scripts/update_gh_pages.sh
 ./misc/scripts/update_GHpages.sh
 ```
 Script also generates the customer facing document, so each time a release is cut, we need to run the same script.

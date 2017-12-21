@@ -37,12 +37,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/photon-controller-go-sdk/photon"
 	"github.com/vmware/vsphere-storage-for-docker/client_plugin/drivers/utils"
 	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/config"
 	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/fs"
 	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/plugin_utils"
 	"github.com/vmware/vsphere-storage-for-docker/client_plugin/utils/refcount"
-	"github.com/vmware/photon-controller-go-sdk/photon"
 )
 
 const (
