@@ -44,7 +44,7 @@ Installation Result
 
 ## Installation on Linux Docker Hosts
 
-VDVS plugin can be installed on Linux Docker hosts like any docker plugin installation. You will need docker version **1.13/17.03 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.
+VDVS plugin can be installed on Linux Docker hosts like any docker plugin installation. You will need docker version **17.06.1 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.
 
 ### Dependencies
 
@@ -104,7 +104,7 @@ ID                  NAME                DESCRIPTION         ENABLED
 
 ## Installation on Windows Docker Hosts
 
-vSphere Storage for Docker can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **1.13/17.03 or above** (with Windows containers mode enabled) on the VM.
+vSphere Storage for Docker can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **17.06 or above** (with Windows containers mode enabled) on the VM.
 
 First, start an instance of PowerShell with the "Run as administrator" option.
 
@@ -123,8 +123,8 @@ PS C:\> .\install-vdvs.ps1 <windows_plugin_binary_url>
 For example, the vSphere Storage for Docker 0.16 developer preview binary could be installed as shown below.
 
 ```
-PS C:\> .\install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=vsphere-storage-for-docker_windows_developer-preview.zip
-Downloading from https://bintray.com/vmware/vDVS/download_file?file_path=vsphere-storage-for-docker_windows_developer-preview.zip...
+PS C:\> .\install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere_windows_developer-preview.zip
+Downloading from https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere_windows_developer-preview.zip...
 Extracting vsphere-storage-for-docker.zip into C:\Program Files\VMware\vmdkops...
 Deleting vsphere-storage-for-docker.zip...
 Installing Windows service vdvs from C:\Program Files\VMware\vmdkops\vdvs.exe...
