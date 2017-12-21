@@ -433,7 +433,7 @@ Windows plugin needs to be built on a windows environment
 3. rename the build/windows/vdvs-bin.zip to /build/windows/vsphere-storage-for-docker_windows_<release_tag>.zip
 
 ### Upload files to bintray
-Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/vDVS_Windows
+Two files need to be uploaded to bintray at https://bintray.com/vmware/vDVS/VDVS_Windows
 
 Following are their paths (with respect to VDVS root working directory)
 1. install-vdvs.ps1
