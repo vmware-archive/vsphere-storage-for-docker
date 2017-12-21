@@ -31,9 +31,16 @@ Please check [VDVS Installation User Guide](http://vmware.github.io/vsphere-stor
 
 ## Supported Platforms
 
-**ESXi:** 6.0 and above<br />
-**Docker (Linux):** 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)<br />
-**Docker (Windows):** 1.13/17.03 and above (Windows containers mode only)
+**ESXi:** 6.0U2 and above<br />
+**Docker (Linux):** 17.06.1 and above to use managed plugin<br />
+**Docker (Windows):** 17.06 and above (Windows containers mode only)<br />
+**Guest Operating System**:
+- Ubuntu 14.04 or higher (64 bit)
+   - Needs Upstart or systemctl to start and stop the service
+   - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340) ```sudo apt-get install open-vm-tools```
+- RedHat 6.9 or higher (64 bit)
+- Windows Server 2016 (64 bit)
+- [Photon 1.0, Revision 2](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-10-revision-2-binaries) (v4.4.51 or later), [Photon 2.0](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-20-ga-binaries)<br />
 
 ## Logging
 The relevant logging for debugging consists of the following:
@@ -82,23 +89,6 @@ logging config format for content details.
 * **Turning on debug logging**: replace all 'INFO' with 'DEBUG' in config file, restart the service
 
 Please refer [VDVS configuration page](http://vmware.github.io/vsphere-storage-for-docker/documentation/configuration.html) for detailed steps.
-
-## Tested on
-
-**VMware ESXi**:
-- 6.0, 6.0U1, 6.0U2
-- 6.5
-
-**Guest Operating System**:
-- Ubuntu 14.04 or higher (64 bit)
-   - Needs Upstart or systemctl to start and stop the service
-   - Needs [open vm tools or VMware Tools installed](https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=340) ```sudo apt-get install open-vm-tools```
-- RedHat and CentOS
-- Windows Server 2016 (64 bit)
-- [Photon 1.0, Revision 2](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-10-revision-2-binaries) (v4.4.51 or later), [Photon 2.0](https://github.com/vmware/photon/wiki/Downloading-Photon-OS#photon-os-20-ga-binaries)
-
-**Docker (Linux)**: 1.12 and higher (Recommended 1.13/17.03 and above to use managed plugin)
-**Docker (Windows)**: 1.13/17.03
 
 ## References
 

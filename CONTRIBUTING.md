@@ -94,7 +94,7 @@ Test environment  typically consist of 1 ESX and 3 guest VMs running inside of t
 
 **Note**: All 3 guest VMs can be reused to run swarm testcase by configuring swarm cluster (by making one node as master and registered others as worker nodes). It is not mandatory to create extra VM to configure swarm cluster but feel free if you would like to do so. Please make sure to set environment variables correctly as mentioned in section below.
 
-We require ESX 6.0 and later, and a Linux VM running  Docker 1.13+ enabled for  plain text TCP connection, i.e.
+We require ESX 6.0 and later, and a Linux VM running  Docker 17.06.1+ enabled for  plain text TCP connection, i.e.
 Docker Daemon running with "-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"
 options. Note that both tcp: and unix: need to be present
 Please check  "Configuring and running Docker"
