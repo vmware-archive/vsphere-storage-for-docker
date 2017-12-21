@@ -32,4 +32,4 @@ User created vmgroup is not supported with SRM.
 
 **Virtual Volumes(VVol)**
 
-- All features of VDVS are supported with Virtual Volumes(VVol) except clone volume. Cloning a volume to create a new volume on a VVol datastore is not supported currently. [#1998] (https://github.com/vmware/vsphere-storage-for-docker/issues/1998)
+- All features of VDVS are supported with Virtual Volumes(VVol).
