@@ -6,7 +6,7 @@
 
 # vSphere Storage for Docker
 
-vSphere Storage for Docker enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS, VVol) to stateful containers using Docker.
+vSphere Storage for Docker enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is ingbgtegrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS, VVol) to stateful containers using Docker.
 
 [<img src="https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vSphere Storage for Docker is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
