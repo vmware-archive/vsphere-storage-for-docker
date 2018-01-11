@@ -19,7 +19,7 @@ rm -Rf etcd-v3.2.3-linux-amd64* /var/cache/apk/*
 RUN mkdir -p /mnt/vfile
 RUN mkdir -p /usr/lib/vmware
 RUN apk add --update ca-certificates openssl tar && \
-wget https://storage.googleapis.com/kubernetes-anywhere-for-vsphere-cna-storage/samba.tar && \
-mv samba.tar /usr/lib/vmware
+wget https://storage.googleapis.com/kubernetes-anywhere-for-vsphere-cna-storage/vfilesmb.tar && \
+mv vfilesmb.tar /usr/lib/vmware
 COPY vfile /usr/bin
 CMD ["/usr/bin/vfile"]

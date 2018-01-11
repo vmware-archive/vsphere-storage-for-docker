@@ -47,18 +47,20 @@ const (
 	// Postfix added to names of Samba services for volumes
 	serviceNamePrefix = "vFileServer"
 	// Path where the file server image resides in plugin
-	fileServerPath = "/usr/lib/vmware/samba.tar"
+	fileServerPath = "/usr/lib/vmware/vfilesmb.tar"
 	// Driver for the network which Samba services will use
 	// for communicating to clients
 	networkDriver = "overlay"
 	// Name of the Samba server docker image
-	sambaImageName = "luomiao/samba-debian"
+	sambaImageName = "cnastorage/vfile-smb:v0.1"
 	// Name of the Samba share used to expose a volume
-	FileShareName = "share1"
+	FileShareName = "vfileshare"
+	// Path of the Samba share inside the server
+	FileSharePath = "/vfilepath"
 	// Default username for all accessing Samba server mounts
-	SambaUsername = "root"
+	SambaUsername = "vfile"
 	// Default password for all accessing Samba server mounts
-	SambaPassword = "badpass"
+	SambaPassword = "vfile"
 	// Port number inside Samba container on which
 	// Samba service listens
 	defaultSambaPort = 445
@@ -220,31 +222,12 @@ func (d *DockerOps) StartSMBServer(volName string) (int, string, bool) {
 	// The Docker image to run in this service
 	service.TaskTemplate.ContainerSpec.Image = sambaImageName
 
-	/* Args which will be passed to the service. These options are
-	   * used by the Samba container, not Docker API.
-	   * -s: Share related info: Name of the share,
-	                             Path in the Samba container that will be shared,
-	                             Browsable (yes),
-	                             Read only (no),
-	                             Guest access allowed by default (no),
-	                             Which users can access (all),
-	                             Which users are admins? (root)
-	                             Writelist: If RO, who can write on the share (root)
-	   * -u: Username and Password
-	*/
-	containerArgs := []string{"-s",
-		FileShareName + ";/mount;yes;no;no;all;" +
-			SambaUsername + ";" + SambaUsername,
-		"-u",
-		SambaUsername + ";" + SambaPassword}
-	service.TaskTemplate.ContainerSpec.Args = containerArgs
-
 	// Mount a volume on service containers at mount point "/mount"
 	var mountInfo []swarm.Mount
 	mountInfo = append(mountInfo, swarm.Mount{
 		Type:   swarm.MountType("volume"),
 		Source: internalVolumePrefix + volName,
-		Target: "/mount"})
+		Target: FileSharePath})
 	service.TaskTemplate.ContainerSpec.Mounts = mountInfo
 
 	// How many containers of this service should be running at a time?
