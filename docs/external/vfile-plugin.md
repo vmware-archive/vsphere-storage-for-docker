@@ -26,6 +26,27 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 * All docker swarm managers should open [official etcd ports](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) 2379 and 2380, or the user-defined ETCD ports (please find more details about user-defined ETCD ports in the Installation section)
 
 ## Installation
+vFile requires all hosts running in swarm mode, you can use this [script] (https://github.com/vmware/vsphere-storage-for-docker/tree/master/misc/scripts/vfile-swarm-setup.sh) to setup all hosts in swarm mode. This script takes a configuration file as parameter. The configuration file has the following format(Assume the total number of nodes is `n` and the total numer of manager node is `m`):
+```
+NODE_COUNT=n
+MGR_COUNT=m
+IP address of manager node 1
+IP address of manager node 2
+...
+IP address of manager node m
+IP address of worker node 1
+...
+IP address of worker node n-m
+```
+
+A sample configuration file can be found [here] (https://github.com/vmware/vsphere-storage-for-docker/tree/master/misc/scripts/vfile-swarm-config.txt)
+
+You need to setup SSH keys for `root` user on all hosts. Then run the following command to configure a Swarm cluster:
+
+```
+~$ ./vfile-swarm-setup.sh vfile-swarm-config.txt
+```
+
 The recommended way to install vFile plugin is from docker cli:
 
 ```
