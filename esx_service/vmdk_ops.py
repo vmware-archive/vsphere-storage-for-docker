@@ -22,13 +22,13 @@ All operations are using requester VM (docker host) datastore and
 VMDK name is formed as [vmdatastore] dockvols/"Name".vmdk
 
 Commands ("cmd" in request):
-		"create" - create a VMDK in "[vmdatastore] dvol"
-		"remove" - remove a VMDK. We assume it's not open, and fail if it is
-		"list"   - enumerate VMDKs
-		"get"    - get info about an individual volume (vmdk)
-		"attach" - attach a VMDK to the requesting VM
-		"detach" - detach a VMDK from the requesting VM (assuming it's unmounted)
-
+		"create"  - create a VMDK in "[vmdatastore] dvol"
+		"remove"  - remove a VMDK. We assume it's not open, and fail if it is
+		"list"    - enumerate VMDKs
+		"get"     - get info about an individual volume (vmdk)
+		"attach"  - attach a VMDK to the requesting VM
+		"detach"  - detach a VMDK from the requesting VM (assuming it's unmounted)
+		"version" - get the ESX service version string
 '''
 
 import atexit
@@ -1827,8 +1827,13 @@ def execRequestThread(client_socket, cartel, request):
                 logging.warning("executeRequest '%s' failed: %s", req["cmd"], reply_string)
                 return
 
-            opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
-            reply_string = executeRequest(
+            # If the command is "version" then there is no need to handle the request via
+            # the normal VM request handler.
+            if req["cmd"] == "version":
+                reply_string = {u'version': "%s" % vmdk_utils.get_version()}
+            else:
+                opts = req["details"]["Opts"] if "Opts" in req["details"] else {}
+                reply_string = executeRequest(
                                 vm_uuid=vm_uuid,
                                 vc_uuid=vc_uuid,
                                 vm_name=vm_name,
