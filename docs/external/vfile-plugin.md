@@ -1,5 +1,5 @@
 ---
-title: vFile volume plugin for Docker
+title: vSphere Shared Storage for Docker volume plugin
 
 ---
 ## Overview
@@ -12,7 +12,7 @@ This can be solved through distributed file systems, such as NFS, Ceph, Gluster,
 However, setting up and maintaining enterprise storage offerings for Cloud Native use cases is not a trivial work.
 Furthermore, users can face more challenges in order to achieve high availability, scalability, and load balancing.
 
-__vFile volume plugin for Docker__ provides simultaneous persistent volume access between hosts in the
+__vSphere Shared Storage for Docker(VSSD)__ provides simultaneous persistent volume access between hosts in the
 same Docker Swarm cluster for the base volume plugin service such as VDVS, with zero configuration effort,
 along with high availability, scalability, and load balancing support.
 
@@ -26,7 +26,7 @@ Detailed documentation can be found on our [GitHub Documentation Page](http://vm
 * All docker swarm managers should open [official etcd ports](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) 2379 and 2380, or the user-defined ETCD ports (please find more details about user-defined ETCD ports in the Installation section)
 
 ## Installation
-vFile requires all hosts running in swarm mode, you can use this [script] (https://github.com/vmware/vsphere-storage-for-docker/tree/master/misc/scripts/vfile-swarm-setup.sh) to setup all hosts in swarm mode. This script takes a configuration file as parameter. The configuration file has the following format(Assume the total number of nodes is `n` and the total numer of manager node is `m`):
+VSSD requires all hosts running in swarm mode, you can use this [script] (https://github.com/vmware/vsphere-storage-for-docker/tree/master/misc/scripts/vfile-swarm-setup.sh) to setup all hosts in swarm mode. This script takes a configuration file as parameter. The configuration file has the following format(Assume the total number of nodes is `n` and the total numer of manager node is `m`):
 ```
 NODE_COUNT=n
 MGR_COUNT=m
@@ -47,7 +47,7 @@ You need to setup SSH keys for `root` user on all hosts. Then run the following 
 ~$ ./vfile-swarm-setup.sh vfile-swarm-config.txt
 ```
 
-The recommended way to install vFile plugin is from docker cli:
+The recommended way to install VSSD plugin is from docker cli:
 
 ```
 ~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
@@ -55,9 +55,9 @@ The recommended way to install vFile plugin is from docker cli:
 
 Note: please make sure the base volume plugin is already installed!
 
-Internally, vFile creates and uses etcd cluster to store metadata for volumes.
+Internally, VSSD creates and uses etcd cluster to store metadata for volumes.
 By default, the etcd cluster listens on port 2379 for client communication and port 2380 for peer communication.
-If you have other etcd cluster which already listens on those default ports, you need to specify different ports to avoid conflict when installing the vFile plugin.
+If you have other etcd cluster which already listens on those default ports, you need to specify different ports to avoid conflict when installing the VSSD plugin.
 Please see the following example:
 
 ```
@@ -69,20 +69,20 @@ Please see the following example:
 ## Remove and Reinstallation
 The recommended order to remove and reinstallation is:
 
-* remove and reinstall vFile plugin on all worker nodes
-* remove and reinstall vFile plugin on all manager nodes which are not swarm leader
-* remove and reinstall vFile plugin on manger node which is swarm leader
+* remove and reinstall VSSD plugin on all worker nodes
+* remove and reinstall VSSD plugin on all manager nodes which are not swarm leader
+* remove and reinstall VSSD plugin on manger node which is swarm leader
 
-Run the following command to remove and reinstall vFile plugin from docker cli:
+Run the following command to remove and reinstall VSSD plugin from docker cli:
 
 ```
 ~$ docker plugin rm vfile:latest vfile:latest
 ~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90
 ```
 
-Note: Please make sure no volume exists when trying to remove and reinstall the vFile plugin.
+Note: Please make sure no volume exists when trying to remove and reinstall the VSSD plugin.
 
-You will get the following error when trying to remove vFile plugin if a volume still exists.
+You will get the following error when trying to remove VSSD plugin if a volume still exists.
 
 ```
 ~$ docker plugin rm vfile:latest
@@ -95,13 +95,13 @@ You can use:
 ~$ docker plugin rm -f vfile:latest
 ```
 
-to force remove the vFile plugin and reinstall the vFile plugin, but after that, that volume is not usable.
+to force remove the VSSD plugin and reinstall the VSSD plugin, but after that, that volume is not usable.
 
 ## Usage examples
 
-### Steps for create/use/delete a vFile volume
+### Steps for create/use/delete a VSSD volume
 
-#### Creating a persistent volume from vFile plugin
+#### Creating a persistent volume from VSSD plugin
 
 ```
 ~$ docker volume create --driver=vfile --name=SharedVol -o size=10gb
@@ -111,7 +111,7 @@ to force remove the vFile plugin and reinstall the vFile plugin, but after that,
 
 Options for creation will be the same for the base volume plugin.
 Please refer to the base volume plugin for more options.
-Note: vFile volume plugin doesn't support filesystem type options.
+Note: VSSD volume plugin doesn't support filesystem type options.
 Note: The valid volume name can only be ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]```.
 
 #### Mounting this volume to a container running on the first host
@@ -120,7 +120,7 @@ Note: The valid volume name can only be ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]``
 # ssh to node1
 ~$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node1 busybox
 / # cd /mnt/myvol
-# read/write data into mounted vFile volume
+# read/write data into mounted VSSD volume
 ```
 
 #### Mounting this volume to a container running on the second host
@@ -129,7 +129,7 @@ Note: The valid volume name can only be ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]``
 # ssh to node2
 ~$ docker run --rm -it -v SharedVol:/mnt/myvol --name busybox-on-node2 busybox
 / # cd /mnt/myvol
-# read/write data from mounted vFile volume
+# read/write data from mounted VSSD volume
 ```
 
 #### Stopping the two containers on each host
@@ -139,15 +139,15 @@ Note: The valid volume name can only be ```[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]``
 ~$ docker stop busybox-on-node2
 ```
 
-#### Removing the vFile volume
+#### Removing the VSSD volume
 
 ```
 ~$ docker volume rm SharedVol
 ```
 
 ## Configuration
-### Options for vFile plugin
-Users can choose the base volume plugin for vFile plugin, by setting configuration during install process.
+### Options for VSSD plugin
+Users can choose the base volume plugin for VSSD plugin, by setting configuration during install process.
 <!---
 * Through CLI flag can only be done through non-managed plugin.
 --->
@@ -181,17 +181,17 @@ via the `--config` option, specifying the full path of the file.
 ## How to troubleshoot issues
 
 ### Which log is needed to debug issues? Where is the log located?
-Log file `vfile.log` is needed to debug. This file is located at `/var/log` directory of the docker host where the vFile plugin is installed.
+Log file `vfile.log` is needed to debug. This file is located at `/var/log` directory of the docker host where the VSSD plugin is installed.
 
 ### What is the default log level? How to change the log level?
-Default log level is `INFO`. If needed, log level can be changed to `DEBUG` using the following command during vFile plugin install:
+Default log level is `INFO`. If needed, log level can be changed to `DEBUG` using the following command during VSSD plugin install:
 
 ```
 ~$ docker plugin install --grant-all-permissions --alias vfile vmware/vfile:latest VFILE_TIMEOUT_IN_SECOND=90 VDVS_LOG_LEVEL=debug
 ```
 
 ### What should I do if the Docker Swarm cluster is in unhealthy state?
-vFile plugin can only work properly when the Docker Swarm cluster is healthy. If Swarm cluster is unhealthy, you may need to destroy and recreate the Docker Swarm cluster.
+VSSD plugin can only work properly when the Docker Swarm cluster is healthy. If Swarm cluster is unhealthy, you may need to destroy and recreate the Docker Swarm cluster.
 
 ## Q&A
 
@@ -199,12 +199,12 @@ vFile plugin can only work properly when the Docker Swarm cluster is healthy. If
 Please follow the instructions at [installation-on-esxi](http://vmware.github.io/vsphere-storage-for-docker/documentation/install.html#installation-on-esxi).
 
 ### Can I use another base volume plugin other than VDVS?
-Currently vFile volume service is only developed and tested with VDVS as the base volume plugin.
+Currently VSSD volume service is only developed and tested with VDVS as the base volume plugin.
 
 ### Can I use default driver for local volumes as a base volume plugin?
-No, this is not supported by vFile plugin.
+No, this is not supported by VSSD plugin.
 
-### I got "Operation now in progress" error when mounting a vFile volume to a container.
+### I got "Operation now in progress" error when mounting a VSSD volume to a container.
 Please make sure the routing mesh of Docker Swarm cluster is working properly.
 Use the following way to verify:
 
@@ -215,7 +215,7 @@ Use the following way to verify:
 Then on each host, make sure there is valid return of `curl 127.0.0.1:8080`.
 `Connection refused` error means the routing mesh of this Docker Swarm cluster is broken and needs to be fixed.
 
-### Mounting volume failed and I saw "name must be valid as a DNS name component" error in the log when mounting a vFile volume to a container.
+### Mounting volume failed and I saw "name must be valid as a DNS name component" error in the log when mounting a VSSD volume to a container.
 When you see something like the following in the log
 
 ```
@@ -258,7 +258,7 @@ Check the "Volume Status" field of ``` docker volume inspect ```, if the "Volume
 ```
 
 
-### I got "docker volume ls" operation very slow and "docker volume rm/create" a vFile volume hang forever
+### I got "docker volume ls" operation very slow and "docker volume rm/create" a VSSD volume hang forever
 Please check the log at `/var/log/vfile.log` and look up if there are error message about swarm status as follow:
 
 `The swarm does not have a leader. It's possible that too few managers are online. Make sure more than half of the managers are online.`
@@ -272,12 +272,12 @@ Please follow the following [recommendations for the Swarm manager nodes setup](
     3. Docker recommends a maximum of seven manager nodes for a swarm.
 
 
-### Does vFile plugin support multi-tenancy feature?
-No. vFile plugin does not support multi-tenency, which is currently an experimental feature for VDVS.
+### Does VSSD plugin support multi-tenancy feature?
+No. VSSD plugin does not support multi-tenency, which is currently an experimental feature for VDVS.
 Assume we have created a vmgroup ```vmgroup1``` and add VM "node1" to ```vmgroup1```. VM "node2" has not been added to any vmgroup and is considered belong to ```_DEFAULT``` vmgroup.
-Then create a volume "vol1" from "node2" and a volume "vol2" from "node1" using vFile plugin.
+Then create a volume "vol1" from "node2" and a volume "vol2" from "node1" using VSSD plugin.
 
-On "node1", we are able to see both "vol1" and "vol2" which are created by vFile plugin.
+On "node1", we are able to see both "vol1" and "vol2" which are created by VSSD plugin.
 
 ```
 ~$ docker volume ls
@@ -299,7 +299,7 @@ vfile:latest        vol2
 
 ```
 
-### Why should I choose vFile instead of just enabling multi-writer flag on vSphere file systems?
+### Why should I choose VSSD instead of just enabling multi-writer flag on vSphere file systems?
 vSAN multi-writer mode permits multiple VMs to access the same VMDKs in read-write mode to enable the use of in-guest
 shared-storage clustering solutions such as Oracle RAC.
 However, the guests must be capable of safely arbitrating and coordinating multiple systems accessing the same storage.
@@ -307,6 +307,6 @@ If your application is not designed for maintaining consistency in the writes pe
 multi-writer mode could result in data corruption.
 More information can be found [here](https://kb.vmware.com/s/article/1034165) and [here](https://kb.vmware.com/s/article/2121181).
 
-### I got "no space left on device" error when installing vFile plugin but I have enough space on my node
+### I got "no space left on device" error when installing VSSD plugin but I have enough space on my node
 This error can happen when your docker version is below required version.
 Please check /var/log/vfile.log to locate if there are warning messages about your current docker server version.

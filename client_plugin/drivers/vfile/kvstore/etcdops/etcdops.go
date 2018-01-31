@@ -608,7 +608,7 @@ func (e *EtcdKVS) etcdHelper() {
 				// find all the vFile volume services
 				volumesToVerify, err := e.dockerOps.ListVolumesFromServices()
 				if err != nil {
-					log.Warningf("Failed to get vFile volumes according to docker services")
+					log.Warningf("Failed to get VSSD volumes according to docker services")
 				} else {
 					e.cleanOrphanService(volumesToVerify)
 				}
@@ -673,7 +673,7 @@ func (e *EtcdKVS) cleanOrphanService(volumesToVerify []string) {
 		state, found := volStates[string(kvstore.VolPrefixState)+volName]
 		if !found ||
 			state == string(kvstore.VolStateDeleting) {
-			log.Warningf("The service for vFile volume %s needs to be shutdown.", volName)
+			log.Warningf("The service for VSSD volume %s needs to be shutdown.", volName)
 			e.dockerOps.StopSMBServer(volName)
 		}
 	}

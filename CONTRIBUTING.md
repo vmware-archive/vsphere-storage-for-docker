@@ -407,7 +407,7 @@ Head to GitHub and author a new release add the changelog for the tag created.
 4. After the vib signing has successfully finished, you will receive a confirmation email. Go to the deliverables link
    mentioned in the email and download the signed offline bundle. Offline bundle will be a zip file something like	```vDVS_driver-0.18-offline_bundle-7032243.zip```. From the offline bundle, extract the signed VIB.
 5. Head to [Bintray](https://bintray.com/vmware/product/vDVS/view) to publish signed VIB as well as offline bundle
-6. Push VDVS & vFile managed plugin to docker store and windows plugin to bintray
+6. Push VDVS & VSSD managed plugin to docker store and windows plugin to bintray
 7. Add ```Downloads``` section with direct links; take [Release 0.13](https://github.com/vmware/vsphere-storage-for-docker/releases/tag/0.13) as the reference
 
 ### Publish VDVS managed plugin to Docker Store
@@ -439,8 +439,8 @@ Following are their paths (with respect to VDVS root working directory)
 1. install-vdvs.ps1
 2. /build/windows/vsphere-storage-for-docker_windows_<release_tag>.zip
 
-## Cutting release steps for vFile plugin
-### Publish vFile managed plugin to Docker Store
+## Cutting release steps for VSSD plugin
+### Publish VSSD managed plugin to Docker Store
 To push plugin image
 ```
 DOCKER_HUB_REPO=vmware EXTRA_TAG= VERSION_TAG=<version_tag> make build-vfile-all

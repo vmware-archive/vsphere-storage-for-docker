@@ -34,15 +34,15 @@ This service is integrated with [Docker Volume Plugin framework](https://docs.do
 
 VDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment
 
-## vFile volume plugin for Docker
+## vSphere Shared Storage for Docker volume plugin
 
-vFile volume plugin for Docker provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as VDVS.
-vFile allows users to utilize vFile volumes with no extra configuration effort. The user experience of vFile volumes is the same as any other type of docker volumes.
-Furthermore, vFile volume plugin comes with high availability, scalability, and load balancing support.
+vSphere Shared Storage for Docker volume plugin(VSSD) provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as VDVS.
+VSSD allows users to utilize VSSD volumes with no extra configuration effort. The user experience of VSSD volumes is the same as any other type of docker volumes.
+Furthermore, VSSD volume plugin comes with high availability, scalability, and load balancing support.
 
-Same as VDVS, vFile volume plugin is also integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
+Same as VDVS, VSSD volume plugin is also integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/plugins_volume/).
 
-More details about the usage of vFile can be found at [vFile userguide](http://vmware.github.io/vsphere-storage-for-docker/documentation/vfile-plugin.html).
+More details about the usage of VSSD can be found at [VSSD userguide](http://vmware.github.io/vsphere-storage-for-docker/documentation/vssd-plugin.html).
 
 ## Documentation Version
 

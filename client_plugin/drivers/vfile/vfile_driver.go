@@ -52,10 +52,10 @@ import (
                             in the vFile volume
 */
 const (
-	version              = "vFile Volume Driver v0.2"
+	version              = "vSphere Shared Storage for Docker Driver v0.2"
 	internalVolumePrefix = "_vF_"
 	fsType               = "cifs"
-	initError            = "vFile volume driver is not fully initialized yet."
+	initError            = "VSSD volume driver is not fully initialized yet."
 	mountError           = "exit status 255"
 	checkTicker          = time.Second
 	requiredVersion      = "17.06.0"
@@ -139,7 +139,7 @@ func NewVolumeDriver(cfg config.Config, mountDir string) *VolumeDriver {
 
 	log.WithFields(log.Fields{
 		"version": version,
-	}).Info("vFile plugin started ")
+	}).Info("VSSD plugin started ")
 
 	return &d
 }
@@ -619,7 +619,7 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 	if err != nil {
 		log.WithFields(
 			log.Fields{"name": name,
-				"error": err}).Error("Failed to mount vFile volume ")
+				"error": err}).Error("Failed to mount VSSD volume ")
 
 		lock.ReleaseLock()
 		return "", err
@@ -713,7 +713,7 @@ func (d *VolumeDriver) mountVFileVolume(volName string, mountpoint string, volRe
 				return nil
 			}
 		case <-timer.C:
-			msg := fmt.Sprintf("Failed to mount vFile volume %s after timeout", volName)
+			msg := fmt.Sprintf("Failed to mount VSSD volume %s after timeout", volName)
 			log.Errorf(msg)
 			return errors.New(msg)
 		}
