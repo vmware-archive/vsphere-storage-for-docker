@@ -25,7 +25,7 @@ More information can be found at [VUM User guide](https://featurewalkthrough.vmw
 
 ESXi component for VDVS is available in the form of a [VIB](https://blogs.vmware.com/vsphere/2011/09/whats-in-a-vib.html). VIB stands for vSphere Installation Bundle. At a conceptual level a VIB is similar to a tarball or ZIP archive in that it is a collection of files packaged into a single archive to facilitate distribution.
 
-Log into ESXi host and download the [latest release](https://bintray.com/vmware/vDVS/VIB/_latestVersion) of vDVS driver VIB on the ESXi. Assuming that you have downloaded the VIB at /tmp location you can run the below command to install it on ESXi. You will need ESXi version **6.0 or above**
+Log into ESXi host and download the [latest release](https://bintray.com/vmware/vDVS/VIB/_latestVersion) of VDVS driver VIB on the ESXi. Assuming that you have downloaded the VIB at /tmp location you can run the below command to install it on ESXi. You will need ESXi version **6.0 or above**
 
 ```
 # esxcli software vib install -v /tmp/vmware-esx-vmdkops-0.12.ccfc38f.vib

@@ -464,15 +464,15 @@ $('#toc').on('click', 'a', function() {
 
 <p>VDVS abstracts underlying enterprise class storage and makes it available as docker volumes to a cluster of hosts running in vSphere environment</p>
 
-<h2 id="vfile-volume-plugin-for-docker">vFile volume plugin for Docker</h2>
+<h2 id="vsphere-shared-storage-for-docker-volume-plugin">vSphere Shared Storage for Docker volume plugin</h2>
 
-<p>vFile volume plugin for Docker provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as VDVS.
-vFile allows users to utilize vFile volumes with no extra configuration effort. The user experience of vFile volumes is the same as any other type of docker volumes.
-Furthermore, vFile volume plugin comes with high availability, scalability, and load balancing support.</p>
+<p>vSphere Shared Storage for Docker volume plugin(VSSD) provides simultaneous persistent volume access between hosts in the same Docker Swarm cluster for the base volume plugin service such as VDVS.
+VSSD allows users to utilize VSSD volumes with no extra configuration effort. The user experience of VSSD volumes is the same as any other type of docker volumes.
+Furthermore, VSSD volume plugin comes with high availability, scalability, and load balancing support.</p>
 
-<p>Same as VDVS, vFile volume plugin is also integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>.</p>
+<p>Same as VDVS, VSSD volume plugin is also integrated with <a href="https://docs.docker.com/engine/extend/plugins_volume/">Docker Volume Plugin framework</a>.</p>
 
-<p>More details about the usage of vFile can be found at <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/vfile-plugin.html">vFile userguide</a>.</p>
+<p>More details about the usage of VSSD can be found at <a href="http://vmware.github.io/vsphere-storage-for-docker/documentation/vssd-plugin.html">VSSD userguide</a>.</p>
 
 <h2 id="documentation-version">Documentation Version</h2>
 
@@ -493,8 +493,8 @@ Furthermore, vFile volume plugin comes with high availability, scalability, and 
 <footer>
             <div class="row">
                 <div class="col-lg-12 footer">
-               &copy;2017 VMWare. All rights reserved. <br />
- Site last generated: Dec 20, 2017 <br />
+               &copy;2018 VMWare. All rights reserved. <br />
+ Site last generated: Jan 31, 2018 <br />
 <p><img src="images/company_logo.png" alt="Company logo"/></p>
                 </div>
             </div>
