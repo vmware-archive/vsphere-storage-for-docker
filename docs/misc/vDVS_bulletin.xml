@@ -1,5 +1,5 @@
 <bulletin>
-	<id>VDVS_driver-0.20</id>
+	<id>VDVS_driver-0.21</id>
 	<vendor>VMware</vendor>
 	<summary>VDVS_Driver Bulletin</summary>
 	<severity>general</severity>
@@ -10,12 +10,12 @@
 		VIB.</description>
 	<kbUrl>https://github.com/vmware/vsphere-storage-for-docker/wiki</kbUrl>
 	<contact>VMware</contact>
-	<releaseDate>2017-12-20T23:47:36.688572+00:00</releaseDate>
+	<releaseDate>2018-01-31T23:47:36.688572+00:00</releaseDate>
 	<platforms>
 		<softwarePlatform locale="" version="6.*"
 			productLineID="embeddedEsx" />
 	</platforms>
 	<vibList>
-		<vibID>vmware-esx-vmdkops-0.20.15f5e1d</vibID>
+		<vibID>vmware-esx-vmdkops-0.21.ddbf56b</vibID>
 	</vibList>
 </bulletin>
