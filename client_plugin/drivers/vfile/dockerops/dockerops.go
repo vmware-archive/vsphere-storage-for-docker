@@ -47,12 +47,12 @@ const (
 	// Postfix added to names of Samba services for volumes
 	serviceNamePrefix = "vFileServer"
 	// Path where the file server image resides in plugin
-	fileServerPath = "/usr/lib/vmware/vfilesmb.tar"
+	fileServerPath = "/usr/lib/vmware/vfilesmbphoton.tar"
 	// Driver for the network which Samba services will use
 	// for communicating to clients
 	networkDriver = "overlay"
 	// Name of the Samba server docker image
-	sambaImageName = "cnastorage/vfile-smb:v0.1"
+	sambaImageName = "cnastorage/vfile-smb:photon-v1.0"
 	// Name of the Samba share used to expose a volume
 	FileShareName = "vfileshare"
 	// Path of the Samba share inside the server
