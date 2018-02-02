@@ -65,7 +65,7 @@ Copy-paste relevant snippets from log file, code. Use github markdown language f
 ```
 ## Typical Developer Workflow
 
-A typical workflow for a developer should be.
+A typical workflow for a developer ssfcsdfhould be.
 
 - Create a branch, push changes and make sure tests do not break as reported
   by the CI system.
