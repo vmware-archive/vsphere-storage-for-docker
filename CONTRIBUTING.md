@@ -265,7 +265,7 @@ Use following information to setup Windows VM in order to contribute towards VDV
     c. Enter "NT SERVICE\sshd" without quotes and hit OK.
     d. Select sshd, check Full control and hit OK.
 ```
-9. Open `regedit.exe` and edit the following keys.
+9. Open `regedit.exe` and edit the followdding keys.
 ```
     a. HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ssh-agent
     b. HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\sshd
