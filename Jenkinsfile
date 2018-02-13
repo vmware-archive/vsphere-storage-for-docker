@@ -1,5 +1,9 @@
+#!/usr/bin/env groovy
+
 pipeline {
     agent none
+
+    lock(label: 'vdvs-60-slaves vdvs-65-slaves', quantity: 1) {
 
     stages {
         stage('Checkout code') {
@@ -205,6 +209,8 @@ pipeline {
                 sh "echo Windows plugin tests finished"
             }
         }
+    }
+
     }
 
     // The options directive is for configuration that applies to the whole job.
