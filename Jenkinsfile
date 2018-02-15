@@ -1,14 +1,46 @@
+#!/usr/bin/env groovy
+
 pipeline {
     agent none
 
     stages {
+        stage('Slave selection') {
+	    failFast true
+	    parallel {
+		stage('Select slave for ESX 6.5 runs') {
+		    agent {
+                        label "vdvs-65-slaves && available"
+		    }
+		    steps {
+			script {
+			    env.VDVS_65_NODE_NAME = env.NODE_NAME
+			    env.VDVS_65_NODE_ID = UUID.randomUUID().toString()
+			    replaceNodeLabel(env.NODE_NAME, "available", env.VDVS_65_NODE_ID)
+			}
+		    }
+		}
+		stage('Select slave for ESX 6.0 runs') {
+		    agent {
+                        label "vdvs-60-slaves && available"
+		    }
+		    steps {
+			script {
+                            env.VDVS_60_NODE_NAME = env.NODE_NAME
+                            env.VDVS_60_NODE_ID = UUID.randomUUID().toString()
+                            replaceNodeLabel(env.NODE_NAME, "available", env.VDVS_60_NODE_ID)
+			}
+		    }
+		}
+	    }
+	}
+
         stage('Checkout code') {
             failFast true
             parallel {
                 stage('Checkout for ESX 6.5 runs') {
                 /* Let's make sure we have the repository cloned to our workspace. */
                     agent {
-                        label "vdvs-65-slaves"
+                        label env.VDVS_65_NODE_ID
                     }
                     steps {
                         checkout scm
@@ -17,7 +49,7 @@ pipeline {
                 stage('Checkout for ESX 6.0 runs') {
                 /* Let's make sure we have the repository cloned to our workspace..*/
                     agent {
-                        label "vdvs-60-slaves"
+                        label env.VDVS_60_NODE_ID
                     }
                     steps {
                         checkout scm
@@ -32,7 +64,7 @@ pipeline {
             parallel {
                 stage('Build binaries for ESX 6.5 runs') {
                     agent {
-                        label "vdvs-65-slaves"
+                        label env.VDVS_65_NODE_ID
                     }
                     steps {
                         sh "echo Building the VDVS binaries"
@@ -43,7 +75,7 @@ pipeline {
 
                 stage('Build binaries for ESX 6.0 runs') {
                     agent {
-                        label "vdvs-60-slaves"
+                        label env.VDVS_60_NODE_ID
                     }
                     steps {
                         sh "echo Building the VDVS binaries"
@@ -59,7 +91,7 @@ pipeline {
             parallel {
                 stage('Deploy binaries for ESX 6.5 runs') {
                     agent {
-                        label "vdvs-65-slaves"
+                        label env.VDVS_65_NODE_ID
                     }
                     steps {
                         sh "echo Deployment On 6.5 setup"
@@ -72,7 +104,7 @@ pipeline {
 
                 stage('Deploy binaries for ESX 6.0 runs') {
                     agent {
-                        label "vdvs-60-slaves"
+                        label env.VDVS_60_NODE_ID
                     }
                     steps {
                         sh "echo Deployment On 6.0 setup"
@@ -90,7 +122,7 @@ pipeline {
             parallel {
                 stage('Run tests on ESX 6.5') {
                     agent {
-                        label "vdvs-65-slaves"
+                        label env.VDVS_65_NODE_ID
                     }
 
                 steps {
@@ -104,7 +136,7 @@ pipeline {
                 }
                 stage('Run tests on ESX 6.0') {
                     agent {
-                    label "vdvs-60-slaves"
+                    label env.VDVS_60_NODE_ID
                     }   
                 steps {
                     sh "echo Test VDVS On 6.0 setup"
@@ -123,7 +155,7 @@ pipeline {
             parallel {
                 stage('Run vFile tests on ESX 6.5') {
                     agent {
-                       label "vdvs-65-slaves"
+                       label env.VDVS_65_NODE_ID
                     }
                     steps {
                         script{
@@ -153,7 +185,7 @@ pipeline {
       
                 stage('Run vFile tests on ESX 6.0') {
                     agent {
-                        label "vdvs-60-slaves"
+                        label env.VDVS_60_NODE_ID
                     }
 
                     steps {
@@ -188,7 +220,7 @@ pipeline {
         stage('Test Windows plugin') {
         /* This builds, deploys and tests the windows binaries */
             agent {
-                        label "vdvs-65-slaves"
+                        label env.VDVS_65_NODE_ID
                     }
 
             steps {
@@ -213,4 +245,24 @@ pipeline {
         // we don't fill up our storage!
         buildDiscarder(logRotator(numToKeepStr:'10'))
     }
+
+    post {
+        always {
+            script {
+                echo "Resetting nodes..."
+                replaceNodeLabel(env.VDVS_65_NODE_NAME, env.VDVS_65_NODE_ID, "available")
+                replaceNodeLabel(env.VDVS_60_NODE_NAME, env.VDVS_60_NODE_ID, "available")
+                echo "Reset complete!"
+            }
+        }
+    }
+}
+
+def replaceNodeLabel(nodeName, oldLabel, newLabel) {
+    echo "Replacing label for node: " + nodeName + ", oldLabel: " + oldLabel + ", newLabel: " + newLabel
+    def jk = jenkins.model.Jenkins.instance
+    def node = jk.getNode(nodeName)
+    node.labelString = node.labelString.replaceAll("\\b " + oldLabel + "\\b", "")
+    node.labelString = node.labelString + " " + newLabel
+    node.save()
 }
