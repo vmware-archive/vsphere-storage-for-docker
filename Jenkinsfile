@@ -150,9 +150,6 @@ pipeline {
                    steps {
                        node (VDVS_60_NODE_ID as String) { 
                                script {
-                                    def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
-                                    def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
-                                    def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
                                 try {
                                     echo "Test VDVS On 6.0 setup"
                                     echo "ESX=$ESX, VM1=$VM1, VM2=$VM2, echo VM3=$VM3, echo PKG_VERSION"
@@ -180,9 +177,6 @@ pipeline {
                     steps {
                         node (VDVS_65_NODE_ID as String) { 
                             script {
-                                def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
-                                def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
-                                def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
                                 try {
                                     echo "Build, deploy, and test vFile on 6.5 setup"
                                     echo "Build vFile binaries"
@@ -207,9 +201,6 @@ pipeline {
                     steps {
                         node (VDVS_60_NODE_ID as String) { 
                             script{
-                                def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
-                                def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
-                                def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
                                 try {
                                     echo "Build, deploy, and test vFile on 6.0 setup"
                                     echo "Build vFile binaries"
@@ -283,6 +274,9 @@ def cleanSetup(cleanVfile) {
     echo "Cleaning up the setup..."
     echo "ESX = $ESX; VM1=$VM1; VM2=$VM2; VM3=$VM3;"
     echo "bool=$cleanVfile"
+    def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
+    def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
+    def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
     sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
     sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
     sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
@@ -291,4 +285,5 @@ def cleanSetup(cleanVfile) {
         sh "make clean-vfile"
     }
     sh "make clean-all"
+    echo "Cleanup finished."
 }
