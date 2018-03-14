@@ -69,6 +69,18 @@ Status: Downloaded newer image for vmware/vsphere-storage-for-docker:latest
 Installed plugin vmware/vsphere-storage-for-docker:latest
 ```
 
+On some linux distributions, such as CoreOS the installation might fail with an error:
+
+```
+Error response from daemon: dial unix /run/docker/plugins/daa3290986386bde82fa486a79578c0511522a03fceaf1a50cb7c7451a254b5d/vsphere.sock: connect: no such file or directory
+```
+
+To work around this, you need to pass an additional configuration option to the install command, the GID of the group that owns the docker socket.
+
+```
+docker plugin install --grant-all-permissions --alias vsphere vmware/vsphere-storage-for-docker:latest "VDVS_SOCKET_GID=$(getent group $(stat -c "%G" /var/run/docker.sock) | cut -f3 -d":")"
+```
+
 * **To verify that it was installed and is listed**
 
 ```
