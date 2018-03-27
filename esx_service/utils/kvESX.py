@@ -19,7 +19,8 @@ of a KV store for vmdks.
 
 from ctypes import \
         CDLL, POINTER, byref, Structure,\
-        c_char_p, c_int32, c_bool, c_uint32, c_uint64
+        c_char_p, c_int32, c_bool, c_uint32, c_uint64,\
+        create_string_buffer, addressof
 import json
 import logging
 import sys
@@ -48,6 +49,9 @@ KV_VOL_VIRTUAL = 2
 
 # Volume KV prop
 KV_VOL_DESC_PROP = "sidecars".encode()
+
+# KV file type
+KV_FILE_TYPE='sidecars'
 
 # VSphere lib to access ESX proprietary APIs.
 DISK_LIB64 = "/lib64/libvmsnapshot.so"
@@ -185,6 +189,30 @@ def kv_esx_init():
     disk_lib_init()
 
 
+def get_vol_type(volpath):
+    vol_type = c_uint32(0)
+    res = lib.ObjLib_PathToType(volpath.encode(), byref(vol_type))
+    if res != 0:
+        logging.warning("Could not determine type of volume %s, error - %x", volpath, res)
+        return None
+    return vol_type.value
+
+def get_kv_filename(volpath):
+    kv_type = KV_FILE_TYPE
+    try:
+        with open(volpath) as f:
+            for line in f:
+                if KV_FILE_TYPE in line:
+                    s=line.split(',')[1]
+                    kv_file = s.split('"')[0]
+                    return "{0}/{1}".format(os.path.dirname(volpath),
+                           kv_file)
+    except IOError as open_error:
+        logging.exception("Failed to open %s", volpath)
+        return None
+    return None
+
+
 @diskLibLock
 def vol_open_path(volpath, open_flags=VMDK_OPEN_DEFAULT):
     """
@@ -210,15 +238,12 @@ def create(volpath, kv_dict):
     """
     obj_handle = get_uint(0)
 
-    # If the volume is a virtual type then
-    # create the KV as a flat file.
-    vol_type = c_uint32(0)
-    res = lib.ObjLib_PathToType(volpath.encode(), byref(vol_type))
-    if res != 0:
-        logging.warning("Could not determine type of volume %s, error - %x", volpath, res)
+    # If the volume is a virtual type then the KV as a flat file.
+    vol_type = get_vol_type(volpath)
+    if not vol_type:
+        logging.warning("Could not determine type of volume %s", volpath)
         return False
-
-    if vol_type.value == c_uint32(KV_VOL_VIRTUAL).value:
+    if vol_type == c_uint32(KV_VOL_VIRTUAL).value:
         return save(volpath, kv_dict)
 
     dhandle = vol_open_path(volpath)
@@ -248,12 +273,11 @@ def delete(volpath):
     """
     Delete the side car for the given volume.
     """
-    vol_type = c_uint32(0)
-    res = lib.ObjLib_PathToType(volpath.encode(), byref(vol_type))
-    if res != 0:
-        logging.warning("KV delete - could not determine type of volume %s, error - %x", volpath, res)
+    vol_type = get_vol_type(volpath)
+    if not vol_type:
+        logging.warning("KV delete - could not determine type of volume %s", volpath)
         return False
-    if vol_type.value == c_uint32(KV_VOL_VIRTUAL).value:
+    if vol_type == c_uint32(KV_VOL_VIRTUAL).value:
         meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(), DVOL_KEY.encode())
         if os.path.exists(meta_file):
             os.unlink(meta_file)
@@ -288,8 +312,17 @@ def load(volpath):
     """
     Load and return dictionary from the sidecar
     """
-    meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
-                                                DVOL_KEY.encode())
+    vol_type = get_vol_type(volpath)
+    if not vol_type:
+        logging.warning("KV delete - could not determine type of volume %s", volpath)
+        return None
+    if vol_type == c_uint32(KV_VOL_VIRTUAL).value:
+        meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
+                                                    DVOL_KEY.encode())
+    else:
+        meta_file = get_kv_filename(volpath)
+        if not meta_file:
+            return None
     retry_count = 0
     vol_name = vmdk_utils.get_volname_from_vmdk_path(volpath)
     while True:
@@ -320,8 +353,18 @@ def save(volpath, kv_dict, key=None, value=None):
     """
     Save the dictionary to side car.
     """
-    meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
-                                                DVOL_KEY.encode())
+    vol_type = get_vol_type(volpath)
+    if not vol_type:
+        logging.warning("KV delete - could not determine type of volume %s", volpath)
+        return False
+    if vol_type == c_uint32(KV_VOL_VIRTUAL).value:
+        meta_file = lib.DiskLib_SidecarMakeFileName(volpath.encode(),
+                                                    DVOL_KEY.encode())
+    else:
+        meta_file = get_kv_filename(volpath)
+        if not meta_file:
+            return False
+
     kv_str = json.dumps(kv_dict)
 
     retry_count = 0
@@ -361,23 +404,23 @@ def fixup_kv(src_volpath, dst_volpath):
     Fix up the sidecars for the destination volume which ever is a
     volume of type - virtual.
     """
-    src_vol_type = c_uint32(0)
-    res = lib.ObjLib_PathToType(src_volpath.encode(), byref(src_vol_type))
-    if res != 0:
-        logging.warning("Could not determine type of volume %s, error - %x", src_volpath, res)
+    src_vol_type = get_vol_type(src_volpath)
+    logging.warning("Source vvol type %x", src_vol_type)
+    if not src_vol_type:
+        logging.warning("KV delete - could not determine type of volume %s", src_volpath)
         return False
 
-    dst_vol_type = c_uint32(0)
-    res = lib.ObjLib_PathToType(dst_volpath.encode(), byref(dst_vol_type))
-    if res != 0:
-        logging.warning("Could not determine type of volume %s, error - %x", dst_volpath, res)
+    dst_vol_type = get_vol_type(dst_volpath)
+    logging.warning("Dest vvol type %x", src_vol_type)
+    if not dst_vol_type:
+        logging.warning("KV delete - could not determine type of volume %s", dst_volpath)
         return False
 
-    if src_vol_type.value != c_uint32(KV_VOL_VIRTUAL).value:
+    if src_vol_type != c_uint32(KV_VOL_VIRTUAL).value:
         # If the destination is a virtual type volume,
         # the source will create a native sidecar that must be deleted
         # and a new flat file version is created.
-        if dst_vol_type.value == c_uint32(KV_VOL_VIRTUAL).value:
+        if dst_vol_type == c_uint32(KV_VOL_VIRTUAL).value:
             dhandle = vol_open_path(dst_volpath)
             if not disk_is_valid(dhandle):
                 return False
@@ -386,7 +429,7 @@ def fixup_kv(src_volpath, dst_volpath):
                 logging.warning("Side car delete for %s failed - %x", dst_volpath, res)
                 lib.DiskLib_Close(dhandle)
                 return False
-
+    
             lib.DiskLib_Close(dhandle)
             src_dict = load(src_volpath)
             return create(dst_volpath, src_dict)
