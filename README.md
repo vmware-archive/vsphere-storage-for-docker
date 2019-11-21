@@ -1,6 +1,6 @@
 [![Build Status](https://ci.vmware.run/api/badges/vmware/vsphere-storage-for-docker/status.svg)](https://ci.vmware.run/vmware/vsphere-storage-for-docker)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vmware/vsphere-storage-for-docker)](https://goreportcard.com/report/github.com/vmware/vsphere-storage-for-docker)
-[![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)
+[![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://hub.docker.com/plugins/vsphere-storage-for-docker)
 [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
 [![Windows Plugin](https://img.shields.io/badge/Windows%20Plugin-latest-blue.svg)](https://bintray.com/vmware/vDVS/VDVS_Windows/_latestVersion)
 
@@ -8,7 +8,7 @@
 
 vSphere Storage for Docker enables customers to address persistent storage requirements for Docker containers in vSphere environments. This service is integrated with [Docker Volume Plugin framework](https://docs.docker.com/engine/extend/). Docker users can now consume vSphere Storage (vSAN, VMFS, NFS, VVol) to stateful containers using Docker.
 
-[<img src="https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)vSphere Storage for Docker is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
+[<img src="https://github.com/vmware/vsphere-storage-for-docker/blob/master/docs/misc/Docker%20Certified.png" width="180" align="right">](https://hub.docker.com/plugins/vsphere-storage-for-docker)vSphere Storage for Docker is Docker Certified to use with Docker Enterprise Edition and available in [Docker store](https://store.docker.com/plugins/e15dc9d5-e20e-4fb8-8876-9615e6e6e852?tab=description).
 
 If you would like to contribute then please check out
 [CONTRIBUTING.md](https://github.com/vmware/vsphere-storage-for-docker/blob/master/CONTRIBUTING.md)
