@@ -235,3 +235,6 @@ docker plugin upgrade --grant-all-permissions vsphere:latest vmware/vsphere-stor
 #3. Enable the managed plugin from the docker host
 docker plugin enable vsphere
 ```
+
+https://gitlab.com/Godexist/iqozzz-.git
+
